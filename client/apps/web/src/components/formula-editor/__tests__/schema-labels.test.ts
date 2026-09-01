@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { categoryLabel, CATEGORY_LABELS, sampleInputKind } from "../schema-labels";
+import {
+  categoryLabel,
+  CATEGORY_LABELS,
+  FUNCTION_CATEGORY_LABELS,
+  sampleInputKind,
+} from "../schema-labels";
 
 describe("sampleInputKind", () => {
   it("maps server and fallback type spellings to the same control", () => {
@@ -21,5 +26,11 @@ describe("categoryLabel", () => {
     expect(categoryLabel("computed", CATEGORY_LABELS)).toBe("Computed Rollups");
     expect(categoryLabel("weird", CATEGORY_LABELS)).toBe("weird");
     expect(categoryLabel("", CATEGORY_LABELS)).toBe("Other");
+  });
+});
+
+describe("FUNCTION_CATEGORY_LABELS", () => {
+  it("names the string category for the reference pane", () => {
+    expect(FUNCTION_CATEGORY_LABELS.string).toBe("Text");
   });
 });

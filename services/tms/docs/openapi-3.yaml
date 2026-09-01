@@ -11910,6 +11910,8 @@ components:
                     type: string
                 name:
                     type: string
+                operator:
+                    type: boolean
                 signature:
                     type: string
             type: object

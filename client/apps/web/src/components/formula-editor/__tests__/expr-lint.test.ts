@@ -79,3 +79,40 @@ describe("lintExpression", () => {
     expect(lintExpression("hasHazmat and true", known)).toEqual([]);
   });
 });
+
+describe("lintExpression with expr string operators", () => {
+  it("does not flag startsWith, endsWith, contains, or matches as unknown names", () => {
+    const diagnostics = lintExpression(
+      'origin.state startsWith "T" and customer.name contains "Acme" and origin.zip matches "^7" and destination.state endsWith "X"',
+      known,
+    );
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("accepts operators the server publishes even when the static list lacks them", () => {
+    const serverKnown = buildKnownIdentifiers({
+      variables: [
+        {
+          name: "code",
+          type: "string",
+          description: "",
+          category: "shipment",
+          nullable: false,
+          computed: false,
+          enum: undefined,
+        },
+      ],
+      functions: [
+        {
+          name: "soundsLike",
+          signature: 'text soundsLike "x"',
+          description: "",
+          example: "",
+          category: "string",
+          operator: true,
+        },
+      ],
+    });
+    expect(lintExpression('code soundsLike "abc"', serverKnown)).toEqual([]);
+  });
+});

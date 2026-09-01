@@ -45,6 +45,7 @@ func (s *Service) DescribeSchema(
 			Description: spec.Description,
 			Example:     spec.Example,
 			Category:    spec.Category,
+			Operator:    spec.Operator,
 		})
 	}
 

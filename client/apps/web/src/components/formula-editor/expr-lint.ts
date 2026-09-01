@@ -3,6 +3,7 @@ import type { Extension } from "@codemirror/state";
 import {
   EXPR_KEYWORDS,
   isKnownFunction,
+  isOperatorWord,
   isKnownVariable,
   type KnownIdentifiers,
 } from "./known-identifiers";
@@ -204,7 +205,7 @@ export function lintExpression(expression: string, known: KnownIdentifiers): Exp
   }
 
   for (const token of collectIdentifierTokens(expression)) {
-    if (EXPR_KEYWORDS.has(token.name)) continue;
+    if (EXPR_KEYWORDS.has(token.name) || isOperatorWord(known, token.name)) continue;
 
     if (token.isCall) {
       const callee = token.name;

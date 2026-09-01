@@ -31,14 +31,19 @@ func TestDescribeSchema(t *testing.T) {
 	assert.True(t, computedByName["totalDistance"], "totalDistance is computed")
 
 	functionNames := make(map[string]bool, len(description.Functions))
+	operators := make(map[string]bool, len(description.Functions))
 	for _, fn := range description.Functions {
 		functionNames[fn.Name] = true
+		operators[fn.Name] = fn.Operator
 		assert.NotEmpty(t, fn.Signature, "signature for %s", fn.Name)
 		assert.NotEmpty(t, fn.Description, "description for %s", fn.Name)
 	}
 
 	assert.True(t, functionNames["round"])
 	assert.True(t, functionNames["lookup"])
+	assert.True(t, functionNames["startsWith"], "expr string operators are published")
+	assert.True(t, operators["startsWith"], "operators are marked so editors insert them infix")
+	assert.False(t, operators["round"])
 }
 
 func TestDescribeSchema_UnknownSchema(t *testing.T) {

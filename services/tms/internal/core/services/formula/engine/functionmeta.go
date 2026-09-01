@@ -6,9 +6,17 @@ type FunctionSpec struct {
 	Description string `json:"description"`
 	Example     string `json:"example"`
 	Category    string `json:"category"`
+	Operator    bool   `json:"operator"`
 
 	fn    func(...any) (any, error)
 	types []any
+}
+
+// Executable reports whether Trenova supplies the implementation. Specs
+// without one document something expr already ships, so the reference pane
+// and linter know it exists without the engine registering it twice.
+func (s FunctionSpec) Executable() bool {
+	return s.fn != nil
 }
 
 const (
@@ -17,6 +25,7 @@ const (
 	FunctionCategoryAggregate   = "aggregate"
 	FunctionCategoryConditional = "conditional"
 	FunctionCategoryRateTable   = "rateTable"
+	FunctionCategoryString      = "string"
 )
 
 func FunctionSpecs() []FunctionSpec {
@@ -112,21 +121,21 @@ var functionSpecs = []FunctionSpec{
 	},
 	{
 		Name:        "min",
-		Signature:   "min(a, b)",
-		Description: "Returns the smaller of two numbers.",
+		Signature:   "min(...values)",
+		Description: "Returns the smallest of one or more numbers.",
 		Example:     "min(baseRate, 500) // caps at 500",
 		Category:    FunctionCategoryMath,
 		fn:          minFn,
-		types:       []any{new(func(float64, float64) float64)},
+		types:       []any{new(func(...float64) float64)},
 	},
 	{
 		Name:        "max",
-		Signature:   "max(a, b)",
-		Description: "Returns the larger of two numbers.",
-		Example:     "max(baseRate * totalDistance, 250) // floor of 250",
+		Signature:   "max(...values)",
+		Description: "Returns the largest of one or more numbers.",
+		Example:     "max(baseRate * totalDistance, 250, minimumCharge) // highest floor wins",
 		Category:    FunctionCategoryMath,
 		fn:          maxFn,
-		types:       []any{new(func(float64, float64) float64)},
+		types:       []any{new(func(...float64) float64)},
 	},
 	{
 		Name:        "sum",
@@ -209,5 +218,143 @@ var functionSpecs = []FunctionSpec{
 		Description: "Like lookup2, but returns fallback when the table has no cell at the row/column intersection. A missing table still errors, so a deleted matrix cannot silently reprice.",
 		Example:     `lookup2Or("zone_weight_rates", origin.zip, totalWeight, 0)`,
 		Category:    FunctionCategoryRateTable,
+	},
+	{
+		Name:        "startsWith",
+		Signature:   `text startsWith "prefix"`,
+		Description: "True when the text begins with the prefix. Case-sensitive.",
+		Example:     `origin.zip startsWith "7" ? 1.10 : 1.00`,
+		Category:    FunctionCategoryString,
+		Operator:    true,
+	},
+	{
+		Name:        "endsWith",
+		Signature:   `text endsWith "suffix"`,
+		Description: "True when the text ends with the suffix. Case-sensitive.",
+		Example:     `customer.code endsWith "-EXP" ? 75 : 0`,
+		Category:    FunctionCategoryString,
+		Operator:    true,
+	},
+	{
+		Name:        "contains",
+		Signature:   `text contains "part"`,
+		Description: "True when the text includes the part anywhere. Case-sensitive; wrap both sides in lower() to ignore case.",
+		Example:     `lower(customer.name) contains "hospital" ? 50 : 0`,
+		Category:    FunctionCategoryString,
+		Operator:    true,
+	},
+	{
+		Name:        "matches",
+		Signature:   `text matches "pattern"`,
+		Description: "True when the text matches the regular expression. Anchor with ^ and $ to match the whole value.",
+		Example:     `origin.zip matches "^(75|76)" ? 25 : 0`,
+		Category:    FunctionCategoryString,
+		Operator:    true,
+	},
+	{
+		Name:        "[start:end]",
+		Signature:   "text[start:end]",
+		Description: "Slices characters from start up to but not including end. Either bound may be left out; negative bounds count from the end.",
+		Example:     `origin.zip[0:3] == "750" ? 1.05 : 1.00`,
+		Category:    FunctionCategoryString,
+		Operator:    true,
+	},
+	{
+		Name:        "upper",
+		Signature:   "upper(text)",
+		Description: "Converts text to upper case.",
+		Example:     `upper(origin.state) == "TX"`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "lower",
+		Signature:   "lower(text)",
+		Description: "Converts text to lower case.",
+		Example:     `lower(customer.name) contains "clinic"`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "trim",
+		Signature:   "trim(text)",
+		Description: "Removes leading and trailing whitespace.",
+		Example:     `trim(customer.code) == "ACME"`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "trimPrefix",
+		Signature:   `trimPrefix(text, "prefix")`,
+		Description: "Removes the prefix when the text begins with it.",
+		Example:     `trimPrefix(customer.code, "C-")`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "trimSuffix",
+		Signature:   `trimSuffix(text, "suffix")`,
+		Description: "Removes the suffix when the text ends with it.",
+		Example:     `trimSuffix(origin.zip, "-0000")`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "hasPrefix",
+		Signature:   `hasPrefix(text, "prefix")`,
+		Description: "Function form of startsWith.",
+		Example:     `hasPrefix(origin.zip, "7")`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "hasSuffix",
+		Signature:   `hasSuffix(text, "suffix")`,
+		Description: "Function form of endsWith.",
+		Example:     `hasSuffix(customer.code, "-EXP")`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "indexOf",
+		Signature:   `indexOf(text, "part")`,
+		Description: "Position of the first occurrence of part, or -1 when absent.",
+		Example:     `indexOf(customer.code, "-") > 0`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "replace",
+		Signature:   `replace(text, "old", "new")`,
+		Description: "Replaces every occurrence of old with new.",
+		Example:     `replace(origin.zip, "-", "")`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "split",
+		Signature:   `split(text, "separator")`,
+		Description: "Splits text into a list on the separator.",
+		Example:     `split(customer.code, "-")[0]`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "len",
+		Signature:   "len(value)",
+		Description: "Number of characters in text or items in a list.",
+		Example:     `len(origin.zip) == 5`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "string",
+		Signature:   "string(value)",
+		Description: "Converts a number or boolean to text.",
+		Example:     `string(totalPieces) + " pcs"`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "float",
+		Signature:   "float(value)",
+		Description: "Converts numeric text or an integer to a number.",
+		Example:     `float(trim(customer.creditTier))`,
+		Category:    FunctionCategoryString,
+	},
+	{
+		Name:        "int",
+		Signature:   "int(value)",
+		Description: "Converts numeric text or a number to a whole number, truncating toward zero.",
+		Example:     `int(origin.zip[0:1])`,
+		Category:    FunctionCategoryString,
 	},
 }

@@ -46,16 +46,44 @@ func TestFunctionSpecsIncludeLookupDocumentation(t *testing.T) {
 func TestBuiltinFunctionsMatchExecutableSpecs(t *testing.T) {
 	t.Parallel()
 
-	lookupSpecs := map[string]struct{}{
-		"lookup": {}, "lookupOr": {}, "lookup2": {}, "lookup2Or": {},
-	}
-
 	executable := 0
 	for _, spec := range engine.FunctionSpecs() {
-		if _, isLookup := lookupSpecs[spec.Name]; !isLookup {
+		if spec.Executable() {
 			executable++
 		}
 	}
 
 	assert.Len(t, engine.BuiltinFunctions(), executable)
+}
+
+func TestFunctionSpecsPublishStringBuiltins(t *testing.T) {
+	t.Parallel()
+
+	byName := make(map[string]engine.FunctionSpec)
+	for _, spec := range engine.FunctionSpecs() {
+		byName[spec.Name] = spec
+	}
+
+	for _, operator := range []string{"startsWith", "endsWith", "contains", "matches"} {
+		spec, ok := byName[operator]
+		require.True(t, ok, "%s must be published", operator)
+		assert.True(t, spec.Operator, "%s is an infix operator", operator)
+		assert.False(t, spec.Executable(), "%s ships with expr, not Trenova", operator)
+		assert.Equal(t, engine.FunctionCategoryString, spec.Category)
+	}
+
+	for _, fn := range []string{"upper", "lower", "trim", "len", "indexOf", "replace"} {
+		spec, ok := byName[fn]
+		require.True(t, ok, "%s must be published", fn)
+		assert.False(t, spec.Operator, "%s is called like a function", fn)
+		assert.False(t, spec.Executable())
+		assert.Equal(t, engine.FunctionCategoryString, spec.Category)
+	}
+
+	slice, ok := byName["[start:end]"]
+	require.True(t, ok, "slicing must be published")
+	assert.True(t, slice.Operator)
+
+	assert.Equal(t, "min(...values)", byName["min"].Signature)
+	assert.Equal(t, "max(...values)", byName["max"].Signature)
 }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildKnownIdentifiers, isKnownFunction, isKnownVariable } from "../known-identifiers";
+import {
+  buildKnownIdentifiers,
+  functionInsertion,
+  isKnownFunction,
+  isKnownVariable,
+} from "../known-identifiers";
 
 describe("buildKnownIdentifiers", () => {
   it("falls back to the bundled shipment schema when no server schema exists", () => {
@@ -22,7 +27,14 @@ describe("buildKnownIdentifiers", () => {
         },
       ],
       functions: [
-        { name: "lookup", signature: "lookup(t, k)", description: "", example: "", category: "" },
+        {
+          name: "lookup",
+          signature: "lookup(t, k)",
+          description: "",
+          example: "",
+          category: "",
+          operator: false,
+        },
       ],
     });
     expect(known.variablePaths.has("newServerVariable")).toBe(true);
@@ -55,5 +67,36 @@ describe("isKnownFunction", () => {
     expect(isKnownFunction(known, "round")).toBe(true);
     expect(isKnownFunction(known, "len")).toBe(true);
     expect(isKnownFunction(known, "bogusFn")).toBe(false);
+  });
+});
+
+describe("functionInsertion", () => {
+  it("inserts a call with the cursor between the parentheses", () => {
+    expect(functionInsertion({ name: "round", signature: "round(x)", description: "" })).toEqual({
+      text: "round()",
+      cursor: 6,
+    });
+  });
+
+  it("inserts an infix operator with a string placeholder selected for typing", () => {
+    expect(
+      functionInsertion({
+        name: "startsWith",
+        signature: 'text startsWith "prefix"',
+        description: "",
+        operator: true,
+      }),
+    ).toEqual({ text: ' startsWith ""', cursor: 13 });
+  });
+
+  it("inserts a slice with the cursor on the start index", () => {
+    expect(
+      functionInsertion({
+        name: "[start:end]",
+        signature: "text[start:end]",
+        description: "",
+        operator: true,
+      }),
+    ).toEqual({ text: "[0:3]", cursor: 1 });
   });
 });

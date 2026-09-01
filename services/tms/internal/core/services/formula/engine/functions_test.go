@@ -1021,3 +1021,12 @@ func TestRoundingFunctions_RejectBadArguments(t *testing.T) {
 		require.Error(t, err, expression)
 	}
 }
+
+func TestMinMax_AreVariadic(t *testing.T) {
+	t.Parallel()
+
+	assert.InDelta(t, 3, evalFloat(t, "min(5, 3, 8)"), 0.0001)
+	assert.InDelta(t, 8, evalFloat(t, "max(5, 3, 8)"), 0.0001)
+	assert.InDelta(t, 10, evalFloat(t, "min(10)"), 0.0001)
+	assert.InDelta(t, -8, evalFloat(t, "min(-5, -3, -8)"), 0.0001)
+}

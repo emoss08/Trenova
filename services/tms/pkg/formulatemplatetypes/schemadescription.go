@@ -16,6 +16,7 @@ type SchemaFunctionInfo struct {
 	Description string `json:"description"`
 	Example     string `json:"example"`
 	Category    string `json:"category"`
+	Operator    bool   `json:"operator"`
 }
 
 type SchemaDescription struct {

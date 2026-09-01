@@ -9,7 +9,9 @@ import { Tag, tags as t } from "@lezer/highlight";
 import {
   EXPR_KEYWORDS,
   buildKnownIdentifiers,
+  functionInsertion,
   isKnownFunction,
+  isOperatorWord,
   isKnownVariable,
   type KnownIdentifiers,
 } from "./known-identifiers";
@@ -72,7 +74,7 @@ export function createExprLanguage(known: KnownIdentifiers) {
       if (stream.match(/[a-zA-Z_#][a-zA-Z0-9_]*/)) {
         const word = stream.current();
 
-        if (EXPR_KEYWORDS.has(word) || word === "#") {
+        if (EXPR_KEYWORDS.has(word) || word === "#" || isOperatorWord(known, word)) {
           return "keyword";
         }
 
@@ -196,15 +198,16 @@ function createCompletions(known: KnownIdentifiers): Completion[] {
   }
 
   for (const fn of known.functions) {
+    const insertion = functionInsertion(fn);
     options.push({
       label: fn.name,
-      type: "function",
+      type: fn.operator ? "keyword" : "function",
       detail: fn.signature,
       info: completionInfo(fn.signature, fn.description, fn.example),
       apply: (view, _completion, from, to) => {
         view.dispatch({
-          changes: { from, to, insert: `${fn.name}()` },
-          selection: { anchor: from + fn.name.length + 1 },
+          changes: { from, to, insert: insertion.text },
+          selection: { anchor: from + insertion.cursor },
         });
       },
       boost: 1,

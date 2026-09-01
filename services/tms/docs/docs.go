@@ -48881,6 +48881,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "operator": {
+                    "type": "boolean"
+                },
                 "signature": {
                     "type": "string"
                 }

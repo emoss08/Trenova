@@ -16,6 +16,7 @@ export const FUNCTION_CATEGORY_LABELS: Record<string, string> = {
   aggregate: "Aggregates",
   conditional: "Conditionals",
   rateTable: "Rate Tables",
+  string: "Text",
 };
 
 export function categoryLabel(category: string, labels: Record<string, string>): string {

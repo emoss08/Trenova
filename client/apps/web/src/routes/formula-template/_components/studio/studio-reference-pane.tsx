@@ -3,6 +3,7 @@ import type {
   KnownIdentifiers,
   VariableDoc,
 } from "@/components/formula-editor/known-identifiers";
+import { functionInsertion } from "@/components/formula-editor/known-identifiers";
 import {
   CATEGORY_LABELS,
   FUNCTION_CATEGORY_LABELS,
@@ -102,7 +103,10 @@ function FunctionRow({
         render={
           <button
             type="button"
-            onClick={() => onInsert(`${fn.name}()`, fn.name.length + 1)}
+            onClick={() => {
+              const insertion = functionInsertion(fn);
+              onInsert(insertion.text, insertion.cursor);
+            }}
             className="group hover:bg-muted flex w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-left"
           >
             <span className="truncate font-mono text-xs">{fn.signature}</span>

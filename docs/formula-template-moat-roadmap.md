@@ -371,9 +371,11 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 4.1 Function library
 
-- [ ] Variadic `min`/`max`, `avg`; publish expr's string builtins (`startsWith`,
+- [x] Variadic `min`/`max`, `avg`; publish expr's string builtins (`startsWith`,
       `contains`, `matches`, slicing) in `DescribeSchema` so the reference pane and
-      linter know them (`formula/engine/functionmeta.go`)
+      linter know them (`formula/engine/functionmeta.go`; specs carry `operator` so the
+      editor inserts `text startsWith ""` infix and highlights operator words as keywords
+      instead of flagging them as unknown variables; "Text" category in the reference pane)
 - [ ] Lookup key normalisation modes: `trim`, `upper`, `zip3`, and nearest/clamp-to-
       top-band options (`formula/matrix_lookup.go`)
 - [ ] `lookupInterp(table, key)` linear interpolation between bands

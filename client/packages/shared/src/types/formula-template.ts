@@ -688,12 +688,12 @@ export const AVAILABLE_FUNCTIONS = [
   { name: "abs", signature: "abs(x)", description: "Absolute value" },
   {
     name: "min",
-    signature: "min(a, b, ...)",
+    signature: "min(...values)",
     description: "Minimum of values",
   },
   {
     name: "max",
-    signature: "max(a, b, ...)",
+    signature: "max(...values)",
     description: "Maximum of values",
   },
   {
@@ -835,6 +835,7 @@ export const formulaSchemaFunctionSchema = z.object({
   description: z.string().default(""),
   example: z.string().default(""),
   category: z.string().default(""),
+  operator: z.boolean().default(false),
 });
 export type FormulaSchemaFunction = z.output<typeof formulaSchemaFunctionSchema>;
 

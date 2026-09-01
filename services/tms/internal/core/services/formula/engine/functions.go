@@ -118,33 +118,31 @@ func absFn(args ...any) (any, error) {
 }
 
 func minFn(args ...any) (any, error) {
-	a, err := toFloat64(args[0])
-	if err != nil {
-		return nil, err
-	}
-	b, err := toFloat64(args[1])
-	if err != nil {
-		return nil, err
-	}
-	if a < b {
-		return a, nil
-	}
-	return b, nil
+	return extremum("min", args, func(candidate, best float64) bool { return candidate < best })
 }
 
 func maxFn(args ...any) (any, error) {
-	a, err := toFloat64(args[0])
+	return extremum("max", args, func(candidate, best float64) bool { return candidate > best })
+}
+
+func extremum(name string, args []any, better func(candidate, best float64) bool) (any, error) {
+	if len(args) == 0 {
+		return nil, fmt.Errorf("%s requires at least one argument", name)
+	}
+	best, err := toFloat64(args[0])
 	if err != nil {
 		return nil, err
 	}
-	b, err := toFloat64(args[1])
-	if err != nil {
-		return nil, err
+	for _, arg := range args[1:] {
+		candidate, convErr := toFloat64(arg)
+		if convErr != nil {
+			return nil, convErr
+		}
+		if better(candidate, best) {
+			best = candidate
+		}
 	}
-	if a > b {
-		return a, nil
-	}
-	return b, nil
+	return best, nil
 }
 
 func sumFn(args ...any) (any, error) {

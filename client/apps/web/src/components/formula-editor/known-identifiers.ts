@@ -21,6 +21,8 @@ export type FunctionDoc = {
   description: string;
   example?: string;
   category?: string;
+  /** Written infix (`text startsWith "x"`) or as a slice, not as a call. */
+  operator?: boolean;
 };
 
 export type KnownIdentifiers = {
@@ -29,7 +31,14 @@ export type KnownIdentifiers = {
   variableRoots: Set<string>;
   variablePaths: Set<string>;
   functionNames: Set<string>;
+  operatorNames: Set<string>;
 };
+
+/**
+ * Words expr parses as binary operators. They look like identifiers to a
+ * tokenizer, so the linter and highlighter must not treat them as variables.
+ */
+export const EXPR_OPERATOR_WORDS = new Set(["startsWith", "endsWith", "contains", "matches"]);
 
 export const EXPR_KEYWORDS = new Set([
   "true",
@@ -124,6 +133,7 @@ export const FALLBACK_SCHEMA: Pick<FormulaSchemaResponse, "variables" | "functio
     description: fn.description,
     example: "",
     category: "",
+    operator: false,
   })),
 };
 
@@ -159,6 +169,7 @@ export function buildKnownIdentifiers(
     description: fn.description ?? "",
     example: fn.example || undefined,
     category: fn.category || undefined,
+    operator: fn.operator || undefined,
   }));
 
   const variableRoots = new Set<string>();
@@ -169,9 +180,43 @@ export function buildKnownIdentifiers(
     variableRoots.add(dot === -1 ? variable.name : variable.name.slice(0, dot));
   }
 
-  const functionNames = new Set<string>(functions.map((fn) => fn.name));
+  const functionNames = new Set<string>();
+  const operatorNames = new Set<string>(EXPR_OPERATOR_WORDS);
+  for (const fn of functions) {
+    if (fn.operator) {
+      operatorNames.add(fn.name);
+    } else {
+      functionNames.add(fn.name);
+    }
+  }
 
-  return { variables, functions, variableRoots, variablePaths, functionNames };
+  return { variables, functions, variableRoots, variablePaths, functionNames, operatorNames };
+}
+
+export function isOperatorWord(known: KnownIdentifiers, identifier: string): boolean {
+  return known.operatorNames.has(identifier);
+}
+
+export type FunctionInsertion = { text: string; cursor: number };
+
+/**
+ * What clicking or completing a function drops into the editor. Calls get
+ * empty parentheses with the cursor inside; infix operators get surrounding
+ * spaces and an empty string to type into; a slice gets a sample range with
+ * the cursor on the start index.
+ */
+export function functionInsertion(
+  fn: Pick<FunctionDoc, "name"> & Partial<FunctionDoc>,
+): FunctionInsertion {
+  if (!fn.operator) {
+    const text = `${fn.name}()`;
+    return { text, cursor: text.length - 1 };
+  }
+  if (fn.name.startsWith("[")) {
+    return { text: "[0:3]", cursor: 1 };
+  }
+  const text = ` ${fn.name} ""`;
+  return { text, cursor: text.length - 1 };
 }
 
 export function isKnownVariable(known: KnownIdentifiers, identifier: string): boolean {
