@@ -20,16 +20,84 @@ import { FormulaStudio } from "../_components/studio/formula-studio";
 
 function StudioSkeleton() {
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-8 w-32" />
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
+        <div className="flex min-w-0 items-center gap-3">
+          <Skeleton className="size-7 rounded-md" />
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-10 rounded-full" />
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Skeleton className="h-7 w-32" />
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="size-7" />
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Skeleton className="h-[60vh]" />
-        <div className="space-y-4">
-          <Skeleton className="h-[30vh]" />
-          <Skeleton className="h-[26vh]" />
+
+      <div className="flex min-h-0 flex-1">
+        <div className="min-w-0 flex-[55] space-y-4 overflow-hidden border-r p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-8 rounded-lg" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-52" />
+              </div>
+            </div>
+            <Skeleton className="size-4" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-8" />
+            <Skeleton className="h-8" />
+            <Skeleton className="h-8" />
+            <Skeleton className="h-8" />
+          </div>
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-8 rounded-lg" />
+                <Skeleton className="h-3.5 w-24" />
+              </div>
+              <Skeleton className="h-6 w-28" />
+            </div>
+            <Skeleton className="h-44 w-full rounded-md" />
+          </div>
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-8 rounded-lg" />
+              <Skeleton className="h-3.5 w-36" />
+            </div>
+            <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-[45] flex-col overflow-hidden">
+          <div className="flex gap-1 border-b px-2 pt-1.5 pb-1">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-20" />
+          </div>
+          <div className="basis-[55%] space-y-3 border-b p-4">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-3.5 w-32" />
+            <div className="space-y-1.5 pt-2">
+              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-7 w-full rounded-md" />
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 space-y-2 p-3">
+            <Skeleton className="h-8 w-full rounded-md" />
+            <Skeleton className="mt-3 h-3 w-24" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-7 w-full rounded-md" />
+            </div>
+          </div>
         </div>
       </div>
     </div>

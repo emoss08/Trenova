@@ -60,7 +60,10 @@ function ScenarioRow({
     <div
       className={cn(
         "group flex items-center justify-between gap-2 rounded-md border px-3 py-2",
-        result && (result.passed ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"),
+        result &&
+          (result.passed
+            ? "border-emerald-500/40 bg-emerald-500/5"
+            : "border-destructive/40 bg-destructive/5"),
       )}
     >
       <div className="min-w-0 flex-1">
@@ -235,10 +238,7 @@ export function StudioScenariosPane({ templateId, preview }: StudioScenariosPane
           <FlaskConicalIcon className="text-muted-foreground size-4" />
           <span className="text-sm font-semibold">Scenarios</span>
           {runResults && (
-            <Badge
-              variant={runResults.failed === 0 ? "active" : "inactive"}
-              className="text-2xs"
-            >
+            <Badge variant={runResults.failed === 0 ? "active" : "inactive"} className="text-2xs">
               {runResults.passed}/{runResults.total} passing
             </Badge>
           )}
@@ -276,8 +276,12 @@ export function StudioScenariosPane({ templateId, preview }: StudioScenariosPane
         <div className="space-y-2 p-3">
           {isLoading && (
             <>
-              <Skeleton className="h-12" />
-              <Skeleton className="h-12" />
+              {[0, 1].map((row) => (
+                <div key={row} className="space-y-1.5 rounded-md border px-3 py-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ))}
             </>
           )}
 
@@ -285,8 +289,8 @@ export function StudioScenariosPane({ templateId, preview }: StudioScenariosPane
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
               <FlaskConicalIcon className="size-8 opacity-40" />
               <span>
-                No scenarios yet. Add one to pin what this formula must produce — approval
-                requires every scenario to pass.
+                No scenarios yet. Add one to pin what this formula must produce — approval requires
+                every scenario to pass.
               </span>
             </div>
           )}
