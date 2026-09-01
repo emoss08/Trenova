@@ -319,6 +319,7 @@ export type FormulaValueSource = z.infer<typeof formulaValueSourceSchema>;
 
 export const lookupMatchSchema = z.object({
   matchedKey: z.string().optional(),
+  adjusted: z.boolean().optional(),
   bandMin: z.coerce.number().nullish(),
   bandMax: z.coerce.number().nullish(),
 });

@@ -6440,6 +6440,18 @@ definitions:
             - DimensionKindServiceType
             - DimensionKindCustom
             - DimensionKindQuantity
+    github_com_emoss08_trenova_internal_core_domain_ratematrix.KeyNormalization:
+        enum:
+            - None
+            - Trim
+            - Upper
+            - Zip3
+        type: string
+        x-enum-varnames:
+            - KeyNormalizationNone
+            - KeyNormalizationTrim
+            - KeyNormalizationUpper
+            - KeyNormalizationZip3
     github_com_emoss08_trenova_internal_core_domain_ratematrix.MatchMode:
         enum:
             - Exact
@@ -6448,6 +6460,16 @@ definitions:
         x-enum-varnames:
             - MatchModeExact
             - MatchModeRange
+    github_com_emoss08_trenova_internal_core_domain_ratematrix.RangeOverflow:
+        enum:
+            - Error
+            - ClampToTopBand
+            - Nearest
+        type: string
+        x-enum-varnames:
+            - RangeOverflowError
+            - RangeOverflowClampToTopBand
+            - RangeOverflowNearest
     github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix:
         properties:
             businessUnitId:
@@ -6543,6 +6565,8 @@ definitions:
                 type: integer
             id:
                 type: string
+            keyNormalization:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.KeyNormalization'
             kind:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.DimensionKind'
             label:
@@ -6553,6 +6577,8 @@ definitions:
                 type: string
             position:
                 type: integer
+            rangeOverflow:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.RangeOverflow'
             rateMatrixId:
                 type: string
             updatedAt:
@@ -11945,6 +11971,11 @@ definitions:
         type: object
     github_com_emoss08_trenova_pkg_formulatypes.LookupMatch:
         properties:
+            adjusted:
+                description: |-
+                    Adjusted says the axis's overflow policy moved the key into this band
+                    because no band covered it.
+                type: boolean
             bandMax:
                 type: number
             bandMin:

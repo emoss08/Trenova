@@ -376,8 +376,12 @@ Every rating carries a trace that a non-programmer can read.
       linter know them (`formula/engine/functionmeta.go`; specs carry `operator` so the
       editor inserts `text startsWith ""` infix and highlights operator words as keywords
       instead of flagging them as unknown variables; "Text" category in the reference pane)
-- [ ] Lookup key normalisation modes: `trim`, `upper`, `zip3`, and nearest/clamp-to-
-      top-band options (`formula/matrix_lookup.go`)
+- [x] Lookup key normalisation modes: `trim`, `upper`, `zip3`, and nearest/clamp-to-
+      top-band options (`formula/matrix_lookup.go`; modes live on the rate-matrix axis as
+      `keyNormalization` and `rangeOverflow`, set in the matrix editor, applied to stored and
+      looked-up keys alike; receipts mark a band the key was moved into. The rate-matrix
+      service's own cell selection still matches SQL-narrowed exact keys; normalisation there
+      would need the repository query to normalise too)
 - [ ] `lookupInterp(table, key)` linear interpolation between bands
 - [ ] Deficit-weight helper for CWT pricing ("rate as next break if cheaper")
 

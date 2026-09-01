@@ -27,11 +27,12 @@ const SOURCE_LABELS: Record<FormulaValueSource, { label: string; className: stri
 /** Words for which entry answered a lookup, for the receipt and dispute letters alike. */
 export function describeLookupMatch(match: LookupMatch | null | undefined): string {
   if (!match) return "no match";
-  if (match.matchedKey) return `key ${match.matchedKey}`;
+  const moved = match.adjusted ? " (key moved into band)" : "";
+  if (match.matchedKey) return `key ${match.matchedKey}${moved}`;
   if (match.bandMin != null) {
-    return match.bandMax != null
-      ? `band ${match.bandMin}–${match.bandMax}`
-      : `band ${match.bandMin}+`;
+    const band =
+      match.bandMax != null ? `band ${match.bandMin}–${match.bandMax}` : `band ${match.bandMin}+`;
+    return `${band}${moved}`;
   }
   return "no match";
 }

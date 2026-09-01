@@ -70,3 +70,12 @@ describe("ReceiptView", () => {
     });
   });
 });
+
+describe("describeLookupMatch with adjusted keys", () => {
+  it("says when the key was moved into the band that priced it", () => {
+    expect(describeLookupMatch({ bandMin: 1000, bandMax: 5000, adjusted: true })).toBe(
+      "band 1000–5000 (key moved into band)",
+    );
+    expect(describeLookupMatch({ bandMin: 1000, bandMax: 5000 })).toBe("band 1000–5000");
+  });
+});

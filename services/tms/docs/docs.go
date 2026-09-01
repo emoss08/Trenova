@@ -41002,6 +41002,21 @@ const docTemplate = `{
                 "DimensionKindQuantity"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_ratematrix.KeyNormalization": {
+            "type": "string",
+            "enum": [
+                "None",
+                "Trim",
+                "Upper",
+                "Zip3"
+            ],
+            "x-enum-varnames": [
+                "KeyNormalizationNone",
+                "KeyNormalizationTrim",
+                "KeyNormalizationUpper",
+                "KeyNormalizationZip3"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_ratematrix.MatchMode": {
             "type": "string",
             "enum": [
@@ -41011,6 +41026,19 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "MatchModeExact",
                 "MatchModeRange"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_ratematrix.RangeOverflow": {
+            "type": "string",
+            "enum": [
+                "Error",
+                "ClampToTopBand",
+                "Nearest"
+            ],
+            "x-enum-varnames": [
+                "RangeOverflowError",
+                "RangeOverflowClampToTopBand",
+                "RangeOverflowNearest"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix": {
@@ -41150,6 +41178,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "keyNormalization": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.KeyNormalization"
+                },
                 "kind": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.DimensionKind"
                 },
@@ -41164,6 +41195,9 @@ const docTemplate = `{
                 },
                 "position": {
                     "type": "integer"
+                },
+                "rangeOverflow": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.RangeOverflow"
                 },
                 "rateMatrixId": {
                     "type": "string"
@@ -48935,6 +48969,10 @@ const docTemplate = `{
         "github_com_emoss08_trenova_pkg_formulatypes.LookupMatch": {
             "type": "object",
             "properties": {
+                "adjusted": {
+                    "description": "Adjusted says the axis's overflow policy moved the key into this band\nbecause no band covered it.",
+                    "type": "boolean"
+                },
                 "bandMax": {
                     "type": "number"
                 },

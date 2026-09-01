@@ -19,6 +19,20 @@ type rateBand struct {
 	value float64
 }
 
+// exactTable is a keyed single-axis matrix. Keys are stored already
+// normalised by the axis's mode, so a lookup normalises once and compares.
+type exactTable struct {
+	entries   map[string]float64
+	normalize ratematrix.KeyNormalization
+}
+
+// rangeTable is a banded single-axis matrix together with the axis's policy
+// for a quantity that no band covers.
+type rangeTable struct {
+	bands    []rateBand
+	overflow ratematrix.RangeOverflow
+}
+
 // twoAxisCell is one intersection of a two-axis matrix, carrying whichever
 // key or bounds each axis's match mode uses.
 type twoAxisCell struct {
@@ -37,10 +51,16 @@ type twoAxisCell struct {
 // which stays cheap because the repository only loads matrices small enough to
 // hold whole.
 type twoAxisTable struct {
-	rowMode ratematrix.MatchMode
-	colMode ratematrix.MatchMode
-	byRow   map[string][]twoAxisCell
-	cells   []twoAxisCell
+	rowMode      ratematrix.MatchMode
+	colMode      ratematrix.MatchMode
+	rowNormalize ratematrix.KeyNormalization
+	colNormalize ratematrix.KeyNormalization
+	rowOverflow  ratematrix.RangeOverflow
+	colOverflow  ratematrix.RangeOverflow
+	rowBands     []rateBand
+	colBands     []rateBand
+	byRow        map[string][]twoAxisCell
+	cells        []twoAxisCell
 }
 
 // matrixLookup answers a formula's lookup() and lookup2() calls from rate
@@ -52,8 +72,8 @@ type twoAxisTable struct {
 // twoAxisTable addressed by lookup2's row and column keys. The value comes
 // back as the same raw number a rate table entry held.
 type matrixLookup struct {
-	exact  map[string]map[string]float64
-	ranges map[string][]rateBand
+	exact  map[string]exactTable
+	ranges map[string]rangeTable
 	two    map[string]*twoAxisTable
 }
 
@@ -74,8 +94,8 @@ func NewMatrixLookup(
 	data []*repositories.RateMatrixLookupData,
 ) formulatemplatetypes.RateTableLookup {
 	lookup := &matrixLookup{
-		exact:  make(map[string]map[string]float64),
-		ranges: make(map[string][]rateBand),
+		exact:  make(map[string]exactTable),
+		ranges: make(map[string]rangeTable),
 		two:    make(map[string]*twoAxisTable),
 	}
 
@@ -108,9 +128,12 @@ func indexSingleAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupDa
 			if cell == nil {
 				continue
 			}
-			entries[cell.D0Key] = cell.Value.InexactFloat64()
+			entries[axis.KeyNormalization.Apply(cell.D0Key)] = cell.Value.InexactFloat64()
 		}
-		lookup.exact[item.Matrix.Code] = entries
+		lookup.exact[item.Matrix.Code] = exactTable{
+			entries:   entries,
+			normalize: axis.KeyNormalization,
+		}
 	case ratematrix.MatchModeRange:
 		bands := make([]rateBand, 0, len(item.Cells))
 		for _, cell := range item.Cells {
@@ -126,7 +149,10 @@ func indexSingleAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupDa
 		sort.Slice(bands, func(a, b int) bool {
 			return bands[a].min.LessThan(bands[b].min)
 		})
-		lookup.ranges[item.Matrix.Code] = bands
+		lookup.ranges[item.Matrix.Code] = rangeTable{
+			bands:    bands,
+			overflow: axis.RangeOverflow,
+		}
 	}
 }
 
@@ -148,8 +174,12 @@ func indexTwoAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupData)
 	}
 
 	table := &twoAxisTable{
-		rowMode: rowAxis.MatchMode,
-		colMode: colAxis.MatchMode,
+		rowMode:      rowAxis.MatchMode,
+		colMode:      colAxis.MatchMode,
+		rowNormalize: rowAxis.KeyNormalization,
+		colNormalize: colAxis.KeyNormalization,
+		rowOverflow:  rowAxis.RangeOverflow,
+		colOverflow:  colAxis.RangeOverflow,
 	}
 
 	cells := make([]twoAxisCell, 0, len(item.Cells))
@@ -164,14 +194,31 @@ func indexTwoAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupData)
 			continue
 		}
 		cells = append(cells, twoAxisCell{
-			rowKey: cell.D0Key,
+			rowKey: rowAxis.KeyNormalization.Apply(cell.D0Key),
 			rowMin: cell.D0Min,
 			rowMax: cell.D0Max,
-			colKey: cell.D1Key,
+			colKey: colAxis.KeyNormalization.Apply(cell.D1Key),
 			colMin: cell.D1Min,
 			colMax: cell.D1Max,
 			value:  cell.Value.InexactFloat64(),
 		})
+	}
+
+	if table.rowMode == ratematrix.MatchModeRange {
+		table.rowBands = distinctBands(
+			cells,
+			func(cell twoAxisCell) (decimal.NullDecimal, decimal.NullDecimal) {
+				return cell.rowMin, cell.rowMax
+			},
+		)
+	}
+	if table.colMode == ratematrix.MatchModeRange {
+		table.colBands = distinctBands(
+			cells,
+			func(cell twoAxisCell) (decimal.NullDecimal, decimal.NullDecimal) {
+				return cell.colMin, cell.colMax
+			},
+		)
 	}
 
 	if table.rowMode == ratematrix.MatchModeExact {
@@ -200,12 +247,16 @@ func (l *matrixLookup) Has2(table string) bool {
 }
 
 func (l *matrixLookup) Lookup(table string, key any) (float64, error) {
-	if entries, ok := l.exact[table]; ok {
-		return lookupExact(table, entries, key)
+	if t, ok := l.exact[table]; ok {
+		return lookupExact(table, t, key)
 	}
 
-	if bands, ok := l.ranges[table]; ok {
-		return lookupRange(table, bands, key)
+	if t, ok := l.ranges[table]; ok {
+		band, _, err := resolveBand(table, t, key)
+		if err != nil {
+			return 0, err
+		}
+		return band.value, nil
 	}
 
 	if _, ok := l.two[table]; ok {
@@ -230,52 +281,104 @@ func (l *matrixLookup) Lookup2(table string, rowKey, colKey any) (float64, error
 		return 0, fmt.Errorf("two-axis rate table %q not found", table)
 	}
 
-	candidates, err := t.rowCandidates(table, rowKey)
+	cell, _, err := t.match(table, rowKey, colKey)
 	if err != nil {
 		return 0, err
 	}
 
-	for i := range candidates {
-		matched, mErr := t.colMatches(table, &candidates[i], colKey)
-		if mErr != nil {
-			return 0, mErr
+	return cell.value, nil
+}
+
+// match resolves the one cell a two-axis lookup prices from, reporting
+// whether either axis's overflow policy had to move the key into a band.
+func (t *twoAxisTable) match(table string, rowKey, colKey any) (*twoAxisCell, bool, error) {
+	candidates, rowAdjusted, err := t.rowCandidates(table, rowKey)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cell, err := t.firstColumnMatch(table, candidates, colKey)
+	if err != nil {
+		return nil, false, err
+	}
+
+	colAdjusted := false
+	if cell == nil && t.colMode == ratematrix.MatchModeRange && len(candidates) > 0 {
+		numericKey, convErr := keyToDecimal(colKey)
+		if convErr != nil {
+			return nil, false, fmt.Errorf("rate table %q column key: %w", table, convErr)
 		}
-		if matched {
-			return candidates[i].value, nil
+		if band, ok := overflowBand(t.colBands, numericKey, t.colOverflow); ok {
+			cell, err = t.firstColumnMatch(table, candidates, band.min.InexactFloat64())
+			if err != nil {
+				return nil, false, err
+			}
+			colAdjusted = cell != nil
 		}
 	}
 
-	return 0, fmt.Errorf(
-		"%w: rate table %q has no cell matching row %v and column %v",
-		formulatemplatetypes.ErrRateTableMiss, table, rowKey, colKey,
-	)
+	if cell == nil {
+		return nil, false, fmt.Errorf(
+			"%w: rate table %q has no cell matching row %v and column %v",
+			formulatemplatetypes.ErrRateTableMiss, table, rowKey, colKey,
+		)
+	}
+
+	return cell, rowAdjusted || colAdjusted, nil
+}
+
+func (t *twoAxisTable) firstColumnMatch(
+	table string,
+	candidates []twoAxisCell,
+	colKey any,
+) (*twoAxisCell, error) {
+	for i := range candidates {
+		matched, err := t.colMatches(table, &candidates[i], colKey)
+		if err != nil {
+			return nil, err
+		}
+		if matched {
+			return &candidates[i], nil
+		}
+	}
+	return nil, nil //nolint:nilnil // no match is an outcome, not a failure
 }
 
 // rowCandidates narrows a two-axis lookup to the cells whose row axis matches.
 // Exact rows resolve through the per-row index; banded rows filter the flat
 // cell list half-open on the upper bound, the same way single-axis bands match.
-func (t *twoAxisTable) rowCandidates(table string, rowKey any) ([]twoAxisCell, error) {
+func (t *twoAxisTable) rowCandidates(table string, rowKey any) ([]twoAxisCell, bool, error) {
 	if t.rowMode == ratematrix.MatchModeExact {
 		matchKey, err := keyToString(rowKey)
 		if err != nil {
-			return nil, fmt.Errorf("rate table %q row key: %w", table, err)
+			return nil, false, fmt.Errorf("rate table %q row key: %w", table, err)
 		}
-		return t.byRow[matchKey], nil
+		return t.byRow[t.rowNormalize.Apply(matchKey)], false, nil
 	}
 
 	numericKey, err := keyToDecimal(rowKey)
 	if err != nil {
-		return nil, fmt.Errorf("rate table %q row key: %w", table, err)
+		return nil, false, fmt.Errorf("rate table %q row key: %w", table, err)
 	}
 
-	candidates := make([]twoAxisCell, 0, 4)
-	for _, cell := range t.cells {
-		if bandContains(cell.rowMin, cell.rowMax, numericKey) {
-			candidates = append(candidates, cell)
+	candidates := t.rowCellsContaining(numericKey)
+	if len(candidates) == 0 {
+		if band, ok := overflowBand(t.rowBands, numericKey, t.rowOverflow); ok {
+			return t.rowCellsContaining(band.min), true, nil
 		}
 	}
 
-	return candidates, nil
+	return candidates, false, nil
+}
+
+func (t *twoAxisTable) rowCellsContaining(quantity decimal.Decimal) []twoAxisCell {
+	candidates := make([]twoAxisCell, 0, 4)
+	for _, cell := range t.cells {
+		if bandContains(cell.rowMin, cell.rowMax, quantity) {
+			candidates = append(candidates, cell)
+		}
+	}
+	return candidates
 }
 
 func (t *twoAxisTable) colMatches(
@@ -288,7 +391,7 @@ func (t *twoAxisTable) colMatches(
 		if err != nil {
 			return false, fmt.Errorf("rate table %q column key: %w", table, err)
 		}
-		return cell.colKey == matchKey, nil
+		return cell.colKey == t.colNormalize.Apply(matchKey), nil
 	}
 
 	numericKey, err := keyToDecimal(colKey)
@@ -309,13 +412,14 @@ func bandContains(minimum, maximum decimal.NullDecimal, key decimal.Decimal) boo
 	return true
 }
 
-func lookupExact(table string, entries map[string]float64, key any) (float64, error) {
+func lookupExact(table string, t exactTable, key any) (float64, error) {
 	matchKey, err := keyToString(key)
 	if err != nil {
 		return 0, fmt.Errorf("rate table %q: %w", table, err)
 	}
+	matchKey = t.normalize.Apply(matchKey)
 
-	value, ok := entries[matchKey]
+	value, ok := t.entries[matchKey]
 	if !ok {
 		return 0, fmt.Errorf(
 			"%w: rate table %q has no entry for key %q",
@@ -326,20 +430,106 @@ func lookupExact(table string, entries map[string]float64, key any) (float64, er
 	return value, nil
 }
 
-func lookupRange(table string, bands []rateBand, key any) (float64, error) {
+// resolveBand finds the band that prices a quantity, falling back to the
+// axis's overflow policy when none covers it. The bool reports that fallback
+// so a receipt can say the key was moved.
+func resolveBand(table string, t rangeTable, key any) (rateBand, bool, error) {
 	numericKey, err := keyToDecimal(key)
 	if err != nil {
-		return 0, fmt.Errorf("rate table %q: %w", table, err)
+		return rateBand{}, false, fmt.Errorf("rate table %q: %w", table, err)
 	}
 
-	if band, ok := findBand(bands, numericKey); ok {
-		return band.value, nil
+	if band, ok := findBand(t.bands, numericKey); ok {
+		return band, false, nil
 	}
 
-	return 0, fmt.Errorf(
+	if band, ok := overflowBand(t.bands, numericKey, t.overflow); ok {
+		return band, true, nil
+	}
+
+	return rateBand{}, false, fmt.Errorf(
 		"%w: rate table %q has no band matching %s",
 		formulatemplatetypes.ErrRateTableMiss, table, numericKey.String(),
 	)
+}
+
+// overflowBand picks the band an out-of-range quantity prices at, if the
+// policy allows one. Bands arrive sorted by floor. A quantity that reached
+// here matched no band, so one at or past the top floor is beyond the top
+// band's ceiling.
+func overflowBand(
+	bands []rateBand,
+	key decimal.Decimal,
+	overflow ratematrix.RangeOverflow,
+) (rateBand, bool) {
+	if len(bands) == 0 {
+		return rateBand{}, false
+	}
+
+	bottom := bands[0]
+	top := bands[len(bands)-1]
+
+	switch overflow {
+	case ratematrix.RangeOverflowClampToTopBand:
+		if key.GreaterThanOrEqual(top.min) {
+			return top, true
+		}
+		return rateBand{}, false
+	case ratematrix.RangeOverflowNearest:
+		if key.LessThan(bottom.min) {
+			return bottom, true
+		}
+		if key.GreaterThanOrEqual(top.min) {
+			return top, true
+		}
+		best, bestDistance := rateBand{}, decimal.Decimal{}
+		found := false
+		for _, band := range bands {
+			distance := distanceToBand(band, key)
+			if !found || distance.LessThan(bestDistance) {
+				best, bestDistance, found = band, distance, true
+			}
+		}
+		return best, found
+	default:
+		return rateBand{}, false
+	}
+}
+
+func distanceToBand(band rateBand, key decimal.Decimal) decimal.Decimal {
+	if key.LessThan(band.min) {
+		return band.min.Sub(key)
+	}
+	if band.max.Valid && key.GreaterThanOrEqual(band.max.Decimal) {
+		return key.Sub(band.max.Decimal)
+	}
+	return decimal.Zero
+}
+
+// distinctBands lists the bands one axis of a two-axis matrix is cut into,
+// so its overflow policy can pick one the same way a single-axis table does.
+func distinctBands(
+	cells []twoAxisCell,
+	bounds func(twoAxisCell) (decimal.NullDecimal, decimal.NullDecimal),
+) []rateBand {
+	seen := make(map[string]struct{}, len(cells))
+	bands := make([]rateBand, 0, len(cells))
+	for _, cell := range cells {
+		low, high := bounds(cell)
+		if !low.Valid {
+			continue
+		}
+		label := bandLabel(low.Decimal, high)
+		if _, duplicate := seen[label]; duplicate {
+			continue
+		}
+		seen[label] = struct{}{}
+		bands = append(bands, rateBand{min: low.Decimal, max: high})
+	}
+	sort.Slice(bands, func(a, b int) bool {
+		return bands[a].min.LessThan(bands[b].min)
+	})
+	return bands
 }
 
 func keyToString(key any) (string, error) {
@@ -415,27 +605,26 @@ func bandMatch(band rateBand) formulatypes.LookupMatch {
 // ExplainLookup reports which key or band a single-axis lookup would resolve
 // to, without evaluating anything.
 func (l *matrixLookup) ExplainLookup(table string, key any) (formulatypes.LookupMatch, bool) {
-	if entries, ok := l.exact[table]; ok {
+	if t, ok := l.exact[table]; ok {
 		matchKey, err := keyToString(key)
 		if err != nil {
 			return formulatypes.LookupMatch{}, false
 		}
-		if _, found := entries[matchKey]; !found {
+		matchKey = t.normalize.Apply(matchKey)
+		if _, found := t.entries[matchKey]; !found {
 			return formulatypes.LookupMatch{}, false
 		}
 		return formulatypes.LookupMatch{MatchedKey: matchKey}, true
 	}
 
-	if bands, ok := l.ranges[table]; ok {
-		numericKey, err := keyToDecimal(key)
+	if t, ok := l.ranges[table]; ok {
+		band, adjusted, err := resolveBand(table, t, key)
 		if err != nil {
 			return formulatypes.LookupMatch{}, false
 		}
-		band, found := findBand(bands, numericKey)
-		if !found {
-			return formulatypes.LookupMatch{}, false
-		}
-		return bandMatch(band), true
+		match := bandMatch(band)
+		match.Adjusted = adjusted
+		return match, true
 	}
 
 	return formulatypes.LookupMatch{}, false
@@ -452,22 +641,12 @@ func (l *matrixLookup) ExplainLookup2(
 		return formulatypes.LookupMatch{}, false
 	}
 
-	candidates, err := t.rowCandidates(table, rowKey)
+	cell, adjusted, err := t.match(table, rowKey, colKey)
 	if err != nil {
 		return formulatypes.LookupMatch{}, false
 	}
 
-	for i := range candidates {
-		matched, mErr := t.colMatches(table, &candidates[i], colKey)
-		if mErr != nil {
-			return formulatypes.LookupMatch{}, false
-		}
-		if matched {
-			return formulatypes.LookupMatch{MatchedKey: describeCell(&candidates[i])}, true
-		}
-	}
-
-	return formulatypes.LookupMatch{}, false
+	return formulatypes.LookupMatch{MatchedKey: describeCell(cell), Adjusted: adjusted}, true
 }
 
 func describeCell(cell *twoAxisCell) string {

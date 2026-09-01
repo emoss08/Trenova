@@ -1,6 +1,11 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { rateMatrixDimensionKindChoices, rateMatrixMatchModeChoices } from "@/lib/choices";
+import {
+  rateMatrixDimensionKindChoices,
+  rateMatrixKeyNormalizationChoices,
+  rateMatrixMatchModeChoices,
+  rateMatrixRangeOverflowChoices,
+} from "@/lib/choices";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -98,6 +103,27 @@ export function DimensionEditor() {
                 />
               </FormControl>
               <FormControl cols="full">
+                {matchMode === "Range" ? (
+                  <SelectField
+                    control={control}
+                    name={`dimensions.${index}.rangeOverflow` as never}
+                    label="Outside every band"
+                    placeholder="Select overflow policy"
+                    description="What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break."
+                    options={rateMatrixRangeOverflowChoices}
+                  />
+                ) : (
+                  <SelectField
+                    control={control}
+                    name={`dimensions.${index}.keyNormalization` as never}
+                    label="Key matching"
+                    placeholder="Select key normalization"
+                    description="Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter."
+                    options={rateMatrixKeyNormalizationChoices}
+                  />
+                )}
+              </FormControl>
+              <FormControl cols="full">
                 <InputField
                   control={control}
                   name={`dimensions.${index}.label` as never}
@@ -122,6 +148,8 @@ export function DimensionEditor() {
             kind: "Zone",
             matchMode: "Exact",
             label: "",
+            keyNormalization: "None",
+            rangeOverflow: "Error",
           } as RateMatrixDimension)
         }
       >

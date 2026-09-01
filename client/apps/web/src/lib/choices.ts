@@ -2232,3 +2232,16 @@ export const rateMatrixMatchModeChoices = [
   { label: "Exact key", value: "Exact" },
   { label: "Band", value: "Range" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixKeyNormalizationChoices = [
+  { label: "As entered", value: "None" },
+  { label: "Trim whitespace", value: "Trim" },
+  { label: "Upper case", value: "Upper" },
+  { label: "ZIP3 (first three characters)", value: "Zip3" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixRangeOverflowChoices = [
+  { label: "No match (strict)", value: "Error" },
+  { label: "Clamp to top band", value: "ClampToTopBand" },
+  { label: "Nearest band", value: "Nearest" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;

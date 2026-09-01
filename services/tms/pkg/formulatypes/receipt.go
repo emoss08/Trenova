@@ -36,6 +36,9 @@ type LookupMatch struct {
 	MatchedKey string           `json:"matchedKey,omitempty"`
 	BandMin    *decimal.Decimal `json:"bandMin,omitempty"`
 	BandMax    *decimal.Decimal `json:"bandMax,omitempty"`
+	// Adjusted says the axis's overflow policy moved the key into this band
+	// because no band covered it.
+	Adjusted bool `json:"adjusted,omitempty"`
 }
 
 type LookupTrace struct {
