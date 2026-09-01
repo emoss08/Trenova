@@ -290,6 +290,7 @@ export function VersionHistoryPanel({
             }
           }}
           templateId={template.id ?? ""}
+          templateStatus={template.status}
           currentVersion={template.currentVersionNumber ?? 0}
           targetVersion={pendingRollbackVersion.versionNumber}
           usageData={usageData ?? null}

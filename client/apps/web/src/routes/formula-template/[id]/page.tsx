@@ -1,7 +1,18 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { saveDemotesToDraft } from "@/lib/formula-template-material";
 import { queries } from "@/lib/queries";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -111,6 +122,9 @@ export function FormulaStudioEditPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [seatedVersion, setSeatedVersion] = useState<number | null>(null);
+  const [pendingDemotingSave, setPendingDemotingSave] = useState<FormulaTemplateFormValues | null>(
+    null,
+  );
 
   const {
     data: template,
@@ -151,7 +165,14 @@ export function FormulaStudioEditPage() {
       return api.put<FormulaTemplate>(`/formula-templates/${id}/`, values);
     },
     onSuccess: async (updated) => {
-      toast.success("Formula template saved");
+      if (template && updated.status !== template.status && updated.status === "Draft") {
+        toast.success("Formula template saved as a draft", {
+          description:
+            "The change returned it to Draft. Shipments cannot be rated with it until it is approved again.",
+        });
+      } else {
+        toast.success("Formula template saved");
+      }
       // Reseat the form on the saved record right away so the dirty flag —
       // and with it the unsaved-changes guard — clears without waiting for
       // the query refetch.
@@ -167,8 +188,21 @@ export function FormulaStudioEditPage() {
 
   const onSave = form.handleSubmit((values) => {
     if (!isSeated) return;
+    // A material edit to an approved template takes it out of production the
+    // moment it is saved; that is worth a pause, not a toast after the fact.
+    if (saveDemotesToDraft(template ?? null, values)) {
+      setPendingDemotingSave(values);
+      return;
+    }
     mutate(values);
   });
+
+  const confirmDemotingSave = () => {
+    if (pendingDemotingSave) {
+      mutate(pendingDemotingSave);
+    }
+    setPendingDemotingSave(null);
+  };
 
   if (isError) {
     return (
@@ -190,6 +224,8 @@ export function FormulaStudioEditPage() {
     return <StudioSkeleton />;
   }
 
+  const inReview = template?.status === "InReview";
+
   return (
     <FormProvider {...form}>
       <FormulaStudio
@@ -198,6 +234,34 @@ export function FormulaStudioEditPage() {
         isSubmitting={form.formState.isSubmitting}
         onSave={() => void onSave()}
       />
+
+      <AlertDialog
+        open={pendingDemotingSave !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDemotingSave(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold">
+              {inReview ? "Cancel the review and save?" : "Take this template out of production?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {inReview
+                ? "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again."
+                : "This changes what the template computes, so it returns to Draft and stops rating shipments until it is approved again. Name and description edits do not do this."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel variant="outline" size="default">
+              Keep editing
+            </AlertDialogCancel>
+            <AlertDialogAction variant="destructive" size="default" onClick={confirmDemotingSave}>
+              Save and return to Draft
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </FormProvider>
   );
 }

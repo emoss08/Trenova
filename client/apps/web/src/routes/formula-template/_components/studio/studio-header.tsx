@@ -48,7 +48,26 @@ const USAGE_LABELS: Record<string, string> = {
   rate_agreement_accessorial: "rate agreement accessorials",
 };
 
-function UsageChip({ templateId }: { templateId: string }) {
+function usageConsequence(status: FormulaTemplate["status"] | undefined): string {
+  switch (status) {
+    case "Active":
+      return "Editing the formula returns it to Draft, and shipments cannot be rated with a draft until it is approved again. Name and description edits are safe.";
+    case "InReview":
+      return "A material edit cancels the review and returns it to Draft.";
+    case "Inactive":
+      return "These stopped rating with it when it was archived; reactivate it through review.";
+    default:
+      return "These will rate with the new content once it is approved.";
+  }
+}
+
+function UsageChip({
+  templateId,
+  status,
+}: {
+  templateId: string;
+  status: FormulaTemplate["status"] | undefined;
+}) {
   const { data } = useQuery({
     ...queries.formulaTemplate.usage(templateId),
     staleTime: 60_000,
@@ -82,9 +101,7 @@ function UsageChip({ templateId }: { templateId: string }) {
                 <span className="font-mono font-medium">{usage.count}</span>
               </div>
             ))}
-            <p className="text-muted-foreground text-2xs pt-1">
-              Changes take effect the next time these are rated.
-            </p>
+            <p className="text-muted-foreground text-2xs pt-1">{usageConsequence(status)}</p>
           </div>
         )}
       </HoverCardContent>
@@ -206,7 +223,9 @@ export function StudioHeader({
             )}
           </div>
         </div>
-        {mode === "edit" && template?.id && <UsageChip templateId={template.id} />}
+        {mode === "edit" && template?.id && (
+          <UsageChip templateId={template.id} status={template.status} />
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">

@@ -210,13 +210,13 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.4 Say what saving will do
 
-- [ ] Saving a material change to an Active or InReview template shows a confirm
+- [x] Saving a material change to an Active or InReview template shows a confirm
       dialog: "This will return the template to Draft and stop it rating shipments
       until re-approved" (`[id]/page.tsx`)
-- [ ] Usage chip copy is state-aware; the rollback dialog copy says the template
+- [x] Usage chip copy is state-aware; the rollback dialog copy says the template
       returns to Draft on material change (`studio/studio-header.tsx`,
       `version/rollback-confirm-dialog.tsx`)
-- [ ] Save toast reports the resulting status when it changed
+- [x] Save toast reports the resulting status when it changed
 
 ### 2.5 Schema-driven test data
 

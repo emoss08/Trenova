@@ -20,7 +20,11 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { FieldChange, TemplateUsageResponse } from "@trenova/shared/types/formula-template";
+import type {
+  FormulaTemplate,
+  FieldChange,
+  TemplateUsageResponse,
+} from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
@@ -32,6 +36,7 @@ type RollbackConfirmDialogProps = {
   currentVersion: number;
   targetVersion: number;
   usageData?: TemplateUsageResponse | null;
+  templateStatus?: FormulaTemplate["status"];
   onConfirm: () => void;
   isLoading: boolean;
 };
@@ -173,6 +178,7 @@ export function RollbackConfirmDialog({
   currentVersion,
   targetVersion,
   usageData,
+  templateStatus,
   onConfirm,
   isLoading,
 }: RollbackConfirmDialogProps) {
@@ -224,7 +230,10 @@ export function RollbackConfirmDialog({
                           {u.count} {formatUsageType(u.type)}
                         </span>
                       ))}
-                      . Rolling back may affect active calculations.
+                      .{" "}
+                      {templateStatus === "Active" || templateStatus === "InReview"
+                        ? "Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again."
+                        : "Rolling back changes the content the next approval will review."}
                     </span>
                   </div>
                 )}
