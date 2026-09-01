@@ -8,6 +8,7 @@ import {
   FUNCTION_CATEGORY_LABELS,
   categoryLabel,
 } from "@/components/formula-editor/schema-labels";
+import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
 import { useFormulaSchema } from "@/hooks/use-formula-schema";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -193,9 +194,11 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
         <div className="relative">
           <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
           <Input
+            id="formula-reference-search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search variables and functions..."
+            placeholder={`Search variables and functions (${shortcutHint("search")})`}
+            aria-label="Search variables and functions"
             className="h-7 pl-7 text-xs"
           />
         </div>

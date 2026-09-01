@@ -86,7 +86,6 @@ export function StudioEditorPane({
 
   const expression = useWatch({ control, name: "expression" });
   const schemaId = useWatch({ control, name: "schemaId" });
-  const status = useWatch({ control, name: "status" });
 
   return (
     <ScrollArea className="h-full">
@@ -167,11 +166,6 @@ export function StudioEditorPane({
             description="The formula that computes the charge"
           />
           <div className="flex items-center gap-1.5">
-            {mode === "edit" && status && (
-              <Badge variant="outline" className="text-2xs">
-                {status}
-              </Badge>
-            )}
             <Button
               type="button"
               variant="outline"

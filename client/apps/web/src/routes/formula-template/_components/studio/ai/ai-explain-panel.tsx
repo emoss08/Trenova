@@ -58,6 +58,7 @@ export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
         <div className="bg-muted/40 relative rounded-md border p-3">
           <button
             type="button"
+            aria-label="Dismiss explanation"
             onClick={() => {
               setDismissed(true);
               reset();

@@ -108,10 +108,14 @@ export function BreakdownDefinitionEditor({
                   className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors"
                 >
                   <div className="col-span-3">
-                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+                    <label
+                      htmlFor={`breakdown-${index}-name`}
+                      className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                    >
                       Name
                     </label>
                     <Input
+                      id={`breakdown-${index}-name`}
                       {...register(`breakdownDefinitions.${index}.name`)}
                       placeholder="fuelSurcharge"
                       className="h-8 font-mono text-sm"
@@ -120,10 +124,14 @@ export function BreakdownDefinitionEditor({
                   </div>
 
                   <div className="col-span-3">
-                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+                    <label
+                      htmlFor={`breakdown-${index}-label`}
+                      className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                    >
                       Label
                     </label>
                     <Input
+                      id={`breakdown-${index}-label`}
                       {...register(`breakdownDefinitions.${index}.label`)}
                       placeholder="Fuel Surcharge"
                       className="h-8 text-sm"
@@ -132,9 +140,9 @@ export function BreakdownDefinitionEditor({
                   </div>
 
                   <div className="col-span-5">
-                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+                    <span className="text-muted-foreground mb-1.5 block text-xs font-medium">
                       Expression
-                    </label>
+                    </span>
                     <ExpressionEditor
                       name={`breakdownDefinitions.${index}.expression`}
                       control={control as never}
@@ -149,8 +157,9 @@ export function BreakdownDefinitionEditor({
                       type="button"
                       variant="ghost"
                       size="sm"
+                      aria-label="Remove breakdown item"
                       onClick={() => remove(index)}
-                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </Button>

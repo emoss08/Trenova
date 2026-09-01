@@ -1,4 +1,5 @@
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   Sheet,
   SheetContent,
@@ -23,10 +24,23 @@ type BacktestSheetProps = {
   template: FormulaTemplate | null;
 };
 
+function BacktestSheetSkeleton() {
+  return (
+    <div className="space-y-3" aria-busy>
+      <Skeleton className="h-9 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-8 w-40" />
+    </div>
+  );
+}
+
 export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-[620px] flex-col gap-0 sm:max-w-[620px]">
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 sm:w-[620px] sm:max-w-[620px]"
+      >
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
             <HistoryIcon className="size-4" />
@@ -39,7 +53,7 @@ export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSh
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">
           <div className="p-4">
-            <Suspense fallback={null}>
+            <Suspense fallback={<BacktestSheetSkeleton />}>
               <FormulaTemplateBacktestTab form={form} template={template} />
             </Suspense>
           </div>

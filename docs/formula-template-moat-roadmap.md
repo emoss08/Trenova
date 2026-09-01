@@ -257,17 +257,18 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.8 Keyboard, layout, accessibility
 
-- [ ] Shortcuts: `Ctrl/Cmd+S` save, `Ctrl/Cmd+Enter` run preview, `Ctrl/Cmd+K`
+- [x] Shortcuts: `Ctrl/Cmd+S` save, `Ctrl/Cmd+Enter` run preview, `Ctrl/Cmd+K`
       focus reference search, `Ctrl/Cmd+1/2` toggle Preview/Scenarios; shortcut
       hints in tooltips
-- [ ] Below ~1100px the right column stacks under the editor as tabs instead of
+- [x] Below ~1100px the right column stacks under the editor as tabs instead of
       nested resizable panes; sheets use `max-w` not fixed widths
-- [ ] Hover-only delete buttons get `focus-visible:opacity-100`; icon buttons get
+- [x] Hover-only delete buttons get `focus-visible:opacity-100`; icon buttons get
       `aria-label`; labels get `htmlFor`; clickable `div`s in lineage/version
       history become buttons
-- [ ] Terminology pass: "Scenarios" everywhere in the UI (API keeps `testCases`),
-      "Sample data" as the single term for preview inputs, status shown once,
-      reference categories match the schema's category ids
+- [x] Terminology pass: "Scenarios" everywhere in the UI (API keeps `testCases`),
+      "Sample Data" as the single term for preview inputs, status shown once,
+      reference and sample-data categories share one label map keyed by the
+      schema's category ids
 
 ### 2.9 List page carries decision info
 

@@ -480,7 +480,16 @@ function VersionItem({
           isSelectedForCompare && "ring-primary ring-2 ring-offset-2",
           canCompareWith && "hover:border-primary/50 cursor-pointer",
         )}
+        role={canCompareWith ? "button" : undefined}
+        tabIndex={canCompareWith ? 0 : undefined}
         onClick={canCompareWith ? onCompareWith : undefined}
+        onKeyDown={(event) => {
+          if (!canCompareWith) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onCompareWith?.();
+          }
+        }}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

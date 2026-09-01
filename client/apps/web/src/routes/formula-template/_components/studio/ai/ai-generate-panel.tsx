@@ -80,7 +80,10 @@ export function AiGeneratePanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-[480px] flex-col gap-0 sm:max-w-[480px]">
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 sm:w-[480px] sm:max-w-[480px]"
+      >
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
             <WandSparklesIcon className="size-4" />

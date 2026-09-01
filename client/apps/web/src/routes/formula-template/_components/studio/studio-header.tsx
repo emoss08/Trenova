@@ -1,4 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
+import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { queries } from "@/lib/queries";
 import { formulaTemplateStatusChoices } from "@/lib/choices";
@@ -194,6 +195,7 @@ export function StudioHeader({
           type="button"
           variant="ghost"
           size="icon-sm"
+          aria-label="Back to formula templates"
           onClick={() => void navigate(formulaTemplateRoutes.list)}
         >
           <ArrowLeftIcon className="size-4" />
@@ -293,7 +295,7 @@ export function StudioHeader({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button type="button" variant="ghost" size="icon-sm">
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="More actions">
                   <MoreVerticalIcon className="size-4" />
                 </Button>
               }
@@ -342,16 +344,27 @@ export function StudioHeader({
           </DropdownMenu>
         )}
 
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSave}
-          isLoading={isSubmitting}
-          loadingText="Saving..."
-          disabled={mode === "edit" && !isDirty}
-        >
-          {mode === "create" ? "Create Template" : "Save Changes"}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={onSave}
+                  isLoading={isSubmitting}
+                  loadingText="Saving..."
+                  disabled={mode === "edit" && !isDirty}
+                >
+                  {mode === "create" ? "Create Template" : "Save Changes"}
+                </Button>
+              </span>
+            }
+          />
+          <TooltipContent>
+            {mode === "edit" && !isDirty ? "No unsaved changes" : shortcutHint("save")}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

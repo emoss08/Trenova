@@ -8,6 +8,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
+import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
 import { flattenResolvedVariables } from "@/components/formula-editor/resolved-variables";
 import type {
   ExpressionWarning,
@@ -301,6 +302,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                   type="button"
                   variant="outline"
                   size="icon-xs"
+                  aria-label="Run preview now"
                   onClick={runNow}
                   disabled={useRealShipment && !shipmentId}
                 >
@@ -308,7 +310,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 </Button>
               }
             />
-            <TooltipContent>Run now</TooltipContent>
+            <TooltipContent>Run now ({shortcutHint("run")})</TooltipContent>
           </Tooltip>
         </div>
       </div>

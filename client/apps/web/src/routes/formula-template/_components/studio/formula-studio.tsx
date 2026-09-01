@@ -2,6 +2,8 @@ import {
   ActiveEditorProvider,
   useActiveEditorInsert,
 } from "@/components/formula-editor/active-editor";
+import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
 import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
@@ -22,7 +24,7 @@ import type {
   FormulaTemplateFormValues,
   VariableDefinition,
 } from "@trenova/shared/types/formula-template";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -43,6 +45,14 @@ import { useLivePreview } from "./use-live-preview";
 import { useLiveScenarios } from "./use-live-scenarios";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
+
+const REFERENCE_SEARCH_ID = "formula-reference-search";
+
+const TAB_LABELS = {
+  preview: "Live Preview",
+  scenarios: "Scenarios",
+  reference: "Reference",
+} as const;
 
 type FormulaStudioProps = {
   mode: "create" | "edit";
@@ -78,7 +88,8 @@ function FormulaStudioBody({
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [backtestOpen, setBacktestOpen] = useState(false);
   const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
-  const [rightTab, setRightTab] = useState<"preview" | "scenarios">("preview");
+  const [rightTab, setRightTab] = useState<"preview" | "scenarios" | "reference">("preview");
+  const isNarrow = useMediaQuery("(max-width: 1100px)");
 
   const templateName = useWatch({ control: form.control, name: "name" });
   const schemaId = useWatch({ control: form.control, name: "schemaId" });
@@ -108,6 +119,22 @@ function FormulaStudioBody({
   );
 
   const insertIntoActiveEditor = useActiveEditorInsert();
+
+  const isDirty = form.formState.isDirty;
+  const shortcutHandlers = useMemo(
+    () => ({
+      save: () => {
+        if (isSubmitting) return;
+        if (mode === "create" || isDirty) onSave();
+      },
+      run: preview.runNow,
+      search: () => document.getElementById(REFERENCE_SEARCH_ID)?.focus(),
+      preview: () => setRightTab("preview"),
+      scenarios: () => setRightTab("scenarios"),
+    }),
+    [isSubmitting, isDirty, mode, onSave, preview.runNow],
+  );
+  useStudioShortcuts(shortcutHandlers);
   const handleInsert = useCallback(
     (text: string, cursorOffset?: number) => {
       insertIntoActiveEditor(text, cursorOffset);
@@ -150,6 +177,43 @@ function FormulaStudioBody({
     }
   }, [template]);
 
+  const previewPane = (
+    <StudioPreviewPane preview={preview} onPinScenario={template ? handlePinScenario : undefined} />
+  );
+  const scenariosPane = (
+    <StudioScenariosPane
+      templateId={template?.id ?? null}
+      preview={preview}
+      live={liveScenarios}
+      pinDraft={pinDraft}
+      onPinConsumed={() => setPinDraft(null)}
+    />
+  );
+  const referencePane = (
+    <StudioReferencePane known={known} schemaId={schemaId || "shipment"} onInsert={handleInsert} />
+  );
+  const rightPane =
+    rightTab === "preview" ? previewPane : rightTab === "scenarios" ? scenariosPane : referencePane;
+
+  const tabStrip = (tabs: Array<typeof rightTab>) => (
+    <div className="flex gap-1 border-b px-2 pt-1.5 pb-1" role="tablist">
+      {tabs.map((tab) => (
+        <Button
+          key={tab}
+          type="button"
+          role="tab"
+          aria-selected={rightTab === tab}
+          variant={rightTab === tab ? "secondary" : "ghost"}
+          size="xs"
+          onClick={() => setRightTab(tab)}
+          className={cn("h-6 text-xs capitalize", rightTab !== tab && "text-muted-foreground")}
+        >
+          {TAB_LABELS[tab]}
+        </Button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <UnsavedChangesGuard when={form.formState.isDirty} />
@@ -170,66 +234,53 @@ function FormulaStudioBody({
         onBacktest={() => setBacktestOpen(true)}
       />
 
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
-        <ResizablePanel defaultSize={55} minSize={40}>
-          <StudioEditorPane
-            mode={mode}
-            known={known}
-            editorRef={editorRef}
-            onOpenAiGenerate={() => setAiGenerateOpen(true)}
-          />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={45} minSize={28}>
-          <ResizablePanelGroup orientation="vertical">
-            <ResizablePanel defaultSize={55} minSize={30}>
-              <div className="flex h-full flex-col">
-                <div className="flex gap-1 border-b px-2 pt-1.5 pb-1">
-                  {(["preview", "scenarios"] as const).map((tab) => (
-                    <Button
-                      key={tab}
-                      type="button"
-                      variant={rightTab === tab ? "secondary" : "ghost"}
-                      size="xs"
-                      onClick={() => setRightTab(tab)}
-                      className={cn(
-                        "h-6 text-xs capitalize",
-                        rightTab !== tab && "text-muted-foreground",
-                      )}
-                    >
-                      {tab === "preview" ? "Live Preview" : "Scenarios"}
-                    </Button>
-                  ))}
+      {isNarrow ? (
+        <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
+          <ResizablePanel defaultSize={60} minSize={30}>
+            <StudioEditorPane
+              mode={mode}
+              known={known}
+              editorRef={editorRef}
+              onOpenAiGenerate={() => setAiGenerateOpen(true)}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={40} minSize={20}>
+            <div className="flex h-full flex-col">
+              {tabStrip(["preview", "scenarios", "reference"])}
+              <div className="min-h-0 flex-1">{rightPane}</div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
+          <ResizablePanel defaultSize={55} minSize={40}>
+            <StudioEditorPane
+              mode={mode}
+              known={known}
+              editorRef={editorRef}
+              onOpenAiGenerate={() => setAiGenerateOpen(true)}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={45} minSize={28}>
+            <ResizablePanelGroup orientation="vertical">
+              <ResizablePanel defaultSize={55} minSize={30}>
+                <div className="flex h-full flex-col">
+                  {tabStrip(["preview", "scenarios"])}
+                  <div className="min-h-0 flex-1">
+                    {rightTab === "reference" ? previewPane : rightPane}
+                  </div>
                 </div>
-                <div className="min-h-0 flex-1">
-                  {rightTab === "preview" ? (
-                    <StudioPreviewPane
-                      preview={preview}
-                      onPinScenario={template ? handlePinScenario : undefined}
-                    />
-                  ) : (
-                    <StudioScenariosPane
-                      templateId={template?.id ?? null}
-                      preview={preview}
-                      live={liveScenarios}
-                      pinDraft={pinDraft}
-                      onPinConsumed={() => setPinDraft(null)}
-                    />
-                  )}
-                </div>
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={45} minSize={20}>
-              <StudioReferencePane
-                known={known}
-                schemaId={schemaId || "shipment"}
-                onInsert={handleInsert}
-              />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={45} minSize={20}>
+                {referencePane}
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
 
       {approvalAction && (
         <ApprovalActionDialog
