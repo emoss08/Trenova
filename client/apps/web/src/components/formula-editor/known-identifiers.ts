@@ -12,6 +12,7 @@ export type VariableDoc = {
   category: string;
   nullable?: boolean;
   custom?: boolean;
+  enum?: string[] | null;
 };
 
 export type FunctionDoc = {
@@ -138,6 +139,7 @@ export function buildKnownIdentifiers(
     description: variable.description ?? "",
     category: variable.category ?? "",
     nullable: variable.nullable ?? false,
+    enum: variable.enum ?? null,
   }));
 
   for (const custom of customVariables) {

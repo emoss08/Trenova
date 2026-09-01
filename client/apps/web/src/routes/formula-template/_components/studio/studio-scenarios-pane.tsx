@@ -18,6 +18,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type {
+  FormulaTemplateFormValues,
   FormulaTestCase,
   FormulaTestCaseInput,
   TestCaseResult,
@@ -33,6 +34,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { ScenarioDialog, type ScenarioPrefill } from "./scenario-dialog";
 import type { LivePreviewState } from "./use-live-preview";
@@ -137,6 +139,9 @@ export function StudioScenariosPane({
 }: StudioScenariosPaneProps) {
   const queryClient = useQueryClient();
   const { scenarios, isLoading, results, isPending, isStale, runNow } = live;
+  const { control } = useFormContext<FormulaTemplateFormValues>();
+  const schemaId = useWatch({ control, name: "schemaId" }) || "shipment";
+  const customVariables = useWatch({ control, name: "variableDefinitions" }) ?? [];
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<FormulaTestCase | null>(null);
@@ -319,6 +324,8 @@ export function StudioScenariosPane({
         editing={editing}
         prefill={editing ? null : pinDraft}
         currentSample={currentSample}
+        schemaId={schemaId}
+        customVariables={customVariables}
         isSaving={saveMutation.isPending}
         onSave={(input) => saveMutation.mutate(input)}
       />

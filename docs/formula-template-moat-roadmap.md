@@ -220,14 +220,14 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.5 Schema-driven test data
 
-- [ ] `TestDataEditor` iterates the fetched schema (`useFormulaSchema`) instead of
+- [x] `TestDataEditor` iterates the fetched schema (`useFormulaSchema`) instead of
       the hardcoded fallback list; custom variables get their own section; enum
       fields render as selects (`components/formula-editor/test-data-editor.tsx`)
-- [ ] Scenario dialog validates through `formulaTestCaseInputSchema` (name ≤ 100,
+- [x] Scenario dialog validates through `formulaTestCaseInputSchema` (name ≤ 100,
       etc.) instead of hand-rolled checks (`studio/scenario-dialog.tsx`)
-- [ ] Custom-variable default coercion re-runs when the declared type changes
+- [x] Custom-variable default coercion re-runs when the declared type changes
       (`components/formula-editor/variable-definition-editor.tsx`)
-- [ ] Duplicate custom-variable and breakdown names (against each other and the
+- [x] Duplicate custom-variable and breakdown names (against each other and the
       schema) produce field errors
 
 ### 2.6 Editor correctness and performance

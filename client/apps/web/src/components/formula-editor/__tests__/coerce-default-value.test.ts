@@ -32,3 +32,14 @@ describe("coerceVariableDefaultValue", () => {
     expect(coerceVariableDefaultValue("Boolean", true)).toBe(true);
   });
 });
+
+describe("coerceVariableDefaultValue across type changes", () => {
+  it("turns a stored number into text when the type becomes String", () => {
+    expect(coerceVariableDefaultValue("String", 5)).toBe("5");
+  });
+
+  it("keeps a number a number and a boolean a boolean", () => {
+    expect(coerceVariableDefaultValue("Number", 5)).toBe(5);
+    expect(coerceVariableDefaultValue("Boolean", true)).toBe(true);
+  });
+});

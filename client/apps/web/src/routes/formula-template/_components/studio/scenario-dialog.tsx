@@ -12,7 +12,12 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { FormulaTestCase, FormulaTestCaseInput } from "@trenova/shared/types/formula-template";
+import {
+  formulaTestCaseInputSchema,
+  type FormulaTestCase,
+  type FormulaTestCaseInput,
+  type VariableDefinitionInput,
+} from "@trenova/shared/types/formula-template";
 import { FlaskConicalIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -60,6 +65,8 @@ type ScenarioDialogProps = {
   /** When creating, start from these inputs and this expected result. */
   prefill?: ScenarioPrefill | null;
   currentSample?: ScenarioPrefill;
+  schemaId?: string;
+  customVariables?: VariableDefinitionInput[];
   isSaving: boolean;
   onSave: (input: FormulaTestCaseInput) => void;
 };
@@ -70,6 +77,8 @@ export function ScenarioDialog({
   editing,
   prefill = null,
   currentSample,
+  schemaId = "shipment",
+  customVariables = [],
   isSaving,
   onSave,
 }: ScenarioDialogProps) {
@@ -94,29 +103,35 @@ export function ScenarioDialog({
   };
 
   const handleSave = () => {
-    const expectedAmount = Number(draft.expectedAmount);
-    const tolerance = Number(draft.tolerance || "0.01");
-
-    if (!draft.name.trim()) {
-      setError("A scenario name is required");
-      return;
-    }
-    if (draft.expectedAmount === "" || Number.isNaN(expectedAmount) || expectedAmount < 0) {
-      setError("Expected amount must be a non-negative number");
-      return;
-    }
-    if (Number.isNaN(tolerance) || tolerance < 0) {
-      setError("Tolerance must be a non-negative number");
-      return;
-    }
-
-    onSave({
+    // The same schema the service parses; a scenario the dialog accepts is one
+    // the server accepts, name length and all.
+    const parsed = formulaTestCaseInputSchema.safeParse({
       name: draft.name.trim(),
       description: draft.description,
       variables: draft.variables,
-      expectedAmount,
-      tolerance,
+      expectedAmount: draft.expectedAmount === "" ? Number.NaN : draft.expectedAmount,
+      tolerance: draft.tolerance === "" ? 0.01 : draft.tolerance,
     });
+
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      const field = first?.path[0];
+      const label =
+        field === "expectedAmount"
+          ? "Expected charge"
+          : field === "tolerance"
+            ? "Tolerance"
+            : field === "name"
+              ? "Name"
+              : "Scenario";
+      const message = first?.message?.includes("NaN")
+        ? "must be a number"
+        : (first?.message ?? "is invalid");
+      setError(`${label}: ${message}`);
+      return;
+    }
+
+    onSave(parsed.data);
   };
 
   return (
@@ -216,6 +231,8 @@ export function ScenarioDialog({
               <TestDataEditor
                 values={draft.variables}
                 onChange={(variables) => setDraft((prev) => ({ ...prev, variables }))}
+                schemaId={schemaId}
+                customVariables={customVariables}
               />
             </div>
 

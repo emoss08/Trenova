@@ -3,6 +3,11 @@ import type {
   KnownIdentifiers,
   VariableDoc,
 } from "@/components/formula-editor/known-identifiers";
+import {
+  CATEGORY_LABELS,
+  FUNCTION_CATEGORY_LABELS,
+  categoryLabel,
+} from "@/components/formula-editor/schema-labels";
 import { useFormulaSchema } from "@/hooks/use-formula-schema";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -17,35 +22,11 @@ import { cn } from "@trenova/shared/lib/utils";
 import { BookOpenIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  shipment: "Shipment Fields",
-  customer: "Customer",
-  tractorType: "Tractor Equipment",
-  trailerType: "Trailer Equipment",
-  equipment: "Equipment",
-  origin: "Origin",
-  destination: "Destination",
-  computed: "Computed Rollups",
-  custom: "Custom Variables",
-};
-
-const FUNCTION_CATEGORY_LABELS: Record<string, string> = {
-  math: "Math",
-  rounding: "Rounding",
-  aggregate: "Aggregates",
-  conditional: "Conditionals",
-  rateTable: "Rate Tables",
-};
-
 type StudioReferencePaneProps = {
   known: KnownIdentifiers;
   schemaId: string;
   onInsert: (text: string, cursorOffset?: number) => void;
 };
-
-function categoryLabel(category: string, labels: Record<string, string>): string {
-  return labels[category] ?? (category ? category : "Other");
-}
 
 function groupBy<T>(items: T[], key: (item: T) => string): [string, T[]][] {
   const groups = new Map<string, T[]>();

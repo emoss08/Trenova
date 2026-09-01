@@ -31,7 +31,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { useFormContext, type Path } from "react-hook-form";
+import { useFormContext, useWatch, type Path } from "react-hook-form";
 import type { LivePreviewState } from "./use-live-preview";
 
 function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
@@ -227,6 +227,9 @@ type StudioPreviewPaneProps = {
 };
 
 export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneProps) {
+  const { control } = useFormContext<FormulaTemplateFormValues>();
+  const schemaId = useWatch({ control, name: "schemaId" }) || "shipment";
+  const customVariables = useWatch({ control, name: "variableDefinitions" }) ?? [];
   const {
     result,
     isPending,
@@ -326,7 +329,14 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
             </div>
           )}
 
-          {!useRealShipment && <TestDataEditor values={testValues} onChange={setTestValues} />}
+          {!useRealShipment && (
+            <TestDataEditor
+              values={testValues}
+              onChange={setTestValues}
+              schemaId={schemaId}
+              customVariables={customVariables}
+            />
+          )}
 
           {requestError && (
             <div

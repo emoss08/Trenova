@@ -98,6 +98,38 @@ export const formulaTemplateSchema = z
     updatedAt: z.number().optional(),
   })
   .superRefine((value, ctx) => {
+    const seenVariables = new Map<string, number>();
+    value.variableDefinitions.forEach((definition, index) => {
+      const name = definition.name.trim();
+      if (!name) return;
+      const first = seenVariables.get(name);
+      if (first !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Duplicate variable name; first declared as variable ${first + 1}`,
+          path: ["variableDefinitions", index, "name"],
+        });
+      } else {
+        seenVariables.set(name, index);
+      }
+    });
+
+    const seenBreakdowns = new Map<string, number>();
+    value.breakdownDefinitions.forEach((definition, index) => {
+      const name = definition.name.trim();
+      if (!name) return;
+      const first = seenBreakdowns.get(name);
+      if (first !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Duplicate breakdown name; first used by item ${first + 1}`,
+          path: ["breakdownDefinitions", index, "name"],
+        });
+      } else {
+        seenBreakdowns.set(name, index);
+      }
+    });
+
     if (value.minCharge != null && value.minCharge < 0) {
       ctx.addIssue({
         code: "custom",
