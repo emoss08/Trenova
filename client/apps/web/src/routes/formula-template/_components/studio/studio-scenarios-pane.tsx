@@ -146,6 +146,8 @@ export function StudioScenariosPane({ templateId, preview }: StudioScenariosPane
       breakdownDefinitions: values.breakdownDefinitions,
       minCharge: values.minCharge ?? null,
       maxCharge: values.maxCharge ?? null,
+      roundingMode: values.roundingMode,
+      roundingPrecision: values.roundingPrecision,
     };
   }, [getValues]);
 

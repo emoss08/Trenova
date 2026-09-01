@@ -3370,6 +3370,10 @@ components:
                     type: string
                 reviewComment:
                     type: string
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
                 schemaId:
                     type: string
                 sourceTemplate:
@@ -3438,6 +3442,10 @@ components:
                     type: string
                 organizationId:
                     type: string
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
                 schemaId:
                     type: string
                 status:
@@ -11323,6 +11331,10 @@ components:
                     $ref: '#/components/schemas/decimal.NullDecimal'
                 name:
                     type: string
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
                 schemaId:
                     type: string
                 sourceTemplateId:
@@ -11405,6 +11417,10 @@ components:
                     $ref: '#/components/schemas/decimal.NullDecimal'
                 minCharge:
                     $ref: '#/components/schemas/decimal.NullDecimal'
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
                 variableDefinitions:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
@@ -11459,6 +11475,8 @@ components:
                     additionalProperties: {}
                     type: object
                 result: {}
+                rounding:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult'
                 valid:
                     type: boolean
             type: object
@@ -11738,6 +11756,17 @@ components:
                 minCharge:
                     type: number
                 rawAmount:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult:
+            properties:
+                applied:
+                    type: boolean
+                mode:
+                    type: string
+                precision:
+                    type: integer
+                unroundedAmount:
                     type: number
             type: object
         github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaDescription:
@@ -13311,6 +13340,13 @@ components:
                     type: string
                 minCharge:
                     type: string
+                roundingMode:
+                    description: |-
+                        RoundingMode and RoundingPrecision are the charge policy under test;
+                        omitted means the default the template would store.
+                    type: string
+                roundingPrecision:
+                    type: integer
                 schemaId:
                     type: string
                 shipmentId:

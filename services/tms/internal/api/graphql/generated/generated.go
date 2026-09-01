@@ -82,6 +82,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/postgis"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -3072,6 +3073,8 @@ type ComplexityRoot struct {
 		Organization         func(childComplexity int) int
 		OrganizationID       func(childComplexity int) int
 		ReviewComment        func(childComplexity int) int
+		RoundingMode         func(childComplexity int) int
+		RoundingPrecision    func(childComplexity int) int
 		SchemaID             func(childComplexity int) int
 		SourceTemplateID     func(childComplexity int) int
 		SourceVersionNumber  func(childComplexity int) int
@@ -21542,6 +21545,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.ReviewComment(childComplexity), true
+	case "FormulaTemplate.roundingMode":
+		if e.ComplexityRoot.FormulaTemplate.RoundingMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.RoundingMode(childComplexity), true
+	case "FormulaTemplate.roundingPrecision":
+		if e.ComplexityRoot.FormulaTemplate.RoundingPrecision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.RoundingPrecision(childComplexity), true
 	case "FormulaTemplate.schemaId":
 		if e.ComplexityRoot.FormulaTemplate.SchemaID == nil {
 			break
@@ -49585,6 +49600,15 @@ enum FormulaTemplateType {
   AccessorialCharge
 }
 
+"How a formula's computed charge is reduced to its billable precision."
+enum RateRoundingMode {
+  HalfUp
+  HalfEven
+  Up
+  Down
+  None
+}
+
 type FormulaTemplateVariableDefinition {
   name: String!
   type: String!
@@ -49615,6 +49639,8 @@ type FormulaTemplate {
   breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
   minCharge: String
   maxCharge: String
+  roundingMode: RateRoundingMode!
+  roundingPrecision: Int!
   submittedById: ID
   submittedAt: Int
   approvedById: ID
@@ -60789,6 +60815,10 @@ func (ec *executionContext) childFields_FormulaTemplate(ctx context.Context, fie
 		return ec.fieldContext_FormulaTemplate_minCharge(ctx, field)
 	case "maxCharge":
 		return ec.fieldContext_FormulaTemplate_maxCharge(ctx, field)
+	case "roundingMode":
+		return ec.fieldContext_FormulaTemplate_roundingMode(ctx, field)
+	case "roundingPrecision":
+		return ec.fieldContext_FormulaTemplate_roundingPrecision(ctx, field)
 	case "submittedById":
 		return ec.fieldContext_FormulaTemplate_submittedById(ctx, field)
 	case "submittedAt":
@@ -129114,6 +129144,52 @@ func (ec *executionContext) _FormulaTemplate_maxCharge(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_FormulaTemplate_maxCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FormulaTemplate", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_roundingMode(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_roundingMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoundingMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v ratetypes.RoundingMode) graphql.Marshaler {
+			return ec.marshalNRateRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋratetypesᚐRoundingMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_roundingMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type RateRoundingMode does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_roundingPrecision(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_roundingPrecision(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoundingPrecision, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_roundingPrecision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _FormulaTemplate_submittedById(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
@@ -249553,6 +249629,16 @@ func (ec *executionContext) _FormulaTemplate(ctx context.Context, sel ast.Select
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "roundingMode":
+			out.Values[i] = ec._FormulaTemplate_roundingMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "roundingPrecision":
+			out.Values[i] = ec._FormulaTemplate_roundingPrecision(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "submittedById":
 			out.Values[i] = ec._FormulaTemplate_submittedById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -292947,6 +293033,23 @@ func (ec *executionContext) unmarshalNRateQuotePurpose2githubᚗcomᚋemoss08ᚋ
 
 func (ec *executionContext) marshalNRateQuotePurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuotePurpose(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateQuotePurpose) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNRateRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋratetypesᚐRoundingMode(ctx context.Context, v any) (ratetypes.RoundingMode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := ratetypes.RoundingMode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRateRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋratetypesᚐRoundingMode(ctx context.Context, sel ast.SelectionSet, v ratetypes.RoundingMode) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNRateZone2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZone(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateZone) graphql.Marshaler {

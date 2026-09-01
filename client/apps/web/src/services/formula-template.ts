@@ -63,6 +63,8 @@ export type ImportTemplatePayload = {
   breakdownDefinitions?: FormulaTemplate["breakdownDefinitions"];
   minCharge?: FormulaTemplate["minCharge"];
   maxCharge?: FormulaTemplate["maxCharge"];
+  roundingMode?: FormulaTemplate["roundingMode"];
+  roundingPrecision?: FormulaTemplate["roundingPrecision"];
   metadata?: FormulaTemplate["metadata"];
   sourceTemplateId?: string | null;
   sourceVersionNumber?: number | null;

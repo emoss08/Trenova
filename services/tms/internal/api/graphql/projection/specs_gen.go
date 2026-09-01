@@ -6792,8 +6792,64 @@ func init() {
 				FieldMapKey: "schemaId",
 			},
 			{
+				Name:        "variableDefinitions",
+				FieldMapKey: "variableDefinitions",
+			},
+			{
+				Name:        "breakdownDefinitions",
+				FieldMapKey: "breakdownDefinitions",
+			},
+			{
+				Name:        "minCharge",
+				FieldMapKey: "minCharge",
+			},
+			{
+				Name:        "maxCharge",
+				FieldMapKey: "maxCharge",
+			},
+			{
+				Name:        "roundingMode",
+				FieldMapKey: "roundingMode",
+			},
+			{
+				Name:        "roundingPrecision",
+				FieldMapKey: "roundingPrecision",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "reviewComment",
+				FieldMapKey: "reviewComment",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+			{
+				Name:        "sourceTemplateId",
+				FieldMapKey: "sourceTemplateId",
+			},
+			{
+				Name:        "sourceVersionNumber",
+				FieldMapKey: "sourceVersionNumber",
 			},
 			{
 				Name:        "currentVersionNumber",
@@ -11524,6 +11580,42 @@ func init() {
 			{
 				Name:        "ratingDetail",
 				FieldMapKey: "ratingDetail",
+			},
+			{
+				Name:        "autoRated",
+				FieldMapKey: "autoRated",
+			},
+			{
+				Name:        "autoRatedAt",
+				FieldMapKey: "autoRatedAt",
+			},
+			{
+				Name:        "rateAgreementId",
+				FieldMapKey: "rateAgreementId",
+			},
+			{
+				Name:        "rateAgreementRuleId",
+				FieldMapKey: "rateAgreementRuleId",
+			},
+			{
+				Name:        "rateQuoteId",
+				FieldMapKey: "rateQuoteId",
+			},
+			{
+				Name:        "rateOverrideAmount",
+				FieldMapKey: "rateOverrideAmount",
+			},
+			{
+				Name:        "rateOverrideReason",
+				FieldMapKey: "rateOverrideReason",
+			},
+			{
+				Name:        "rateOverrideAt",
+				FieldMapKey: "rateOverrideAt",
+			},
+			{
+				Name:        "rateLocked",
+				FieldMapKey: "rateLocked",
 			},
 			{
 				Name:        "version",

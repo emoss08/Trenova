@@ -33,6 +33,8 @@ export function useLivePreview(): LivePreviewState {
   const breakdownDefinitions = useWatch({ control, name: "breakdownDefinitions" });
   const minCharge = useWatch({ control, name: "minCharge" });
   const maxCharge = useWatch({ control, name: "maxCharge" });
+  const roundingMode = useWatch({ control, name: "roundingMode" });
+  const roundingPrecision = useWatch({ control, name: "roundingPrecision" });
 
   const [testValues, setTestValues] = useState<Record<string, unknown>>({
     ...DEFAULT_TEST_VALUES,
@@ -72,6 +74,8 @@ export function useLivePreview(): LivePreviewState {
       ...(validBreakdowns.length > 0 ? { breakdowns: validBreakdowns } : {}),
       ...(minCharge != null ? { minCharge: String(minCharge) } : {}),
       ...(maxCharge != null ? { maxCharge: String(maxCharge) } : {}),
+      ...(roundingMode ? { roundingMode } : {}),
+      ...(roundingPrecision != null ? { roundingPrecision } : {}),
     };
   }, [
     expression,
@@ -80,6 +84,8 @@ export function useLivePreview(): LivePreviewState {
     breakdownDefinitions,
     minCharge,
     maxCharge,
+    roundingMode,
+    roundingPrecision,
     testValues,
     useRealShipment,
     shipmentId,

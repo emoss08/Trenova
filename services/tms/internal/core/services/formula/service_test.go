@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -417,15 +418,13 @@ func TestService_EvaluateWithEnv(t *testing.T) {
 			name:       "boolean true result",
 			expression: "a > b",
 			env:        map[string]any{"a": 10.0, "b": 5.0},
-			want:       decimal.NewFromInt(1),
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name:       "boolean false result",
 			expression: "a > b",
 			env:        map[string]any{"a": 3.0, "b": 5.0},
-			want:       decimal.NewFromInt(0),
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name:       "NaN result errors",
@@ -993,4 +992,75 @@ func TestService_EvaluatePredicate(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestApplyChargePolicy_GuardrailsThenRounding(t *testing.T) {
+	t.Parallel()
+
+	policy := formulatypes.ChargePolicy{
+		MinCharge:         decimal.NewNullDecimal(decimal.NewFromInt(250)),
+		RoundingMode:      ratetypes.RoundingModeUp,
+		RoundingPrecision: 0,
+	}
+
+	amount, guardrail, rounding := formula.ApplyChargePolicy(
+		policy,
+		decimal.RequireFromString("249.996"),
+	)
+	require.NotNil(t, guardrail)
+	assert.True(t, guardrail.Applied)
+	assert.True(t, decimal.NewFromInt(250).Equal(amount), amount.String())
+	require.NotNil(t, rounding)
+	assert.False(t, rounding.Applied, "the floor is already whole")
+	assert.Equal(t, "Up", rounding.Mode)
+
+	amount, _, rounding = formula.ApplyChargePolicy(policy, decimal.RequireFromString("312.01"))
+	assert.True(t, decimal.NewFromInt(313).Equal(amount), amount.String())
+	assert.True(t, rounding.Applied)
+	assert.True(t, decimal.RequireFromString("312.01").Equal(rounding.UnroundedAmount))
+}
+
+func TestApplyChargePolicy_DefaultsAndNone(t *testing.T) {
+	t.Parallel()
+
+	amount, _, rounding := formula.ApplyChargePolicy(
+		formulatypes.ChargePolicy{},
+		decimal.RequireFromString("2.675"),
+	)
+	assert.True(t, decimal.RequireFromString("2.68").Equal(amount), amount.String())
+	assert.Equal(t, "HalfUp", rounding.Mode)
+	assert.Equal(t, int32(2), rounding.Precision)
+
+	amount, _, rounding = formula.ApplyChargePolicy(
+		formulatypes.ChargePolicy{RoundingMode: ratetypes.RoundingModeNone},
+		decimal.RequireFromString("2.675"),
+	)
+	assert.True(t, decimal.RequireFromString("2.675").Equal(amount))
+	assert.False(t, rounding.Applied)
+}
+
+func TestService_Rate_AppliesTemplateRoundingPolicy(t *testing.T) {
+	t.Parallel()
+
+	svc := setupService(t)
+	template := &formulatemplate.FormulaTemplate{
+		ID:                pulid.MustNew("ft_"),
+		Name:              "thirds",
+		Expression:        "10 / 3",
+		SchemaID:          "shipment",
+		Status:            formulatemplate.StatusActive,
+		RoundingMode:      ratetypes.RoundingModeHalfEven,
+		RoundingPrecision: 3,
+	}
+
+	resp, err := svc.Rate(t.Context(), &formula.RateRequest{
+		Template: template,
+		Entity:   &shipment.Shipment{},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, decimal.RequireFromString("3.333").Equal(resp.Amount), resp.Amount.String())
+	require.NotNil(t, resp.Rounding)
+	assert.True(t, resp.Rounding.Applied)
+	assert.Equal(t, "HalfEven", resp.Rounding.Mode)
 }

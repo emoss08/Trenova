@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice/standardcatalog"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -85,6 +87,8 @@ func (s *FormulaTemplateSeed) Run(ctx context.Context, tx bun.Tx) error {
 					Type:                entry.Type,
 					Expression:          entry.Expression,
 					Status:              formulatemplate.StatusActive,
+					RoundingMode:        ratetypes.RoundingModeHalfUp,
+					RoundingPrecision:   formulatypes.DefaultRoundingPrecision,
 					SchemaID:            entry.SchemaID,
 					VariableDefinitions: entry.VariableDefinitions,
 				}

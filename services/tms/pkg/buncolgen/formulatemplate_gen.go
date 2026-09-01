@@ -62,6 +62,8 @@ var FormulaTemplateColumns = struct {
 	BreakdownDefinitions Column // "breakdown_definitions" → qualified: "ft.breakdown_definitions"
 	MinCharge            Column // "min_charge" → qualified: "ft.min_charge"
 	MaxCharge            Column // "max_charge" → qualified: "ft.max_charge"
+	RoundingMode         Column // "rounding_mode" → qualified: "ft.rounding_mode"
+	RoundingPrecision    Column // "rounding_precision" → qualified: "ft.rounding_precision"
 	SubmittedByID        Column // "submitted_by_id" → qualified: "ft.submitted_by_id"
 	SubmittedAt          Column // "submitted_at" → qualified: "ft.submitted_at"
 	ApprovedByID         Column // "approved_by_id" → qualified: "ft.approved_by_id"
@@ -90,6 +92,8 @@ var FormulaTemplateColumns = struct {
 	BreakdownDefinitions: NewColumn("breakdown_definitions", "ft"),
 	MinCharge:            NewColumn("min_charge", "ft"),
 	MaxCharge:            NewColumn("max_charge", "ft"),
+	RoundingMode:         NewColumn("rounding_mode", "ft"),
+	RoundingPrecision:    NewColumn("rounding_precision", "ft"),
 	SubmittedByID:        NewColumn("submitted_by_id", "ft"),
 	SubmittedAt:          NewColumn("submitted_at", "ft"),
 	ApprovedByID:         NewColumn("approved_by_id", "ft"),
@@ -124,6 +128,8 @@ var FormulaTemplateFieldMap = map[string]string{
 	"breakdownDefinitions": "breakdown_definitions",
 	"minCharge":            "min_charge",
 	"maxCharge":            "max_charge",
+	"roundingMode":         "rounding_mode",
+	"roundingPrecision":    "rounding_precision",
 	"submittedById":        "submitted_by_id",
 	"submittedAt":          "submitted_at",
 	"approvedById":         "approved_by_id",
@@ -154,6 +160,8 @@ var FormulaTemplateInsertableColumns = []string{
 	"breakdown_definitions",
 	"min_charge",
 	"max_charge",
+	"rounding_mode",
+	"rounding_precision",
 	"submitted_by_id",
 	"submitted_at",
 	"approved_by_id",
@@ -248,6 +256,8 @@ var FormulaTemplateFilter = struct {
 	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
 	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
 	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
+	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
+	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
 	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
 	SubmittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
 	ApprovedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
@@ -299,6 +309,12 @@ var FormulaTemplateFilter = struct {
 	},
 	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxCharge", op, value)
+	},
+	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingMode", op, value)
+	},
+	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingPrecision", op, value)
 	},
 	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("submittedById", op, value)
@@ -379,6 +395,8 @@ var FormulaTemplateVersionColumns = struct {
 	BreakdownDefinitions Column // "breakdown_definitions" → qualified: "ftv.breakdown_definitions"
 	MinCharge            Column // "min_charge" → qualified: "ftv.min_charge"
 	MaxCharge            Column // "max_charge" → qualified: "ftv.max_charge"
+	RoundingMode         Column // "rounding_mode" → qualified: "ftv.rounding_mode"
+	RoundingPrecision    Column // "rounding_precision" → qualified: "ftv.rounding_precision"
 	EffectiveFrom        Column // "effective_from" → qualified: "ftv.effective_from"
 	Metadata             Column // "metadata" → qualified: "ftv.metadata"
 	ChangeMessage        Column // "change_message" → qualified: "ftv.change_message"
@@ -402,6 +420,8 @@ var FormulaTemplateVersionColumns = struct {
 	BreakdownDefinitions: NewColumn("breakdown_definitions", "ftv"),
 	MinCharge:            NewColumn("min_charge", "ftv"),
 	MaxCharge:            NewColumn("max_charge", "ftv"),
+	RoundingMode:         NewColumn("rounding_mode", "ftv"),
+	RoundingPrecision:    NewColumn("rounding_precision", "ftv"),
 	EffectiveFrom:        NewColumn("effective_from", "ftv"),
 	Metadata:             NewColumn("metadata", "ftv"),
 	ChangeMessage:        NewColumn("change_message", "ftv"),
@@ -431,6 +451,8 @@ var FormulaTemplateVersionFieldMap = map[string]string{
 	"breakdownDefinitions": "breakdown_definitions",
 	"minCharge":            "min_charge",
 	"maxCharge":            "max_charge",
+	"roundingMode":         "rounding_mode",
+	"roundingPrecision":    "rounding_precision",
 	"effectiveFrom":        "effective_from",
 	"metadata":             "metadata",
 	"changeMessage":        "change_message",
@@ -458,6 +480,8 @@ var FormulaTemplateVersionInsertableColumns = []string{
 	"breakdown_definitions",
 	"min_charge",
 	"max_charge",
+	"rounding_mode",
+	"rounding_precision",
 	"effective_from",
 	"metadata",
 	"change_message",
@@ -543,6 +567,8 @@ var FormulaTemplateVersionFilter = struct {
 	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
 	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
 	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
+	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
+	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
 	EffectiveFrom        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
 	Metadata             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
 	ChangeMessage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
@@ -595,6 +621,12 @@ var FormulaTemplateVersionFilter = struct {
 	},
 	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxCharge", op, value)
+	},
+	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingMode", op, value)
+	},
+	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingPrecision", op, value)
 	},
 	EffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("effectiveFrom", op, value)

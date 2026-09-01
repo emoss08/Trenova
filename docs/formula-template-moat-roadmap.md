@@ -84,20 +84,22 @@ Money is float64 end-to-end; `round()` is binary half-away; agreement rules roun
 with the agreement's mode; the fallback-template path never rounds and Postgres
 truncates to 4dp. Preview ≠ stored ≠ agreement-path to the cent.
 
-- [ ] Template gains `RoundingMode` (half-up, half-even, up, down) and `Precision`
+- [x] Template gains `RoundingMode` (half-up, half-even, up, down) and `Precision`
       (default 2) (`domain/formulatemplate/formulatemplate.go`, migration + SQLite
       mirror, GraphQL SDL, client zod schema)
-- [ ] `formula.Service.Rate` applies rounding once, after guardrails; preview, test,
-      scenarios, backtest, impact, and production all go through `Rate`
-      (`formula/service.go`)
-- [ ] Decimal-aware `round`, `roundUp`, `roundDown`, `roundTo(x, increment)`,
+- [x] `formula.ApplyChargePolicy` (guardrails, then rounding) is the single step
+      behind `Rate`, the Studio preview, and scenarios, so production, preview,
+      backtest, and impact all land on the same cents (`formula/service.go`).
+      Agreement-priced rules still apply the agreement's own rounding on top,
+      as the contract's outer policy
+- [x] Decimal-aware `round`, `roundUp`, `roundDown`, `roundTo(x, increment)`,
       `roundHalfEven` in the function library using `shopspring/decimal`
       (`formula/engine/functions.go`, `functionmeta.go`); client fallback list mirrored
-- [ ] `bool` results are rejected for rating (`engine.go` `toDecimal`), not coerced
+- [x] `bool` results are rejected for rating (`engine.go` `toDecimal`), not coerced
       to `$1`
-- [ ] Studio: rounding controls beside Guardrails; preview shows raw vs rounded when
+- [x] Studio: rounding controls beside Guardrails; preview shows raw vs rounded when
       they differ
-- [ ] Tests: half-even vs half-up on `2.675`; production and preview produce the
+- [x] Tests: half-even vs half-up on `2.675`; production and preview produce the
       same cents for the same input
 
 ### 1.5 Timeout race in the engine

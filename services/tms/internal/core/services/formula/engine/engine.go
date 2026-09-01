@@ -147,10 +147,29 @@ func (e *Engine) Evaluate(
 	if err != nil {
 		return nil, err
 	}
+	if err = rejectBooleanAmount(req.Template.Expression, result); err != nil {
+		return nil, err
+	}
 
 	result.Breakdown = e.evaluateBreakdowns(ctx, req.Template.BreakdownDefinitions, env, req.Lookup)
 
 	return result, nil
+}
+
+// ErrBooleanAmount is returned when a charge expression evaluates to true or
+// false. The engine can turn a boolean into one or zero, and for a predicate
+// that is the point; for a price it is a bug with a dollar sign on it.
+var ErrBooleanAmount = goErrors.New(
+	"expression produced true/false rather than an amount; " +
+		"write a conditional such as condition ? amount : 0",
+)
+
+func rejectBooleanAmount(expression string, result *formulatemplatetypes.EvaluationResult) error {
+	if _, isBool := result.RawValue.(bool); !isBool {
+		return nil
+	}
+
+	return errors.NewComputeError(expression, "expression", ErrBooleanAmount)
 }
 
 func (e *Engine) EvaluateExpression(
@@ -176,6 +195,11 @@ func (e *Engine) EvaluateExpression(
 	if err != nil {
 		return nil, err
 	}
+	if !req.AllowBoolean {
+		if err = rejectBooleanAmount(req.Expression, result); err != nil {
+			return nil, err
+		}
+	}
 
 	result.Breakdown = e.evaluateBreakdowns(ctx, req.Breakdowns, env, req.Lookup)
 
@@ -186,7 +210,15 @@ func (e *Engine) EvaluateWithEnv(
 	ctx context.Context,
 	req *formulatemplatetypes.EnvEvaluationRequest,
 ) (*formulatemplatetypes.EvaluationResult, error) {
-	return e.evaluateProgram(ctx, req.Expression, req.Env, req.Lookup, nil)
+	result, err := e.evaluateProgram(ctx, req.Expression, req.Env, req.Lookup, nil)
+	if err != nil {
+		return nil, err
+	}
+	if err = rejectBooleanAmount(req.Expression, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (e *Engine) evaluateProgram(

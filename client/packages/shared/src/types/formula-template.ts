@@ -54,6 +54,19 @@ export type FormulaTemplateStatus = z.infer<typeof formulaTemplateStatusSchema>;
 export const formulaTemplateTypeSchema = z.enum(["FreightCharge", "AccessorialCharge"]);
 export type FormulaTemplateType = z.infer<typeof formulaTemplateTypeSchema>;
 
+export const formulaRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
+export type FormulaRoundingMode = z.infer<typeof formulaRoundingModeSchema>;
+
+export const DEFAULT_ROUNDING_MODE: FormulaRoundingMode = "HalfUp";
+export const DEFAULT_ROUNDING_PRECISION = 2;
+export const MAX_ROUNDING_PRECISION = 4;
+
+const roundingPrecisionSchema = z
+  .number()
+  .int("Rounding precision must be a whole number")
+  .min(0, "Rounding precision cannot be negative")
+  .max(MAX_ROUNDING_PRECISION, `Rounding precision cannot exceed ${MAX_ROUNDING_PRECISION}`);
+
 export const formulaTemplateSchema = z
   .object({
     id: z.string().optional(),
@@ -69,6 +82,8 @@ export const formulaTemplateSchema = z
     breakdownDefinitions: breakdownDefinitionsSchema,
     minCharge: decimalStringSchema,
     maxCharge: decimalStringSchema,
+    roundingMode: formulaRoundingModeSchema.default(DEFAULT_ROUNDING_MODE),
+    roundingPrecision: roundingPrecisionSchema.default(DEFAULT_ROUNDING_PRECISION),
     submittedById: z.string().nullish(),
     submittedAt: z.number().nullish(),
     approvedById: z.string().nullish(),
@@ -178,6 +193,8 @@ export const formulaTemplateVersionSchema = z.object({
   breakdownDefinitions: breakdownDefinitionsSchema,
   minCharge: decimalStringSchema,
   maxCharge: decimalStringSchema,
+  roundingMode: formulaRoundingModeSchema.default(DEFAULT_ROUNDING_MODE),
+  roundingPrecision: roundingPrecisionSchema.default(DEFAULT_ROUNDING_PRECISION),
   effectiveFrom: z.number().nullish(),
   metadata: z.record(z.any(), z.any()).nullish(),
   changeMessage: z.string().optional(),
@@ -226,6 +243,8 @@ export const testExpressionRequestSchema = z.object({
   breakdowns: z.array(breakdownDefinitionSchema).optional(),
   minCharge: z.string().optional(),
   maxCharge: z.string().optional(),
+  roundingMode: formulaRoundingModeSchema.optional(),
+  roundingPrecision: z.number().int().optional(),
 });
 export type TestExpressionRequest = z.infer<typeof testExpressionRequestSchema>;
 
@@ -237,6 +256,14 @@ export const guardrailResultSchema = z.object({
   maxCharge: z.coerce.number().nullish(),
 });
 export type GuardrailResult = z.output<typeof guardrailResultSchema>;
+
+export const roundingResultSchema = z.object({
+  mode: z.string(),
+  precision: z.number(),
+  applied: z.boolean(),
+  unroundedAmount: z.coerce.number(),
+});
+export type RoundingResult = z.output<typeof roundingResultSchema>;
 
 export const testBreakdownItemSchema = z.object({
   name: z.string(),
@@ -254,6 +281,7 @@ export const testExpressionResponseSchema = z.object({
   resolvedVariables: z.record(z.string(), z.any()).nullish(),
   breakdown: z.array(testBreakdownItemSchema).nullish(),
   guardrail: guardrailResultSchema.nullish(),
+  rounding: roundingResultSchema.nullish(),
 });
 export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
 
@@ -585,10 +613,30 @@ export const AVAILABLE_FUNCTIONS = [
   {
     name: "round",
     signature: "round(x, decimals?)",
-    description: "Round to decimal places",
+    description: "Round half up to decimal places",
   },
-  { name: "ceil", signature: "ceil(x)", description: "Round up" },
-  { name: "floor", signature: "floor(x)", description: "Round down" },
+  {
+    name: "roundUp",
+    signature: "roundUp(x, decimals?)",
+    description: "Round up at decimal places",
+  },
+  {
+    name: "roundDown",
+    signature: "roundDown(x, decimals?)",
+    description: "Round down at decimal places",
+  },
+  {
+    name: "roundHalfEven",
+    signature: "roundHalfEven(x, decimals?)",
+    description: "Banker's rounding at decimal places",
+  },
+  {
+    name: "roundTo",
+    signature: "roundTo(x, increment)",
+    description: "Round to the nearest multiple of increment",
+  },
+  { name: "ceil", signature: "ceil(x)", description: "Round up to a whole number" },
+  { name: "floor", signature: "floor(x)", description: "Round down to a whole number" },
   { name: "sqrt", signature: "sqrt(x)", description: "Square root" },
   {
     name: "sum",
@@ -774,6 +822,8 @@ export type TestCaseCandidate = {
   breakdownDefinitions?: BreakdownDefinitionInput[];
   minCharge?: number | string | null;
   maxCharge?: number | string | null;
+  roundingMode?: FormulaRoundingMode;
+  roundingPrecision?: number;
 };
 
 export const installStandardsResponseSchema = z.object({

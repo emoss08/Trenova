@@ -4552,6 +4552,8 @@ type FormulaTemplate {
   organization: Organization
   organizationId: ID!
   reviewComment: String!
+  roundingMode: RateRoundingMode!
+  roundingPrecision: Int!
   schemaId: String!
   sourceTemplateId: ID
   sourceVersionNumber: Int
@@ -7331,6 +7333,15 @@ enum RateQuotePurpose {
   Shopping
   Simulation
   WhatIf
+}
+
+"""How a formula's computed charge is reduced to its billable precision."""
+enum RateRoundingMode {
+  Down
+  HalfEven
+  HalfUp
+  None
+  Up
 }
 
 enum RateUnit {

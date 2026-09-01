@@ -733,15 +733,13 @@ func TestEngine_EvaluateWithEnv(t *testing.T) {
 			name:       "boolean result true",
 			expression: "a > b",
 			env:        map[string]any{"a": 10.0, "b": 5.0},
-			want:       decimal.NewFromInt(1),
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name:       "boolean result false",
 			expression: "a > b",
 			env:        map[string]any{"a": 3.0, "b": 5.0},
-			want:       decimal.NewFromInt(0),
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name:       "integer result",
@@ -1178,4 +1176,38 @@ func TestNewEngine(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, e)
+}
+
+func TestEngine_BooleanResultIsNotAnAmount(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	_, err := e.EvaluateExpression(t.Context(), &formulatemplatetypes.ExpressionEvaluationRequest{
+		Expression: "a > b",
+		Entity:     struct{}{},
+		SchemaID:   "test",
+		Variables:  map[string]any{"a": 2.0, "b": 1.0},
+	})
+	require.ErrorIs(t, err, engine.ErrBooleanAmount)
+
+	result, err := e.EvaluateExpression(
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression:   "a > b",
+			Entity:       struct{}{},
+			SchemaID:     "test",
+			Variables:    map[string]any{"a": 2.0, "b": 1.0},
+			AllowBoolean: true,
+		},
+	)
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromInt(1).Equal(result.Value))
+
+	conditional, err := e.EvaluateWithEnv(t.Context(), &formulatemplatetypes.EnvEvaluationRequest{
+		Expression: "a > b ? 150 : 0",
+		Env:        map[string]any{"a": 2.0, "b": 1.0},
+	})
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromInt(150).Equal(conditional.Value))
 }

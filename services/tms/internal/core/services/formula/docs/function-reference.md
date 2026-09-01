@@ -218,9 +218,15 @@ tan(3.142)             // ~0 (tan of π)
 
 ### Rounding
 
+All rounding functions work in decimal arithmetic, so `round(2.675, 2)` is `2.68` the
+way a person expects rather than the `2.67` binary floating point produces. Note that
+the template's own **charge policy** (rounding mode and precision) is applied to the
+final amount after guardrails, so an expression rarely needs to round its own result;
+these functions are for intermediate steps such as per-unit rates.
+
 #### round(x, precision?)
 
-Rounds a number to the specified decimal places.
+Rounds half up to the specified decimal places.
 
 **Parameters:**
 
@@ -234,10 +240,50 @@ Rounds a number to the specified decimal places.
 ```javascript
 round(3.14159)         // 3
 round(3.14159, 2)      // 3.14
-round(3.14159, 4)      // 3.1416
+round(2.675, 2)        // 2.68
 round(1234.5)          // 1235
 round(1234.5, -2)      // 1200
 round(1.5, 400)        // Error: round decimals must be between -12 and 12
+```
+
+#### roundUp(x, precision?)
+
+Rounds toward positive infinity at the given decimal places. This is what a tariff
+means by "rounded up to the nearest cent".
+
+```javascript
+roundUp(2.001, 2)      // 2.01
+roundUp(2.0, 2)        // 2
+```
+
+#### roundDown(x, precision?)
+
+Rounds toward negative infinity at the given decimal places.
+
+```javascript
+roundDown(2.999, 2)    // 2.99
+```
+
+#### roundHalfEven(x, precision?)
+
+Banker's rounding: an exact half goes to the even neighbour, so a large book of
+charges does not drift upward.
+
+```javascript
+roundHalfEven(2.665, 2)   // 2.66
+roundHalfEven(2.675, 2)   // 2.68
+roundHalfEven(2.5)        // 2
+```
+
+#### roundTo(x, increment)
+
+Rounds to the nearest multiple of `increment`: the nearest $5, the nearest quarter,
+the nearest hundredweight. The increment must be positive.
+
+```javascript
+roundTo(123.4, 5)      // 125
+roundTo(10.13, 0.25)   // 10.25
+roundTo(10, 0)         // Error: roundTo increment must be a positive number
 ```
 
 #### floor(x)

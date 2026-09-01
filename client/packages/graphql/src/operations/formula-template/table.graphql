@@ -23,6 +23,8 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   }
   minCharge
   maxCharge
+  roundingMode
+  roundingPrecision
   sourceTemplateId
   sourceVersionNumber
   version

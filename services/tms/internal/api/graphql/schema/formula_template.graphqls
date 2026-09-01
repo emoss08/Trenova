@@ -10,6 +10,15 @@ enum FormulaTemplateType {
   AccessorialCharge
 }
 
+"How a formula's computed charge is reduced to its billable precision."
+enum RateRoundingMode {
+  HalfUp
+  HalfEven
+  Up
+  Down
+  None
+}
+
 type FormulaTemplateVariableDefinition {
   name: String!
   type: String!
@@ -40,6 +49,8 @@ type FormulaTemplate {
   breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
   minCharge: String
   maxCharge: String
+  roundingMode: RateRoundingMode!
+  roundingPrecision: Int!
   submittedById: ID
   submittedAt: Int
   approvedById: ID

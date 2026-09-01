@@ -5,7 +5,7 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { downloadJsonFile } from "@trenova/shared/lib/utils";
 
-export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.2";
+export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.3";
 
 export type ExportedTestCase = {
   name: string;
@@ -26,6 +26,8 @@ export type FormulaTemplateExportPayload = {
   breakdownDefinitions: FormulaTemplate["breakdownDefinitions"];
   minCharge: FormulaTemplate["minCharge"];
   maxCharge: FormulaTemplate["maxCharge"];
+  roundingMode: FormulaTemplate["roundingMode"];
+  roundingPrecision: FormulaTemplate["roundingPrecision"];
   metadata: FormulaTemplate["metadata"];
   sourceTemplateId: string | null | undefined;
   sourceVersionNumber: number | null | undefined;
@@ -48,6 +50,8 @@ export type FormulaTemplateExport = {
     breakdownDefinitions: FormulaTemplate["breakdownDefinitions"];
     minCharge: FormulaTemplate["minCharge"];
     maxCharge: FormulaTemplate["maxCharge"];
+    roundingMode: FormulaTemplate["roundingMode"];
+    roundingPrecision: FormulaTemplate["roundingPrecision"];
     metadata: FormulaTemplate["metadata"];
     changeMessage?: string;
     tags: string[];
@@ -97,6 +101,8 @@ function toExportPayload(
     breakdownDefinitions: template.breakdownDefinitions,
     minCharge: template.minCharge,
     maxCharge: template.maxCharge,
+    roundingMode: template.roundingMode,
+    roundingPrecision: template.roundingPrecision,
     metadata: template.metadata,
     sourceTemplateId: template.sourceTemplateId,
     sourceVersionNumber: template.sourceVersionNumber,
@@ -138,6 +144,8 @@ export function buildTemplateExport(
       breakdownDefinitions: v.breakdownDefinitions,
       minCharge: v.minCharge,
       maxCharge: v.maxCharge,
+      roundingMode: v.roundingMode,
+      roundingPrecision: v.roundingPrecision,
       metadata: v.metadata,
       changeMessage: v.changeMessage,
       tags: v.tags,
@@ -169,6 +177,8 @@ export function buildVersionExport(
       breakdownDefinitions: version.breakdownDefinitions,
       minCharge: version.minCharge,
       maxCharge: version.maxCharge,
+      roundingMode: version.roundingMode,
+      roundingPrecision: version.roundingPrecision,
       metadata: version.metadata,
       sourceTemplateId: undefined,
       sourceVersionNumber: version.versionNumber,

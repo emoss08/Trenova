@@ -7,7 +7,11 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import type { GuardrailResult, TestBreakdownItem } from "@trenova/shared/types/formula-template";
+import type {
+  GuardrailResult,
+  RoundingResult,
+  TestBreakdownItem,
+} from "@trenova/shared/types/formula-template";
 import {
   AlertTriangleIcon,
   Braces,
@@ -44,6 +48,34 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
         The formula produced {formatCurrency(guardrail.rawAmount)} and was clamped to the {bound}{" "}
         charge{limit != null ? ` of ${formatCurrency(limit)}` : ""}.
       </span>
+    </div>
+  );
+}
+
+const ROUNDING_MODE_LABELS: Record<string, string> = {
+  HalfUp: "half up",
+  HalfEven: "half even",
+  Up: "up",
+  Down: "down",
+  None: "not rounded",
+};
+
+function RoundingNotice({ rounding }: { rounding: RoundingResult }) {
+  const modeLabel = ROUNDING_MODE_LABELS[rounding.mode] ?? rounding.mode;
+  const places = rounding.precision === 1 ? "1 decimal" : `${rounding.precision} decimals`;
+
+  if (!rounding.applied) {
+    return (
+      <div className="text-muted-foreground text-2xs mt-1">
+        Rounding ({modeLabel}, {places}) made no change.
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-muted-foreground text-2xs mt-1">
+      Rounded {modeLabel} to {places} from{" "}
+      <span className="font-mono tabular-nums">{rounding.unroundedAmount.toFixed(6)}</span>.
     </div>
   );
 }
@@ -238,6 +270,7 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
                         : String(result.result)}
                     </span>
                     {result.guardrail && <GuardrailNotice guardrail={result.guardrail} />}
+                    {result.rounding && <RoundingNotice rounding={result.rounding} />}
                   </div>
                 )}
 

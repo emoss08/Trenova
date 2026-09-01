@@ -242,6 +242,8 @@ func applyClearableColumns(
 		Value(cols.ReviewComment.String(), "?", entity.ReviewComment).
 		Value(cols.MinCharge.String(), "?", entity.MinCharge).
 		Value(cols.MaxCharge.String(), "?", entity.MaxCharge).
+		Value(cols.RoundingMode.String(), "?", entity.RoundingMode).
+		Value(cols.RoundingPrecision.String(), "?", entity.RoundingPrecision).
 		Value(cols.SubmittedByID.String(), "?", entity.SubmittedByID).
 		Value(cols.SubmittedAt.String(), "?", entity.SubmittedAt).
 		Value(cols.ApprovedByID.String(), "?", entity.ApprovedByID).
@@ -433,6 +435,8 @@ func buildDuplicateEntity(
 		BreakdownDefinitions: source.BreakdownDefinitions,
 		MinCharge:            source.MinCharge,
 		MaxCharge:            source.MaxCharge,
+		RoundingMode:         source.RoundingMode,
+		RoundingPrecision:    source.RoundingPrecision,
 		Metadata:             source.Metadata,
 		SourceTemplateID:     &sourceID,
 		SourceVersionNumber:  &sourceVersion,

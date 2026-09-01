@@ -36541,6 +36541,12 @@ const docTemplate = `{
                 "reviewComment": {
                     "type": "string"
                 },
+                "roundingMode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode"
+                },
+                "roundingPrecision": {
+                    "type": "integer"
+                },
                 "schemaId": {
                     "type": "string"
                 },
@@ -36642,6 +36648,12 @@ const docTemplate = `{
                 },
                 "organizationId": {
                     "type": "string"
+                },
+                "roundingMode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode"
+                },
+                "roundingPrecision": {
+                    "type": "integer"
                 },
                 "schemaId": {
                     "type": "string"
@@ -47860,6 +47872,12 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "roundingMode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode"
+                },
+                "roundingPrecision": {
+                    "type": "integer"
+                },
                 "schemaId": {
                     "type": "string"
                 },
@@ -47986,6 +48004,12 @@ const docTemplate = `{
                 "minCharge": {
                     "$ref": "#/definitions/decimal.NullDecimal"
                 },
+                "roundingMode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode"
+                },
+                "roundingPrecision": {
+                    "type": "integer"
+                },
                 "variableDefinitions": {
                     "type": "array",
                     "items": {
@@ -48067,6 +48091,9 @@ const docTemplate = `{
                     "additionalProperties": {}
                 },
                 "result": {},
+                "rounding": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult"
+                },
                 "valid": {
                     "type": "boolean"
                 }
@@ -48477,6 +48504,23 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "rawAmount": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult": {
+            "type": "object",
+            "properties": {
+                "applied": {
+                    "type": "boolean"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "precision": {
+                    "type": "integer"
+                },
+                "unroundedAmount": {
                     "type": "number"
                 }
             }
@@ -50771,6 +50815,13 @@ const docTemplate = `{
                 },
                 "minCharge": {
                     "type": "string"
+                },
+                "roundingMode": {
+                    "description": "RoundingMode and RoundingPrecision are the charge policy under test;\nomitted means the default the template would store.",
+                    "type": "string"
+                },
+                "roundingPrecision": {
+                    "type": "integer"
                 },
                 "schemaId": {
                     "type": "string"

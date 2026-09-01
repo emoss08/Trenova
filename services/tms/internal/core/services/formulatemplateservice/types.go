@@ -3,6 +3,7 @@ package formulatemplateservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/shopspring/decimal"
 )
 
@@ -15,6 +16,8 @@ type templateSnapshot struct {
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition
 	MinCharge            decimal.NullDecimal
 	MaxCharge            decimal.NullDecimal
+	RoundingMode         ratetypes.RoundingMode
+	RoundingPrecision    int32
 	Metadata             map[string]any
 }
 
@@ -28,6 +31,8 @@ func snapshotFromVersion(v *formulatemplate.FormulaTemplateVersion) templateSnap
 		BreakdownDefinitions: v.BreakdownDefinitions,
 		MinCharge:            v.MinCharge,
 		MaxCharge:            v.MaxCharge,
+		RoundingMode:         v.RoundingMode,
+		RoundingPrecision:    v.RoundingPrecision,
 		Metadata:             v.Metadata,
 	}
 }
@@ -42,6 +47,8 @@ func snapshotFromTemplate(t *formulatemplate.FormulaTemplate) templateSnapshot {
 		BreakdownDefinitions: t.BreakdownDefinitions,
 		MinCharge:            t.MinCharge,
 		MaxCharge:            t.MaxCharge,
+		RoundingMode:         t.RoundingMode,
+		RoundingPrecision:    t.RoundingPrecision,
 		Metadata:             t.Metadata,
 	}
 }

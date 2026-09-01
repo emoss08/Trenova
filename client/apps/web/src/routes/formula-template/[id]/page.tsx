@@ -5,6 +5,8 @@ import { api } from "@trenova/shared/lib/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
+  DEFAULT_ROUNDING_MODE,
+  DEFAULT_ROUNDING_PRECISION,
   formulaTemplateSchema,
   type FormulaTemplate,
   type FormulaTemplateFormValues,
@@ -132,6 +134,8 @@ export function FormulaStudioEditPage() {
       breakdownDefinitions: [],
       minCharge: null,
       maxCharge: null,
+      roundingMode: DEFAULT_ROUNDING_MODE,
+      roundingPrecision: DEFAULT_ROUNDING_PRECISION,
     },
   });
 

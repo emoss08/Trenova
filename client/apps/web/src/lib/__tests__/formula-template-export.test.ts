@@ -26,6 +26,8 @@ function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate
     breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
     minCharge: 250,
     maxCharge: 5000,
+    roundingMode: "HalfUp",
+    roundingPrecision: 2,
     metadata: null,
     sourceTemplateId: null,
     sourceVersionNumber: null,
@@ -50,6 +52,8 @@ function makeVersion(overrides: Partial<FormulaTemplateVersion> = {}): FormulaTe
     breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
     minCharge: 250,
     maxCharge: 5000,
+    roundingMode: "HalfUp",
+    roundingPrecision: 2,
     metadata: null,
     changeMessage: "Initial version",
     changeSummary: null,
@@ -105,7 +109,7 @@ describe("buildTemplateExport", () => {
   it("builds export without versions", () => {
     const template = makeTemplate();
     const result = buildTemplateExport(template);
-    expect(result.exportVersion).toBe("1.2");
+    expect(result.exportVersion).toBe("1.3");
     expect(result.exportedAt).toBeDefined();
     expect(result.template.name).toBe("My Template");
     expect(result.versionHistory).toBeUndefined();
@@ -141,6 +145,8 @@ describe("buildTemplateExport", () => {
     ]);
     expect(result.template.minCharge).toBe(250);
     expect(result.template.maxCharge).toBe(5000);
+    expect(result.template.roundingMode).toBe("HalfUp");
+    expect(result.template.roundingPrecision).toBe(2);
   });
 
   it("includes version history when provided", () => {
@@ -163,7 +169,7 @@ describe("buildTemplateExport", () => {
 describe("buildVersionExport", () => {
   it("exports one version's content including breakdowns and guardrails", () => {
     const result = buildVersionExport(makeTemplate(), makeVersion({ versionNumber: 3 }));
-    expect(result.exportVersion).toBe("1.2");
+    expect(result.exportVersion).toBe("1.3");
     expect(result.template.expression).toBe("weight * 0.5");
     expect(result.template.breakdownDefinitions).toHaveLength(1);
     expect(result.template.minCharge).toBe(250);
@@ -191,7 +197,7 @@ describe("buildBulkExport", () => {
 
   it("has exportVersion and exportedAt", () => {
     const result = buildBulkExport([makeTemplate()]);
-    expect(result.exportVersion).toBe("1.2");
+    expect(result.exportVersion).toBe("1.3");
     expect(result.exportedAt).toBeDefined();
   });
 

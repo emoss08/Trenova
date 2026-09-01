@@ -2954,3 +2954,69 @@ func (m *mockVersionRepo) ClearScheduled(
 ) (int64, error) {
 	return 0, nil
 }
+
+func TestFormulaTemplateHandler_TestExpression_RejectsBadRoundingPolicy(t *testing.T) {
+	t.Parallel()
+
+	for name, body := range map[string]map[string]any{
+		"invalid mode": {
+			"expression":   "totalDistance * 2",
+			"schemaId":     "shipment",
+			"roundingMode": "Sideways",
+		},
+		"precision too high": {
+			"expression":        "totalDistance * 2",
+			"schemaId":          "shipment",
+			"roundingMode":      "HalfUp",
+			"roundingPrecision": 9,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			handler := setupHandler(t, &mockFormulaTemplateRepo{}, &mockVersionRepo{})
+
+			ginCtx := testutil.NewGinTestContext().
+				WithMethod(http.MethodPost).
+				WithPath("/api/v1/formula-templates/test").
+				WithDefaultAuthContext().
+				WithJSONBody(body)
+
+			handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+			ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+			assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+		})
+	}
+}
+
+func TestFormulaTemplateHandler_TestExpression_ReportsRounding(t *testing.T) {
+	t.Parallel()
+
+	handler := setupHandler(t, &mockFormulaTemplateRepo{}, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/test").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"expression":        "10 / 3",
+			"schemaId":          "shipment",
+			"roundingMode":      "Up",
+			"roundingPrecision": 1,
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, true, resp["valid"])
+	assert.Equal(t, "3.4", resp["result"])
+	rounding, ok := resp["rounding"].(map[string]any)
+	require.True(t, ok, "rounding block should be present")
+	assert.Equal(t, "Up", rounding["mode"])
+	assert.Equal(t, true, rounding["applied"])
+}

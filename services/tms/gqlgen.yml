@@ -400,6 +400,9 @@ models:
   DetentionRoundingMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/detention.RoundingMode
+  RateRoundingMode:
+    model:
+      - github.com/emoss08/trenova/pkg/ratetypes.RoundingMode
   DetentionRateSource:
     model:
       - github.com/emoss08/trenova/internal/core/domain/detention.RateSource

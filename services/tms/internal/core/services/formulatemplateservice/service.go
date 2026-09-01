@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -638,6 +639,8 @@ func (s *Service) Fork(
 		BreakdownDefinitions: snapshot.BreakdownDefinitions,
 		MinCharge:            snapshot.MinCharge,
 		MaxCharge:            snapshot.MaxCharge,
+		RoundingMode:         snapshot.RoundingMode,
+		RoundingPrecision:    snapshot.RoundingPrecision,
 		Metadata:             snapshot.Metadata,
 		SourceTemplateID:     &req.SourceTemplateID,
 		SourceVersionNumber:  &sourceVersionNum,
@@ -826,6 +829,19 @@ type TestExpressionRequest struct {
 	Breakdowns []*formulatypes.BreakdownDefinition
 	MinCharge  decimal.NullDecimal
 	MaxCharge  decimal.NullDecimal
+	// RoundingMode and RoundingPrecision are the policy under test. An empty
+	// mode means the default policy, exactly as it does on a stored template.
+	RoundingMode      ratetypes.RoundingMode
+	RoundingPrecision int32
+}
+
+func (r *TestExpressionRequest) chargePolicy() formulatypes.ChargePolicy {
+	return formulatypes.ChargePolicy{
+		MinCharge:         r.MinCharge,
+		MaxCharge:         r.MaxCharge,
+		RoundingMode:      r.RoundingMode,
+		RoundingPrecision: r.RoundingPrecision,
+	}
 }
 
 const msgExpressionValidationFailed = "Expression validation failed"
@@ -838,6 +854,7 @@ type TestExpressionResponse struct {
 	Breakdown         []formulatemplatetypes.BreakdownAmount `json:"breakdown,omitempty"`
 	ResolvedVariables map[string]any                         `json:"resolvedVariables,omitempty"`
 	Guardrail         *formulatemplatetypes.GuardrailResult  `json:"guardrail,omitempty"`
+	Rounding          *formulatemplatetypes.RoundingResult   `json:"rounding,omitempty"`
 }
 
 func (s *Service) DescribeSchema(
@@ -948,7 +965,7 @@ func (s *Service) testExpressionAgainstShipment(
 		}
 	}
 
-	amount, guardrail := formula.ApplyGuardrailBounds(req.MinCharge, req.MaxCharge, resp.Amount)
+	amount, guardrail, rounding := formula.ApplyChargePolicy(req.chargePolicy(), resp.Amount)
 
 	return &TestExpressionResponse{
 		Valid:             true,
@@ -956,6 +973,7 @@ func (s *Service) testExpressionAgainstShipment(
 		Breakdown:         resp.Breakdown,
 		ResolvedVariables: maputils.WithoutFuncValues(resp.Variables),
 		Guardrail:         guardrail,
+		Rounding:          rounding,
 		Message:           "Expression evaluated against shipment",
 	}
 }
@@ -995,12 +1013,13 @@ func (s *Service) testExpressionWithEnv(
 		}
 	}
 
-	amount, guardrail := formula.ApplyGuardrailBounds(req.MinCharge, req.MaxCharge, result.Amount)
+	amount, guardrail, rounding := formula.ApplyChargePolicy(req.chargePolicy(), result.Amount)
 
 	resp := &TestExpressionResponse{
 		Valid:     true,
 		Result:    amount,
 		Guardrail: guardrail,
+		Rounding:  rounding,
 		Message:   "Expression is valid",
 	}
 
@@ -1048,6 +1067,8 @@ func (s *Service) validateTemplate(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 ) error {
+	entity.NormalizeRounding()
+
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 

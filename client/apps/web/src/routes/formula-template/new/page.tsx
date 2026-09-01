@@ -2,6 +2,8 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
 import {
+  DEFAULT_ROUNDING_MODE,
+  DEFAULT_ROUNDING_PRECISION,
   formulaTemplateSchema,
   type FormulaTemplate,
   type FormulaTemplateFormValues,
@@ -30,6 +32,8 @@ export function FormulaStudioCreatePage() {
       breakdownDefinitions: [],
       minCharge: null,
       maxCharge: null,
+      roundingMode: DEFAULT_ROUNDING_MODE,
+      roundingPrecision: DEFAULT_ROUNDING_PRECISION,
     },
   });
 

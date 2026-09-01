@@ -19,7 +19,7 @@ import { FileUpIcon, UploadIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-const SUPPORTED_EXPORT_VERSIONS = new Set(["1.0", "1.1", "1.2"]);
+const SUPPORTED_EXPORT_VERSIONS = new Set(["1.0", "1.1", "1.2", "1.3"]);
 
 type ParsedImport = {
   templates: ImportTemplatePayload[];

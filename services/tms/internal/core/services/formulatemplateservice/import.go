@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -31,6 +32,7 @@ var supportedImportVersions = map[string]struct{}{
 	"1.0": {},
 	"1.1": {},
 	"1.2": {},
+	"1.3": {},
 }
 
 type ImportTemplatePayload struct {
@@ -43,6 +45,8 @@ type ImportTemplatePayload struct {
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"`
 	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"`
+	RoundingMode         ratetypes.RoundingMode              `json:"roundingMode"`
+	RoundingPrecision    *int32                              `json:"roundingPrecision"`
 	Metadata             map[string]any                      `json:"metadata"`
 	SourceTemplateID     *pulid.ID                           `json:"sourceTemplateId"`
 	SourceVersionNumber  *int64                              `json:"sourceVersionNumber"`
@@ -302,6 +306,8 @@ func (s *Service) buildImportEntities(
 			BreakdownDefinitions: payload.BreakdownDefinitions,
 			MinCharge:            payload.MinCharge,
 			MaxCharge:            payload.MaxCharge,
+			RoundingMode:         payload.RoundingMode,
+			RoundingPrecision:    importedPrecision(payload),
 			Metadata:             payload.Metadata,
 			CurrentVersionNumber: 1,
 		}
@@ -352,7 +358,10 @@ func validateImportTestCases(indexed *errortypes.MultiError, testCases []*TestCa
 		indexed.Add(
 			"testCases",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Cannot import more than %d test scenarios per template", importMaxTestCases),
+			fmt.Sprintf(
+				"Cannot import more than %d test scenarios per template",
+				importMaxTestCases,
+			),
 		)
 		return
 	}
@@ -419,4 +428,18 @@ func addIndexedValidationError(indexed *errortypes.MultiError, err error) {
 	default:
 		indexed.Add("expression", errortypes.ErrInvalid, err.Error())
 	}
+}
+
+// importedPrecision reads the precision an export carried. Exports before 1.3
+// carried no policy at all, and an export that names a mode without a
+// precision meant the default; NormalizeRounding settles the fully absent
+// case when the entity is validated.
+func importedPrecision(payload *ImportTemplatePayload) int32 {
+	if payload.RoundingPrecision != nil {
+		return *payload.RoundingPrecision
+	}
+	if payload.RoundingMode != "" {
+		return formulatypes.DefaultRoundingPrecision
+	}
+	return 0
 }

@@ -5,7 +5,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { ExpressionEditor } from "@/components/formula-editor/expression-editor";
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { VariableDefinitionEditor } from "@/components/formula-editor/variable-definition-editor";
-import { formulaTemplateTypeChoices } from "@/lib/choices";
+import { formulaTemplateTypeChoices, rateRoundingModeChoices } from "@/lib/choices";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -18,7 +18,10 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
+import {
+  MAX_ROUNDING_PRECISION,
+  type FormulaTemplateFormValues,
+} from "@trenova/shared/types/formula-template";
 import {
   ChevronDownIcon,
   CodeIcon,
@@ -189,8 +192,8 @@ export function StudioEditorPane({
         <Separator />
         <SectionHeader
           icon={ShieldCheckIcon}
-          title="Guardrails"
-          description="Clamp the calculated charge to a minimum and maximum amount"
+          title="Charge Policy"
+          description="Clamp the calculated charge to a range, then round it to what gets billed"
         />
         <FormGroup cols={2}>
           <FormControl>
@@ -213,6 +216,25 @@ export function StudioEditorPane({
               sideText="$"
               decimalScale={2}
               thousandSeparator
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              label="Rounding Mode"
+              name="roundingMode"
+              control={control}
+              options={rateRoundingModeChoices}
+              description="Applied after guardrails; production, preview, and scenarios all round the same way"
+            />
+          </FormControl>
+          <FormControl>
+            <NumberField
+              label="Rounding Precision"
+              name="roundingPrecision"
+              control={control}
+              placeholder="2"
+              decimalScale={0}
+              description={`Decimal places kept, 0 to ${MAX_ROUNDING_PRECISION}`}
             />
           </FormControl>
         </FormGroup>

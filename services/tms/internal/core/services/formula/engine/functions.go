@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/expr-lang/expr"
+	"github.com/shopspring/decimal"
 )
 
 func BuiltinFunctions() []expr.Option {
@@ -20,7 +22,11 @@ func BuiltinFunctions() []expr.Option {
 
 const maxRoundDecimals = 12
 
-func roundFn(args ...any) (any, error) {
+// roundWith rounds through the decimal type rather than float arithmetic, so
+// round(2.675, 2) is 2.68 the way a person expects and not the 2.67 that
+// binary floating point produces. Every rounding function shares it; only
+// the mode differs.
+func roundWith(mode ratetypes.RoundingMode, args ...any) (any, error) {
 	value, err := toFloat64(args[0])
 	if err != nil {
 		return nil, err
@@ -40,8 +46,51 @@ func roundFn(args ...any) (any, error) {
 		decimals = d
 	}
 
-	multiplier := math.Pow(10, float64(decimals))
-	return math.Round(value*multiplier) / multiplier, nil
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return nil, fmt.Errorf("cannot round a non-finite value: %v", value)
+	}
+
+	return mode.Round(decimal.NewFromFloat(value), int32(decimals)).InexactFloat64(), nil
+}
+
+func roundFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeHalfUp, args...)
+}
+
+func roundUpFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeUp, args...)
+}
+
+func roundDownFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeDown, args...)
+}
+
+func roundHalfEvenFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeHalfEven, args...)
+}
+
+// roundToFn rounds to the nearest multiple of an increment: the nearest $5,
+// the nearest quarter, the nearest hundredweight.
+func roundToFn(args ...any) (any, error) {
+	value, err := toFloat64(args[0])
+	if err != nil {
+		return nil, err
+	}
+	increment, err := toFloat64(args[1])
+	if err != nil {
+		return nil, err
+	}
+	if increment <= 0 || math.IsNaN(increment) || math.IsInf(increment, 0) {
+		return nil, fmt.Errorf("roundTo increment must be a positive number, got %v", increment)
+	}
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return nil, fmt.Errorf("cannot round a non-finite value: %v", value)
+	}
+
+	step := decimal.NewFromFloat(increment)
+	multiples := decimal.NewFromFloat(value).Div(step).Round(0)
+
+	return multiples.Mul(step).InexactFloat64(), nil
 }
 
 func ceilFn(args ...any) (any, error) {

@@ -56,6 +56,10 @@ type ExpressionEvaluationRequest struct {
 	Variables  map[string]any
 	Breakdowns []*formulatypes.BreakdownDefinition
 	Lookup     RateTableLookup
+	// AllowBoolean lets a yes-or-no expression evaluate to true or false. A
+	// charge never may: a comparison that slipped in as a whole formula would
+	// otherwise price every shipment at one dollar.
+	AllowBoolean bool
 }
 
 type BreakdownAmount struct {
@@ -71,6 +75,16 @@ type GuardrailResult struct {
 	RawAmount decimal.Decimal  `json:"rawAmount"`
 	MinCharge *decimal.Decimal `json:"minCharge,omitempty"`
 	MaxCharge *decimal.Decimal `json:"maxCharge,omitempty"`
+}
+
+// RoundingResult records how the charge policy rounded an amount, so a
+// preview can show the raw figure beside the billable one and a reviewer can
+// see which mode produced the cents.
+type RoundingResult struct {
+	Mode            string          `json:"mode"`
+	Precision       int32           `json:"precision"`
+	Applied         bool            `json:"applied"`
+	UnroundedAmount decimal.Decimal `json:"unroundedAmount"`
 }
 
 type EvaluationResult struct {
@@ -99,5 +113,6 @@ type CalculateResponse struct {
 	Expression          string
 	Breakdown           []BreakdownAmount
 	Guardrail           *GuardrailResult
+	Rounding            *RoundingResult
 	VersionNumber       int64
 }

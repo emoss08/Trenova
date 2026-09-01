@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -894,6 +895,10 @@ type testExpressionRequest struct {
 	Breakdowns []*formulatypes.BreakdownDefinition `json:"breakdowns"`
 	MinCharge  *string                             `json:"minCharge"`
 	MaxCharge  *string                             `json:"maxCharge"`
+	// RoundingMode and RoundingPrecision are the charge policy under test;
+	// omitted means the default the template would store.
+	RoundingMode      string `json:"roundingMode"`
+	RoundingPrecision *int32 `json:"roundingPrecision"`
 }
 
 // @Summary Test a formula expression
@@ -955,6 +960,14 @@ func (h *Handler) testExpression(c *gin.Context) {
 	serviceReq.MinCharge = minCharge
 	serviceReq.MaxCharge = maxCharge
 
+	policy, err := parseRoundingPolicy(req.RoundingMode, req.RoundingPrecision)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	serviceReq.RoundingMode = policy.RoundingMode
+	serviceReq.RoundingPrecision = policy.RoundingPrecision
+
 	if req.ShipmentID != "" {
 		shipmentID, err := pulid.MustParse(req.ShipmentID)
 		if err != nil {
@@ -996,6 +1009,33 @@ func (h *Handler) allowShipmentRead(c *gin.Context, authCtx *authctx.AuthContext
 	}
 
 	return true
+}
+
+func parseRoundingPolicy(mode string, precision *int32) (formulatypes.ChargePolicy, error) {
+	policy := formulatypes.ChargePolicy{RoundingMode: ratetypes.RoundingMode(mode)}
+
+	if mode != "" && !policy.RoundingMode.IsValid() {
+		return policy, errortypes.NewValidationError(
+			"roundingMode",
+			errortypes.ErrInvalid,
+			"Must be one of HalfUp, HalfEven, Up, Down, or None",
+		)
+	}
+
+	if precision != nil {
+		if *precision < 0 || *precision > formulatypes.MaxRoundingPrecision {
+			return policy, errortypes.NewValidationError(
+				"roundingPrecision",
+				errortypes.ErrInvalid,
+				"Must be between 0 and 4",
+			)
+		}
+		policy.RoundingPrecision = *precision
+	} else if mode != "" {
+		policy.RoundingPrecision = formulatypes.DefaultRoundingPrecision
+	}
+
+	return policy, nil
 }
 
 func parseGuardrailCharge(field string, raw *string) (decimal.NullDecimal, error) {

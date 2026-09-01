@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -196,6 +197,8 @@ type TestCaseCandidate struct {
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"`
 	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"`
+	RoundingMode         ratetypes.RoundingMode              `json:"roundingMode"`
+	RoundingPrecision    int32                               `json:"roundingPrecision"`
 }
 
 type RunTestCasesRequest struct {
@@ -316,12 +319,14 @@ func (s *Service) runSingleCase(
 	}
 
 	evaluation := s.TestExpression(ctx, &TestExpressionRequest{
-		Expression: candidate.Expression,
-		SchemaID:   schemaID,
-		Variables:  variables,
-		TenantInfo: tenantInfo,
-		MinCharge:  candidate.MinCharge,
-		MaxCharge:  candidate.MaxCharge,
+		Expression:        candidate.Expression,
+		SchemaID:          schemaID,
+		Variables:         variables,
+		TenantInfo:        tenantInfo,
+		MinCharge:         candidate.MinCharge,
+		MaxCharge:         candidate.MaxCharge,
+		RoundingMode:      candidate.RoundingMode,
+		RoundingPrecision: candidate.RoundingPrecision,
 	})
 
 	if !evaluation.Valid {
@@ -380,6 +385,8 @@ func (s *Service) requirePassingTestCases(
 			BreakdownDefinitions: template.BreakdownDefinitions,
 			MinCharge:            template.MinCharge,
 			MaxCharge:            template.MaxCharge,
+			RoundingMode:         template.RoundingMode,
+			RoundingPrecision:    template.RoundingPrecision,
 		},
 	)
 

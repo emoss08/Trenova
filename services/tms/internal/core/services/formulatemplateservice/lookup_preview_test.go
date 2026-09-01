@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -205,4 +206,91 @@ func TestRunTestCases_ScenarioAgainstMissingTableFailsLoudly(t *testing.T) {
 	assert.False(t, result.Results[0].Passed)
 	assert.Contains(t, result.Results[0].Error, "nope")
 	assert.Equal(t, 1, result.Failed)
+}
+
+func TestTestExpression_AppliesRoundingPolicy(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	halfUp := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "10 / 3",
+		SchemaID:   "shipment",
+		Variables:  map[string]any{},
+		TenantInfo: newTenantInfo(),
+	})
+	assert.True(t, decimal.RequireFromString("3.33").Equal(resultAmount(t, halfUp)), halfUp.Result)
+	require.NotNil(t, halfUp.Rounding)
+	assert.True(t, halfUp.Rounding.Applied)
+	assert.Equal(t, "HalfUp", halfUp.Rounding.Mode)
+
+	wholeUp := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression:        "10 / 3",
+		SchemaID:          "shipment",
+		Variables:         map[string]any{},
+		TenantInfo:        newTenantInfo(),
+		RoundingMode:      ratetypes.RoundingModeUp,
+		RoundingPrecision: 0,
+	})
+	assert.True(t, decimal.NewFromInt(4).Equal(resultAmount(t, wholeUp)), wholeUp.Result)
+}
+
+func TestTestExpression_GuardrailFloorIsNotRoundedAway(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression:        "249.996",
+		SchemaID:          "shipment",
+		Variables:         map[string]any{},
+		TenantInfo:        newTenantInfo(),
+		MinCharge:         decimal.NewNullDecimal(decimal.RequireFromString("250.00")),
+		RoundingMode:      ratetypes.RoundingModeDown,
+		RoundingPrecision: 0,
+	})
+
+	assert.True(t, decimal.NewFromInt(250).Equal(resultAmount(t, result)), result.Result)
+	require.NotNil(t, result.Guardrail)
+	assert.True(t, result.Guardrail.Applied)
+}
+
+func TestTestExpression_BooleanExpressionIsRejected(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "totalDistance > 100",
+		SchemaID:   "shipment",
+		Variables:  map[string]any{"totalDistance": 500.0},
+		TenantInfo: newTenantInfo(),
+	})
+
+	assert.False(t, result.Valid)
+	assert.Contains(t, result.Error, "true/false")
+}
+
+func TestRunTestCases_ScenarioUsesCandidateRoundingPolicy(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Expression = "totalDistance / 3"
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.testCaseRepo.cases = []*formulatemplate.TestCase{
+		newTestCase("rounded up to whole dollars", 34, 0.001),
+	}
+
+	result, err := deps.svc.RunTestCases(t.Context(), &RunTestCasesRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+		Candidate: &TestCaseCandidate{
+			Expression:        template.Expression,
+			RoundingMode:      ratetypes.RoundingModeUp,
+			RoundingPrecision: 0,
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 1)
+	assert.True(t, result.Results[0].Passed, result.Results[0].Error)
+	assert.True(t, decimal.NewFromInt(34).Equal(result.Results[0].ActualAmount))
 }

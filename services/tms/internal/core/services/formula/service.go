@@ -199,7 +199,7 @@ func (s *Service) Rate(
 		return nil, err
 	}
 
-	amount, guardrail := applyGuardrails(req.Template, result.Value)
+	amount, guardrail, rounding := ApplyChargePolicy(req.Template.ChargePolicy(), result.Value)
 
 	return &formulatemplatetypes.CalculateResponse{
 		Amount:              amount,
@@ -209,6 +209,7 @@ func (s *Service) Rate(
 		Expression:          req.Template.Expression,
 		Breakdown:           result.Breakdown,
 		Guardrail:           guardrail,
+		Rounding:            rounding,
 		VersionNumber:       req.Template.CurrentVersionNumber,
 	}, nil
 }
@@ -244,11 +245,29 @@ func (s *Service) BuildLookup(
 	)
 }
 
-func applyGuardrails(
-	template *formulatemplate.FormulaTemplate,
+// ApplyChargePolicy turns a raw evaluation into the billable amount: clamp to
+// the guardrails, then round. Guardrails go first so a floor of $250.00 is
+// the exact floor, not $250.00 rounded to whatever the policy says. Every
+// surface that shows an amount — production rating, the Studio preview, a
+// saved scenario, a backtest — comes through here, which is what makes the
+// number on the screen the number on the invoice.
+func ApplyChargePolicy(
+	policy formulatypes.ChargePolicy,
 	rawAmount decimal.Decimal,
-) (decimal.Decimal, *formulatemplatetypes.GuardrailResult) {
-	return ApplyGuardrailBounds(template.MinCharge, template.MaxCharge, rawAmount)
+) (decimal.Decimal, *formulatemplatetypes.GuardrailResult, *formulatemplatetypes.RoundingResult) {
+	policy = policy.Normalized()
+
+	clamped, guardrail := ApplyGuardrailBounds(policy.MinCharge, policy.MaxCharge, rawAmount)
+	rounded := policy.RoundingMode.Round(clamped, policy.RoundingPrecision)
+
+	rounding := &formulatemplatetypes.RoundingResult{
+		Mode:            policy.RoundingMode.String(),
+		Precision:       policy.RoundingPrecision,
+		Applied:         !rounded.Equal(clamped),
+		UnroundedAmount: clamped,
+	}
+
+	return rounded, guardrail, rounding
 }
 
 func ApplyGuardrailBounds(
@@ -354,10 +373,11 @@ func (s *Service) EvaluatePredicate(
 	result, err := s.engine.EvaluateExpression(
 		ctx,
 		&formulatemplatetypes.ExpressionEvaluationRequest{
-			Expression: req.Expression,
-			Entity:     req.Entity,
-			SchemaID:   req.SchemaID,
-			Lookup:     engine.StubLookup{},
+			Expression:   req.Expression,
+			Entity:       req.Entity,
+			SchemaID:     req.SchemaID,
+			Lookup:       engine.StubLookup{},
+			AllowBoolean: true,
 		},
 	)
 	if err != nil {
