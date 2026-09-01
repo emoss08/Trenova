@@ -286,7 +286,9 @@ export default function FormulaTemplatesDataTable() {
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
         onAddRecord={() => void navigate(formulaTemplateRoutes.new)}
-        onRowClick={(row) => void navigate(formulaTemplateRoutes.edit(row.original.id))}
+        onRowClick={(row) => {
+          if (row.original.id) void navigate(formulaTemplateRoutes.edit(row.original.id));
+        }}
         addRecordActions={[
           {
             id: "install-standards",
@@ -400,7 +402,7 @@ export default function FormulaTemplatesDataTable() {
         currentTemplateId={lineageDialogTemplate?.id}
         onNavigateToTemplate={(templateId) => {
           setLineageDialogTemplate(null);
-          void navigate(formulaTemplateRoutes.edit(templateId));
+          if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
         }}
       />
     </>

@@ -269,7 +269,7 @@ function FormulaStudioBody({
         currentTemplateId={template?.id}
         onNavigateToTemplate={(templateId) => {
           setLineageDialogOpen(false);
-          void navigate(formulaTemplateRoutes.edit(templateId));
+          if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
         }}
       />
 
