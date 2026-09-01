@@ -4554,6 +4554,8 @@ type FormulaTemplate {
   reviewComment: String!
   roundingMode: RateRoundingMode!
   roundingPrecision: Int!
+  """How many saved scenarios gate this template's approval."""
+  scenarioCount: Int!
   schemaId: String!
   sourceTemplateId: ID
   sourceVersionNumber: Int
@@ -4562,6 +4564,10 @@ type FormulaTemplate {
   submittedById: ID
   type: FormulaTemplateType!
   updatedAt: Int!
+  """
+  How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template.
+  """
+  usageCount: Int!
   variableDefinitions: [FormulaTemplateVariableDefinition!]!
   version: Int!
 }

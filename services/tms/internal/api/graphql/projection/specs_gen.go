@@ -6864,6 +6864,14 @@ func init() {
 				FieldMapKey: "updatedAt",
 			},
 			{
+				Name:    "usageCount",
+				Special: "usageCount",
+			},
+			{
+				Name:    "scenarioCount",
+				Special: "scenarioCount",
+			},
+			{
 				Name:        "businessUnit",
 				FieldMapKey: "businessUnitId",
 				Relation: &RelationSpec{

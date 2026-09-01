@@ -688,6 +688,13 @@ func (s *stubFormulaTemplateRepository) CountUsages(
 	return nil, errors.New("not implemented")
 }
 
+func (s *stubFormulaTemplateRepository) CountStatsByIDs(
+	context.Context,
+	*repositories.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]repositories.TemplateStats, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *stubFormulaTemplateRepository) SelectOptions(
 	context.Context,
 	*repositories.FormulaTemplateSelectOptionsRequest,

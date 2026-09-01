@@ -51,8 +51,12 @@ func (r *repository) filterQuery(
 	if req.Type != "" {
 		t, err := formulatemplate.TemplateTypeFromString(req.Type)
 		if err != nil {
-			log.Error("failed to parse template type", zap.Error(err))
-			return q
+			log.Warn("rejected unknown template type filter", zap.String("type", req.Type))
+			return q.Err(errortypes.NewValidationError(
+				"type",
+				errortypes.ErrInvalid,
+				"Unknown template type: "+req.Type,
+			))
 		}
 
 		q = q.Where("ft.type = ?", t)
@@ -61,8 +65,12 @@ func (r *repository) filterQuery(
 	if req.Status != "" {
 		s, err := formulatemplate.StatusFromString(req.Status)
 		if err != nil {
-			log.Error("failed to parse template status", zap.Error(err))
-			return q
+			log.Warn("rejected unknown template status filter", zap.String("status", req.Status))
+			return q.Err(errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalid,
+				"Unknown template status: "+req.Status,
+			))
 		}
 
 		q = q.Where("ft.status = ?", s)

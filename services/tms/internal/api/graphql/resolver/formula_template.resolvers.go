@@ -36,6 +36,24 @@ func (r *formulaTemplateResolver) MaxCharge(ctx context.Context, obj *formulatem
 	return nullDecimalToStringPtr(obj.MaxCharge), nil
 }
 
+// UsageCount is the resolver for the usageCount field.
+func (r *formulaTemplateResolver) UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error) {
+	stats, err := formulaTemplateStats(ctx, obj)
+	if err != nil {
+		return 0, err
+	}
+	return stats.UsageCount, nil
+}
+
+// ScenarioCount is the resolver for the scenarioCount field.
+func (r *formulaTemplateResolver) ScenarioCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error) {
+	stats, err := formulaTemplateStats(ctx, obj)
+	if err != nil {
+		return 0, err
+	}
+	return stats.ScenarioCount, nil
+}
+
 // FormulaTemplates is the resolver for the formulaTemplates field.
 func (r *queryResolver) FormulaTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaTemplateConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)

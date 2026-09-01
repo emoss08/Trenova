@@ -3075,6 +3075,7 @@ type ComplexityRoot struct {
 		ReviewComment        func(childComplexity int) int
 		RoundingMode         func(childComplexity int) int
 		RoundingPrecision    func(childComplexity int) int
+		ScenarioCount        func(childComplexity int) int
 		SchemaID             func(childComplexity int) int
 		SourceTemplateID     func(childComplexity int) int
 		SourceVersionNumber  func(childComplexity int) int
@@ -3083,6 +3084,7 @@ type ComplexityRoot struct {
 		SubmittedByID        func(childComplexity int) int
 		Type                 func(childComplexity int) int
 		UpdatedAt            func(childComplexity int) int
+		UsageCount           func(childComplexity int) int
 		VariableDefinitions  func(childComplexity int) int
 		Version              func(childComplexity int) int
 	}
@@ -7300,6 +7302,9 @@ type FormulaTemplateResolver interface {
 	BreakdownDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateBreakdownDefinition, error)
 	MinCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error)
 	MaxCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error)
+
+	UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error)
+	ScenarioCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error)
 }
 type InvoiceResolver interface {
 	SubtotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
@@ -21557,6 +21562,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.RoundingPrecision(childComplexity), true
+	case "FormulaTemplate.scenarioCount":
+		if e.ComplexityRoot.FormulaTemplate.ScenarioCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.ScenarioCount(childComplexity), true
 	case "FormulaTemplate.schemaId":
 		if e.ComplexityRoot.FormulaTemplate.SchemaID == nil {
 			break
@@ -21605,6 +21616,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.UpdatedAt(childComplexity), true
+	case "FormulaTemplate.usageCount":
+		if e.ComplexityRoot.FormulaTemplate.UsageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.UsageCount(childComplexity), true
 	case "FormulaTemplate.variableDefinitions":
 		if e.ComplexityRoot.FormulaTemplate.VariableDefinitions == nil {
 			break
@@ -49654,6 +49671,10 @@ type FormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Int!
   updatedAt: Int!
+  "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
+  usageCount: Int!
+  "How many saved scenarios gate this template's approval."
+  scenarioCount: Int!
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -60843,6 +60864,10 @@ func (ec *executionContext) childFields_FormulaTemplate(ctx context.Context, fie
 		return ec.fieldContext_FormulaTemplate_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_FormulaTemplate_updatedAt(ctx, field)
+	case "usageCount":
+		return ec.fieldContext_FormulaTemplate_usageCount(ctx, field)
+	case "scenarioCount":
+		return ec.fieldContext_FormulaTemplate_scenarioCount(ctx, field)
 	case "businessUnit":
 		return ec.fieldContext_FormulaTemplate_businessUnit(ctx, field)
 	case "organization":
@@ -129466,6 +129491,52 @@ func (ec *executionContext) _FormulaTemplate_updatedAt(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_FormulaTemplate_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_usageCount(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_usageCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.FormulaTemplate().UsageCount(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_usageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_scenarioCount(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_scenarioCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.FormulaTemplate().ScenarioCount(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_scenarioCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, true, true, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _FormulaTemplate_businessUnit(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
@@ -249699,6 +249770,82 @@ func (ec *executionContext) _FormulaTemplate(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "usageCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FormulaTemplate_usageCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "scenarioCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FormulaTemplate_scenarioCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "businessUnit":
 			out.Values[i] = ec._FormulaTemplate_businessUnit(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {

@@ -109,6 +109,91 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       maxSize: 100,
     },
     {
+      accessorKey: "usageCount",
+      header: "In Use",
+      cell: ({ row }) => {
+        const count = row.original.usageCount ?? 0;
+        return count > 0 ? (
+          <Badge variant="info" className="font-mono text-xs">
+            {count}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-xs">Not in use</span>
+        );
+      },
+      meta: {
+        label: "In Use",
+        apiField: "usageCount",
+        filterable: false,
+        sortable: false,
+        filterType: "number",
+      },
+      size: 100,
+      minSize: 90,
+      maxSize: 120,
+    },
+    {
+      accessorKey: "scenarioCount",
+      header: "Scenarios",
+      cell: ({ row }) => {
+        const count = row.original.scenarioCount ?? 0;
+        return count > 0 ? (
+          <Badge variant="outline" className="font-mono text-xs">
+            {count}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-xs">None</span>
+        );
+      },
+      meta: {
+        label: "Scenarios",
+        apiField: "scenarioCount",
+        filterable: false,
+        sortable: false,
+        filterType: "number",
+      },
+      size: 100,
+      minSize: 90,
+      maxSize: 120,
+    },
+    {
+      accessorKey: "approvedAt",
+      header: "Approved",
+      cell: ({ row }) =>
+        row.original.approvedAt ? (
+          <HoverCardTimestamp timestamp={row.original.approvedAt} />
+        ) : (
+          <span className="text-muted-foreground text-xs">Never</span>
+        ),
+      meta: {
+        label: "Approved",
+        apiField: "approvedAt",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "gt",
+      },
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated",
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
+      meta: {
+        label: "Updated",
+        apiField: "updatedAt",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "gt",
+      },
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
+    },
+    {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,

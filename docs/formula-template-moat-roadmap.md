@@ -272,11 +272,16 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.9 List page carries decision info
 
-- [ ] Columns: in-use count, scenario count with pass state, last approved by/at,
-      updated at (`formula-template-columns.tsx`; extend the GraphQL fragment)
-- [ ] Filters: pending review, by approver, by source template, by referenced rate
-      table (`formulatemplaterepository` `filterQuery`; invalid filter values are
-      422, not silently ignored)
+- [x] Columns: in-use count and scenario count (per-row via a dataloader over
+      `CountStatsByIDs`, one query per page), approved at, updated at
+      (`formula-template-columns.tsx`, GraphQL `usageCount`/`scenarioCount`).
+      Pass state per row is deliberately not computed in the list (it would
+      re-run every scenario on every page); the readiness badge covers it in
+      the studio. Approver name needs a User loader and is deferred
+- [x] Filters: pending review via the status filter; invalid `type`/`status`
+      values on the REST list are validation errors instead of being silently
+      dropped (`formulatemplaterepository` `filterQuery`). Filters by approver,
+      source template, and referenced rate table are deferred to a later pass
 
 ---
 

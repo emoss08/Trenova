@@ -29,6 +29,9 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
 }

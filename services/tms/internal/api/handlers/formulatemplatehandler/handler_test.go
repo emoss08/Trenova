@@ -3051,3 +3051,10 @@ func TestFormulaTemplateHandler_Readiness_DraftWithoutScenarios(t *testing.T) {
 	assert.Equal(t, "warn", byKey["scenarios"]["status"])
 	assert.Equal(t, "warn", byKey["description"]["status"])
 }
+
+func (m *mockFormulaTemplateRepo) CountStatsByIDs(
+	_ context.Context,
+	_ *repositories.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]repositories.TemplateStats, error) {
+	return map[pulid.ID]repositories.TemplateStats{}, nil
+}

@@ -64,6 +64,10 @@ type FormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Int!
   updatedAt: Int!
+  "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
+  usageCount: Int!
+  "How many saved scenarios gate this template's approval."
+  scenarioCount: Int!
   businessUnit: BusinessUnit
   organization: Organization
 }

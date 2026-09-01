@@ -5,8 +5,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -83,4 +86,20 @@ func formulaTemplateBreakdownDefinitionsToModel(
 		})
 	}
 	return items
+}
+
+// formulaTemplateStats reads the per-row counts through the request's
+// dataloader, so a page of templates resolves them in one query.
+func formulaTemplateStats(
+	ctx context.Context,
+	obj *formulatemplate.FormulaTemplate,
+) (repositories.TemplateStats, error) {
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return repositories.TemplateStats{}, errortypes.NewDatabaseError(
+			"Formula template stats loader is not configured",
+		)
+	}
+
+	return loadersForRequest.FormulaTemplateStatsByID.Load(ctx, obj.ID.String())()
 }

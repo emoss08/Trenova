@@ -96,6 +96,8 @@ export const formulaTemplateSchema = z
     currentVersionNumber: z.number().optional(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
+    usageCount: z.number().optional(),
+    scenarioCount: z.number().optional(),
   })
   .superRefine((value, ctx) => {
     const seenVariables = new Map<string, number>();

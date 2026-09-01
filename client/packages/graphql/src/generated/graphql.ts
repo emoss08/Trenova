@@ -4680,7 +4680,7 @@ export type FleetCodeTableQueryVariables = Exact<{
 
 export type FleetCodeTableQuery = { fleetCodes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, minCharge: string | null, maxCharge: string | null, roundingMode: RateRoundingMode, roundingPrecision: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }>, breakdownDefinitions: Array<{ name: string, label: string, expression: string }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
+export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, minCharge: string | null, maxCharge: string | null, roundingMode: RateRoundingMode, roundingPrecision: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, approvedAt: number | null, usageCount: number, scenarioCount: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }>, breakdownDefinitions: Array<{ name: string, label: string, expression: string }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
 export type FormulaTemplateTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -7709,6 +7709,9 @@ export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(
   sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
 }
@@ -16597,9 +16600,12 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
-}`, {"hash":"sha256:7712d39cde54618773acf841cd7c01a8ae8a7911000e73dd6d6fc06a5cd7e4fb"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+}`, {"hash":"sha256:58fed7b314c6fffe6a8cfa40f90466b48ca8cf6bf254f35f47a31af88b1ff9cc"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
 export const FuelIndexTableDocument = new TypedDocumentString(`
     query FuelIndexTable($input: DataTableConnectionInput!) {
   fuelIndexes(input: $input) {
