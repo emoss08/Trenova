@@ -1176,7 +1176,7 @@ func TestFormulaTemplateHandler_Patch_UpdatesOnlyProvidedFields(t *testing.T) {
 		WithPath("/api/v1/formula-templates/" + templateID.String() + "/").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]string{
-			"status": "Inactive",
+			"description": "Patched Description",
 		})
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -1186,10 +1186,10 @@ func TestFormulaTemplateHandler_Patch_UpdatesOnlyProvidedFields(t *testing.T) {
 
 	require.NotNil(t, updatedEntity)
 	assert.Equal(t, "Original Name", updatedEntity.Name)
-	assert.Equal(t, "Original Description", updatedEntity.Description)
+	assert.Equal(t, "Patched Description", updatedEntity.Description)
 	assert.Equal(t, formulatemplate.TemplateTypeFreightCharge, updatedEntity.Type)
 	assert.Equal(t, "totalDistance * 2", updatedEntity.Expression)
-	assert.Equal(t, formulatemplate.StatusInactive, updatedEntity.Status)
+	assert.Equal(t, formulatemplate.StatusActive, updatedEntity.Status)
 }
 
 func TestFormulaTemplateHandler_Patch_ReturnsNotFoundForMissingEntity(t *testing.T) {
@@ -1368,9 +1368,64 @@ func TestFormulaTemplateHandler_Patch_PreservesAllFields(t *testing.T) {
 	assert.Equal(t, "A test formula template", updatedEntity.Description)
 	assert.Equal(t, formulatemplate.TemplateTypeAccessorialCharge, updatedEntity.Type)
 	assert.Equal(t, "freightChargeAmount * 0.15", updatedEntity.Expression)
-	assert.Equal(t, formulatemplate.StatusInReview, updatedEntity.Status)
+	assert.Equal(t, formulatemplate.StatusDraft, updatedEntity.Status,
+		"a partial update never moves status; that is the review workflow's job")
 	assert.Equal(t, "shipment", updatedEntity.SchemaID)
 	assert.Equal(t, int64(5), updatedEntity.Version)
+}
+
+func TestFormulaTemplateHandler_Update_RejectsStatusChange(t *testing.T) {
+	t.Parallel()
+
+	templateID := pulid.MustNew("ft_")
+
+	existingTemplate := &formulatemplate.FormulaTemplate{
+		ID:                   templateID,
+		OrganizationID:       testutil.TestOrgID,
+		BusinessUnitID:       testutil.TestBuID,
+		Name:                 "Test Template",
+		Description:          "A test formula template",
+		Type:                 formulatemplate.TemplateTypeFreightCharge,
+		Expression:           "totalDistance * 2",
+		Status:               formulatemplate.StatusInReview,
+		SchemaID:             "shipment",
+		Version:              1,
+		CurrentVersionNumber: 1,
+	}
+
+	updateCalled := false
+	repo := &mockFormulaTemplateRepo{
+		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+			copied := *existingTemplate
+			return &copied, nil
+		},
+		updateFunc: func(_ context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
+			updateCalled = true
+			return entity, nil
+		},
+	}
+
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPut).
+		WithPath("/api/v1/formula-templates/" + templateID.String() + "/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"name":        "Test Template",
+			"description": "A test formula template",
+			"type":        "FreightCharge",
+			"expression":  "totalDistance * 2",
+			"status":      "Active",
+			"schemaId":    "shipment",
+			"version":     1,
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+	assert.False(t, updateCalled, "a PUT must not be a back door to Active")
 }
 
 func TestFormulaTemplateHandler_TestExpression_Success(t *testing.T) {
@@ -2640,6 +2695,7 @@ func TestFormulaTemplateHandler_UpdateEffectiveDate_Success(t *testing.T) {
 		getByTemplateAndVersionFn: func(_ context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				VersionNumber: req.VersionNumber,
+				Status:        formulatemplate.StatusActive,
 			}, nil
 		},
 		updateEffectiveDateFunc: func(_ context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error) {
@@ -2890,4 +2946,11 @@ func (m *mockVersionRepo) GetLatestByStatus(
 	_ *repositories.GetLatestVersionByStatusRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
+}
+
+func (m *mockVersionRepo) ClearScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) (int64, error) {
+	return 0, nil
 }

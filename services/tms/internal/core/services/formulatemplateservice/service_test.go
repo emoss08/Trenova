@@ -381,6 +381,43 @@ func TestCreate_Success(t *testing.T) {
 	deps.repo.AssertExpectations(t)
 }
 
+func TestCreate_ForcesDraftAndClearsReviewStamps(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	userID := pulid.MustNew("usr_")
+	approver := pulid.MustNew("usr_")
+	stamp := int64(1700000000)
+
+	entity := newTestTemplate()
+	entity.ID = ""
+	entity.Status = formulatemplate.StatusActive
+	entity.ApprovedByID = &approver
+	entity.ApprovedAt = &stamp
+	entity.SubmittedByID = &approver
+	entity.SubmittedAt = &stamp
+	entity.ReviewComment = "self-approved"
+
+	deps.repo.On("Create", mock.Anything, mock.MatchedBy(
+		func(created *formulatemplate.FormulaTemplate) bool {
+			return created.Status == formulatemplate.StatusDraft &&
+				created.ApprovedByID == nil && created.ApprovedAt == nil &&
+				created.SubmittedByID == nil && created.SubmittedAt == nil &&
+				created.ReviewComment == ""
+		},
+	)).Return(func(_ context.Context, created *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
+		return created, nil
+	})
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+
+	result, err := deps.svc.Create(t.Context(), entity, userID)
+
+	require.NoError(t, err)
+	assert.Equal(t, formulatemplate.StatusDraft, result.Status)
+	deps.repo.AssertExpectations(t)
+}
+
 func TestCreate_ValidationFailure(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
@@ -473,6 +510,7 @@ func TestUpdate_Success(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(updated, nil)
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Update(ctx, entity, userID)
@@ -481,6 +519,66 @@ func TestUpdate_Success(t *testing.T) {
 	assert.Equal(t, entity.ID, result.ID)
 	assert.Equal(t, "Updated Name", result.Name)
 	deps.repo.AssertExpectations(t)
+}
+
+func TestUpdate_RejectsStatusChangeEvenWhenMachineAllowsIt(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	userID := pulid.MustNew("usr_")
+
+	original := newTestTemplate()
+	original.Status = formulatemplate.StatusInReview
+
+	entity := newTestTemplate()
+	entity.ID = original.ID
+	entity.OrganizationID = original.OrganizationID
+	entity.BusinessUnitID = original.BusinessUnitID
+	entity.Status = formulatemplate.StatusActive
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+
+	result, err := deps.svc.Update(t.Context(), entity, userID)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "Status cannot be changed")
+	deps.repo.AssertNotCalled(t, "Update")
+}
+
+func TestUpdate_KeepsWorkflowStampsFromOriginal(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	userID := pulid.MustNew("usr_")
+	forged := pulid.MustNew("usr_")
+	forgedAt := int64(1700009999)
+
+	original := newTestTemplate()
+	original.Status = formulatemplate.StatusDraft
+
+	entity := newTestTemplate()
+	entity.ID = original.ID
+	entity.OrganizationID = original.OrganizationID
+	entity.BusinessUnitID = original.BusinessUnitID
+	entity.Status = formulatemplate.StatusDraft
+	entity.Description = "non-material edit"
+	entity.ApprovedByID = &forged
+	entity.ApprovedAt = &forgedAt
+	entity.ReviewComment = "forged approval"
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).
+		Return(func(_ context.Context, updated *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
+			return updated, nil
+		})
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	result, err := deps.svc.Update(t.Context(), entity, userID)
+
+	require.NoError(t, err)
+	assert.Nil(t, result.ApprovedByID)
+	assert.Nil(t, result.ApprovedAt)
+	assert.Empty(t, result.ReviewComment)
+	deps.versionRepo.AssertNotCalled(t, "ClearScheduled", mock.Anything, mock.Anything)
 }
 
 func TestUpdate_NotFound(t *testing.T) {
@@ -605,6 +703,23 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
 	deps.repo.AssertExpectations(t)
+}
+
+func TestBulkUpdateStatus_RejectsReactivation(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	req := &repositories.BulkUpdateFormulaTemplateStatusRequest{
+		TenantInfo:  newTenantInfo(),
+		TemplateIDs: []pulid.ID{pulid.MustNew("ft_")},
+		Status:      formulatemplate.StatusActive,
+	}
+
+	result, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	deps.repo.AssertNotCalled(t, "BulkUpdateStatus")
 }
 
 func TestBulkUpdateStatus_RejectsUnsupportedTarget(t *testing.T) {
@@ -1527,7 +1642,14 @@ func TestApprovalTransitions(t *testing.T) {
 		},
 		{"submit from in review", "submit", formulatemplate.StatusInReview, "", "", true},
 		{"submit from active", "submit", formulatemplate.StatusActive, "", "", true},
-		{"submit from inactive", "submit", formulatemplate.StatusInactive, "", "", true},
+		{
+			"submit from inactive",
+			"submit",
+			formulatemplate.StatusInactive,
+			"bring it back",
+			formulatemplate.StatusInReview,
+			false,
+		},
 		{
 			"approve from in review",
 			"approve",
@@ -1569,6 +1691,10 @@ func TestApprovalTransitions(t *testing.T) {
 			if tt.action == "approve" && !tt.wantErr {
 				deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+			}
+			if tt.action == "reject" && !tt.wantErr {
+				deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).
+					Return(int64(0), nil)
 			}
 
 			req := &ApprovalActionRequest{
@@ -1725,6 +1851,7 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
@@ -1738,6 +1865,33 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 	assert.Nil(t, result.SubmittedByID)
 	assert.Nil(t, result.SubmittedAt)
 	assert.Equal(t, "expression is wrong", result.ReviewComment)
+}
+
+func TestReject_ClearsScheduledVersions(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.MatchedBy(
+		func(req *repositories.ListScheduledVersionsRequest) bool {
+			return req.TemplateID == template.ID &&
+				req.TenantInfo.OrgID == template.OrganizationID
+		},
+	)).Return(int64(2), nil).Once()
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
+		TenantInfo: newTenantInfo(),
+		EntityID:   template.ID,
+		Comment:    "not yet",
+	})
+
+	require.NoError(t, err)
+	deps.versionRepo.AssertExpectations(t)
 }
 
 func TestUpdate_InvalidStatusTransition(t *testing.T) {
@@ -1798,11 +1952,17 @@ func TestUpdate_MaterialChangeRevertsApproval(t *testing.T) {
 		})
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.MatchedBy(
+		func(req *repositories.ListScheduledVersionsRequest) bool {
+			return req.TemplateID == original.ID
+		},
+	)).Return(int64(1), nil).Once()
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Update(t.Context(), entity, userID)
 
 	require.NoError(t, err)
+	deps.versionRepo.AssertExpectations(t)
 	assert.Equal(t, formulatemplate.StatusDraft, result.Status)
 	assert.Nil(t, result.SubmittedByID)
 	assert.Nil(t, result.SubmittedAt)
@@ -1940,7 +2100,10 @@ func TestUpdateVersionEffectiveDate_Success(t *testing.T) {
 	}
 
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
-		Return(&formulatemplate.FormulaTemplateVersion{VersionNumber: 2}, nil)
+		Return(&formulatemplate.FormulaTemplateVersion{
+			VersionNumber: 2,
+			Status:        formulatemplate.StatusActive,
+		}, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("UpdateEffectiveDate", mock.Anything, mock.Anything).Return(updated, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -1959,6 +2122,36 @@ func TestUpdateVersionEffectiveDate_Success(t *testing.T) {
 	require.NotNil(t, result.EffectiveFrom)
 	assert.Equal(t, future, *result.EffectiveFrom)
 	deps.versionRepo.AssertExpectations(t)
+}
+
+func TestUpdateVersionEffectiveDate_RejectsUnapprovedSnapshot(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	future := timeutils.NowUnix() + 7200
+
+	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplateVersion{
+			VersionNumber: 3,
+			Status:        formulatemplate.StatusDraft,
+		}, nil)
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	result, err := deps.svc.UpdateVersionEffectiveDate(
+		t.Context(),
+		&repositories.UpdateEffectiveDateRequest{
+			TenantInfo:    newTenantInfo(),
+			TemplateID:    template.ID,
+			VersionNumber: 3,
+			EffectiveFrom: &future,
+		},
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "approved")
+	deps.versionRepo.AssertNotCalled(t, "UpdateEffectiveDate", mock.Anything, mock.Anything)
 }
 
 func TestUpdateVersionEffectiveDate_ClearAllowsAnyStatus(t *testing.T) {

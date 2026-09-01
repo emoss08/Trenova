@@ -167,18 +167,20 @@ export function StudioHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
-        {mode === "edit" && template?.status === "Draft" && canSubmit && (
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            className="gap-1.5"
-            onClick={() => onApprovalAction("submit")}
-          >
-            <SendIcon className="size-3" />
-            Submit for Review
-          </Button>
-        )}
+        {mode === "edit" &&
+          (template?.status === "Draft" || template?.status === "Inactive") &&
+          canSubmit && (
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              className="gap-1.5"
+              onClick={() => onApprovalAction("submit")}
+            >
+              <SendIcon className="size-3" />
+              {template?.status === "Inactive" ? "Reactivate via Review" : "Submit for Review"}
+            </Button>
+          )}
         {mode === "edit" && template?.status === "InReview" && (
           <>
             {canApprove && (

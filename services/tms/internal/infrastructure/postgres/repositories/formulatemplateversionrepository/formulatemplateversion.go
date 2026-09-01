@@ -396,3 +396,38 @@ func (r *repository) GetLatestByStatus(
 
 	return entity, nil
 }
+
+func (r *repository) ClearScheduled(
+	ctx context.Context,
+	req *repositories.ListScheduledVersionsRequest,
+) (int64, error) {
+	log := r.l.With(
+		zap.String("operation", "ClearScheduled"),
+		zap.String("templateID", req.TemplateID.String()),
+	)
+
+	ftv := buncolgen.FormulaTemplateVersionColumns
+
+	result, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*formulatemplate.FormulaTemplateVersion)(nil)).
+		Set(ftv.EffectiveFrom.String()+" = NULL").
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.FormulaTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
+				Where(ftv.TemplateID.Eq(), req.TemplateID).
+				Where(ftv.EffectiveFrom.IsNotNull())
+		}).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to clear scheduled versions", zap.Error(err))
+		return 0, err
+	}
+
+	cleared, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to read cleared version count", zap.Error(err))
+		return 0, err
+	}
+
+	return cleared, nil
+}

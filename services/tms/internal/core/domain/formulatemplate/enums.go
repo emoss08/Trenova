@@ -33,11 +33,15 @@ func StatusFromString(s string) (Status, error) {
 	}
 }
 
+// allowedTransitions is the review cycle. Active is reachable only from
+// InReview: an archived template goes back through review rather than
+// straight to Active, because its content may reference tables that have
+// since changed and nobody has looked at it in a while.
 var allowedTransitions = map[Status][]Status{
 	StatusDraft:    {StatusInReview},
 	StatusInReview: {StatusActive, StatusDraft},
 	StatusActive:   {StatusInactive, StatusDraft},
-	StatusInactive: {StatusActive},
+	StatusInactive: {StatusInReview},
 }
 
 func CanTransition(from, to Status) bool {

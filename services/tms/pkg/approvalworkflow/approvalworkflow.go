@@ -17,6 +17,7 @@ package approvalworkflow
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,8 +40,12 @@ type Request struct {
 // submitter, the approver, the comment. Everything around it is the same
 // whatever is being reviewed.
 type Transition[T any, S comparable] struct {
-	Operation    string
-	From         S
+	Operation string
+	From      S
+	// AlsoFrom lists further statuses the step may start from, for a cycle
+	// where two states share a next step — an archived template is submitted
+	// for review the same way a draft is.
+	AlsoFrom     []S
 	To           S
 	PermissionOp permission.Operation
 	AuditComment string
@@ -100,7 +105,7 @@ func (e Engine[T, S]) Apply(
 	}
 
 	current := e.StatusOf(entity)
-	if current != transition.From || !e.CanTransition(current, transition.To) {
+	if !transition.startsFrom(current) || !e.CanTransition(current, transition.To) {
 		return zero, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -140,6 +145,10 @@ func (e Engine[T, S]) Apply(
 	}
 
 	return updated, nil
+}
+
+func (t Transition[T, S]) startsFrom(status S) bool {
+	return status == t.From || slices.Contains(t.AlsoFrom, status)
 }
 
 // RequireComment refuses a transition that would leave no record of why.

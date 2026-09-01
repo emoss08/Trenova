@@ -63,18 +63,19 @@ permission only; `Create` never forces Draft; bulk status flips Inactive→Activ
 without re-validation; any snapshot (Draft included) can be scheduled onto an
 Active template.
 
-- [ ] `Create` forces `Status = Draft` and clears approval fields regardless of
+- [x] `Create` forces `Status = Draft` and clears approval fields regardless of
       payload (`formulatemplateservice/service.go`)
-- [ ] `Update` rejects any status change in the payload with a field error on
+- [x] `Update` rejects any status change in the payload with a field error on
       `status`; Submit/Approve/Reject are the only movers
-- [ ] `BulkUpdateStatus` restricted to Active→Inactive; reactivation goes through
-      Submit → Approve (or, if kept, re-validates expression + lookup tables and
-      snapshots) (`service.go` `BulkUpdateStatus`)
-- [ ] `UpdateVersionEffectiveDate` requires the snapshot to be `Active`
+- [x] `BulkUpdateStatus` restricted to archiving (→Inactive); an archived template
+      is reactivated by Submit → Approve (`Inactive → InReview` is now the only
+      transition out of Inactive; the Studio labels it "Reactivate via Review")
+- [x] `UpdateVersionEffectiveDate` requires the snapshot to be `Active`
       (`formulatemplateservice/effectivedate.go`); Reject and material Update clear
-      pending scheduled versions and say so in the audit comment
-- [ ] `PATCH /:id` handler stops binding `status` (`formulatemplatehandler/handler.go`)
-- [ ] Tests: create-with-Active lands Draft; PUT InReview→Active is 422; scheduling a
+      pending scheduled versions (`versionRepo.ClearScheduled`; the Update audit
+      comment carries the count)
+- [x] `PATCH /:id` handler stops binding `status` (`formulatemplatehandler/handler.go`)
+- [x] Tests: create-with-Active lands Draft; PUT InReview→Active is 422; scheduling a
       Draft snapshot is 422; reject clears schedules
 
 ### 1.4 One rounding step for money

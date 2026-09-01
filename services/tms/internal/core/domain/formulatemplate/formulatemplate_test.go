@@ -658,3 +658,12 @@ func TestForkLineage_NoSource(t *testing.T) {
 	assert.Nil(t, lineage.SourceVersion)
 	assert.Nil(t, lineage.ForkedTemplates)
 }
+
+func TestCanTransition_ArchivedTemplatesReenterReview(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, CanTransition(StatusInactive, StatusInReview))
+	assert.False(t, CanTransition(StatusInactive, StatusActive))
+	assert.False(t, CanTransition(StatusDraft, StatusActive))
+	assert.True(t, CanTransition(StatusInReview, StatusActive))
+}

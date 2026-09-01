@@ -36,6 +36,16 @@ func clearApprovalFields(template *formulatemplate.FormulaTemplate) {
 	template.ReviewComment = ""
 }
 
+// carryApprovalFields keeps the review stamps the workflow wrote, whatever an
+// update payload says about them.
+func carryApprovalFields(template, original *formulatemplate.FormulaTemplate) {
+	template.SubmittedByID = original.SubmittedByID
+	template.SubmittedAt = original.SubmittedAt
+	template.ApprovedByID = original.ApprovedByID
+	template.ApprovedAt = original.ApprovedAt
+	template.ReviewComment = original.ReviewComment
+}
+
 func extractVersionPair(
 	versions []*formulatemplate.FormulaTemplateVersion,
 	fromNum, toNum int64,

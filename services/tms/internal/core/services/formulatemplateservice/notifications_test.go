@@ -121,6 +121,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
@@ -156,6 +157,7 @@ func TestReject_SkipsNotificationWhenRejectorIsSubmitter(t *testing.T) {
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{

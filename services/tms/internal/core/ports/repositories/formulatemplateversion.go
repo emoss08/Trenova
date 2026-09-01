@@ -156,4 +156,11 @@ type FormulaTemplateVersionRepository interface {
 		ctx context.Context,
 		req *GetLatestVersionByStatusRequest,
 	) (*formulatemplate.FormulaTemplateVersion, error)
+
+	// ClearScheduled removes every pending effective date on the template's
+	// snapshots and reports how many it cleared.
+	ClearScheduled(
+		ctx context.Context,
+		req *ListScheduledVersionsRequest,
+	) (int64, error)
 }

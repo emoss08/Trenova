@@ -478,10 +478,14 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
+	// A partial update never moves status; that belongs to the review
+	// workflow, so whatever the body says about it is dropped here.
+	status := existing.Status
 	if err = c.ShouldBindJSON(existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
+	existing.Status = status
 
 	updatedEntity, err := h.service.Update(c.Request.Context(), existing, authCtx.UserID)
 	if err != nil {

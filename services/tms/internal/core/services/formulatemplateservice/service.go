@@ -80,6 +80,12 @@ func (s *Service) Create(
 		zap.String("name", entity.Name),
 	)
 
+	// A template is born a draft whatever the payload claims. Active is
+	// reached only through review, and the review stamps are set by the
+	// reviewers, not by whoever typed the record in.
+	entity.Status = formulatemplate.StatusDraft
+	clearApprovalFields(entity)
+
 	if err := s.validateTemplate(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -145,24 +151,28 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if entity.Status != original.Status &&
-		!formulatemplate.CanTransition(original.Status, entity.Status) {
+	if entity.Status != original.Status {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
 			fmt.Sprintf(
-				"Cannot transition template status from %s to %s",
+				"Status cannot be changed from %s to %s here; "+
+					"submit, approve, reject, or archive the template instead",
 				original.Status,
 				entity.Status,
 			),
 		)
 	}
 
+	carryApprovalFields(entity, original)
+
 	material := entity.HasMaterialChange(original)
 
 	auditComment := "Formula template updated"
-	if (original.Status == formulatemplate.StatusActive ||
-		original.Status == formulatemplate.StatusInReview) && material {
+	revertsApproval := material &&
+		(original.Status == formulatemplate.StatusActive ||
+			original.Status == formulatemplate.StatusInReview)
+	if revertsApproval {
 		entity.Status = formulatemplate.StatusDraft
 		clearApprovalFields(entity)
 		auditComment = "Material change reverted approval"
@@ -197,6 +207,15 @@ func (s *Service) Update(
 			}
 		}
 
+		if revertsApproval {
+			cleared, clearErr := s.clearScheduledVersions(txCtx, updated)
+			if clearErr != nil {
+				log.Error("failed to clear scheduled versions", zap.Error(clearErr))
+				return clearErr
+			}
+			auditComment = withClearedSchedules(auditComment, cleared)
+		}
+
 		updatedEntity = updated
 		return nil
 	})
@@ -214,6 +233,34 @@ func (s *Service) Update(
 	)
 
 	return updatedEntity, nil
+}
+
+// clearScheduledVersions drops any pending effective dates on a template whose
+// approved content is no longer what it was. A schedule set against the old
+// approval would otherwise fire, unreviewed, the moment the template is
+// approved again.
+func (s *Service) clearScheduledVersions(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+) (int64, error) {
+	return s.versionRepo.ClearScheduled(ctx, &repositories.ListScheduledVersionsRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: template.OrganizationID,
+			BuID:  template.BusinessUnitID,
+		},
+		TemplateID: template.ID,
+	})
+}
+
+func withClearedSchedules(comment string, cleared int64) string {
+	switch cleared {
+	case 0:
+		return comment
+	case 1:
+		return comment + "; cleared 1 scheduled version"
+	default:
+		return fmt.Sprintf("%s; cleared %d scheduled versions", comment, cleared)
+	}
 }
 
 func (s *Service) Duplicate(
@@ -296,12 +343,12 @@ func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	if req.Status != formulatemplate.StatusActive &&
-		req.Status != formulatemplate.StatusInactive {
+	if req.Status != formulatemplate.StatusInactive {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"Bulk status updates only support Active and Inactive",
+			"Bulk status updates can only archive templates; "+
+				"an archived template is reactivated by submitting it for review",
 		)
 	}
 

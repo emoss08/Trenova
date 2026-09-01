@@ -27,6 +27,7 @@ func (s *Service) Submit(
 	submitted, err := s.approvals().Apply(ctx, req, templateTransition{
 		Operation:    "Submit",
 		From:         formulatemplate.StatusDraft,
+		AlsoFrom:     []formulatemplate.Status{formulatemplate.StatusInactive},
 		To:           formulatemplate.StatusInReview,
 		PermissionOp: permission.OpSubmit,
 		AuditComment: "Formula template submitted for review",
@@ -158,6 +159,23 @@ func (s *Service) Reject(
 			template.SubmittedByID = nil
 			template.SubmittedAt = nil
 			template.ReviewComment = r.Comment
+		},
+		AfterSave: func(
+			aCtx context.Context,
+			updated *formulatemplate.FormulaTemplate,
+			_ *ApprovalActionRequest,
+		) error {
+			cleared, clearErr := s.clearScheduledVersions(aCtx, updated)
+			if clearErr != nil {
+				return clearErr
+			}
+			if cleared > 0 {
+				s.l.Info("rejection cleared scheduled versions",
+					zap.String("templateID", updated.ID.String()),
+					zap.Int64("cleared", cleared),
+				)
+			}
+			return nil
 		},
 	})
 	if err != nil {
