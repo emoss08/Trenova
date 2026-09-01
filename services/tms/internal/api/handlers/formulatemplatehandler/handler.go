@@ -95,6 +95,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/approve", requireApprove, h.approve)
 	idGroup.POST("/reject", requireReject, h.reject)
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
+	idGroup.POST("/impact", requireRead, h.approvalImpact)
 	idGroup.GET("/test-cases", requireRead, h.listTestCases)
 	idGroup.POST("/test-cases", requireUpdate, h.createTestCase)
 	idGroup.PUT("/test-cases/:testCaseID", requireUpdate, h.updateTestCase)
@@ -1631,6 +1632,59 @@ type backtestRequest struct {
 	Expression    string `json:"expression"`
 	VersionNumber *int64 `json:"versionNumber"`
 	Limit         int    `json:"limit"`
+}
+
+type approvalImpactRequest struct {
+	Limit int `json:"limit"`
+}
+
+// @Summary Compare a template's pending content against the versions its shipments actually priced with
+// @ID formulaTemplateApprovalImpact
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body approvalImpactRequest true "Impact request"
+// @Success 200 {object} formulatemplateservice.BacktestResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/impact [post]
+func (h *Handler) approvalImpact(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req approvalImpactRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	response, err := h.service.ApprovalImpact(
+		c.Request.Context(),
+		&formulatemplateservice.ApprovalImpactRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID: templateID,
+			Limit:      req.Limit,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // @Summary Backtest a formula template candidate against rated shipments

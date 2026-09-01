@@ -13264,6 +13264,11 @@ components:
                 comment:
                     type: string
             type: object
+        internal_api_handlers_formulatemplatehandler.approvalImpactRequest:
+            properties:
+                limit:
+                    type: integer
+            type: object
         internal_api_handlers_formulatemplatehandler.backtestRequest:
             properties:
                 expression:
@@ -22867,6 +22872,60 @@ paths:
             security:
                 - BearerAuth: []
             summary: Fork a formula template
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/impact:
+        post:
+            operationId: formulaTemplateApprovalImpact
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_formulatemplatehandler.approvalImpactRequest'
+                description: Impact request
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestResponse'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Compare a template's pending content against the versions its shipments actually priced with
             tags:
                 - Formula Templates
     /formula-templates/{templateID}/lineage:

@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ApprovalImpactPanel } from "./approval-impact-panel";
 
 export type ApprovalAction = "submit" | "approve" | "reject";
 
@@ -133,7 +134,7 @@ export function ApprovalActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className={action === "approve" ? "sm:max-w-[520px]" : "sm:max-w-[420px]"}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
@@ -142,6 +143,10 @@ export function ApprovalActionDialog({
           </DialogTitle>
           <DialogDescription>{config.description}</DialogDescription>
         </DialogHeader>
+
+        {action === "approve" && open && template?.id && (
+          <ApprovalImpactPanel templateId={template.id} />
+        )}
 
         <div className="space-y-1.5 py-2">
           <label htmlFor="approval-comment" className="text-xs font-medium">

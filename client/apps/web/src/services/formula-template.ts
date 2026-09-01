@@ -373,4 +373,15 @@ export class FormulaTemplateService {
 
     return safeParse(backtestResponseSchema, response, "Backtest");
   }
+
+  public async approvalImpact(
+    templateId: FormulaTemplate["id"],
+    limit?: number,
+  ): Promise<BacktestResponse> {
+    const response = await api.post<BacktestResponse>(`/formula-templates/${templateId}/impact`, {
+      limit: limit ?? 0,
+    });
+
+    return safeParse(backtestResponseSchema, response, "Approval Impact");
+  }
 }

@@ -12214,6 +12214,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/formula-templates/{templateID}/impact": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Formula Templates"
+                ],
+                "summary": "Compare a template's pending content against the versions its shipments actually priced with",
+                "operationId": "formulaTemplateApprovalImpact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Formula template ID",
+                        "name": "templateID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Impact request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_formulatemplatehandler.approvalImpactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/formula-templates/{templateID}/lineage": {
             "get": {
                 "security": [
@@ -50626,6 +50696,14 @@ const docTemplate = `{
             "properties": {
                 "comment": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_formulatemplatehandler.approvalImpactRequest": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
                 }
             }
         },
