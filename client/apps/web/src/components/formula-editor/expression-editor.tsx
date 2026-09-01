@@ -11,6 +11,7 @@ import CodeMirror, {
 import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
+import { usePreviewValues } from "./preview-values";
 import { darkTheme, lightTheme } from "./editor-theme";
 import { buildKnownIdentifiers, type KnownIdentifiers } from "./expr-language";
 import { useExprExtensions } from "./use-expr-extensions";
@@ -60,7 +61,8 @@ export function ExpressionEditor<T extends FieldValues>({
   );
 
   const viewRef = useRef<EditorView | null>(null);
-  const extensions = useExprExtensions(known, lint, viewRef);
+  const previewValues = usePreviewValues();
+  const extensions = useExprExtensions(known, lint, viewRef, previewValues);
 
   const handleRef = useCallback(
     (instance: ReactCodeMirrorRef | null) => {

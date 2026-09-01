@@ -23,6 +23,13 @@ export const lightTheme = EditorView.theme(
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
+    ".cm-expr-hover": {
+      padding: "4px 8px",
+      fontFamily: "var(--font-mono, ui-monospace, monospace)",
+      fontSize: "11px",
+      maxWidth: "360px",
+      whiteSpace: "pre-wrap",
+    },
     ".cm-expr-completion-info": {
       display: "flex",
       flexDirection: "column",
@@ -175,6 +182,13 @@ export const darkTheme = EditorView.theme(
     ".cm-theme[aria-invalid='true'] &.cm-editor": {
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
+    },
+    ".cm-expr-hover": {
+      padding: "4px 8px",
+      fontFamily: "var(--font-mono, ui-monospace, monospace)",
+      fontSize: "11px",
+      maxWidth: "360px",
+      whiteSpace: "pre-wrap",
     },
     ".cm-expr-completion-info": {
       display: "flex",

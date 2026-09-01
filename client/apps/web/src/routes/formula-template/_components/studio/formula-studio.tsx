@@ -2,6 +2,7 @@ import {
   ActiveEditorProvider,
   useActiveEditorInsert,
 } from "@/components/formula-editor/active-editor";
+import { PreviewValuesProvider } from "@/components/formula-editor/preview-values";
 import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
@@ -233,135 +234,137 @@ function FormulaStudioBody({
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <UnsavedChangesGuard when={form.formState.isDirty} />
-      <StudioHeader
-        mode={mode}
-        template={template}
-        templateName={templateName ?? ""}
-        isSubmitting={isSubmitting}
-        isDirty={form.formState.isDirty}
-        scenarios={scenarioSummary}
-        onSave={onSave}
-        onApprovalAction={setApprovalAction}
-        onVersionHistory={() => setVersionHistoryOpen(true)}
-        onFork={() => setForkDialogOpen(true)}
-        onLineage={() => setLineageDialogOpen(true)}
-        onExport={() => void handleExport()}
-        onImport={() => setImportDialogOpen(true)}
-        onBacktest={() => setBacktestOpen(true)}
-      />
+    <PreviewValuesProvider receipt={preview.result?.receipt}>
+      <div className="flex h-full flex-col overflow-hidden">
+        <UnsavedChangesGuard when={form.formState.isDirty} />
+        <StudioHeader
+          mode={mode}
+          template={template}
+          templateName={templateName ?? ""}
+          isSubmitting={isSubmitting}
+          isDirty={form.formState.isDirty}
+          scenarios={scenarioSummary}
+          onSave={onSave}
+          onApprovalAction={setApprovalAction}
+          onVersionHistory={() => setVersionHistoryOpen(true)}
+          onFork={() => setForkDialogOpen(true)}
+          onLineage={() => setLineageDialogOpen(true)}
+          onExport={() => void handleExport()}
+          onImport={() => setImportDialogOpen(true)}
+          onBacktest={() => setBacktestOpen(true)}
+        />
 
-      {isNarrow ? (
-        <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
-          <ResizablePanel defaultSize={60} minSize={30}>
-            <StudioEditorPane
-              mode={mode}
-              known={known}
-              editorRef={editorRef}
-              onOpenAiGenerate={() => setAiGenerateOpen(true)}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={40} minSize={20}>
-            <div className="flex h-full flex-col">
-              {tabStrip(["preview", "scenarios", "reference"])}
-              <div className="min-h-0 flex-1">{rightPane}</div>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      ) : (
-        <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
-          <ResizablePanel defaultSize={55} minSize={40}>
-            <StudioEditorPane
-              mode={mode}
-              known={known}
-              editorRef={editorRef}
-              onOpenAiGenerate={() => setAiGenerateOpen(true)}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={45} minSize={28}>
-            <ResizablePanelGroup orientation="vertical">
-              <ResizablePanel defaultSize={55} minSize={30}>
-                <div className="flex h-full flex-col">
-                  {tabStrip(["preview", "scenarios"])}
-                  <div className="min-h-0 flex-1">
-                    {rightTab === "reference" ? previewPane : rightPane}
+        {isNarrow ? (
+          <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
+            <ResizablePanel defaultSize={60} minSize={30}>
+              <StudioEditorPane
+                mode={mode}
+                known={known}
+                editorRef={editorRef}
+                onOpenAiGenerate={() => setAiGenerateOpen(true)}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={40} minSize={20}>
+              <div className="flex h-full flex-col">
+                {tabStrip(["preview", "scenarios", "reference"])}
+                <div className="min-h-0 flex-1">{rightPane}</div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+          <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
+            <ResizablePanel defaultSize={55} minSize={40}>
+              <StudioEditorPane
+                mode={mode}
+                known={known}
+                editorRef={editorRef}
+                onOpenAiGenerate={() => setAiGenerateOpen(true)}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={45} minSize={28}>
+              <ResizablePanelGroup orientation="vertical">
+                <ResizablePanel defaultSize={55} minSize={30}>
+                  <div className="flex h-full flex-col">
+                    {tabStrip(["preview", "scenarios"])}
+                    <div className="min-h-0 flex-1">
+                      {rightTab === "reference" ? previewPane : rightPane}
+                    </div>
                   </div>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={45} minSize={20}>
-                {referencePane}
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      )}
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={45} minSize={20}>
+                  {referencePane}
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
 
-      {approvalAction && (
-        <ApprovalActionDialog
-          open={approvalAction !== null}
-          onOpenChange={(open) => {
-            if (!open) setApprovalAction(null);
+        {approvalAction && (
+          <ApprovalActionDialog
+            open={approvalAction !== null}
+            onOpenChange={(open) => {
+              if (!open) setApprovalAction(null);
+            }}
+            action={approvalAction}
+            template={template}
+          />
+        )}
+
+        <VersionHistoryPanel
+          open={versionHistoryOpen}
+          onOpenChange={setVersionHistoryOpen}
+          template={template}
+          onRollback={(updatedTemplate) => {
+            form.reset(updatedTemplate as unknown as FormulaTemplateFormValues);
+            onTemplateChanged?.(updatedTemplate);
           }}
-          action={approvalAction}
+        />
+
+        <ForkTemplateDialog
+          open={forkDialogOpen}
+          onOpenChange={setForkDialogOpen}
+          template={template}
+          onForkSuccess={(forked) => {
+            setForkDialogOpen(false);
+            if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+          }}
+        />
+
+        <ForkLineageDialog
+          open={lineageDialogOpen}
+          onOpenChange={setLineageDialogOpen}
+          templateId={template?.id}
+          currentTemplateId={template?.id}
+          onNavigateToTemplate={(templateId) => {
+            setLineageDialogOpen(false);
+            if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
+          }}
+        />
+
+        <ImportTemplateDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImported={(response) => void navigate(importLandingRoute(response))}
+        />
+
+        <BacktestSheet
+          open={backtestOpen}
+          onOpenChange={setBacktestOpen}
+          form={form}
           template={template}
         />
-      )}
 
-      <VersionHistoryPanel
-        open={versionHistoryOpen}
-        onOpenChange={setVersionHistoryOpen}
-        template={template}
-        onRollback={(updatedTemplate) => {
-          form.reset(updatedTemplate as unknown as FormulaTemplateFormValues);
-          onTemplateChanged?.(updatedTemplate);
-        }}
-      />
-
-      <ForkTemplateDialog
-        open={forkDialogOpen}
-        onOpenChange={setForkDialogOpen}
-        template={template}
-        onForkSuccess={(forked) => {
-          setForkDialogOpen(false);
-          if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
-        }}
-      />
-
-      <ForkLineageDialog
-        open={lineageDialogOpen}
-        onOpenChange={setLineageDialogOpen}
-        templateId={template?.id}
-        currentTemplateId={template?.id}
-        onNavigateToTemplate={(templateId) => {
-          setLineageDialogOpen(false);
-          if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
-        }}
-      />
-
-      <ImportTemplateDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        onImported={(response) => void navigate(importLandingRoute(response))}
-      />
-
-      <BacktestSheet
-        open={backtestOpen}
-        onOpenChange={setBacktestOpen}
-        form={form}
-        template={template}
-      />
-
-      <AiGeneratePanel
-        open={aiGenerateOpen}
-        onOpenChange={setAiGenerateOpen}
-        templateType={templateType ?? "FreightCharge"}
-        schemaId={schemaId || "shipment"}
-        onInsert={handleAiInsert}
-      />
-    </div>
+        <AiGeneratePanel
+          open={aiGenerateOpen}
+          onOpenChange={setAiGenerateOpen}
+          templateType={templateType ?? "FreightCharge"}
+          schemaId={schemaId || "shipment"}
+          onInsert={handleAiInsert}
+        />
+      </div>
+    </PreviewValuesProvider>
   );
 }

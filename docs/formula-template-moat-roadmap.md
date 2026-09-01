@@ -320,11 +320,14 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 3.3 Hover-to-evaluate
 
-- [ ] CodeMirror `hoverTooltip` shows each identifier's current value and source
-      ("500 mi, from shipment SHP-1234") from the last preview result
-      (`components/formula-editor/expr-hover.ts`)
+- [x] CodeMirror `hoverTooltip` shows each identifier's value and source from the
+      last preview receipt ("weight = 12000 (from shipment)"), fed through a
+      `PreviewValuesProvider` ref so previews never rebuild editor extensions
+      (`components/formula-editor/expr-hover.ts`, `preview-values.tsx`)
 - [ ] Ternary branches that fired in the last run are subtly highlighted; the other
-      branch is dimmed
+      branch is dimmed. Deferred: needs the engine to trace which conditional
+      branches evaluated (expr does not expose this without instrumenting the
+      compiled program), which is a separate engine change
 
 ### 3.4 Breakdown reconciliation
 
