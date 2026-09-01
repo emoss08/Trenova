@@ -7,6 +7,7 @@ import (
 	goErrors "errors"
 	"fmt"
 	"hash"
+	"maps"
 	"math"
 	"reflect"
 	"sort"
@@ -33,6 +34,28 @@ const (
 	evaluationTimeout  = 5 * time.Second
 	ctxEnvKey          = "__ctx"
 )
+
+type evaluationTimeoutKey struct{}
+
+// WithEvaluationTimeout caps how long a single evaluation may run, overriding
+// the engine's default ceiling for the calls made with this context. An
+// interactive preview wants a short leash; a batch re-rate can afford the
+// default. Non-positive durations are ignored.
+func WithEvaluationTimeout(ctx context.Context, timeout time.Duration) context.Context {
+	if timeout <= 0 {
+		return ctx
+	}
+
+	return context.WithValue(ctx, evaluationTimeoutKey{}, timeout)
+}
+
+func evaluationTimeoutFor(ctx context.Context) time.Duration {
+	if timeout, ok := ctx.Value(evaluationTimeoutKey{}).(time.Duration); ok && timeout > 0 {
+		return timeout
+	}
+
+	return evaluationTimeout
+}
 
 type Params struct {
 	fx.In
@@ -239,7 +262,6 @@ func (e *Engine) evaluateProgram(
 	}
 
 	output, err := e.run(ctx, compiled.program, env)
-	delete(env, ctxEnvKey)
 	if err != nil {
 		return nil, errors.NewComputeError(
 			expression,
@@ -303,15 +325,25 @@ func (e *Engine) evaluateBreakdowns(
 
 // vm.Run cannot be interrupted, so a timed-out evaluation goroutine is
 // abandoned; its work stays bounded by expr's memory budget and MaxNodes.
+// run executes a compiled program under the evaluation deadline.
+//
+// The VM gets its own copy of the environment. The caller keeps using — and
+// mutating — its map the moment run returns, and on a timeout it returns while
+// the VM goroutine may still be reading; a shared map at that point is a
+// concurrent read and write, which the runtime treats as fatal rather than as
+// an error anyone can recover from. Copying a few dozen entries costs far
+// less than the evaluation itself.
 func (e *Engine) run(
 	ctx context.Context,
 	program *vm.Program,
 	env map[string]any,
 ) (any, error) {
-	ctx, cancel := context.WithTimeout(ctx, evaluationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, evaluationTimeoutFor(ctx))
 	defer cancel()
 
-	env[ctxEnvKey] = ctx
+	vmEnv := make(map[string]any, len(env)+1)
+	maps.Copy(vmEnv, env)
+	vmEnv[ctxEnvKey] = ctx
 
 	type outcome struct {
 		value any
@@ -327,7 +359,7 @@ func (e *Engine) run(
 			}
 		}()
 
-		value, err := vm.Run(program, env)
+		value, err := vm.Run(program, vmEnv)
 		resultCh <- outcome{value: value, err: err}
 	}()
 

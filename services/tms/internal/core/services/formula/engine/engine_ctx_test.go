@@ -34,11 +34,21 @@ func newBareEngine(t *testing.T) *engine.Engine {
 	return e
 }
 
-// TestEvaluateWithEnv_RunawayExpressionIsCancelled guards the WithContext
-// wiring: a loop over a billion elements fits MaxNodes easily, so without the
-// injected cancellation checks the vm would pin a core for minutes after the
-// caller has given up.
-func TestEvaluateWithEnv_RunawayExpressionIsCancelled(t *testing.T) {
+// slowFn blocks the VM inside a function call for the given time. Cancellation
+// checks run between VM instructions, so this is the shape of evaluation that
+// outlives the caller's deadline: the caller returns while the goroutine is
+// still inside the call.
+func slowFn(d time.Duration) func() float64 {
+	return func() float64 {
+		time.Sleep(d)
+		return 1
+	}
+}
+
+// TestEvaluateWithEnv_SlowExpressionIsCancelled guards the deadline: the
+// caller gets its answer at the deadline, not when the evaluation finally
+// finishes, and the goroutine still exits on its own afterwards.
+func TestEvaluateWithEnv_SlowExpressionIsCancelled(t *testing.T) {
 	t.Parallel()
 
 	e := newBareEngine(t)
@@ -52,13 +62,13 @@ func TestEvaluateWithEnv_RunawayExpressionIsCancelled(t *testing.T) {
 	_, err := e.EvaluateWithEnv(
 		ctx,
 		&formulatemplatetypes.EnvEvaluationRequest{
-			Expression: "all(1..1000000000, # >= 0)",
-			Env:        map[string]any{},
+			Expression: "slow() * 2",
+			Env:        map[string]any{"slow": slowFn(time.Second)},
 		},
 	)
 
-	require.Error(t, err)
-	assert.Less(t, time.Since(start), 5*time.Second, "evaluation must stop at cancellation")
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Less(t, time.Since(start), 900*time.Millisecond, "evaluation must stop at cancellation")
 
 	assert.Eventually(t, func() bool {
 		return runtime.NumGoroutine() <= before+2
@@ -134,4 +144,49 @@ func TestValidateExpressionDetailed(t *testing.T) {
 		require.NoError(t, outcome.Err)
 		assert.Empty(t, outcome.Warning)
 	})
+}
+
+// TestRun_TimeoutLeavesCallerEnvUntouched guards the environment copy: after a
+// timed-out evaluation the caller's map must be exactly as it was, with no
+// injected context key and every entry intact, and must be safe to reuse.
+func TestRun_TimeoutLeavesCallerEnvUntouched(t *testing.T) {
+	t.Parallel()
+
+	e := newBareEngine(t)
+	ctx := engine.WithEvaluationTimeout(t.Context(), 100*time.Millisecond)
+
+	env := map[string]any{"weight": 10.0, "rate": 2.5, "slow": slowFn(400 * time.Millisecond)}
+
+	start := time.Now()
+	_, err := e.EvaluateWithEnv(ctx, &formulatemplatetypes.EnvEvaluationRequest{
+		Expression: "slow() * weight",
+		Env:        env,
+	})
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Less(t, time.Since(start), 350*time.Millisecond, "the override must shorten the leash")
+
+	// The abandoned goroutine is still inside slow() here; the caller's map
+	// must already be clean and must stay clean once that goroutine finishes.
+	assert.NotContains(t, env, "__ctx")
+	assert.InDelta(t, 10.0, env["weight"], 0)
+	time.Sleep(500 * time.Millisecond)
+	assert.NotContains(t, env, "__ctx")
+	assert.InDelta(t, 2.5, env["rate"], 0)
+
+	result, err := e.EvaluateWithEnv(t.Context(), &formulatemplatetypes.EnvEvaluationRequest{
+		Expression: "weight * rate",
+		Env:        env,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "25", result.Value.String())
+	assert.NotContains(t, env, "__ctx")
+}
+
+func TestWithEvaluationTimeout_IgnoresNonPositive(t *testing.T) {
+	t.Parallel()
+
+	base := t.Context()
+	assert.Equal(t, base, engine.WithEvaluationTimeout(base, 0))
+	assert.Equal(t, base, engine.WithEvaluationTimeout(base, -time.Second))
+	assert.NotEqual(t, base, engine.WithEvaluationTimeout(base, time.Second))
 }

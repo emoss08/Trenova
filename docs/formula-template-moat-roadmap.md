@@ -108,12 +108,14 @@ After the 5s deadline fires, the caller deletes `__ctx` from `env` while the
 abandoned VM goroutine may still read it. Concurrent map access is a fatal runtime
 crash.
 
-- [ ] `run()` evaluates against a shallow copy of `env` (or waits for the goroutine
-      with a hard cap) and the post-timeout `delete` is removed
-      (`formula/engine/engine.go` `run`, `evaluateProgram`)
-- [ ] Deadline configurable per caller (interactive vs batch)
-- [ ] Test: a deliberately slow expression times out and the process stays healthy
-      under `-race`
+- [x] `run()` evaluates against a shallow copy of `env` and the post-timeout
+      `delete` is removed (`formula/engine/engine.go` `run`, `evaluateProgram`)
+- [x] Deadline configurable per caller via `engine.WithEvaluationTimeout`; the
+      Studio preview runs on a 2s leash, batch paths keep the 5s default
+- [x] Test: a blocking function outlives the deadline, the caller gets
+      `DeadlineExceeded` on time, the caller's env is untouched after the
+      goroutine finishes, and the goroutine exits (`engine_ctx_test.go`; the
+      race detector needs gcc, which this machine lacks, so run `-race` in CI)
 
 ### 1.6 Null-safe schema fields
 

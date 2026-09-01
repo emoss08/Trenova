@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -844,7 +845,14 @@ func (r *TestExpressionRequest) chargePolicy() formulatypes.ChargePolicy {
 	}
 }
 
-const msgExpressionValidationFailed = "Expression validation failed"
+const (
+	msgExpressionValidationFailed = "Expression validation failed"
+
+	// previewEvaluationTimeout is the leash on an interactive preview. It runs
+	// on every keystroke, so a runaway expression should fail fast rather than
+	// hold the Studio for the engine's full batch ceiling.
+	previewEvaluationTimeout = 2 * time.Second
+)
 
 type TestExpressionResponse struct {
 	Valid             bool                                   `json:"valid"`
@@ -867,7 +875,7 @@ func (s *Service) TestExpression(
 	ctx context.Context,
 	req *TestExpressionRequest,
 ) *TestExpressionResponse {
-	ctx = ratetablecache.With(ctx)
+	ctx = engine.WithEvaluationTimeout(ratetablecache.With(ctx), previewEvaluationTimeout)
 
 	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
