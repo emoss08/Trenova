@@ -618,7 +618,8 @@ export const AVAILABLE_FUNCTIONS = [
   {
     name: "lookupOr",
     signature: "lookupOr(table, key, fallback)",
-    description: "Like lookup, with a fallback on any miss",
+    description:
+      "Like lookup, with a fallback when the key has no entry (a missing table still errors)",
   },
   {
     name: "lookup2",
@@ -628,7 +629,8 @@ export const AVAILABLE_FUNCTIONS = [
   {
     name: "lookup2Or",
     signature: "lookup2Or(table, rowKey, colKey, fallback)",
-    description: "Like lookup2, with a fallback on any miss",
+    description:
+      "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)",
   },
 ] as const;
 

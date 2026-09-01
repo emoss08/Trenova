@@ -147,7 +147,7 @@ var functionSpecs = []FunctionSpec{
 	{
 		Name:        "lookupOr",
 		Signature:   "lookupOr(table, key, fallback)",
-		Description: "Like lookup, but returns fallback instead of erroring when the table or entry is missing.",
+		Description: "Like lookup, but returns fallback when the table has no entry or band for the key. A missing table still errors, so a deleted matrix cannot silently reprice.",
 		Example:     `lookupOr("lane_rate", laneCode, 0)`,
 		Category:    FunctionCategoryRateTable,
 	},
@@ -161,7 +161,7 @@ var functionSpecs = []FunctionSpec{
 	{
 		Name:        "lookup2Or",
 		Signature:   "lookup2Or(table, rowKey, colKey, fallback)",
-		Description: "Like lookup2, but returns fallback instead of erroring when the table or intersection is missing.",
+		Description: "Like lookup2, but returns fallback when the table has no cell at the row/column intersection. A missing table still errors, so a deleted matrix cannot silently reprice.",
 		Example:     `lookup2Or("zone_weight_rates", origin.zip, totalWeight, 0)`,
 		Category:    FunctionCategoryRateTable,
 	},

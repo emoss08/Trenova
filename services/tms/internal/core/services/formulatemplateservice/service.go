@@ -12,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -801,6 +803,8 @@ func (s *Service) TestExpression(
 	ctx context.Context,
 	req *TestExpressionRequest,
 ) *TestExpressionResponse {
+	ctx = ratetablecache.With(ctx)
+
 	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
 		return &TestExpressionResponse{
@@ -814,7 +818,54 @@ func (s *Service) TestExpression(
 		return s.testExpressionAgainstShipment(ctx, req)
 	}
 
-	return s.testExpressionWithEnv(ctx, req)
+	lookup, err := s.lookupForTest(ctx, req)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Failed to load rate tables",
+		}
+	}
+
+	return s.testExpressionWithEnv(ctx, req, lookup)
+}
+
+// lookupForTest loads the tenant's rate tables only when the expression or a
+// breakdown line names one. A preview re-runs on every keystroke, and most
+// formulas never touch a table; loading every matrix for them would turn the
+// live preview into the slowest thing on the page. When a table is named the
+// real tables are used, so the number an author sees is the number a shipment
+// would be charged.
+func (s *Service) lookupForTest(
+	ctx context.Context,
+	req *TestExpressionRequest,
+) (formulatemplatetypes.RateTableLookup, error) {
+	if !referencesLookupTables(req.Expression, req.Breakdowns) {
+		return nil, nil
+	}
+
+	return s.formulaService.BuildLookup(ctx, req.TenantInfo)
+}
+
+func referencesLookupTables(
+	expression string,
+	breakdowns []*formulatypes.BreakdownDefinition,
+) bool {
+	if tables, err := engine.ExtractLookupTables(expression); err == nil && len(tables) > 0 {
+		return true
+	}
+
+	for _, def := range breakdowns {
+		if def == nil {
+			continue
+		}
+		if tables, err := engine.ExtractLookupTables(def.Expression); err == nil &&
+			len(tables) > 0 {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Service) testExpressionAgainstShipment(
@@ -865,6 +916,7 @@ func (s *Service) testExpressionAgainstShipment(
 func (s *Service) testExpressionWithEnv(
 	ctx context.Context,
 	req *TestExpressionRequest,
+	lookup formulatemplatetypes.RateTableLookup,
 ) *TestExpressionResponse {
 	env, err := s.formulaService.BuildValidationEnvironment(req.SchemaID, req.Variables)
 	if err != nil {
@@ -883,7 +935,11 @@ func (s *Service) testExpressionWithEnv(
 		}
 	}
 
-	result, err := s.formulaService.EvaluateWithEnv(ctx, req.Expression, env)
+	result, err := s.formulaService.EvaluateWithEnv(ctx, &formulatemplatetypes.EnvEvaluationRequest{
+		Expression: req.Expression,
+		Env:        env,
+		Lookup:     lookup,
+	})
 	if err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,
@@ -902,7 +958,7 @@ func (s *Service) testExpressionWithEnv(
 	}
 
 	if len(req.Breakdowns) > 0 {
-		resp.Breakdown = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env)
+		resp.Breakdown = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
 	}
 
 	return resp
@@ -912,6 +968,7 @@ func (s *Service) evaluateBreakdownsWithEnv(
 	ctx context.Context,
 	defs []*formulatypes.BreakdownDefinition,
 	env map[string]any,
+	lookup formulatemplatetypes.RateTableLookup,
 ) []formulatemplatetypes.BreakdownAmount {
 	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(defs))
 	for _, def := range defs {
@@ -920,7 +977,15 @@ func (s *Service) evaluateBreakdownsWithEnv(
 		}
 
 		item := formulatemplatetypes.BreakdownAmount{Name: def.Name, Label: def.Label}
-		if result, err := s.formulaService.EvaluateWithEnv(ctx, def.Expression, env); err != nil {
+		result, err := s.formulaService.EvaluateWithEnv(
+			ctx,
+			&formulatemplatetypes.EnvEvaluationRequest{
+				Expression: def.Expression,
+				Env:        env,
+				Lookup:     lookup,
+			},
+		)
+		if err != nil {
 			item.Error = err.Error()
 		} else {
 			item.Amount = result.Amount

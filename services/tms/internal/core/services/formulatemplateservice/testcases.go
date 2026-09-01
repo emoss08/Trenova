@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -256,7 +257,13 @@ func (s *Service) RunTestCases(
 		}
 	}
 
-	return s.runCasesAgainstCandidate(ctx, template.SchemaID, req.TenantInfo, cases, candidate), nil
+	return s.runCasesAgainstCandidate(
+		ratetablecache.With(ctx),
+		template.SchemaID,
+		req.TenantInfo,
+		cases,
+		candidate,
+	), nil
 }
 
 func (s *Service) runCasesAgainstCandidate(
@@ -327,7 +334,10 @@ func (s *Service) runSingleCase(
 
 	actual, ok := evaluation.Result.(decimal.Decimal)
 	if !ok {
-		result.Error = fmt.Sprintf("expression produced a non-numeric result: %v", evaluation.Result)
+		result.Error = fmt.Sprintf(
+			"expression produced a non-numeric result: %v",
+			evaluation.Result,
+		)
 		return result
 	}
 
@@ -359,13 +369,19 @@ func (s *Service) requirePassingTestCases(
 		return nil
 	}
 
-	run := s.runCasesAgainstCandidate(ctx, template.SchemaID, tenantInfo, cases, &TestCaseCandidate{
-		Expression:           template.Expression,
-		VariableDefinitions:  template.VariableDefinitions,
-		BreakdownDefinitions: template.BreakdownDefinitions,
-		MinCharge:            template.MinCharge,
-		MaxCharge:            template.MaxCharge,
-	})
+	run := s.runCasesAgainstCandidate(
+		ratetablecache.With(ctx),
+		template.SchemaID,
+		tenantInfo,
+		cases,
+		&TestCaseCandidate{
+			Expression:           template.Expression,
+			VariableDefinitions:  template.VariableDefinitions,
+			BreakdownDefinitions: template.BreakdownDefinitions,
+			MinCharge:            template.MinCharge,
+			MaxCharge:            template.MaxCharge,
+		},
+	)
 
 	if run.Failed == 0 {
 		return nil

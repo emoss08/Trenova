@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +49,13 @@ func TestEvaluateWithEnv_RunawayExpressionIsCancelled(t *testing.T) {
 	before := runtime.NumGoroutine()
 	start := time.Now()
 
-	_, err := e.EvaluateWithEnv(ctx, "all(1..1000000000, # >= 0)", map[string]any{})
+	_, err := e.EvaluateWithEnv(
+		ctx,
+		&formulatemplatetypes.EnvEvaluationRequest{
+			Expression: "all(1..1000000000, # >= 0)",
+			Env:        map[string]any{},
+		},
+	)
 
 	require.Error(t, err)
 	assert.Less(t, time.Since(start), 5*time.Second, "evaluation must stop at cancellation")
@@ -69,12 +76,21 @@ func TestCompileCacheStableAcrossContextTypes(t *testing.T) {
 
 	env := map[string]any{"weight": 10.0}
 
-	_, err := e.EvaluateWithEnv(t.Context(), "weight * 2", env)
+	_, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "weight * 2", Env: env},
+	)
 	require.NoError(t, err)
 
 	cancelable, cancel := context.WithCancel(t.Context())
 	defer cancel()
-	_, err = e.EvaluateWithEnv(cancelable, "weight * 2", map[string]any{"weight": 10.0})
+	_, err = e.EvaluateWithEnv(
+		cancelable,
+		&formulatemplatetypes.EnvEvaluationRequest{
+			Expression: "weight * 2",
+			Env:        map[string]any{"weight": 10.0},
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, e.CacheLen())

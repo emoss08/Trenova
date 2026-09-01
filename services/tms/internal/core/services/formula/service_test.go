@@ -476,7 +476,10 @@ func TestService_EvaluateWithEnv(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.wantErrIs != nil {
@@ -673,7 +676,10 @@ func TestService_EvaluateWithEnvClampFormulas(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			require.NoError(t, err)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
 		})
@@ -714,7 +720,10 @@ func TestService_EvaluateWithEnvWeightBased(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			require.NoError(t, err)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
 		})

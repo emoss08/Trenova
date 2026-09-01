@@ -163,7 +163,7 @@ func (s *Service) Rate(
 	ctx context.Context,
 	req *RateRequest,
 ) (*formulatemplatetypes.CalculateResponse, error) {
-	lookup, err := s.buildLookup(ctx, pagination.TenantInfo{
+	lookup, err := s.BuildLookup(ctx, pagination.TenantInfo{
 		OrgID: req.Template.OrganizationID,
 		BuID:  req.Template.BusinessUnitID,
 	})
@@ -196,7 +196,7 @@ func (s *Service) Rate(
 	}, nil
 }
 
-// buildLookup reads the tenant's lookup tables, once per unit of work.
+// BuildLookup reads the tenant's lookup tables, once per unit of work.
 //
 // A lookup table is a single-axis rate matrix: the expression language calls
 // them tables and the storage calls them matrices, and this is where the two
@@ -205,7 +205,7 @@ func (s *Service) Rate(
 // The memo is only present when a caller installed one; without it this
 // behaves exactly as it always did, which is what keeps a formula evaluated
 // outside a request working.
-func (s *Service) buildLookup(
+func (s *Service) BuildLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (formulatemplatetypes.RateTableLookup, error) {
@@ -287,7 +287,7 @@ func (s *Service) EvaluateExpression(
 
 	var lookup formulatemplatetypes.RateTableLookup
 	if !req.TenantInfo.OrgID.IsNil() {
-		builtLookup, err := s.buildLookup(ctx, req.TenantInfo)
+		builtLookup, err := s.BuildLookup(ctx, req.TenantInfo)
 		if err != nil {
 			log.Error("failed to build rate table lookup", zap.Error(err))
 			return nil, err
@@ -327,7 +327,9 @@ func (s *Service) EvaluateExpression(
 //
 // No rate-table lookup is built. A condition that reaches for a rate table is
 // asking the wrong question, and building one would put a full tenant table
-// load on the save path of every shipment.
+// load on the save path of every shipment. The stub is named here on purpose:
+// a table reference in a predicate reads as zero, which is documented, rather
+// than as an error that would block the save.
 func (s *Service) EvaluatePredicate(
 	ctx context.Context,
 	req *services.EvaluatePredicateRequest,
@@ -338,6 +340,7 @@ func (s *Service) EvaluatePredicate(
 			Expression: req.Expression,
 			Entity:     req.Entity,
 			SchemaID:   req.SchemaID,
+			Lookup:     engine.StubLookup{},
 		},
 	)
 	if err != nil {
@@ -359,10 +362,9 @@ func (s *Service) ValidateExpression(ctx context.Context, expression, schemaID s
 
 func (s *Service) EvaluateWithEnv(
 	ctx context.Context,
-	expression string,
-	env map[string]any,
+	req *formulatemplatetypes.EnvEvaluationRequest,
 ) (*formulatemplatetypes.CalculateResponse, error) {
-	result, err := s.engine.EvaluateWithEnv(ctx, expression, env)
+	result, err := s.engine.EvaluateWithEnv(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +401,7 @@ func (s *Service) ValidateLookupTables(
 		return nil //nolint:nilerr // unparseable expressions are rejected by compile validation
 	}
 
-	lookup, err := s.buildLookup(ctx, tenantInfo)
+	lookup, err := s.BuildLookup(ctx, tenantInfo)
 	if err != nil {
 		return err
 	}

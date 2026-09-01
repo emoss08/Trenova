@@ -1,4 +1,4 @@
-﻿package formulatemplateservice
+package formulatemplateservice
 
 import (
 	"context"
@@ -124,16 +124,25 @@ func (s *stubFormulaVersionRepo) ListScheduled(
 
 type stubMatrixLookupRepo struct {
 	repositories.RateMatrixRepository
+	data []*repositories.RateMatrixLookupData
 }
 
 func (s *stubMatrixLookupRepo) GetLookupData(
 	_ context.Context,
 	_ *repositories.GetRateMatrixLookupDataRequest,
 ) ([]*repositories.RateMatrixLookupData, error) {
-	return nil, nil
+	return s.data, nil
 }
 
 func newFormulaService(t *testing.T) *formula.Service {
+	t.Helper()
+	return newFormulaServiceWithMatrices(t, nil)
+}
+
+func newFormulaServiceWithMatrices(
+	t *testing.T,
+	matrices []*repositories.RateMatrixLookupData,
+) *formula.Service {
 	t.Helper()
 
 	registry := schema.NewRegistry()
@@ -155,7 +164,7 @@ func newFormulaService(t *testing.T) *formula.Service {
 		Engine:         eng,
 		Resolver:       res,
 		VersionRepo:    &stubFormulaVersionRepo{},
-		RateMatrixRepo: &stubMatrixLookupRepo{},
+		RateMatrixRepo: &stubMatrixLookupRepo{data: matrices},
 	})
 }
 
@@ -204,6 +213,14 @@ func registerShipmentSchema(registry *schema.Registry) {
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
+	return setupTestWithMatrices(t, nil)
+}
+
+func setupTestWithMatrices(
+	t *testing.T,
+	matrices []*repositories.RateMatrixLookupData,
+) *testDeps {
+	t.Helper()
 	repo := mocks.NewMockFormulaTemplateRepository(t)
 	versionRepo := mocks.NewMockFormulaTemplateVersionRepository(t)
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
@@ -216,7 +233,7 @@ func setupTest(t *testing.T) *testDeps {
 		versionRepo:    versionRepo,
 		testCaseRepo:   testCaseRepo,
 		shipmentRepo:   shipmentRepo,
-		formulaService: newFormulaService(t),
+		formulaService: newFormulaServiceWithMatrices(t, matrices),
 		auditService:   auditSvc,
 	}
 	return &testDeps{

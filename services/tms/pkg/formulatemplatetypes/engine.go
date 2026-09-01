@@ -1,6 +1,8 @@
 package formulatemplatetypes
 
 import (
+	"errors"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -8,11 +10,31 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// ErrRateTableMiss marks a lookup whose table exists but holds no entry, band,
+// or cell for the requested key. It is the only lookup failure the *Or
+// variants absorb: a missing table, a wrong arity, or an unusable key is an
+// authoring mistake and must surface rather than quietly price at the fallback.
+var ErrRateTableMiss = errors.New("rate table has no matching entry")
+
+// ErrRateTableUnavailable is returned when an expression reaches for a rate
+// table in a context that never loaded any.
+var ErrRateTableUnavailable = errors.New(
+	"rate table lookups are not available in this context",
+)
+
 type RateTableLookup interface {
 	Lookup(table string, key any) (float64, error)
 	Has(table string) bool
 	Lookup2(table string, rowKey, colKey any) (float64, error)
 	Has2(table string) bool
+}
+
+// EnvEvaluationRequest evaluates one expression against an already-built
+// environment, the shape the Studio preview and saved scenarios use.
+type EnvEvaluationRequest struct {
+	Expression string
+	Env        map[string]any
+	Lookup     RateTableLookup
 }
 
 type EvaluationRequest struct {

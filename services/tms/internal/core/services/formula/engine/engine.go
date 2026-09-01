@@ -184,10 +184,9 @@ func (e *Engine) EvaluateExpression(
 
 func (e *Engine) EvaluateWithEnv(
 	ctx context.Context,
-	expression string,
-	env map[string]any,
+	req *formulatemplatetypes.EnvEvaluationRequest,
 ) (*formulatemplatetypes.EvaluationResult, error) {
-	return e.evaluateProgram(ctx, expression, env, nil, nil)
+	return e.evaluateProgram(ctx, req.Expression, req.Env, req.Lookup, nil)
 }
 
 func (e *Engine) evaluateProgram(
@@ -327,7 +326,7 @@ func (e *Engine) ValidateExpressionDetailed(
 	expression string,
 	env map[string]any,
 ) ValidationOutcome {
-	injectLookupFunctions(env, nil)
+	injectLookupFunctions(env, StubLookup{})
 
 	env[ctxEnvKey] = ctx
 	defer delete(env, ctxEnvKey)

@@ -800,7 +800,10 @@ func TestEngine_EvaluateWithEnv(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result, err := e.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			result, err := e.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.wantErrIs != nil {
@@ -827,7 +830,10 @@ func TestEngine_EvaluateWithEnv_Int64Result(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": int64(42)}
-	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
+	result, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+	)
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromInt(42).Equal(result.Value))
 }
@@ -838,7 +844,10 @@ func TestEngine_EvaluateWithEnv_Int32Result(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": int32(10)}
-	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
+	result, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+	)
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromInt(10).Equal(result.Value))
 }
@@ -849,7 +858,10 @@ func TestEngine_EvaluateWithEnv_Float32Result(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": float32(3.5)}
-	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
+	result, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+	)
 	require.NoError(t, err)
 	assert.InDelta(t, 3.5, result.Value.InexactFloat64(), 0.01)
 }
@@ -874,7 +886,10 @@ func TestEngine_EvaluateWithEnv_UintResults(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result, err := e.EvaluateWithEnv(t.Context(), "x", tt.env)
+			result, err := e.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: tt.env},
+			)
 			require.NoError(t, err)
 			assert.True(
 				t,
@@ -897,7 +912,10 @@ func TestEngine_EvaluateWithEnv_NullDecimalResult(t *testing.T) {
 		env := map[string]any{
 			"x": decimal.NullDecimal{Decimal: decimal.NewFromFloat(12.5), Valid: true},
 		}
-		result, err := e.EvaluateWithEnv(t.Context(), "x", env)
+		result, err := e.EvaluateWithEnv(
+			t.Context(),
+			&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+		)
 		require.NoError(t, err)
 		assert.True(t, decimal.NewFromFloat(12.5).Equal(result.Value))
 	})
@@ -905,7 +923,10 @@ func TestEngine_EvaluateWithEnv_NullDecimalResult(t *testing.T) {
 	t.Run("invalid null decimal", func(t *testing.T) {
 		t.Parallel()
 		env := map[string]any{"x": decimal.NullDecimal{}}
-		_, err := e.EvaluateWithEnv(t.Context(), "x", env)
+		_, err := e.EvaluateWithEnv(
+			t.Context(),
+			&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+		)
 		require.ErrorIs(t, err, engine.ErrNullResult)
 	})
 }
@@ -916,7 +937,10 @@ func TestEngine_EvaluateWithEnv_CoalesceAllNilResult(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"a": nil, "b": nil}
-	_, err := e.EvaluateWithEnv(t.Context(), "coalesce(a, b)", env)
+	_, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "coalesce(a, b)", Env: env},
+	)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "cannot convert <nil> to decimal")
 }
@@ -927,7 +951,10 @@ func TestEngine_EvaluateWithEnv_StringResultError(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": "hello"}
-	_, err := e.EvaluateWithEnv(t.Context(), "x", env)
+	_, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+	)
 	require.Error(t, err)
 }
 
@@ -1033,7 +1060,10 @@ func TestEngine_EvaluateWithEnv_DecimalResult(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": decimal.NewFromFloat(42.5)}
-	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
+	result, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "x", Env: env},
+	)
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromFloat(42.5).Equal(result.Value))
 }
@@ -1123,7 +1153,10 @@ func TestEngine_EvaluateWithEnv_RuntimeError(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"arr": []int{1, 2, 3}}
-	_, err := e.EvaluateWithEnv(t.Context(), "arr[10]", env)
+	_, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{Expression: "arr[10]", Env: env},
+	)
 	require.Error(t, err)
 }
 

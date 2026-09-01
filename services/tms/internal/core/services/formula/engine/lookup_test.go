@@ -15,10 +15,15 @@ type recordingLookup struct {
 	singleCalls [][]any
 	twoCalls    [][]any
 	values      map[string]float64
+	misses      map[string]struct{}
 }
 
 func (r *recordingLookup) Lookup(table string, key any) (float64, error) {
 	r.singleCalls = append(r.singleCalls, []any{table, key})
+	if _, miss := r.misses[table]; miss {
+		return 0, fmt.Errorf("%w: rate table %q has no entry for key %v",
+			formulatemplatetypes.ErrRateTableMiss, table, key)
+	}
 	value, ok := r.values[table]
 	if !ok {
 		return 0, fmt.Errorf("rate table %q not found", table)
@@ -33,6 +38,10 @@ func (r *recordingLookup) Has(table string) bool {
 
 func (r *recordingLookup) Lookup2(table string, rowKey, colKey any) (float64, error) {
 	r.twoCalls = append(r.twoCalls, []any{table, rowKey, colKey})
+	if _, miss := r.misses[table]; miss {
+		return 0, fmt.Errorf("%w: rate table %q has no cell matching row %v and column %v",
+			formulatemplatetypes.ErrRateTableMiss, table, rowKey, colKey)
+	}
 	value, ok := r.values[table]
 	if !ok {
 		return 0, fmt.Errorf("two-axis rate table %q not found", table)
@@ -131,9 +140,75 @@ func TestEngine_EvaluateExpression_Lookup2OrFallsBackOnMiss(t *testing.T) {
 	t.Parallel()
 
 	e := setupEngine(t)
-	provider := &recordingLookup{values: map[string]float64{}}
+	provider := &recordingLookup{
+		values: map[string]float64{},
+		misses: map[string]struct{}{"grid": {}},
+	}
 
 	result, err := e.EvaluateExpression(
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: `lookup2Or("grid", "row", 5, 2.5)`,
+			Entity:     struct{}{},
+			SchemaID:   "test",
+			Lookup:     provider,
+		},
+	)
+
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromFloat(2.5).Equal(result.Value))
+}
+
+func TestEngine_EvaluateExpression_LookupOrFallsBackOnMiss(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+	provider := &recordingLookup{
+		values: map[string]float64{},
+		misses: map[string]struct{}{"fsc": {}},
+	}
+
+	result, err := e.EvaluateExpression(
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: `lookupOr("fsc", "GAS", 1.25)`,
+			Entity:     struct{}{},
+			SchemaID:   "test",
+			Lookup:     provider,
+		},
+	)
+
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromFloat(1.25).Equal(result.Value))
+}
+
+func TestEngine_EvaluateExpression_LookupOrPropagatesMissingTable(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+	provider := &recordingLookup{values: map[string]float64{}}
+
+	_, err := e.EvaluateExpression(
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: `lookupOr("missing", "x", 1.25)`,
+			Entity:     struct{}{},
+			SchemaID:   "test",
+			Lookup:     provider,
+		},
+	)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `rate table "missing" not found`)
+}
+
+func TestEngine_EvaluateExpression_Lookup2OrPropagatesMissingTable(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+	provider := &recordingLookup{values: map[string]float64{}}
+
+	_, err := e.EvaluateExpression(
 		t.Context(),
 		&formulatemplatetypes.ExpressionEvaluationRequest{
 			Expression: `lookup2Or("missing", "row", 5, 2.5)`,
@@ -143,8 +218,63 @@ func TestEngine_EvaluateExpression_Lookup2OrFallsBackOnMiss(t *testing.T) {
 		},
 	)
 
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `two-axis rate table "missing" not found`)
+}
+
+func TestEngine_EvaluateExpression_NilLookupIsUnavailableNotZero(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	_, err := e.EvaluateExpression(
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: `lookup("fsc", "DIESEL")`,
+			Entity:     struct{}{},
+			SchemaID:   "test",
+		},
+	)
+
+	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableUnavailable)
+}
+
+func TestEngine_EvaluateWithEnv_UsesProvidedLookup(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+	provider := &recordingLookup{values: map[string]float64{"fsc": 0.35}}
+
+	result, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{
+			Expression: `lookup("fsc", "DIESEL") * miles`,
+			Env:        map[string]any{"miles": 100.0},
+			Lookup:     provider,
+		},
+	)
+
 	require.NoError(t, err)
-	assert.True(t, decimal.NewFromFloat(2.5).Equal(result.Value))
+	assert.True(t, decimal.NewFromFloat(35).Equal(result.Value))
+	require.Len(t, provider.singleCalls, 1)
+}
+
+func TestEngine_StubLookup_ResolvesEveryTableToZero(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	result, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{
+			Expression: `lookup("anything", 1) + lookup2("grid", "a", 2) + 4`,
+			Env:        map[string]any{},
+			Lookup:     engine.StubLookup{},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromInt(4).Equal(result.Value))
 }
 
 func TestEngine_EvaluateExpression_Lookup2NamesAreReserved(t *testing.T) {

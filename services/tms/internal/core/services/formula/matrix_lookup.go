@@ -242,8 +242,8 @@ func (l *matrixLookup) Lookup2(table string, rowKey, colKey any) (float64, error
 	}
 
 	return 0, fmt.Errorf(
-		"rate table %q has no cell matching row %v and column %v",
-		table, rowKey, colKey,
+		"%w: rate table %q has no cell matching row %v and column %v",
+		formulatemplatetypes.ErrRateTableMiss, table, rowKey, colKey,
 	)
 }
 
@@ -313,7 +313,10 @@ func lookupExact(table string, entries map[string]float64, key any) (float64, er
 
 	value, ok := entries[matchKey]
 	if !ok {
-		return 0, fmt.Errorf("rate table %q has no entry for key %q", table, matchKey)
+		return 0, fmt.Errorf(
+			"%w: rate table %q has no entry for key %q",
+			formulatemplatetypes.ErrRateTableMiss, table, matchKey,
+		)
 	}
 
 	return value, nil
@@ -335,7 +338,10 @@ func lookupRange(table string, bands []rateBand, key any) (float64, error) {
 		return band.value, nil
 	}
 
-	return 0, fmt.Errorf("rate table %q has no band matching %s", table, numericKey.String())
+	return 0, fmt.Errorf(
+		"%w: rate table %q has no band matching %s",
+		formulatemplatetypes.ErrRateTableMiss, table, numericKey.String(),
+	)
 }
 
 func keyToString(key any) (string, error) {

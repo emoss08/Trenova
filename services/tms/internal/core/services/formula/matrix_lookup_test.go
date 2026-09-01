@@ -1,6 +1,7 @@
 package formula_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
@@ -521,4 +522,29 @@ func TestService_ValidateLookupTables_RejectsUnknownTwoAxisTable(t *testing.T) {
 	)
 
 	require.ErrorContains(t, err, "Unknown rate table: nowhere")
+}
+
+func TestMatrixLookup_MissIsDistinguishableFromMissingTable(t *testing.T) {
+	t.Parallel()
+
+	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+		exactLookupMatrix("fsc", map[string]string{"DIESEL": "0.35"}),
+		rangeLookupMatrix("miles", []bandDef{{min: "0", max: "500", value: "2.5"}}),
+	})
+
+	_, err := lookup.Lookup("fsc", "GAS")
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, formulatemplatetypes.ErrRateTableMiss), err.Error())
+
+	_, err = lookup.Lookup("miles", 900)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, formulatemplatetypes.ErrRateTableMiss), err.Error())
+
+	_, err = lookup.Lookup("nope", "DIESEL")
+	require.Error(t, err)
+	assert.False(t, errors.Is(err, formulatemplatetypes.ErrRateTableMiss), err.Error())
+
+	_, err = lookup.Lookup("fsc", struct{}{})
+	require.Error(t, err)
+	assert.False(t, errors.Is(err, formulatemplatetypes.ErrRateTableMiss), err.Error())
 }

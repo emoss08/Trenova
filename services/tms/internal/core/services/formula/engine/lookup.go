@@ -18,19 +18,40 @@ const (
 
 var ErrReservedVariableName = goErrors.New("variable name is reserved")
 
-type stubLookup struct{}
+// StubLookup answers every lookup with zero and claims every table exists.
+//
+// It is for contexts that must compile and type-check an expression without
+// pricing anything: save-time validation and yes-or-no predicates. Callers opt
+// into it by name. A nil provider no longer degrades to it, because a preview
+// or scenario that quietly priced a rate table at $0 was the wrong number shown
+// with full confidence.
+type StubLookup struct{}
 
-func (stubLookup) Lookup(string, any) (float64, error) { return 0, nil }
+func (StubLookup) Lookup(string, any) (float64, error) { return 0, nil }
 
-func (stubLookup) Has(string) bool { return true }
+func (StubLookup) Has(string) bool { return true }
 
-func (stubLookup) Lookup2(string, any, any) (float64, error) { return 0, nil }
+func (StubLookup) Lookup2(string, any, any) (float64, error) { return 0, nil }
 
-func (stubLookup) Has2(string) bool { return true }
+func (StubLookup) Has2(string) bool { return true }
+
+type unavailableLookup struct{}
+
+func (unavailableLookup) Lookup(table string, _ any) (float64, error) {
+	return 0, fmt.Errorf("%w: %q", formulatemplatetypes.ErrRateTableUnavailable, table)
+}
+
+func (unavailableLookup) Has(string) bool { return false }
+
+func (unavailableLookup) Lookup2(table string, _, _ any) (float64, error) {
+	return 0, fmt.Errorf("%w: %q", formulatemplatetypes.ErrRateTableUnavailable, table)
+}
+
+func (unavailableLookup) Has2(string) bool { return false }
 
 func injectLookupFunctions(env map[string]any, provider formulatemplatetypes.RateTableLookup) {
 	if provider == nil {
-		provider = stubLookup{}
+		provider = unavailableLookup{}
 	}
 
 	env[lookupFuncName] = func(table string, key any) (float64, error) {
@@ -40,7 +61,10 @@ func injectLookupFunctions(env map[string]any, provider formulatemplatetypes.Rat
 	env[lookupOrFuncName] = func(table string, key any, fallback float64) (float64, error) {
 		value, err := provider.Lookup(table, key)
 		if err != nil {
-			return fallback, nil //nolint:nilerr // lookupOr falls back to the default on any miss
+			if goErrors.Is(err, formulatemplatetypes.ErrRateTableMiss) {
+				return fallback, nil
+			}
+			return 0, err
 		}
 		return value, nil
 	}
@@ -52,7 +76,10 @@ func injectLookupFunctions(env map[string]any, provider formulatemplatetypes.Rat
 	env[lookup2OrFuncName] = func(table string, rowKey, colKey any, fallback float64) (float64, error) {
 		value, err := provider.Lookup2(table, rowKey, colKey)
 		if err != nil {
-			return fallback, nil //nolint:nilerr // lookup2Or falls back to the default on any miss
+			if goErrors.Is(err, formulatemplatetypes.ErrRateTableMiss) {
+				return fallback, nil
+			}
+			return 0, err
 		}
 		return value, nil
 	}
