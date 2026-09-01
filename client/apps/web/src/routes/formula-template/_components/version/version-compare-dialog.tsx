@@ -8,13 +8,12 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
-import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
+import { ExpressionDiff } from "@/components/formula-editor/expression-diff";
 
 type VersionCompareDialogProps = {
   open: boolean;
@@ -171,26 +170,6 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function ExpressionDiff({ before, after }: { before: string; after: string }) {
-  const { theme } = useTheme();
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-  return (
-    <div className="overflow-hidden rounded-md border font-mono text-xs">
-      <ReactDiffViewer
-        oldValue={before}
-        newValue={after}
-        splitView={false}
-        compareMethod={DiffMethod.WORDS}
-        useDarkTheme={isDark}
-        hideLineNumbers
-      />
     </div>
   );
 }

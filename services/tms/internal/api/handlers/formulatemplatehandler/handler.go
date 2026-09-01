@@ -98,6 +98,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
 	idGroup.POST("/impact", requireRead, h.approvalImpact)
 	idGroup.GET("/readiness", requireRead, h.readiness)
+	idGroup.GET("/review-diff", requireRead, h.reviewDiff)
 	idGroup.GET("/test-cases", requireRead, h.listTestCases)
 	idGroup.POST("/test-cases", requireUpdate, h.createTestCase)
 	idGroup.PUT("/test-cases/:testCaseID", requireUpdate, h.updateTestCase)
@@ -1728,6 +1729,45 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 			},
 			TemplateID: templateID,
 			Limit:      req.Limit,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// @Summary Compare a formula template's pending content with its last approved snapshot
+// @ID formulaTemplateReviewDiff
+// @Tags Formula Templates
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Success 200 {object} formulatemplateservice.ReviewDiffResponse
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/review-diff [get]
+func (h *Handler) reviewDiff(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	response, err := h.service.ReviewDiff(
+		c.Request.Context(),
+		&formulatemplateservice.ReviewDiffRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID: templateID,
 		},
 	)
 	if err != nil {

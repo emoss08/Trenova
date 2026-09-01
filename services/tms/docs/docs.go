@@ -12458,6 +12458,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/formula-templates/{templateID}/review-diff": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Formula Templates"
+                ],
+                "summary": "Compare a formula template's pending content with its last approved snapshot",
+                "operationId": "formulaTemplateReviewDiff",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Formula template ID",
+                        "name": "templateID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReviewDiffResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/formula-templates/{templateID}/rollback": {
             "post": {
                 "security": [
@@ -48081,6 +48133,35 @@ const docTemplate = `{
                 },
                 "scenarioTotal": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReviewDiffResponse": {
+            "type": "object",
+            "properties": {
+                "baseExpression": {
+                    "type": "string"
+                },
+                "baseVersion": {
+                    "type": "integer"
+                },
+                "changeCount": {
+                    "type": "integer"
+                },
+                "changes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/jsonutils.FieldChange"
+                    }
+                },
+                "currentExpression": {
+                    "type": "string"
+                },
+                "currentVersion": {
+                    "type": "integer"
+                },
+                "hasApprovedBase": {
+                    "type": "boolean"
                 }
             }
         },

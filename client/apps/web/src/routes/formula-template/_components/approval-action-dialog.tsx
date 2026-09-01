@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
 import { ReadinessPanel } from "./readiness-panel";
+import { ReviewDiffPanel } from "./review-diff-panel";
 
 export type ApprovalAction = "submit" | "approve" | "reject";
 
@@ -147,7 +148,13 @@ export function ApprovalActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={action === "reject" ? "sm:max-w-[420px]" : "sm:max-w-[520px]"}>
+      <DialogContent
+        className={
+          action === "reject"
+            ? "sm:max-w-[420px]"
+            : "flex max-h-[85vh] flex-col overflow-y-auto sm:max-w-[600px]"
+        }
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
@@ -160,6 +167,8 @@ export function ApprovalActionDialog({
         {gated && open && template?.id && (
           <ReadinessPanel templateId={template.id} step={action} onReadinessChange={setReady} />
         )}
+
+        {gated && open && template?.id && <ReviewDiffPanel templateId={template.id} />}
 
         {action === "approve" && open && template?.id && (
           <ApprovalImpactPanel templateId={template.id} />

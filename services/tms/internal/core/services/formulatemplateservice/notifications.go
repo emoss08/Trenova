@@ -23,6 +23,13 @@ func templateStudioLink(templateID pulid.ID) string {
 	return "/billing/configuration-files/formula-templates/" + templateID.String() + "/edit"
 }
 
+// templateReviewLink opens the studio on the approve step, with the diff and
+// impact already in view, so a reviewer lands on the decision rather than on
+// the editor.
+func templateReviewLink(templateID pulid.ID) string {
+	return templateStudioLink(templateID) + "?review=approve"
+}
+
 // notifySubmitted raises a global in-app notification so reviewers learn a
 // template is waiting on them without having to poll the list. Failures are
 // logged only: a notification must never fail the transition it decorates.
@@ -48,7 +55,7 @@ func (s *Service) notifySubmitted(
 			template.Name,
 		),
 		Source: notificationSource,
-		Data:   map[string]any{"link": templateStudioLink(template.ID)},
+		Data:   map[string]any{"link": templateReviewLink(template.ID)},
 	}
 
 	if _, err := s.notifications.Create(ctx, entity); err != nil {

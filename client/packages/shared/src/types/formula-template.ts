@@ -914,6 +914,17 @@ export type TestCaseCandidate = {
   roundingPrecision?: number;
 };
 
+export const reviewDiffResponseSchema = z.object({
+  hasApprovedBase: z.boolean(),
+  baseVersion: z.number(),
+  currentVersion: z.number(),
+  baseExpression: z.string(),
+  currentExpression: z.string(),
+  changes: z.record(z.string(), fieldChangeSchema),
+  changeCount: z.number(),
+});
+export type ReviewDiffResponse = z.output<typeof reviewDiffResponseSchema>;
+
 export const readinessCheckSchema = z.object({
   key: z.string(),
   label: z.string(),

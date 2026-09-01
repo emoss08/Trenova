@@ -11437,6 +11437,25 @@ components:
                 scenarioTotal:
                     type: integer
             type: object
+        github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReviewDiffResponse:
+            properties:
+                baseExpression:
+                    type: string
+                baseVersion:
+                    type: integer
+                changeCount:
+                    type: integer
+                changes:
+                    additionalProperties:
+                        $ref: '#/components/schemas/jsonutils.FieldChange'
+                    type: object
+                currentExpression:
+                    type: string
+                currentVersion:
+                    type: integer
+                hasApprovedBase:
+                    type: boolean
+            type: object
         github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesRequest:
             properties:
                 candidate:
@@ -23221,6 +23240,46 @@ paths:
             security:
                 - BearerAuth: []
             summary: Reject a formula template
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/review-diff:
+        get:
+            operationId: formulaTemplateReviewDiff
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReviewDiffResponse'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Compare a formula template's pending content with its last approved snapshot
             tags:
                 - Formula Templates
     /formula-templates/{templateID}/rollback:

@@ -312,11 +312,11 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 3.2 Reviewer sees a diff
 
-- [ ] Endpoint: diff between the last `Active` snapshot and the submitted content
-      (`formulatemplateservice` `CompareWithLastApproved`, handler route)
-- [ ] Approve dialog shows expression diff (reuse `ExpressionDiff`) plus the
+- [x] `GET /:id/review-diff` compares the last `Active` snapshot with the current
+      content (`formulatemplateservice/reviewdiff.go`)
+- [x] Approve dialog shows expression diff (reuse `ExpressionDiff`) plus the
       corrected impact panel; Submit dialog shows the same to the author
-- [ ] Notification for reviewers links to the studio with the diff open
+- [x] Notification for reviewers links to the studio with the diff open
 
 ### 3.3 Hover-to-evaluate
 

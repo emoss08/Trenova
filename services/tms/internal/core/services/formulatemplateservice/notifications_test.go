@@ -66,7 +66,7 @@ func TestSubmit_NotifiesReviewers(t *testing.T) {
 	assert.Equal(t, eventTemplateSubmitted, notified.EventType)
 	assert.Equal(t, tenant.OrgID, notified.OrganizationID)
 	assert.Contains(t, notified.Message, template.Name)
-	assert.Equal(t, templateStudioLink(template.ID), notified.Data["link"])
+	assert.Equal(t, templateReviewLink(template.ID), notified.Data["link"])
 }
 
 func TestApprove_NotifiesSubmitter(t *testing.T) {

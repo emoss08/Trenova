@@ -3,6 +3,8 @@ import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
   readinessResponseSchema,
+  reviewDiffResponseSchema,
+  type ReviewDiffResponse,
   type ReadinessResponse,
   explainFormulaResponseSchema,
   forkLineageSchema,
@@ -393,5 +395,13 @@ export class FormulaTemplateService {
     const response = await api.get<ReadinessResponse>(`/formula-templates/${templateId}/readiness`);
 
     return safeParse(readinessResponseSchema, response, "Formula Template Readiness");
+  }
+
+  public async reviewDiff(templateId: FormulaTemplate["id"]): Promise<ReviewDiffResponse> {
+    const response = await api.get<ReviewDiffResponse>(
+      `/formula-templates/${templateId}/review-diff`,
+    );
+
+    return safeParse(reviewDiffResponseSchema, response, "Formula Template Review Diff");
   }
 }

@@ -483,3 +483,54 @@ func TestTestExpression_ReturnsAReceipt(t *testing.T) {
 	require.NotNil(t, result.Receipt.Lookups[0].Match)
 	assert.True(t, result.Receipt.Lookups[0].Match.BandMin.Equal(decimal.NewFromInt(500)))
 }
+
+func TestReviewDiff_ComparesLastApprovedSnapshotToPendingContent(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	template.Expression = "totalDistance * 3"
+	template.CurrentVersionNumber = 4
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.MatchedBy(
+		func(req *repositories.GetLatestVersionByStatusRequest) bool {
+			return req.Status == formulatemplate.StatusActive && req.TemplateID == template.ID
+		},
+	)).Return(newApprovedSnapshot(template, 2, "totalDistance * 2"), nil)
+
+	diff, err := deps.svc.ReviewDiff(t.Context(), &ReviewDiffRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, diff.HasApprovedBase)
+	assert.Equal(t, int64(2), diff.BaseVersion)
+	assert.Equal(t, int64(4), diff.CurrentVersion)
+	assert.Equal(t, "totalDistance * 2", diff.BaseExpression)
+	assert.Equal(t, "totalDistance * 3", diff.CurrentExpression)
+	assert.Contains(t, diff.Changes, "expression")
+	assert.Positive(t, diff.ChangeCount)
+}
+
+func TestReviewDiff_WithoutApprovedHistoryShowsEverythingAsNew(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
+
+	diff, err := deps.svc.ReviewDiff(t.Context(), &ReviewDiffRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, diff.HasApprovedBase)
+	assert.Equal(t, int64(0), diff.BaseVersion)
+	assert.Empty(t, diff.BaseExpression)
+	assert.Equal(t, template.Expression, diff.CurrentExpression)
+}

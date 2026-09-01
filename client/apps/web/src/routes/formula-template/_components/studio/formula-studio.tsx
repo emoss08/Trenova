@@ -24,9 +24,9 @@ import type {
   FormulaTemplateFormValues,
   VariableDefinition,
 } from "@trenova/shared/types/formula-template";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { ApprovalActionDialog, type ApprovalAction } from "../approval-action-dialog";
 import { ForkLineageDialog } from "../fork-lineage-dialog";
@@ -79,6 +79,7 @@ function FormulaStudioBody({
 }: FormulaStudioProps) {
   const form = useFormContext<FormulaTemplateFormValues>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
@@ -119,6 +120,23 @@ function FormulaStudioBody({
   );
 
   const insertIntoActiveEditor = useActiveEditorInsert();
+
+  // A reviewer following a notification lands on the decision, not the
+  // editor: the approve dialog opens itself, then the marker is dropped from
+  // the URL so a refresh does not reopen it.
+  const reviewStep = searchParams.get("review");
+  useEffect(() => {
+    if (reviewStep === "approve" && template?.status === "InReview") {
+      setApprovalAction("approve");
+      setSearchParams(
+        (params) => {
+          params.delete("review");
+          return params;
+        },
+        { replace: true },
+      );
+    }
+  }, [reviewStep, template?.status, setSearchParams]);
 
   const isDirty = form.formState.isDirty;
   const shortcutHandlers = useMemo(

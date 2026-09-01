@@ -3058,3 +3058,25 @@ func (m *mockFormulaTemplateRepo) CountStatsByIDs(
 ) (map[pulid.ID]repositories.TemplateStats, error) {
 	return map[pulid.ID]repositories.TemplateStats{}, nil
 }
+
+func TestFormulaTemplateHandler_ReviewDiff_FirstApproval(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusInReview)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/review-diff").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, false, resp["hasApprovedBase"])
+	assert.Equal(t, "totalDistance * 2.5", resp["currentExpression"])
+}
