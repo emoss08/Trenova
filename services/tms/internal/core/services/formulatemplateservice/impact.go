@@ -24,8 +24,8 @@ type ApprovalImpactRequest struct {
 // ApprovalImpact answers the question a reviewer actually has before
 // approving: what would this template's pending content have done to the
 // shipments it already priced? Each shipment is rated twice — once with the
-// version that was effective when it shipped, once with the row as it stands
-// — and the deltas are returned biggest-movers-first.
+// content it was actually charged with (see resolveCurrentForShipment), once
+// with the row as it stands — and the deltas are returned biggest-movers-first.
 func (s *Service) ApprovalImpact(
 	ctx context.Context,
 	req *ApprovalImpactRequest,

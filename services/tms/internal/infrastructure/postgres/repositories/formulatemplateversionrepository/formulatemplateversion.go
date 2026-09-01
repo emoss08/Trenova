@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -359,4 +360,39 @@ func (r *repository) ListScheduled(
 	}
 
 	return versions, nil
+}
+
+func (r *repository) GetLatestByStatus(
+	ctx context.Context,
+	req *repositories.GetLatestVersionByStatusRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	log := r.l.With(
+		zap.String("operation", "GetLatestByStatus"),
+		zap.String("templateID", req.TemplateID.String()),
+		zap.String("status", req.Status.String()),
+	)
+
+	ftv := buncolgen.FormulaTemplateVersionColumns
+
+	entity := new(formulatemplate.FormulaTemplateVersion)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
+				Where(ftv.TemplateID.Eq(), req.TemplateID).
+				Where(ftv.Status.Eq(), req.Status)
+		}).
+		Order(ftv.VersionNumber.OrderDesc()).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil version means the template never held that status
+		}
+		log.Error("failed to get latest formula template version by status", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
 }

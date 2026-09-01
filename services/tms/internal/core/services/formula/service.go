@@ -122,6 +122,28 @@ func (s *Service) ResolveEffectiveTemplate(
 	tenantInfo pagination.TenantInfo,
 	ratingDate int64,
 ) (*formulatemplate.FormulaTemplate, error) {
+	version, err := s.ResolveScheduledVersion(ctx, template, tenantInfo, ratingDate)
+	if err != nil {
+		return nil, err
+	}
+
+	if version == nil {
+		return template, nil
+	}
+
+	return template.ApplyVersion(version), nil
+}
+
+// ResolveScheduledVersion returns the scheduled snapshot in effect for the
+// rating date, or nil when none is scheduled that early. Callers that need to
+// know whether a schedule applied at all, rather than just what content to
+// use, ask this directly.
+func (s *Service) ResolveScheduledVersion(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+	ratingDate int64,
+) (*formulatemplate.FormulaTemplateVersion, error) {
 	asOf := ratingDate
 	if asOf == 0 {
 		asOf = timeutils.NowUnix()
@@ -144,12 +166,7 @@ func (s *Service) ResolveEffectiveTemplate(
 		return nil, err
 	}
 
-	version := effectiveversioncache.EffectiveAsOf(versions, asOf)
-	if version == nil {
-		return template, nil
-	}
-
-	return template.ApplyVersion(version), nil
+	return effectiveversioncache.EffectiveAsOf(versions, asOf), nil
 }
 
 type RateRequest struct {

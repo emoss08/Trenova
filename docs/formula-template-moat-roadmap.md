@@ -46,13 +46,13 @@ approval-gating scenarios prove nothing.
 dialog nearly always reports "pricing-neutral". Same flaw affects backtest's
 "current" side.
 
-- [ ] "Current" for each shipment = `RatingDetail.Result` when present (what the
+- [x] "Current" for each shipment = `RatingDetail.Result` when present (what the
       customer was charged), else re-rate with the version recorded in
       `RatingDetail.VersionNumber`, else the last `Active` snapshot
       (`formulatemplateservice/impact.go`, `backtest.go` `resolveEffectiveForShipment`)
-- [ ] Version repo gains `GetLastActiveSnapshot(templateID)`
+- [x] Version repo gains `GetLastActiveSnapshot(templateID)`
       (`formulatemplateversionrepository`)
-- [ ] Tests: impact with a template whose content changed since the shipment was
+- [x] Tests: impact with a template whose content changed since the shipment was
       rated reports a non-zero delta; backtest current side uses the recorded version
 - [ ] Manual: approve dialog shows movers for a template with edited content
 

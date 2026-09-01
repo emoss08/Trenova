@@ -89,6 +89,16 @@ type ListScheduledVersionsRequest struct {
 	TemplateID pulid.ID
 }
 
+// GetLatestVersionByStatusRequest asks for the newest snapshot a template took
+// while in a given status. With StatusActive it answers "what was the last
+// approved content", which is what a shipment was charged with when nothing
+// more specific was recorded on it.
+type GetLatestVersionByStatusRequest struct {
+	TenantInfo pagination.TenantInfo
+	TemplateID pulid.ID
+	Status     formulatemplate.Status
+}
+
 type FormulaTemplateVersionRepository interface {
 	Create(
 		ctx context.Context,
@@ -140,4 +150,10 @@ type FormulaTemplateVersionRepository interface {
 		ctx context.Context,
 		req *ListScheduledVersionsRequest,
 	) ([]*formulatemplate.FormulaTemplateVersion, error)
+
+	// GetLatestByStatus returns nil, nil when the template never held that status.
+	GetLatestByStatus(
+		ctx context.Context,
+		req *GetLatestVersionByStatusRequest,
+	) (*formulatemplate.FormulaTemplateVersion, error)
 }

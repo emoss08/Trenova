@@ -2068,6 +2068,7 @@ func TestBacktest_SummaryMath(t *testing.T) {
 	template := newBacktestTemplate()
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.MatchedBy(
 		func(req *repositories.ListRatedByFormulaTemplateRequest) bool {
 			return req.TemplateID == template.ID && req.Limit == 50
@@ -2116,6 +2117,7 @@ func TestBacktest_GuardrailClampsCandidate(t *testing.T) {
 	template.MaxCharge = decimal.NewNullDecimal(decimal.NewFromInt(150))
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.Anything).
 		Return(newBacktestShipments()[:1], nil)
 
@@ -2153,6 +2155,7 @@ func TestBacktest_WithVersionNumber(t *testing.T) {
 	}
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.MatchedBy(
 		func(req *repositories.GetVersionRequest) bool {
 			return req.VersionNumber == versionNumber
@@ -2179,6 +2182,7 @@ func TestBacktest_CandidateErrorsRecordedPerRow(t *testing.T) {
 	template := newBacktestTemplate()
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.Anything).
 		Return(newBacktestShipments(), nil)
 

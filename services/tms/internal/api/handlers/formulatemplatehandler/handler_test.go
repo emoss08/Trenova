@@ -2884,3 +2884,10 @@ func TestFormulaTemplateHandler_TestExpression_WithShipment_PermissionDenied(t *
 
 	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
 }
+
+func (m *mockVersionRepo) GetLatestByStatus(
+	_ context.Context,
+	_ *repositories.GetLatestVersionByStatusRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}

@@ -2,12 +2,15 @@ package formulatemplateservice
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratesimulation"
@@ -206,7 +209,7 @@ func (s *Service) backtestShipment(
 		ProNumber:  entity.ProNumber,
 	}
 
-	current, err := s.resolveEffectiveForShipment(ctx, template, entity, tenantInfo)
+	current, err := s.resolveCurrentForShipment(ctx, template, entity, tenantInfo)
 	if err != nil {
 		result.CurrentError = err.Error()
 	} else if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
@@ -246,12 +249,114 @@ func (s *Service) backtestShipment(
 	return result
 }
 
-func (s *Service) resolveEffectiveForShipment(
+// resolveCurrentForShipment reconstructs the content a shipment was actually
+// charged with, so the "current" side of a backtest is the number on the
+// invoice rather than whatever the template row happens to hold today.
+//
+// The row is the wrong baseline more often than not: while a template is in
+// review the row already carries the pending edit, and a template under
+// revision has been demoted to Draft. So the search goes from most to least
+// specific — the version stamped on the shipment's own rating detail, then a
+// version scheduled into effect for its ship date, then the newest snapshot
+// the template took while Active — and only falls back to the row when the
+// template has no approved history at all.
+func (s *Service) resolveCurrentForShipment(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplate, error) {
+	if recorded := recordedVersionNumber(template, entity); recorded > 0 {
+		version, err := effectiveversioncache.GetVersion(
+			ctx,
+			template.ID,
+			recorded,
+			func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
+				return s.lookupVersion(loadCtx, template.ID, recorded, tenantInfo)
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		if version != nil {
+			return template.ApplyVersion(version), nil
+		}
+	}
+
+	scheduled, err := s.formulaService.ResolveScheduledVersion(
+		ctx,
+		template,
+		tenantInfo,
+		shipmentRatingDate(entity),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if scheduled != nil {
+		return template.ApplyVersion(scheduled), nil
+	}
+
+	active, err := effectiveversioncache.GetLatestActive(
+		ctx,
+		template.ID,
+		func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
+			return s.versionRepo.GetLatestByStatus(
+				loadCtx,
+				&repositories.GetLatestVersionByStatusRequest{
+					TenantInfo: tenantInfo,
+					TemplateID: template.ID,
+					Status:     formulatemplate.StatusActive,
+				},
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if active != nil {
+		return template.ApplyVersion(active), nil
+	}
+
+	return template, nil
+}
+
+// lookupVersion fetches one numbered snapshot, treating "no such version" as
+// nil so a stale stamp on a shipment degrades to the next resolution step
+// instead of failing the whole backtest row.
+func (s *Service) lookupVersion(
+	ctx context.Context,
+	templateID pulid.ID,
+	versionNumber int64,
+	tenantInfo pagination.TenantInfo,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+		TenantInfo:    tenantInfo,
+		TemplateID:    templateID,
+		VersionNumber: versionNumber,
+	})
+	if err != nil {
+		if dberror.IsNotFoundError(err) || errors.Is(err, sql.ErrNoRows) {
+			return nil, nil //nolint:nilnil // nil version means the stamp points at nothing
+		}
+		return nil, err
+	}
+
+	return version, nil
+}
+
+func recordedVersionNumber(
+	template *formulatemplate.FormulaTemplate,
+	entity *shipment.Shipment,
+) int64 {
+	detail := entity.RatingDetail
+	if detail == nil || detail.FormulaTemplateID != template.ID.String() {
+		return 0
+	}
+
+	return detail.VersionNumber
+}
+
+func shipmentRatingDate(entity *shipment.Shipment) int64 {
 	asOf := entity.CreatedAt
 	if entity.ActualShipDate != nil && *entity.ActualShipDate > 0 {
 		asOf = *entity.ActualShipDate
@@ -260,7 +365,7 @@ func (s *Service) resolveEffectiveForShipment(
 		asOf = timeutils.NowUnix()
 	}
 
-	return s.formulaService.ResolveEffectiveTemplate(ctx, template, tenantInfo, asOf)
+	return asOf
 }
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
