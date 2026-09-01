@@ -41,6 +41,11 @@ type GetFormulaTemplatesByIDsRequest struct {
 	TemplateIDs []pulid.ID            `json:"templateIds"`
 }
 
+type GetFormulaTemplatesByNamesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Names      []string              `json:"names"`
+}
+
 type TemplateUsageCount struct {
 	Type  string `json:"type"`
 	Count int    `json:"count"`
@@ -76,6 +81,10 @@ type FormulaTemplateRepository interface {
 	GetByIDs(
 		ctx context.Context,
 		req GetFormulaTemplatesByIDsRequest,
+	) ([]*formulatemplate.FormulaTemplate, error)
+	FindByNames(
+		ctx context.Context,
+		req GetFormulaTemplatesByNamesRequest,
 	) ([]*formulatemplate.FormulaTemplate, error)
 	List(
 		ctx context.Context,

@@ -124,6 +124,7 @@ type ResolverRoot interface {
 	EquipmentContinuity() EquipmentContinuityResolver
 	EscrowAccount() EscrowAccountResolver
 	FiscalYear() FiscalYearResolver
+	FormulaTemplate() FormulaTemplateResolver
 	Invoice() InvoiceResolver
 	InvoiceLine() InvoiceLineResolver
 	JournalEntryLine() JournalEntryLineResolver
@@ -3054,6 +3055,9 @@ type ComplexityRoot struct {
 	}
 
 	FormulaTemplate struct {
+		ApprovedAt           func(childComplexity int) int
+		ApprovedByID         func(childComplexity int) int
+		BreakdownDefinitions func(childComplexity int) int
 		BusinessUnit         func(childComplexity int) int
 		BusinessUnitID       func(childComplexity int) int
 		CreatedAt            func(childComplexity int) int
@@ -3061,14 +3065,29 @@ type ComplexityRoot struct {
 		Description          func(childComplexity int) int
 		Expression           func(childComplexity int) int
 		ID                   func(childComplexity int) int
+		MaxCharge            func(childComplexity int) int
+		Metadata             func(childComplexity int) int
+		MinCharge            func(childComplexity int) int
 		Name                 func(childComplexity int) int
 		Organization         func(childComplexity int) int
 		OrganizationID       func(childComplexity int) int
+		ReviewComment        func(childComplexity int) int
 		SchemaID             func(childComplexity int) int
+		SourceTemplateID     func(childComplexity int) int
+		SourceVersionNumber  func(childComplexity int) int
 		Status               func(childComplexity int) int
+		SubmittedAt          func(childComplexity int) int
+		SubmittedByID        func(childComplexity int) int
 		Type                 func(childComplexity int) int
 		UpdatedAt            func(childComplexity int) int
+		VariableDefinitions  func(childComplexity int) int
 		Version              func(childComplexity int) int
+	}
+
+	FormulaTemplateBreakdownDefinition struct {
+		Expression func(childComplexity int) int
+		Label      func(childComplexity int) int
+		Name       func(childComplexity int) int
 	}
 
 	FormulaTemplateConnection struct {
@@ -3080,6 +3099,15 @@ type ComplexityRoot struct {
 	FormulaTemplateEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	FormulaTemplateVariableDefinition struct {
+		DefaultValue func(childComplexity int) int
+		Description  func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Required     func(childComplexity int) int
+		Source       func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	FuelCostResolution struct {
@@ -7263,6 +7291,12 @@ type EscrowAccountResolver interface {
 }
 type FiscalYearResolver interface {
 	Periods(ctx context.Context, obj *fiscalyear.FiscalYear) ([]*fiscalperiod.FiscalPeriod, error)
+}
+type FormulaTemplateResolver interface {
+	VariableDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateVariableDefinition, error)
+	BreakdownDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateBreakdownDefinition, error)
+	MinCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error)
+	MaxCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error)
 }
 type InvoiceResolver interface {
 	SubtotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
@@ -21406,6 +21440,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.FormSubmissionField.Value(childComplexity), true
 
+	case "FormulaTemplate.approvedAt":
+		if e.ComplexityRoot.FormulaTemplate.ApprovedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.ApprovedAt(childComplexity), true
+	case "FormulaTemplate.approvedById":
+		if e.ComplexityRoot.FormulaTemplate.ApprovedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.ApprovedByID(childComplexity), true
+	case "FormulaTemplate.breakdownDefinitions":
+		if e.ComplexityRoot.FormulaTemplate.BreakdownDefinitions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.BreakdownDefinitions(childComplexity), true
 	case "FormulaTemplate.businessUnit":
 		if e.ComplexityRoot.FormulaTemplate.BusinessUnit == nil {
 			break
@@ -21448,6 +21500,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.ID(childComplexity), true
+	case "FormulaTemplate.maxCharge":
+		if e.ComplexityRoot.FormulaTemplate.MaxCharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.MaxCharge(childComplexity), true
+	case "FormulaTemplate.metadata":
+		if e.ComplexityRoot.FormulaTemplate.Metadata == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.Metadata(childComplexity), true
+	case "FormulaTemplate.minCharge":
+		if e.ComplexityRoot.FormulaTemplate.MinCharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.MinCharge(childComplexity), true
 	case "FormulaTemplate.name":
 		if e.ComplexityRoot.FormulaTemplate.Name == nil {
 			break
@@ -21466,18 +21536,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.OrganizationID(childComplexity), true
+	case "FormulaTemplate.reviewComment":
+		if e.ComplexityRoot.FormulaTemplate.ReviewComment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.ReviewComment(childComplexity), true
 	case "FormulaTemplate.schemaId":
 		if e.ComplexityRoot.FormulaTemplate.SchemaID == nil {
 			break
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.SchemaID(childComplexity), true
+	case "FormulaTemplate.sourceTemplateId":
+		if e.ComplexityRoot.FormulaTemplate.SourceTemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.SourceTemplateID(childComplexity), true
+	case "FormulaTemplate.sourceVersionNumber":
+		if e.ComplexityRoot.FormulaTemplate.SourceVersionNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.SourceVersionNumber(childComplexity), true
 	case "FormulaTemplate.status":
 		if e.ComplexityRoot.FormulaTemplate.Status == nil {
 			break
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.Status(childComplexity), true
+	case "FormulaTemplate.submittedAt":
+		if e.ComplexityRoot.FormulaTemplate.SubmittedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.SubmittedAt(childComplexity), true
+	case "FormulaTemplate.submittedById":
+		if e.ComplexityRoot.FormulaTemplate.SubmittedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.SubmittedByID(childComplexity), true
 	case "FormulaTemplate.type":
 		if e.ComplexityRoot.FormulaTemplate.Type == nil {
 			break
@@ -21490,12 +21590,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.UpdatedAt(childComplexity), true
+	case "FormulaTemplate.variableDefinitions":
+		if e.ComplexityRoot.FormulaTemplate.VariableDefinitions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplate.VariableDefinitions(childComplexity), true
 	case "FormulaTemplate.version":
 		if e.ComplexityRoot.FormulaTemplate.Version == nil {
 			break
 		}
 
 		return e.ComplexityRoot.FormulaTemplate.Version(childComplexity), true
+
+	case "FormulaTemplateBreakdownDefinition.expression":
+		if e.ComplexityRoot.FormulaTemplateBreakdownDefinition.Expression == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateBreakdownDefinition.Expression(childComplexity), true
+	case "FormulaTemplateBreakdownDefinition.label":
+		if e.ComplexityRoot.FormulaTemplateBreakdownDefinition.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateBreakdownDefinition.Label(childComplexity), true
+	case "FormulaTemplateBreakdownDefinition.name":
+		if e.ComplexityRoot.FormulaTemplateBreakdownDefinition.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateBreakdownDefinition.Name(childComplexity), true
 
 	case "FormulaTemplateConnection.edges":
 		if e.ComplexityRoot.FormulaTemplateConnection.Edges == nil {
@@ -21528,6 +21653,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FormulaTemplateEdge.Node(childComplexity), true
+
+	case "FormulaTemplateVariableDefinition.defaultValue":
+		if e.ComplexityRoot.FormulaTemplateVariableDefinition.DefaultValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateVariableDefinition.DefaultValue(childComplexity), true
+	case "FormulaTemplateVariableDefinition.description":
+		if e.ComplexityRoot.FormulaTemplateVariableDefinition.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateVariableDefinition.Description(childComplexity), true
+	case "FormulaTemplateVariableDefinition.name":
+		if e.ComplexityRoot.FormulaTemplateVariableDefinition.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateVariableDefinition.Name(childComplexity), true
+	case "FormulaTemplateVariableDefinition.required":
+		if e.ComplexityRoot.FormulaTemplateVariableDefinition.Required == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateVariableDefinition.Required(childComplexity), true
+	case "FormulaTemplateVariableDefinition.source":
+		if e.ComplexityRoot.FormulaTemplateVariableDefinition.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateVariableDefinition.Source(childComplexity), true
+	case "FormulaTemplateVariableDefinition.type":
+		if e.ComplexityRoot.FormulaTemplateVariableDefinition.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FormulaTemplateVariableDefinition.Type(childComplexity), true
 
 	case "FuelCostResolution.fuelIndexId":
 		if e.ComplexityRoot.FuelCostResolution.FuelIndexID == nil {
@@ -49415,11 +49577,28 @@ extend type Query {
   Active
   Inactive
   Draft
+  InReview
 }
 
 enum FormulaTemplateType {
   FreightCharge
   AccessorialCharge
+}
+
+type FormulaTemplateVariableDefinition {
+  name: String!
+  type: String!
+  description: String!
+  required: Boolean!
+  "Formula variable defaults can be scalar, array, object, or null by template design."
+  defaultValue: Any
+  source: String
+}
+
+type FormulaTemplateBreakdownDefinition {
+  name: String!
+  label: String!
+  expression: String!
 }
 
 type FormulaTemplate {
@@ -49432,7 +49611,20 @@ type FormulaTemplate {
   expression: String!
   status: FormulaTemplateStatus!
   schemaId: String!
+  variableDefinitions: [FormulaTemplateVariableDefinition!]!
+  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
+  minCharge: String
+  maxCharge: String
+  submittedById: ID
+  submittedAt: Int
+  approvedById: ID
+  approvedAt: Int
+  reviewComment: String!
+  "Formula template metadata is admin-defined and intentionally open-ended."
+  metadata: JSON
   version: Int!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
   currentVersionNumber: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -60589,8 +60781,32 @@ func (ec *executionContext) childFields_FormulaTemplate(ctx context.Context, fie
 		return ec.fieldContext_FormulaTemplate_status(ctx, field)
 	case "schemaId":
 		return ec.fieldContext_FormulaTemplate_schemaId(ctx, field)
+	case "variableDefinitions":
+		return ec.fieldContext_FormulaTemplate_variableDefinitions(ctx, field)
+	case "breakdownDefinitions":
+		return ec.fieldContext_FormulaTemplate_breakdownDefinitions(ctx, field)
+	case "minCharge":
+		return ec.fieldContext_FormulaTemplate_minCharge(ctx, field)
+	case "maxCharge":
+		return ec.fieldContext_FormulaTemplate_maxCharge(ctx, field)
+	case "submittedById":
+		return ec.fieldContext_FormulaTemplate_submittedById(ctx, field)
+	case "submittedAt":
+		return ec.fieldContext_FormulaTemplate_submittedAt(ctx, field)
+	case "approvedById":
+		return ec.fieldContext_FormulaTemplate_approvedById(ctx, field)
+	case "approvedAt":
+		return ec.fieldContext_FormulaTemplate_approvedAt(ctx, field)
+	case "reviewComment":
+		return ec.fieldContext_FormulaTemplate_reviewComment(ctx, field)
+	case "metadata":
+		return ec.fieldContext_FormulaTemplate_metadata(ctx, field)
 	case "version":
 		return ec.fieldContext_FormulaTemplate_version(ctx, field)
+	case "sourceTemplateId":
+		return ec.fieldContext_FormulaTemplate_sourceTemplateId(ctx, field)
+	case "sourceVersionNumber":
+		return ec.fieldContext_FormulaTemplate_sourceVersionNumber(ctx, field)
 	case "currentVersionNumber":
 		return ec.fieldContext_FormulaTemplate_currentVersionNumber(ctx, field)
 	case "createdAt":
@@ -60603,6 +60819,18 @@ func (ec *executionContext) childFields_FormulaTemplate(ctx context.Context, fie
 		return ec.fieldContext_FormulaTemplate_organization(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FormulaTemplate", field.Name)
+}
+
+func (ec *executionContext) childFields_FormulaTemplateBreakdownDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_FormulaTemplateBreakdownDefinition_name(ctx, field)
+	case "label":
+		return ec.fieldContext_FormulaTemplateBreakdownDefinition_label(ctx, field)
+	case "expression":
+		return ec.fieldContext_FormulaTemplateBreakdownDefinition_expression(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FormulaTemplateBreakdownDefinition", field.Name)
 }
 
 func (ec *executionContext) childFields_FormulaTemplateConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -60625,6 +60853,24 @@ func (ec *executionContext) childFields_FormulaTemplateEdge(ctx context.Context,
 		return ec.fieldContext_FormulaTemplateEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FormulaTemplateEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_FormulaTemplateVariableDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_FormulaTemplateVariableDefinition_name(ctx, field)
+	case "type":
+		return ec.fieldContext_FormulaTemplateVariableDefinition_type(ctx, field)
+	case "description":
+		return ec.fieldContext_FormulaTemplateVariableDefinition_description(ctx, field)
+	case "required":
+		return ec.fieldContext_FormulaTemplateVariableDefinition_required(ctx, field)
+	case "defaultValue":
+		return ec.fieldContext_FormulaTemplateVariableDefinition_defaultValue(ctx, field)
+	case "source":
+		return ec.fieldContext_FormulaTemplateVariableDefinition_source(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FormulaTemplateVariableDefinition", field.Name)
 }
 
 func (ec *executionContext) childFields_FuelCostResolution(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -128760,6 +129006,254 @@ func (ec *executionContext) fieldContext_FormulaTemplate_schemaId(_ context.Cont
 	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _FormulaTemplate_variableDefinitions(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_variableDefinitions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.FormulaTemplate().VariableDefinitions(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.FormulaTemplateVariableDefinition) graphql.Marshaler {
+			return ec.marshalNFormulaTemplateVariableDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateVariableDefinitionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_variableDefinitions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FormulaTemplate",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FormulaTemplateVariableDefinition(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FormulaTemplate_breakdownDefinitions(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_breakdownDefinitions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.FormulaTemplate().BreakdownDefinitions(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.FormulaTemplateBreakdownDefinition) graphql.Marshaler {
+			return ec.marshalNFormulaTemplateBreakdownDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateBreakdownDefinitionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_breakdownDefinitions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FormulaTemplate",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FormulaTemplateBreakdownDefinition(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FormulaTemplate_minCharge(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_minCharge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.FormulaTemplate().MinCharge(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_minCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_maxCharge(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_maxCharge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.FormulaTemplate().MaxCharge(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_maxCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_submittedById(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_submittedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubmittedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_submittedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_submittedAt(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_submittedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubmittedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_submittedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_approvedById(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_approvedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ApprovedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_approvedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_approvedAt(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_approvedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ApprovedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_approvedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_reviewComment(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_reviewComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReviewComment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_reviewComment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_metadata(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_metadata(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metadata, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
 func (ec *executionContext) _FormulaTemplate_version(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -128780,6 +129274,52 @@ func (ec *executionContext) _FormulaTemplate_version(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_FormulaTemplate_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_sourceTemplateId(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_sourceTemplateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceTemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_sourceTemplateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplate_sourceVersionNumber(ctx context.Context, field graphql.CollectedField, obj *formulatemplate.FormulaTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplate_sourceVersionNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceVersionNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplate_sourceVersionNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FormulaTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
@@ -128914,6 +129454,75 @@ func (ec *executionContext) fieldContext_FormulaTemplate_organization(_ context.
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _FormulaTemplateBreakdownDefinition_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateBreakdownDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateBreakdownDefinition_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateBreakdownDefinition_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateBreakdownDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateBreakdownDefinition_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateBreakdownDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateBreakdownDefinition_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateBreakdownDefinition_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateBreakdownDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateBreakdownDefinition_expression(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateBreakdownDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateBreakdownDefinition_expression(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Expression, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateBreakdownDefinition_expression(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateBreakdownDefinition", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _FormulaTemplateConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateConnection) (ret graphql.Marshaler) {
@@ -129056,6 +129665,144 @@ func (ec *executionContext) _FormulaTemplateEdge_cursor(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_FormulaTemplateEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FormulaTemplateEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateVariableDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateVariableDefinition_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateVariableDefinition_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateVariableDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition_type(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateVariableDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateVariableDefinition_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateVariableDefinition_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateVariableDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateVariableDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateVariableDefinition_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateVariableDefinition_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateVariableDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition_required(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateVariableDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateVariableDefinition_required(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Required, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateVariableDefinition_required(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateVariableDefinition", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition_defaultValue(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateVariableDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateVariableDefinition_defaultValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v any) graphql.Marshaler {
+			return ec.marshalOAny2interface(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateVariableDefinition_defaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateVariableDefinition", field, false, false, errors.New("field of type Any does not have child fields"))
+}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition_source(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FormulaTemplateVariableDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FormulaTemplateVariableDefinition_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FormulaTemplateVariableDefinition_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FormulaTemplateVariableDefinition", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _FuelCostResolution_pricePerGallon(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCostResolution) (ret graphql.Marshaler) {
@@ -248612,76 +249359,316 @@ func (ec *executionContext) _FormulaTemplate(ctx context.Context, sel ast.Select
 		case "id":
 			out.Values[i] = ec._FormulaTemplate_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._FormulaTemplate_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizationId":
 			out.Values[i] = ec._FormulaTemplate_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._FormulaTemplate_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._FormulaTemplate_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._FormulaTemplate_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "expression":
 			out.Values[i] = ec._FormulaTemplate_expression(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._FormulaTemplate_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "schemaId":
 			out.Values[i] = ec._FormulaTemplate_schemaId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "variableDefinitions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FormulaTemplate_variableDefinitions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "breakdownDefinitions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FormulaTemplate_breakdownDefinitions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "minCharge":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FormulaTemplate_minCharge(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "maxCharge":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FormulaTemplate_maxCharge(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "submittedById":
+			out.Values[i] = ec._FormulaTemplate_submittedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "submittedAt":
+			out.Values[i] = ec._FormulaTemplate_submittedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "approvedById":
+			out.Values[i] = ec._FormulaTemplate_approvedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "approvedAt":
+			out.Values[i] = ec._FormulaTemplate_approvedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "reviewComment":
+			out.Values[i] = ec._FormulaTemplate_reviewComment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "metadata":
+			out.Values[i] = ec._FormulaTemplate_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
 			out.Values[i] = ec._FormulaTemplate_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceTemplateId":
+			out.Values[i] = ec._FormulaTemplate_sourceTemplateId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceVersionNumber":
+			out.Values[i] = ec._FormulaTemplate_sourceVersionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "currentVersionNumber":
 			out.Values[i] = ec._FormulaTemplate_currentVersionNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._FormulaTemplate_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._FormulaTemplate_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnit":
 			out.Values[i] = ec._FormulaTemplate_businessUnit(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organization":
 			out.Values[i] = ec._FormulaTemplate_organization(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var formulaTemplateBreakdownDefinitionImplementors = []string{"FormulaTemplateBreakdownDefinition"}
+
+func (ec *executionContext) _FormulaTemplateBreakdownDefinition(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.FormulaTemplateBreakdownDefinition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, formulaTemplateBreakdownDefinitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FormulaTemplateBreakdownDefinition")
+		case "name":
+			out.Values[i] = ec._FormulaTemplateBreakdownDefinition_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._FormulaTemplateBreakdownDefinition_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expression":
+			out.Values[i] = ec._FormulaTemplateBreakdownDefinition_expression(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -248773,6 +249760,69 @@ func (ec *executionContext) _FormulaTemplateEdge(ctx context.Context, sel ast.Se
 		case "cursor":
 			out.Values[i] = ec._FormulaTemplateEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var formulaTemplateVariableDefinitionImplementors = []string{"FormulaTemplateVariableDefinition"}
+
+func (ec *executionContext) _FormulaTemplateVariableDefinition(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.FormulaTemplateVariableDefinition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, formulaTemplateVariableDefinitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FormulaTemplateVariableDefinition")
+		case "name":
+			out.Values[i] = ec._FormulaTemplateVariableDefinition_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._FormulaTemplateVariableDefinition_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._FormulaTemplateVariableDefinition_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "required":
+			out.Values[i] = ec._FormulaTemplateVariableDefinition_required(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "defaultValue":
+			out.Values[i] = ec._FormulaTemplateVariableDefinition_defaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._FormulaTemplateVariableDefinition_source(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
@@ -288762,6 +289812,32 @@ func (ec *executionContext) marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋ
 	return ec._FormulaTemplate(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNFormulaTemplateBreakdownDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateBreakdownDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.FormulaTemplateBreakdownDefinition) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNFormulaTemplateBreakdownDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateBreakdownDefinition(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFormulaTemplateBreakdownDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateBreakdownDefinition(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.FormulaTemplateBreakdownDefinition) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FormulaTemplateBreakdownDefinition(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNFormulaTemplateConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.FormulaTemplateConnection) graphql.Marshaler {
 	return ec._FormulaTemplateConnection(ctx, sel, &v)
 }
@@ -288834,6 +289910,32 @@ func (ec *executionContext) marshalNFormulaTemplateType2githubᚗcomᚋemoss08�
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNFormulaTemplateVariableDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateVariableDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.FormulaTemplateVariableDefinition) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNFormulaTemplateVariableDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateVariableDefinition(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFormulaTemplateVariableDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateVariableDefinition(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.FormulaTemplateVariableDefinition) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FormulaTemplateVariableDefinition(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNFuelIndex2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndex(ctx context.Context, sel ast.SelectionSet, v gqlmodel.FuelIndex) graphql.Marshaler {

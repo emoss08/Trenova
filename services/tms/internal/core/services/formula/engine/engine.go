@@ -31,6 +31,7 @@ const (
 	compileCacheSize   = 1024
 	maxExpressionNodes = 1_000
 	evaluationTimeout  = 5 * time.Second
+	ctxEnvKey          = "__ctx"
 )
 
 type Params struct {
@@ -56,11 +57,15 @@ func NewEngine(p Params) (*Engine, error) {
 	}
 
 	return &Engine{
-		registry:    p.Registry,
-		resolver:    p.Resolver,
-		envBuilder:  p.EnvBuilder,
-		cache:       cache,
-		exprOptions: append(BuiltinFunctions(), expr.MaxNodes(maxExpressionNodes)),
+		registry:   p.Registry,
+		resolver:   p.Resolver,
+		envBuilder: p.EnvBuilder,
+		cache:      cache,
+		exprOptions: append(
+			BuiltinFunctions(),
+			expr.MaxNodes(maxExpressionNodes),
+			expr.WithContext(ctxEnvKey),
+		),
 	}, nil
 }
 
@@ -152,6 +157,12 @@ func (e *Engine) EvaluateExpression(
 	ctx context.Context,
 	req *formulatemplatetypes.ExpressionEvaluationRequest,
 ) (*formulatemplatetypes.EvaluationResult, error) {
+	for key := range req.Variables {
+		if isReservedName(key) {
+			return nil, errors.NewVariableError(key, req.SchemaID, ErrReservedVariableName)
+		}
+	}
+
 	env, resolveFailures, err := e.envBuilder.BuildWithVariables(
 		req.Entity,
 		req.SchemaID,
@@ -188,12 +199,16 @@ func (e *Engine) evaluateProgram(
 ) (*formulatemplatetypes.EvaluationResult, error) {
 	injectLookupFunctions(env, lookup)
 
+	env[ctxEnvKey] = ctx
+	defer delete(env, ctxEnvKey)
+
 	compiled, err := e.Compile(expression, env)
 	if err != nil {
 		return nil, withResolveFailures(err, resolveFailures)
 	}
 
 	output, err := e.run(ctx, compiled.program, env)
+	delete(env, ctxEnvKey)
 	if err != nil {
 		return nil, errors.NewComputeError(
 			expression,
@@ -265,6 +280,8 @@ func (e *Engine) run(
 	ctx, cancel := context.WithTimeout(ctx, evaluationTimeout)
 	defer cancel()
 
+	env[ctxEnvKey] = ctx
+
 	type outcome struct {
 		value any
 		err   error
@@ -300,31 +317,47 @@ func (e *Engine) ValidateExpression(ctx context.Context, expression, schemaID st
 	return e.ValidateExpressionWithEnv(ctx, expression, env)
 }
 
-func (e *Engine) ValidateExpressionWithEnv(
+type ValidationOutcome struct {
+	Err     error
+	Warning string
+}
+
+func (e *Engine) ValidateExpressionDetailed(
 	ctx context.Context,
 	expression string,
 	env map[string]any,
-) error {
+) ValidationOutcome {
 	injectLookupFunctions(env, nil)
+
+	env[ctxEnvKey] = ctx
+	defer delete(env, ctxEnvKey)
 
 	compiled, err := e.Compile(expression, env)
 	if err != nil {
-		return errors.NewSchemaError(expression, "validate", err)
+		return ValidationOutcome{Err: errors.NewSchemaError(expression, "validate", err)}
 	}
 
 	output, err := e.run(ctx, compiled.program, env)
 	if err != nil {
 		if goErrors.Is(err, context.DeadlineExceeded) {
-			return errors.NewSchemaError(expression, "validate", err)
+			return ValidationOutcome{Err: errors.NewSchemaError(expression, "validate", err)}
 		}
-		return nil
+		return ValidationOutcome{Warning: err.Error()}
 	}
 
 	if err = validateResultType(output); err != nil {
-		return errors.NewSchemaError(expression, "validate", err)
+		return ValidationOutcome{Err: errors.NewSchemaError(expression, "validate", err)}
 	}
 
-	return nil
+	return ValidationOutcome{}
+}
+
+func (e *Engine) ValidateExpressionWithEnv(
+	ctx context.Context,
+	expression string,
+	env map[string]any,
+) error {
+	return e.ValidateExpressionDetailed(ctx, expression, env).Err
 }
 
 func (e *Engine) GetEnvironmentBuilder() *EnvironmentBuilder {
@@ -333,6 +366,10 @@ func (e *Engine) GetEnvironmentBuilder() *EnvironmentBuilder {
 
 func (e *Engine) ClearCache() {
 	e.cache.Purge()
+}
+
+func (e *Engine) CacheLen() int {
+	return e.cache.Len()
 }
 
 func (e *Engine) compileOptions(env map[string]any) []expr.Option {
@@ -499,6 +536,10 @@ func writeEnvSignature(digest hash.Hash, env map[string]any) {
 	digest.Write([]byte{'{'})
 	for _, key := range keys {
 		writeLenPrefixed(digest, key)
+		if key == ctxEnvKey {
+			writeLenPrefixed(digest, "context.Context")
+			continue
+		}
 		writeValueSignature(digest, env[key])
 	}
 	digest.Write([]byte{'}'})

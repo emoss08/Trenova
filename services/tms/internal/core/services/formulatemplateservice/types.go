@@ -3,49 +3,45 @@ package formulatemplateservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/shopspring/decimal"
 )
 
 type templateSnapshot struct {
-	Description         string
-	Type                formulatemplate.TemplateType
-	Expression          string
-	SchemaID            string
-	VariableDefinitions []*formulatypes.VariableDefinition
-	Metadata            map[string]any
+	Description          string
+	Type                 formulatemplate.TemplateType
+	Expression           string
+	SchemaID             string
+	VariableDefinitions  []*formulatypes.VariableDefinition
+	BreakdownDefinitions []*formulatypes.BreakdownDefinition
+	MinCharge            decimal.NullDecimal
+	MaxCharge            decimal.NullDecimal
+	Metadata             map[string]any
 }
 
 func snapshotFromVersion(v *formulatemplate.FormulaTemplateVersion) templateSnapshot {
 	return templateSnapshot{
-		Description:         v.Description,
-		Type:                v.Type,
-		Expression:          v.Expression,
-		SchemaID:            v.SchemaID,
-		VariableDefinitions: v.VariableDefinitions,
-		Metadata:            v.Metadata,
+		Description:          v.Description,
+		Type:                 v.Type,
+		Expression:           v.Expression,
+		SchemaID:             v.SchemaID,
+		VariableDefinitions:  v.VariableDefinitions,
+		BreakdownDefinitions: v.BreakdownDefinitions,
+		MinCharge:            v.MinCharge,
+		MaxCharge:            v.MaxCharge,
+		Metadata:             v.Metadata,
 	}
 }
 
 func snapshotFromTemplate(t *formulatemplate.FormulaTemplate) templateSnapshot {
 	return templateSnapshot{
-		Description:         t.Description,
-		Type:                t.Type,
-		Expression:          t.Expression,
-		SchemaID:            t.SchemaID,
-		VariableDefinitions: t.VariableDefinitions,
-		Metadata:            t.Metadata,
+		Description:          t.Description,
+		Type:                 t.Type,
+		Expression:           t.Expression,
+		SchemaID:             t.SchemaID,
+		VariableDefinitions:  t.VariableDefinitions,
+		BreakdownDefinitions: t.BreakdownDefinitions,
+		MinCharge:            t.MinCharge,
+		MaxCharge:            t.MaxCharge,
+		Metadata:             t.Metadata,
 	}
-}
-
-func applyVersionToTemplate(
-	t *formulatemplate.FormulaTemplate,
-	v *formulatemplate.FormulaTemplateVersion,
-) {
-	t.Name = v.Name
-	t.Description = v.Description
-	t.Type = v.Type
-	t.Expression = v.Expression
-	t.Status = v.Status
-	t.SchemaID = v.SchemaID
-	t.VariableDefinitions = v.VariableDefinitions
-	t.Metadata = v.Metadata
 }

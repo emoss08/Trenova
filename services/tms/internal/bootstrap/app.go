@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
@@ -71,6 +72,7 @@ func Options() fx.Option {
 		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,
+		formulaassistantservice.Module,
 		rateengine.Module,
 		editransport.Module,
 		temporaljobs.Module,

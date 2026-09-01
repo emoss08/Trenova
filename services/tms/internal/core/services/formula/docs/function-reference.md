@@ -582,11 +582,12 @@ coalesce(null, null)             // null
 
 ## Lookup Table Functions
 
-A lookup table is a rate matrix with a single axis, managed under Billing → Rate Matrices and
-referenced by its code. Two match modes exist: **Exact** (string key → value) and **Range**
-(numeric key matched against bands; band minimum inclusive, maximum exclusive, open-ended final
-band allowed). Matrices with more than one axis cannot be addressed from a formula — lookup()
-supplies a single key, and a multi-axis grid needs one value per axis.
+A lookup table is a rate matrix managed under Billing → Rate Matrices and referenced by its
+code. Two match modes exist per axis: **Exact** (string key → value) and **Range** (numeric key
+matched against bands; band minimum inclusive, maximum exclusive, open-ended final band
+allowed). Single-axis matrices are addressed with `lookup`/`lookupOr`; two-axis matrices (a
+class tariff's weight break × zone, for example) with `lookup2`/`lookup2Or`. Matrices with more
+than two axes cannot be addressed from a formula.
 
 #### lookup(table, key)
 
@@ -619,9 +620,45 @@ Like `lookup`, but returns `default` instead of erroring when the table or entry
 lookupOr("lane_rate", laneCode, 0)       // 0 when the lane has no configured rate
 ```
 
+#### lookup2(table, rowKey, colKey)
+
+Returns the value at the row/column intersection of the two-axis matrix whose code is `table`.
+The row key addresses the axis at position 0, the column key the axis at position 1, and each
+axis matches by its own mode — an exact zone key beside a banded weight axis is the typical
+class-tariff shape.
+
+**Parameters:**
+
+- `table` (string): The matrix code (must exist, be active, and have exactly two axes)
+- `rowKey` (string | number): Key for the first axis (exact key or numeric value for range axes)
+- `colKey` (string | number): Key for the second axis
+
+**Returns:** number
+
+**Errors:** unknown table, no matching intersection, or a non-numeric key against a range axis.
+
+**Examples:**
+
+```javascript
+lookup2("class_rates", "ZONE_5", 8500)             // rate for zone 5, 5000–10000 lb band
+totalWeight * lookup2("class_rates", destination.state, totalWeight)
+```
+
+#### lookup2Or(table, rowKey, colKey, default)
+
+Like `lookup2`, but returns `default` instead of erroring when the table or intersection is
+missing.
+
+**Examples:**
+
+```javascript
+lookup2Or("zone_weight_rates", origin.zip, totalWeight, 0)
+```
+
 Template validation verifies that every string-literal table name referenced by
-`lookup`/`lookupOr` names an active single-axis matrix in your organization. `lookup` and `lookupOr` are reserved names —
-variables and schema fields cannot use them.
+`lookup`/`lookupOr` names an active single-axis matrix in your organization, and that every one
+referenced by `lookup2`/`lookup2Or` names an active two-axis matrix. `lookup`, `lookupOr`,
+`lookup2`, and `lookup2Or` are reserved names — variables and schema fields cannot use them.
 
 ## Function Composition
 

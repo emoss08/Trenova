@@ -22,6 +22,8 @@
             "TractorType",
             "TrailerType",
             "Moves.Stops",
+            "Moves.Stops.Location",
+            "Moves.Stops.Location.State",
             "AdditionalCharges.AccessorialCharge",
             "Commodities.Commodity",
             "Commodities.Commodity.HazardousMaterial"
@@ -345,6 +347,148 @@
                 "requires": [
                     "Commodities",
                     "Commodities.Commodity"
+                ]
+            }
+        },
+        "origin": {
+            "description": "The shipment's first pickup stop",
+            "type": "object",
+            "properties": {
+                "city": {
+                    "description": "City of the first pickup stop's location; empty when the stop has no location",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeOriginCity",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                },
+                "state": {
+                    "description": "State abbreviation of the first pickup stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeOriginState",
+                        "preload": [
+                            "Moves.Stops.Location",
+                            "Moves.Stops.Location.State"
+                        ]
+                    }
+                },
+                "zip": {
+                    "description": "Postal code of the first pickup stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeOriginZip",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                }
+            }
+        },
+        "destination": {
+            "description": "The shipment's final delivery stop",
+            "type": "object",
+            "properties": {
+                "city": {
+                    "description": "City of the final delivery stop's location; empty when the stop has no location",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeDestinationCity",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                },
+                "state": {
+                    "description": "State abbreviation of the final delivery stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeDestinationState",
+                        "preload": [
+                            "Moves.Stops.Location",
+                            "Moves.Stops.Location.State"
+                        ]
+                    }
+                },
+                "zip": {
+                    "description": "Postal code of the final delivery stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeDestinationZip",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                }
+            }
+        },
+        "pickupDayOfWeek": {
+            "description": "Day of week of the pickup in UTC (0 = Sunday through 6 = Saturday), from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "x-source": {
+                "computed": true,
+                "function": "computePickupDayOfWeek",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "pickupHour": {
+            "description": "Hour of the pickup in UTC (0-23), from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "x-source": {
+                "computed": true,
+                "function": "computePickupHour",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "pickupMonth": {
+            "description": "Month of the pickup in UTC (1-12); 0 when the shipment has no stops",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12,
+            "x-source": {
+                "computed": true,
+                "function": "computePickupMonth",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "isWeekendPickup": {
+            "description": "Whether the pickup falls on a Saturday or Sunday in UTC",
+            "type": "boolean",
+            "x-source": {
+                "computed": true,
+                "function": "computeIsWeekendPickup",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "totalHours": {
+            "description": "Hours from the first stop arrival to the last stop departure, using actual times and falling back to the scheduled windows",
+            "type": "number",
+            "minimum": 0,
+            "x-source": {
+                "computed": true,
+                "function": "computeTotalHours",
+                "requires": [
+                    "Moves"
                 ]
             }
         },

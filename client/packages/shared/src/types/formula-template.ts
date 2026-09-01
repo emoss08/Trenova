@@ -224,8 +224,19 @@ export const testExpressionRequestSchema = z.object({
   variables: z.record(z.any(), z.any()).default({}),
   shipmentId: z.string().optional(),
   breakdowns: z.array(breakdownDefinitionSchema).optional(),
+  minCharge: z.string().optional(),
+  maxCharge: z.string().optional(),
 });
 export type TestExpressionRequest = z.infer<typeof testExpressionRequestSchema>;
+
+export const guardrailResultSchema = z.object({
+  applied: z.boolean(),
+  bound: z.enum(["min", "max"]).optional(),
+  rawAmount: z.coerce.number(),
+  minCharge: z.coerce.number().nullish(),
+  maxCharge: z.coerce.number().nullish(),
+});
+export type GuardrailResult = z.output<typeof guardrailResultSchema>;
 
 export const testBreakdownItemSchema = z.object({
   name: z.string(),
@@ -242,6 +253,7 @@ export const testExpressionResponseSchema = z.object({
   message: z.string(),
   resolvedVariables: z.record(z.string(), z.any()).nullish(),
   breakdown: z.array(testBreakdownItemSchema).nullish(),
+  guardrail: guardrailResultSchema.nullish(),
 });
 export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
 
@@ -325,6 +337,8 @@ export const VARIABLE_CATEGORIES = [
   { id: "shipment", label: "Shipment Fields" },
   { id: "customer", label: "Customer" },
   { id: "equipment", label: "Equipment" },
+  { id: "origin", label: "Origin" },
+  { id: "destination", label: "Destination" },
   { id: "computed", label: "Computed Rollups" },
 ] as const;
 
@@ -406,6 +420,46 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
     nullable: true,
   },
 
+  // Origin
+  {
+    name: "origin.city",
+    type: "String",
+    description: "City of the first pickup stop",
+    category: "origin",
+  },
+  {
+    name: "origin.state",
+    type: "String",
+    description: "State abbreviation of the first pickup stop",
+    category: "origin",
+  },
+  {
+    name: "origin.zip",
+    type: "String",
+    description: "Postal code of the first pickup stop",
+    category: "origin",
+  },
+
+  // Destination
+  {
+    name: "destination.city",
+    type: "String",
+    description: "City of the final delivery stop",
+    category: "destination",
+  },
+  {
+    name: "destination.state",
+    type: "String",
+    description: "State abbreviation of the final delivery stop",
+    category: "destination",
+  },
+  {
+    name: "destination.zip",
+    type: "String",
+    description: "Postal code of the final delivery stop",
+    category: "destination",
+  },
+
   // Computed Rollups
   {
     name: "totalDistance",
@@ -435,6 +489,36 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
     name: "totalLinearFeet",
     type: "Number",
     description: "Total linear feet",
+    category: "computed",
+  },
+  {
+    name: "totalHours",
+    type: "Number",
+    description: "Hours from first stop arrival to last stop departure",
+    category: "computed",
+  },
+  {
+    name: "pickupDayOfWeek",
+    type: "Integer",
+    description: "Pickup day of week in UTC (0 = Sunday through 6 = Saturday)",
+    category: "computed",
+  },
+  {
+    name: "pickupHour",
+    type: "Integer",
+    description: "Pickup hour of day in UTC (0-23)",
+    category: "computed",
+  },
+  {
+    name: "pickupMonth",
+    type: "Integer",
+    description: "Pickup month in UTC (1-12)",
+    category: "computed",
+  },
+  {
+    name: "isWeekendPickup",
+    type: "Boolean",
+    description: "Whether the pickup falls on a Saturday or Sunday (UTC)",
     category: "computed",
   },
   {
@@ -481,8 +565,6 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
   },
 ];
 
-export const AVAILABLE_VARIABLES = SHIPMENT_VARIABLES;
-
 export const AVAILABLE_FUNCTIONS = [
   { name: "abs", signature: "abs(x)", description: "Absolute value" },
   {
@@ -527,6 +609,26 @@ export const AVAILABLE_FUNCTIONS = [
     name: "clamp",
     signature: "clamp(value, min, max)",
     description: "Clamp value to range",
+  },
+  {
+    name: "lookup",
+    signature: "lookup(table, key)",
+    description: "Value for key in a single-axis rate matrix",
+  },
+  {
+    name: "lookupOr",
+    signature: "lookupOr(table, key, fallback)",
+    description: "Like lookup, with a fallback on any miss",
+  },
+  {
+    name: "lookup2",
+    signature: "lookup2(table, rowKey, colKey)",
+    description: "Value at a row/column intersection of a two-axis rate matrix",
+  },
+  {
+    name: "lookup2Or",
+    signature: "lookup2Or(table, rowKey, colKey, fallback)",
+    description: "Like lookup2, with a fallback on any miss",
   },
 ] as const;
 
@@ -574,3 +676,134 @@ export const templateUsageResponseSchema = z.object({
   usages: z.array(templateUsageCountSchema),
 });
 export type TemplateUsageResponse = z.infer<typeof templateUsageResponseSchema>;
+
+export const formulaSchemaVariableSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  description: z.string().default(""),
+  category: z.string().default(""),
+  nullable: z.boolean().default(false),
+  computed: z.boolean().default(false),
+  enum: z.array(z.string()).nullish(),
+});
+export type FormulaSchemaVariable = z.output<typeof formulaSchemaVariableSchema>;
+
+export const formulaSchemaFunctionSchema = z.object({
+  name: z.string(),
+  signature: z.string(),
+  description: z.string().default(""),
+  example: z.string().default(""),
+  category: z.string().default(""),
+});
+export type FormulaSchemaFunction = z.output<typeof formulaSchemaFunctionSchema>;
+
+export const formulaSchemaResponseSchema = z.object({
+  schemaId: z.string(),
+  variables: z.array(formulaSchemaVariableSchema),
+  functions: z.array(formulaSchemaFunctionSchema),
+});
+export type FormulaSchemaResponse = z.output<typeof formulaSchemaResponseSchema>;
+
+export const importTemplatesResponseSchema = z.object({
+  created: listFormulaTemplateResponseSchema,
+  renamed: z.record(z.string(), z.string()).nullish(),
+});
+export type ImportTemplatesResponse = z.output<typeof importTemplatesResponseSchema>;
+
+export const formulaTestCaseSchema = z.object({
+  id: z.string(),
+  templateId: z.string(),
+  organizationId: z.string(),
+  businessUnitId: z.string(),
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  variables: z
+    .record(z.string(), z.any())
+    .nullish()
+    .transform((v) => v ?? {}),
+  expectedAmount: z.coerce.number(),
+  tolerance: z.coerce.number(),
+  version: z.number().optional(),
+  createdById: z.string(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+export type FormulaTestCase = z.output<typeof formulaTestCaseSchema>;
+
+export const formulaTestCaseInputSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  description: z.string().default(""),
+  variables: z.record(z.string(), z.any()).default({}),
+  expectedAmount: z.coerce.number().min(0, "Expected amount cannot be negative"),
+  tolerance: z.coerce.number().min(0, "Tolerance cannot be negative").default(0.01),
+});
+export type FormulaTestCaseInput = z.input<typeof formulaTestCaseInputSchema>;
+export type FormulaTestCaseValues = z.output<typeof formulaTestCaseInputSchema>;
+
+export const testCaseResultSchema = z.object({
+  testCaseId: z.string(),
+  name: z.string(),
+  passed: z.boolean(),
+  expectedAmount: z.coerce.number(),
+  actualAmount: z.coerce.number(),
+  difference: z.coerce.number(),
+  tolerance: z.coerce.number(),
+  error: z.string().optional(),
+});
+export type TestCaseResult = z.output<typeof testCaseResultSchema>;
+
+export const runTestCasesResponseSchema = z.object({
+  results: z
+    .array(testCaseResultSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  total: z.number(),
+  passed: z.number(),
+  failed: z.number(),
+});
+export type RunTestCasesResponse = z.output<typeof runTestCasesResponseSchema>;
+
+export type TestCaseCandidate = {
+  expression: string;
+  variableDefinitions?: VariableDefinitionInput[];
+  breakdownDefinitions?: BreakdownDefinitionInput[];
+  minCharge?: number | string | null;
+  maxCharge?: number | string | null;
+};
+
+export const installStandardsResponseSchema = z.object({
+  installed: listFormulaTemplateResponseSchema,
+  skipped: z
+    .array(z.string())
+    .nullish()
+    .transform((v) => v ?? []),
+});
+export type InstallStandardsResponse = z.output<typeof installStandardsResponseSchema>;
+
+export const generateFormulaRequestSchema = z.object({
+  instruction: z.string().min(1, "An instruction is required").max(4000),
+  schemaId: z.string().optional(),
+  templateType: formulaTemplateTypeSchema.optional(),
+});
+export type GenerateFormulaRequest = z.infer<typeof generateFormulaRequestSchema>;
+
+export const generateFormulaResponseSchema = z.object({
+  expression: z.string(),
+  variableDefinitions: z
+    .array(variableDefinitionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  explanation: z.string(),
+  validation: testExpressionResponseSchema.nullish(),
+  modelIdentifier: z.string().optional(),
+});
+export type GenerateFormulaResponse = z.output<typeof generateFormulaResponseSchema>;
+
+export const explainFormulaResponseSchema = z.object({
+  explanation: z.string(),
+  modelIdentifier: z.string().optional(),
+});
+export type ExplainFormulaResponse = z.output<typeof explainFormulaResponseSchema>;

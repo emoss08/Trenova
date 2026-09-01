@@ -232,13 +232,14 @@ func (r *repository) insertCellBatches(
 	return nil
 }
 
-// GetLookupData reads every matrix a formula's lookup() call could address.
+// GetLookupData reads every matrix a formula's lookup() or lookup2() call
+// could address.
 //
-// The one-axis restriction is applied in the database, not after the load: a
-// class tariff with four axes and a hundred thousand cells must never ride
-// along just to be discarded. What survives the filter is rate-table sized —
-// dozens of cells — which is why loading it whole is affordable here and
-// nowhere else.
+// The axis-count restriction (one or two) is applied in the database, not
+// after the load: a class tariff with four axes and a hundred thousand cells
+// must never ride along just to be discarded. What survives the filter is
+// lookup-table sized — dozens to hundreds of cells — which is why loading it
+// whole is affordable here and nowhere else.
 func (r *repository) GetLookupData(
 	ctx context.Context,
 	req *repositories.GetRateMatrixLookupDataRequest,
@@ -261,7 +262,7 @@ func (r *repository) GetLookupData(
 					"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
 						dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
 						" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
-						") = 1",
+						") IN (1, 2)",
 				)
 		}).
 		Scan(ctx)

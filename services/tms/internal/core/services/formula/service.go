@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
@@ -23,20 +24,20 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger        *zap.Logger
-	Registry      *schema.Registry
-	Engine        *engine.Engine
-	Resolver      *resolver.Resolver
+	Logger         *zap.Logger
+	Registry       *schema.Registry
+	Engine         *engine.Engine
+	Resolver       *resolver.Resolver
 	Repo           repositories.FormulaTemplateRepository
 	VersionRepo    repositories.FormulaTemplateVersionRepository
 	RateMatrixRepo repositories.RateMatrixRepository
 }
 
 type Service struct {
-	l             *zap.Logger
-	registry      *schema.Registry
-	engine        *engine.Engine
-	resolver      *resolver.Resolver
+	l              *zap.Logger
+	registry       *schema.Registry
+	engine         *engine.Engine
+	resolver       *resolver.Resolver
 	repo           repositories.FormulaTemplateRepository
 	versionRepo    repositories.FormulaTemplateVersionRepository
 	rateMatrixRepo repositories.RateMatrixRepository
@@ -47,10 +48,10 @@ func NewService(p ServiceParams) *Service {
 	resolver.RegisterDefaultComputed(p.Resolver)
 
 	return &Service{
-		l:             p.Logger.Named("service.formula"),
-		registry:      p.Registry,
-		engine:        p.Engine,
-		resolver:      p.Resolver,
+		l:              p.Logger.Named("service.formula"),
+		registry:       p.Registry,
+		engine:         p.Engine,
+		resolver:       p.Resolver,
 		repo:           p.Repo,
 		versionRepo:    p.VersionRepo,
 		rateMatrixRepo: p.RateMatrixRepo,
@@ -83,7 +84,7 @@ func (s *Service) Calculate(
 		)
 	}
 
-	resolved, err := s.resolveEffectiveTemplate(ctx, template, req.TenantInfo, req.RatingDate)
+	resolved, err := s.ResolveEffectiveTemplate(ctx, template, req.TenantInfo, req.RatingDate)
 	if err != nil {
 		log.Error("failed to resolve effective template version", zap.Error(err))
 		return nil, err
@@ -111,7 +112,11 @@ func (s *Service) Calculate(
 	return resp, nil
 }
 
-func (s *Service) resolveEffectiveTemplate(
+// ResolveEffectiveTemplate resolves the template content that is in effect for
+// the given rating date, honouring scheduled version activations. The version
+// list is memoized per unit of work via effectiveversioncache when a caller
+// installed one, so batch re-rating does not query per shipment.
+func (s *Service) ResolveEffectiveTemplate(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
@@ -122,18 +127,24 @@ func (s *Service) resolveEffectiveTemplate(
 		asOf = timeutils.NowUnix()
 	}
 
-	version, err := s.versionRepo.GetEffectiveVersion(
+	versions, err := effectiveversioncache.GetVersions(
 		ctx,
-		&repositories.GetEffectiveVersionRequest{
-			TenantInfo: tenantInfo,
-			TemplateID: template.ID,
-			AsOf:       asOf,
+		template.ID,
+		func(loadCtx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
+			return s.versionRepo.ListScheduled(
+				loadCtx,
+				&repositories.ListScheduledVersionsRequest{
+					TenantInfo: tenantInfo,
+					TemplateID: template.ID,
+				},
+			)
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	version := effectiveversioncache.EffectiveAsOf(versions, asOf)
 	if version == nil {
 		return template, nil
 	}
@@ -220,28 +231,35 @@ func applyGuardrails(
 	template *formulatemplate.FormulaTemplate,
 	rawAmount decimal.Decimal,
 ) (decimal.Decimal, *formulatemplatetypes.GuardrailResult) {
-	if !template.MinCharge.Valid && !template.MaxCharge.Valid {
+	return ApplyGuardrailBounds(template.MinCharge, template.MaxCharge, rawAmount)
+}
+
+func ApplyGuardrailBounds(
+	minCharge, maxCharge decimal.NullDecimal,
+	rawAmount decimal.Decimal,
+) (decimal.Decimal, *formulatemplatetypes.GuardrailResult) {
+	if !minCharge.Valid && !maxCharge.Valid {
 		return rawAmount, nil
 	}
 
 	guardrail := &formulatemplatetypes.GuardrailResult{RawAmount: rawAmount}
-	if template.MinCharge.Valid {
-		minCharge := template.MinCharge.Decimal
-		guardrail.MinCharge = &minCharge
+	if minCharge.Valid {
+		lowerBound := minCharge.Decimal
+		guardrail.MinCharge = &lowerBound
 	}
-	if template.MaxCharge.Valid {
-		maxCharge := template.MaxCharge.Decimal
-		guardrail.MaxCharge = &maxCharge
+	if maxCharge.Valid {
+		upperBound := maxCharge.Decimal
+		guardrail.MaxCharge = &upperBound
 	}
 
 	amount := rawAmount
 	switch {
-	case template.MinCharge.Valid && rawAmount.LessThan(template.MinCharge.Decimal):
-		amount = template.MinCharge.Decimal
+	case minCharge.Valid && rawAmount.LessThan(minCharge.Decimal):
+		amount = minCharge.Decimal
 		guardrail.Applied = true
 		guardrail.Bound = "min"
-	case template.MaxCharge.Valid && rawAmount.GreaterThan(template.MaxCharge.Decimal):
-		amount = template.MaxCharge.Decimal
+	case maxCharge.Valid && rawAmount.GreaterThan(maxCharge.Decimal):
+		amount = maxCharge.Decimal
 		guardrail.Applied = true
 		guardrail.Bound = "max"
 	}
@@ -363,13 +381,21 @@ func (s *Service) ValidateExpressionWithEnv(
 	return s.engine.ValidateExpressionWithEnv(ctx, expression, env)
 }
 
+func (s *Service) ValidateExpressionDetailed(
+	ctx context.Context,
+	expression string,
+	env map[string]any,
+) engine.ValidationOutcome {
+	return s.engine.ValidateExpressionDetailed(ctx, expression, env)
+}
+
 func (s *Service) ValidateLookupTables(
 	ctx context.Context,
 	expression string,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	tables, err := engine.ExtractLookupTables(expression)
-	if err != nil || len(tables) == 0 {
+	refs, err := engine.ExtractLookupTableRefs(expression)
+	if err != nil || (len(refs.Single) == 0 && len(refs.Multi) == 0) {
 		return nil //nolint:nilerr // unparseable expressions are rejected by compile validation
 	}
 
@@ -379,15 +405,46 @@ func (s *Service) ValidateLookupTables(
 	}
 
 	multiErr := errortypes.NewMultiError()
-	for _, table := range tables {
-		if !lookup.Has(table) {
+	for _, table := range refs.Single {
+		if lookup.Has(table) {
+			continue
+		}
+		if lookup.Has2(table) {
 			multiErr.Add(
 				"expression",
 				errortypes.ErrInvalid,
-				"Unknown rate table: "+table+
-					" — a lookup table is an active rate matrix with a single axis",
+				"Rate table "+table+
+					" has two axes — address it with lookup2(table, rowKey, colKey)",
 			)
+			continue
 		}
+		multiErr.Add(
+			"expression",
+			errortypes.ErrInvalid,
+			"Unknown rate table: "+table+
+				" — a lookup table is an active rate matrix with a single axis",
+		)
+	}
+
+	for _, table := range refs.Multi {
+		if lookup.Has2(table) {
+			continue
+		}
+		if lookup.Has(table) {
+			multiErr.Add(
+				"expression",
+				errortypes.ErrInvalid,
+				"Rate table "+table+
+					" has a single axis — address it with lookup(table, key)",
+			)
+			continue
+		}
+		multiErr.Add(
+			"expression",
+			errortypes.ErrInvalid,
+			"Unknown rate table: "+table+
+				" — lookup2 addresses an active rate matrix with exactly two axes",
+		)
 	}
 
 	if multiErr.HasErrors() {

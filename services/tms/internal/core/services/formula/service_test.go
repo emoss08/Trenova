@@ -59,6 +59,13 @@ func (m *mockFormulaTemplateRepo) GetByIDs(
 	return nil, nil
 }
 
+func (m *mockFormulaTemplateRepo) FindByNames(
+	_ context.Context,
+	_ repositories.GetFormulaTemplatesByNamesRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	return nil, nil
+}
+
 func (m *mockFormulaTemplateRepo) List(
 	_ context.Context,
 	_ *repositories.ListFormulaTemplatesRequest,
@@ -145,6 +152,23 @@ func setupServiceWithRepo(
 	repo repositories.FormulaTemplateRepository,
 ) *formula.Service {
 	t.Helper()
+	return setupServiceWithRepoAndMatrixData(t, repo, nil)
+}
+
+func setupServiceWithMatrixData(
+	t *testing.T,
+	data []*repositories.RateMatrixLookupData,
+) *formula.Service {
+	t.Helper()
+	return setupServiceWithRepoAndMatrixData(t, nil, data)
+}
+
+func setupServiceWithRepoAndMatrixData(
+	t *testing.T,
+	repo repositories.FormulaTemplateRepository,
+	data []*repositories.RateMatrixLookupData,
+) *formula.Service {
+	t.Helper()
 
 	registry := newTestRegistry(t)
 	res := resolver.NewResolver()
@@ -164,13 +188,13 @@ func setupServiceWithRepo(
 	logger := zap.NewNop()
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:        logger,
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
-		Repo:          repo,
-		VersionRepo:   &stubVersionRepo{},
-		RateMatrixRepo: &stubMatrixRepo{},
+		Logger:         logger,
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
+		Repo:           repo,
+		VersionRepo:    &stubVersionRepo{},
+		RateMatrixRepo: &stubMatrixRepo{data: data},
 	})
 }
 
@@ -184,6 +208,16 @@ func (s *stubVersionRepo) GetEffectiveVersion(
 	_ *repositories.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return s.effectiveVersion, nil
+}
+
+func (s *stubVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	if s.effectiveVersion == nil {
+		return nil, nil
+	}
+	return []*formulatemplate.FormulaTemplateVersion{s.effectiveVersion}, nil
 }
 
 type stubMatrixRepo struct {

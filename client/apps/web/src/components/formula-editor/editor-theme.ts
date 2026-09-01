@@ -11,6 +11,7 @@ export const lightTheme = EditorView.theme(
       "--expr-function": "oklch(0.7 0.12 200)",
       "--expr-comment": "oklch(0.5 0 0)",
       "--expr-punctuation": "oklch(0.6 0 0)",
+      "--expr-unknown": "oklch(0.65 0.18 60)",
     },
     "&.cm-editor": {
       backgroundColor: "var(--muted)",
@@ -21,6 +22,26 @@ export const lightTheme = EditorView.theme(
     ".cm-theme[aria-invalid='true'] &.cm-editor": {
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
+    },
+    ".cm-expr-completion-info": {
+      display: "flex",
+      flexDirection: "column",
+      gap: "4px",
+      padding: "8px 10px",
+      maxWidth: "280px",
+      fontSize: "12px",
+      fontFamily: "inherit",
+    },
+    ".cm-expr-completion-info-title": {
+      fontFamily: "'Geist Mono', monospace",
+      fontWeight: "600",
+    },
+    ".cm-expr-completion-info-example": {
+      fontFamily: "'Geist Mono', monospace",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
+      borderRadius: "4px",
+      padding: "3px 6px",
+      display: "block",
     },
     ".cm-content": {
       caretColor: "var(--primary)",
@@ -143,6 +164,7 @@ export const darkTheme = EditorView.theme(
       "--expr-function": "oklch(0.7 0.12 200)",
       "--expr-comment": "oklch(0.5 0 0)",
       "--expr-punctuation": "oklch(0.6 0 0)",
+      "--expr-unknown": "oklch(0.75 0.16 70)",
     },
     "&.cm-editor": {
       backgroundColor: "var(--muted)",
@@ -153,6 +175,26 @@ export const darkTheme = EditorView.theme(
     ".cm-theme[aria-invalid='true'] &.cm-editor": {
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
+    },
+    ".cm-expr-completion-info": {
+      display: "flex",
+      flexDirection: "column",
+      gap: "4px",
+      padding: "8px 10px",
+      maxWidth: "280px",
+      fontSize: "12px",
+      fontFamily: "inherit",
+    },
+    ".cm-expr-completion-info-title": {
+      fontFamily: "'Geist Mono', monospace",
+      fontWeight: "600",
+    },
+    ".cm-expr-completion-info-example": {
+      fontFamily: "'Geist Mono', monospace",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
+      borderRadius: "4px",
+      padding: "3px 6px",
+      display: "block",
     },
     ".cm-content": {
       caretColor: "oklch(0.7 0.18 260)",

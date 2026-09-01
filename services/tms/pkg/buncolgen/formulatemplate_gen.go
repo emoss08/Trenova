@@ -618,3 +618,201 @@ var FormulaTemplateVersionFilter = struct {
 		return NewFieldFilter("createdAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// TestCase — table "formula_template_test_cases", alias "ftc"
+// ---------------------------------------------------------------------------
+
+// TestCaseTable holds the table name, alias, and primary key columns
+// for the "formula_template_test_cases" table. The alias "ftc" is used in all generated
+// SQL fragments (e.g. "ftc.id = ?").
+var TestCaseTable = TableInfo{
+	Name:       "formula_template_test_cases",
+	Alias:      "ftc",
+	PrimaryKey: []string{"id"},
+}
+
+// TestCaseColumns provides type-safe column references for the "formula_template_test_cases" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(TestCaseColumns.ID.String())
+//	// SELECT ftc.id FROM formula_template_test_cases AS ftc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(TestCaseColumns.ID.Eq(), id)           // WHERE ftc.id = ?
+//	q.Order(TestCaseColumns.CreatedAt.OrderDesc())  // ORDER BY ftc.created_at DESC
+var TestCaseColumns = struct {
+	ID             Column // "id" → qualified: "ftc.id"
+	TemplateID     Column // "template_id" → qualified: "ftc.template_id"
+	OrganizationID Column // "organization_id" → qualified: "ftc.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "ftc.business_unit_id"
+	Name           Column // "name" → qualified: "ftc.name"
+	Description    Column // "description" → qualified: "ftc.description"
+	Variables      Column // "variables" → qualified: "ftc.variables"
+	ExpectedAmount Column // "expected_amount" → qualified: "ftc.expected_amount"
+	Tolerance      Column // "tolerance" → qualified: "ftc.tolerance"
+	Version        Column // "version" → qualified: "ftc.version"
+	CreatedByID    Column // "created_by_id" → qualified: "ftc.created_by_id"
+	CreatedAt      Column // "created_at" → qualified: "ftc.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "ftc.updated_at"
+}{
+	ID:             NewColumn("id", "ftc"),
+	TemplateID:     NewColumn("template_id", "ftc"),
+	OrganizationID: NewColumn("organization_id", "ftc"),
+	BusinessUnitID: NewColumn("business_unit_id", "ftc"),
+	Name:           NewColumn("name", "ftc"),
+	Description:    NewColumn("description", "ftc"),
+	Variables:      NewColumn("variables", "ftc"),
+	ExpectedAmount: NewColumn("expected_amount", "ftc"),
+	Tolerance:      NewColumn("tolerance", "ftc"),
+	Version:        NewColumn("version", "ftc"),
+	CreatedByID:    NewColumn("created_by_id", "ftc"),
+	CreatedAt:      NewColumn("created_at", "ftc"),
+	UpdatedAt:      NewColumn("updated_at", "ftc"),
+}
+
+// TestCaseFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by TestCase.GetStaticFieldMap().
+var TestCaseFieldMap = map[string]string{
+	"id":             "id",
+	"templateId":     "template_id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"name":           "name",
+	"description":    "description",
+	"variables":      "variables",
+	"expectedAmount": "expected_amount",
+	"tolerance":      "tolerance",
+	"version":        "version",
+	"createdById":    "created_by_id",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// TestCaseInsertableColumns lists column names suitable for INSERT statements on the "formula_template_test_cases" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var TestCaseInsertableColumns = []string{
+	"id",
+	"template_id",
+	"organization_id",
+	"business_unit_id",
+	"name",
+	"description",
+	"variables",
+	"expected_amount",
+	"tolerance",
+	"version",
+	"created_by_id",
+	"created_at",
+	"updated_at",
+}
+
+// TestCaseScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ftc.organization_id = ? AND ftc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.TestCaseScopeTenant(sq, ti).
+//		Where(buncolgen.TestCaseColumns.ID.Eq(), id)
+func TestCaseScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.TestCaseScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.TestCaseColumns.ID.In(), bun.List(ids))
+//	})
+func TestCaseScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.TestCaseScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.TestCaseColumns.ID.Eq(), id)
+//	})
+func TestCaseScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.TestCaseApplyTenant(tenantInfo))
+func TestCaseApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "formula_template_test_cases" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	TestCaseFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var TestCaseFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Variables      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variables" → DB: "variables"
+	ExpectedAmount func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAmount" → DB: "expected_amount"
+	Tolerance      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tolerance" → DB: "tolerance"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("templateId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Variables: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("variables", op, value)
+	},
+	ExpectedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expectedAmount", op, value)
+	},
+	Tolerance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tolerance", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}

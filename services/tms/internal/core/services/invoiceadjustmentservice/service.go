@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -1793,6 +1794,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	// Every leg of a multi-leg order re-rates against the same tenant's rate
 	// tables, so the invoice reads them once instead of once per leg.
 	ctx = ratetablecache.With(ctx)
+	ctx = effectiveversioncache.With(ctx)
 
 	lines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
 	total := decimal.Zero

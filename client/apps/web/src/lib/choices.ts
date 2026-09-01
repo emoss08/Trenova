@@ -690,11 +690,6 @@ export const stopScheduleTypeChoices = [
   { label: "Appointment", value: "Appointment" },
 ] satisfies ReadonlyArray<GenericSelectOption<StopScheduleType>>;
 
-export const formulaTypeChoices: SelectOption[] = [
-  { label: "Freight Charge", value: "FreightCharge" },
-  { label: "Accessorial Charge", value: "AccessorialCharge" },
-];
-
 export const equipmentClassChoices = [
   { value: "Tractor", label: "Tractor", color: "#15803d" },
   { value: "Trailer", label: "Trailer", color: "#7e22ce" },

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -28,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -84,6 +86,13 @@ func (m *mockFormulaTemplateRepo) GetByIDs(
 	if m.getByIDsFunc != nil {
 		return m.getByIDsFunc(ctx, req)
 	}
+	return nil, nil
+}
+
+func (m *mockFormulaTemplateRepo) FindByNames(
+	_ context.Context,
+	_ repositories.GetFormulaTemplatesByNamesRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
 
@@ -288,10 +297,10 @@ func newTestFormulaService(t *testing.T) *formula.Service {
 	})
 	require.NoError(t, err)
 	return formula.NewService(formula.ServiceParams{
-		Logger:        zap.NewNop(),
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
 		VersionRepo:    &stubFormulaVersionRepo{},
 		RateMatrixRepo: &stubRateMatrixRepo{},
 	})
@@ -305,6 +314,13 @@ func (s *stubFormulaVersionRepo) GetEffectiveVersion(
 	_ context.Context,
 	_ *repositories.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+func (s *stubFormulaVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
@@ -387,6 +403,33 @@ func (m *mockShipmentRepo) ListRatedByFormulaTemplate(
 	return []*shipment.Shipment{}, nil
 }
 
+type stubTestCaseRepo struct {
+	repositories.FormulaTemplateTestCaseRepository
+	cases []*formulatemplate.TestCase
+}
+
+func (s *stubTestCaseRepo) ListByTemplate(
+	_ context.Context,
+	_ repositories.ListTestCasesRequest,
+) ([]*formulatemplate.TestCase, error) {
+	return s.cases, nil
+}
+
+type testDBConnection struct{}
+
+func (testDBConnection) DB() *bun.DB                          { return nil }
+func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
+func (testDBConnection) HealthCheck(context.Context) error    { return nil }
+func (testDBConnection) IsHealthy(context.Context) bool       { return true }
+func (testDBConnection) Close() error                         { return nil }
+func (testDBConnection) WithTx(
+	ctx context.Context,
+	_ ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
+	return fn(ctx, bun.Tx{})
+}
+
 func setupHandler(
 	t *testing.T,
 	repo *mockFormulaTemplateRepo,
@@ -427,8 +470,10 @@ func setupHandlerWithDeps(
 
 	service := formulatemplateservice.New(formulatemplateservice.Params{
 		Logger:         logger,
+		DB:             testDBConnection{},
 		Repo:           repo,
 		VersionRepo:    versionRepo,
+		TestCaseRepo:   &stubTestCaseRepo{},
 		ShipmentRepo:   shipmentRepo,
 		FormulaService: newTestFormulaService(t),
 		AuditService:   &mocks.NoopAuditService{},
@@ -2293,7 +2338,22 @@ func TestFormulaTemplateHandler_UpdateVersionTags_Success(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, &mockFormulaTemplateRepo{}, versionRepo)
+	repo := &mockFormulaTemplateRepo{
+		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+			return &formulatemplate.FormulaTemplate{
+				ID:             req.TemplateID,
+				OrganizationID: req.TenantInfo.OrgID,
+				BusinessUnitID: req.TenantInfo.BuID,
+				Name:           "Test Template",
+				Expression:     "totalDistance * 2.5",
+				Type:           formulatemplate.TemplateTypeFreightCharge,
+				Status:         formulatemplate.StatusActive,
+				SchemaID:       "shipment",
+			}, nil
+		},
+	}
+
+	handler := setupHandler(t, repo, versionRepo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).

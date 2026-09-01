@@ -1,113 +1,116 @@
-import {
-  AVAILABLE_FUNCTIONS,
-  SHIPMENT_VARIABLES,
-  type VariableDefinitionInput,
-} from "@trenova/shared/types/formula-template";
-import { type CompletionContext } from "@codemirror/autocomplete";
+import { type CompletionContext, type Completion } from "@codemirror/autocomplete";
 import {
   HighlightStyle,
   LanguageSupport,
   StreamLanguage,
   syntaxHighlighting,
 } from "@codemirror/language";
-import { tags as t } from "@lezer/highlight";
+import { Tag, tags as t } from "@lezer/highlight";
+import {
+  EXPR_KEYWORDS,
+  buildKnownIdentifiers,
+  isKnownFunction,
+  isKnownVariable,
+  type KnownIdentifiers,
+} from "./known-identifiers";
 
-const KEYWORDS = new Set(["true", "false", "nil", "in", "not", "and", "or"]);
-const BUILTIN_FUNCTIONS = new Set<string>(AVAILABLE_FUNCTIONS.map((f) => f.name));
-const BUILTIN_VARIABLES = new Set<string>(
-  SHIPMENT_VARIABLES.map((v) => {
-    const dot = v.name.indexOf(".");
-    return dot === -1 ? v.name : v.name.slice(0, dot);
-  }),
-);
+export const unknownVariableTag = Tag.define();
 
 type ExprState = {
   inBlockComment: boolean;
 };
 
-const exprLanguage = StreamLanguage.define<ExprState>({
-  name: "expr",
+export function createExprLanguage(known: KnownIdentifiers) {
+  return StreamLanguage.define<ExprState>({
+    name: "expr",
 
-  token(stream, state: ExprState) {
-    if (stream.eatSpace()) {
+    token(stream, state: ExprState) {
+      if (stream.eatSpace()) {
+        return null;
+      }
+
+      if (stream.match(/\/\/.*/)) {
+        return "lineComment";
+      }
+
+      if (stream.match(/\/\*/)) {
+        state.inBlockComment = true;
+        return "blockComment";
+      }
+
+      if (state.inBlockComment) {
+        if (stream.match(/.*?\*\//)) {
+          state.inBlockComment = false;
+        } else {
+          stream.skipToEnd();
+        }
+        return "blockComment";
+      }
+
+      if (stream.match(/"(?:[^"\\]|\\.)*"/)) {
+        return "string";
+      }
+      if (stream.match(/'(?:[^'\\]|\\.)*'/)) {
+        return "string";
+      }
+      if (stream.match(/`(?:[^`\\]|\\.)*`/)) {
+        return "string";
+      }
+
+      if (stream.match(/\d+\.?\d*([eE][+-]?\d+)?/) || stream.match(/\.\d+([eE][+-]?\d+)?/)) {
+        return "number";
+      }
+
+      if (stream.match(/[+\-*/%^]=?|[<>!=]=?|&&|\|\||[?:]/)) {
+        return "operator";
+      }
+
+      if (stream.match(/[()[\]{},;.]/)) {
+        return "punctuation";
+      }
+
+      if (stream.match(/[a-zA-Z_#][a-zA-Z0-9_]*/)) {
+        const word = stream.current();
+
+        if (EXPR_KEYWORDS.has(word) || word === "#") {
+          return "keyword";
+        }
+
+        if (isKnownFunction(known, word) && stream.peek() === "(") {
+          return "exprFunction";
+        }
+
+        if (isKnownVariable(known, word)) {
+          return "knownVariable";
+        }
+
+        return "unknownVariable";
+      }
+
+      stream.next();
       return null;
-    }
+    },
 
-    if (stream.match(/\/\/.*/)) {
-      return "lineComment";
-    }
+    startState() {
+      return { inBlockComment: false };
+    },
 
-    if (stream.match(/\/\*/)) {
-      state.inBlockComment = true;
-      return "blockComment";
-    }
+    copyState(state: ExprState): ExprState {
+      return { inBlockComment: state.inBlockComment };
+    },
 
-    if (state.inBlockComment) {
-      if (stream.match(/.*?\*\//)) {
-        state.inBlockComment = false;
-      } else {
-        stream.skipToEnd();
-      }
-      return "blockComment";
-    }
+    tokenTable: {
+      exprFunction: t.function(t.variableName),
+      knownVariable: t.special(t.variableName),
+      unknownVariable: unknownVariableTag,
+    },
 
-    if (stream.match(/"(?:[^"\\]|\\.)*"/)) {
-      return "string";
-    }
-    if (stream.match(/'(?:[^'\\]|\\.)*'/)) {
-      return "string";
-    }
-    if (stream.match(/`(?:[^`\\]|\\.)*`/)) {
-      return "string";
-    }
-
-    if (stream.match(/\d+\.?\d*([eE][+-]?\d+)?/) || stream.match(/\.\d+([eE][+-]?\d+)?/)) {
-      return "number";
-    }
-
-    if (stream.match(/[+\-*/%^]=?|[<>!=]=?|&&|\|\||[?:]/)) {
-      return "operator";
-    }
-
-    if (stream.match(/[()[\]{},;.]/)) {
-      return "punctuation";
-    }
-
-    if (stream.match(/[a-zA-Z_][a-zA-Z0-9_]*/)) {
-      const word = stream.current();
-
-      if (KEYWORDS.has(word)) {
-        return "keyword";
-      }
-
-      if (BUILTIN_FUNCTIONS.has(word)) {
-        return "function";
-      }
-
-      if (BUILTIN_VARIABLES.has(word)) {
-        return "variableName";
-      }
-
-      return "variableName";
-    }
-
-    stream.next();
-    return null;
-  },
-
-  startState() {
-    return { inBlockComment: false };
-  },
-
-  copyState(state: ExprState): ExprState {
-    return { inBlockComment: state.inBlockComment };
-  },
-
-  languageData: {
-    commentTokens: { line: "//", block: { open: "/*", close: "*/" } },
-    closeBrackets: { brackets: ["(", "[", "{", '"', "'", "`"] },
-  },
-});
+    languageData: {
+      commentTokens: { line: "//", block: { open: "/*", close: "*/" } },
+      closeBrackets: { brackets: ["(", "[", "{", '"', "'", "`"] },
+    },
+  });
+}
 
 export const exprHighlightStyle = HighlightStyle.define([
   { tag: t.keyword, color: "var(--expr-keyword)", fontWeight: "500" },
@@ -115,7 +118,20 @@ export const exprHighlightStyle = HighlightStyle.define([
   { tag: t.number, color: "var(--expr-number)" },
   { tag: t.string, color: "var(--expr-string)" },
   { tag: t.variableName, color: "var(--expr-variable)" },
+  {
+    tag: t.special(t.variableName),
+    color: "var(--expr-variable)",
+    backgroundColor: "color-mix(in oklab, var(--expr-variable) 14%, transparent)",
+    borderRadius: "4px",
+    padding: "1px 2px",
+  },
   { tag: t.function(t.variableName), color: "var(--expr-function)" },
+  {
+    tag: unknownVariableTag,
+    color: "var(--expr-unknown)",
+    textDecoration: "underline wavy var(--expr-unknown)",
+    textUnderlineOffset: "3px",
+  },
   { tag: t.bool, color: "var(--expr-keyword)" },
   { tag: t.null, color: "var(--expr-keyword)" },
   {
@@ -139,46 +155,74 @@ export const exprHighlightStyle = HighlightStyle.define([
   { tag: t.punctuation, color: "var(--expr-punctuation)" },
 ]);
 
-function createCompletions(customVariables: VariableDefinitionInput[] = []) {
-  return [
-    ...SHIPMENT_VARIABLES.map((v) => ({
-      label: v.name,
-      type: "variable" as const,
-      detail: v.type,
-      info: v.description,
-      boost: 2,
-    })),
-    ...AVAILABLE_FUNCTIONS.map((f) => ({
-      label: f.name,
-      type: "function" as const,
-      detail: f.signature,
-      info: f.description,
-      apply: `${f.name}()`,
-      boost: 1,
-    })),
-    ...customVariables.map((v) => ({
-      label: v.name,
-      type: "variable" as const,
-      detail: `${v.type} (custom)`,
-      info: v.description || "Custom variable",
-      boost: 3,
-    })),
-    {
-      label: "true",
-      type: "keyword" as const,
-      detail: "Boolean true",
-    },
-    {
-      label: "false",
-      type: "keyword" as const,
-      detail: "Boolean false",
-    },
-    { label: "nil", type: "keyword" as const, detail: "Null value" },
-  ];
+function completionInfo(title: string, description: string, example?: string) {
+  return () => {
+    const node = document.createElement("div");
+    node.className = "cm-expr-completion-info";
+
+    const heading = document.createElement("div");
+    heading.className = "cm-expr-completion-info-title";
+    heading.textContent = title;
+    node.appendChild(heading);
+
+    if (description) {
+      const body = document.createElement("div");
+      body.textContent = description;
+      node.appendChild(body);
+    }
+
+    if (example) {
+      const code = document.createElement("code");
+      code.className = "cm-expr-completion-info-example";
+      code.textContent = example;
+      node.appendChild(code);
+    }
+
+    return node;
+  };
 }
 
-export function exprLanguageSupport(customVariables: VariableDefinitionInput[] = []) {
-  const options = createCompletions(customVariables);
+function createCompletions(known: KnownIdentifiers): Completion[] {
+  const options: Completion[] = [];
+
+  for (const variable of known.variables) {
+    options.push({
+      label: variable.name,
+      type: "variable",
+      detail: variable.type,
+      info: completionInfo(variable.name, variable.description),
+      boost: variable.custom ? 3 : 2,
+    });
+  }
+
+  for (const fn of known.functions) {
+    options.push({
+      label: fn.name,
+      type: "function",
+      detail: fn.signature,
+      info: completionInfo(fn.signature, fn.description, fn.example),
+      apply: (view, _completion, from, to) => {
+        view.dispatch({
+          changes: { from, to, insert: `${fn.name}()` },
+          selection: { anchor: from + fn.name.length + 1 },
+        });
+      },
+      boost: 1,
+    });
+  }
+
+  options.push(
+    { label: "true", type: "keyword", detail: "Boolean true" },
+    { label: "false", type: "keyword", detail: "Boolean false" },
+    { label: "nil", type: "keyword", detail: "Null value" },
+  );
+
+  return options;
+}
+
+export function exprLanguageSupport(known: KnownIdentifiers) {
+  const language = createExprLanguage(known);
+  const options = createCompletions(known);
 
   const completionSource = (context: CompletionContext) => {
     const word = context.matchBefore(/[a-zA-Z_][\w.]*/);
@@ -188,10 +232,11 @@ export function exprLanguageSupport(customVariables: VariableDefinitionInput[] =
     return { from: word.from, options, validFor: /^[\w.]*$/ };
   };
 
-  return new LanguageSupport(exprLanguage, [
+  return new LanguageSupport(language, [
     syntaxHighlighting(exprHighlightStyle),
-    exprLanguage.data.of({ autocomplete: completionSource }),
+    language.data.of({ autocomplete: completionSource }),
   ]);
 }
 
-export { exprLanguage };
+export { buildKnownIdentifiers };
+export type { KnownIdentifiers };

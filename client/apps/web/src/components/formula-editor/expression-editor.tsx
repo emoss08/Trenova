@@ -4,16 +4,25 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import type { VariableDefinitionInput } from "@trenova/shared/types/formula-template";
 import { EditorView } from "@codemirror/view";
-import CodeMirror, { type ReactCodeMirrorProps } from "@uiw/react-codemirror";
+import CodeMirror, {
+  type ReactCodeMirrorProps,
+  type ReactCodeMirrorRef,
+} from "@uiw/react-codemirror";
+import { useMemo, useRef, type Ref } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { darkTheme, lightTheme } from "./editor-theme";
-import { exprLanguageSupport } from "./expr-language";
+import { createExprLinter } from "./expr-lint";
+import { buildKnownIdentifiers, exprLanguageSupport, type KnownIdentifiers } from "./expr-language";
 
 type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
   ReactCodeMirrorProps & {
     customVariables?: VariableDefinitionInput[];
+    knownIdentifiers?: KnownIdentifiers;
     label?: string;
     description?: string;
+    variant?: "default" | "mini";
+    lint?: boolean;
+    editorRef?: Ref<ReactCodeMirrorRef>;
   };
 
 export function ExpressionEditor<T extends FieldValues>({
@@ -21,13 +30,33 @@ export function ExpressionEditor<T extends FieldValues>({
   label,
   description,
   customVariables = [],
+  knownIdentifiers,
+  variant = "default",
+  lint = true,
+  editorRef,
   control,
   rules,
   ...props
 }: ExpressionEditorProps<T>) {
   const { theme } = useTheme();
 
-  const extensions = [exprLanguageSupport(customVariables), EditorView.lineWrapping];
+  const known = useMemo(
+    () => knownIdentifiers ?? buildKnownIdentifiers(undefined, customVariables),
+    [knownIdentifiers, customVariables],
+  );
+
+  const knownRef = useRef(known);
+  knownRef.current = known;
+
+  const extensions = useMemo(() => {
+    const list = [exprLanguageSupport(known), EditorView.lineWrapping];
+    if (lint) {
+      list.push(createExprLinter(() => knownRef.current));
+    }
+    return list;
+  }, [known, lint]);
+
+  const isMini = variant === "mini";
 
   return (
     <Controller<T>
@@ -50,12 +79,14 @@ export function ExpressionEditor<T extends FieldValues>({
             )}
           >
             <CodeMirror
+              ref={editorRef}
               value={field.value || ""}
               onChange={(value) => field.onChange(value)}
               extensions={extensions}
               aria-invalid={fieldState.invalid ? "true" : "false"}
+              minHeight={isMini ? "60px" : undefined}
               basicSetup={{
-                lineNumbers: true,
+                lineNumbers: !isMini,
                 foldGutter: false,
                 dropCursor: true,
                 allowMultipleSelections: false,
@@ -63,8 +94,8 @@ export function ExpressionEditor<T extends FieldValues>({
                 bracketMatching: true,
                 closeBrackets: true,
                 autocompletion: true,
-                highlightActiveLine: true,
-                highlightActiveLineGutter: true,
+                highlightActiveLine: !isMini,
+                highlightActiveLineGutter: !isMini,
                 highlightSelectionMatches: true,
                 searchKeymap: false,
               }}

@@ -797,6 +797,29 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/configuration-files/formula-templates/new",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaTemplate, Operation.Create),
+            ),
+            async lazy() {
+              const { FormulaStudioCreatePage } =
+                await import("@/routes/formula-template/new/page");
+              return { Component: FormulaStudioCreatePage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-templates/:id/edit",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaTemplate),
+            ),
+            async lazy() {
+              const { FormulaStudioEditPage } = await import("@/routes/formula-template/[id]/page");
+              return { Component: FormulaStudioEditPage };
+            },
+          },
+          {
             path: "/billing/fuel-management",
             loader: combineLoaders(
               protectedLoader,

@@ -11,13 +11,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
@@ -25,6 +28,7 @@ type Params struct {
 	fx.In
 
 	Service              *formulatemplateservice.Service
+	AssistantService     *formulaassistantservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     services.PermissionEngine
@@ -32,6 +36,7 @@ type Params struct {
 
 type Handler struct {
 	service    *formulatemplateservice.Service
+	assistant  *formulaassistantservice.Service
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
 	permEngine services.PermissionEngine
@@ -40,6 +45,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service:    p.Service,
+		assistant:  p.AssistantService,
 		eh:         p.ErrorHandler,
 		pm:         p.PermissionMiddleware,
 		permEngine: p.PermissionEngine,
@@ -63,9 +69,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/formula-templates")
 	api.GET("/", requireRead, h.list)
 	api.POST("/", requireCreate, h.create)
+	api.GET("/schema", requireRead, h.getSchema)
 	api.POST("/bulk-update-status", requireUpdate, h.bulkUpdateStatus)
 	api.POST("/test", requireAuthoring, h.testExpression)
 	api.POST("/duplicate", requireDuplicate, h.duplicate)
+	api.POST("/import", requireCreate, h.importTemplates)
+	api.POST("/install-standards", requireCreate, h.installStandards)
+	api.POST("/ai/generate", requireAuthoring, h.aiGenerate)
+	api.POST("/ai/explain", requireRead, h.aiExplain)
 
 	idGroup := api.Group("/:templateID")
 	idGroup.GET("/", requireRead, h.get)
@@ -84,6 +95,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/approve", requireApprove, h.approve)
 	idGroup.POST("/reject", requireReject, h.reject)
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
+	idGroup.GET("/test-cases", requireRead, h.listTestCases)
+	idGroup.POST("/test-cases", requireUpdate, h.createTestCase)
+	idGroup.PUT("/test-cases/:testCaseID", requireUpdate, h.updateTestCase)
+	idGroup.DELETE("/test-cases/:testCaseID", requireUpdate, h.deleteTestCase)
+	idGroup.POST("/test-cases/run", requireAuthoring, h.runTestCases)
 	idGroup.GET("/versions/scheduled", requireRead, h.listScheduledVersions)
 	idGroup.PATCH(
 		"/versions/:versionNumber/effective-date",
@@ -475,12 +491,404 @@ func (h *Handler) patch(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedEntity)
 }
 
+// @Summary Describe the variables and functions available to formula expressions
+// @ID getFormulaSchema
+// @Tags Formula Templates
+// @Produce json
+// @Param schemaId query string false "Formula schema identifier" default(shipment)
+// @Success 200 {object} formulatemplatetypes.SchemaDescription
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/schema [get]
+func (h *Handler) getSchema(c *gin.Context) {
+	schemaID := helpers.QueryString(c, "schemaId")
+	if schemaID == "" {
+		schemaID = "shipment"
+	}
+
+	var description *formulatemplatetypes.SchemaDescription
+	description, err := h.service.DescribeSchema(schemaID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, description)
+}
+
+// @Summary Import formula templates from an exported JSON payload
+// @ID importFormulaTemplates
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param request body formulatemplateservice.ImportTemplatesRequest true "Import request"
+// @Success 200 {object} formulatemplateservice.ImportTemplatesResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/import [post]
+func (h *Handler) importTemplates(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var req formulatemplateservice.ImportTemplatesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+
+	result, err := h.service.Import(c.Request.Context(), &req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// @Summary List a formula template's saved test scenarios
+// @ID listFormulaTemplateTestCases
+// @Tags Formula Templates
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Success 200 {array} formulatemplate.TestCase
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/test-cases [get]
+func (h *Handler) listTestCases(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	cases, err := h.service.ListTestCases(c.Request.Context(), repositories.ListTestCasesRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		TemplateID: templateID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, cases)
+}
+
+// @Summary Create a test scenario for a formula template
+// @ID createFormulaTemplateTestCase
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body formulatemplateservice.TestCaseInput true "Test scenario"
+// @Success 200 {object} formulatemplate.TestCase
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/test-cases [post]
+func (h *Handler) createTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var input formulatemplateservice.TestCaseInput
+	if err = c.ShouldBindJSON(&input); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	created, err := h.service.CreateTestCase(
+		c.Request.Context(),
+		&formulatemplateservice.CreateTestCaseRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID:    templateID,
+			TestCaseInput: input,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, created)
+}
+
+// @Summary Update a formula template test scenario
+// @ID updateFormulaTemplateTestCase
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param testCaseID path string true "Test scenario ID"
+// @Param request body formulatemplateservice.UpdateTestCaseRequest true "Test scenario"
+// @Success 200 {object} formulatemplate.TestCase
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/test-cases/{testCaseID} [put]
+func (h *Handler) updateTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	testCaseID, err := pulid.MustParse(c.Param("testCaseID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req formulatemplateservice.UpdateTestCaseRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	req.TemplateID = templateID
+	req.TestCaseID = testCaseID
+
+	updated, err := h.service.UpdateTestCase(c.Request.Context(), &req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
+}
+
+// @Summary Delete a formula template test scenario
+// @ID deleteFormulaTemplateTestCase
+// @Tags Formula Templates
+// @Param templateID path string true "Formula template ID"
+// @Param testCaseID path string true "Test scenario ID"
+// @Success 204
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/test-cases/{testCaseID} [delete]
+func (h *Handler) deleteTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	testCaseID, err := pulid.MustParse(c.Param("testCaseID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	err = h.service.DeleteTestCase(c.Request.Context(), repositories.GetTestCaseByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		TemplateID: templateID,
+		TestCaseID: testCaseID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// @Summary Run a formula template's test scenarios
+// @ID runFormulaTemplateTestCases
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body formulatemplateservice.RunTestCasesRequest true "Optional candidate content"
+// @Success 200 {object} formulatemplateservice.RunTestCasesResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/test-cases/run [post]
+func (h *Handler) runTestCases(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req formulatemplateservice.RunTestCasesRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	req.TemplateID = templateID
+
+	result, err := h.service.RunTestCases(c.Request.Context(), &req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// @Summary Install the standard formula template library for this organization
+// @ID installStandardFormulaTemplates
+// @Tags Formula Templates
+// @Produce json
+// @Success 200 {object} formulatemplateservice.InstallStandardsResponse
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/install-standards [post]
+func (h *Handler) installStandards(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	result, err := h.service.InstallStandards(c.Request.Context(), pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// @Summary Generate a formula expression from a natural-language description
+// @ID generateFormulaExpression
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param request body formulaassistantservice.GenerateFormulaRequest true "Generation request"
+// @Success 200 {object} formulaassistantservice.GenerateFormulaResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/ai/generate [post]
+func (h *Handler) aiGenerate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var req formulaassistantservice.GenerateFormulaRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+
+	result, err := h.assistant.GenerateFormula(c.Request.Context(), &req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// @Summary Explain a formula expression in plain English
+// @ID explainFormulaExpression
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param request body formulaassistantservice.ExplainFormulaRequest true "Explanation request"
+// @Success 200 {object} formulaassistantservice.ExplainFormulaResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/ai/explain [post]
+func (h *Handler) aiExplain(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var req formulaassistantservice.ExplainFormulaRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+
+	result, err := h.assistant.ExplainFormula(c.Request.Context(), &req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 type testExpressionRequest struct {
 	Expression string                              `json:"expression"`
 	SchemaID   string                              `json:"schemaId"`
 	Variables  map[string]any                      `json:"variables"`
 	ShipmentID string                              `json:"shipmentId"`
 	Breakdowns []*formulatypes.BreakdownDefinition `json:"breakdowns"`
+	MinCharge  *string                             `json:"minCharge"`
+	MaxCharge  *string                             `json:"maxCharge"`
 }
 
 // @Summary Test a formula expression
@@ -519,6 +927,28 @@ func (h *Handler) testExpression(c *gin.Context) {
 			UserID: authCtx.UserID,
 		},
 	}
+
+	minCharge, err := parseGuardrailCharge("minCharge", req.MinCharge)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	maxCharge, err := parseGuardrailCharge("maxCharge", req.MaxCharge)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if minCharge.Valid && maxCharge.Valid &&
+		minCharge.Decimal.GreaterThan(maxCharge.Decimal) {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"minCharge",
+			errortypes.ErrInvalid,
+			"Minimum charge cannot exceed maximum charge",
+		))
+		return
+	}
+	serviceReq.MinCharge = minCharge
+	serviceReq.MaxCharge = maxCharge
 
 	if req.ShipmentID != "" {
 		shipmentID, err := pulid.MustParse(req.ShipmentID)
@@ -561,6 +991,31 @@ func (h *Handler) allowShipmentRead(c *gin.Context, authCtx *authctx.AuthContext
 	}
 
 	return true
+}
+
+func parseGuardrailCharge(field string, raw *string) (decimal.NullDecimal, error) {
+	if raw == nil || *raw == "" {
+		return decimal.NullDecimal{}, nil
+	}
+
+	value, err := decimal.NewFromString(*raw)
+	if err != nil {
+		return decimal.NullDecimal{}, errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"Must be a valid decimal number",
+		)
+	}
+
+	if value.IsNegative() {
+		return decimal.NullDecimal{}, errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"Cannot be negative",
+		)
+	}
+
+	return decimal.NullDecimal{Decimal: value, Valid: true}, nil
 }
 
 // @Summary List formula template versions

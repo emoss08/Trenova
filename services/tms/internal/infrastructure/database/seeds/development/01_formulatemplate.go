@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice/standardcatalog"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -20,7 +20,7 @@ func NewFormulaTemplateSeed() *FormulaTemplateSeed {
 	seed := &FormulaTemplateSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"FormulaTemplate",
-		"1.1.0",
+		"1.2.0",
 		"Creates standard rating method formula templates",
 		[]common.Environment{
 			common.EnvDevelopment,
@@ -47,34 +47,13 @@ func (s *FormulaTemplateSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 			}
 
-			loader := seedhelpers.NewDataLoader(
-				"./internal/infrastructure/database/seeds/development/data",
-			)
-
-			var data struct {
-				Templates []struct {
-					Name        string `yaml:"name"`
-					Description string `yaml:"description"`
-					Type        string `yaml:"type"`
-					Expression  string `yaml:"expression"`
-					Status      string `yaml:"status"`
-					SchemaID    string `yaml:"schema_id"`
-					Variables   []struct {
-						Name         string  `yaml:"name"`
-						Type         string  `yaml:"type"`
-						Description  string  `yaml:"description"`
-						Required     bool    `yaml:"required"`
-						DefaultValue float64 `yaml:"default_value"`
-					} `yaml:"variables"`
-				} `yaml:"templates"`
-			}
-
-			if err := loader.LoadYAML("formula_templates.yaml", &data); err != nil {
-				return fmt.Errorf("load formula templates: %w", err)
+			catalog, err := standardcatalog.Load()
+			if err != nil {
+				return fmt.Errorf("load standard template catalog: %w", err)
 			}
 
 			// A version bump re-runs the whole seed, so templates already
-			// present are skipped by name: the bump only adds what the yaml
+			// present are skipped by name: the bump only adds what the catalog
 			// gained, and never duplicates the standard set an organization's
 			// contracts already point at.
 			var existing []formulatemplate.FormulaTemplate
@@ -92,32 +71,22 @@ func (s *FormulaTemplateSeed) Run(ctx context.Context, tx bun.Tx) error {
 				existingNames[template.Name] = struct{}{}
 			}
 
-			for _, tmplData := range data.Templates {
-				if _, ok := existingNames[tmplData.Name]; ok {
+			for _, entry := range catalog {
+				if _, ok := existingNames[entry.Name]; ok {
 					continue
-				}
-				variableDefs := make([]*formulatypes.VariableDefinition, len(tmplData.Variables))
-				for i, v := range tmplData.Variables {
-					variableDefs[i] = &formulatypes.VariableDefinition{
-						Name:         v.Name,
-						Type:         stringToVariableType(v.Type),
-						Description:  v.Description,
-						Required:     v.Required,
-						DefaultValue: v.DefaultValue,
-					}
 				}
 
 				tmpl := &formulatemplate.FormulaTemplate{
 					ID:                  pulid.MustNew("ft_"),
 					OrganizationID:      org.ID,
 					BusinessUnitID:      org.BusinessUnitID,
-					Name:                tmplData.Name,
-					Description:         tmplData.Description,
-					Type:                stringToTemplateType(tmplData.Type),
-					Expression:          tmplData.Expression,
-					Status:              stringToStatus(tmplData.Status),
-					SchemaID:            tmplData.SchemaID,
-					VariableDefinitions: variableDefs,
+					Name:                entry.Name,
+					Description:         entry.Description,
+					Type:                entry.Type,
+					Expression:          entry.Expression,
+					Status:              formulatemplate.StatusActive,
+					SchemaID:            entry.SchemaID,
+					VariableDefinitions: entry.VariableDefinitions,
 				}
 
 				if _, err := tx.NewInsert().Model(tmpl).Exec(ctx); err != nil {
@@ -131,41 +100,6 @@ func (s *FormulaTemplateSeed) Run(ctx context.Context, tx bun.Tx) error {
 			return nil
 		},
 	)
-}
-
-func stringToTemplateType(s string) formulatemplate.TemplateType {
-	switch s {
-	case "freight_charge":
-		return formulatemplate.TemplateTypeFreightCharge
-	case "accessorial_charge":
-		return formulatemplate.TemplateTypeAccessorialCharge
-	default:
-		return formulatemplate.TemplateTypeFreightCharge
-	}
-}
-
-func stringToStatus(s string) formulatemplate.Status {
-	switch s {
-	case "active":
-		return formulatemplate.StatusActive
-	case "inactive":
-		return formulatemplate.StatusInactive
-	default:
-		return formulatemplate.StatusActive
-	}
-}
-
-func stringToVariableType(s string) formulatypes.VariableValueType {
-	switch s {
-	case "number":
-		return formulatypes.VariableValueTypeNumber
-	case "string":
-		return formulatypes.VariableValueTypeString
-	case "boolean":
-		return formulatypes.VariableValueTypeBoolean
-	default:
-		return formulatypes.VariableValueTypeNumber
-	}
 }
 
 func (s *FormulaTemplateSeed) Down(ctx context.Context, tx bun.Tx) error {

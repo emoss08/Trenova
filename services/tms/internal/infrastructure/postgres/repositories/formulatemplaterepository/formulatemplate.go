@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -188,7 +189,7 @@ func (r *repository) Create(
 		zap.String("name", entity.Name),
 	)
 
-	_, err := r.db.DB().NewInsert().Model(entity).Exec(ctx)
+	_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
 	if err != nil {
 		log.Error("failed to create formula template", zap.Error(err))
 		return nil, err
@@ -209,12 +210,14 @@ func (r *repository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	results, err := r.db.DB().
+	query := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
-		OmitZero().
+		Where(buncolgen.FormulaTemplateColumns.Version.Eq(), ov).
+		OmitZero()
+
+	results, err := applyClearableColumns(query, entity).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -229,6 +232,22 @@ func (r *repository) Update(
 	return entity, nil
 }
 
+func applyClearableColumns(
+	q *bun.UpdateQuery,
+	entity *formulatemplate.FormulaTemplate,
+) *bun.UpdateQuery {
+	cols := buncolgen.FormulaTemplateColumns
+	return q.
+		Value(cols.Description.String(), "?", entity.Description).
+		Value(cols.ReviewComment.String(), "?", entity.ReviewComment).
+		Value(cols.MinCharge.String(), "?", entity.MinCharge).
+		Value(cols.MaxCharge.String(), "?", entity.MaxCharge).
+		Value(cols.SubmittedByID.String(), "?", entity.SubmittedByID).
+		Value(cols.SubmittedAt.String(), "?", entity.SubmittedAt).
+		Value(cols.ApprovedByID.String(), "?", entity.ApprovedByID).
+		Value(cols.ApprovedAt.String(), "?", entity.ApprovedAt)
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetFormulaTemplateByIDRequest,
@@ -239,7 +258,7 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(formulatemplate.FormulaTemplate)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -266,7 +285,7 @@ func (r *repository) GetByIDs(
 	)
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -283,6 +302,37 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+func (r *repository) FindByNames(
+	ctx context.Context,
+	req repositories.GetFormulaTemplatesByNamesRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	log := r.l.With(
+		zap.String("operation", "FindByNames"),
+		zap.Any("request", req),
+	)
+
+	if len(req.Names) == 0 {
+		return []*formulatemplate.FormulaTemplate{}, nil
+	}
+
+	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.Names))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("ft.organization_id = ?", req.TenantInfo.OrgID).
+				Where("ft.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("ft.name IN (?)", bun.List(req.Names))
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to find formula templates by names", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
@@ -293,7 +343,7 @@ func (r *repository) BulkUpdateStatus(
 	)
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
-	results, err := r.db.DB().
+	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -338,26 +388,16 @@ func (r *repository) BulkDuplicate(
 		return nil, err
 	}
 
-	// Bulk insert new formula templates
-	var newEntities []*formulatemplate.FormulaTemplate
-
+	newEntities := make([]*formulatemplate.FormulaTemplate, 0, len(entities))
 	for _, e := range entities {
-		newEntities = append(newEntities, &formulatemplate.FormulaTemplate{
-			OrganizationID:      e.OrganizationID,
-			BusinessUnitID:      e.BusinessUnitID,
-			Name:                fmt.Sprintf("%s (Copy)", e.Name),
-			Description:         e.Description,
-			Type:                e.Type,
-			Expression:          e.Expression,
-			Status:              e.Status,
-			SchemaID:            e.SchemaID,
-			Version:             e.Version,
-			VariableDefinitions: e.VariableDefinitions,
-			Metadata:            e.Metadata,
-		})
+		newEntities = append(newEntities, buildDuplicateEntity(e))
 	}
 
-	results, err := r.db.DB().NewInsert().Model(&newEntities).Returning("*").Exec(ctx)
+	results, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(&newEntities).
+		Returning("*").
+		Exec(ctx)
 	if err != nil {
 		log.Error("failed to bulk insert formula templates", zap.Error(err))
 		return nil, err
@@ -372,6 +412,32 @@ func (r *repository) BulkDuplicate(
 	}
 
 	return newEntities, nil
+}
+
+func buildDuplicateEntity(
+	source *formulatemplate.FormulaTemplate,
+) *formulatemplate.FormulaTemplate {
+	sourceID := source.ID
+	sourceVersion := source.CurrentVersionNumber
+
+	return &formulatemplate.FormulaTemplate{
+		OrganizationID:       source.OrganizationID,
+		BusinessUnitID:       source.BusinessUnitID,
+		Name:                 fmt.Sprintf("%s (Copy)", source.Name),
+		Description:          source.Description,
+		Type:                 source.Type,
+		Expression:           source.Expression,
+		Status:               formulatemplate.StatusDraft,
+		SchemaID:             source.SchemaID,
+		VariableDefinitions:  source.VariableDefinitions,
+		BreakdownDefinitions: source.BreakdownDefinitions,
+		MinCharge:            source.MinCharge,
+		MaxCharge:            source.MaxCharge,
+		Metadata:             source.Metadata,
+		SourceTemplateID:     &sourceID,
+		SourceVersionNumber:  &sourceVersion,
+		CurrentVersionNumber: 1,
+	}
 }
 
 func (r *repository) CountUsages(

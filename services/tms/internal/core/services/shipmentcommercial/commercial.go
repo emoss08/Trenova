@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -161,6 +162,7 @@ func (c *Calculator) calculateCommercialTotals(
 	// tables. A caller walking a batch installs its own memo first, and this
 	// one steps aside for it.
 	ctx = ratetablecache.With(ctx)
+	ctx = effectiveversioncache.With(ctx)
 
 	if sync.detention {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {

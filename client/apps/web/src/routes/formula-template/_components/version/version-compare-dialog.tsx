@@ -8,11 +8,13 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { queries } from "@/lib/queries";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
+import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
 type VersionCompareDialogProps = {
   open: boolean;
@@ -30,9 +32,7 @@ export function VersionCompareDialog({
   toVersion,
 }: VersionCompareDialogProps) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ["formula-template-compare", templateId, fromVersion, toVersion],
-    queryFn: () =>
-      apiService.formulaTemplateService.compareVersions(templateId, fromVersion, toVersion),
+    ...queries.formulaTemplate.versionDiff(templateId, fromVersion, toVersion),
     enabled: open,
   });
 
@@ -127,6 +127,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
   };
 
   const formattedPath = path.replace(/\./g, " → ");
+  const isExpressionChange = path === "expression" || path.endsWith(".expression");
 
   return (
     <div className="overflow-hidden rounded-lg border">
@@ -137,7 +138,9 @@ function ChangeItem({ path, change }: ChangeItemProps) {
       </div>
 
       <div className="p-3">
-        {change.type === "updated" ? (
+        {change.type === "updated" && isExpressionChange ? (
+          <ExpressionDiff before={formatValue(change.from)} after={formatValue(change.to)} />
+        ) : change.type === "updated" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-muted-foreground mb-1 block text-xs font-medium">Before</span>
@@ -168,6 +171,26 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ExpressionDiff({ before, after }: { before: string; after: string }) {
+  const { theme } = useTheme();
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  return (
+    <div className="overflow-hidden rounded-md border font-mono text-xs">
+      <ReactDiffViewer
+        oldValue={before}
+        newValue={after}
+        splitView={false}
+        compareMethod={DiffMethod.WORDS}
+        useDarkTheme={isDark}
+        hideLineNumbers
+      />
     </div>
   );
 }

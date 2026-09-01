@@ -8,12 +8,33 @@ package resolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+// VariableDefinitions is the resolver for the variableDefinitions field.
+func (r *formulaTemplateResolver) VariableDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateVariableDefinition, error) {
+	return formulaTemplateVariableDefinitionsToModel(obj.VariableDefinitions), nil
+}
+
+// BreakdownDefinitions is the resolver for the breakdownDefinitions field.
+func (r *formulaTemplateResolver) BreakdownDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateBreakdownDefinition, error) {
+	return formulaTemplateBreakdownDefinitionsToModel(obj.BreakdownDefinitions), nil
+}
+
+// MinCharge is the resolver for the minCharge field.
+func (r *formulaTemplateResolver) MinCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error) {
+	return nullDecimalToStringPtr(obj.MinCharge), nil
+}
+
+// MaxCharge is the resolver for the maxCharge field.
+func (r *formulaTemplateResolver) MaxCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error) {
+	return nullDecimalToStringPtr(obj.MaxCharge), nil
+}
 
 // FormulaTemplates is the resolver for the formulaTemplates field.
 func (r *queryResolver) FormulaTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaTemplateConnection, error) {
@@ -59,3 +80,10 @@ func (r *queryResolver) FormulaTemplate(ctx context.Context, id string) (*formul
 		TenantInfo: tenantInfo(authCtx),
 	})
 }
+
+// FormulaTemplate returns generated.FormulaTemplateResolver implementation.
+func (r *Resolver) FormulaTemplate() generated.FormulaTemplateResolver {
+	return &formulaTemplateResolver{r}
+}
+
+type formulaTemplateResolver struct{ *Resolver }

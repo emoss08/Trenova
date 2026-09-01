@@ -45,6 +45,17 @@ type Transition[T any, S comparable] struct {
 	PermissionOp permission.Operation
 	AuditComment string
 	Apply        func(entity T, req *Request, now int64)
+
+	// Validate runs after the status check and before anything is stamped or
+	// saved, so a transition-specific rule can refuse the move while the entity
+	// is still untouched. Nil means no extra rule.
+	Validate func(ctx context.Context, entity T, req *Request) error
+
+	// AfterSave runs after the entity is saved and before the audit record, for
+	// work that must land with the transition, such as a version snapshot. Its
+	// error fails the transition, so callers wanting atomicity run Apply inside
+	// a transaction. Nil means no extra work.
+	AfterSave func(ctx context.Context, updated T, req *Request) error
 }
 
 // Engine binds a review cycle to one entity's storage, status rules and audit
@@ -102,6 +113,12 @@ func (e Engine[T, S]) Apply(
 		)
 	}
 
+	if transition.Validate != nil {
+		if err = transition.Validate(ctx, entity, req); err != nil {
+			return zero, err
+		}
+	}
+
 	original := e.Snapshot(entity)
 
 	e.SetStatus(entity, transition.To)
@@ -110,6 +127,12 @@ func (e Engine[T, S]) Apply(
 	updated, err := e.Save(ctx, entity)
 	if err != nil {
 		return zero, err
+	}
+
+	if transition.AfterSave != nil {
+		if err = transition.AfterSave(ctx, updated, req); err != nil {
+			return zero, err
+		}
 	}
 
 	if e.Audit != nil {

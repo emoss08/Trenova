@@ -65,10 +65,10 @@ func setupCountingService(t *testing.T, repo repositories.RateMatrixRepository) 
 	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:        zap.NewNop(),
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
 		VersionRepo:    &stubVersionRepo{},
 		RateMatrixRepo: repo,
 	})

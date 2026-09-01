@@ -114,6 +114,14 @@ func (ft *FormulaTemplate) ApplyVersion(version *FormulaTemplateVersion) *Formul
 	return &resolved
 }
 
+func (ft *FormulaTemplate) ApplyVersionFull(version *FormulaTemplateVersion) *FormulaTemplate {
+	resolved := ft.ApplyVersion(version)
+	resolved.Name = version.Name
+	resolved.Description = version.Description
+	resolved.Metadata = version.Metadata
+	return resolved
+}
+
 func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
 	if other == nil {
 		return true

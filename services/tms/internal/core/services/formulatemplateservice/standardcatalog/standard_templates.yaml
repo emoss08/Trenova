@@ -64,7 +64,7 @@ templates:
     variables: []
 
   - name: Per Hour
-    description: Charges based on hours of service, such as hourly dray or local work. Multiplies the base rate per hour by the hours worked.
+    description: Charges based on hours of service, such as hourly dray or local work. Multiplies the base rate per hour by the hours computed from stop times, unless a manual totalHours is supplied.
     type: freight_charge
     expression: baseRate * totalHours
     status: active
@@ -72,9 +72,8 @@ templates:
     variables:
       - name: totalHours
         type: number
-        description: Hours of service to bill
+        description: Manual override for the hours to bill; leave unset to use the hours computed from the shipment's stop times
         required: false
-        default_value: 0.0
 
   - name: Percent of Sell Rate
     description: Buy-side rate written as a share of what the customer pays. The lane's rate is the percentage; the rating engine supplies the sell total.

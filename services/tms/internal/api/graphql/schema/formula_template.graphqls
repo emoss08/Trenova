@@ -2,11 +2,28 @@ enum FormulaTemplateStatus {
   Active
   Inactive
   Draft
+  InReview
 }
 
 enum FormulaTemplateType {
   FreightCharge
   AccessorialCharge
+}
+
+type FormulaTemplateVariableDefinition {
+  name: String!
+  type: String!
+  description: String!
+  required: Boolean!
+  "Formula variable defaults can be scalar, array, object, or null by template design."
+  defaultValue: Any
+  source: String
+}
+
+type FormulaTemplateBreakdownDefinition {
+  name: String!
+  label: String!
+  expression: String!
 }
 
 type FormulaTemplate {
@@ -19,7 +36,20 @@ type FormulaTemplate {
   expression: String!
   status: FormulaTemplateStatus!
   schemaId: String!
+  variableDefinitions: [FormulaTemplateVariableDefinition!]!
+  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
+  minCharge: String
+  maxCharge: String
+  submittedById: ID
+  submittedAt: Int
+  approvedById: ID
+  approvedAt: Int
+  reviewComment: String!
+  "Formula template metadata is admin-defined and intentionally open-ended."
+  metadata: JSON
   version: Int!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
   currentVersionNumber: Int!
   createdAt: Int!
   updatedAt: Int!

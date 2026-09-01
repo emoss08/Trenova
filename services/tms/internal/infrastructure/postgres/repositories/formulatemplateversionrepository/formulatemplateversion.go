@@ -45,7 +45,7 @@ func (r *repository) Create(
 		zap.Int64("versionNumber", version.VersionNumber),
 	)
 
-	_, err := r.db.DB().NewInsert().Model(version).Exec(ctx)
+	_, err := r.db.DBForContext(ctx).NewInsert().Model(version).Exec(ctx)
 	if err != nil {
 		log.Error("failed to create formula template version", zap.Error(err))
 		return nil, err
@@ -65,7 +65,7 @@ func (r *repository) GetByTemplateAndVersion(
 	)
 
 	entity := new(formulatemplate.FormulaTemplateVersion)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -115,7 +115,7 @@ func (r *repository) List(
 		0,
 		req.Filter.Pagination.SafeLimit(),
 	)
-	total, err := r.db.DB().
+	total, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -146,7 +146,7 @@ func (r *repository) GetVersionRange(
 	)
 
 	entities := make([]*formulatemplate.FormulaTemplateVersion, 0, 2)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -177,7 +177,7 @@ func (r *repository) GetLatestVersion(
 	)
 
 	entity := new(formulatemplate.FormulaTemplateVersion)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -207,7 +207,7 @@ func (r *repository) GetForkedTemplates(
 	)
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -241,7 +241,7 @@ func (r *repository) UpdateTags(
 	}
 
 	entity := new(formulatemplate.FormulaTemplateVersion)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		Set("tags = ?", pgdialect.Array(tags)).
@@ -273,7 +273,7 @@ func (r *repository) GetEffectiveVersion(
 	)
 
 	entity := new(formulatemplate.FormulaTemplateVersion)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -310,7 +310,7 @@ func (r *repository) UpdateEffectiveDate(
 	)
 
 	entity := new(formulatemplate.FormulaTemplateVersion)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		Set("effective_from = ?", req.EffectiveFrom).
@@ -341,7 +341,7 @@ func (r *repository) ListScheduled(
 	)
 
 	versions := make([]*formulatemplate.FormulaTemplateVersion, 0)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&versions).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

@@ -4850,6 +4850,51 @@
                 "TemplateTypeAccessorialCharge"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase": {
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "createdById": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "expectedAmount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "templateId": {
+                    "type": "string"
+                },
+                "tolerance": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "variables": {
+                    "additionalProperties": {},
+                    "type": "object"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_internal_core_domain_formulatemplate.VersionTag": {
             "enum": [
                 "Stable",
@@ -15793,6 +15838,65 @@
             },
             "type": "object"
         },
+        "github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaRequest": {
+            "properties": {
+                "expression": {
+                    "type": "string"
+                },
+                "schemaId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaResponse": {
+            "properties": {
+                "explanation": {
+                    "type": "string"
+                },
+                "modelIdentifier": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaRequest": {
+            "properties": {
+                "instruction": {
+                    "type": "string"
+                },
+                "schemaId": {
+                    "type": "string"
+                },
+                "templateType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaResponse": {
+            "properties": {
+                "explanation": {
+                    "type": "string"
+                },
+                "expression": {
+                    "type": "string"
+                },
+                "modelIdentifier": {
+                    "type": "string"
+                },
+                "validation": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestExpressionResponse"
+                },
+                "variableDefinitions": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestResponse": {
             "properties": {
                 "results": {
@@ -15880,6 +15984,212 @@
             },
             "type": "object"
         },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload": {
+            "properties": {
+                "breakdownDefinitions": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.BreakdownDefinition"
+                    },
+                    "type": "array"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "expression": {
+                    "type": "string"
+                },
+                "maxCharge": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "metadata": {
+                    "additionalProperties": {},
+                    "type": "object"
+                },
+                "minCharge": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "schemaId": {
+                    "type": "string"
+                },
+                "sourceTemplateId": {
+                    "type": "string"
+                },
+                "sourceVersionNumber": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType"
+                },
+                "variableDefinitions": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesRequest": {
+            "properties": {
+                "exportVersion": {
+                    "type": "string"
+                },
+                "onConflict": {
+                    "type": "string"
+                },
+                "template": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload"
+                },
+                "templates": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesResponse": {
+            "properties": {
+                "created": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate"
+                    },
+                    "type": "array"
+                },
+                "renamed": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.InstallStandardsResponse": {
+            "properties": {
+                "installed": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate"
+                    },
+                    "type": "array"
+                },
+                "skipped": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesRequest": {
+            "properties": {
+                "candidate": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseCandidate"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesResponse": {
+            "properties": {
+                "failed": {
+                    "type": "integer"
+                },
+                "passed": {
+                    "type": "integer"
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseResult"
+                    },
+                    "type": "array"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseCandidate": {
+            "properties": {
+                "breakdownDefinitions": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.BreakdownDefinition"
+                    },
+                    "type": "array"
+                },
+                "expression": {
+                    "type": "string"
+                },
+                "maxCharge": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "minCharge": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "variableDefinitions": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput": {
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "expectedAmount": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tolerance": {
+                    "type": "number"
+                },
+                "variables": {
+                    "additionalProperties": {},
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseResult": {
+            "properties": {
+                "actualAmount": {
+                    "type": "number"
+                },
+                "difference": {
+                    "type": "number"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "expectedAmount": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "passed": {
+                    "type": "boolean"
+                },
+                "testCaseId": {
+                    "type": "string"
+                },
+                "tolerance": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestExpressionResponse": {
             "properties": {
                 "breakdown": {
@@ -15891,6 +16201,9 @@
                 "error": {
                     "type": "string"
                 },
+                "guardrail": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.GuardrailResult"
+                },
                 "message": {
                     "type": "string"
                 },
@@ -15901,6 +16214,30 @@
                 "result": {},
                 "valid": {
                     "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.UpdateTestCaseRequest": {
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "expectedAmount": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tolerance": {
+                    "type": "number"
+                },
+                "variables": {
+                    "additionalProperties": {},
+                    "type": "object"
+                },
+                "version": {
+                    "type": "integer"
                 }
             },
             "type": "object"
@@ -16265,6 +16602,95 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_pkg_formulatemplatetypes.GuardrailResult": {
+            "properties": {
+                "applied": {
+                    "type": "boolean"
+                },
+                "bound": {
+                    "type": "string"
+                },
+                "maxCharge": {
+                    "type": "number"
+                },
+                "minCharge": {
+                    "type": "number"
+                },
+                "rawAmount": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaDescription": {
+            "properties": {
+                "functions": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaFunctionInfo"
+                    },
+                    "type": "array"
+                },
+                "schemaId": {
+                    "type": "string"
+                },
+                "variables": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaVariableInfo"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaFunctionInfo": {
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "example": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaVariableInfo": {
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "computed": {
+                    "type": "boolean"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enum": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nullable": {
+                    "type": "boolean"
+                },
+                "type": {
                     "type": "string"
                 }
             },
@@ -18475,6 +18901,12 @@
                     "type": "array"
                 },
                 "expression": {
+                    "type": "string"
+                },
+                "maxCharge": {
+                    "type": "string"
+                },
+                "minCharge": {
                     "type": "string"
                 },
                 "schemaId": {
@@ -30277,6 +30709,132 @@
                 ]
             }
         },
+        "/formula-templates/ai/explain": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "explainFormulaExpression",
+                "parameters": [
+                    {
+                        "description": "Explanation request",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Explain a formula expression in plain English",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/ai/generate": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "generateFormulaExpression",
+                "parameters": [
+                    {
+                        "description": "Generation request",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Generate a formula expression from a natural-language description",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
         "/formula-templates/bulk-update-status": {
             "post": {
                 "consumes": [
@@ -30392,6 +30950,164 @@
                     }
                 ],
                 "summary": "Duplicate formula templates",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/import": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "importFormulaTemplates",
+                "parameters": [
+                    {
+                        "description": "Import request",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Import formula templates from an exported JSON payload",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/install-standards": {
+            "post": {
+                "operationId": "installStandardFormulaTemplates",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.InstallStandardsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Install the standard formula template library for this organization",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/schema": {
+            "get": {
+                "operationId": "getFormulaSchema",
+                "parameters": [
+                    {
+                        "default": "shipment",
+                        "description": "Formula schema identifier",
+                        "in": "query",
+                        "name": "schemaId",
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaDescription"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Describe the variables and functions available to formula expressions",
                 "tags": [
                     "Formula Templates"
                 ]
@@ -31263,6 +31979,327 @@
                     }
                 ],
                 "summary": "Submit a formula template for review",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/{templateID}/test-cases": {
+            "get": {
+                "operationId": "listFormulaTemplateTestCases",
+                "parameters": [
+                    {
+                        "description": "Formula template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "items": {
+                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List a formula template's saved test scenarios",
+                "tags": [
+                    "Formula Templates"
+                ]
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "createFormulaTemplateTestCase",
+                "parameters": [
+                    {
+                        "description": "Formula template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Test scenario",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Create a test scenario for a formula template",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/{templateID}/test-cases/run": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "runFormulaTemplateTestCases",
+                "parameters": [
+                    {
+                        "description": "Formula template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Optional candidate content",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Run a formula template's test scenarios",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/{templateID}/test-cases/{testCaseID}": {
+            "delete": {
+                "operationId": "deleteFormulaTemplateTestCase",
+                "parameters": [
+                    {
+                        "description": "Formula template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Test scenario ID",
+                        "in": "path",
+                        "name": "testCaseID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete a formula template test scenario",
+                "tags": [
+                    "Formula Templates"
+                ]
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "updateFormulaTemplateTestCase",
+                "parameters": [
+                    {
+                        "description": "Formula template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Test scenario ID",
+                        "in": "path",
+                        "name": "testCaseID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Test scenario",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.UpdateTestCaseRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update a formula template test scenario",
                 "tags": [
                     "Formula Templates"
                 ]

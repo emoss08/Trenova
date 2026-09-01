@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -44,23 +47,72 @@ func (s *Service) Approve(
 	ctx context.Context,
 	req *ApprovalActionRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.approvals().Apply(ctx, req, templateTransition{
-		Operation:    "Approve",
-		From:         formulatemplate.StatusInReview,
-		To:           formulatemplate.StatusActive,
-		PermissionOp: permission.OpApprove,
-		AuditComment: "Formula template approved",
-		Apply: func(
-			template *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-			now int64,
-		) {
-			userID := r.TenantInfo.UserID
-			template.ApprovedByID = &userID
-			template.ApprovedAt = &now
-			template.ReviewComment = r.Comment
-		},
+	var approved *formulatemplate.FormulaTemplate
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		result, txErr := s.approvals().Apply(txCtx, req, templateTransition{
+			Operation:    "Approve",
+			From:         formulatemplate.StatusInReview,
+			To:           formulatemplate.StatusActive,
+			PermissionOp: permission.OpApprove,
+			AuditComment: "Formula template approved",
+			Validate: func(
+				vCtx context.Context,
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				if template.SubmittedByID != nil &&
+					*template.SubmittedByID == r.TenantInfo.UserID {
+					return errortypes.NewValidationError(
+						"approvedById",
+						errortypes.ErrInvalid,
+						"A template cannot be approved by its submitter",
+					)
+				}
+
+				if err := s.validateTemplate(vCtx, template); err != nil {
+					return err
+				}
+
+				return s.requirePassingTestCases(vCtx, template, r.TenantInfo)
+			},
+			Apply: func(
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+				now int64,
+			) {
+				userID := r.TenantInfo.UserID
+				template.ApprovedByID = &userID
+				template.ApprovedAt = &now
+				template.ReviewComment = r.Comment
+				template.CurrentVersionNumber++
+			},
+			AfterSave: func(
+				aCtx context.Context,
+				updated *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				return s.createVersionSnapshot(
+					aCtx,
+					updated,
+					updated.CurrentVersionNumber,
+					r.TenantInfo.UserID,
+					"Approved",
+					nil,
+				)
+			},
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		approved = result
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return approved, nil
 }
 
 func (s *Service) Reject(

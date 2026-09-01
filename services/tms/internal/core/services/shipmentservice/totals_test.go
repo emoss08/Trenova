@@ -501,12 +501,12 @@ func newTestFormulaService(
 	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:        zap.NewNop(),
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
-		Repo:          repo,
-		VersionRepo:   stubTotalsVersionRepo{},
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
+		Repo:           repo,
+		VersionRepo:    stubTotalsVersionRepo{},
 		RateMatrixRepo: stubTotalsMatrixRepo{},
 	})
 }
@@ -642,6 +642,13 @@ func (s *stubFormulaTemplateRepository) GetByID(
 func (s *stubFormulaTemplateRepository) GetByIDs(
 	context.Context,
 	repositories.GetFormulaTemplatesByIDsRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *stubFormulaTemplateRepository) FindByNames(
+	context.Context,
+	repositories.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, errors.New("not implemented")
 }

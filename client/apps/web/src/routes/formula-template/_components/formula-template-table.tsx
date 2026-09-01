@@ -2,38 +2,50 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { DuplicateAlertDialog } from "@/components/duplicate-alert-dialog";
 import { formulaTemplateTableGraphQLConfig } from "@/lib/graphql/formula-template-table";
-import { statusChoices } from "@/lib/choices";
 import {
   buildBulkExport,
   downloadJson,
   getBulkExportFilename,
 } from "@/lib/formula-template-export";
+import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
+import { pluralize } from "@trenova/shared/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@trenova/shared/components/ui/alert-dialog";
 import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  ArchiveIcon,
-  CircleCheckIcon,
-  CopyIcon,
-  DownloadIcon,
-  GitForkIcon,
-  NetworkIcon,
-} from "lucide-react";
+import { ArchiveIcon, CopyIcon, DownloadIcon, GitForkIcon, NetworkIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ExportTemplateDialog } from "./export-template-dialog";
 import { ForkLineageDialog } from "./fork-lineage-dialog";
 import { ForkTemplateDialog } from "./fork-template-dialog";
 import { getColumns } from "./formula-template-columns";
-import { FormulaTemplatePanel } from "./formula-template-panel";
+import { ImportTemplateDialog } from "./studio/import-template-dialog";
 
 export default function FormulaTemplatesDataTable() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [pendingDuplicateRows, setPendingDuplicateRows] = useState<FormulaTemplate[]>([]);
   const [isDuplicating, setIsDuplicating] = useState(false);
+
+  const [pendingArchiveRows, setPendingArchiveRows] = useState<FormulaTemplate[]>([]);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const [exportDialogTemplate, setExportDialogTemplate] = useState<FormulaTemplate | null>(null);
 
@@ -43,6 +55,42 @@ export default function FormulaTemplatesDataTable() {
   const handleExportClick = useCallback((template: FormulaTemplate) => {
     setExportDialogTemplate(template);
   }, []);
+
+  const handleInstallStandards = useCallback(async () => {
+    setIsInstalling(true);
+    await apiService.formulaTemplateService
+      .installStandards()
+      .then((result) => {
+        if (result.installed.length === 0) {
+          toast.info("Standard templates already installed", {
+            description: `All ${result.skipped.length} standard templates exist in your organization.`,
+          });
+        } else {
+          toast.success(
+            `Installed ${result.installed.length} standard ${pluralize(
+              "template",
+              result.installed.length,
+            )}`,
+            {
+              description:
+                result.skipped.length > 0
+                  ? `${result.skipped.length} already existed and ${
+                      result.skipped.length === 1 ? "was" : "were"
+                    } skipped.`
+                  : "The standard rating library is ready to use.",
+            },
+          );
+        }
+        setInstallDialogOpen(false);
+      })
+      .catch(() => {
+        toast.error("Failed to install standard templates");
+      })
+      .finally(async () => {
+        setIsInstalling(false);
+        await invalidateFormulaTemplate(queryClient);
+      });
+  }, [queryClient]);
 
   const handleDuplicate = useCallback(
     (row: Row<FormulaTemplate>) => {
@@ -58,10 +106,7 @@ export default function FormulaTemplatesDataTable() {
           success: "Template duplicated successfully",
           error: "Failed to duplicate template",
           finally: async () => {
-            await queryClient.invalidateQueries({
-              queryKey: ["formula-template-list"],
-              refetchType: "all",
-            });
+            await invalidateFormulaTemplate(queryClient);
           },
         },
       );
@@ -71,51 +116,44 @@ export default function FormulaTemplatesDataTable() {
 
   const columns = useMemo(() => getColumns(), []);
 
-  const handleArchiveTemplates = useCallback(
-    async (templates: FormulaTemplate[]) => {
-      const ids = templates.flatMap((template) => (template.id ? [template.id] : []));
-      if (ids.length === 0) {
-        toast.error("No formula templates selected");
-        throw new Error("No formula templates selected");
-      }
+  const requestArchive = useCallback((templates: FormulaTemplate[]) => {
+    const withIds = templates.filter((template) => template.id);
+    if (withIds.length === 0) {
+      toast.error("No formula templates selected");
+      return;
+    }
 
-      const confirmed = window.confirm(
-        `Archive ${templates.length} formula template${
-          templates.length === 1 ? "" : "s"
-        }? Archived templates will be marked inactive.`,
-      );
+    setPendingArchiveRows(withIds);
+  }, []);
 
-      if (!confirmed) {
-        throw new Error("Archive canceled");
-      }
+  const handleConfirmArchive = useCallback(async () => {
+    const ids = pendingArchiveRows.flatMap((template) => (template.id ? [template.id] : []));
+    if (ids.length === 0) return;
 
-      await apiService.formulaTemplateService
-        .bulkUpdateStatus({
-          templateIds: ids,
-          status: "Inactive",
-        })
-        .then(() => {
-          toast.success(
-            templates.length === 1 ? "Formula template archived" : "Formula templates archived",
-          );
-        })
-        .catch((error: unknown) => {
-          toast.error(
-            templates.length === 1
-              ? "Failed to archive formula template"
-              : "Failed to archive formula templates",
-          );
-          throw error;
-        })
-        .finally(async () => {
-          await queryClient.invalidateQueries({
-            queryKey: ["formula-template-list"],
-            refetchType: "all",
-          });
-        });
-    },
-    [queryClient],
-  );
+    setIsArchiving(true);
+    await apiService.formulaTemplateService
+      .bulkUpdateStatus({
+        templateIds: ids,
+        status: "Inactive",
+      })
+      .then(() => {
+        toast.success(
+          ids.length === 1 ? "Formula template archived" : "Formula templates archived",
+        );
+        setPendingArchiveRows([]);
+      })
+      .catch(() => {
+        toast.error(
+          ids.length === 1
+            ? "Failed to archive formula template"
+            : "Failed to archive formula templates",
+        );
+      })
+      .finally(async () => {
+        setIsArchiving(false);
+        await invalidateFormulaTemplate(queryClient);
+      });
+  }, [pendingArchiveRows, queryClient]);
 
   const contextMenuActions = useMemo<RowAction<FormulaTemplate>[]>(
     () => [
@@ -152,10 +190,10 @@ export default function FormulaTemplatesDataTable() {
         label: "Archive",
         icon: ArchiveIcon,
         variant: "destructive",
-        onClick: (row) => void handleArchiveTemplates([row.original]).catch(() => undefined),
+        onClick: (row) => requestArchive([row.original]),
       },
     ],
-    [handleArchiveTemplates, handleDuplicate, handleExportClick],
+    [handleDuplicate, handleExportClick, requestArchive],
   );
 
   const handleBulkExport = useCallback((rows: FormulaTemplate[]) => {
@@ -189,49 +227,12 @@ export default function FormulaTemplatesDataTable() {
       })
       .finally(async () => {
         setIsDuplicating(false);
-        await queryClient.invalidateQueries({
-          queryKey: ["formula-template-list"],
-          refetchType: "all",
-        });
+        await invalidateFormulaTemplate(queryClient);
       });
   }, [pendingDuplicateRows, queryClient]);
 
-  const handleBulkStatusUpdate = useCallback(
-    async (rows: FormulaTemplate[], status: string) => {
-      const ids = rows.map((r) => r.id);
-      toast.promise(
-        apiService.formulaTemplateService.bulkUpdateStatus({
-          templateIds: ids as string[],
-          status: status as FormulaTemplate["status"],
-        }),
-        {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
-          finally: async () => {
-            await queryClient.invalidateQueries({
-              queryKey: ["formula-template-list"],
-              refetchType: "all",
-            });
-          },
-        },
-      );
-    },
-    [queryClient],
-  );
-
   const dockActions = useMemo<DockAction<FormulaTemplate>[]>(
     () => [
-      {
-        id: "status-update",
-        type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
-        icon: CircleCheckIcon,
-        options: statusChoices,
-        onSelect: handleBulkStatusUpdate,
-        clearSelectionOnSuccess: true,
-      },
       {
         id: "duplicate",
         label: "Duplicate",
@@ -249,12 +250,14 @@ export default function FormulaTemplatesDataTable() {
         label: "Archive",
         icon: ArchiveIcon,
         variant: "destructive",
-        onClick: handleArchiveTemplates,
+        onClick: requestArchive,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleArchiveTemplates, handleBulkExport, handleBulkDuplicate, handleBulkStatusUpdate],
+    [handleBulkExport, handleBulkDuplicate, requestArchive],
   );
+
+  const archiveCount = pendingArchiveRows.length;
 
   return (
     <>
@@ -266,8 +269,53 @@ export default function FormulaTemplatesDataTable() {
         enableRowSelection
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
-        TablePanel={FormulaTemplatePanel}
+        onAddRecord={() => void navigate("/billing/configuration-files/formula-templates/new")}
+        onRowClick={(row) =>
+          void navigate(`/billing/configuration-files/formula-templates/${row.original.id}/edit`)
+        }
+        addRecordActions={[
+          {
+            id: "install-standards",
+            label: "Install Standard Templates",
+            description: "Add the vetted standard rating library (per mile, per CWT, ...).",
+            onClick: () => setInstallDialogOpen(true),
+          },
+          {
+            id: "import-templates",
+            label: "Import Templates",
+            description: "Import templates from an exported JSON file.",
+            onClick: () => setImportDialogOpen(true),
+          },
+        ]}
       />
+      <AlertDialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold">
+              Install standard templates?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This adds Trenova&apos;s vetted standard rating templates (Flat Rate, Per Mile, Per
+              CWT, and more) to your organization as Active templates. Templates you already have
+              are left untouched.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel variant="outline" size="default">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              size="default"
+              onClick={() => void handleInstallStandards()}
+              disabled={isInstalling}
+              isLoading={isInstalling}
+            >
+              Install
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <ImportTemplateDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
       <DuplicateAlertDialog
         open={isDuplicateDialogOpen}
         onOpenChange={setIsDuplicateDialogOpen}
@@ -275,6 +323,38 @@ export default function FormulaTemplatesDataTable() {
         onConfirm={handleConfirmDuplicate}
         isLoading={isDuplicating}
       />
+      <AlertDialog
+        open={archiveCount > 0}
+        onOpenChange={(open) => {
+          if (!open) setPendingArchiveRows([]);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold">
+              Archive {archiveCount} formula {pluralize("template", archiveCount)}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Archived templates are marked inactive and stop pricing new shipments. Rate agreements
+              and shipments referencing them keep their history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel variant="outline" size="default">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              size="default"
+              onClick={() => void handleConfirmArchive()}
+              disabled={isArchiving}
+              isLoading={isArchiving}
+            >
+              Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ExportTemplateDialog
         open={exportDialogTemplate !== null}
         onOpenChange={(open) => {

@@ -2,30 +2,179 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
+  explainFormulaResponseSchema,
   forkLineageSchema,
+  formulaSchemaResponseSchema,
   formulaTemplateSchema,
+  formulaTestCaseSchema,
   formulaTemplateVersionSchema,
+  generateFormulaResponseSchema,
+  importTemplatesResponseSchema,
+  installStandardsResponseSchema,
   listFormulaTemplateResponseSchema,
+  runTestCasesResponseSchema,
   templateUsageResponseSchema,
+  testExpressionResponseSchema,
   versionDiffSchema,
   type BacktestRequest,
   type BacktestResponse,
   type BulkDuplicateFormulaTemplateRequest,
   type BulkUpdateStatusRequest,
   type CreateVersionRequest,
+  type ExplainFormulaResponse,
   type ForkLineage,
   type ForkRequest,
+  type FormulaSchemaResponse,
   type FormulaTemplate,
   type FormulaTemplateVersion,
+  type FormulaTestCase,
+  type FormulaTestCaseInput,
+  type RunTestCasesResponse,
+  type TestCaseCandidate,
+  type GenerateFormulaRequest,
+  type GenerateFormulaResponse,
+  type ImportTemplatesResponse,
+  type InstallStandardsResponse,
   type ListFormulaTemplateResponse,
   type RollbackRequest,
   type TemplateUsageResponse,
+  type TestExpressionRequest,
+  type TestExpressionResponse,
   type VersionDiff,
 } from "@trenova/shared/types/formula-template";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { z } from "zod";
 
+export type ImportTemplatePayload = {
+  name: string;
+  description?: string;
+  type: FormulaTemplate["type"];
+  expression: string;
+  schemaId?: string;
+  variableDefinitions?: FormulaTemplate["variableDefinitions"];
+  breakdownDefinitions?: FormulaTemplate["breakdownDefinitions"];
+  minCharge?: FormulaTemplate["minCharge"];
+  maxCharge?: FormulaTemplate["maxCharge"];
+  metadata?: FormulaTemplate["metadata"];
+  sourceTemplateId?: string | null;
+  sourceVersionNumber?: number | null;
+};
+
+export type ImportTemplatesRequest = {
+  exportVersion: string;
+  templates: ImportTemplatePayload[];
+  onConflict?: "reject" | "rename";
+};
+
 export class FormulaTemplateService {
+  public async get(templateId: FormulaTemplate["id"]): Promise<FormulaTemplate> {
+    const response = await api.get<FormulaTemplate>(`/formula-templates/${templateId}/`);
+
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async test(request: TestExpressionRequest): Promise<TestExpressionResponse> {
+    const response = await api.post<TestExpressionResponse>("/formula-templates/test", request);
+
+    return safeParse(testExpressionResponseSchema, response, "Test Expression");
+  }
+
+  public async getSchema(schemaId = "shipment"): Promise<FormulaSchemaResponse> {
+    const response = await api.get<FormulaSchemaResponse>(
+      `/formula-templates/schema?schemaId=${encodeURIComponent(schemaId)}`,
+    );
+
+    return safeParse(formulaSchemaResponseSchema, response, "Formula Schema");
+  }
+
+  public async importTemplates(request: ImportTemplatesRequest): Promise<ImportTemplatesResponse> {
+    const response = await api.post<ImportTemplatesResponse>("/formula-templates/import", request);
+
+    return safeParse(importTemplatesResponseSchema, response, "Formula Template Import");
+  }
+
+  public async listTestCases(templateId: FormulaTemplate["id"]): Promise<FormulaTestCase[]> {
+    const response = await api.get<FormulaTestCase[]>(
+      `/formula-templates/${templateId}/test-cases`,
+    );
+
+    return safeParse(z.array(formulaTestCaseSchema), response, "Formula Test Case");
+  }
+
+  public async createTestCase(
+    templateId: FormulaTemplate["id"],
+    input: FormulaTestCaseInput,
+  ): Promise<FormulaTestCase> {
+    const response = await api.post<FormulaTestCase>(
+      `/formula-templates/${templateId}/test-cases`,
+      input,
+    );
+
+    return safeParse(formulaTestCaseSchema, response, "Formula Test Case");
+  }
+
+  public async updateTestCase(
+    templateId: FormulaTemplate["id"],
+    testCaseId: string,
+    input: FormulaTestCaseInput & { version?: number },
+  ): Promise<FormulaTestCase> {
+    const response = await api.put<FormulaTestCase>(
+      `/formula-templates/${templateId}/test-cases/${testCaseId}`,
+      input,
+    );
+
+    return safeParse(formulaTestCaseSchema, response, "Formula Test Case");
+  }
+
+  public async deleteTestCase(
+    templateId: FormulaTemplate["id"],
+    testCaseId: string,
+  ): Promise<void> {
+    await api.delete(`/formula-templates/${templateId}/test-cases/${testCaseId}`);
+  }
+
+  public async runTestCases(
+    templateId: FormulaTemplate["id"],
+    candidate?: TestCaseCandidate,
+  ): Promise<RunTestCasesResponse> {
+    const response = await api.post<RunTestCasesResponse>(
+      `/formula-templates/${templateId}/test-cases/run`,
+      { candidate: candidate ?? null },
+    );
+
+    return safeParse(runTestCasesResponseSchema, response, "Test Case Run");
+  }
+
+  public async installStandards(): Promise<InstallStandardsResponse> {
+    const response = await api.post<InstallStandardsResponse>(
+      "/formula-templates/install-standards",
+      {},
+    );
+
+    return safeParse(installStandardsResponseSchema, response, "Standard Templates");
+  }
+
+  public async generateFormula(request: GenerateFormulaRequest): Promise<GenerateFormulaResponse> {
+    const response = await api.post<GenerateFormulaResponse>(
+      "/formula-templates/ai/generate",
+      request,
+    );
+
+    return safeParse(generateFormulaResponseSchema, response, "Formula Generation");
+  }
+
+  public async explainFormula(request: {
+    expression: string;
+    schemaId?: string;
+  }): Promise<ExplainFormulaResponse> {
+    const response = await api.post<ExplainFormulaResponse>(
+      "/formula-templates/ai/explain",
+      request,
+    );
+
+    return safeParse(explainFormulaResponseSchema, response, "Formula Explanation");
+  }
+
   public async bulkUpdateStatus(request: BulkUpdateStatusRequest) {
     const response = await api.post<ListFormulaTemplateResponse>(
       "/formula-templates/bulk-update-status",

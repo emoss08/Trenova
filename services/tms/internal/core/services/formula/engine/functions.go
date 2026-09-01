@@ -8,23 +8,14 @@ import (
 )
 
 func BuiltinFunctions() []expr.Option {
-	return []expr.Option{
-		expr.Function("round", roundFn,
-			new(func(float64) float64),
-			new(func(float64, int) float64),
-		),
-		expr.Function("ceil", ceilFn, new(func(float64) float64)),
-		expr.Function("floor", floorFn, new(func(float64) float64)),
-		expr.Function("abs", absFn, new(func(float64) float64)),
-		expr.Function("min", minFn, new(func(float64, float64) float64)),
-		expr.Function("max", maxFn, new(func(float64, float64) float64)),
-		expr.Function("sum", sumFn, new(func(...float64) float64)),
-		expr.Function("avg", avgFn, new(func(...float64) float64)),
-		expr.Function("coalesce", coalesceFn, new(func(...any) any)),
-		expr.Function("clamp", clampFn, new(func(float64, float64, float64) float64)),
-		expr.Function("pow", powFn, new(func(float64, float64) float64)),
-		expr.Function("sqrt", sqrtFn, new(func(float64) float64)),
+	options := make([]expr.Option, 0, len(functionSpecs))
+	for _, spec := range functionSpecs {
+		if spec.fn == nil {
+			continue
+		}
+		options = append(options, expr.Function(spec.Name, spec.fn, spec.types...))
 	}
+	return options
 }
 
 const maxRoundDecimals = 12

@@ -5,7 +5,26 @@ import { Input } from "@trenova/shared/components/ui/input";
 import type { VariableDefinition, VariableValueType } from "@trenova/shared/types/formula-template";
 import { Plus, Trash2, Variable } from "lucide-react";
 import { useCallback } from "react";
-import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
+import { useFieldArray, useWatch, type Control, type UseFormRegister } from "react-hook-form";
+
+export function coerceVariableDefaultValue(type: VariableValueType, raw: unknown): unknown {
+  if (raw === "" || raw === null || raw === undefined) return undefined;
+  if (typeof raw !== "string") return raw;
+
+  switch (type) {
+    case "Number": {
+      const parsed = Number(raw);
+      return Number.isNaN(parsed) ? raw : parsed;
+    }
+    case "Boolean": {
+      if (raw === "true") return true;
+      if (raw === "false") return false;
+      return raw;
+    }
+    default:
+      return raw;
+  }
+}
 
 type FormWithVariables = {
   variableDefinitions: VariableDefinition[];
@@ -90,68 +109,90 @@ export function VariableDefinitionEditor({
         ) : (
           <div className="space-y-3">
             {fields.map((field, index) => (
-              <div
+              <VariableDefinitionRow
                 key={field.id}
-                className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors"
-              >
-                <div className="col-span-3">
-                  <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                    Name
-                  </label>
-                  <Input
-                    {...register(`variableDefinitions.${index}.name`)}
-                    placeholder="myVariable"
-                    className="h-8 font-mono text-sm"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <SelectField
-                    label="Type"
-                    name={`variableDefinitions.${index}.type` as any}
-                    control={control as any}
-                    options={VARIABLE_TYPES}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                    Default
-                  </label>
-                  <Input
-                    {...register(`variableDefinitions.${index}.defaultValue`)}
-                    placeholder="0"
-                    className="h-8 text-sm"
-                  />
-                </div>
-
-                <div className="col-span-4">
-                  <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                    Description
-                  </label>
-                  <Input
-                    {...register(`variableDefinitions.${index}.description`)}
-                    placeholder="Optional description"
-                    className="h-8 text-sm"
-                  />
-                </div>
-
-                <div className="col-span-1 flex items-end justify-end pb-0.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove(index)}
-                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
+                index={index}
+                control={control}
+                register={register}
+                onRemove={() => remove(index)}
+              />
             ))}
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function VariableDefinitionRow({
+  index,
+  control,
+  register,
+  onRemove,
+}: {
+  index: number;
+  control: Control<FormWithVariables>;
+  register: UseFormRegister<FormWithVariables>;
+  onRemove: () => void;
+}) {
+  const variableType = useWatch({
+    control,
+    name: `variableDefinitions.${index}.type`,
+  });
+
+  return (
+    <div className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors">
+      <div className="col-span-3">
+        <label className="text-muted-foreground mb-1.5 block text-xs font-medium">Name</label>
+        <Input
+          {...register(`variableDefinitions.${index}.name`)}
+          placeholder="myVariable"
+          className="h-8 font-mono text-sm"
+        />
+      </div>
+
+      <div className="col-span-2">
+        <SelectField
+          label="Type"
+          name={`variableDefinitions.${index}.type` as any}
+          control={control as any}
+          options={VARIABLE_TYPES}
+        />
+      </div>
+
+      <div className="col-span-2">
+        <label className="text-muted-foreground mb-1.5 block text-xs font-medium">Default</label>
+        <Input
+          {...register(`variableDefinitions.${index}.defaultValue`, {
+            setValueAs: (value) => coerceVariableDefaultValue(variableType ?? "Number", value),
+          })}
+          placeholder="0"
+          className="h-8 text-sm"
+        />
+      </div>
+
+      <div className="col-span-4">
+        <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+          Description
+        </label>
+        <Input
+          {...register(`variableDefinitions.${index}.description`)}
+          placeholder="Optional description"
+          className="h-8 text-sm"
+        />
+      </div>
+
+      <div className="col-span-1 flex items-end justify-end pb-0.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onRemove}
+          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+    </div>
   );
 }

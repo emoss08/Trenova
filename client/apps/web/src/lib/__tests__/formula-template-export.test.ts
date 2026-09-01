@@ -3,8 +3,10 @@ import {
   slugify,
   buildTemplateExport,
   buildBulkExport,
+  buildVersionExport,
   getExportFilename,
   getBulkExportFilename,
+  getVersionExportFilename,
 } from "../formula-template-export";
 import type {
   FormulaTemplate,
@@ -20,6 +22,9 @@ function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate
     status: "Active",
     schemaId: "shipment",
     variableDefinitions: [],
+    breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
+    minCharge: 250,
+    maxCharge: 5000,
     metadata: null,
     sourceTemplateId: null,
     sourceVersionNumber: null,
@@ -41,6 +46,9 @@ function makeVersion(overrides: Partial<FormulaTemplateVersion> = {}): FormulaTe
     status: "Active",
     schemaId: "shipment",
     variableDefinitions: [],
+    breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
+    minCharge: 250,
+    maxCharge: 5000,
     metadata: null,
     changeMessage: "Initial version",
     changeSummary: null,
@@ -78,10 +86,19 @@ describe("buildTemplateExport", () => {
   it("builds export without versions", () => {
     const template = makeTemplate();
     const result = buildTemplateExport(template);
-    expect(result.exportVersion).toBe("1.0");
+    expect(result.exportVersion).toBe("1.1");
     expect(result.exportedAt).toBeDefined();
     expect(result.template.name).toBe("My Template");
     expect(result.versionHistory).toBeUndefined();
+  });
+
+  it("carries breakdown definitions and guardrails so an import round-trips", () => {
+    const result = buildTemplateExport(makeTemplate());
+    expect(result.template.breakdownDefinitions).toEqual([
+      { name: "linehaul", label: "Linehaul", expression: "weight * 0.5" },
+    ]);
+    expect(result.template.minCharge).toBe(250);
+    expect(result.template.maxCharge).toBe(5000);
   });
 
   it("includes version history when provided", () => {
@@ -90,12 +107,34 @@ describe("buildTemplateExport", () => {
     const result = buildTemplateExport(template, versions);
     expect(result.versionHistory).toHaveLength(2);
     expect(result.versionHistory![0].versionNumber).toBe(1);
+    expect(result.versionHistory![0].breakdownDefinitions).toHaveLength(1);
+    expect(result.versionHistory![0].minCharge).toBe(250);
   });
 
   it("omits versionHistory for empty versions array", () => {
     const template = makeTemplate();
     const result = buildTemplateExport(template, []);
     expect(result.versionHistory).toBeUndefined();
+  });
+});
+
+describe("buildVersionExport", () => {
+  it("exports one version's content including breakdowns and guardrails", () => {
+    const result = buildVersionExport(makeTemplate(), makeVersion({ versionNumber: 3 }));
+    expect(result.exportVersion).toBe("1.1");
+    expect(result.template.expression).toBe("weight * 0.5");
+    expect(result.template.breakdownDefinitions).toHaveLength(1);
+    expect(result.template.minCharge).toBe(250);
+    expect(result.template.maxCharge).toBe(5000);
+    expect(result.template.sourceVersionNumber).toBe(3);
+  });
+});
+
+describe("getVersionExportFilename", () => {
+  it("names the file by slug and version", () => {
+    expect(getVersionExportFilename(makeTemplate(), 3)).toBe(
+      "my-template.v3.formula-template.json",
+    );
   });
 });
 
@@ -110,8 +149,15 @@ describe("buildBulkExport", () => {
 
   it("has exportVersion and exportedAt", () => {
     const result = buildBulkExport([makeTemplate()]);
-    expect(result.exportVersion).toBe("1.0");
+    expect(result.exportVersion).toBe("1.1");
     expect(result.exportedAt).toBeDefined();
+  });
+
+  it("carries breakdown definitions and guardrails for every template", () => {
+    const result = buildBulkExport([makeTemplate()]);
+    expect(result.templates[0].breakdownDefinitions).toHaveLength(1);
+    expect(result.templates[0].minCharge).toBe(250);
+    expect(result.templates[0].maxCharge).toBe(5000);
   });
 });
 

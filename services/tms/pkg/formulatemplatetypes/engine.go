@@ -11,6 +11,8 @@ import (
 type RateTableLookup interface {
 	Lookup(table string, key any) (float64, error)
 	Has(table string) bool
+	Lookup2(table string, rowKey, colKey any) (float64, error)
+	Has2(table string) bool
 }
 
 type EvaluationRequest struct {

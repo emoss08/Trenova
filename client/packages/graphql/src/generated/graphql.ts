@@ -1152,6 +1152,7 @@ export type ForkCannedReportInput = {
 export type FormulaTemplateStatus =
   | 'Active'
   | 'Draft'
+  | 'InReview'
   | 'Inactive';
 
 export type FormulaTemplateType =
@@ -4671,7 +4672,7 @@ export type FleetCodeTableQueryVariables = Exact<{
 
 export type FleetCodeTableQuery = { fleetCodes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, version: number, currentVersionNumber: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
+export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, minCharge: string | null, maxCharge: string | null, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }>, breakdownDefinitions: Array<{ name: string, label: string, expression: string }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
 export type FormulaTemplateTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -7679,6 +7680,23 @@ export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
   createdAt
@@ -16548,11 +16566,28 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
   createdAt
   updatedAt
-}`, {"hash":"sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+}`, {"hash":"sha256:d1b7a3978ffcc7a61865c900524953c6e62f25f7f62fa6255fda968f6731454d"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
 export const FuelIndexTableDocument = new TypedDocumentString(`
     query FuelIndexTable($input: DataTableConnectionInput!) {
   fuelIndexes(input: $input) {

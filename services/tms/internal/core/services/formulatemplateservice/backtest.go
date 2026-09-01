@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratesimulation"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -78,6 +80,9 @@ func (s *Service) Backtest(
 	if err := validateBacktestRequest(req); err != nil {
 		return nil, err
 	}
+
+	ctx = ratetablecache.With(ctx)
+	ctx = effectiveversioncache.With(ctx)
 
 	limit := req.Limit
 	if limit <= 0 {
@@ -255,20 +260,7 @@ func (s *Service) resolveEffectiveForShipment(
 		asOf = timeutils.NowUnix()
 	}
 
-	version, err := s.versionRepo.GetEffectiveVersion(ctx, &repositories.GetEffectiveVersionRequest{
-		TenantInfo: tenantInfo,
-		TemplateID: template.ID,
-		AsOf:       asOf,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if version == nil {
-		return template, nil
-	}
-
-	return template.ApplyVersion(version), nil
+	return s.formulaService.ResolveEffectiveTemplate(ctx, template, tenantInfo, asOf)
 }
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
