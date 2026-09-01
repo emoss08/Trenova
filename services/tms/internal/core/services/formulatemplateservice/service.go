@@ -916,6 +916,7 @@ type TestExpressionResponse struct {
 	Guardrail         *formulatemplatetypes.GuardrailResult  `json:"guardrail,omitempty"`
 	Rounding          *formulatemplatetypes.RoundingResult   `json:"rounding,omitempty"`
 	Warnings          []ExpressionWarning                    `json:"warnings,omitempty"`
+	Receipt           *formulatypes.Receipt                  `json:"receipt,omitempty"`
 }
 
 func (s *Service) DescribeSchema(
@@ -1095,6 +1096,7 @@ func (s *Service) testExpressionAgainstShipment(
 		ResolvedVariables: maputils.WithoutFuncValues(resp.Variables),
 		Guardrail:         guardrail,
 		Rounding:          rounding,
+		Receipt:           resp.Receipt,
 		Message:           "Expression evaluated against shipment",
 	}
 }
@@ -1141,23 +1143,32 @@ func (s *Service) testExpressionWithEnv(
 		Result:    amount,
 		Guardrail: guardrail,
 		Rounding:  rounding,
+		Receipt:   result.Receipt,
 		Message:   "Expression is valid",
 	}
 
 	if len(req.Breakdowns) > 0 {
-		resp.Breakdown = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
+		var lookups []formulatypes.LookupTrace
+		resp.Breakdown, lookups = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
+		if resp.Receipt != nil {
+			resp.Receipt.Lookups = append(resp.Receipt.Lookups, lookups...)
+		}
 	}
 
 	return resp
 }
 
+// evaluateBreakdownsWithEnv prices each breakdown line and returns the
+// rate-table lookups the lines made, re-scoped to the line's name so the
+// receipt can attribute them.
 func (s *Service) evaluateBreakdownsWithEnv(
 	ctx context.Context,
 	defs []*formulatypes.BreakdownDefinition,
 	env map[string]any,
 	lookup formulatemplatetypes.RateTableLookup,
-) []formulatemplatetypes.BreakdownAmount {
+) ([]formulatemplatetypes.BreakdownAmount, []formulatypes.LookupTrace) {
 	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(defs))
+	lookups := make([]formulatypes.LookupTrace, 0, len(defs))
 	for _, def := range defs {
 		if def == nil {
 			continue
@@ -1176,12 +1187,18 @@ func (s *Service) evaluateBreakdownsWithEnv(
 			item.Error = err.Error()
 		} else {
 			item.Amount = result.Amount
+			if result.Receipt != nil {
+				for _, entry := range result.Receipt.Lookups {
+					entry.Scope = def.Name
+					lookups = append(lookups, entry)
+				}
+			}
 		}
 
 		items = append(items, item)
 	}
 
-	return items
+	return items, lookups
 }
 
 func (s *Service) validateTemplate(

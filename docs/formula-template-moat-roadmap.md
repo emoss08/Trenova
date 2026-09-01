@@ -291,22 +291,24 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 Every rating carries a trace that a non-programmer can read.
 
-- [ ] Recording `RateTableLookup` decorator captures `{table, keys, matchedKey or
+- [x] Recording `RateTableLookup` decorator captures `{table, keys, matchedKey or
       band, value}` per call (`formula/engine/lookup.go`)
-- [ ] Variable provenance map (schema field, override, declared default, caller
+- [x] Variable provenance map (schema field, override, declared default, caller
       variable, computed) built alongside the env (`formula/engine/engine.go`
       `Evaluate`, `environment.go`)
-- [ ] `Trace` on `EvaluationResult` and `CalculateResponse`: pre-clamp raw value,
-      effective version + `EffectiveFrom`, breakdown line results, lookups,
-      provenance, evaluation time (`pkg/formulatemplatetypes/engine.go`)
-- [ ] Trace carried into `ratetypes.Component.Detail` and
+- [x] `Receipt` on `EvaluationResult`, `CalculateResponse`, and the preview
+      response: pre-clamp raw value, version + `EffectiveFrom`, lookups with scope,
+      provenance, evaluation time (`pkg/formulatypes/receipt.go`); breakdown line
+      results stay on `Breakdown` beside it
+- [x] Trace carried into `ratetypes.Component.Detail` and
       `shipment.RatingDetail` (replace the intentionally-empty `ResolvedVariables`)
       (`rateengine/pricing.go`, `shipmentcommercial/commercial.go`)
-- [ ] Studio preview renders the receipt: variables with source badges, lookup hits
+- [x] Studio preview renders the receipt: variables with source badges, lookup hits
       with the matched band, guardrail clamp, rounding step
-- [ ] Shipment "Why this rate" shows the same receipt and links to the template
-      version that produced it
-- [ ] Func values stripped at the engine boundary, not in the handler
+- [x] The shipment's Rating Breakdown card shows the same receipt (collapsible)
+      with an "Open template vN" link into the studio; the rate-quote "Why this
+      rate" popover is unchanged and still explains contract selection
+- [x] Func values stripped at the engine boundary, not in the handler
 
 ### 3.2 Reviewer sees a diff
 

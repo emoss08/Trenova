@@ -29,6 +29,13 @@ type RateTableLookup interface {
 	Has2(table string) bool
 }
 
+// LookupExplainer is implemented by providers that can say which row or band
+// answered a lookup, so a receipt shows more than the number that came back.
+type LookupExplainer interface {
+	ExplainLookup(table string, key any) (formulatypes.LookupMatch, bool)
+	ExplainLookup2(table string, rowKey, colKey any) (formulatypes.LookupMatch, bool)
+}
+
 // EnvEvaluationRequest evaluates one expression against an already-built
 // environment, the shape the Studio preview and saved scenarios use.
 type EnvEvaluationRequest struct {
@@ -92,6 +99,7 @@ type EvaluationResult struct {
 	RawValue  any
 	Variables map[string]any
 	Breakdown []BreakdownAmount
+	Receipt   *formulatypes.Receipt
 }
 
 type CalculateRequest struct {
@@ -115,4 +123,5 @@ type CalculateResponse struct {
 	Guardrail           *GuardrailResult
 	Rounding            *RoundingResult
 	VersionNumber       int64
+	Receipt             *formulatypes.Receipt
 }

@@ -222,6 +222,12 @@ func recordFormulaResponse(
 	if resp.VersionNumber > 0 {
 		detail["versionNumber"] = resp.VersionNumber
 	}
+	// The receipt is what lets a person read the number back: each variable
+	// with its source, each table row consulted. Timing is dropped because a
+	// trace is compared and stored, and wall-clock time is noise in both.
+	if resp.Receipt != nil {
+		detail["receipt"] = resp.Receipt.WithoutTiming()
+	}
 
 	if len(resp.Breakdown) > 0 {
 		lines := make(map[string]string, len(resp.Breakdown))

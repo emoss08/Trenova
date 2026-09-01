@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -166,12 +167,16 @@ func (e *Engine) Evaluate(
 	if err != nil {
 		return nil, errors.NewSchemaError(req.Template.SchemaID, "build environment", err)
 	}
+	sources := provenanceForSchema(definition)
+	sources.markAll(req.Variables, formulatypes.ValueSourceInput)
 
 	mergeVariables(env, req.Overrides)
+	sources.markAll(req.Overrides, formulatypes.ValueSourceOverride)
 
-	e.applyVariableDefaults(req.Template, env)
+	sources.markPaths(e.applyVariableDefaults(req.Template, env), formulatypes.ValueSourceDefault)
 
-	result, err := e.evaluateProgram(ctx, req.Template.Expression, env, req.Lookup, resolveFailures)
+	recorder := newLookupRecorder(req.Lookup)
+	result, err := e.evaluateProgram(ctx, req.Template.Expression, env, recorder, resolveFailures)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +184,12 @@ func (e *Engine) Evaluate(
 		return nil, err
 	}
 
-	result.Breakdown = e.evaluateBreakdowns(ctx, req.Template.BreakdownDefinitions, env, req.Lookup)
+	result.Breakdown = e.evaluateBreakdowns(ctx, req.Template.BreakdownDefinitions, env, recorder)
+	result.Receipt = &formulatypes.Receipt{
+		Variables: receiptVariables(env, sources),
+		Lookups:   recorder.entries,
+		RawAmount: result.Value,
+	}
 
 	return result, nil
 }
@@ -219,7 +229,16 @@ func (e *Engine) EvaluateExpression(
 		return nil, errors.NewSchemaError(req.SchemaID, "build environment", err)
 	}
 
-	result, err := e.evaluateProgram(ctx, req.Expression, env, req.Lookup, resolveFailures)
+	var sources provenance
+	if definition, ok := e.registry.Get(req.SchemaID); ok {
+		sources = provenanceForSchema(definition)
+	} else {
+		sources = make(provenance, len(req.Variables))
+	}
+	sources.markAll(req.Variables, formulatypes.ValueSourceInput)
+
+	recorder := newLookupRecorder(req.Lookup)
+	result, err := e.evaluateProgram(ctx, req.Expression, env, recorder, resolveFailures)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +248,12 @@ func (e *Engine) EvaluateExpression(
 		}
 	}
 
-	result.Breakdown = e.evaluateBreakdowns(ctx, req.Breakdowns, env, req.Lookup)
+	result.Breakdown = e.evaluateBreakdowns(ctx, req.Breakdowns, env, recorder)
+	result.Receipt = &formulatypes.Receipt{
+		Variables: receiptVariables(env, sources),
+		Lookups:   recorder.entries,
+		RawAmount: result.Value,
+	}
 
 	return result, nil
 }
@@ -238,12 +262,21 @@ func (e *Engine) EvaluateWithEnv(
 	ctx context.Context,
 	req *formulatemplatetypes.EnvEvaluationRequest,
 ) (*formulatemplatetypes.EvaluationResult, error) {
-	result, err := e.evaluateProgram(ctx, req.Expression, req.Env, req.Lookup, nil)
+	recorder := newLookupRecorder(req.Lookup)
+	result, err := e.evaluateProgram(ctx, req.Expression, req.Env, recorder, nil)
 	if err != nil {
 		return nil, err
 	}
 	if err = rejectBooleanAmount(req.Expression, result); err != nil {
 		return nil, err
+	}
+
+	sources := make(provenance, len(req.Env))
+	sources.markAll(req.Env, formulatypes.ValueSourceSample)
+	result.Receipt = &formulatypes.Receipt{
+		Variables: receiptVariables(req.Env, sources),
+		Lookups:   recorder.entries,
+		RawAmount: result.Value,
 	}
 
 	return result, nil
@@ -278,9 +311,12 @@ func (e *Engine) evaluateProgram(
 		)
 	}
 
+	// The injected context is deleted before the copy so the variables a
+	// caller sees are exactly what the formula saw.
+	delete(env, ctxEnvKey)
 	result := &formulatemplatetypes.EvaluationResult{
 		RawValue:  output,
-		Variables: env,
+		Variables: maputils.WithoutFuncValues(env),
 	}
 
 	result.Value, err = e.toDecimal(output)
@@ -300,13 +336,14 @@ func (e *Engine) evaluateBreakdowns(
 	ctx context.Context,
 	definitions []*formulatypes.BreakdownDefinition,
 	env map[string]any,
-	lookup formulatemplatetypes.RateTableLookup,
+	recorder *lookupRecorder,
 ) []formulatemplatetypes.BreakdownAmount {
 	if len(definitions) == 0 {
 		return nil
 	}
 
 	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(definitions))
+	defer recorder.setScope(mainExpressionScope)
 
 	for _, def := range definitions {
 		if def == nil {
@@ -318,7 +355,8 @@ func (e *Engine) evaluateBreakdowns(
 			Label: def.Label,
 		}
 
-		result, err := e.evaluateProgram(ctx, def.Expression, env, lookup, nil)
+		recorder.setScope(def.Name)
+		result, err := e.evaluateProgram(ctx, def.Expression, env, recorder, nil)
 		if err != nil {
 			item.Error = err.Error()
 		} else {
@@ -457,12 +495,15 @@ func (e *Engine) compileOptions(env map[string]any) []expr.Option {
 func (e *Engine) applyVariableDefaults(
 	template *formulatemplate.FormulaTemplate,
 	env map[string]any,
-) {
+) []string {
+	filled := make([]string, 0, len(template.VariableDefinitions))
 	for _, varDef := range template.VariableDefinitions {
 		if _, exists := env[varDef.Name]; !exists && varDef.DefaultValue != nil {
 			env[varDef.Name] = varDef.DefaultValue
+			filled = append(filled, varDef.Name)
 		}
 	}
+	return filled
 }
 
 func (e *Engine) toDecimal(value any) (decimal.Decimal, error) {

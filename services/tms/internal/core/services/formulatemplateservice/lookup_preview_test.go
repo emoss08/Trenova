@@ -445,3 +445,41 @@ func TestReadiness_BrokenExpressionBlocks(t *testing.T) {
 	assert.False(t, resp.CanSubmit)
 	assert.Equal(t, ReadinessFail, readinessByKey(resp)[ReadinessCheckExpression].Status)
 }
+
+func TestTestExpression_ReturnsAReceipt(t *testing.T) {
+	t.Parallel()
+	deps := setupTestWithMatrices(t, []*repositories.RateMatrixLookupData{
+		rangeMatrixFixture("miles", [][3]string{{"0", "500", "2.5"}, {"500", "", "2.0"}}),
+	})
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "totalDistance * 3",
+		SchemaID:   "shipment",
+		Variables:  map[string]any{"totalDistance": 600.0},
+		TenantInfo: newTenantInfo(),
+		MinCharge:  decimal.NewNullDecimal(decimal.NewFromInt(5000)),
+		Breakdowns: []*formulatypes.BreakdownDefinition{
+			{Name: "linehaul", Label: "Linehaul", Expression: `lookup("miles", totalDistance) * totalDistance`},
+		},
+	})
+
+	require.True(t, result.Valid, result.Error)
+	require.NotNil(t, result.Receipt)
+	assert.True(t, decimal.NewFromInt(1800).Equal(result.Receipt.RawAmount),
+		"the receipt keeps the pre-guardrail amount")
+
+	var distance *formulatypes.VariableProvenance
+	for i := range result.Receipt.Variables {
+		if result.Receipt.Variables[i].Name == "totalDistance" {
+			distance = &result.Receipt.Variables[i]
+		}
+	}
+	require.NotNil(t, distance)
+	assert.Equal(t, formulatypes.ValueSourceSample, distance.Source)
+
+	require.Len(t, result.Receipt.Lookups, 1)
+	assert.Equal(t, "linehaul", result.Receipt.Lookups[0].Scope)
+	assert.Equal(t, "miles", result.Receipt.Lookups[0].Table)
+	require.NotNil(t, result.Receipt.Lookups[0].Match)
+	assert.True(t, result.Receipt.Lookups[0].Match.BandMin.Equal(decimal.NewFromInt(500)))
+}

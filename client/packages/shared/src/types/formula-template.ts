@@ -307,6 +307,49 @@ export const testBreakdownItemSchema = z.object({
 });
 export type TestBreakdownItem = z.output<typeof testBreakdownItemSchema>;
 
+export const formulaValueSourceSchema = z.enum([
+  "field",
+  "computed",
+  "input",
+  "override",
+  "default",
+  "sample",
+]);
+export type FormulaValueSource = z.infer<typeof formulaValueSourceSchema>;
+
+export const lookupMatchSchema = z.object({
+  matchedKey: z.string().optional(),
+  bandMin: z.coerce.number().nullish(),
+  bandMax: z.coerce.number().nullish(),
+});
+export type LookupMatch = z.output<typeof lookupMatchSchema>;
+
+export const lookupTraceSchema = z.object({
+  scope: z.string(),
+  table: z.string(),
+  keys: z.array(z.any()),
+  value: z.number(),
+  match: lookupMatchSchema.nullish(),
+  error: z.string().optional(),
+});
+export type LookupTrace = z.output<typeof lookupTraceSchema>;
+
+export const formulaReceiptSchema = z.object({
+  variables: z.array(
+    z.object({
+      name: z.string(),
+      value: z.any(),
+      source: formulaValueSourceSchema.catch("sample"),
+    }),
+  ),
+  lookups: z.array(lookupTraceSchema).nullish(),
+  rawAmount: z.coerce.number(),
+  versionNumber: z.number().optional(),
+  effectiveFrom: z.number().nullish(),
+  durationMicros: z.number().optional(),
+});
+export type FormulaReceipt = z.output<typeof formulaReceiptSchema>;
+
 export const expressionWarningSchema = z.object({
   scope: z.string(),
   field: z.string(),
@@ -326,6 +369,7 @@ export const testExpressionResponseSchema = z.object({
   guardrail: guardrailResultSchema.nullish(),
   rounding: roundingResultSchema.nullish(),
   warnings: z.array(expressionWarningSchema).nullish(),
+  receipt: formulaReceiptSchema.nullish(),
 });
 export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
 

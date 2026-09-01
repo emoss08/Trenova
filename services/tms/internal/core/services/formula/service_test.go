@@ -1088,3 +1088,10 @@ func TestService_Rate_MissingNullableFieldIsAValidationError(t *testing.T) {
 	assert.Contains(t, err.Error(), "weight")
 	assert.Contains(t, err.Error(), "coalesce(weight, 0)")
 }
+
+func (m *mockFormulaTemplateRepo) CountStatsByIDs(
+	context.Context,
+	*repositories.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]repositories.TemplateStats, error) {
+	return map[pulid.ID]repositories.TemplateStats{}, nil
+}

@@ -42537,6 +42537,14 @@ const docTemplate = `{
                 "ratedAt": {
                     "type": "integer"
                 },
+                "receipt": {
+                    "description": "Receipt is the formula's calculation receipt when a formula priced the\nload: variables with their sources, rate-table rows consulted, and the\namount before guardrails and rounding.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.Receipt"
+                        }
+                    ]
+                },
                 "resolvedVariables": {
                     "type": "object",
                     "additionalProperties": {}
@@ -48204,6 +48212,9 @@ const docTemplate = `{
                 "message": {
                     "type": "string"
                 },
+                "receipt": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.Receipt"
+                },
                 "resolvedVariables": {
                     "type": "object",
                     "additionalProperties": {}
@@ -48732,6 +48743,93 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_pkg_formulatypes.LookupMatch": {
+            "type": "object",
+            "properties": {
+                "bandMax": {
+                    "type": "number"
+                },
+                "bandMin": {
+                    "type": "number"
+                },
+                "matchedKey": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_formulatypes.LookupTrace": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {}
+                },
+                "match": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.LookupMatch"
+                },
+                "scope": {
+                    "description": "Scope is \"expression\" for the main formula or the breakdown line's name.",
+                    "type": "string"
+                },
+                "table": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_formulatypes.Receipt": {
+            "type": "object",
+            "properties": {
+                "durationMicros": {
+                    "type": "integer"
+                },
+                "effectiveFrom": {
+                    "type": "integer"
+                },
+                "lookups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.LookupTrace"
+                    }
+                },
+                "rawAmount": {
+                    "type": "number"
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableProvenance"
+                    }
+                },
+                "versionNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_formulatypes.ValueSource": {
+            "type": "string",
+            "enum": [
+                "field",
+                "computed",
+                "input",
+                "override",
+                "default",
+                "sample"
+            ],
+            "x-enum-varnames": [
+                "ValueSourceField",
+                "ValueSourceComputed",
+                "ValueSourceInput",
+                "ValueSourceOverride",
+                "ValueSourceDefault",
+                "ValueSourceSample"
+            ]
+        },
         "github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition": {
             "type": "object",
             "properties": {
@@ -48751,6 +48849,18 @@ const docTemplate = `{
                 "type": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableValueType"
                 }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_formulatypes.VariableProvenance": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.ValueSource"
+                },
+                "value": {}
             }
         },
         "github_com_emoss08_trenova_pkg_formulatypes.VariableValueType": {

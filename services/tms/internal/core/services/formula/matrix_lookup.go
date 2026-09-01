@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/shopspring/decimal"
 )
 
@@ -56,7 +57,10 @@ type matrixLookup struct {
 	two    map[string]*twoAxisTable
 }
 
-var _ formulatemplatetypes.RateTableLookup = (*matrixLookup)(nil)
+var (
+	_ formulatemplatetypes.RateTableLookup = (*matrixLookup)(nil)
+	_ formulatemplatetypes.LookupExplainer = (*matrixLookup)(nil)
+)
 
 // NewMatrixLookup builds the lookup provider from every one- and two-axis
 // matrix the repository handed over.
@@ -328,13 +332,7 @@ func lookupRange(table string, bands []rateBand, key any) (float64, error) {
 		return 0, fmt.Errorf("rate table %q: %w", table, err)
 	}
 
-	for _, band := range bands {
-		if numericKey.LessThan(band.min) {
-			continue
-		}
-		if band.max.Valid && numericKey.GreaterThanOrEqual(band.max.Decimal) {
-			continue
-		}
+	if band, ok := findBand(bands, numericKey); ok {
 		return band.value, nil
 	}
 
@@ -387,4 +385,106 @@ func keyToDecimal(key any) (decimal.Decimal, error) {
 	default:
 		return decimal.Zero, fmt.Errorf("unsupported lookup key type %T", key)
 	}
+}
+
+// findBand returns the first band containing the key; bands are sorted by
+// floor, so the first hit is the lowest band that applies.
+func findBand(bands []rateBand, key decimal.Decimal) (rateBand, bool) {
+	for _, band := range bands {
+		if key.LessThan(band.min) {
+			continue
+		}
+		if band.max.Valid && key.GreaterThanOrEqual(band.max.Decimal) {
+			continue
+		}
+		return band, true
+	}
+	return rateBand{}, false
+}
+
+func bandMatch(band rateBand) formulatypes.LookupMatch {
+	low := band.min
+	match := formulatypes.LookupMatch{BandMin: &low}
+	if band.max.Valid {
+		high := band.max.Decimal
+		match.BandMax = &high
+	}
+	return match
+}
+
+// ExplainLookup reports which key or band a single-axis lookup would resolve
+// to, without evaluating anything.
+func (l *matrixLookup) ExplainLookup(table string, key any) (formulatypes.LookupMatch, bool) {
+	if entries, ok := l.exact[table]; ok {
+		matchKey, err := keyToString(key)
+		if err != nil {
+			return formulatypes.LookupMatch{}, false
+		}
+		if _, found := entries[matchKey]; !found {
+			return formulatypes.LookupMatch{}, false
+		}
+		return formulatypes.LookupMatch{MatchedKey: matchKey}, true
+	}
+
+	if bands, ok := l.ranges[table]; ok {
+		numericKey, err := keyToDecimal(key)
+		if err != nil {
+			return formulatypes.LookupMatch{}, false
+		}
+		band, found := findBand(bands, numericKey)
+		if !found {
+			return formulatypes.LookupMatch{}, false
+		}
+		return bandMatch(band), true
+	}
+
+	return formulatypes.LookupMatch{}, false
+}
+
+// ExplainLookup2 reports the cell a two-axis lookup resolves to, described by
+// the row and column keys or bounds that matched.
+func (l *matrixLookup) ExplainLookup2(
+	table string,
+	rowKey, colKey any,
+) (formulatypes.LookupMatch, bool) {
+	t, ok := l.two[table]
+	if !ok {
+		return formulatypes.LookupMatch{}, false
+	}
+
+	candidates, err := t.rowCandidates(table, rowKey)
+	if err != nil {
+		return formulatypes.LookupMatch{}, false
+	}
+
+	for i := range candidates {
+		matched, mErr := t.colMatches(table, &candidates[i], colKey)
+		if mErr != nil {
+			return formulatypes.LookupMatch{}, false
+		}
+		if matched {
+			return formulatypes.LookupMatch{MatchedKey: describeCell(&candidates[i])}, true
+		}
+	}
+
+	return formulatypes.LookupMatch{}, false
+}
+
+func describeCell(cell *twoAxisCell) string {
+	row := cell.rowKey
+	if row == "" && cell.rowMin.Valid {
+		row = bandLabel(cell.rowMin.Decimal, cell.rowMax)
+	}
+	col := cell.colKey
+	if col == "" && cell.colMin.Valid {
+		col = bandLabel(cell.colMin.Decimal, cell.colMax)
+	}
+	return row + " × " + col
+}
+
+func bandLabel(low decimal.Decimal, high decimal.NullDecimal) string {
+	if high.Valid {
+		return low.String() + "–" + high.Decimal.String()
+	}
+	return low.String() + "+"
 }

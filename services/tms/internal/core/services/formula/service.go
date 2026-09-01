@@ -3,6 +3,7 @@ package formula
 import (
 	"context"
 	goErrors "errors"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -86,10 +87,14 @@ func (s *Service) Calculate(
 		)
 	}
 
-	resolved, err := s.ResolveEffectiveTemplate(ctx, template, req.TenantInfo, req.RatingDate)
+	scheduled, err := s.ResolveScheduledVersion(ctx, template, req.TenantInfo, req.RatingDate)
 	if err != nil {
 		log.Error("failed to resolve effective template version", zap.Error(err))
 		return nil, err
+	}
+	resolved := template
+	if scheduled != nil {
+		resolved = template.ApplyVersion(scheduled)
 	}
 
 	resp, err := s.Rate(ctx, &RateRequest{
@@ -101,6 +106,9 @@ func (s *Service) Calculate(
 	if err != nil {
 		log.Error("failed to evaluate formula", zap.Error(err))
 		return nil, err
+	}
+	if scheduled != nil && resp.Receipt != nil {
+		resp.Receipt.EffectiveFrom = scheduled.EffectiveFrom
 	}
 
 	if resp.Guardrail != nil && resp.Guardrail.Applied {
@@ -182,6 +190,8 @@ func (s *Service) Rate(
 	ctx context.Context,
 	req *RateRequest,
 ) (*formulatemplatetypes.CalculateResponse, error) {
+	started := time.Now()
+
 	lookup, err := s.BuildLookup(ctx, pagination.TenantInfo{
 		OrgID: req.Template.OrganizationID,
 		BuID:  req.Template.BusinessUnitID,
@@ -214,6 +224,12 @@ func (s *Service) Rate(
 
 	amount, guardrail, rounding := ApplyChargePolicy(req.Template.ChargePolicy(), result.Value)
 
+	receipt := result.Receipt
+	if receipt != nil {
+		receipt.VersionNumber = req.Template.CurrentVersionNumber
+		receipt.DurationMicros = time.Since(started).Microseconds()
+	}
+
 	return &formulatemplatetypes.CalculateResponse{
 		Amount:              amount,
 		Variables:           result.Variables,
@@ -224,6 +240,7 @@ func (s *Service) Rate(
 		Guardrail:           guardrail,
 		Rounding:            rounding,
 		VersionNumber:       req.Template.CurrentVersionNumber,
+		Receipt:             receipt,
 	}, nil
 }
 
@@ -364,6 +381,7 @@ func (s *Service) EvaluateExpression(
 		Amount:    result.Value,
 		Variables: result.Variables,
 		Breakdown: result.Breakdown,
+		Receipt:   result.Receipt,
 	}, nil
 }
 
@@ -422,6 +440,7 @@ func (s *Service) EvaluateWithEnv(
 	return &formulatemplatetypes.CalculateResponse{
 		Amount:    result.Value,
 		Variables: result.Variables,
+		Receipt:   result.Receipt,
 	}, nil
 }
 

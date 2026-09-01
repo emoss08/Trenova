@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
 import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
+import { ReceiptView } from "@/components/formula-editor/receipt-view";
 import { flattenResolvedVariables } from "@/components/formula-editor/resolved-variables";
 import type {
   ExpressionWarning,
@@ -461,11 +462,21 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                   <NullableWarnings warnings={result.warnings} />
                 )}
 
-                {result.resolvedVariables && Object.keys(result.resolvedVariables).length > 0 && (
-                  <ResolvedVariablesView
-                    variables={result.resolvedVariables}
-                    onUseValues={useRealShipment ? adoptResolvedValues : undefined}
-                  />
+                {isValid && result.receipt ? (
+                  <div className="mt-4">
+                    <ReceiptView
+                      receipt={result.receipt}
+                      onUseValues={useRealShipment ? adoptResolvedValues : undefined}
+                    />
+                  </div>
+                ) : (
+                  result.resolvedVariables &&
+                  Object.keys(result.resolvedVariables).length > 0 && (
+                    <ResolvedVariablesView
+                      variables={result.resolvedVariables}
+                      onUseValues={useRealShipment ? adoptResolvedValues : undefined}
+                    />
+                  )
                 )}
               </div>
             </div>

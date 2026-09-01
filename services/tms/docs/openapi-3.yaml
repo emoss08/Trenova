@@ -7624,6 +7624,13 @@ components:
                     type: string
                 ratedAt:
                     type: integer
+                receipt:
+                    allOf:
+                        - $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.Receipt'
+                    description: |-
+                        Receipt is the formula's calculation receipt when a formula priced the
+                        load: variables with their sources, rate-table rows consulted, and the
+                        amount before guardrails and rounding.
                 resolvedVariables:
                     additionalProperties: {}
                     type: object
@@ -11514,6 +11521,8 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatemplatetypes.GuardrailResult'
                 message:
                     type: string
+                receipt:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.Receipt'
                 resolvedVariables:
                     additionalProperties: {}
                     type: object
@@ -11870,6 +11879,67 @@ components:
                 name:
                     type: string
             type: object
+        github_com_emoss08_trenova_pkg_formulatypes.LookupMatch:
+            properties:
+                bandMax:
+                    type: number
+                bandMin:
+                    type: number
+                matchedKey:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_pkg_formulatypes.LookupTrace:
+            properties:
+                error:
+                    type: string
+                keys:
+                    items: {}
+                    type: array
+                match:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.LookupMatch'
+                scope:
+                    description: Scope is "expression" for the main formula or the breakdown line's name.
+                    type: string
+                table:
+                    type: string
+                value:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_pkg_formulatypes.Receipt:
+            properties:
+                durationMicros:
+                    type: integer
+                effectiveFrom:
+                    type: integer
+                lookups:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.LookupTrace'
+                    type: array
+                rawAmount:
+                    type: number
+                variables:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.VariableProvenance'
+                    type: array
+                versionNumber:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_pkg_formulatypes.ValueSource:
+            enum:
+                - field
+                - computed
+                - input
+                - override
+                - default
+                - sample
+            type: string
+            x-enum-varnames:
+                - ValueSourceField
+                - ValueSourceComputed
+                - ValueSourceInput
+                - ValueSourceOverride
+                - ValueSourceDefault
+                - ValueSourceSample
         github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition:
             properties:
                 defaultValue: {}
@@ -11883,6 +11953,14 @@ components:
                     type: string
                 type:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.VariableValueType'
+            type: object
+        github_com_emoss08_trenova_pkg_formulatypes.VariableProvenance:
+            properties:
+                name:
+                    type: string
+                source:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatypes.ValueSource'
+                value: {}
             type: object
         github_com_emoss08_trenova_pkg_formulatypes.VariableValueType:
             enum:

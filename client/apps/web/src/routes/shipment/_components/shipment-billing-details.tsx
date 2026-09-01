@@ -27,8 +27,20 @@ import type {
   GetPreviousRatesRequest,
   Shipment,
 } from "@trenova/shared/types/shipment";
-import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon, SparklesIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ReceiptTextIcon,
+  ShieldAlertIcon,
+  ShieldIcon,
+  SparklesIcon,
+} from "lucide-react";
 import type React from "react";
+import { useState } from "react";
+import { Link } from "react-router";
+import { ReceiptView } from "@/components/formula-editor/receipt-view";
+import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
 import { AutoRateDialog } from "./auto-rate-dialog";
@@ -269,6 +281,7 @@ function RateDepartureReason() {
 
 function RatingBreakdownCard() {
   const { control, getValues } = useFormContext<Shipment>();
+  const [showReceipt, setShowReceipt] = useState(false);
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
   const shipmentId = getValues("id");
 
@@ -346,6 +359,37 @@ function RatingBreakdownCard() {
             )}
             .
           </p>
+        </div>
+      )}
+
+      {ratingDetail.receipt && (
+        <div className="mt-3 border-t pt-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setShowReceipt((prev) => !prev)}
+              aria-expanded={showReceipt}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs font-medium"
+            >
+              <ReceiptTextIcon className="size-3.5" />
+              Calculation receipt
+              {showReceipt ? (
+                <ChevronDownIcon className="size-3" />
+              ) : (
+                <ChevronRightIcon className="size-3" />
+              )}
+            </button>
+            {ratingDetail.formulaTemplateId && (
+              <Link
+                to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
+                className="text-2xs text-primary hover:underline"
+              >
+                Open template
+                {ratingDetail.versionNumber ? ` v${ratingDetail.versionNumber}` : ""}
+              </Link>
+            )}
+          </div>
+          {showReceipt && <ReceiptView receipt={ratingDetail.receipt} />}
         </div>
       )}
     </div>

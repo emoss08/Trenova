@@ -5,6 +5,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -389,8 +391,39 @@ func applyFormulaComponent(detail *shipment.RatingDetail, trace *ratetypes.Trace
 		if version, ok := maputils.IntValue(component.Detail, "versionNumber"); ok {
 			detail.VersionNumber = version
 		}
+		if receipt := receiptFromDetail(component.Detail); receipt != nil {
+			detail.Receipt = receipt
+			detail.ResolvedVariables = receipt.VariableMap()
+		}
 
 		return
+	}
+}
+
+// receiptFromDetail reads the formula receipt out of a trace component. A
+// trace built in this process carries the typed value; one read back from
+// storage carries the decoded JSON, which is round-tripped into the type.
+func receiptFromDetail(detail map[string]any) *formulatypes.Receipt {
+	raw, ok := detail["receipt"]
+	if !ok || raw == nil {
+		return nil
+	}
+
+	switch typed := raw.(type) {
+	case *formulatypes.Receipt:
+		return typed
+	case formulatypes.Receipt:
+		return &typed
+	default:
+		encoded, err := sonic.Marshal(typed)
+		if err != nil {
+			return nil
+		}
+		var receipt formulatypes.Receipt
+		if err = sonic.Unmarshal(encoded, &receipt); err != nil {
+			return nil
+		}
+		return &receipt
 	}
 }
 

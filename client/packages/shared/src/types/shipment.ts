@@ -3,7 +3,7 @@ import { accessorialChargeMethodSchema, type AccessorialCharge } from "./accesso
 import { defaultBillTypeSchema } from "./bill-type";
 import type { Commodity } from "./commodity";
 import { customerSchema } from "./customer";
-import { formulaTemplateSchema } from "./formula-template";
+import { formulaReceiptSchema, formulaTemplateSchema } from "./formula-template";
 import {
   decimalNumberSchema,
   decimalStringSchema,
@@ -502,6 +502,7 @@ export const ratingDetailSchema = z.object({
   ruleLabel: z.string().nullish(),
   source: z.string().nullish(),
   explanation: z.string().nullish(),
+  receipt: formulaReceiptSchema.nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
