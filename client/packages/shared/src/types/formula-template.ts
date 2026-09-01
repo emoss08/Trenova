@@ -933,6 +933,23 @@ export const readinessCheckSchema = z.object({
 });
 export type ReadinessCheck = z.output<typeof readinessCheckSchema>;
 
+export const standardTemplateSchema = z.object({
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  type: formulaTemplateTypeSchema,
+  expression: z.string(),
+  schemaId: z.string(),
+  variableDefinitions: z
+    .array(variableDefinitionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+export type StandardTemplate = z.output<typeof standardTemplateSchema>;
+export const listStandardsResponseSchema = z.array(standardTemplateSchema);
+
 export const readinessResponseSchema = z.object({
   canSubmit: z.boolean(),
   canApprove: z.boolean(),
@@ -959,6 +976,22 @@ export const generateFormulaRequestSchema = z.object({
 });
 export type GenerateFormulaRequest = z.infer<typeof generateFormulaRequestSchema>;
 
+export const proposedScenarioSchema = z.object({
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  variables: z
+    .record(z.string(), z.any())
+    .nullish()
+    .transform((v) => v ?? {}),
+  expectedAmount: z.number().nullish(),
+  valid: z.boolean(),
+  error: z.string().nullish(),
+});
+export type ProposedScenario = z.output<typeof proposedScenarioSchema>;
+
 export const generateFormulaResponseSchema = z.object({
   expression: z.string(),
   variableDefinitions: z
@@ -967,6 +1000,10 @@ export const generateFormulaResponseSchema = z.object({
     .transform((v) => v ?? []),
   explanation: z.string(),
   validation: testExpressionResponseSchema.nullish(),
+  scenarios: z
+    .array(proposedScenarioSchema)
+    .nullish()
+    .transform((v) => v ?? []),
   modelIdentifier: z.string().optional(),
 });
 export type GenerateFormulaResponse = z.output<typeof generateFormulaResponseSchema>;

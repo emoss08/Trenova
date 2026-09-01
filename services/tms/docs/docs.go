@@ -11711,6 +11711,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/formula-templates/standards": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Formula Templates"
+                ],
+                "summary": "List the standard formula template catalog",
+                "operationId": "listStandardFormulaTemplates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.StandardTemplate"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/formula-templates/test": {
             "post": {
                 "security": [
@@ -47858,6 +47898,12 @@ const docTemplate = `{
                 "modelIdentifier": {
                     "type": "string"
                 },
+                "scenarios": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ProposedScenario"
+                    }
+                },
                 "validation": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestExpressionResponse"
                 },
@@ -47866,6 +47912,30 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition"
                     }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ProposedScenario": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "expectedAmount": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": {}
                 }
             }
         },
@@ -48190,6 +48260,32 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.StandardTemplate": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "expression": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "schemaId": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType"
+                },
+                "variableDefinitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition"
+                    }
                 }
             }
         },

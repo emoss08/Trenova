@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"maps"
+	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
@@ -18,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -73,11 +76,21 @@ type GeneratedVariable struct {
 	DefaultValue any    `json:"defaultValue"`
 }
 
+type ProposedScenario struct {
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Variables      map[string]any `json:"variables"`
+	ExpectedAmount *float64       `json:"expectedAmount,omitempty"`
+	Valid          bool           `json:"valid"`
+	Error          string         `json:"error,omitempty"`
+}
+
 type GenerateFormulaResponse struct {
 	Expression          string                                         `json:"expression"`
 	VariableDefinitions []*formulatypes.VariableDefinition             `json:"variableDefinitions"`
 	Explanation         string                                         `json:"explanation"`
 	Validation          *formulatemplateservice.TestExpressionResponse `json:"validation"`
+	Scenarios           []ProposedScenario                             `json:"scenarios"`
 	ModelIdentifier     string                                         `json:"modelIdentifier"`
 }
 
@@ -96,7 +109,21 @@ type generatedPayload struct {
 	Expression  string              `json:"expression"`
 	Variables   []GeneratedVariable `json:"variables"`
 	Explanation string              `json:"explanation"`
+	Scenarios   []generatedScenario `json:"scenarios"`
 }
+
+type generatedScenario struct {
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	Variables   []generatedScenarioValue `json:"variables"`
+}
+
+type generatedScenarioValue struct {
+	Name  string `json:"name"`
+	Value any    `json:"value"`
+}
+
+const maxProposedScenarios = 3
 
 type explanationPayload struct {
 	Explanation string `json:"explanation"`
@@ -127,9 +154,14 @@ func (s *Service) GenerateFormula(
 	}
 
 	result, err := s.completion.CompleteStructured(ctx, &serviceports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		System:       generateSystemPrompt,
-		Context:      buildGenerateContext(description, lookupTables, templateType, req.Instruction),
+		TenantInfo: req.TenantInfo,
+		System:     generateSystemPrompt,
+		Context: buildGenerateContext(
+			description,
+			lookupTables,
+			templateType,
+			req.Instruction,
+		),
 		OutputSchema: generateOutputSchema(),
 	})
 	if err != nil {
@@ -153,15 +185,114 @@ func (s *Service) GenerateFormula(
 		},
 	)
 
-	s.logCall(ctx, req.TenantInfo, ailog.OperationFormulaGenerate, schemaID, req.Instruction, result)
+	scenarios := s.priceScenarios(ctx, &priceScenariosParams{
+		TenantInfo: req.TenantInfo,
+		SchemaID:   schemaID,
+		Expression: payload.Expression,
+		Defaults:   testValues,
+		Generated:  payload.Scenarios,
+	})
+
+	s.logCall(
+		ctx,
+		req.TenantInfo,
+		ailog.OperationFormulaGenerate,
+		schemaID,
+		req.Instruction,
+		result,
+	)
 
 	return &GenerateFormulaResponse{
 		Expression:          payload.Expression,
 		VariableDefinitions: variables,
 		Explanation:         payload.Explanation,
 		Validation:          validation,
+		Scenarios:           scenarios,
 		ModelIdentifier:     result.ModelIdentifier,
 	}, nil
+}
+
+type priceScenariosParams struct {
+	TenantInfo pagination.TenantInfo
+	SchemaID   string
+	Expression string
+	Defaults   map[string]any
+	Generated  []generatedScenario
+}
+
+// priceScenarios turns the model's proposed scenarios into concrete test cases
+// by pricing each one through the same preview path the studio uses. The model
+// never gets to assert an expected amount; the engine computes it.
+func (s *Service) priceScenarios(
+	ctx context.Context,
+	params *priceScenariosParams,
+) []ProposedScenario {
+	scenarios := make([]ProposedScenario, 0, maxProposedScenarios)
+	for _, candidate := range params.Generated {
+		if len(scenarios) == maxProposedScenarios {
+			break
+		}
+		name := strings.TrimSpace(candidate.Name)
+		if name == "" {
+			continue
+		}
+
+		variables := make(map[string]any, len(params.Defaults)+len(candidate.Variables))
+		maps.Copy(variables, params.Defaults)
+		for _, value := range candidate.Variables {
+			if value.Name == "" || value.Value == nil {
+				continue
+			}
+			variables[value.Name] = value.Value
+		}
+
+		scenario := ProposedScenario{
+			Name:        name,
+			Description: strings.TrimSpace(candidate.Description),
+			Variables:   variables,
+		}
+
+		result := s.templateService.TestExpression(
+			ctx,
+			&formulatemplateservice.TestExpressionRequest{
+				Expression: params.Expression,
+				SchemaID:   params.SchemaID,
+				Variables:  variables,
+				TenantInfo: params.TenantInfo,
+			},
+		)
+		if amount, ok := resultAmount(result); ok {
+			scenario.Valid = true
+			scenario.ExpectedAmount = &amount
+		} else {
+			scenario.Error = result.Error
+			if scenario.Error == "" {
+				scenario.Error = result.Message
+			}
+		}
+
+		scenarios = append(scenarios, scenario)
+	}
+
+	return scenarios
+}
+
+func resultAmount(result *formulatemplateservice.TestExpressionResponse) (float64, bool) {
+	if result == nil || !result.Valid {
+		return 0, false
+	}
+	switch value := result.Result.(type) {
+	case decimal.Decimal:
+		return value.InexactFloat64(), true
+	case float64:
+		return value, true
+	case int:
+		return float64(value), true
+	case int64:
+		return float64(value), true
+	default:
+		return 0, false
+	}
 }
 
 func (s *Service) ExplainFormula(

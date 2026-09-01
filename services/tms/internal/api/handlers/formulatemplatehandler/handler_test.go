@@ -3080,3 +3080,31 @@ func TestFormulaTemplateHandler_ReviewDiff_FirstApproval(t *testing.T) {
 	assert.Equal(t, false, resp["hasApprovedBase"])
 	assert.Equal(t, "totalDistance * 2.5", resp["currentExpression"])
 }
+
+func TestFormulaTemplateHandler_ListStandards(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newApprovalTemplateRepo(formulatemplate.StatusDraft)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/formula-templates/standards").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp []map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.NotEmpty(t, resp)
+	for _, standard := range resp {
+		assert.NotEmpty(t, standard["name"])
+		assert.NotEmpty(t, standard["expression"])
+		assert.NotEmpty(t, standard["schemaId"])
+		_, hasVariables := standard["variableDefinitions"].([]any)
+		assert.True(t, hasVariables, "variableDefinitions must serialize as an array")
+	}
+}

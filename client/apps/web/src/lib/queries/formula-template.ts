@@ -51,6 +51,10 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.readiness(templateId),
   }),
+  standards: {
+    queryKey: null,
+    queryFn: async () => apiService.formulaTemplateService.listStandards(),
+  },
   reviewDiff: (templateId: FormulaTemplate["id"]) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.reviewDiff(templateId),

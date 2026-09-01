@@ -11255,12 +11255,32 @@ definitions:
                 type: string
             modelIdentifier:
                 type: string
+            scenarios:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ProposedScenario'
+                type: array
             validation:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestExpressionResponse'
             variableDefinitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
                 type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ProposedScenario:
+        properties:
+            description:
+                type: string
+            error:
+                type: string
+            expectedAmount:
+                type: number
+            name:
+                type: string
+            valid:
+                type: boolean
+            variables:
+                additionalProperties: {}
+                type: object
         type: object
     github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestResponse:
         properties:
@@ -11473,6 +11493,23 @@ definitions:
                 type: array
             total:
                 type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.StandardTemplate:
+        properties:
+            description:
+                type: string
+            expression:
+                type: string
+            name:
+                type: string
+            schemaId:
+                type: string
+            type:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType'
+            variableDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
+                type: array
         type: object
     github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseCandidate:
         properties:
@@ -22528,6 +22565,31 @@ paths:
             security:
                 - BearerAuth: []
             summary: Get a formula template option
+            tags:
+                - Formula Templates
+    /formula-templates/standards:
+        get:
+            operationId: listStandardFormulaTemplates
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.StandardTemplate'
+                        type: array
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List the standard formula template catalog
             tags:
                 - Formula Templates
     /formula-templates/test:

@@ -534,3 +534,19 @@ func TestReviewDiff_WithoutApprovedHistoryShowsEverythingAsNew(t *testing.T) {
 	assert.Empty(t, diff.BaseExpression)
 	assert.Equal(t, template.Expression, diff.CurrentExpression)
 }
+
+func TestListStandards_ExposesTheCatalog(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	standards, err := deps.svc.ListStandards()
+
+	require.NoError(t, err)
+	require.NotEmpty(t, standards)
+	for _, standard := range standards {
+		assert.NotEmpty(t, standard.Name)
+		assert.NotEmpty(t, standard.Expression)
+		assert.NotEmpty(t, standard.SchemaID)
+		assert.NotEmpty(t, standard.Type)
+	}
+}

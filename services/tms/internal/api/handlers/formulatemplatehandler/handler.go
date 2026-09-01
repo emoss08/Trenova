@@ -75,6 +75,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/test", requireAuthoring, h.testExpression)
 	api.POST("/duplicate", requireDuplicate, h.duplicate)
 	api.POST("/import", requireCreate, h.importTemplates)
+	api.GET("/standards", requireRead, h.listStandards)
 	api.POST("/install-standards", requireCreate, h.installStandards)
 	api.POST("/ai/generate", requireAuthoring, h.aiGenerate)
 	api.POST("/ai/explain", requireRead, h.aiExplain)
@@ -787,6 +788,25 @@ func (h *Handler) runTestCases(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+// @Summary List the standard formula template catalog
+// @ID listStandardFormulaTemplates
+// @Tags Formula Templates
+// @Produce json
+// @Success 200 {array} formulatemplateservice.StandardTemplate
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/standards [get]
+func (h *Handler) listStandards(c *gin.Context) {
+	standards, err := h.service.ListStandards()
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, standards)
 }
 
 // @Summary Install the standard formula template library for this organization

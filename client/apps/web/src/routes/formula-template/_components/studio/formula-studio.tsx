@@ -362,6 +362,7 @@ function FormulaStudioBody({
           onOpenChange={setAiGenerateOpen}
           templateType={templateType ?? "FreightCharge"}
           schemaId={schemaId || "shipment"}
+          templateId={template?.id ?? null}
           onInsert={handleAiInsert}
         />
       </div>

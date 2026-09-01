@@ -2,8 +2,10 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
+  listStandardsResponseSchema,
   readinessResponseSchema,
   reviewDiffResponseSchema,
+  type StandardTemplate,
   type ReviewDiffResponse,
   type ReadinessResponse,
   explainFormulaResponseSchema,
@@ -395,6 +397,12 @@ export class FormulaTemplateService {
     const response = await api.get<ReadinessResponse>(`/formula-templates/${templateId}/readiness`);
 
     return safeParse(readinessResponseSchema, response, "Formula Template Readiness");
+  }
+
+  public async listStandards(): Promise<StandardTemplate[]> {
+    const response = await api.get<StandardTemplate[]>("/formula-templates/standards");
+
+    return safeParse(listStandardsResponseSchema, response, "Formula Template Standards");
   }
 
   public async reviewDiff(templateId: FormulaTemplate["id"]): Promise<ReviewDiffResponse> {

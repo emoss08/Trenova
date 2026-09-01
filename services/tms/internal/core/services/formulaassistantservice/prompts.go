@@ -17,7 +17,8 @@ Rules:
 - When an input the formula needs is not a shipment variable, declare it as a custom variable with a name, type, description, and a sensible default value.
 - Only call lookup functions with a rate table code from the available rate tables section, and match the function to the table's axis count: lookup()/lookupOr() for single-axis tables, lookup2()/lookup2Or() for two-axis tables. When no table fits, do not use lookups.
 - Prefer round(x, 2) on the final result when the computation can produce fractional cents.
-- The explanation must describe the formula in plain English for a billing clerk, not a programmer.`
+- The explanation must describe the formula in plain English for a billing clerk, not a programmer.
+- Propose two or three test scenarios. Each scenario names a realistic shipment, describes it in one sentence, and gives concrete values for every variable the expression reads, including any custom variables you defined. Cover one typical shipment and at least one edge case such as a minimum charge, a threshold, or a zero quantity. Never state the expected charge; Trenova computes it.`
 
 const explainSystemPrompt = `You explain Trenova rating formulas to billing staff who are not programmers. You are given an expression in the expr expression language, along with the variables and functions it can reference.
 
@@ -109,7 +110,7 @@ func generateOutputSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
 		"additionalProperties": false,
-		"required":             []string{"expression", "variables", "explanation"},
+		"required":             []string{"expression", "variables", "explanation", "scenarios"},
 		"properties": map[string]any{
 			"expression": map[string]any{
 				"type":        "string",
@@ -122,16 +123,48 @@ func generateOutputSchema() map[string]any {
 					"additionalProperties": false,
 					"required":             []string{"name", "type", "description"},
 					"properties": map[string]any{
-						"name":         map[string]any{"type": "string"},
-						"type":         map[string]any{"type": "string", "enum": []string{"Number", "String", "Boolean"}},
-						"description":  map[string]any{"type": "string"},
-						"defaultValue": map[string]any{"type": []string{"number", "string", "boolean", "null"}},
+						"name": map[string]any{"type": "string"},
+						"type": map[string]any{
+							"type": "string",
+							"enum": []string{"Number", "String", "Boolean"},
+						},
+						"description": map[string]any{"type": "string"},
+						"defaultValue": map[string]any{
+							"type": []string{"number", "string", "boolean", "null"},
+						},
 					},
 				},
 			},
 			"explanation": map[string]any{
 				"type":        "string",
 				"description": "A plain-English explanation of how the formula computes the charge",
+			},
+			"scenarios": map[string]any{
+				"type":        "array",
+				"description": "Two or three test scenarios with concrete input values; expected charges are computed by Trenova",
+				"items": map[string]any{
+					"type":                 "object",
+					"additionalProperties": false,
+					"required":             []string{"name", "description", "variables"},
+					"properties": map[string]any{
+						"name":        map[string]any{"type": "string"},
+						"description": map[string]any{"type": "string"},
+						"variables": map[string]any{
+							"type": "array",
+							"items": map[string]any{
+								"type":                 "object",
+								"additionalProperties": false,
+								"required":             []string{"name", "value"},
+								"properties": map[string]any{
+									"name": map[string]any{"type": "string"},
+									"value": map[string]any{
+										"type": []string{"number", "string", "boolean"},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}

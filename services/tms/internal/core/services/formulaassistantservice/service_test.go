@@ -287,3 +287,50 @@ func TestLogCallRecordsUsage(t *testing.T) {
 	assert.Equal(t, 30, entry.CompletionTokens)
 	assert.Equal(t, 150, entry.TotalTokens)
 }
+
+func TestGenerateFormula_PricesProposedScenarios(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		text: `{
+			"expression": "baseRate * totalDistance",
+			"variables": [],
+			"explanation": "Rate per mile.",
+			"scenarios": [
+				{"name": "Short haul", "description": "A 100 mile lane", "variables": [
+					{"name": "baseRate", "value": 2},
+					{"name": "totalDistance", "value": 100}
+				]},
+				{"name": "Broken", "description": "References nothing real", "variables": [
+					{"name": "baseRate", "value": "not a number"},
+					{"name": "totalDistance", "value": 100}
+				]},
+				{"name": "", "description": "Unnamed scenarios are dropped", "variables": []},
+				{"name": "Four", "description": "", "variables": []},
+				{"name": "Five", "description": "", "variables": []}
+			]
+		}`,
+	}
+	svc := newTestService(t, completion)
+
+	result, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
+		TenantInfo:   newTenant(),
+		Instruction:  "per mile",
+		TemplateType: formulatemplate.TemplateTypeFreightCharge,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Scenarios, 3, "at most three named scenarios are kept")
+
+	short := result.Scenarios[0]
+	assert.Equal(t, "Short haul", short.Name)
+	assert.True(t, short.Valid)
+	require.NotNil(t, short.ExpectedAmount)
+	assert.InDelta(t, 200, *short.ExpectedAmount, 0.001)
+	assert.Equal(t, map[string]any{"baseRate": float64(2), "totalDistance": float64(100)}, short.Variables)
+
+	broken := result.Scenarios[1]
+	assert.False(t, broken.Valid)
+	assert.Nil(t, broken.ExpectedAmount)
+	assert.NotEmpty(t, broken.Error)
+}

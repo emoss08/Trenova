@@ -8,10 +8,47 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice/standardcatalog"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+type StandardTemplate struct {
+	Name                string                             `json:"name"`
+	Description         string                             `json:"description"`
+	Type                formulatemplate.TemplateType       `json:"type"`
+	Expression          string                             `json:"expression"`
+	SchemaID            string                             `json:"schemaId"`
+	VariableDefinitions []*formulatypes.VariableDefinition `json:"variableDefinitions"`
+}
+
+// ListStandards exposes the vendor-curated catalog without installing it, so
+// the studio can offer every standard as a starting point for a new template.
+func (s *Service) ListStandards() ([]StandardTemplate, error) {
+	catalog, err := standardcatalog.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	standards := make([]StandardTemplate, 0, len(catalog))
+	for _, entry := range catalog {
+		variables := entry.VariableDefinitions
+		if variables == nil {
+			variables = []*formulatypes.VariableDefinition{}
+		}
+		standards = append(standards, StandardTemplate{
+			Name:                entry.Name,
+			Description:         entry.Description,
+			Type:                entry.Type,
+			Expression:          entry.Expression,
+			SchemaID:            entry.SchemaID,
+			VariableDefinitions: variables,
+		})
+	}
+
+	return standards, nil
+}
 
 type InstallStandardsResponse struct {
 	Installed []*formulatemplate.FormulaTemplate `json:"installed"`

@@ -342,12 +342,18 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 3.5 Library and starters
 
-- [ ] Starter picker sourced from the standard catalog endpoint instead of the four
-      hardcoded starters (`studio/starter-templates.ts` → API)
-- [ ] "Start from existing template" option that forks in place
-- [ ] AI generate returns two or three proposed scenarios with expected amounts
+- [x] Starter picker sourced from the standard catalog endpoint instead of the four
+      hardcoded starters (`GET /formula-templates/standards`; `starter-templates.ts` deleted;
+      picker filters by template type and applies a standard's schema, expression, variables,
+      and a default charge policy)
+- [x] "Start from existing template" option that forks in place (create-mode picker copies a
+      chosen template's formula, variables, lines, and charge policy into the new draft;
+      lineage stays with the explicit Fork action)
+- [x] AI generate returns two or three proposed scenarios with expected amounts
       computed through `/formula-templates/test`; author accepts them one click
-      (`studio/ai/ai-generate-panel.tsx`, `formulaassistantservice`)
+      (model proposes inputs only, the engine prices each; unpriceable scenarios show why;
+      Add / Add all create test cases and refresh the scenarios pane; create mode explains
+      that scenarios need a saved template)
 
 ### 3.6 Backtest drill-in
 
