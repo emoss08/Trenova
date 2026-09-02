@@ -6,6 +6,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   equipment: "Equipment",
   origin: "Origin",
   destination: "Destination",
+  serviceType: "Service Type",
+  shipmentType: "Shipment Type",
   computed: "Computed Rollups",
   custom: "Custom Variables",
 };

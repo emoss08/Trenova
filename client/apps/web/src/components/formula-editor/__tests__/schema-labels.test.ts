@@ -34,3 +34,10 @@ describe("FUNCTION_CATEGORY_LABELS", () => {
     expect(FUNCTION_CATEGORY_LABELS.string).toBe("Text");
   });
 });
+
+describe("CATEGORY_LABELS for typed relations", () => {
+  it("names the service and shipment type groups", () => {
+    expect(CATEGORY_LABELS.serviceType).toBe("Service Type");
+    expect(CATEGORY_LABELS.shipmentType).toBe("Shipment Type");
+  });
+});

@@ -3,6 +3,7 @@ package resolver
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 // computeStops lists every stop on the shipment, in move and sequence order,
@@ -186,4 +187,95 @@ func optionalTimestamp(entity any, fieldName string) any {
 		return nil
 	}
 	return timestamp
+}
+
+// computeTotalCubicFeet sums the cube of every commodity line that has all
+// three dimensions. Lines without dimensions add nothing rather than failing,
+// so a partially measured shipment still prices; density tells the formula how
+// much of the weight the cube accounts for.
+func computeTotalCubicFeet(entity any) (any, error) {
+	total := 0.0
+	for _, record := range commodityRecords(entity) {
+		if cube, ok := record["cubicFeet"].(float64); ok {
+			total += cube
+		}
+	}
+	return total, nil
+}
+
+// computeDensity is total weight over total cube in pounds per cubic foot, or
+// nil when nothing has been measured, because a density of zero would look
+// like the lightest freight there is.
+func computeDensity(entity any) (any, error) {
+	rawCube, err := computeTotalCubicFeet(entity)
+	if err != nil {
+		return nil, err
+	}
+	cube, _ := rawCube.(float64)
+	if cube <= 0 {
+		return nil, nil //nolint:nilnil // no cube means density is unknown
+	}
+
+	rawWeight, err := computeTotalWeight(entity)
+	if err != nil {
+		return nil, err
+	}
+	weight, _ := rawWeight.(float64)
+
+	return weight / cube, nil
+}
+
+// computePrimaryFreightClass is the class of the heaviest commodity line: the
+// class most of the freight actually belongs to.
+func computePrimaryFreightClass(entity any) (any, error) {
+	primary := ""
+	heaviest := -1.0
+	for _, record := range commodityRecords(entity) {
+		class, _ := record["freightClass"].(string)
+		weight, _ := record["weight"].(float64)
+		if class == "" || weight <= heaviest {
+			continue
+		}
+		heaviest = weight
+		primary = class
+	}
+	return primary, nil
+}
+
+// computeHighestFreightClass is the numerically highest class on the shipment,
+// which is the class a mixed LTL shipment is rated at when the tariff has no
+// exception for mixing.
+func computeHighestFreightClass(entity any) (any, error) {
+	highest := ""
+	highestValue := -1.0
+	for _, record := range commodityRecords(entity) {
+		class, _ := record["freightClass"].(string)
+		if class == "" {
+			continue
+		}
+		value, err := strconv.ParseFloat(class, 64)
+		if err != nil {
+			continue
+		}
+		if value > highestValue {
+			highestValue = value
+			highest = class
+		}
+	}
+	return highest, nil
+}
+
+func commodityRecords(entity any) []map[string]any {
+	raw, err := computeCommodities(entity)
+	if err != nil {
+		return nil
+	}
+	lines, _ := raw.([]any)
+	records := make([]map[string]any, 0, len(lines))
+	for _, line := range lines {
+		if record, ok := line.(map[string]any); ok {
+			records = append(records, record)
+		}
+	}
+	return records
 }

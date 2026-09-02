@@ -172,3 +172,64 @@ func TestComputeCollections_AreEmptyWithoutData(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []any{}, commodities)
 }
+
+func TestComputeDimensionRollups(t *testing.T) {
+	t.Parallel()
+
+	r := laneResolver()
+	entity := &CollectionShipment{
+		Commodities: []CollectionShipmentCommodity{
+			{
+				Weight: 1200, Pieces: 4,
+				LengthFeet: ptrFloat(4), WidthFeet: ptrFloat(4), HeightFeet: ptrFloat(5),
+				Commodity: &CollectionCommodity{Name: "Batteries", FreightClass: "85"},
+			},
+			{
+				Weight: 300, Pieces: 1,
+				LengthFeet: ptrFloat(2), WidthFeet: ptrFloat(2), HeightFeet: ptrFloat(2),
+				Commodity: &CollectionCommodity{Name: "Paper", FreightClass: "55"},
+			},
+			{
+				Weight: 50, Pieces: 1,
+				Commodity: &CollectionCommodity{Name: "Foam", FreightClass: "250"},
+			},
+		},
+	}
+
+	cube, err := r.ResolveComputed(entity, "computeTotalCubicFeet")
+	require.NoError(t, err)
+	assert.InDelta(t, 328, cube, 0.0001, "320 + 8; a line without dimensions adds no cube")
+
+	density, err := r.ResolveComputed(entity, "computeDensity")
+	require.NoError(t, err)
+	assert.InDelta(t, 1550.0/328.0, density, 0.0001, "total weight over total cube")
+
+	primary, err := r.ResolveComputed(entity, "computePrimaryFreightClass")
+	require.NoError(t, err)
+	assert.Equal(t, "85", primary, "the heaviest line's class")
+
+	highest, err := r.ResolveComputed(entity, "computeHighestFreightClass")
+	require.NoError(t, err)
+	assert.Equal(t, "250", highest, "the least dense class governs a mixed shipment")
+}
+
+func TestComputeDimensionRollups_WithoutDimensionsOrClasses(t *testing.T) {
+	t.Parallel()
+
+	r := laneResolver()
+	entity := &CollectionShipment{
+		Commodities: []CollectionShipmentCommodity{{Weight: 500, Pieces: 2}},
+	}
+
+	cube, err := r.ResolveComputed(entity, "computeTotalCubicFeet")
+	require.NoError(t, err)
+	assert.InDelta(t, 0, cube, 0.0001)
+
+	density, err := r.ResolveComputed(entity, "computeDensity")
+	require.NoError(t, err)
+	assert.Nil(t, density, "no cube means no density, not a divide by zero")
+
+	primary, err := r.ResolveComputed(entity, "computePrimaryFreightClass")
+	require.NoError(t, err)
+	assert.Equal(t, "", primary)
+}

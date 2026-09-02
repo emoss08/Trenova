@@ -405,8 +405,11 @@ Every rating carries a trace that a non-programmer can read.
       `sum(map(stops, .weight ?? 0))` works while `sum(a, b, c)` keeps working, which is why
       the shadow stays; the studio's sample editor shows arrays as read-only text, so
       scenarios cannot yet author stop lists)
-- [ ] Dimensions and freight class for dim-weight formulas; `serviceType`,
-      `shipmentType`, `currency`
+- [x] Dimensions and freight class for dim-weight formulas; `serviceType`,
+      `shipmentType`, `currency` (`totalCubicFeet`, `density`, `primaryFreightClass`,
+      `highestFreightClass` rollups over the commodity lines; `serviceType` and
+      `shipmentType` objects with code and description. `currency` is deferred: neither the
+      shipment nor the organization carries a currency field today, only fuel indices do)
 - [ ] `fuelPrice` as a schema-level computed variable fed by the fuel-price job so
       FSC tables work in preview and scenarios
 
