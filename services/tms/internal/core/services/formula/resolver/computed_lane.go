@@ -23,37 +23,19 @@ func registerLaneComputed(r *Resolver) {
 }
 
 func firstStopOf(entity any) any {
-	moves, err := getFieldSlice(entity, "Moves")
-	if err != nil {
+	stops, err := orderedStops(entity)
+	if err != nil || len(stops) == 0 {
 		return nil
 	}
-
-	for _, move := range moves {
-		stops, stopsErr := getFieldSlice(move, "Stops")
-		if stopsErr != nil || len(stops) == 0 {
-			continue
-		}
-		return stops[0]
-	}
-
-	return nil
+	return stops[0]
 }
 
 func lastStopOf(entity any) any {
-	moves, err := getFieldSlice(entity, "Moves")
-	if err != nil {
+	stops, err := orderedStops(entity)
+	if err != nil || len(stops) == 0 {
 		return nil
 	}
-
-	for i := len(moves) - 1; i >= 0; i-- {
-		stops, stopsErr := getFieldSlice(moves[i], "Stops")
-		if stopsErr != nil || len(stops) == 0 {
-			continue
-		}
-		return stops[len(stops)-1]
-	}
-
-	return nil
+	return stops[len(stops)-1]
 }
 
 func stopLocationString(stop any, fieldName string) string {

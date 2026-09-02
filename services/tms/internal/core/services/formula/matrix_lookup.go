@@ -60,7 +60,9 @@ type twoAxisTable struct {
 	rowBands     []rateBand
 	colBands     []rateBand
 	byRow        map[string][]twoAxisCell
-	cells        []twoAxisCell
+	// byRowBand groups a banded row axis's cells by band, so a lookup walks
+	// the few sorted bands instead of every cell in the matrix.
+	byRowBand map[string][]twoAxisCell
 }
 
 // matrixLookup answers a formula's lookup() and lookup2() calls from rate
@@ -228,7 +230,14 @@ func indexTwoAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupData)
 			table.byRow[cell.rowKey] = append(table.byRow[cell.rowKey], cell)
 		}
 	} else {
-		table.cells = cells
+		table.byRowBand = make(map[string][]twoAxisCell)
+		for _, cell := range cells {
+			if !cell.rowMin.Valid {
+				continue
+			}
+			label := bandLabel(cell.rowMin.Decimal, cell.rowMax)
+			table.byRowBand[label] = append(table.byRowBand[label], cell)
+		}
 	}
 
 	lookup.two[item.Matrix.Code] = table
@@ -372,12 +381,20 @@ func (t *twoAxisTable) rowCandidates(table string, rowKey any) ([]twoAxisCell, b
 	return candidates, false, nil
 }
 
+// rowCellsContaining walks the row bands, which are sorted by floor, and stops
+// at the first floor above the quantity; every band at or below it that still
+// contains the quantity contributes its cells. Overlapping bands are all
+// candidates, exactly as a scan over every cell would have found them.
 func (t *twoAxisTable) rowCellsContaining(quantity decimal.Decimal) []twoAxisCell {
 	candidates := make([]twoAxisCell, 0, 4)
-	for _, cell := range t.cells {
-		if bandContains(cell.rowMin, cell.rowMax, quantity) {
-			candidates = append(candidates, cell)
+	for _, band := range t.rowBands {
+		if quantity.LessThan(band.min) {
+			break
 		}
+		if band.max.Valid && quantity.GreaterThanOrEqual(band.max.Decimal) {
+			continue
+		}
+		candidates = append(candidates, t.byRowBand[bandLabel(band.min, band.max)]...)
 	}
 	return candidates
 }

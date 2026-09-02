@@ -2,6 +2,7 @@ package formula_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
@@ -765,4 +766,60 @@ func TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper(t *testing.T) {
 
 	_, err = banded.DeficitWeight("capped", 9000)
 	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableMiss, "a strict table still misses")
+}
+
+func TestMatrixLookup_TwoAxisRangeRowsResolveAcrossManyBandsAndOverlaps(t *testing.T) {
+	t.Parallel()
+
+	matrixID := pulid.MustNew("rmx_")
+	cells := make([]*ratematrix.RateMatrixCell, 0, 50*40+2)
+	for band := range 50 {
+		low := decimal.NewFromInt(int64(band * 100))
+		high := decimal.NewFromInt(int64((band + 1) * 100))
+		for zone := range 40 {
+			cells = append(cells, &ratematrix.RateMatrixCell{
+				ID:           pulid.MustNew("rmc_"),
+				RateMatrixID: matrixID,
+				D0Min:        decimal.NewNullDecimal(low),
+				D0Max:        decimal.NewNullDecimal(high),
+				D1Key:        fmt.Sprintf("Z%02d", zone),
+				Value:        decimal.NewFromInt(int64(band*1000 + zone)),
+			})
+		}
+	}
+	// An overlapping catch-all band: any weight from 4000 up, for one zone.
+	cells = append(cells, &ratematrix.RateMatrixCell{
+		ID:           pulid.MustNew("rmc_"),
+		RateMatrixID: matrixID,
+		D0Min:        decimal.NewNullDecimal(decimal.NewFromInt(4000)),
+		D1Key:        "HEAVY",
+		Value:        decimal.NewFromInt(999999),
+	})
+
+	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{{
+		Matrix: &ratematrix.RateMatrix{
+			ID:   matrixID,
+			Code: "big_grid",
+			Dimensions: []*ratematrix.RateMatrixDimension{
+				{Position: 0, Kind: ratematrix.DimensionKindWeightBreak, MatchMode: ratematrix.MatchModeRange},
+				{Position: 1, Kind: ratematrix.DimensionKindZone, MatchMode: ratematrix.MatchModeExact},
+			},
+		},
+		Cells: cells,
+	}})
+
+	value, err := lookup.Lookup2("big_grid", 1250, "Z07")
+	require.NoError(t, err)
+	assert.InDelta(t, 12007, value, 0.0001, "band 12 (1200–1300), zone 7")
+
+	value, err = lookup.Lookup2("big_grid", 4999, "HEAVY")
+	require.NoError(t, err)
+	assert.InDelta(t, 999999, value, 0.0001, "the open catch-all band still matches alongside the fixed bands")
+
+	value, err = lookup.Lookup2("big_grid", 4999, "Z00")
+	require.NoError(t, err)
+	assert.InDelta(t, 49000, value, 0.0001, "overlapping bands are both candidates; the zone decides")
+
+	_, err = lookup.Lookup2("big_grid", 5000, "Z00")
+	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableMiss, "past every fixed band with no policy")
 }

@@ -43,6 +43,9 @@ func (b *EnvironmentBuilder) Build(
 
 	env := make(map[string]any, len(definition.FieldSources))
 	resolveFailures := make(map[string]error)
+	// Computed variables share one walk of the record's moves and stops for
+	// this build; field reads go straight to the record.
+	computedEntity := resolver.Memoize(entity)
 
 	for fieldPath, source := range definition.FieldSources {
 		var value any
@@ -54,7 +57,7 @@ func (b *EnvironmentBuilder) Build(
 		}
 
 		if source.Computed {
-			value, err = b.resolver.ResolveComputed(entity, source.Function)
+			value, err = b.resolver.ResolveComputed(computedEntity, source.Function)
 		} else {
 			value, err = b.resolver.ResolveField(entity, source)
 		}

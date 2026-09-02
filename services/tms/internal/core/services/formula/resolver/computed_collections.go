@@ -14,22 +14,16 @@ import (
 func computeStops(entity any) (any, error) {
 	stops := make([]any, 0, 4)
 
-	moves, err := getFieldSlice(entity, "Moves")
+	ordered, err := orderedStops(entity)
 	if err != nil {
 		return stops, err
 	}
 
-	for _, move := range moves {
-		moveStops, stopsErr := getFieldSlice(move, "Stops")
-		if stopsErr != nil {
+	for _, stop := range ordered {
+		if stop == nil || isNilInterface(stop) {
 			continue
 		}
-		for _, stop := range moveStops {
-			if stop == nil || isNilInterface(stop) {
-				continue
-			}
-			stops = append(stops, stopRecord(stop))
-		}
+		stops = append(stops, stopRecord(stop))
 	}
 
 	return stops, nil

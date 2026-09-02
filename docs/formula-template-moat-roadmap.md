@@ -434,9 +434,12 @@ Every rating carries a trace that a non-programmer can read.
       hashed once and reused by every breakdown line; a record that truly lacks a value
       now fails at run time and is mapped to the same missing-field guidance;
       `Params.CompileCacheSize`)
-- [ ] Boxed `Moves`/`Stops` walk cached once per env build
-      (`formula/resolver/computed_lane.go`)
-- [ ] Two-axis range-row tables use a sorted index instead of a linear scan
+- [x] Boxed `Moves`/`Stops` walk cached once per env build
+      (`resolver.Memoize` wraps the record for computed calls; every stop walker reads
+      through one memoized `orderedStops`, and field accessors unwrap transparently)
+- [x] Two-axis range-row tables use a sorted index instead of a linear scan (cells grouped
+      by row band; a lookup walks the sorted band floors and stops at the first floor above
+      the quantity, keeping overlapping bands as candidates)
 
 ### 4.4 Service-layer structure
 

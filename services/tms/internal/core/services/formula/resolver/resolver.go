@@ -104,14 +104,18 @@ func (r *Resolver) ResolveComputed(
 	if !ok {
 		return nil, errors.NewComputeError(
 			functionName,
-			reflect.TypeOf(entity).String(),
+			reflect.TypeOf(Unwrap(entity)).String(),
 			ErrComputedNotFound,
 		)
 	}
 
 	result, err := fn(entity)
 	if err != nil {
-		return nil, errors.NewComputeError(functionName, reflect.TypeOf(entity).String(), err)
+		return nil, errors.NewComputeError(
+			functionName,
+			reflect.TypeOf(Unwrap(entity)).String(),
+			err,
+		)
 	}
 
 	return result, nil

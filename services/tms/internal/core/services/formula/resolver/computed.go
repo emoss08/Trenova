@@ -39,7 +39,7 @@ func RegisterDefaultComputed(r *Resolver) {
 }
 
 func computeTotalDistance(entity any) (any, error) {
-	moves, err := getFieldSlice(entity, "Moves")
+	moves, err := movesOf(entity)
 	if err != nil {
 		return 0.0, err
 	}
@@ -55,18 +55,12 @@ func computeTotalDistance(entity any) (any, error) {
 }
 
 func computeTotalStops(entity any) (any, error) {
-	moves, err := getFieldSlice(entity, "Moves")
+	stops, err := orderedStops(entity)
 	if err != nil {
 		return 0, err
 	}
 
-	var total int
-	for _, move := range moves {
-		stops, stopsErr := getFieldSlice(move, "Stops")
-		if stopsErr == nil {
-			total += len(stops)
-		}
-	}
+	total := len(stops)
 
 	return total, nil
 }
@@ -188,7 +182,7 @@ func computeTotalLinearFeet(entity any) (any, error) {
 }
 
 func computeTotalHours(entity any) (any, error) {
-	moves, err := getFieldSlice(entity, "Moves")
+	stops, err := orderedStops(entity)
 	if err != nil {
 		return 0.0, err
 	}
@@ -199,28 +193,21 @@ func computeTotalHours(entity any) (any, error) {
 		found       bool
 	)
 
-	for _, move := range moves {
-		stops, stopsErr := getFieldSlice(move, "Stops")
-		if stopsErr != nil {
+	for _, stop := range stops {
+		start, ok := stopWindowStart(stop)
+		if !ok {
 			continue
 		}
 
-		for _, stop := range stops {
-			start, ok := stopWindowStart(stop)
-			if !ok {
-				continue
-			}
+		end := stopWindowEnd(stop, start)
 
-			end := stopWindowEnd(stop, start)
-
-			if !found || start < windowStart {
-				windowStart = start
-			}
-			if !found || end > windowEnd {
-				windowEnd = end
-			}
-			found = true
+		if !found || start < windowStart {
+			windowStart = start
 		}
+		if !found || end > windowEnd {
+			windowEnd = end
+		}
+		found = true
 	}
 
 	if !found || windowEnd <= windowStart {
@@ -259,7 +246,7 @@ func stopWindowEnd(stop any, fallback int64) int64 {
 }
 
 func getFieldValue(entity any, fieldName string) (any, error) {
-	v := reflect.ValueOf(entity)
+	v := reflect.ValueOf(Unwrap(entity))
 	if v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return nil, ErrNilPointer
