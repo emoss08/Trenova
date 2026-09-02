@@ -16,13 +16,16 @@ type LaneState struct {
 type LaneLocation struct {
 	City       string
 	PostalCode string
+	Timezone   string
 	State      *LaneState
 }
 
 type LaneStop struct {
 	Location             *LaneLocation
 	ActualArrival        *int64
+	ActualDeparture      *int64
 	ScheduledWindowStart int64
+	ScheduledWindowEnd   int64
 }
 
 type LaneMove struct {
@@ -315,4 +318,87 @@ func TestComputePickupTemporal_NoTimestamps(t *testing.T) {
 	isWeekend, err := r.ResolveComputed(entity, "computeIsWeekendPickup")
 	require.NoError(t, err)
 	assert.Equal(t, false, isWeekend)
+}
+
+// Saturday 2026-06-06 01:30 UTC is Friday 2026-06-05 20:30 in Chicago. A
+// pickup at that instant is a weekday evening for the shipper, and pricing
+// weekend surcharges by UTC would charge them for a Saturday they never saw.
+const saturdayEarlyUTC int64 = 1780709400
+
+func TestLaneTimeVariablesUseThePickupLocationTimezone(t *testing.T) {
+	t.Parallel()
+
+	r := laneResolver()
+	arrival := saturdayEarlyUTC
+	departure := saturdayEarlyUTC + 6*3600
+
+	chicago := laneLocation("Chicago", "60601", "IL")
+	chicago.Timezone = "America/Chicago"
+	entity := &LaneShipment{
+		Moves: []LaneMove{{Stops: []LaneStop{
+			{Location: chicago, ActualArrival: &arrival},
+			{Location: laneLocation("Dallas", "75201", "TX"), ActualDeparture: &departure},
+		}}},
+	}
+
+	hour, err := r.ResolveComputed(entity, "computePickupHour")
+	require.NoError(t, err)
+	assert.Equal(t, 20, hour, "hour is local to the pickup location")
+
+	weekend, err := r.ResolveComputed(entity, "computeIsWeekendPickup")
+	require.NoError(t, err)
+	assert.Equal(t, false, weekend, "Friday evening in Chicago is not a weekend pickup")
+
+	day, err := r.ResolveComputed(entity, "computePickupDayOfWeek")
+	require.NoError(t, err)
+	assert.Equal(t, int(time.Friday), day)
+
+	pickupDate, err := r.ResolveComputed(entity, "computePickupDate")
+	require.NoError(t, err)
+	pickup, ok := pickupDate.(time.Time)
+	require.True(t, ok, "pickupDate is a real date for expr, got %T", pickupDate)
+	assert.Equal(t, "America/Chicago", pickup.Location().String())
+	assert.Equal(t, saturdayEarlyUTC, pickup.Unix())
+
+	deliveryDate, err := r.ResolveComputed(entity, "computeDeliveryDate")
+	require.NoError(t, err)
+	delivery, ok := deliveryDate.(time.Time)
+	require.True(t, ok)
+	assert.Equal(t, departure, delivery.Unix())
+	assert.Equal(t, "UTC", delivery.Location().String(), "a location without a timezone stays UTC")
+}
+
+func TestLaneTimeVariables_UnknownTimezoneFallsBackToUTC(t *testing.T) {
+	t.Parallel()
+
+	r := laneResolver()
+	arrival := saturdayEarlyUTC
+	somewhere := laneLocation("Nowhere", "00000", "XX")
+	somewhere.Timezone = "Mars/Olympus_Mons"
+	entity := &LaneShipment{
+		Moves: []LaneMove{{Stops: []LaneStop{{Location: somewhere, ActualArrival: &arrival}}}},
+	}
+
+	hour, err := r.ResolveComputed(entity, "computePickupHour")
+	require.NoError(t, err)
+	assert.Equal(t, 1, hour)
+
+	weekend, err := r.ResolveComputed(entity, "computeIsWeekendPickup")
+	require.NoError(t, err)
+	assert.Equal(t, true, weekend)
+}
+
+func TestLaneDates_AreNilWithoutStops(t *testing.T) {
+	t.Parallel()
+
+	r := laneResolver()
+	entity := &LaneShipment{}
+
+	pickupDate, err := r.ResolveComputed(entity, "computePickupDate")
+	require.NoError(t, err)
+	assert.Nil(t, pickupDate, "no stop means no date, not year one")
+
+	deliveryDate, err := r.ResolveComputed(entity, "computeDeliveryDate")
+	require.NoError(t, err)
+	assert.Nil(t, deliveryDate)
 }

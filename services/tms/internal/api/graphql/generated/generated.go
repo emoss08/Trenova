@@ -3731,6 +3731,7 @@ type ComplexityRoot struct {
 		State                func(childComplexity int) int
 		StateID              func(childComplexity int) int
 		Status               func(childComplexity int) int
+		Timezone             func(childComplexity int) int
 		UpdatedAt            func(childComplexity int) int
 		Version              func(childComplexity int) int
 	}
@@ -24563,6 +24564,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Location.Status(childComplexity), true
+	case "Location.timezone":
+		if e.ComplexityRoot.Location.Timezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Location.Timezone(childComplexity), true
 	case "Location.updatedAt":
 		if e.ComplexityRoot.Location.UpdatedAt == nil {
 			break
@@ -50721,6 +50728,7 @@ type Location {
   addressLine2: String!
   city: String!
   postalCode: String!
+  timezone: String!
   placeId: String!
   isGeocoded: Boolean!
   longitude: Float
@@ -62136,6 +62144,8 @@ func (ec *executionContext) childFields_Location(ctx context.Context, field grap
 		return ec.fieldContext_Location_city(ctx, field)
 	case "postalCode":
 		return ec.fieldContext_Location_postalCode(ctx, field)
+	case "timezone":
+		return ec.fieldContext_Location_timezone(ctx, field)
 	case "placeId":
 		return ec.fieldContext_Location_placeId(ctx, field)
 	case "isGeocoded":
@@ -140872,6 +140882,29 @@ func (ec *executionContext) _Location_postalCode(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_Location_postalCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Location", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Location_timezone(ctx context.Context, field graphql.CollectedField, obj *location.Location) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Location_timezone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Timezone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Location_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Location", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -254333,6 +254366,11 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "postalCode":
 			out.Values[i] = ec._Location_postalCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "timezone":
+			out.Values[i] = ec._Location_timezone(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -38643,6 +38643,9 @@ const docTemplate = `{
                 "status": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_pkg_domaintypes.Status"
                 },
+                "timezone": {
+                    "type": "string"
+                },
                 "updatedAt": {
                     "type": "integer"
                 },

@@ -58,6 +58,7 @@ type FieldSource struct {
 
 type Property struct {
 	Type        any                 `json:"type"`
+	Format      string              `json:"format,omitempty"`
 	Description string              `json:"description"`
 	Enum        []string            `json:"enum,omitempty"`
 	Minimum     *float64            `json:"minimum,omitempty"`
@@ -74,4 +75,13 @@ type FormulaContextExtension struct {
 	Entities    []string `json:"entities"`
 	Permissions []string `json:"permissions"`
 	Tags        []string `json:"tags"`
+}
+
+const FormatDateTime = "date-time"
+
+// IsDateTime reports whether the property carries a date rather than plain
+// text. JSON Schema has no date type, so the shipment schema declares one as a
+// string with the date-time format; the engine binds it as a real time value.
+func (p Property) IsDateTime() bool {
+	return p.Format == FormatDateTime
 }

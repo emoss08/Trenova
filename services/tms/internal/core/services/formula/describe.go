@@ -82,6 +82,9 @@ func collectSchemaVariables(
 		}
 
 		variableType, nullable := normalizePropertyType(prop.Type)
+		if prop.IsDateTime() {
+			variableType = "datetime"
+		}
 
 		variableCategory := category
 		if prop.Source.Computed && prefix == "" {

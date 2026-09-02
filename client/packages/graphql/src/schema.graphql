@@ -5598,6 +5598,7 @@ type Location {
   state: UsState
   stateId: ID!
   status: EntityStatus!
+  timezone: String!
   updatedAt: Int!
   version: Int!
 }

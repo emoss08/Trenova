@@ -87,6 +87,8 @@ func guardFor(field, fieldType string) string {
 		return "coalesce(" + field + ", false)"
 	case "string":
 		return "coalesce(" + field + ", \"\")"
+	case "datetime":
+		return "coalesce(" + field + ", now())"
 	default:
 		return "coalesce(" + field + ", 0)"
 	}
@@ -115,6 +117,14 @@ func nullablePaths(properties map[string]formulatypes.Property, prefix string) m
 }
 
 func propertyTypeInfo(prop formulatypes.Property) (string, bool) {
+	fieldType, nullable := rawPropertyTypeInfo(prop)
+	if prop.IsDateTime() {
+		return "datetime", nullable
+	}
+	return fieldType, nullable
+}
+
+func rawPropertyTypeInfo(prop formulatypes.Property) (string, bool) {
 	nullable := prop.Source.Nullable
 
 	switch typed := prop.Type.(type) {

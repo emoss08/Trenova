@@ -431,7 +431,7 @@
             }
         },
         "pickupDayOfWeek": {
-            "description": "Day of week of the pickup in UTC (0 = Sunday through 6 = Saturday), from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
+            "description": "Day of week of the pickup (0 = Sunday through 6 = Saturday) in the pickup location's local time, or UTC when the location has no timezone; from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
             "type": "integer",
             "minimum": 0,
             "maximum": 6,
@@ -444,7 +444,7 @@
             }
         },
         "pickupHour": {
-            "description": "Hour of the pickup in UTC (0-23), from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
+            "description": "Hour of the pickup (0-23) in the pickup location's local time, or UTC when the location has no timezone; from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
             "type": "integer",
             "minimum": 0,
             "maximum": 23,
@@ -457,7 +457,7 @@
             }
         },
         "pickupMonth": {
-            "description": "Month of the pickup in UTC (1-12); 0 when the shipment has no stops",
+            "description": "Month of the pickup (1-12) in the pickup location's local time, or UTC when the location has no timezone; 0 when the shipment has no stops",
             "type": "integer",
             "minimum": 0,
             "maximum": 12,
@@ -470,11 +470,37 @@
             }
         },
         "isWeekendPickup": {
-            "description": "Whether the pickup falls on a Saturday or Sunday in UTC",
+            "description": "Whether the pickup falls on a Saturday or Sunday in the pickup location's local time, or UTC when the location has no timezone",
             "type": "boolean",
             "x-source": {
                 "computed": true,
                 "function": "computeIsWeekendPickup",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "pickupDate": {
+            "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first stop's actual arrival or scheduled window. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no stops",
+            "type": ["string", "null"],
+            "format": "date-time",
+            "x-source": {
+                "computed": true,
+                "function": "computePickupDate",
+                "nullable": true,
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "deliveryDate": {
+            "description": "The delivery as a date in the delivery location's local time (UTC when the location has no timezone), from the last stop's actual departure, actual arrival, or scheduled window end; empty when the shipment has no stops",
+            "type": ["string", "null"],
+            "format": "date-time",
+            "x-source": {
+                "computed": true,
+                "function": "computeDeliveryDate",
+                "nullable": true,
                 "requires": [
                     "Moves"
                 ]

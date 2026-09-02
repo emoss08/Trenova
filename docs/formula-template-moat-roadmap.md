@@ -391,10 +391,13 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 4.2 Schema expansion
 
-- [ ] `pickupDate`/`deliveryDate` as expr dates plus per-location timezone (new
+- [x] `pickupDate`/`deliveryDate` as expr dates plus per-location timezone (new
       `timezone` column on `locations`, IANA) so `pickupHour`/`isWeekendPickup` are
       local-time correct (`formula/resolver/computed_lane.go`,
-      `schema/definitions/shipment.schema.json`)
+      `schema/definitions/shipment.schema.json`; dates are `string` + `format: date-time`
+      in the schema because the 2020-12 metaschema has no date type, and the engine binds
+      them as real `time.Time` values, coercing text samples from the studio; a location
+      without a timezone, or with one the runtime cannot load, stays UTC)
 - [ ] `stops[]` (state, type, appointment window) and `commodities[]` (class,
       dims, hazmat) exposed as arrays; stop shadowing expr's `sum` so `map`/
       `filter`/`sum` work over them

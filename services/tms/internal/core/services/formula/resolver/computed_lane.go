@@ -18,6 +18,8 @@ func registerLaneComputed(r *Resolver) {
 	r.RegisterComputed("computePickupHour", computePickupHour)
 	r.RegisterComputed("computePickupMonth", computePickupMonth)
 	r.RegisterComputed("computeIsWeekendPickup", computeIsWeekendPickup)
+	r.RegisterComputed("computePickupDate", computePickupDate)
+	r.RegisterComputed("computeDeliveryDate", computeDeliveryDate)
 }
 
 func firstStopOf(entity any) any {
@@ -119,6 +121,10 @@ func computeDestinationZip(entity any) (any, error) {
 	return stopLocationString(lastStopOf(entity), "PostalCode"), nil
 }
 
+// pickupTime is the first stop's arrival in that stop's local time. A
+// weekend or after-hours surcharge is about the shipper's clock, not the
+// server's, so the location's IANA timezone decides; a location without one
+// falls back to UTC, as does one whose zone the runtime cannot load.
 func pickupTime(entity any) (time.Time, bool) {
 	stop := firstStopOf(entity)
 	if stop == nil {
@@ -130,7 +136,57 @@ func pickupTime(entity any) (time.Time, bool) {
 		return time.Time{}, false
 	}
 
-	return time.Unix(timestamp, 0).UTC(), true
+	return stopLocalTime(stop, timestamp), true
+}
+
+// deliveryTime is the last stop's departure in that stop's local time,
+// falling back through actual arrival and the scheduled window end.
+func deliveryTime(entity any) (time.Time, bool) {
+	stop := lastStopOf(entity)
+	if stop == nil {
+		return time.Time{}, false
+	}
+
+	timestamp := stopWindowEnd(stop, 0)
+	if timestamp <= 0 {
+		return time.Time{}, false
+	}
+
+	return stopLocalTime(stop, timestamp), true
+}
+
+func stopLocalTime(stop any, timestamp int64) time.Time {
+	instant := time.Unix(timestamp, 0).UTC()
+
+	zoneName := stopLocationString(stop, "Timezone")
+	if zoneName == "" {
+		return instant
+	}
+
+	zone, err := time.LoadLocation(zoneName)
+	if err != nil {
+		return instant
+	}
+
+	return instant.In(zone)
+}
+
+func computePickupDate(entity any) (any, error) {
+	pickup, ok := pickupTime(entity)
+	if !ok {
+		return nil, nil //nolint:nilnil // a shipment without stops has no pickup date
+	}
+
+	return pickup, nil
+}
+
+func computeDeliveryDate(entity any) (any, error) {
+	delivery, ok := deliveryTime(entity)
+	if !ok {
+		return nil, nil //nolint:nilnil // a shipment without stops has no delivery date
+	}
+
+	return delivery, nil
 }
 
 func computePickupDayOfWeek(entity any) (any, error) {
