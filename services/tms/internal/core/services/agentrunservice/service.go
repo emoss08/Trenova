@@ -35,6 +35,7 @@ type Params struct {
 	Repo         repositories.AgentRunRepository
 	Control      services.AgentControlService
 	Workflows    services.WorkflowStarter
+	Validator    *Validator
 	AuditService services.AuditService
 }
 
@@ -42,6 +43,7 @@ type Service struct {
 	l         *zap.Logger
 	repo      repositories.AgentRunRepository
 	control   services.AgentControlService
+	validator *Validator
 	workflows services.WorkflowStarter
 	audit     services.AuditService
 }
@@ -51,6 +53,7 @@ func New(p Params) services.AgentRunService {
 		l:         p.Logger.Named("service.agentrun"),
 		repo:      p.Repo,
 		control:   p.Control,
+		validator: p.Validator,
 		workflows: p.Workflows,
 		audit:     p.AuditService,
 	}
@@ -87,10 +90,8 @@ func (s *Service) Start(
 		InputContextHash: provisionalHash,
 	}
 
-	me := errortypes.NewMultiError()
-	run.Validate(me)
-	if me.HasErrors() {
-		return nil, me
+	if multiErr := s.validator.ValidateCreate(ctx, run); multiErr != nil {
+		return nil, multiErr
 	}
 
 	created, err := s.repo.Create(ctx, run)
@@ -177,10 +178,8 @@ func (s *Service) StartInline(
 		StartedAt:        timeutils.NowUnix(),
 	}
 
-	me := errortypes.NewMultiError()
-	run.Validate(me)
-	if me.HasErrors() {
-		return nil, me
+	if multiErr := s.validator.ValidateCreate(ctx, run); multiErr != nil {
+		return nil, multiErr
 	}
 
 	created, err := s.repo.Create(ctx, run)

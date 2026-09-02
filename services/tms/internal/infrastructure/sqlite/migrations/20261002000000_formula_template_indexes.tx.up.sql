@@ -8,6 +8,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uk_formula_templates_name" ON "formula_templa
 CREATE INDEX IF NOT EXISTS "idx_formula_templates_tenant_created" ON "formula_templates" ("organization_id", "business_unit_id", "created_at" DESC);
 
 --bun:split
-CREATE INDEX IF NOT EXISTS "idx_accessorial_charges_formula_template" ON "accessorial_charges" ("formula_template_id", "organization_id", "business_unit_id")
+CREATE INDEX IF NOT EXISTS "idx_rate_matrices_formula_template" ON "rate_matrices" ("formula_template_id", "organization_id", "business_unit_id")
+WHERE
+    "formula_template_id" IS NOT NULL;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS "idx_rate_agreement_rules_formula_template" ON "rate_agreement_rules" ("formula_template_id", "organization_id", "business_unit_id")
+WHERE
+    "formula_template_id" IS NOT NULL;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS "idx_rate_agreement_accessorials_formula_template" ON "rate_agreement_accessorials" ("formula_template_id", "organization_id", "business_unit_id")
 WHERE
     "formula_template_id" IS NOT NULL;

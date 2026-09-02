@@ -510,13 +510,10 @@ func (r *repository) CountUsages(
 		buncolgen.ShipmentColumns.FormulaTemplateID,
 		buncolgen.ShipmentScopeTenant,
 	)
-	accessorialUsage := r.usageCount(ctx, req, "accessorial_charge",
-		buncolgen.AccessorialChargeTable,
-		// accessorial_charges.formula_template_id exists in the schema but the
-		// accessorial charge model does not map it, so the generator has no
-		// helper for it; the column is still built through buncolgen.
-		buncolgen.NewColumn("formula_template_id", buncolgen.AccessorialChargeTable.Alias),
-		buncolgen.AccessorialChargeScopeTenant,
+	matrixUsage := r.usageCount(ctx, req, "rate_matrix",
+		buncolgen.RateMatrixTable,
+		buncolgen.RateMatrixColumns.FormulaTemplateID,
+		buncolgen.RateMatrixScopeTenant,
 	)
 	ruleUsage := r.usageCount(ctx, req, "rate_agreement_rule",
 		buncolgen.RateAgreementRuleTable,
@@ -532,7 +529,7 @@ func (r *repository) CountUsages(
 	var results []usageResult
 	err := r.db.DBForContext(ctx).NewSelect().
 		TableExpr("(?) AS shipment_usage", shipmentUsage).
-		UnionAll(accessorialUsage).
+		UnionAll(matrixUsage).
 		UnionAll(ruleUsage).
 		UnionAll(agreementAccessorialUsage).
 		Scan(ctx, &results)

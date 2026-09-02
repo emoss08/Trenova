@@ -34,7 +34,7 @@ func TestStatsQueryCountsEveryConsumerInOneStatement(t *testing.T) {
 
 	for _, table := range []string{
 		"shipments",
-		"accessorial_charges",
+		"rate_matrices",
 		"rate_agreement_rules",
 		"rate_agreement_accessorials",
 		"formula_template_test_cases",

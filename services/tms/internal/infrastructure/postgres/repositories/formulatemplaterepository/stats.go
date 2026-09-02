@@ -37,7 +37,7 @@ func statsQuery(
 		ColumnExpr("ft.id AS id").
 		ColumnExpr(
 			consumer("shipments")+" + "+
-				consumer("accessorial_charges")+" + "+
+				consumer("rate_matrices")+" + "+
 				consumer("rate_agreement_rules")+" + "+
 				consumer("rate_agreement_accessorials")+" AS usage_count",
 		).

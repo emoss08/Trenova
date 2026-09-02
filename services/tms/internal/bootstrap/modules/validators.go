@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
@@ -108,14 +109,16 @@ func ProvideValidationContextFactory() ValidationContextFactory {
 	return &defaultValidationContextFactory{}
 }
 
-var ValidationFrameworkModule = fx.Module("validation-framework",
+var ValidationFrameworkModule = fx.Module(
+	"validation-framework",
 	fx.Provide(
 		ProvideValidationEngineFactory,
 		ProvideValidationContextFactory,
 	),
 )
 
-var ValidatorModule = fx.Module("validators",
+var ValidatorModule = fx.Module(
+	"validators",
 	fx.Provide(
 		organizationservice.NewValidator,
 		iamservice.NewValidator,
@@ -175,6 +178,7 @@ var ValidatorModule = fx.Module("validators",
 		documentpacketruleservice.NewValidator,
 		documenttemplateservice.NewValidator,
 		billingqueueservice.NewValidator,
+		agentrunservice.NewValidator,
 	),
 	fx.Options(
 		ValidationFrameworkModule,

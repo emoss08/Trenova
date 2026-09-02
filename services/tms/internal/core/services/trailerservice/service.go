@@ -217,7 +217,7 @@ func (s *Service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
@@ -331,19 +331,20 @@ func (s *Service) Update(
 		updatedEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceTrailer,
-		ResourceID:     updatedEntity.GetID().String(),
-		Operation:      permission.OpUpdate,
-		UserID:         auditActor.UserID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		APIKeyID:       auditActor.APIKeyID,
-		CurrentState:   jsonutils.MustToJSON(updatedEntity),
-		PreviousState:  jsonutils.MustToJSON(original),
-		OrganizationID: updatedEntity.OrganizationID,
-		BusinessUnitID: updatedEntity.BusinessUnitID,
-	},
+	if err = s.auditService.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTrailer,
+			ResourceID:     updatedEntity.GetID().String(),
+			Operation:      permission.OpUpdate,
+			UserID:         auditActor.UserID,
+			PrincipalType:  auditActor.PrincipalType,
+			PrincipalID:    auditActor.PrincipalID,
+			APIKeyID:       auditActor.APIKeyID,
+			CurrentState:   jsonutils.MustToJSON(updatedEntity),
+			PreviousState:  jsonutils.MustToJSON(original),
+			OrganizationID: updatedEntity.OrganizationID,
+			BusinessUnitID: updatedEntity.BusinessUnitID,
+		},
 		auditservice.WithComment("Trailer updated"),
 		auditservice.WithDiff(original, updatedEntity),
 	); err != nil {
