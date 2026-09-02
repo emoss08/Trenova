@@ -80,6 +80,7 @@ type matrixLookup struct {
 var (
 	_ formulatemplatetypes.RateTableLookup = (*matrixLookup)(nil)
 	_ formulatemplatetypes.LookupExplainer = (*matrixLookup)(nil)
+	_ formulatemplatetypes.BandedLookup    = (*matrixLookup)(nil)
 )
 
 // NewMatrixLookup builds the lookup provider from every one- and two-axis
@@ -666,4 +667,113 @@ func bandLabel(low decimal.Decimal, high decimal.NullDecimal) string {
 		return low.String() + "–" + high.Decimal.String()
 	}
 	return low.String() + "+"
+}
+
+// LookupInterp reads a banded table as a curve through its floors: the value
+// at a key between two floors is the straight line between those bands'
+// values. Keys below the first floor hold the first value and keys past the
+// last floor hold the last, so a fuel curve never extrapolates.
+func (l *matrixLookup) LookupInterp(table string, key any) (float64, error) {
+	t, err := l.bandedTable(table)
+	if err != nil {
+		return 0, err
+	}
+
+	numericKey, err := keyToDecimal(key)
+	if err != nil {
+		return 0, fmt.Errorf("rate table %q: %w", table, err)
+	}
+
+	return interpolateBands(t.bands, numericKey), nil
+}
+
+// DeficitWeight returns the weight to bill under a per-unit break table: the
+// actual weight, unless charging the next break's minimum at the next break's
+// rate is cheaper, in which case the shipment is rated as if it weighed that
+// minimum. That is the deficit-weight rule of hundredweight tariffs.
+func (l *matrixLookup) DeficitWeight(table string, weight any) (float64, error) {
+	t, err := l.bandedTable(table)
+	if err != nil {
+		return 0, err
+	}
+
+	quantity, err := keyToDecimal(weight)
+	if err != nil {
+		return 0, fmt.Errorf("rate table %q: %w", table, err)
+	}
+
+	band, _, err := resolveBand(table, t, weight)
+	if err != nil {
+		return 0, err
+	}
+
+	actual := quantity.InexactFloat64()
+	next, ok := nextBand(t.bands, band)
+	if !ok {
+		return actual, nil
+	}
+
+	breakWeight := next.min.InexactFloat64()
+	if breakWeight*next.value < actual*band.value {
+		return breakWeight, nil
+	}
+
+	return actual, nil
+}
+
+func (l *matrixLookup) bandedTable(table string) (rangeTable, error) {
+	if t, ok := l.ranges[table]; ok {
+		if len(t.bands) == 0 {
+			return rangeTable{}, fmt.Errorf("rate table %q has no bands", table)
+		}
+		return t, nil
+	}
+	if _, ok := l.exact[table]; ok {
+		return rangeTable{}, fmt.Errorf(
+			"rate table %q matches exact keys, not bands — use lookup(table, key)",
+			table,
+		)
+	}
+	if _, ok := l.two[table]; ok {
+		return rangeTable{}, fmt.Errorf(
+			"rate table %q has two axes — use lookup2(table, rowKey, colKey)",
+			table,
+		)
+	}
+	return rangeTable{}, fmt.Errorf("rate table %q not found", table)
+}
+
+func interpolateBands(bands []rateBand, key decimal.Decimal) float64 {
+	first := bands[0]
+	last := bands[len(bands)-1]
+	if key.LessThanOrEqual(first.min) {
+		return first.value
+	}
+	if key.GreaterThanOrEqual(last.min) {
+		return last.value
+	}
+
+	for i := 0; i+1 < len(bands); i++ {
+		low, high := bands[i], bands[i+1]
+		if key.LessThan(low.min) || key.GreaterThanOrEqual(high.min) {
+			continue
+		}
+		span := high.min.Sub(low.min)
+		if span.IsZero() {
+			return high.value
+		}
+		ratio := key.Sub(low.min).Div(span).InexactFloat64()
+		return low.value + (high.value-low.value)*ratio
+	}
+
+	return last.value
+}
+
+func nextBand(bands []rateBand, current rateBand) (rateBand, bool) {
+	for _, band := range bands {
+		if band.min.GreaterThan(current.min) {
+			return band, true
+		}
+	}
+	return rateBand{}, false
 }

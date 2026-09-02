@@ -697,3 +697,72 @@ func TestMatrixLookup_TwoAxisRowOverflowAndColumnNormalization(t *testing.T) {
 	_, err = lookup.Lookup2("weight_zone", 9000, "MW")
 	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableMiss, "clamping never invents a cell")
 }
+
+func TestMatrixLookup_LookupInterpBetweenBandFloors(t *testing.T) {
+	t.Parallel()
+
+	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+		rangeLookupMatrix("fuel_curve", []bandDef{
+			{min: "2.00", max: "3.00", value: "0.10"},
+			{min: "3.00", max: "4.00", value: "0.20"},
+			{min: "4.00", max: "", value: "0.40"},
+		}),
+		exactLookupMatrix("zones", map[string]string{"A": "1"}),
+	})
+	banded, ok := lookup.(formulatemplatetypes.BandedLookup)
+	require.True(t, ok, "matrix lookups support banded helpers")
+
+	value, err := banded.LookupInterp("fuel_curve", 3.5)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.30, value, 0.0001, "halfway between the 3.00 and 4.00 floors")
+
+	value, err = banded.LookupInterp("fuel_curve", 2.0)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.10, value, 0.0001, "on a floor returns that band's value")
+
+	value, err = banded.LookupInterp("fuel_curve", 1.0)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.10, value, 0.0001, "below the first floor holds the first value")
+
+	value, err = banded.LookupInterp("fuel_curve", 9.0)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.40, value, 0.0001, "past the last floor holds the last value")
+
+	_, err = banded.LookupInterp("zones", 1)
+	require.Error(t, err, "a keyed table has nothing to interpolate")
+
+	_, err = banded.LookupInterp("nope", 1)
+	require.Error(t, err)
+}
+
+func TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper(t *testing.T) {
+	t.Parallel()
+
+	cwt := []bandDef{
+		{min: "0", max: "500", value: "30"},
+		{min: "500", max: "1000", value: "20"},
+		{min: "1000", max: "2000", value: "15"},
+		{min: "2000", max: "", value: "12"},
+	}
+	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+		rangeLookupMatrix("cwt", cwt),
+		rangeLookupMatrix("capped", cwt[:3]),
+	})
+	banded, ok := lookup.(formulatemplatetypes.BandedLookup)
+	require.True(t, ok)
+
+	weight, err := banded.DeficitWeight("cwt", 450)
+	require.NoError(t, err)
+	assert.InDelta(t, 500, weight, 0.0001, "450 @ 30 costs more than 500 @ 20, so bill 500")
+
+	weight, err = banded.DeficitWeight("cwt", 300)
+	require.NoError(t, err)
+	assert.InDelta(t, 300, weight, 0.0001, "300 @ 30 is cheaper than 500 @ 20")
+
+	weight, err = banded.DeficitWeight("cwt", 2500)
+	require.NoError(t, err)
+	assert.InDelta(t, 2500, weight, 0.0001, "the top band has no next break")
+
+	_, err = banded.DeficitWeight("capped", 9000)
+	require.ErrorIs(t, err, formulatemplatetypes.ErrRateTableMiss, "a strict table still misses")
+}

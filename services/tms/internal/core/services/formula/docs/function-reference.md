@@ -701,10 +701,40 @@ missing.
 lookup2Or("zone_weight_rates", origin.zip, totalWeight, 0)
 ```
 
+#### lookupInterp(table, key)
+
+Reads a banded single-axis table as a curve. Between two band floors the value is interpolated
+linearly between those bands' values; below the first floor or past the last floor the edge
+band's value is held, so the curve never extrapolates.
+
+**Examples:**
+
+```javascript
+// bands: 2.00 → 0.10, 3.00 → 0.20, 4.00 → 0.40
+lookupInterp("fuel_curve", 3.5)      // 0.30
+baseRate * (1 + lookupInterp("fuel_curve", fuelPrice))
+```
+
+#### deficitWeight(table, weight)
+
+The weight to bill under a per-unit break table such as a hundredweight tariff. Returns the
+actual weight, unless charging the next break's minimum weight at the next break's rate is
+cheaper, in which case that minimum is returned. Pair it with `lookup` on the same table.
+
+**Examples:**
+
+```javascript
+// bands: 0–500 @ 30, 500–1000 @ 20
+deficitWeight("cwt", 450)            // 500 (500 × 20 < 450 × 30)
+deficitWeight("cwt", 300)            // 300
+deficitWeight("cwt", totalWeight) / 100 * lookup("cwt", deficitWeight("cwt", totalWeight))
+```
+
 Template validation verifies that every string-literal table name referenced by
-`lookup`/`lookupOr` names an active single-axis matrix in your organization, and that every one
-referenced by `lookup2`/`lookup2Or` names an active two-axis matrix. `lookup`, `lookupOr`,
-`lookup2`, and `lookup2Or` are reserved names — variables and schema fields cannot use them.
+`lookup`/`lookupOr`/`lookupInterp`/`deficitWeight` names an active single-axis matrix in your
+organization, and that every one referenced by `lookup2`/`lookup2Or` names an active two-axis
+matrix. `lookup`, `lookupOr`, `lookup2`, `lookup2Or`, `lookupInterp`, and `deficitWeight` are
+reserved names — variables and schema fields cannot use them.
 
 ## Function Composition
 

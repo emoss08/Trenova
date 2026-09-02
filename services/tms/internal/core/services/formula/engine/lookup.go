@@ -14,6 +14,9 @@ const (
 	lookupOrFuncName  = "lookupOr"
 	lookup2FuncName   = "lookup2"
 	lookup2OrFuncName = "lookup2Or"
+
+	lookupInterpFuncName  = "lookupInterp"
+	deficitWeightFuncName = "deficitWeight"
 )
 
 var ErrReservedVariableName = goErrors.New("variable name is reserved")
@@ -35,6 +38,10 @@ func (StubLookup) Lookup2(string, any, any) (float64, error) { return 0, nil }
 
 func (StubLookup) Has2(string) bool { return true }
 
+func (StubLookup) LookupInterp(string, any) (float64, error) { return 0, nil }
+
+func (StubLookup) DeficitWeight(string, any) (float64, error) { return 0, nil }
+
 type unavailableLookup struct{}
 
 func (unavailableLookup) Lookup(table string, _ any) (float64, error) {
@@ -48,6 +55,14 @@ func (unavailableLookup) Lookup2(table string, _, _ any) (float64, error) {
 }
 
 func (unavailableLookup) Has2(string) bool { return false }
+
+func (unavailableLookup) LookupInterp(table string, _ any) (float64, error) {
+	return 0, fmt.Errorf("%w: %q", formulatemplatetypes.ErrRateTableUnavailable, table)
+}
+
+func (unavailableLookup) DeficitWeight(table string, _ any) (float64, error) {
+	return 0, fmt.Errorf("%w: %q", formulatemplatetypes.ErrRateTableUnavailable, table)
+}
 
 func injectLookupFunctions(env map[string]any, provider formulatemplatetypes.RateTableLookup) {
 	if provider == nil {
@@ -83,11 +98,35 @@ func injectLookupFunctions(env map[string]any, provider formulatemplatetypes.Rat
 		}
 		return value, nil
 	}
+
+	banded, _ := provider.(formulatemplatetypes.BandedLookup)
+
+	env[lookupInterpFuncName] = func(table string, key any) (float64, error) {
+		if banded == nil {
+			return 0, bandedUnsupported(lookupInterpFuncName, table)
+		}
+		return banded.LookupInterp(table, key)
+	}
+
+	env[deficitWeightFuncName] = func(table string, weight any) (float64, error) {
+		if banded == nil {
+			return 0, bandedUnsupported(deficitWeightFuncName, table)
+		}
+		return banded.DeficitWeight(table, weight)
+	}
+}
+
+func bandedUnsupported(function, table string) error {
+	return fmt.Errorf(
+		"%w: %s(%q) needs a rate table provider with bands",
+		formulatemplatetypes.ErrRateTableUnavailable, function, table,
+	)
 }
 
 func isReservedName(name string) bool {
 	switch name {
-	case lookupFuncName, lookupOrFuncName, lookup2FuncName, lookup2OrFuncName, ctxEnvKey:
+	case lookupFuncName, lookupOrFuncName, lookup2FuncName, lookup2OrFuncName,
+		lookupInterpFuncName, deficitWeightFuncName, ctxEnvKey:
 		return true
 	default:
 		return false
@@ -161,7 +200,7 @@ func (v *lookupTableVisitor) Visit(node *ast.Node) {
 
 	var multiAxis bool
 	switch callee.Value {
-	case lookupFuncName, lookupOrFuncName:
+	case lookupFuncName, lookupOrFuncName, lookupInterpFuncName, deficitWeightFuncName:
 		multiAxis = false
 	case lookup2FuncName, lookup2OrFuncName:
 		multiAxis = true

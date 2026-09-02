@@ -29,6 +29,14 @@ type RateTableLookup interface {
 	Has2(table string) bool
 }
 
+// BandedLookup is implemented by providers whose single-axis tables are bands
+// with numeric floors, so a formula can read between floors or rate a weight at
+// the next break instead of only landing in one band.
+type BandedLookup interface {
+	LookupInterp(table string, key any) (float64, error)
+	DeficitWeight(table string, weight any) (float64, error)
+}
+
 // LookupExplainer is implemented by providers that can say which row or band
 // answered a lookup, so a receipt shows more than the number that came back.
 type LookupExplainer interface {

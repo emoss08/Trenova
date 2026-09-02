@@ -115,6 +115,8 @@ export const EXPR_BUILTIN_FUNCTIONS = new Set([
   "lookupOr",
   "lookup2",
   "lookup2Or",
+  "lookupInterp",
+  "deficitWeight",
 ]);
 
 export const FALLBACK_SCHEMA: Pick<FormulaSchemaResponse, "variables" | "functions"> = {

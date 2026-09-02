@@ -77,6 +77,39 @@ func (r *lookupRecorder) Has2(table string) bool {
 	return r.inner != nil && r.inner.Has2(table)
 }
 
+func (r *lookupRecorder) LookupInterp(table string, key any) (float64, error) {
+	banded, ok := r.inner.(formulatemplatetypes.BandedLookup)
+	if !ok {
+		return unavailableLookup{}.LookupInterp(table, key)
+	}
+	value, err := banded.LookupInterp(table, key)
+	r.recordBanded(lookupInterpFuncName, table, key, value, err)
+	return value, err
+}
+
+func (r *lookupRecorder) DeficitWeight(table string, weight any) (float64, error) {
+	banded, ok := r.inner.(formulatemplatetypes.BandedLookup)
+	if !ok {
+		return unavailableLookup{}.DeficitWeight(table, weight)
+	}
+	value, err := banded.DeficitWeight(table, weight)
+	r.recordBanded(deficitWeightFuncName, table, weight, value, err)
+	return value, err
+}
+
+// recordBanded traces a banded helper call. The match names the helper rather
+// than a single band, because interpolation reads two bands and deficit
+// rating may move to the next one.
+func (r *lookupRecorder) recordBanded(function, table string, key any, value float64, err error) {
+	entry := formulatypes.LookupTrace{Scope: r.scope, Table: table, Keys: []any{key}, Value: value}
+	if err != nil {
+		entry.Error = err.Error()
+	} else {
+		entry.Match = &formulatypes.LookupMatch{MatchedKey: function}
+	}
+	r.entries = append(r.entries, entry)
+}
+
 // provenance remembers where each environment path came from. Later writes
 // win, which mirrors how the environment itself is built: a caller's input
 // replaces a field, an engine override replaces both.

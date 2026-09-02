@@ -295,3 +295,64 @@ func TestEngine_EvaluateExpression_Lookup2NamesAreReserved(t *testing.T) {
 		require.ErrorIs(t, err, engine.ErrReservedVariableName, name)
 	}
 }
+
+func TestExtractLookupTableRefs_BandedHelpersAreSingleAxis(t *testing.T) {
+	t.Parallel()
+
+	refs, err := engine.ExtractLookupTableRefs(
+		`lookupInterp("fuel_curve", x) + deficitWeight("cwt", w) / 100`,
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"fuel_curve", "cwt"}, refs.Single)
+	assert.Empty(t, refs.Multi)
+}
+
+func TestEngine_BandedHelpers_StubbedAndReserved(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	for _, expression := range []string{`lookupInterp("curve", 5)`, `deficitWeight("cwt", 900)`} {
+		result, err := e.EvaluateWithEnv(
+			t.Context(),
+			&formulatemplatetypes.EnvEvaluationRequest{
+				Expression: expression,
+				Env:        map[string]any{},
+				Lookup:     engine.StubLookup{},
+			},
+		)
+		require.NoError(t, err, expression)
+		assert.True(t, result.Value.IsZero(), expression)
+	}
+
+	for _, name := range []string{"lookupInterp", "deficitWeight"} {
+		_, err := e.EvaluateExpression(
+			t.Context(),
+			&formulatemplatetypes.ExpressionEvaluationRequest{
+				Expression: "1 + 1",
+				Entity:     struct{}{},
+				SchemaID:   "test",
+				Variables:  map[string]any{name: 1.0},
+			},
+		)
+		require.ErrorIs(t, err, engine.ErrReservedVariableName, name)
+	}
+}
+
+func TestEngine_BandedHelpers_RequireABandedProvider(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	_, err := e.EvaluateWithEnv(
+		t.Context(),
+		&formulatemplatetypes.EnvEvaluationRequest{
+			Expression: `lookupInterp("curve", 5)`,
+			Env:        map[string]any{},
+			Lookup:     &recordingLookup{},
+		},
+	)
+
+	require.Error(t, err, "a provider without bands cannot interpolate")
+}

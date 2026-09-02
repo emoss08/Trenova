@@ -220,6 +220,20 @@ var functionSpecs = []FunctionSpec{
 		Category:    FunctionCategoryRateTable,
 	},
 	{
+		Name:        "lookupInterp",
+		Signature:   "lookupInterp(table, key)",
+		Description: "Reads a banded single-axis table as a curve: between two band floors the value is interpolated linearly between those bands' values. Below the first floor or past the last, the edge band's value is used.",
+		Example:     `baseRate * (1 + lookupInterp("fuel_curve", fuelPrice))`,
+		Category:    FunctionCategoryRateTable,
+	},
+	{
+		Name:        "deficitWeight",
+		Signature:   "deficitWeight(table, weight)",
+		Description: "The weight to bill under a per-unit break table: the actual weight, unless rating the next break's minimum at the next break's rate is cheaper. Pair it with lookup on the same table.",
+		Example:     `deficitWeight("cwt", totalWeight) / 100 * lookup("cwt", deficitWeight("cwt", totalWeight))`,
+		Category:    FunctionCategoryRateTable,
+	},
+	{
 		Name:        "startsWith",
 		Signature:   `text startsWith "prefix"`,
 		Description: "True when the text begins with the prefix. Case-sensitive.",

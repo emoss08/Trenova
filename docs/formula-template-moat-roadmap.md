@@ -382,8 +382,12 @@ Every rating carries a trace that a non-programmer can read.
       looked-up keys alike; receipts mark a band the key was moved into. The rate-matrix
       service's own cell selection still matches SQL-narrowed exact keys; normalisation there
       would need the repository query to normalise too)
-- [ ] `lookupInterp(table, key)` linear interpolation between bands
-- [ ] Deficit-weight helper for CWT pricing ("rate as next break if cheaper")
+- [x] `lookupInterp(table, key)` linear interpolation between bands (curve through band
+      floors; edge values held, never extrapolated; `BandedLookup` optional interface so
+      stubs validate and the receipt traces the call)
+- [x] Deficit-weight helper for CWT pricing ("rate as next break if cheaper")
+      (`deficitWeight(table, weight)` returns the billable weight; both helpers count as
+      single-axis table references for validation and are reserved names)
 
 ### 4.2 Schema expansion
 

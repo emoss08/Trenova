@@ -772,6 +772,17 @@ export const AVAILABLE_FUNCTIONS = [
     description:
       "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)",
   },
+  {
+    name: "lookupInterp",
+    signature: "lookupInterp(table, key)",
+    description: "Linear interpolation between the floors of a banded single-axis rate matrix",
+  },
+  {
+    name: "deficitWeight",
+    signature: "deficitWeight(table, weight)",
+    description:
+      "Billable weight under a break table: the next break's minimum when that is cheaper",
+  },
 ] as const;
 
 export const bulkUpdateStatusRequestSchema = z.object({
