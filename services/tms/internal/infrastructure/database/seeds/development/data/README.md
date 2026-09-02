@@ -74,9 +74,13 @@ Demonstrates a complete worker seeding example with:
 
 See `03_worker_example.go` for the companion seed implementation.
 
-### `formula_templates.yaml`
+### Formula templates
 
-Real production data for formula templates (referenced by FormulaTemplateSeed).
+Standard formula templates are no longer seeded from this directory. The catalog
+lives embedded at
+`internal/core/services/formulatemplateservice/standardcatalog/standard_templates.yaml`
+and is shared by FormulaTemplateSeed and the production
+`POST /formula-templates/install-standards` endpoint.
 
 ## YAML Syntax Guide
 
@@ -247,7 +251,6 @@ if err != nil {
 data/
 ├── README.md                    # This file
 ├── workers.yaml                 # Worker seed data
-├── formula_templates.yaml       # Formula template data
 ├── customers.yaml               # Customer seed data
 └── locations.yaml               # Location seed data
 ```

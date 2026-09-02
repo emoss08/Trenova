@@ -1,10 +1,22 @@
+import { EntityRedirectLink } from "@/components/link";
+import { DeltaValue, StatTile } from "@/components/metric-tiles";
+import { downloadCsv, exportFilename } from "@/lib/data-table-export";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   NumberFieldGroup,
   NumberFieldInput,
   NumberField as NumberFieldRoot,
 } from "@trenova/shared/components/ui/number-field";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@trenova/shared/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,20 +26,27 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { DeltaValue, StatTile } from "@/components/metric-tiles";
-import { apiService } from "@/services/api";
 import type {
   BacktestResult,
   BacktestSummary,
   FormulaTemplate,
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
-import { useMutation } from "@tanstack/react-query";
-import { AlertTriangleIcon, ArrowRightIcon, HistoryIcon, PlayIcon, ShieldIcon } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  AlertTriangleIcon,
+  ArrowRightIcon,
+  DownloadIcon,
+  HistoryIcon,
+  PlayIcon,
+  ShieldIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
+import { backtestCsv, describeVersionOption } from "./backtest-export";
 
 type CandidateSource = "editor" | "version";
 
@@ -49,10 +68,13 @@ const SOURCE_OPTIONS: { value: CandidateSource; label: string; description: stri
   },
 ];
 
+const VERSION_PICKER_LIMIT = 100;
+const SHIPMENTS_BASE_URL = "/shipment-management/shipments";
+
 function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         <StatTile label="Shipments" value={`${summary.evaluatedCount}/${summary.shipmentCount}`} />
         <StatTile label="Changed" value={String(summary.changedCount)} />
         <StatTile
@@ -66,11 +88,27 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
           tone="text-red-600 dark:text-red-400"
         />
         <StatTile
-          label="Errors"
+          label="Clamped"
+          value={String(summary.guardrailCount)}
+          tone={summary.guardrailCount > 0 ? "text-blue-600 dark:text-blue-400" : undefined}
+        />
+        <StatTile
+          label="Failed"
           value={String(summary.errorCount)}
           tone={summary.errorCount > 0 ? "text-destructive" : undefined}
         />
       </div>
+
+      {summary.errorCount > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {summary.currentErrorCount > 0 &&
+            `${summary.currentErrorCount} could not be re-rated with the current template`}
+          {summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · "}
+          {summary.candidateErrorCount > 0 &&
+            `${summary.candidateErrorCount} failed under the candidate`}
+          . Failed shipments are excluded from the totals below.
+        </p>
+      )}
 
       <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
         <span className="text-muted-foreground">Total</span>
@@ -96,7 +134,16 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
 
   return (
     <TableRow>
-      <TableCell className="font-mono text-xs">{result.proNumber || result.shipmentId}</TableCell>
+      <TableCell className="font-mono text-xs">
+        <EntityRedirectLink
+          entityId={result.shipmentId}
+          baseUrl={SHIPMENTS_BASE_URL}
+          panelOpen
+          className="w-auto"
+        >
+          {result.proNumber || result.shipmentId}
+        </EntityRedirectLink>
+      </TableCell>
       <TableCell className="text-right font-mono text-xs tabular-nums">
         {result.currentError ? (
           <span className="text-muted-foreground">—</span>
@@ -147,6 +194,55 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
   );
 }
 
+function VersionPicker({
+  templateId,
+  value,
+  onChange,
+}: {
+  templateId: FormulaTemplate["id"];
+  value: number;
+  onChange: (versionNumber: number) => void;
+}) {
+  const versions = useQuery({
+    ...queries.formulaTemplate.versions(templateId, VERSION_PICKER_LIMIT),
+    staleTime: 30_000,
+  });
+  const options = versions.data?.results ?? [];
+  const hasSelected = options.some((version) => version.versionNumber === value);
+
+  return (
+    <div className="w-64">
+      <label className="text-muted-foreground mb-1.5 block text-xs font-medium">Version</label>
+      <Select
+        value={hasSelected ? String(value) : ""}
+        onValueChange={(next) => {
+          if (next) onChange(Number(next));
+        }}
+        disabled={versions.isPending || options.length === 0}
+      >
+        <SelectTrigger className="h-8 w-full text-xs" aria-label="Backtest version">
+          <SelectValue
+            placeholder={
+              versions.isPending
+                ? "Loading versions..."
+                : versions.isError
+                  ? "Versions could not be loaded"
+                  : "Choose a version"
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((version) => (
+            <SelectItem key={version.id} value={String(version.versionNumber)}>
+              {describeVersionOption(version, (unixSeconds) => formatToUserTimezone(unixSeconds))}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export default function FormulaTemplateBacktestTab({
   form,
   template,
@@ -171,6 +267,14 @@ export default function FormulaTemplateBacktestTab({
   });
 
   const canRun = !!template?.id && (source === "editor" ? !!expression?.trim() : versionNumber > 0);
+
+  const handleExport = () => {
+    if (!mutation.data || mutation.data.results.length === 0) return;
+    downloadCsv(
+      backtestCsv(mutation.data.results),
+      exportFilename(`backtest ${template?.name ?? "formula template"}`),
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -203,23 +307,12 @@ export default function FormulaTemplateBacktestTab({
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
-          {source === "version" && (
-            <div className="w-32">
-              <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                Version
-              </label>
-              <NumberFieldRoot
-                value={versionNumber}
-                onValueChange={(val) => setVersionNumber(val ?? 1)}
-                min={1}
-                step={1}
-                size="sm"
-              >
-                <NumberFieldGroup>
-                  <NumberFieldInput className="text-right" />
-                </NumberFieldGroup>
-              </NumberFieldRoot>
-            </div>
+          {source === "version" && template?.id && (
+            <VersionPicker
+              templateId={template.id}
+              value={versionNumber}
+              onChange={setVersionNumber}
+            />
           )}
           <div className="w-32">
             <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
@@ -256,6 +349,25 @@ export default function FormulaTemplateBacktestTab({
       {mutation.data ? (
         <>
           <BacktestSummaryRow summary={mutation.data.summary} />
+
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-muted-foreground text-xs">
+              {mutation.data.results.length} shipment
+              {mutation.data.results.length === 1 ? "" : "s"} re-rated. Click a Pro # to open the
+              shipment.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={mutation.data.results.length === 0}
+              className="gap-1.5"
+            >
+              <DownloadIcon className="size-3.5" />
+              Export CSV
+            </Button>
+          </div>
 
           <div className="overflow-hidden rounded-lg border">
             <Table>

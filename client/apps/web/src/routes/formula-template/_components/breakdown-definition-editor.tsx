@@ -1,7 +1,8 @@
+import { ExpressionEditor } from "@/components/formula-editor/expression-editor";
+import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   MAX_BREAKDOWN_DEFINITIONS,
   type BreakdownDefinitionInput,
@@ -17,6 +18,7 @@ type FormWithBreakdowns = {
 type BreakdownDefinitionEditorProps = {
   control: Control<FormWithBreakdowns>;
   register: UseFormRegister<FormWithBreakdowns>;
+  knownIdentifiers?: KnownIdentifiers;
   className?: string;
 };
 
@@ -29,6 +31,7 @@ function FieldError({ message }: { message?: string }) {
 export function BreakdownDefinitionEditor({
   control,
   register,
+  knownIdentifiers,
   className,
 }: BreakdownDefinitionEditorProps) {
   const { fields, append, remove } = useFieldArray({
@@ -105,10 +108,14 @@ export function BreakdownDefinitionEditor({
                   className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors"
                 >
                   <div className="col-span-3">
-                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+                    <label
+                      htmlFor={`breakdown-${index}-name`}
+                      className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                    >
                       Name
                     </label>
                     <Input
+                      id={`breakdown-${index}-name`}
                       {...register(`breakdownDefinitions.${index}.name`)}
                       placeholder="fuelSurcharge"
                       className="h-8 font-mono text-sm"
@@ -117,10 +124,14 @@ export function BreakdownDefinitionEditor({
                   </div>
 
                   <div className="col-span-3">
-                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+                    <label
+                      htmlFor={`breakdown-${index}-label`}
+                      className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                    >
                       Label
                     </label>
                     <Input
+                      id={`breakdown-${index}-label`}
                       {...register(`breakdownDefinitions.${index}.label`)}
                       placeholder="Fuel Surcharge"
                       className="h-8 text-sm"
@@ -129,17 +140,16 @@ export function BreakdownDefinitionEditor({
                   </div>
 
                   <div className="col-span-5">
-                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+                    <span className="text-muted-foreground mb-1.5 block text-xs font-medium">
                       Expression
-                    </label>
-                    <Textarea
-                      {...register(`breakdownDefinitions.${index}.expression`)}
+                    </span>
+                    <ExpressionEditor
+                      name={`breakdownDefinitions.${index}.expression`}
+                      control={control as never}
+                      variant="mini"
+                      knownIdentifiers={knownIdentifiers}
                       placeholder="totalDistance * 0.35"
-                      minRows={1}
-                      maxRows={4}
-                      className="min-h-8 py-1.5 font-mono text-sm"
                     />
-                    <FieldError message={rowErrors?.expression?.message} />
                   </div>
 
                   <div className="col-span-1 flex items-start justify-end pt-6">
@@ -147,8 +157,9 @@ export function BreakdownDefinitionEditor({
                       type="button"
                       variant="ghost"
                       size="sm"
+                      aria-label="Remove breakdown item"
                       onClick={() => remove(index)}
-                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </Button>

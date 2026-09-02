@@ -31,7 +31,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { UserHoverCard } from "@/components/user-hover-card";
 import { usePermission } from "@/hooks/use-permission";
 import { formatToUserTimezone, fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
+import {
+  buildVersionExport,
+  downloadJson,
+  getVersionExportFilename,
+} from "@/lib/formula-template-export";
 import { queries } from "@/lib/queries";
+import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import {
@@ -39,7 +45,6 @@ import {
   type FieldChange,
   type FormulaTemplate,
   type FormulaTemplateVersion,
-  type TemplateUsageResponse,
   type VersionTag,
 } from "@trenova/shared/types/formula-template";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -91,14 +96,17 @@ export function VersionHistoryPanel({
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [pendingRollbackVersion, setPendingRollbackVersion] =
     useState<FormulaTemplateVersion | null>(null);
-  const [usageData, setUsageData] = useState<TemplateUsageResponse | null>(null);
-  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     ...queries.formulaTemplate.versions(template?.id),
     enabled: open && !!template?.id,
+  });
+
+  const { data: usageData, isLoading: isLoadingUsage } = useQuery({
+    ...queries.formulaTemplate.usage(template?.id ?? ""),
+    enabled: rollbackDialogOpen && !!template?.id,
   });
 
   const versions = data?.results ?? [];
@@ -124,34 +132,11 @@ export function VersionHistoryPanel({
 
   const handleExportVersion = useCallback(
     (version: FormulaTemplateVersion) => {
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        templateId: template?.id,
-        templateName: template?.name,
-        version: {
-          versionNumber: version.versionNumber,
-          name: version.name,
-          description: version.description,
-          type: version.type,
-          expression: version.expression,
-          status: version.status,
-          schemaId: version.schemaId,
-          variableDefinitions: version.variableDefinitions,
-          metadata: version.metadata,
-          changeMessage: version.changeMessage,
-          createdAt: version.createdAt,
-        },
-      };
+      if (!template) return;
 
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${template?.name?.replace(/\s+/g, "-").toLowerCase()}-v${version.versionNumber}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const exportData = buildVersionExport(template, version);
+      const filename = getVersionExportFilename(template, version.versionNumber);
+      downloadJson(exportData, filename);
       toast.success("Version exported", {
         description: `Downloaded v${version.versionNumber} as JSON`,
       });
@@ -159,24 +144,11 @@ export function VersionHistoryPanel({
     [template],
   );
 
-  const handleRollbackClick = async (version: FormulaTemplateVersion) => {
+  const handleRollbackClick = (version: FormulaTemplateVersion) => {
     if (!template?.id) return;
 
     setPendingRollbackVersion(version);
-    setIsLoadingUsage(true);
     setRollbackDialogOpen(true);
-
-    await apiService.formulaTemplateService
-      .getUsage(template.id)
-      .then((usage) => {
-        setUsageData(usage);
-      })
-      .catch(() => {
-        setUsageData(null);
-      })
-      .finally(() => {
-        setIsLoadingUsage(false);
-      });
   };
 
   const handleRollbackConfirm = async () => {
@@ -193,10 +165,9 @@ export function VersionHistoryPanel({
           description: `Restored to version ${pendingRollbackVersion.versionNumber}`,
         });
 
-        void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
+        void invalidateFormulaTemplate(queryClient);
         setRollbackDialogOpen(false);
         setPendingRollbackVersion(null);
-        setUsageData(null);
         onRollback?.(updatedTemplate);
       })
       .catch((err) => {
@@ -278,7 +249,7 @@ export function VersionHistoryPanel({
                               )
                           : undefined
                       }
-                      onRollback={index !== 0 ? () => void handleRollbackClick(version) : undefined}
+                      onRollback={index !== 0 ? () => handleRollbackClick(version) : undefined}
                       isRollingBack={rollingBackVersion === version.versionNumber}
                       canSchedule={canSchedule}
                       onExport={() => handleExportVersion(version)}
@@ -316,13 +287,13 @@ export function VersionHistoryPanel({
             setRollbackDialogOpen(open);
             if (!open) {
               setPendingRollbackVersion(null);
-              setUsageData(null);
             }
           }}
           templateId={template.id ?? ""}
+          templateStatus={template.status}
           currentVersion={template.currentVersionNumber ?? 0}
           targetVersion={pendingRollbackVersion.versionNumber}
-          usageData={usageData}
+          usageData={usageData ?? null}
           onConfirm={handleRollbackConfirm}
           isLoading={rollingBackVersion !== null || isLoadingUsage}
         />
@@ -440,7 +411,7 @@ function VersionItem({
         effectiveFrom,
       ),
     onSuccess: (_data, effectiveFrom) => {
-      void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
+      void invalidateFormulaTemplate(queryClient);
       toast.success(effectiveFrom === null ? "Schedule cleared" : "Activation scheduled", {
         description:
           effectiveFrom === null
@@ -470,7 +441,7 @@ function VersionItem({
     mutationFn: (tags: VersionTag[]) =>
       apiService.formulaTemplateService.updateVersionTags(templateId, version.versionNumber, tags),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
+      void invalidateFormulaTemplate(queryClient);
       toast.success("Tags updated");
       setTagsDialogOpen(false);
     },
@@ -509,7 +480,16 @@ function VersionItem({
           isSelectedForCompare && "ring-primary ring-2 ring-offset-2",
           canCompareWith && "hover:border-primary/50 cursor-pointer",
         )}
+        role={canCompareWith ? "button" : undefined}
+        tabIndex={canCompareWith ? 0 : undefined}
         onClick={canCompareWith ? onCompareWith : undefined}
+        onKeyDown={(event) => {
+          if (!canCompareWith) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onCompareWith?.();
+          }
+        }}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

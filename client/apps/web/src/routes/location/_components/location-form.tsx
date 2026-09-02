@@ -7,7 +7,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { statusChoices } from "@/lib/choices";
+import { statusChoices, timezoneChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import type { Location } from "@trenova/shared/types/location";
 import { useQuery } from "@tanstack/react-query";
@@ -112,6 +112,17 @@ export function LocationForm() {
                 label="Postal Code"
                 placeholder="e.g., 90210"
                 description="ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups."
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <SelectField
+                control={control}
+                name="timezone"
+                label="Timezone"
+                placeholder="Not set (UTC)"
+                isClearable
+                description="Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC."
+                options={timezoneChoices}
               />
             </FormControl>
           </FormGroup>

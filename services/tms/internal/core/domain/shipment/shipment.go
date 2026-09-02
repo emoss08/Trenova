@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/decimalutils"
@@ -63,6 +64,10 @@ type RatingDetail struct {
 	RuleLabel           string                `json:"ruleLabel,omitempty"`
 	Source              string                `json:"source,omitempty"`
 	Explanation         string                `json:"explanation,omitempty"`
+	// Receipt is the formula's calculation receipt when a formula priced the
+	// load: variables with their sources, rate-table rows consulted, and the
+	// amount before guardrails and rounding.
+	Receipt *formulatypes.Receipt `json:"receipt,omitempty"`
 }
 
 type Shipment struct {

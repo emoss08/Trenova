@@ -101,6 +101,12 @@ export type RateMatrixDimensionKind = z.infer<typeof rateMatrixDimensionKindSche
 export const rateMatrixMatchModeSchema = z.enum(["Exact", "Range"]);
 export type RateMatrixMatchMode = z.infer<typeof rateMatrixMatchModeSchema>;
 
+export const rateMatrixKeyNormalizationSchema = z.enum(["None", "Trim", "Upper", "Zip3"]);
+export type RateMatrixKeyNormalization = z.infer<typeof rateMatrixKeyNormalizationSchema>;
+
+export const rateMatrixRangeOverflowSchema = z.enum(["Error", "ClampToTopBand", "Nearest"]);
+export type RateMatrixRangeOverflow = z.infer<typeof rateMatrixRangeOverflowSchema>;
+
 export const rateMatrixRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
 
 export const rateMatrixDimensionSchema = z.object({
@@ -112,6 +118,8 @@ export const rateMatrixDimensionSchema = z.object({
   kind: rateMatrixDimensionKindSchema,
   matchMode: rateMatrixMatchModeSchema,
   label: z.string().default(""),
+  keyNormalization: rateMatrixKeyNormalizationSchema.default("None"),
+  rangeOverflow: rateMatrixRangeOverflowSchema.default("Error"),
 });
 export type RateMatrixDimension = z.infer<typeof rateMatrixDimensionSchema>;
 

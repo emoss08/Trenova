@@ -88,6 +88,72 @@ func (s *Service) Diagnose(
 	return mapDiagnosis(payload, resp.Model), nil
 }
 
+func (s *Service) CompleteStructured(
+	ctx context.Context,
+	req *serviceports.StructuredCompletionRequest,
+) (*serviceports.StructuredCompletionResult, error) {
+	if !s.cfg.AIEnabled() {
+		return nil, errortypes.NewBusinessError("AI features are disabled")
+	}
+
+	runtimeCfg, err := s.integration.GetRuntimeConfig(
+		ctx,
+		req.TenantInfo,
+		integration.TypeAnthropic,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKey := strings.TrimSpace(runtimeCfg.Config["apiKey"])
+	if apiKey == "" {
+		return nil, errortypes.NewBusinessError("Anthropic API key is not configured")
+	}
+
+	maxTokens := req.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = defaultMaxTokens
+	}
+
+	body := messagesRequest{
+		Model:     defaultModel,
+		MaxTokens: maxTokens,
+		System:    strings.TrimSpace(req.System) + "\n\n" + untrustedGuard,
+		Messages: []message{
+			{Role: "user", Content: BuildContextText(req.Context)},
+		},
+	}
+	if req.OutputSchema != nil {
+		body.OutputConfig = &outputConfig{
+			Format: outputFormat{
+				Type:   "json_schema",
+				Schema: req.OutputSchema,
+			},
+		}
+	}
+
+	resp, err := s.executeMessages(ctx, apiKey, body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StopReason == "refusal" {
+		return nil, errortypes.NewBusinessError("The model declined this request")
+	}
+
+	text := firstTextBlock(resp)
+	if text == "" {
+		return nil, errors.New("model returned no structured content")
+	}
+
+	return &serviceports.StructuredCompletionResult{
+		Text:            text,
+		ModelIdentifier: resp.Model,
+		InputTokens:     resp.Usage.InputTokens,
+		OutputTokens:    resp.Usage.OutputTokens,
+	}, nil
+}
+
 func (s *Service) buildMessagesRequest(req *serviceports.DiagnoseRequest) messagesRequest {
 	return messagesRequest{
 		Model:     defaultModel,

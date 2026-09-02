@@ -1358,6 +1358,34 @@ export function ControlledEDIDocumentProfileAutocompleteField({
   );
 }
 
+export function ControlledFormulaTemplateAutocompleteField({
+  label = "Formula Template",
+  placeholder = "Search templates...",
+  ...props
+}: ControlledGraphQLAutocompleteFieldProps) {
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      label={label}
+      link="/formula-templates/select-options/"
+      graphql={formulaTemplateSelectOptionsGraphQL}
+      placeholder={placeholder}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
 export function FormulaTemplateAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {

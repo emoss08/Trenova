@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/expr-lang/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -960,5 +961,83 @@ func TestBuiltinFunctions(t *testing.T) {
 
 	funcs := engine.BuiltinFunctions()
 	assert.NotEmpty(t, funcs)
-	assert.Len(t, funcs, 12)
+	assert.Len(t, funcs, 16)
+}
+
+func evalFloat(t *testing.T, expression string) float64 {
+	t.Helper()
+	e := setupEngine(t)
+	result, err := e.EvaluateWithEnv(t.Context(), &formulatemplatetypes.EnvEvaluationRequest{
+		Expression: expression,
+		Env:        map[string]any{},
+	})
+	require.NoError(t, err, expression)
+	return result.Value.InexactFloat64()
+}
+
+func TestRoundingFunctions_UseDecimalSemantics(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		expression string
+		want       float64
+	}{
+		{"round(2.675, 2)", 2.68},
+		{"round(2.5)", 3},
+		{"round(1234.5, -2)", 1200},
+		{"roundUp(2.001, 2)", 2.01},
+		{"roundUp(2.0, 2)", 2.0},
+		{"roundDown(2.999, 2)", 2.99},
+		{"roundHalfEven(2.665, 2)", 2.66},
+		{"roundHalfEven(2.675, 2)", 2.68},
+		{"roundHalfEven(2.5)", 2},
+		{"roundTo(123.4, 5)", 125},
+		{"roundTo(122.4, 5)", 120},
+		{"roundTo(10.13, 0.25)", 10.25},
+		{"roundTo(0.1 + 0.2, 0.01)", 0.3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expression, func(t *testing.T) {
+			t.Parallel()
+			assert.InDelta(t, tt.want, evalFloat(t, tt.expression), 1e-9)
+		})
+	}
+}
+
+func TestRoundingFunctions_RejectBadArguments(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+	for _, expression := range []string{
+		"roundTo(10, 0)",
+		"roundTo(10, -5)",
+		"roundUp(1.5, 400)",
+	} {
+		_, err := e.EvaluateWithEnv(t.Context(), &formulatemplatetypes.EnvEvaluationRequest{
+			Expression: expression,
+			Env:        map[string]any{},
+		})
+		require.Error(t, err, expression)
+	}
+}
+
+func TestMinMax_AreVariadic(t *testing.T) {
+	t.Parallel()
+
+	assert.InDelta(t, 3, evalFloat(t, "min(5, 3, 8)"), 0.0001)
+	assert.InDelta(t, 8, evalFloat(t, "max(5, 3, 8)"), 0.0001)
+	assert.InDelta(t, 10, evalFloat(t, "min(10)"), 0.0001)
+	assert.InDelta(t, -8, evalFloat(t, "min(-5, -3, -8)"), 0.0001)
+}
+
+func TestSumAndAvg_AcceptArraysAndMappedCollections(t *testing.T) {
+	t.Parallel()
+
+	assert.InDelta(t, 6.5, evalFloat(t, "sum([1.0, 2.0, 3.5])"), 0.0001)
+	assert.InDelta(t, 6, evalFloat(t, "sum([1, 2], 3)"), 0.0001, "arrays and numbers mix")
+	assert.InDelta(t, 0, evalFloat(t, "sum([])"), 0.0001)
+	assert.InDelta(t, 5, evalFloat(t, `sum(map([{"w": 2.0}, {"w": 3.0}], .w))`), 0.0001)
+	assert.InDelta(t, 3, evalFloat(t, "avg([2.0, 4.0])"), 0.0001)
+	assert.InDelta(t, 2.5, evalFloat(t, "avg([1, 2], [3, 4])"), 0.0001, "averages every element")
 }

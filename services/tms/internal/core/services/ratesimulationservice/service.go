@@ -11,12 +11,15 @@ package ratesimulationservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -258,6 +261,8 @@ func (s *Service) walk(
 	// Every shipment in the run reads the same tenant's rate tables. Without
 	// this the walk would re-read them tens of thousands of times.
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
+	ctx = effectiveversioncache.With(ctx)
 
 	var (
 		acc    simmath.Accumulator

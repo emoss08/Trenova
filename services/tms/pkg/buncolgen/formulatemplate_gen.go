@@ -62,6 +62,8 @@ var FormulaTemplateColumns = struct {
 	BreakdownDefinitions Column // "breakdown_definitions" → qualified: "ft.breakdown_definitions"
 	MinCharge            Column // "min_charge" → qualified: "ft.min_charge"
 	MaxCharge            Column // "max_charge" → qualified: "ft.max_charge"
+	RoundingMode         Column // "rounding_mode" → qualified: "ft.rounding_mode"
+	RoundingPrecision    Column // "rounding_precision" → qualified: "ft.rounding_precision"
 	SubmittedByID        Column // "submitted_by_id" → qualified: "ft.submitted_by_id"
 	SubmittedAt          Column // "submitted_at" → qualified: "ft.submitted_at"
 	ApprovedByID         Column // "approved_by_id" → qualified: "ft.approved_by_id"
@@ -90,6 +92,8 @@ var FormulaTemplateColumns = struct {
 	BreakdownDefinitions: NewColumn("breakdown_definitions", "ft"),
 	MinCharge:            NewColumn("min_charge", "ft"),
 	MaxCharge:            NewColumn("max_charge", "ft"),
+	RoundingMode:         NewColumn("rounding_mode", "ft"),
+	RoundingPrecision:    NewColumn("rounding_precision", "ft"),
 	SubmittedByID:        NewColumn("submitted_by_id", "ft"),
 	SubmittedAt:          NewColumn("submitted_at", "ft"),
 	ApprovedByID:         NewColumn("approved_by_id", "ft"),
@@ -124,6 +128,8 @@ var FormulaTemplateFieldMap = map[string]string{
 	"breakdownDefinitions": "breakdown_definitions",
 	"minCharge":            "min_charge",
 	"maxCharge":            "max_charge",
+	"roundingMode":         "rounding_mode",
+	"roundingPrecision":    "rounding_precision",
 	"submittedById":        "submitted_by_id",
 	"submittedAt":          "submitted_at",
 	"approvedById":         "approved_by_id",
@@ -154,6 +160,8 @@ var FormulaTemplateInsertableColumns = []string{
 	"breakdown_definitions",
 	"min_charge",
 	"max_charge",
+	"rounding_mode",
+	"rounding_precision",
 	"submitted_by_id",
 	"submitted_at",
 	"approved_by_id",
@@ -248,6 +256,8 @@ var FormulaTemplateFilter = struct {
 	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
 	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
 	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
+	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
+	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
 	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
 	SubmittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
 	ApprovedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
@@ -299,6 +309,12 @@ var FormulaTemplateFilter = struct {
 	},
 	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxCharge", op, value)
+	},
+	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingMode", op, value)
+	},
+	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingPrecision", op, value)
 	},
 	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("submittedById", op, value)
@@ -379,6 +395,8 @@ var FormulaTemplateVersionColumns = struct {
 	BreakdownDefinitions Column // "breakdown_definitions" → qualified: "ftv.breakdown_definitions"
 	MinCharge            Column // "min_charge" → qualified: "ftv.min_charge"
 	MaxCharge            Column // "max_charge" → qualified: "ftv.max_charge"
+	RoundingMode         Column // "rounding_mode" → qualified: "ftv.rounding_mode"
+	RoundingPrecision    Column // "rounding_precision" → qualified: "ftv.rounding_precision"
 	EffectiveFrom        Column // "effective_from" → qualified: "ftv.effective_from"
 	Metadata             Column // "metadata" → qualified: "ftv.metadata"
 	ChangeMessage        Column // "change_message" → qualified: "ftv.change_message"
@@ -402,6 +420,8 @@ var FormulaTemplateVersionColumns = struct {
 	BreakdownDefinitions: NewColumn("breakdown_definitions", "ftv"),
 	MinCharge:            NewColumn("min_charge", "ftv"),
 	MaxCharge:            NewColumn("max_charge", "ftv"),
+	RoundingMode:         NewColumn("rounding_mode", "ftv"),
+	RoundingPrecision:    NewColumn("rounding_precision", "ftv"),
 	EffectiveFrom:        NewColumn("effective_from", "ftv"),
 	Metadata:             NewColumn("metadata", "ftv"),
 	ChangeMessage:        NewColumn("change_message", "ftv"),
@@ -431,6 +451,8 @@ var FormulaTemplateVersionFieldMap = map[string]string{
 	"breakdownDefinitions": "breakdown_definitions",
 	"minCharge":            "min_charge",
 	"maxCharge":            "max_charge",
+	"roundingMode":         "rounding_mode",
+	"roundingPrecision":    "rounding_precision",
 	"effectiveFrom":        "effective_from",
 	"metadata":             "metadata",
 	"changeMessage":        "change_message",
@@ -458,6 +480,8 @@ var FormulaTemplateVersionInsertableColumns = []string{
 	"breakdown_definitions",
 	"min_charge",
 	"max_charge",
+	"rounding_mode",
+	"rounding_precision",
 	"effective_from",
 	"metadata",
 	"change_message",
@@ -543,6 +567,8 @@ var FormulaTemplateVersionFilter = struct {
 	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
 	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
 	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
+	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
+	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
 	EffectiveFrom        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
 	Metadata             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
 	ChangeMessage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
@@ -596,6 +622,12 @@ var FormulaTemplateVersionFilter = struct {
 	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxCharge", op, value)
 	},
+	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingMode", op, value)
+	},
+	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roundingPrecision", op, value)
+	},
 	EffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("effectiveFrom", op, value)
 	},
@@ -616,5 +648,388 @@ var FormulaTemplateVersionFilter = struct {
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// Review — table "formula_template_reviews", alias "ftr"
+// ---------------------------------------------------------------------------
+
+// ReviewTable holds the table name, alias, and primary key columns
+// for the "formula_template_reviews" table. The alias "ftr" is used in all generated
+// SQL fragments (e.g. "ftr.id = ?").
+var ReviewTable = TableInfo{
+	Name:       "formula_template_reviews",
+	Alias:      "ftr",
+	PrimaryKey: []string{"id"},
+}
+
+// ReviewColumns provides type-safe column references for the "formula_template_reviews" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ReviewColumns.ID.String())
+//	// SELECT ftr.id FROM formula_template_reviews AS ftr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ReviewColumns.ID.Eq(), id)           // WHERE ftr.id = ?
+//	q.Order(ReviewColumns.CreatedAt.OrderDesc())  // ORDER BY ftr.created_at DESC
+var ReviewColumns = struct {
+	ID                Column // "id" → qualified: "ftr.id"
+	TemplateID        Column // "template_id" → qualified: "ftr.template_id"
+	OrganizationID    Column // "organization_id" → qualified: "ftr.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "ftr.business_unit_id"
+	Round             Column // "round" → qualified: "ftr.round"
+	Decision          Column // "decision" → qualified: "ftr.decision"
+	ActorID           Column // "actor_id" → qualified: "ftr.actor_id"
+	Comment           Column // "comment" → qualified: "ftr.comment"
+	BaseVersionNumber Column // "base_version_number" → qualified: "ftr.base_version_number"
+	CreatedAt         Column // "created_at" → qualified: "ftr.created_at"
+}{
+	ID:                NewColumn("id", "ftr"),
+	TemplateID:        NewColumn("template_id", "ftr"),
+	OrganizationID:    NewColumn("organization_id", "ftr"),
+	BusinessUnitID:    NewColumn("business_unit_id", "ftr"),
+	Round:             NewColumn("round", "ftr"),
+	Decision:          NewColumn("decision", "ftr"),
+	ActorID:           NewColumn("actor_id", "ftr"),
+	Comment:           NewColumn("comment", "ftr"),
+	BaseVersionNumber: NewColumn("base_version_number", "ftr"),
+	CreatedAt:         NewColumn("created_at", "ftr"),
+}
+
+// ReviewFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Review.GetStaticFieldMap().
+var ReviewFieldMap = map[string]string{
+	"id":                "id",
+	"templateId":        "template_id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"round":             "round",
+	"decision":          "decision",
+	"actorId":           "actor_id",
+	"comment":           "comment",
+	"baseVersionNumber": "base_version_number",
+	"createdAt":         "created_at",
+}
+
+// ReviewInsertableColumns lists column names suitable for INSERT statements on the "formula_template_reviews" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ReviewInsertableColumns = []string{
+	"id",
+	"template_id",
+	"organization_id",
+	"business_unit_id",
+	"round",
+	"decision",
+	"actor_id",
+	"comment",
+	"base_version_number",
+	"created_at",
+}
+
+// ReviewRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ReviewRelations.Actor)
+//	// Bun eager-loads the Actor association via a separate query
+var ReviewRelations = struct {
+	Actor string
+}{
+	Actor: "Actor",
+}
+
+// ReviewScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ftr.organization_id = ? AND ftr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ReviewScopeTenant(sq, ti).
+//		Where(buncolgen.ReviewColumns.ID.Eq(), id)
+func ReviewScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ReviewScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ReviewColumns.ID.In(), bun.List(ids))
+//	})
+func ReviewScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ReviewScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ReviewColumns.ID.Eq(), id)
+//	})
+func ReviewScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ReviewApplyTenant(tenantInfo))
+func ReviewApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "formula_template_reviews" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ReviewFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ReviewFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Round             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "round" → DB: "round"
+	Decision          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
+	ActorID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorId" → DB: "actor_id"
+	Comment           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
+	BaseVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseVersionNumber" → DB: "base_version_number"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("templateId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Round: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("round", op, value)
+	},
+	Decision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decision", op, value)
+	},
+	ActorID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("actorId", op, value)
+	},
+	Comment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("comment", op, value)
+	},
+	BaseVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baseVersionNumber", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// TestCase — table "formula_template_test_cases", alias "ftc"
+// ---------------------------------------------------------------------------
+
+// TestCaseTable holds the table name, alias, and primary key columns
+// for the "formula_template_test_cases" table. The alias "ftc" is used in all generated
+// SQL fragments (e.g. "ftc.id = ?").
+var TestCaseTable = TableInfo{
+	Name:       "formula_template_test_cases",
+	Alias:      "ftc",
+	PrimaryKey: []string{"id"},
+}
+
+// TestCaseColumns provides type-safe column references for the "formula_template_test_cases" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(TestCaseColumns.ID.String())
+//	// SELECT ftc.id FROM formula_template_test_cases AS ftc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(TestCaseColumns.ID.Eq(), id)           // WHERE ftc.id = ?
+//	q.Order(TestCaseColumns.CreatedAt.OrderDesc())  // ORDER BY ftc.created_at DESC
+var TestCaseColumns = struct {
+	ID             Column // "id" → qualified: "ftc.id"
+	TemplateID     Column // "template_id" → qualified: "ftc.template_id"
+	OrganizationID Column // "organization_id" → qualified: "ftc.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "ftc.business_unit_id"
+	Name           Column // "name" → qualified: "ftc.name"
+	Description    Column // "description" → qualified: "ftc.description"
+	Variables      Column // "variables" → qualified: "ftc.variables"
+	ExpectedAmount Column // "expected_amount" → qualified: "ftc.expected_amount"
+	Tolerance      Column // "tolerance" → qualified: "ftc.tolerance"
+	Version        Column // "version" → qualified: "ftc.version"
+	CreatedByID    Column // "created_by_id" → qualified: "ftc.created_by_id"
+	CreatedAt      Column // "created_at" → qualified: "ftc.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "ftc.updated_at"
+}{
+	ID:             NewColumn("id", "ftc"),
+	TemplateID:     NewColumn("template_id", "ftc"),
+	OrganizationID: NewColumn("organization_id", "ftc"),
+	BusinessUnitID: NewColumn("business_unit_id", "ftc"),
+	Name:           NewColumn("name", "ftc"),
+	Description:    NewColumn("description", "ftc"),
+	Variables:      NewColumn("variables", "ftc"),
+	ExpectedAmount: NewColumn("expected_amount", "ftc"),
+	Tolerance:      NewColumn("tolerance", "ftc"),
+	Version:        NewColumn("version", "ftc"),
+	CreatedByID:    NewColumn("created_by_id", "ftc"),
+	CreatedAt:      NewColumn("created_at", "ftc"),
+	UpdatedAt:      NewColumn("updated_at", "ftc"),
+}
+
+// TestCaseFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by TestCase.GetStaticFieldMap().
+var TestCaseFieldMap = map[string]string{
+	"id":             "id",
+	"templateId":     "template_id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"name":           "name",
+	"description":    "description",
+	"variables":      "variables",
+	"expectedAmount": "expected_amount",
+	"tolerance":      "tolerance",
+	"version":        "version",
+	"createdById":    "created_by_id",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// TestCaseInsertableColumns lists column names suitable for INSERT statements on the "formula_template_test_cases" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var TestCaseInsertableColumns = []string{
+	"id",
+	"template_id",
+	"organization_id",
+	"business_unit_id",
+	"name",
+	"description",
+	"variables",
+	"expected_amount",
+	"tolerance",
+	"version",
+	"created_by_id",
+	"created_at",
+	"updated_at",
+}
+
+// TestCaseScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ftc.organization_id = ? AND ftc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.TestCaseScopeTenant(sq, ti).
+//		Where(buncolgen.TestCaseColumns.ID.Eq(), id)
+func TestCaseScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.TestCaseScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.TestCaseColumns.ID.In(), bun.List(ids))
+//	})
+func TestCaseScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.TestCaseScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.TestCaseColumns.ID.Eq(), id)
+//	})
+func TestCaseScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.TestCaseApplyTenant(tenantInfo))
+func TestCaseApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+}
+
+// TestCaseFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "formula_template_test_cases" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	TestCaseFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var TestCaseFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Variables      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variables" → DB: "variables"
+	ExpectedAmount func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAmount" → DB: "expected_amount"
+	Tolerance      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tolerance" → DB: "tolerance"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("templateId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Variables: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("variables", op, value)
+	},
+	ExpectedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expectedAmount", op, value)
+	},
+	Tolerance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tolerance", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
 	},
 }

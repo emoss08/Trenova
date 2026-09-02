@@ -6,18 +6,17 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/typeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -26,30 +25,42 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
+	DB             ports.DBConnection
 	Repo           repositories.FormulaTemplateRepository
 	VersionRepo    repositories.FormulaTemplateVersionRepository
+	TestCaseRepo   repositories.FormulaTemplateTestCaseRepository
+	ReviewRepo     repositories.FormulaTemplateReviewRepository
 	ShipmentRepo   repositories.ShipmentRepository
 	FormulaService *formula.Service
 	AuditService   services.AuditService
+	Notifications  *notificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l              *zap.Logger
+	db             ports.DBConnection
 	repo           repositories.FormulaTemplateRepository
 	versionRepo    repositories.FormulaTemplateVersionRepository
+	testCaseRepo   repositories.FormulaTemplateTestCaseRepository
+	reviewRepo     repositories.FormulaTemplateReviewRepository
 	shipmentRepo   repositories.ShipmentRepository
 	formulaService *formula.Service
 	auditService   services.AuditService
+	notifications  *notificationservice.Service
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
 		l:              p.Logger.Named("service.formulatemplate"),
+		db:             p.DB,
 		repo:           p.Repo,
 		versionRepo:    p.VersionRepo,
+		testCaseRepo:   p.TestCaseRepo,
+		reviewRepo:     p.ReviewRepo,
 		shipmentRepo:   p.ShipmentRepo,
 		formulaService: p.FormulaService,
 		auditService:   p.AuditService,
+		notifications:  p.Notifications,
 	}
 }
 
@@ -63,19 +74,40 @@ func (s *Service) Create(
 		zap.String("name", entity.Name),
 	)
 
+	// A template is born a draft whatever the payload claims. Active is
+	// reached only through review, and the review stamps are set by the
+	// reviewers, not by whoever typed the record in.
+	entity.Status = formulatemplate.StatusDraft
+	clearApprovalFields(entity)
+
 	if err := s.validateTemplate(ctx, entity); err != nil {
 		return nil, err
 	}
 
 	entity.CurrentVersionNumber = 1
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	var createdEntity *formulatemplate.FormulaTemplate
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		created, txErr := s.repo.Create(txCtx, entity)
+		if txErr != nil {
+			log.Error("failed to create formula template", zap.Error(txErr))
+			return txErr
+		}
+
+		if txErr = s.createVersionSnapshot(
+			txCtx, created, 1, userID, "Initial version", nil,
+		); txErr != nil {
+			log.Error("failed to create version snapshot", zap.Error(txErr))
+			return txErr
+		}
+
+		createdEntity = created
+		return nil
+	})
 	if err != nil {
-		log.Error("failed to create formula template", zap.Error(err))
 		return nil, err
 	}
 
-	s.createVersionSnapshot(ctx, log, createdEntity, 1, userID, "Initial version", nil)
 	s.logAuditAction(
 		log,
 		createdEntity,
@@ -113,43 +145,78 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if entity.Status != original.Status &&
-		!formulatemplate.CanTransition(original.Status, entity.Status) {
+	if entity.Status != original.Status {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
 			fmt.Sprintf(
-				"Cannot transition template status from %s to %s",
+				"Status cannot be changed from %s to %s here; "+
+					"submit, approve, reject, or archive the template instead",
 				original.Status,
 				entity.Status,
 			),
 		)
 	}
 
+	carryApprovalFields(entity, original)
+
+	material := entity.HasMaterialChange(original)
+
 	auditComment := "Formula template updated"
-	if (original.Status == formulatemplate.StatusActive ||
-		original.Status == formulatemplate.StatusInReview) &&
-		entity.HasMaterialChange(original) {
+	revertsApproval := material &&
+		(original.Status == formulatemplate.StatusActive ||
+			original.Status == formulatemplate.StatusInReview)
+	if revertsApproval {
 		entity.Status = formulatemplate.StatusDraft
 		clearApprovalFields(entity)
 		auditComment = "Material change reverted approval"
 	}
 
-	newVersionNumber := original.CurrentVersionNumber + 1
-	entity.CurrentVersionNumber = newVersionNumber
+	entity.CurrentVersionNumber = original.CurrentVersionNumber
+	var changeSummary map[string]jsonutils.FieldChange
+	if material {
+		entity.CurrentVersionNumber = original.CurrentVersionNumber + 1
 
-	changeSummary, diffErr := jsonutils.JSONDiff(original, entity, nil)
-	if diffErr != nil {
-		log.Warn("failed to compute change summary for version snapshot", zap.Error(diffErr))
+		var diffErr error
+		changeSummary, diffErr = jsonutils.JSONDiff(original, entity, nil)
+		if diffErr != nil {
+			log.Warn("failed to compute change summary for version snapshot", zap.Error(diffErr))
+		}
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, entity)
+	var updatedEntity *formulatemplate.FormulaTemplate
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		updated, txErr := s.repo.Update(txCtx, entity)
+		if txErr != nil {
+			log.Error("failed to update formula template", zap.Error(txErr))
+			return txErr
+		}
+
+		if material {
+			if txErr = s.createVersionSnapshot(
+				txCtx, updated, updated.CurrentVersionNumber, userID, "", changeSummary,
+			); txErr != nil {
+				log.Error("failed to create version snapshot", zap.Error(txErr))
+				return txErr
+			}
+		}
+
+		if revertsApproval {
+			cleared, clearErr := s.clearScheduledVersions(txCtx, updated)
+			if clearErr != nil {
+				log.Error("failed to clear scheduled versions", zap.Error(clearErr))
+				return clearErr
+			}
+			auditComment = withClearedSchedules(auditComment, cleared)
+		}
+
+		updatedEntity = updated
+		return nil
+	})
 	if err != nil {
-		log.Error("failed to update formula template", zap.Error(err))
 		return nil, err
 	}
 
-	s.createVersionSnapshot(ctx, log, updatedEntity, newVersionNumber, userID, "", changeSummary)
 	s.logAuditAction(
 		log,
 		updatedEntity,
@@ -171,9 +238,60 @@ func (s *Service) Duplicate(
 		zap.Any("request", req),
 	)
 
-	entities, err := s.repo.BulkDuplicate(ctx, req)
+	if err := validateBulkTemplateIDs(req.TemplateIDs); err != nil {
+		return nil, err
+	}
+
+	sources, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+		TenantInfo:  req.TenantInfo,
+		TemplateIDs: req.TemplateIDs,
+	})
 	if err != nil {
-		log.Error("failed to duplicate formula template", zap.Error(err))
+		log.Error("failed to load source templates", zap.Error(err))
+		return nil, err
+	}
+
+	sourceNames := make(map[pulid.ID]string, len(sources))
+	for _, source := range sources {
+		if vErr := s.validateExpression(ctx, source); vErr != nil {
+			return nil, vErr
+		}
+		sourceNames[source.ID] = source.Name
+	}
+
+	var entities []*formulatemplate.FormulaTemplate
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		duplicated, txErr := s.repo.BulkDuplicate(txCtx, req)
+		if txErr != nil {
+			log.Error("failed to duplicate formula template", zap.Error(txErr))
+			return txErr
+		}
+
+		for _, entity := range duplicated {
+			changeMessage := "Duplicated"
+			if entity.SourceTemplateID != nil {
+				if sourceName, ok := sourceNames[*entity.SourceTemplateID]; ok {
+					changeMessage = "Duplicated from " + sourceName
+				}
+			}
+
+			if txErr = s.createVersionSnapshot(
+				txCtx,
+				entity,
+				1,
+				req.TenantInfo.UserID,
+				changeMessage,
+				nil,
+			); txErr != nil {
+				log.Error("failed to create version snapshot", zap.Error(txErr))
+				return txErr
+			}
+		}
+
+		entities = duplicated
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -195,13 +313,17 @@ func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	if req.Status != formulatemplate.StatusActive &&
-		req.Status != formulatemplate.StatusInactive {
+	if req.Status != formulatemplate.StatusInactive {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"Bulk status updates only support Active and Inactive",
+			"Bulk status updates can only archive templates; "+
+				"an archived template is reactivated by submitting it for review",
 		)
+	}
+
+	if err := validateBulkTemplateIDs(req.TemplateIDs); err != nil {
+		return nil, err
 	}
 
 	templates, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
@@ -229,7 +351,29 @@ func (s *Service) BulkUpdateStatus(
 		)
 	}
 
-	return s.repo.BulkUpdateStatus(ctx, req)
+	previousStates := make(map[pulid.ID]*formulatemplate.FormulaTemplate, len(templates))
+	for _, template := range templates {
+		previousStates[template.ID] = template
+	}
+
+	updated, err := s.repo.BulkUpdateStatus(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	log := s.l.With(zap.String("operation", "BulkUpdateStatus"))
+	for _, template := range updated {
+		s.logAuditAction(
+			log,
+			template,
+			permission.OpUpdate,
+			req.TenantInfo.UserID,
+			previousStates[template.ID],
+			fmt.Sprintf("Status changed to %s in bulk update", req.Status),
+		)
+	}
+
+	return updated, nil
 }
 
 func (s *Service) GetByID(
@@ -267,549 +411,6 @@ func (s *Service) SelectOptions(
 	return s.repo.SelectOptions(ctx, req)
 }
 
-func (s *Service) CreateVersion(
-	ctx context.Context,
-	req *repositories.CreateVersionRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	log := s.l.With(
-		zap.String("operation", "CreateVersion"),
-		zap.String("templateID", req.TemplateID.String()),
-	)
-
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
-	if err != nil {
-		log.Error("failed to get template", zap.Error(err))
-		return nil, err
-	}
-
-	var changeSummary map[string]jsonutils.FieldChange
-	if template.CurrentVersionNumber >= 1 {
-		prevVersion, verr := s.versionRepo.GetByTemplateAndVersion(
-			ctx,
-			&repositories.GetVersionRequest{
-				TenantInfo:    req.TenantInfo,
-				TemplateID:    req.TemplateID,
-				VersionNumber: template.CurrentVersionNumber,
-			},
-		)
-		if verr == nil && prevVersion != nil {
-			changeSummary, _ = jsonutils.JSONDiff(prevVersion, template, &jsonutils.DiffOptions{
-				IgnoreFields: versionDiffIgnoreFields,
-			})
-		}
-	}
-
-	newVersionNumber := template.CurrentVersionNumber + 1
-	template.CurrentVersionNumber = newVersionNumber
-
-	if _, err = s.repo.Update(ctx, template); err != nil {
-		log.Error("failed to update template version number", zap.Error(err))
-		return nil, err
-	}
-
-	version := formulatemplate.NewVersionFromTemplate(
-		template,
-		newVersionNumber,
-		req.TenantInfo.UserID,
-		req.ChangeMessage,
-		changeSummary,
-	)
-
-	createdVersion, err := s.versionRepo.Create(ctx, version)
-	if err != nil {
-		log.Error("failed to create version", zap.Error(err))
-		return nil, err
-	}
-
-	return createdVersion, nil
-}
-
-func (s *Service) ListVersions(
-	ctx context.Context,
-	req *repositories.ListVersionsRequest,
-) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
-	return s.versionRepo.List(ctx, req)
-}
-
-func (s *Service) GetVersion(
-	ctx context.Context,
-	req *repositories.GetVersionRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	return s.versionRepo.GetByTemplateAndVersion(ctx, req)
-}
-
-func (s *Service) Rollback(
-	ctx context.Context,
-	req *repositories.RollbackRequest,
-) (*formulatemplate.FormulaTemplate, error) {
-	log := s.l.With(
-		zap.String("operation", "Rollback"),
-		zap.String("templateID", req.TemplateID.String()),
-		zap.Int64("targetVersion", req.TargetVersion),
-	)
-
-	targetVersion, err := s.versionRepo.GetByTemplateAndVersion(
-		ctx,
-		&repositories.GetVersionRequest{
-			TenantInfo:    req.TenantInfo,
-			TemplateID:    req.TemplateID,
-			VersionNumber: req.TargetVersion,
-		},
-	)
-	if err != nil {
-		log.Error("failed to get target version", zap.Error(err))
-		return nil, err
-	}
-
-	currentTemplate, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
-	if err != nil {
-		log.Error("failed to get current template", zap.Error(err))
-		return nil, err
-	}
-
-	applyVersionToTemplate(currentTemplate, targetVersion)
-
-	newVersionNumber := currentTemplate.CurrentVersionNumber + 1
-	currentTemplate.CurrentVersionNumber = newVersionNumber
-
-	updatedTemplate, err := s.repo.Update(ctx, currentTemplate)
-	if err != nil {
-		log.Error("failed to update template", zap.Error(err))
-		return nil, err
-	}
-
-	changeMessage := req.ChangeMessage
-	if changeMessage == "" {
-		changeMessage = fmt.Sprintf("Rolled back to version %d", req.TargetVersion)
-	}
-
-	s.createVersionSnapshot(
-		ctx,
-		log,
-		updatedTemplate,
-		newVersionNumber,
-		req.TenantInfo.UserID,
-		changeMessage,
-		nil,
-	)
-	s.logAuditAction(
-		log,
-		updatedTemplate,
-		permission.OpUpdate,
-		req.TenantInfo.UserID,
-		nil,
-		changeMessage,
-	)
-
-	return updatedTemplate, nil
-}
-
-func (s *Service) Fork(
-	ctx context.Context,
-	req *repositories.ForkTemplateRequest,
-) (*formulatemplate.FormulaTemplate, error) {
-	log := s.l.With(
-		zap.String("operation", "Fork"),
-		zap.String("sourceTemplateID", req.SourceTemplateID.String()),
-	)
-
-	sourceTemplate, err := s.getTemplateByIDWithTenant(ctx, req.SourceTemplateID, req.TenantInfo)
-	if err != nil {
-		log.Error("failed to get source template", zap.Error(err))
-		return nil, err
-	}
-
-	snapshot, sourceVersionNum := s.resolveTemplateSnapshot(
-		ctx,
-		log,
-		sourceTemplate,
-		req.SourceVersion,
-		req.TenantInfo,
-	)
-
-	forkedTemplate := &formulatemplate.FormulaTemplate{
-		OrganizationID:       req.TenantInfo.OrgID,
-		BusinessUnitID:       req.TenantInfo.BuID,
-		Name:                 req.NewName,
-		Description:          snapshot.Description,
-		Type:                 snapshot.Type,
-		Expression:           snapshot.Expression,
-		Status:               formulatemplate.StatusDraft,
-		SchemaID:             snapshot.SchemaID,
-		VariableDefinitions:  snapshot.VariableDefinitions,
-		Metadata:             snapshot.Metadata,
-		SourceTemplateID:     &req.SourceTemplateID,
-		SourceVersionNumber:  &sourceVersionNum,
-		CurrentVersionNumber: 1,
-	}
-
-	createdTemplate, err := s.repo.Create(ctx, forkedTemplate)
-	if err != nil {
-		log.Error("failed to create forked template", zap.Error(err))
-		return nil, err
-	}
-
-	changeMessage := req.ChangeMessage
-	if changeMessage == "" {
-		changeMessage = fmt.Sprintf("Forked from template %s", sourceTemplate.Name)
-	}
-
-	s.createVersionSnapshot(ctx, log, createdTemplate, 1, req.TenantInfo.UserID, changeMessage, nil)
-	s.logAuditAction(
-		log,
-		createdTemplate,
-		permission.OpCreate,
-		req.TenantInfo.UserID,
-		nil,
-		changeMessage,
-	)
-
-	return createdTemplate, nil
-}
-
-func (s *Service) CompareVersions(
-	ctx context.Context,
-	req *repositories.CompareVersionsRequest,
-) (*formulatemplate.VersionDiff, error) {
-	log := s.l.With(
-		zap.String("operation", "CompareVersions"),
-		zap.String("templateID", req.TemplateID.String()),
-		zap.Int64("fromVersion", req.FromVersion),
-		zap.Int64("toVersion", req.ToVersion),
-	)
-
-	versions, err := s.versionRepo.GetVersionRange(ctx, &repositories.GetVersionRangeRequest{
-		TenantInfo:  req.TenantInfo,
-		TemplateID:  req.TemplateID,
-		FromVersion: req.FromVersion,
-		ToVersion:   req.ToVersion,
-	})
-	if err != nil {
-		log.Error("failed to get version range", zap.Error(err))
-		return nil, err
-	}
-
-	if len(versions) != 2 {
-		return nil, errortypes.NewValidationError(
-			"versions",
-			errortypes.ErrInvalid,
-			"Both versions must exist for comparison",
-		)
-	}
-
-	fromVer, toVer := extractVersionPair(versions, req.FromVersion, req.ToVersion)
-	if fromVer == nil || toVer == nil {
-		return nil, errortypes.NewValidationError(
-			"versions",
-			errortypes.ErrNotFound,
-			"One or both versions not found in the retrieved range",
-		)
-	}
-
-	changes, err := jsonutils.JSONDiff(fromVer, toVer, &jsonutils.DiffOptions{
-		IgnoreFields: versionDiffIgnoreFields,
-	})
-	if err != nil {
-		log.Error("failed to compute diff", zap.Error(err))
-		return nil, err
-	}
-
-	return &formulatemplate.VersionDiff{
-		FromVersion: req.FromVersion,
-		ToVersion:   req.ToVersion,
-		Changes:     changes,
-		ChangeCount: len(changes),
-	}, nil
-}
-
-func (s *Service) GetLineage(
-	ctx context.Context,
-	req *repositories.GetLineageRequest,
-) (*formulatemplate.ForkLineage, error) {
-	log := s.l.With(
-		zap.String("operation", "GetLineage"),
-		zap.String("templateID", req.TemplateID.String()),
-	)
-
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
-	if err != nil {
-		log.Error("failed to get template", zap.Error(err))
-		return nil, err
-	}
-
-	forkedTemplates, err := s.versionRepo.GetForkedTemplates(
-		ctx,
-		&repositories.GetForkedTemplatesRequest{
-			TenantInfo:       req.TenantInfo,
-			SourceTemplateID: req.TemplateID,
-		},
-	)
-	if err != nil {
-		log.Error("failed to get forked templates", zap.Error(err))
-		return nil, err
-	}
-
-	return buildLineage(template, forkedTemplates), nil
-}
-
-func (s *Service) UpdateVersionTags(
-	ctx context.Context,
-	req *repositories.UpdateVersionTagsRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	log := s.l.With(
-		zap.String("operation", "UpdateVersionTags"),
-		zap.String("templateID", req.TemplateID.String()),
-		zap.Int64("versionNumber", req.VersionNumber),
-	)
-
-	for _, tag := range req.Tags {
-		if !formulatemplate.VersionTag(tag).IsValid() {
-			return nil, errortypes.NewValidationError(
-				"tags",
-				errortypes.ErrInvalid,
-				fmt.Sprintf("Invalid tag: %s", tag),
-			)
-		}
-	}
-
-	version, err := s.versionRepo.UpdateTags(ctx, req)
-	if err != nil {
-		log.Error("failed to update version tags", zap.Error(err))
-		return nil, err
-	}
-
-	return version, nil
-}
-
-type TestExpressionRequest struct {
-	Expression string
-	SchemaID   string
-	Variables  map[string]any
-	ShipmentID *pulid.ID
-	TenantInfo pagination.TenantInfo
-	Breakdowns []*formulatypes.BreakdownDefinition
-}
-
-const msgExpressionValidationFailed = "Expression validation failed"
-
-type TestExpressionResponse struct {
-	Valid             bool                                   `json:"valid"`
-	Result            any                                    `json:"result,omitempty"`
-	Error             string                                 `json:"error,omitempty"`
-	Message           string                                 `json:"message"`
-	Breakdown         []formulatemplatetypes.BreakdownAmount `json:"breakdown,omitempty"`
-	ResolvedVariables map[string]any                         `json:"resolvedVariables,omitempty"`
-}
-
-func (s *Service) TestExpression(
-	ctx context.Context,
-	req *TestExpressionRequest,
-) *TestExpressionResponse {
-	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
-	if err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: msgExpressionValidationFailed,
-		}
-	}
-
-	if req.ShipmentID != nil {
-		return s.testExpressionAgainstShipment(ctx, req)
-	}
-
-	return s.testExpressionWithEnv(ctx, req)
-}
-
-func (s *Service) testExpressionAgainstShipment(
-	ctx context.Context,
-	req *TestExpressionRequest,
-) *TestExpressionResponse {
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:              *req.ShipmentID,
-		TenantInfo:      req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
-	})
-	if err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: "Failed to load shipment",
-		}
-	}
-
-	resp, err := s.formulaService.EvaluateExpression(ctx, &formula.EvaluateExpressionRequest{
-		Expression: req.Expression,
-		Entity:     entity,
-		SchemaID:   req.SchemaID,
-		Variables:  req.Variables,
-		Breakdowns: req.Breakdowns,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: "Expression evaluation failed",
-		}
-	}
-
-	return &TestExpressionResponse{
-		Valid:             true,
-		Result:            resp.Amount,
-		Breakdown:         resp.Breakdown,
-		ResolvedVariables: maputils.WithoutFuncValues(resp.Variables),
-		Message:           "Expression evaluated against shipment",
-	}
-}
-
-func (s *Service) testExpressionWithEnv(
-	ctx context.Context,
-	req *TestExpressionRequest,
-) *TestExpressionResponse {
-	env, err := s.formulaService.BuildValidationEnvironment(req.SchemaID, req.Variables)
-	if err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: msgExpressionValidationFailed,
-		}
-	}
-
-	if err = s.formulaService.ValidateExpressionWithEnv(ctx, req.Expression, env); err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: msgExpressionValidationFailed,
-		}
-	}
-
-	result, err := s.formulaService.EvaluateWithEnv(ctx, req.Expression, env)
-	if err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: "Expression evaluation failed",
-		}
-	}
-
-	resp := &TestExpressionResponse{
-		Valid:   true,
-		Result:  result.Amount,
-		Message: "Expression is valid",
-	}
-
-	if len(req.Breakdowns) > 0 {
-		resp.Breakdown = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env)
-	}
-
-	return resp
-}
-
-func (s *Service) evaluateBreakdownsWithEnv(
-	ctx context.Context,
-	defs []*formulatypes.BreakdownDefinition,
-	env map[string]any,
-) []formulatemplatetypes.BreakdownAmount {
-	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(defs))
-	for _, def := range defs {
-		if def == nil {
-			continue
-		}
-
-		item := formulatemplatetypes.BreakdownAmount{Name: def.Name, Label: def.Label}
-		if result, err := s.formulaService.EvaluateWithEnv(ctx, def.Expression, env); err != nil {
-			item.Error = err.Error()
-		} else {
-			item.Amount = result.Amount
-		}
-
-		items = append(items, item)
-	}
-
-	return items
-}
-
-func (s *Service) validateTemplate(
-	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
-) error {
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return s.validateExpression(ctx, entity)
-}
-
-func (s *Service) validateExpression(
-	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
-) error {
-	variables := make(map[string]any, len(entity.VariableDefinitions))
-	for _, varDef := range entity.VariableDefinitions {
-		if varDef.DefaultValue != nil {
-			variables[varDef.Name] = varDef.DefaultValue
-			continue
-		}
-
-		variables[varDef.Name] = typeutils.DefaultValueForType(string(varDef.Type))
-	}
-
-	env, err := s.formulaService.BuildValidationEnvironment(entity.SchemaID, variables)
-	if err != nil {
-		return err
-	}
-
-	if err = s.formulaService.ValidateExpressionWithEnv(ctx, entity.Expression, env); err != nil {
-		return err
-	}
-
-	multiErr := errortypes.NewMultiError()
-	for i, def := range entity.BreakdownDefinitions {
-		if def == nil {
-			continue
-		}
-		defErr := s.formulaService.ValidateExpressionWithEnv(ctx, def.Expression, env)
-		if defErr != nil {
-			multiErr.Add(
-				fmt.Sprintf("breakdownDefinitions[%d].expression", i),
-				errortypes.ErrInvalid,
-				defErr.Error(),
-			)
-		}
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
-
-	if err = s.formulaService.ValidateLookupTables(ctx, entity.Expression, tenantInfo); err != nil {
-		return err
-	}
-
-	for _, def := range entity.BreakdownDefinitions {
-		if def == nil {
-			continue
-		}
-		if err = s.formulaService.ValidateLookupTables(
-			ctx,
-			def.Expression,
-			tenantInfo,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (s *Service) getTemplateByID(
 	ctx context.Context,
 	id, orgID, buID pulid.ID,
@@ -829,27 +430,6 @@ func (s *Service) getTemplateByIDWithTenant(
 		TemplateID: id,
 		TenantInfo: tenant,
 	})
-}
-
-func (s *Service) createVersionSnapshot(
-	ctx context.Context,
-	log *zap.Logger,
-	template *formulatemplate.FormulaTemplate,
-	versionNumber int64,
-	userID pulid.ID,
-	changeMessage string,
-	changeSummary map[string]jsonutils.FieldChange,
-) {
-	version := formulatemplate.NewVersionFromTemplate(
-		template,
-		versionNumber,
-		userID,
-		changeMessage,
-		changeSummary,
-	)
-	if _, err := s.versionRepo.Create(ctx, version); err != nil {
-		log.Error("failed to create version snapshot", zap.Error(err))
-	}
 }
 
 func (s *Service) logAuditAction(
@@ -885,29 +465,7 @@ func (s *Service) logAuditAction(
 	}
 }
 
-func (s *Service) resolveTemplateSnapshot(
-	ctx context.Context,
-	log *zap.Logger,
-	template *formulatemplate.FormulaTemplate,
-	requestedVersion *int64,
-	tenant pagination.TenantInfo,
-) (snapshot templateSnapshot, versionNumber int64) {
-	if requestedVersion != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
-			TenantInfo:    tenant,
-			TemplateID:    template.ID,
-			VersionNumber: *requestedVersion,
-		})
-		if err == nil {
-			return snapshotFromVersion(version), version.VersionNumber
-		}
-		log.Warn("failed to get requested version, falling back to template", zap.Error(err))
-	}
-
-	version, err := s.versionRepo.GetLatestVersion(ctx, template.ID, tenant)
-	if err == nil {
-		return snapshotFromVersion(version), version.VersionNumber
-	}
-
-	return snapshotFromTemplate(template), template.CurrentVersionNumber
-}
+// maxBulkTemplateIDs bounds the id lists bulk operations accept. A duplicate
+// of a hundred templates is already a strange request; an unbounded one is a
+// way to hold a transaction open for as long as the caller likes.
+const maxBulkTemplateIDs = 100
