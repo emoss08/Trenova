@@ -3,10 +3,12 @@ package rateagreementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -16,24 +18,31 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	DB                  *postgres.Connection
+	FormulaTemplateRepo repositories.FormulaTemplateRepository
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*rateagreement.RateAgreement]
+	validator           *validationframework.TenantedValidator[*rateagreement.RateAgreement]
+	formulaTemplateRepo repositories.FormulaTemplateRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return &Validator{validator: newBuilder(p.DB).Build()}
+	return &Validator{
+		validator:           newBuilder(p.DB, p.FormulaTemplateRepo).Build(),
+		formulaTemplateRepo: p.FormulaTemplateRepo,
+	}
 }
 
 func newBuilder(
 	db *postgres.Connection,
+	formulaTemplateRepo repositories.FormulaTemplateRepository,
 ) *validationframework.TenantedValidatorBuilder[*rateagreement.RateAgreement] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*rateagreement.RateAgreement]().
 		WithModelName("Rate Agreement").
-		WithCustomRule(activationReadinessRule())
+		WithCustomRule(activationReadinessRule()).
+		WithCustomRule(templateReferenceRule(formulaTemplateRepo))
 
 	if db == nil {
 		return builder
@@ -92,6 +101,7 @@ func (v *Validator) ValidateUpdate(
 // do not carry a whole agreement — so the rules the validator would have run
 // have to run here instead.
 func (v *Validator) ValidateAmendment(
+	ctx context.Context,
 	agreement *rateagreement.RateAgreement,
 	req *repositories.AmendRateAgreementRulesRequest,
 ) *errortypes.MultiError {
@@ -138,11 +148,134 @@ func (v *Validator) ValidateAmendment(
 		rule.Validate(multiErr.WithIndex("rules", index))
 	}
 
+	validateRuleTemplateReferences(
+		ctx,
+		v.formulaTemplateRepo,
+		pagination.TenantInfo{
+			OrgID: agreement.OrganizationID,
+			BuID:  agreement.BusinessUnitID,
+		},
+		req.Rules,
+		multiErr,
+	)
+
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
 	return nil
+}
+
+// templateReferenceRule refuses a rule that points at a formula template the
+// rating engine could never price with — one that does not exist in the
+// tenant, is not Active, or is not a freight-charge template. Without it the
+// failure surfaces only at rating time, where it blocks the shipment save.
+func templateReferenceRule(
+	formulaTemplateRepo repositories.FormulaTemplateRepository,
+) validationframework.TenantedRule[*rateagreement.RateAgreement] {
+	return validationframework.
+		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_rule_template_reference").
+		OnBoth().
+		WithStage(validationframework.ValidationStageBusinessRules).
+		WithPriority(validationframework.ValidationPriorityHigh).
+		WithValidation(func(
+			ctx context.Context,
+			entity *rateagreement.RateAgreement,
+			_ *validationframework.TenantedValidationContext,
+			multiErr *errortypes.MultiError,
+		) error {
+			validateRuleTemplateReferences(
+				ctx,
+				formulaTemplateRepo,
+				pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+				entity.Rules,
+				multiErr,
+			)
+
+			return nil
+		})
+}
+
+func validateRuleTemplateReferences(
+	ctx context.Context,
+	formulaTemplateRepo repositories.FormulaTemplateRepository,
+	tenantInfo pagination.TenantInfo,
+	rules []*rateagreement.RateAgreementRule,
+	multiErr *errortypes.MultiError,
+) {
+	if formulaTemplateRepo == nil {
+		return
+	}
+
+	templateIDs := make([]pulid.ID, 0, len(rules))
+	seen := make(map[pulid.ID]struct{}, len(rules))
+	for _, rule := range rules {
+		if rule == nil || rule.FormulaTemplateID == nil || rule.FormulaTemplateID.IsNil() {
+			continue
+		}
+		if _, ok := seen[*rule.FormulaTemplateID]; ok {
+			continue
+		}
+		seen[*rule.FormulaTemplateID] = struct{}{}
+		templateIDs = append(templateIDs, *rule.FormulaTemplateID)
+	}
+
+	if len(templateIDs) == 0 {
+		return
+	}
+
+	templates, err := formulaTemplateRepo.GetByIDs(
+		ctx,
+		repositories.GetFormulaTemplatesByIDsRequest{
+			TenantInfo:  tenantInfo,
+			TemplateIDs: templateIDs,
+		},
+	)
+	if err != nil {
+		multiErr.Add(
+			"rules",
+			errortypes.ErrInvalid,
+			"Unable to verify the referenced formula templates",
+		)
+		return
+	}
+
+	byID := make(map[pulid.ID]*formulatemplate.FormulaTemplate, len(templates))
+	for _, template := range templates {
+		byID[template.ID] = template
+	}
+
+	for index, rule := range rules {
+		if rule == nil || rule.FormulaTemplateID == nil || rule.FormulaTemplateID.IsNil() {
+			continue
+		}
+
+		indexed := multiErr.WithIndex("rules", index)
+		template, ok := byID[*rule.FormulaTemplateID]
+		switch {
+		case !ok:
+			indexed.Add(
+				"formulaTemplateId",
+				errortypes.ErrInvalid,
+				"Formula template does not exist in your organization",
+			)
+		case template.Status != formulatemplate.StatusActive:
+			indexed.Add(
+				"formulaTemplateId",
+				errortypes.ErrInvalid,
+				"Formula template must be Active to price shipments",
+			)
+		case template.Type != formulatemplate.TemplateTypeFreightCharge:
+			indexed.Add(
+				"formulaTemplateId",
+				errortypes.ErrInvalid,
+				"Formula template must be a freight charge template",
+			)
+		}
+	}
 }
 
 // activationReadinessRule stops an agreement from being saved in a state it

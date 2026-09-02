@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { rateAgreementAccessorialSchema, rateAgreementRuleSchema, rateMatrixSchema } from "../rate";
+import {
+  rateAgreementAccessorialSchema,
+  rateAgreementRuleSchema,
+  rateMatrixDimensionSchema,
+  rateMatrixSchema,
+} from "../rate";
 
 /**
  * The smallest payload the schema accepts, so each test states only the
@@ -162,5 +167,28 @@ describe("rateMatrixSchema rating method", () => {
     const result = rateMatrixSchema.safeParse({ ...matrix, formulaTemplateId: "" });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("rateMatrixDimensionSchema lookup modes", () => {
+  it("defaults an axis to exact keys and strict bands", () => {
+    const parsed = rateMatrixDimensionSchema.parse({
+      position: 0,
+      kind: "Zone",
+      matchMode: "Exact",
+    });
+    expect(parsed).toMatchObject({ keyNormalization: "None", rangeOverflow: "Error" });
+  });
+
+  it("accepts the normalisation and overflow modes the server knows", () => {
+    expect(
+      rateMatrixDimensionSchema.parse({
+        position: 0,
+        kind: "Zone",
+        matchMode: "Exact",
+        keyNormalization: "Zip3",
+        rangeOverflow: "ClampToTopBand",
+      }),
+    ).toMatchObject({ keyNormalization: "Zip3", rangeOverflow: "ClampToTopBand" });
   });
 });

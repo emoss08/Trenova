@@ -26,12 +26,3 @@ type DataRetentionRepository interface {
 		entity *tenant.DataRetention,
 	) (*tenant.DataRetention, error)
 }
-
-type DataRetentionCacheRepository interface {
-	List(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error)
-	SetList(ctx context.Context, entities []*tenant.DataRetention) error
-	InvalidateAll(ctx context.Context) error
-	Get(ctx context.Context, req GetDataRetentionRequest) (*tenant.DataRetention, error)
-	Set(ctx context.Context, entity *tenant.DataRetention) error
-	Invalidate(ctx context.Context, req GetDataRetentionRequest) error
-}

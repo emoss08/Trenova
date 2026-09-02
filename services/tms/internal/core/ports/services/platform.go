@@ -239,11 +239,6 @@ type AccessAuthorizer interface {
 	AuthorizeAccess(context.Context, *AccessAuthorizeRequest) (*AccessAuthorizeResult, error)
 }
 
-type TenantSyncService interface {
-	SyncFull(context.Context) error
-	SyncDelta(context.Context, TenantSyncDelta) error
-}
-
 type TenantProvisioningService interface {
 	ProvisionTenant(context.Context, *TenantProvisioningRequest) (*TenantProvisioningResult, error)
 }

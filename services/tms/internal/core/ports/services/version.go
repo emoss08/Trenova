@@ -1,9 +1,5 @@
 package services
 
-import (
-	"context"
-)
-
 type ReleaseInfo struct {
 	Version      string `json:"version"`
 	TagName      string `json:"tagName"`
@@ -41,10 +37,4 @@ type GitHubRelease struct {
 		Name               string `json:"name"`
 		BrowserDownloadURL string `json:"browser_download_url"`
 	} `json:"assets"`
-}
-
-type VersionService interface {
-	GetVersionInfo(ctx context.Context) (*VersionInfo, error)
-	GetUpdateStatus(ctx context.Context) (*UpdateStatus, error)
-	CheckForUpdates(ctx context.Context) (*UpdateStatus, error)
 }

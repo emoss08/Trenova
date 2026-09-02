@@ -525,3 +525,17 @@ func TestToInt_WithValidTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestMinMax_RejectZeroArguments(t *testing.T) {
+	t.Parallel()
+
+	for _, expression := range []string{"min()", "max()"} {
+		options := append(engine.BuiltinFunctions(), expr.Env(map[string]any{}))
+		program, err := expr.Compile(expression, options...)
+		require.NoError(t, err, expression)
+
+		_, err = expr.Run(program, map[string]any{})
+		require.Error(t, err, expression)
+		assert.Contains(t, err.Error(), "at least one argument")
+	}
+}

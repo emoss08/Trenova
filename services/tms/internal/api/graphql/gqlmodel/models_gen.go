@@ -564,6 +564,14 @@ type CreateSettlementDisputeInput struct {
 	Description      string                           `json:"description"`
 }
 
+type CreateWorkerPTOInput struct {
+	WorkerID  string         `json:"workerId"`
+	Type      worker.PTOType `json:"type"`
+	StartDate int            `json:"startDate"`
+	EndDate   int            `json:"endDate"`
+	Reason    string         `json:"reason"`
+}
+
 type CustomFieldDefinitionConnection struct {
 	Edges      []*CustomFieldDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
@@ -1936,6 +1944,12 @@ type FormSubmissionField struct {
 	Value string `json:"value"`
 }
 
+type FormulaTemplateBreakdownDefinition struct {
+	Name       string `json:"name"`
+	Label      string `json:"label"`
+	Expression string `json:"expression"`
+}
+
 type FormulaTemplateConnection struct {
 	Edges      []*FormulaTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -1945,6 +1959,16 @@ type FormulaTemplateConnection struct {
 type FormulaTemplateEdge struct {
 	Node   *formulatemplate.FormulaTemplate `json:"node"`
 	Cursor string                           `json:"cursor"`
+}
+
+type FormulaTemplateVariableDefinition struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Required    bool   `json:"required"`
+	// Formula variable defaults can be scalar, array, object, or null by template design.
+	DefaultValue any     `json:"defaultValue,omitempty"`
+	Source       *string `json:"source,omitempty"`
 }
 
 type FuelCostResolution struct {

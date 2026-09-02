@@ -484,6 +484,14 @@ export type CreateSettlementDisputeInput = {
   settlementLineId?: string | number | null | undefined;
 };
 
+export type CreateWorkerPtoInput = {
+  endDate: number;
+  reason: string;
+  startDate: number;
+  type: PtoType;
+  workerId: string | number;
+};
+
 export type CustomerBillingCycleType =
   | 'BiWeekly'
   | 'Daily'
@@ -1152,6 +1160,7 @@ export type ForkCannedReportInput = {
 export type FormulaTemplateStatus =
   | 'Active'
   | 'Draft'
+  | 'InReview'
   | 'Inactive';
 
 export type FormulaTemplateType =
@@ -1754,6 +1763,14 @@ export type RateQuotePurpose =
   | 'Shopping'
   | 'Simulation'
   | 'WhatIf';
+
+/** How a formula's computed charge is reduced to its billable precision. */
+export type RateRoundingMode =
+  | 'Down'
+  | 'HalfEven'
+  | 'HalfUp'
+  | 'None'
+  | 'Up';
 
 export type RateUnit =
   | 'Day'
@@ -4671,7 +4688,7 @@ export type FleetCodeTableQueryVariables = Exact<{
 
 export type FleetCodeTableQuery = { fleetCodes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, version: number, currentVersionNumber: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
+export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, minCharge: string | null, maxCharge: string | null, roundingMode: RateRoundingMode, roundingPrecision: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, approvedAt: number | null, usageCount: number, scenarioCount: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }>, breakdownDefinitions: Array<{ name: string, label: string, expression: string }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
 export type FormulaTemplateTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -6164,6 +6181,13 @@ export type PatchWorkerMutationVariables = Exact<{
 
 
 export type PatchWorkerMutation = { patchWorker: { ' $fragmentRefs'?: { 'WorkerTableRowFieldsFragment': WorkerTableRowFieldsFragment } } };
+
+export type CreateWorkerPtoMutationVariables = Exact<{
+  input: CreateWorkerPtoInput;
+}>;
+
+
+export type CreateWorkerPtoMutation = { createWorkerPTO: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } };
 
 export type ApproveWorkerPtoMutationVariables = Exact<{
   id: string | number;
@@ -7679,8 +7703,30 @@ export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  roundingMode
+  roundingPrecision
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
 }
@@ -16548,11 +16594,33 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  roundingMode
+  roundingPrecision
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
-}`, {"hash":"sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+}`, {"hash":"sha256:58fed7b314c6fffe6a8cfa40f90466b48ca8cf6bf254f35f47a31af88b1ff9cc"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
 export const FuelIndexTableDocument = new TypedDocumentString(`
     query FuelIndexTable($input: DataTableConnectionInput!) {
   fuelIndexes(input: $input) {
@@ -26542,6 +26610,38 @@ fragment WorkerTableRowFields on Worker {
     ...WorkerProfileTableFields
   }
 }`, {"hash":"sha256:7f614eb64dd42991c84620d0626f29319de8c30660b54dc87adb74e2e9b9b816"}) as unknown as TypedDocumentString<PatchWorkerMutation, PatchWorkerMutationVariables>;
+export const CreateWorkerPtoDocument = new TypedDocumentString(`
+    mutation CreateWorkerPto($input: CreateWorkerPTOInput!) {
+  createWorkerPTO(input: $input) {
+    ...WorkerPtoRowFields
+  }
+}
+    fragment WorkerPtoWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+fragment WorkerPtoRowFields on WorkerPTO {
+  id
+  workerId
+  organizationId
+  businessUnitId
+  approverId
+  rejectorId
+  status
+  type
+  startDate
+  endDate
+  reason
+  version
+  createdAt
+  updatedAt
+  worker {
+    ...WorkerPtoWorkerFields
+  }
+}`, {"hash":"sha256:e942c74696cc17f2d2c5e715c8a2818c0625fddefcc9f902ec860d0843216c39"}) as unknown as TypedDocumentString<CreateWorkerPtoMutation, CreateWorkerPtoMutationVariables>;
 export const ApproveWorkerPtoDocument = new TypedDocumentString(`
     mutation ApproveWorkerPto($id: ID!) {
   approveWorkerPTO(id: $id) {

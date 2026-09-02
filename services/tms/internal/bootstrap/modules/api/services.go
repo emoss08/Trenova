@@ -152,6 +152,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
 
 	"go.uber.org/fx"
@@ -430,6 +431,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *exchangerateservice.Service) services.ExchangeRateService { return s },
 	fuelsurchargeservice.New,
 	func(s *fuelsurchargeservice.Service) services.FuelSurchargeResolver { return s },
+	fx.Annotate(
+		func(s *fuelsurchargeservice.Service) formulatemplatetypes.ContextVariableProvider { return s },
+		fx.ResultTags(`group:"formula_context_variables"`),
+	),
 	apikeyservice.New,
 	notificationservice.New,
 	openaidocumentservice.New,

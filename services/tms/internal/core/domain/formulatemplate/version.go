@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -64,6 +65,8 @@ type FormulaTemplateVersion struct {
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions" bun:"breakdown_definitions,type:JSONB,notnull,default:'[]'"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"            bun:"min_charge,type:NUMERIC(19,4)"`
 	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"            bun:"max_charge,type:NUMERIC(19,4)"`
+	RoundingMode         ratetypes.RoundingMode              `json:"roundingMode"         bun:"rounding_mode,type:rate_rounding_mode_enum,notnull,default:'HalfUp'"`
+	RoundingPrecision    int32                               `json:"roundingPrecision"    bun:"rounding_precision,type:SMALLINT,notnull,default:2"`
 	EffectiveFrom        *int64                              `json:"effectiveFrom"        bun:"effective_from,type:BIGINT"`
 	Metadata             map[string]any                      `json:"metadata"             bun:"metadata,type:JSONB"`
 	ChangeMessage        string                              `json:"changeMessage"        bun:"change_message,type:TEXT"`
@@ -79,6 +82,10 @@ func (ftv *FormulaTemplateVersion) BeforeAppendModel(_ context.Context, query bu
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if ftv.ID.IsNil() {
 			ftv.ID = pulid.MustNew("ftv_")
+		}
+		if ftv.RoundingMode == "" {
+			ftv.RoundingMode = ratetypes.RoundingModeHalfUp
+			ftv.RoundingPrecision = formulatypes.DefaultRoundingPrecision
 		}
 		ftv.CreatedAt = timeutils.NowUnix()
 	}
@@ -120,6 +127,8 @@ func NewVersionFromTemplate(
 		BreakdownDefinitions: ft.BreakdownDefinitions,
 		MinCharge:            ft.MinCharge,
 		MaxCharge:            ft.MaxCharge,
+		RoundingMode:         ft.RoundingMode,
+		RoundingPrecision:    ft.RoundingPrecision,
 		Metadata:             ft.Metadata,
 		ChangeMessage:        changeMessage,
 		ChangeSummary:        changeSummary,

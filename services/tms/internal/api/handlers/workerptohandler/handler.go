@@ -56,11 +56,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.get,
 	)
 	api.POST(
-		"/",
-		h.pm.RequirePermission(permission.ResourceWorkerPTO.String(), permission.OpCreate),
-		h.create,
-	)
-	api.POST(
 		"/:ptoID/approve/",
 		h.pm.RequirePermission(permission.ResourceWorkerPTO.String(), permission.OpApprove),
 		h.approve,
@@ -213,26 +208,6 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
-}
-
-func (h *Handler) create(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	entity := new(worker.WorkerPTO)
-	entity.OrganizationID = authCtx.OrganizationID
-	entity.BusinessUnitID = authCtx.BusinessUnitID
-
-	if err := c.ShouldBindJSON(entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	created, err := h.service.Create(c.Request.Context(), entity, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, created)
 }
 
 // @Summary Approve a worker PTO entry

@@ -41,6 +41,11 @@ type GetFormulaTemplatesByIDsRequest struct {
 	TemplateIDs []pulid.ID            `json:"templateIds"`
 }
 
+type GetFormulaTemplatesByNamesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Names      []string              `json:"names"`
+}
+
 type TemplateUsageCount struct {
 	Type  string `json:"type"`
 	Count int    `json:"count"`
@@ -54,6 +59,19 @@ type GetTemplateUsageRequest struct {
 type GetTemplateUsageResponse struct {
 	InUse  bool                 `json:"inUse"`
 	Usages []TemplateUsageCount `json:"usages"`
+}
+
+// TemplateStats is what a list row needs to decide whether a template is
+// live and pinned: how many things rate with it and how many scenarios
+// guard it.
+type TemplateStats struct {
+	UsageCount    int `json:"usageCount"`
+	ScenarioCount int `json:"scenarioCount"`
+}
+
+type GetFormulaTemplateStatsRequest struct {
+	TenantInfo  pagination.TenantInfo
+	TemplateIDs []pulid.ID
 }
 
 type FormulaTemplateSelectOptionsRequest struct {
@@ -77,6 +95,10 @@ type FormulaTemplateRepository interface {
 		ctx context.Context,
 		req GetFormulaTemplatesByIDsRequest,
 	) ([]*formulatemplate.FormulaTemplate, error)
+	FindByNames(
+		ctx context.Context,
+		req GetFormulaTemplatesByNamesRequest,
+	) ([]*formulatemplate.FormulaTemplate, error)
 	List(
 		ctx context.Context,
 		req *ListFormulaTemplatesRequest,
@@ -97,6 +119,12 @@ type FormulaTemplateRepository interface {
 		ctx context.Context,
 		req *GetTemplateUsageRequest,
 	) (*GetTemplateUsageResponse, error)
+	// CountStatsByIDs returns usage and scenario counts for a page of
+	// templates in one statement; ids with no row simply have no entry.
+	CountStatsByIDs(
+		ctx context.Context,
+		req *GetFormulaTemplateStatsRequest,
+	) (map[pulid.ID]TemplateStats, error)
 	SelectOptions(
 		ctx context.Context,
 		req *FormulaTemplateSelectOptionsRequest,

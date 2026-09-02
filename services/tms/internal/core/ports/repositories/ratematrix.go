@@ -63,9 +63,10 @@ type ReplaceRateMatrixCellsRequest struct {
 }
 
 // GetRateMatrixLookupDataRequest fetches every matrix a formula's lookup()
-// call could address: active, and exactly one axis. Multi-axis matrices are
-// excluded on purpose — lookup() supplies a single key, and loading a class
-// tariff whole to answer it would be the exact cost this shape exists to avoid.
+// or lookup2() call could address: active, with one or two axes. Matrices
+// with more axes are excluded on purpose — the lookup functions supply at
+// most two keys, and loading a class tariff whole to answer them would be
+// the exact cost this shape exists to avoid.
 type GetRateMatrixLookupDataRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
@@ -73,9 +74,9 @@ type GetRateMatrixLookupDataRequest struct {
 // RateMatrixLookupData is one lookup-addressable matrix with its cells.
 //
 // Cells ride beside the matrix rather than on it because the domain model
-// deliberately has no whole-matrix cell relation: a single-axis matrix is the
-// only shape small enough to load in full, and this type is how that exception
-// stays an exception.
+// deliberately has no whole-matrix cell relation: one- and two-axis matrices
+// are the only shapes small enough to load in full, and this type is how that
+// exception stays an exception.
 type RateMatrixLookupData struct {
 	Matrix *ratematrix.RateMatrix
 	Cells  []*ratematrix.RateMatrixCell
@@ -109,6 +110,7 @@ type RateMatrixRepository interface {
 		ctx context.Context,
 		req *LookupRateMatrixCellsRequest,
 	) ([]*ratematrix.RateMatrixCell, error)
+	GetLookupStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
 	GetLookupData(
 		ctx context.Context,
 		req *GetRateMatrixLookupDataRequest,

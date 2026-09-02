@@ -32,6 +32,9 @@ type RateMatrixDimension struct {
 	MatchMode MatchMode     `json:"matchMode" bun:"match_mode,type:rate_matrix_match_mode_enum,notnull"`
 	Label     string        `json:"label"     bun:"label,type:VARCHAR(100),nullzero"`
 
+	KeyNormalization KeyNormalization `json:"keyNormalization" bun:"key_normalization,type:rate_matrix_key_normalization_enum,notnull,default:'None'"`
+	RangeOverflow    RangeOverflow    `json:"rangeOverflow"    bun:"range_overflow,type:rate_matrix_range_overflow_enum,notnull,default:'Error'"`
+
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -55,7 +58,37 @@ func (rmd *RateMatrixDimension) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&rmd.Label,
 			validation.Length(0, 100).Error("Label cannot be longer than 100 characters"),
 		),
+		validation.Field(&rmd.KeyNormalization,
+			validation.When(
+				rmd.KeyNormalization != "",
+				domainvalidation.ValidEnum[KeyNormalization]("Key normalization is invalid"),
+			),
+		),
+		validation.Field(&rmd.RangeOverflow,
+			validation.When(
+				rmd.RangeOverflow != "",
+				domainvalidation.ValidEnum[RangeOverflow]("Range overflow is invalid"),
+			),
+		),
 	))
+
+	if rmd.MatchMode != MatchModeExact && rmd.KeyNormalization != "" &&
+		rmd.KeyNormalization != KeyNormalizationNone {
+		multiErr.Add(
+			"keyNormalization",
+			errortypes.ErrInvalid,
+			"Key normalization only applies to an axis matched by exact key",
+		)
+	}
+
+	if rmd.MatchMode != MatchModeRange && rmd.RangeOverflow != "" &&
+		rmd.RangeOverflow != RangeOverflowError {
+		multiErr.Add(
+			"rangeOverflow",
+			errortypes.ErrInvalid,
+			"Range overflow only applies to an axis matched by band",
+		)
+	}
 
 	// Banding only means something for a quantity. A zone or a freight class
 	// has no ordering to cut into ranges, and a cell keyed by a range on such
@@ -82,6 +115,8 @@ func (rmd *RateMatrixDimension) DisplayLabel() string {
 func (rmd *RateMatrixDimension) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
+	rmd.applyModeDefaults()
+
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if rmd.ID.IsNil() {
@@ -94,6 +129,15 @@ func (rmd *RateMatrixDimension) BeforeAppendModel(_ context.Context, query bun.Q
 	}
 
 	return nil
+}
+
+func (rmd *RateMatrixDimension) applyModeDefaults() {
+	if rmd.KeyNormalization == "" {
+		rmd.KeyNormalization = KeyNormalizationNone
+	}
+	if rmd.RangeOverflow == "" {
+		rmd.RangeOverflow = RangeOverflowError
+	}
 }
 
 func (rmd *RateMatrixDimension) GetID() pulid.ID {

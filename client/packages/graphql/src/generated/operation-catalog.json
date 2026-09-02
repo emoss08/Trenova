@@ -1,5 +1,5 @@
 {
-  "operationCount": 424,
+  "operationCount": 425,
   "fragmentCount": 126,
   "operations": [
     {
@@ -2025,6 +2025,29 @@
       "sdl": "mutation CreateTableConfiguration($input: TableConfigurationInput!) {\n  createTableConfiguration(input: $input) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
     },
     {
+      "name": "CreateWorkerPto",
+      "kind": "mutation",
+      "domain": "worker",
+      "sourceFile": "src/operations/worker/page.graphql",
+      "hash": "sha256:e942c74696cc17f2d2c5e715c8a2818c0625fddefcc9f902ec860d0843216c39",
+      "rootFields": [
+        "createWorkerPTO"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateWorkerPTOInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WorkerPtoRowFields",
+        "WorkerPtoWorkerFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateWorkerPto($input: CreateWorkerPTOInput!) {\n  createWorkerPTO(input: $input) {\n    ...WorkerPtoRowFields\n  }\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  status\n  type\n  startDate\n  endDate\n  reason\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
+    },
+    {
       "name": "CurrentCarrierSettlementPeriod",
       "kind": "query",
       "domain": "carrier-settlement",
@@ -3874,7 +3897,7 @@
       "kind": "query",
       "domain": "formula-template",
       "sourceFile": "src/operations/formula-template/table.graphql",
-      "hash": "sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722",
+      "hash": "sha256:58fed7b314c6fffe6a8cfa40f90466b48ca8cf6bf254f35f47a31af88b1ff9cc",
       "rootFields": [
         "formulaTemplates"
       ],
@@ -3890,7 +3913,7 @@
         "FormulaTemplateTableRowFields"
       ],
       "usages": [],
-      "sdl": "query FormulaTemplateTable($input: DataTableConnectionInput!) {\n  formulaTemplates(input: $input) {\n    edges {\n      node {\n        ...FormulaTemplateTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  version\n  currentVersionNumber\n  createdAt\n  updatedAt\n}"
+      "sdl": "query FormulaTemplateTable($input: DataTableConnectionInput!) {\n  formulaTemplates(input: $input) {\n    edges {\n      node {\n        ...FormulaTemplateTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  variableDefinitions {\n    name\n    type\n    description\n    required\n    defaultValue\n    source\n  }\n  breakdownDefinitions {\n    name\n    label\n    expression\n  }\n  minCharge\n  maxCharge\n  roundingMode\n  roundingPrecision\n  sourceTemplateId\n  sourceVersionNumber\n  version\n  currentVersionNumber\n  approvedAt\n  usageCount\n  scenarioCount\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "FuelDashboard",
@@ -10141,7 +10164,7 @@
         "FormulaTemplateTable"
       ],
       "usages": [],
-      "sdl": "fragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  version\n  currentVersionNumber\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  variableDefinitions {\n    name\n    type\n    description\n    required\n    defaultValue\n    source\n  }\n  breakdownDefinitions {\n    name\n    label\n    expression\n  }\n  minCharge\n  maxCharge\n  roundingMode\n  roundingPrecision\n  sourceTemplateId\n  sourceVersionNumber\n  version\n  currentVersionNumber\n  approvedAt\n  usageCount\n  scenarioCount\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "FuelIndexFields",
@@ -11278,6 +11301,7 @@
       ],
       "usedByOperations": [
         "ApproveWorkerPto",
+        "CreateWorkerPto",
         "RejectWorkerPto",
         "UpcomingWorkerPto",
         "WorkerPtoTable"
@@ -11293,6 +11317,7 @@
       "fragments": [],
       "usedByOperations": [
         "ApproveWorkerPto",
+        "CreateWorkerPto",
         "RejectWorkerPto",
         "UpcomingWorkerPto",
         "WorkerPtoTable"
@@ -12184,6 +12209,37 @@
         }
       ],
       "sdl": "input CreateSettlementDisputeInput {\n  category: SettlementDisputeCategory!\n  description: String!\n  settlementId: ID!\n  settlementLineId: ID\n}"
+    },
+    "CreateWorkerPTOInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "endDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "PTOType!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateWorkerPTOInput {\n  endDate: Int!\n  reason: String!\n  startDate: Int!\n  type: PTOType!\n  workerId: ID!\n}"
     },
     "DataTableConnectionInput": {
       "kind": "input",
@@ -16490,6 +16546,19 @@
       ],
       "sdl": "enum SettlementDisputeCategory {\n  IncorrectDeduction\n  IncorrectRate\n  MissingPay\n  MissingReimbursement\n  Other\n}"
     },
+    "PTOType": {
+      "kind": "enum",
+      "values": [
+        "Bereavement",
+        "Holiday",
+        "Maternity",
+        "Paternity",
+        "Personal",
+        "Sick",
+        "Vacation"
+      ],
+      "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
+    },
     "FieldFilterInput": {
       "kind": "input",
       "fields": [
@@ -17696,19 +17765,6 @@
         "Requested"
       ],
       "sdl": "enum PTOStatus {\n  Approved\n  Cancelled\n  Rejected\n  Requested\n}"
-    },
-    "PTOType": {
-      "kind": "enum",
-      "values": [
-        "Bereavement",
-        "Holiday",
-        "Maternity",
-        "Paternity",
-        "Personal",
-        "Sick",
-        "Vacation"
-      ],
-      "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
     },
     "PayPeriodFrequency": {
       "kind": "enum",

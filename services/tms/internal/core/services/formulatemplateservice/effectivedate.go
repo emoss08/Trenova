@@ -24,11 +24,12 @@ func (s *Service) UpdateVersionEffectiveDate(
 		zap.Int64("versionNumber", req.VersionNumber),
 	)
 
-	if _, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
 		TenantInfo:    req.TenantInfo,
 		TemplateID:    req.TemplateID,
 		VersionNumber: req.VersionNumber,
-	}); err != nil {
+	})
+	if err != nil {
 		log.Error("failed to get version", zap.Error(err))
 		return nil, err
 	}
@@ -45,6 +46,18 @@ func (s *Service) UpdateVersionEffectiveDate(
 				"effectiveFrom",
 				errortypes.ErrInvalid,
 				"Only Active templates can have scheduled versions",
+			)
+		}
+
+		// A schedule puts content into production on a date without anyone
+		// looking at it then, so the content must already have passed review.
+		if version.Status != formulatemplate.StatusActive {
+			return nil, errortypes.NewValidationError(
+				"versionNumber",
+				errortypes.ErrInvalid,
+				"Only approved snapshots can be scheduled; "+
+					"this version was captured while the template was "+
+					version.Status.String(),
 			)
 		}
 

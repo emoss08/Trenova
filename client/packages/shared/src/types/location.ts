@@ -18,6 +18,24 @@ const locationGeofenceVerticesSchema = z
   .nullish()
   .transform((value) => value ?? []);
 
+function isKnownTimezone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** An IANA zone name, or empty when the location has not declared one (UTC). */
+export const locationTimezoneSchema = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? "")
+  .refine((value) => value === "" || isKnownTimezone(value), {
+    error: "Timezone must be a valid IANA zone",
+  });
+
 export const locationSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
@@ -39,6 +57,7 @@ export const locationSchema = z.object({
     .max(100, { error: "City must be 100 characters or less" }),
   stateId: z.string().min(1, { error: "State is required" }),
   postalCode: z.string().min(1, { error: "Postal code is required" }),
+  timezone: locationTimezoneSchema,
   isGeocoded: z.boolean().default(false),
   longitude: z.number().nullable().optional(),
   latitude: z.number().nullable().optional(),

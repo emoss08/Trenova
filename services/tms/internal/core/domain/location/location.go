@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
@@ -43,6 +44,7 @@ type Location struct {
 	AddressLine2         string             `json:"addressLine2"         bun:"address_line_2,type:VARCHAR(150),nullzero"`
 	City                 string             `json:"city"                 bun:"city,type:VARCHAR(100),notnull"`
 	PostalCode           string             `json:"postalCode"           bun:"postal_code,type:us_postal_code,notnull"`
+	Timezone             string             `json:"timezone"             bun:"timezone,type:VARCHAR(64),nullzero"`
 	PlaceID              string             `json:"placeId"              bun:"place_id,type:TEXT,nullzero"`
 	IsGeocoded           bool               `json:"isGeocoded"           bun:"is_geocoded,type:BOOLEAN"`
 	Longitude            *float64           `json:"longitude"            bun:"longitude,type:FLOAT,nullzero"`
@@ -71,6 +73,10 @@ func (l *Location) Validate(multiErr *errortypes.MultiError) {
 			&l.Code,
 			validation.Length(0, tenant.MaxLocationCodeLength).
 				Error("Code must be 32 characters or less"),
+		),
+		validation.Field(&l.Timezone,
+			validation.Length(0, 64).Error("Timezone must be 64 characters or less"),
+			validation.By(domainvalidation.ValidateTimezone),
 		),
 		validation.Field(&l.Name,
 			validation.Required.Error("Name is required"),

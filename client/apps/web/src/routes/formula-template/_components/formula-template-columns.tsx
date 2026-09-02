@@ -1,53 +1,9 @@
-import { EditableStatusBadge } from "@/components/editable-status-badge";
+import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { formulaTemplateStatusChoices, formulaTemplateTypeChoices } from "@/lib/choices";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { formulaTemplateStatusChoices, formulaTypeChoices } from "@/lib/choices";
-import { patchFormulaTemplate } from "@/lib/formula-template-api";
-import type {
-  FormulaTemplate,
-  FormulaTemplateStatus,
-} from "@trenova/shared/types/formula-template";
-import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { useCallback } from "react";
-
-const editableStatusChoices = formulaTemplateStatusChoices.filter(
-  (choice) => choice.value !== "InReview",
-);
-
-// eslint-disable-next-line react-refresh/only-export-components
-function FormulaTemplateStatusCell({
-  id,
-  status,
-}: {
-  id: FormulaTemplate["id"];
-  status: FormulaTemplateStatus;
-}) {
-  "use no memo";
-  const queryClient = useQueryClient();
-
-  const handleStatusChange = useCallback(
-    async (newStatus: FormulaTemplate["status"]) => {
-      if (!id) return;
-      await patchFormulaTemplate(id, {
-        status: newStatus,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["formula-template-list"],
-      });
-    },
-    [id, queryClient],
-  );
-
-  return (
-    <EditableStatusBadge
-      status={status}
-      options={editableStatusChoices}
-      onStatusChange={handleStatusChange}
-      disabled={status === "InReview"}
-    />
-  );
-}
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 
 const TYPE_BADGE_VARIANT: Record<string, "info" | "purple"> = {
   FreightCharge: "info",
@@ -86,9 +42,17 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <FormulaTemplateStatusCell id={row.original.id} status={row.original.status} />
-      ),
+      cell: ({ row }) => {
+        const choice = formulaTemplateStatusChoices.find(
+          (option) => option.value === row.original.status,
+        );
+
+        return choice ? (
+          <ColorOptionValue color={choice.color} value={choice.label} />
+        ) : (
+          row.original.status
+        );
+      },
       meta: {
         label: "Status",
         apiField: "status",
@@ -106,7 +70,9 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       accessorKey: "type",
       header: "Type",
       cell: ({ row }) => {
-        const typeLabel = formulaTypeChoices.find((c) => c.value === row.original.type)?.label;
+        const typeLabel = formulaTemplateTypeChoices.find(
+          (c) => c.value === row.original.type,
+        )?.label;
         const variant = TYPE_BADGE_VARIANT[row.original.type] ?? "info";
         return <Badge variant={variant}>{typeLabel || row.original.type}</Badge>;
       },
@@ -116,7 +82,7 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
         filterable: true,
         sortable: true,
         filterType: "select",
-        filterOptions: formulaTypeChoices,
+        filterOptions: formulaTemplateTypeChoices,
         defaultFilterOperator: "eq",
       },
       size: 160,
@@ -124,16 +90,16 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       maxSize: 200,
     },
     {
-      accessorKey: "version",
+      accessorKey: "currentVersionNumber",
       header: "Version",
       cell: ({ row }) => (
         <Badge variant="outline" className="font-mono text-xs">
-          v{row.original.version}
+          {row.original.currentVersionNumber ? `v${row.original.currentVersionNumber}` : "—"}
         </Badge>
       ),
       meta: {
         label: "Version",
-        apiField: "version",
+        apiField: "currentVersionNumber",
         filterable: false,
         sortable: true,
         filterType: "number",
@@ -141,6 +107,91 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       size: 80,
       minSize: 60,
       maxSize: 100,
+    },
+    {
+      accessorKey: "usageCount",
+      header: "In Use",
+      cell: ({ row }) => {
+        const count = row.original.usageCount ?? 0;
+        return count > 0 ? (
+          <Badge variant="info" className="font-mono text-xs">
+            {count}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-xs">Not in use</span>
+        );
+      },
+      meta: {
+        label: "In Use",
+        apiField: "usageCount",
+        filterable: false,
+        sortable: false,
+        filterType: "number",
+      },
+      size: 100,
+      minSize: 90,
+      maxSize: 120,
+    },
+    {
+      accessorKey: "scenarioCount",
+      header: "Scenarios",
+      cell: ({ row }) => {
+        const count = row.original.scenarioCount ?? 0;
+        return count > 0 ? (
+          <Badge variant="outline" className="font-mono text-xs">
+            {count}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-xs">None</span>
+        );
+      },
+      meta: {
+        label: "Scenarios",
+        apiField: "scenarioCount",
+        filterable: false,
+        sortable: false,
+        filterType: "number",
+      },
+      size: 100,
+      minSize: 90,
+      maxSize: 120,
+    },
+    {
+      accessorKey: "approvedAt",
+      header: "Approved",
+      cell: ({ row }) =>
+        row.original.approvedAt ? (
+          <HoverCardTimestamp timestamp={row.original.approvedAt} />
+        ) : (
+          <span className="text-muted-foreground text-xs">Never</span>
+        ),
+      meta: {
+        label: "Approved",
+        apiField: "approvedAt",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "gt",
+      },
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated",
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
+      meta: {
+        label: "Updated",
+        apiField: "updatedAt",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "gt",
+      },
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
     },
     {
       accessorKey: "createdAt",

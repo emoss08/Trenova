@@ -282,7 +282,6 @@ const billingModule: NavModule = {
           label: "Formula Templates",
           path: "/billing/configuration-files/formula-templates",
           resource: Resource.FormulaTemplate,
-          includeBetaTag: true,
         },
         {
           id: "rate-zones",

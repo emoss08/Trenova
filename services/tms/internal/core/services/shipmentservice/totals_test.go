@@ -501,12 +501,12 @@ func newTestFormulaService(
 	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:        zap.NewNop(),
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
-		Repo:          repo,
-		VersionRepo:   stubTotalsVersionRepo{},
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
+		Repo:           repo,
+		VersionRepo:    stubTotalsVersionRepo{},
 		RateMatrixRepo: stubTotalsMatrixRepo{},
 	})
 }
@@ -646,6 +646,13 @@ func (s *stubFormulaTemplateRepository) GetByIDs(
 	return nil, errors.New("not implemented")
 }
 
+func (s *stubFormulaTemplateRepository) FindByNames(
+	context.Context,
+	repositories.GetFormulaTemplatesByNamesRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *stubFormulaTemplateRepository) List(
 	context.Context,
 	*repositories.ListFormulaTemplatesRequest,
@@ -681,6 +688,13 @@ func (s *stubFormulaTemplateRepository) CountUsages(
 	return nil, errors.New("not implemented")
 }
 
+func (s *stubFormulaTemplateRepository) CountStatsByIDs(
+	context.Context,
+	*repositories.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]repositories.TemplateStats, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *stubFormulaTemplateRepository) SelectOptions(
 	context.Context,
 	*repositories.FormulaTemplateSelectOptionsRequest,
@@ -701,3 +715,7 @@ func ptrFloat(value float64) *float64 {
 }
 
 var _ repositories.FormulaTemplateRepository = (*stubFormulaTemplateRepository)(nil)
+
+func (stubTotalsMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}
