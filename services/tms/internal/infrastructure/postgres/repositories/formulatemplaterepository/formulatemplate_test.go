@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"go.uber.org/zap"
 )
 
 // TestUpdateWritesClearedFields guards the OmitZero interaction: nil approval
@@ -124,7 +127,9 @@ func TestBulkDuplicateEntityCarriesFullContentAsDraft(t *testing.T) {
 		CurrentVersionNumber: 4,
 	}
 
-	duplicate := buildDuplicateEntity(source, source.Name+" (Copy)")
+	seed := formulatemplate.SeedFromTemplate(source)
+	seed.Name = source.Name + " (Copy)"
+	duplicate := seed.Build()
 
 	assert.Equal(t, "Per Mile (Copy)", duplicate.Name)
 	assert.Equal(t, source.Description, duplicate.Description)
@@ -152,4 +157,31 @@ func TestNextAvailableName(t *testing.T) {
 
 	assert.Equal(t, "Flat (Copy)", nextAvailableName(taken, "Flat (Copy)"))
 	assert.Equal(t, "Per Mile (Copy) 3", nextAvailableName(taken, "Per Mile (Copy)"))
+}
+
+// TestFilterQueryRendersTypedFilters pins the SQL the list endpoint issues, so
+// moving the filters onto the generated column helpers cannot change a table
+// alias, a column name, or the newest-first order the client relies on.
+func TestFilterQueryRendersTypedFilters(t *testing.T) {
+	t.Parallel()
+
+	db := bun.NewDB(new(sql.DB), pgdialect.New())
+	repo := &repository{l: zap.NewNop()}
+
+	var entities []*formulatemplate.FormulaTemplate
+	req := &repositories.ListFormulaTemplatesRequest{
+		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 25}},
+		Type:   "FreightCharge",
+		Status: "Active",
+	}
+
+	query, err := repo.filterQuery(db.NewSelect().Model(&entities), req).
+		AppendQuery(db.QueryGen(), nil)
+	require.NoError(t, err)
+
+	rendered := string(query)
+	assert.Contains(t, rendered, `ft.type = 'FreightCharge'`)
+	assert.Contains(t, rendered, `ft.status = 'Active'`)
+	assert.Contains(t, rendered, `ORDER BY "ft"."created_at" DESC`)
+	assert.Contains(t, rendered, `LIMIT 25`)
 }
