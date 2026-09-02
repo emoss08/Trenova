@@ -14,9 +14,11 @@ import (
 const (
 	notificationSource = "formula_template_service"
 
-	eventTemplateSubmitted = "formula_template.submitted"
-	eventTemplateApproved  = "formula_template.approved"
-	eventTemplateRejected  = "formula_template.rejected"
+	eventTemplateSubmitted         = "formula_template.submitted"
+	eventTemplateApproved          = "formula_template.approved"
+	eventTemplateRejected          = "formula_template.rejected"
+	eventTemplateChangesRequested  = "formula_template.changes_requested"
+	eventTemplateSubmissionExpired = "formula_template.submission_expired"
 )
 
 func templateStudioLink(templateID pulid.ID) string {
@@ -67,7 +69,7 @@ func (s *Service) notifySubmitted(
 type reviewOutcome struct {
 	Template    *formulatemplate.FormulaTemplate
 	SubmitterID *pulid.ID
-	Approved    bool
+	Decision    formulatemplate.ReviewDecision
 	Comment     string
 }
 
@@ -87,22 +89,7 @@ func (s *Service) notifyReviewOutcome(
 		return
 	}
 
-	title := "Formula template approved"
-	message := fmt.Sprintf("%q was approved and is now active.", outcome.Template.Name)
-	eventType := eventTemplateApproved
-	priority := notification.PriorityMedium
-	if !outcome.Approved {
-		title = "Formula template rejected"
-		message = fmt.Sprintf(
-			"%q was rejected and returned to draft: %s",
-			outcome.Template.Name,
-			outcome.Comment,
-		)
-		eventType = eventTemplateRejected
-		priority = notification.PriorityHigh
-	} else if outcome.Comment != "" {
-		message += " Reviewer note: " + outcome.Comment
-	}
+	title, message, eventType, priority := describeReviewOutcome(outcome)
 
 	buID := tenantInfo.BuID
 	submitterID := *outcome.SubmitterID
@@ -122,5 +109,42 @@ func (s *Service) notifyReviewOutcome(
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
 		s.l.Warn("failed to create review outcome notification",
 			zap.Error(err), zap.String("templateID", outcome.Template.ID.String()))
+	}
+}
+
+// describeReviewOutcome words each decision for the author who submitted.
+func describeReviewOutcome(
+	outcome *reviewOutcome,
+) (title, message, eventType string, priority notification.Priority) {
+	name := outcome.Template.Name
+	switch outcome.Decision {
+	case formulatemplate.ReviewDecisionRejected:
+		return "Formula template rejected",
+			fmt.Sprintf("%q was rejected and returned to draft: %s", name, outcome.Comment),
+			eventTemplateRejected,
+			notification.PriorityHigh
+	case formulatemplate.ReviewDecisionChangesRequested:
+		return "Changes requested on formula template",
+			fmt.Sprintf(
+				"%q needs changes before it can be approved: %s Edit it and resubmit to continue the same review.",
+				name,
+				outcome.Comment,
+			),
+			eventTemplateChangesRequested,
+			notification.PriorityHigh
+	case formulatemplate.ReviewDecisionExpired:
+		return "Formula template submission expired",
+			fmt.Sprintf(
+				"%q waited more than 14 days for a decision and was returned to draft. Resubmit it when the rates are current.",
+				name,
+			),
+			eventTemplateSubmissionExpired,
+			notification.PriorityMedium
+	default:
+		message = fmt.Sprintf("%q was approved and is now active.", name)
+		if outcome.Comment != "" {
+			message += " Reviewer note: " + outcome.Comment
+		}
+		return "Formula template approved", message, eventTemplateApproved, notification.PriorityMedium
 	}
 }

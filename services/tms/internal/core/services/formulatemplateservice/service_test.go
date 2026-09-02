@@ -234,6 +234,7 @@ func setupTestWithMatrices(
 		repo:           repo,
 		versionRepo:    versionRepo,
 		testCaseRepo:   testCaseRepo,
+		reviewRepo:     &stubReviewRepo{},
 		shipmentRepo:   shipmentRepo,
 		formulaService: newFormulaServiceWithMatrices(t, matrices),
 		auditService:   auditSvc,
@@ -1712,6 +1713,7 @@ func TestApprovalTransitions(t *testing.T) {
 			var err error
 			switch tt.action {
 			case "submit":
+				deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 				result, err = deps.svc.Submit(t.Context(), req)
 			case "approve":
 				result, err = deps.svc.Approve(t.Context(), req)
@@ -1744,6 +1746,7 @@ func TestSubmit_StampsSubmissionFields(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	result, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -1767,7 +1770,7 @@ func TestApprove_RejectsSelfApproval(t *testing.T) {
 
 	tenant := newTenantInfo()
 	submitterID := tenant.UserID
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview
@@ -1794,7 +1797,7 @@ func TestApprove_StampsApprovalAndKeepsSubmission(t *testing.T) {
 
 	tenant := newTenantInfo()
 	submitterID := pulid.MustNew("usr_")
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview
@@ -1846,7 +1849,7 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 	deps := setupTest(t)
 
 	submitterID := pulid.MustNew("usr_")
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview

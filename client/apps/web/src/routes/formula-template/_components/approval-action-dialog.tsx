@@ -13,14 +13,21 @@ import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, SendIcon, XIcon } from "lucide-react";
+import { CheckIcon, MessageSquareWarningIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
 import { ReadinessPanel } from "./readiness-panel";
 import { ReviewDiffPanel } from "./review-diff-panel";
+import { ReviewHistory } from "./review-history";
 
-export type ApprovalAction = "submit" | "approve" | "reject";
+export type ApprovalAction = "submit" | "approve" | "reject" | "requestChanges";
+
+/** Actions whose comment is the whole point, so it cannot be left blank. */
+export const COMMENT_REQUIRED_ACTIONS: ReadonlySet<ApprovalAction> = new Set([
+  "reject",
+  "requestChanges",
+]);
 
 const ACTION_CONFIG: Record<
   ApprovalAction,
@@ -60,7 +67,8 @@ const ACTION_CONFIG: Record<
   },
   reject: {
     title: "Reject Template",
-    description: "Rejecting returns this template to draft so the author can make changes.",
+    description:
+      "Rejecting closes this review round and returns the template to draft without an author on it. Use Request Changes to keep the conversation going instead.",
     confirmLabel: "Reject",
     loadingLabel: "Rejecting...",
     successMessage: "Template rejected and returned to draft",
@@ -68,6 +76,18 @@ const ACTION_CONFIG: Record<
     commentPlaceholder: "Explain why this template is being rejected",
     icon: XIcon,
     destructive: true,
+  },
+  requestChanges: {
+    title: "Request Changes",
+    description:
+      "Send the template back to its author with what needs fixing. The round stays open, so their resubmission continues this review.",
+    confirmLabel: "Request Changes",
+    loadingLabel: "Sending...",
+    successMessage: "Changes requested; the author has been notified",
+    commentLabel: "What needs to change (required)",
+    commentPlaceholder: "e.g. Guard totalWeight with coalesce; the hazmat surcharge should be $200",
+    icon: MessageSquareWarningIcon,
+    destructive: false,
   },
 };
 
@@ -115,6 +135,8 @@ export function ApprovalActionDialog({
           return apiService.formulaTemplateService.approve(templateId, trimmedComment);
         case "reject":
           return apiService.formulaTemplateService.reject(templateId, trimmedComment);
+        case "requestChanges":
+          return apiService.formulaTemplateService.requestChanges(templateId, trimmedComment);
       }
     },
     onSuccess: () => {
@@ -135,7 +157,7 @@ export function ApprovalActionDialog({
   const handleConfirm = () => {
     const trimmedComment = comment.trim();
 
-    if (action === "reject" && !trimmedComment) {
+    if (COMMENT_REQUIRED_ACTIONS.has(action) && !trimmedComment) {
       setShowCommentError(true);
       return;
     }
@@ -144,13 +166,14 @@ export function ApprovalActionDialog({
     mutation.mutate(trimmedComment);
   };
 
-  const commentInvalid = showCommentError && action === "reject" && !comment.trim();
+  const commentInvalid =
+    showCommentError && COMMENT_REQUIRED_ACTIONS.has(action) && !comment.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={
-          action === "reject"
+          action === "reject" || action === "requestChanges"
             ? "sm:max-w-[420px]"
             : "flex max-h-[85vh] flex-col overflow-y-auto sm:max-w-[600px]"
         }
@@ -174,6 +197,8 @@ export function ApprovalActionDialog({
           <ApprovalImpactPanel templateId={template.id} />
         )}
 
+        {gated && open && template?.id && <ReviewHistory templateId={template.id} />}
+
         <div className="space-y-1.5 py-2">
           <label htmlFor="approval-comment" className="text-xs font-medium">
             {config.commentLabel}
@@ -191,7 +216,11 @@ export function ApprovalActionDialog({
             isInvalid={commentInvalid}
           />
           {commentInvalid && (
-            <p className="text-2xs text-destructive">A comment is required to reject</p>
+            <p className="text-2xs text-destructive">
+              {action === "reject"
+                ? "A comment is required to reject"
+                : "Say what needs to change before sending it back"}
+            </p>
           )}
         </div>
 

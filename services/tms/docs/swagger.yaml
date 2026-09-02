@@ -3465,6 +3465,45 @@ definitions:
             versionNumber:
                 type: integer
         type: object
+    github_com_emoss08_trenova_internal_core_domain_formulatemplate.Review:
+        properties:
+            actor:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            actorId:
+                type: string
+            baseVersionNumber:
+                type: integer
+            businessUnitId:
+                type: string
+            comment:
+                type: string
+            createdAt:
+                type: integer
+            decision:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.ReviewDecision'
+            id:
+                type: string
+            organizationId:
+                type: string
+            round:
+                type: integer
+            templateId:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_formulatemplate.ReviewDecision:
+        enum:
+            - Submitted
+            - Approved
+            - Rejected
+            - ChangesRequested
+            - Expired
+        type: string
+        x-enum-varnames:
+            - ReviewDecisionSubmitted
+            - ReviewDecisionApproved
+            - ReviewDecisionRejected
+            - ReviewDecisionChangesRequested
+            - ReviewDecisionExpired
     github_com_emoss08_trenova_internal_core_domain_formulatemplate.Status:
         enum:
             - Active
@@ -21664,6 +21703,51 @@ paths:
             summary: Reject a formula template
             tags:
                 - Formula Templates
+    /formula-templates/{templateID}/request-changes:
+        post:
+            consumes:
+                - application/json
+            operationId: requestFormulaTemplateChanges
+            parameters:
+                - description: Template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Reviewer comment
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_formulatemplatehandler.approvalActionRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Request changes on a formula template under review
+            tags:
+                - Formula Templates
     /formula-templates/{templateID}/review-diff:
         get:
             operationId: formulaTemplateReviewDiff
@@ -21695,6 +21779,41 @@ paths:
             security:
                 - BearerAuth: []
             summary: Compare a formula template's pending content with its last approved snapshot
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/reviews:
+        get:
+            operationId: listFormulaTemplateReviews
+            parameters:
+                - description: Template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.Review'
+                        type: array
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List the review history of a formula template
             tags:
                 - Formula Templates
     /formula-templates/{templateID}/rollback:

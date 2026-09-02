@@ -474,6 +474,7 @@ func setupHandlerWithDeps(
 		Repo:           repo,
 		VersionRepo:    versionRepo,
 		TestCaseRepo:   &stubTestCaseRepo{},
+		ReviewRepo:     &stubReviewRepo{},
 		ShipmentRepo:   shipmentRepo,
 		FormulaService: newTestFormulaService(t),
 		AuditService:   &mocks.NoopAuditService{},
@@ -3111,4 +3112,35 @@ func TestFormulaTemplateHandler_ListStandards(t *testing.T) {
 
 func (*stubRateMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
 	return "", nil
+}
+
+type stubReviewRepo struct {
+	repositories.FormulaTemplateReviewRepository
+	created []*formulatemplate.Review
+}
+
+func (s *stubReviewRepo) Create(
+	_ context.Context,
+	entity *formulatemplate.Review,
+) (*formulatemplate.Review, error) {
+	s.created = append(s.created, entity)
+	return entity, nil
+}
+
+func (s *stubReviewRepo) ListByTemplate(
+	context.Context,
+	*repositories.ListTemplateReviewsRequest,
+) ([]*formulatemplate.Review, error) {
+	return s.created, nil
+}
+
+func (s *stubReviewRepo) Latest(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) (*formulatemplate.Review, error) {
+	if len(s.created) == 0 {
+		return nil, nil
+	}
+	return s.created[len(s.created)-1], nil
 }

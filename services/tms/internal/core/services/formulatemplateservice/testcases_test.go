@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -167,7 +168,7 @@ func TestApprove_BlockedByFailingScenarios(t *testing.T) {
 
 	tenant := newTenantInfo()
 	submitterID := pulid.MustNew("usr_")
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview
@@ -197,7 +198,7 @@ func TestApprove_PassesWithGreenScenarios(t *testing.T) {
 
 	tenant := newTenantInfo()
 	submitterID := pulid.MustNew("usr_")
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview

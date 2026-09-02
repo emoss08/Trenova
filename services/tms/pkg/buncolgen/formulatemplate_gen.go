@@ -652,6 +652,191 @@ var FormulaTemplateVersionFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// Review — table "formula_template_reviews", alias "ftr"
+// ---------------------------------------------------------------------------
+
+// ReviewTable holds the table name, alias, and primary key columns
+// for the "formula_template_reviews" table. The alias "ftr" is used in all generated
+// SQL fragments (e.g. "ftr.id = ?").
+var ReviewTable = TableInfo{
+	Name:       "formula_template_reviews",
+	Alias:      "ftr",
+	PrimaryKey: []string{"id"},
+}
+
+// ReviewColumns provides type-safe column references for the "formula_template_reviews" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ReviewColumns.ID.String())
+//	// SELECT ftr.id FROM formula_template_reviews AS ftr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ReviewColumns.ID.Eq(), id)           // WHERE ftr.id = ?
+//	q.Order(ReviewColumns.CreatedAt.OrderDesc())  // ORDER BY ftr.created_at DESC
+var ReviewColumns = struct {
+	ID                Column // "id" → qualified: "ftr.id"
+	TemplateID        Column // "template_id" → qualified: "ftr.template_id"
+	OrganizationID    Column // "organization_id" → qualified: "ftr.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "ftr.business_unit_id"
+	Round             Column // "round" → qualified: "ftr.round"
+	Decision          Column // "decision" → qualified: "ftr.decision"
+	ActorID           Column // "actor_id" → qualified: "ftr.actor_id"
+	Comment           Column // "comment" → qualified: "ftr.comment"
+	BaseVersionNumber Column // "base_version_number" → qualified: "ftr.base_version_number"
+	CreatedAt         Column // "created_at" → qualified: "ftr.created_at"
+}{
+	ID:                NewColumn("id", "ftr"),
+	TemplateID:        NewColumn("template_id", "ftr"),
+	OrganizationID:    NewColumn("organization_id", "ftr"),
+	BusinessUnitID:    NewColumn("business_unit_id", "ftr"),
+	Round:             NewColumn("round", "ftr"),
+	Decision:          NewColumn("decision", "ftr"),
+	ActorID:           NewColumn("actor_id", "ftr"),
+	Comment:           NewColumn("comment", "ftr"),
+	BaseVersionNumber: NewColumn("base_version_number", "ftr"),
+	CreatedAt:         NewColumn("created_at", "ftr"),
+}
+
+// ReviewFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Review.GetStaticFieldMap().
+var ReviewFieldMap = map[string]string{
+	"id":                "id",
+	"templateId":        "template_id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"round":             "round",
+	"decision":          "decision",
+	"actorId":           "actor_id",
+	"comment":           "comment",
+	"baseVersionNumber": "base_version_number",
+	"createdAt":         "created_at",
+}
+
+// ReviewInsertableColumns lists column names suitable for INSERT statements on the "formula_template_reviews" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ReviewInsertableColumns = []string{
+	"id",
+	"template_id",
+	"organization_id",
+	"business_unit_id",
+	"round",
+	"decision",
+	"actor_id",
+	"comment",
+	"base_version_number",
+	"created_at",
+}
+
+// ReviewRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ReviewRelations.Actor)
+//	// Bun eager-loads the Actor association via a separate query
+var ReviewRelations = struct {
+	Actor string
+}{
+	Actor: "Actor",
+}
+
+// ReviewScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ftr.organization_id = ? AND ftr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ReviewScopeTenant(sq, ti).
+//		Where(buncolgen.ReviewColumns.ID.Eq(), id)
+func ReviewScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ReviewScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ReviewColumns.ID.In(), bun.List(ids))
+//	})
+func ReviewScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ReviewScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ReviewColumns.ID.Eq(), id)
+//	})
+func ReviewScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ReviewApplyTenant(tenantInfo))
+func ReviewApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ReviewColumns.OrganizationID, ReviewColumns.BusinessUnitID, ti)
+}
+
+// ReviewFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "formula_template_reviews" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ReviewFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ReviewFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Round             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "round" → DB: "round"
+	Decision          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
+	ActorID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorId" → DB: "actor_id"
+	Comment           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
+	BaseVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseVersionNumber" → DB: "base_version_number"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("templateId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Round: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("round", op, value)
+	},
+	Decision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decision", op, value)
+	},
+	ActorID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("actorId", op, value)
+	},
+	Comment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("comment", op, value)
+	},
+	BaseVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baseVersionNumber", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // TestCase — table "formula_template_test_cases", alias "ftc"
 // ---------------------------------------------------------------------------
 

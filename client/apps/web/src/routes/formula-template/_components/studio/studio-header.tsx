@@ -34,6 +34,7 @@ import {
   GitBranchIcon,
   GitForkIcon,
   HistoryIcon,
+  MessageSquareWarningIcon,
   MoreVerticalIcon,
   NetworkIcon,
   SendIcon,
@@ -277,16 +278,28 @@ export function StudioHeader({
               </Button>
             )}
             {canReject && (
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                className="text-destructive gap-1.5"
-                onClick={() => onApprovalAction("reject")}
-              >
-                <XIcon className="size-3" />
-                Reject
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  className="gap-1.5 text-amber-700 dark:text-amber-300"
+                  onClick={() => onApprovalAction("requestChanges")}
+                >
+                  <MessageSquareWarningIcon className="size-3" />
+                  Request Changes
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  className="text-destructive gap-1.5"
+                  onClick={() => onApprovalAction("reject")}
+                >
+                  <XIcon className="size-3" />
+                  Reject
+                </Button>
+              </>
             )}
           </>
         )}

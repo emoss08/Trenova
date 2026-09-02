@@ -96,6 +96,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/submit", requireSubmit, h.submit)
 	idGroup.POST("/approve", requireApprove, h.approve)
 	idGroup.POST("/reject", requireReject, h.reject)
+	idGroup.POST("/request-changes", requireReject, h.requestChanges)
+	idGroup.GET("/reviews", requireRead, h.listReviews)
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
 	idGroup.POST("/impact", requireRead, h.approvalImpact)
 	idGroup.GET("/readiness", requireRead, h.readiness)
@@ -1592,6 +1594,63 @@ func (h *Handler) approve(c *gin.Context) {
 // @Router /formula-templates/{templateID}/reject [post]
 func (h *Handler) reject(c *gin.Context) {
 	h.handleApprovalAction(c, h.service.Reject)
+}
+
+// @Summary Request changes on a formula template under review
+// @ID requestFormulaTemplateChanges
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Template ID"
+// @Param request body approvalActionRequest true "Reviewer comment"
+// @Success 200 {object} formulatemplate.FormulaTemplate
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/request-changes [post]
+func (h *Handler) requestChanges(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.RequestChanges)
+}
+
+// @Summary List the review history of a formula template
+// @ID listFormulaTemplateReviews
+// @Tags Formula Templates
+// @Produce json
+// @Param templateID path string true "Template ID"
+// @Success 200 {array} formulatemplate.Review
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/reviews [get]
+func (h *Handler) listReviews(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	reviews, err := h.service.ListReviews(
+		c.Request.Context(),
+		&formulatemplateservice.ListReviewsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID: templateID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, reviews)
 }
 
 type updateEffectiveDateRequest struct {

@@ -29,6 +29,7 @@ type Params struct {
 	Repo           repositories.FormulaTemplateRepository
 	VersionRepo    repositories.FormulaTemplateVersionRepository
 	TestCaseRepo   repositories.FormulaTemplateTestCaseRepository
+	ReviewRepo     repositories.FormulaTemplateReviewRepository
 	ShipmentRepo   repositories.ShipmentRepository
 	FormulaService *formula.Service
 	AuditService   services.AuditService
@@ -41,6 +42,7 @@ type Service struct {
 	repo           repositories.FormulaTemplateRepository
 	versionRepo    repositories.FormulaTemplateVersionRepository
 	testCaseRepo   repositories.FormulaTemplateTestCaseRepository
+	reviewRepo     repositories.FormulaTemplateReviewRepository
 	shipmentRepo   repositories.ShipmentRepository
 	formulaService *formula.Service
 	auditService   services.AuditService
@@ -54,6 +56,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		repo:           p.Repo,
 		versionRepo:    p.VersionRepo,
 		testCaseRepo:   p.TestCaseRepo,
+		reviewRepo:     p.ReviewRepo,
 		shipmentRepo:   p.ShipmentRepo,
 		formulaService: p.FormulaService,
 		auditService:   p.AuditService,

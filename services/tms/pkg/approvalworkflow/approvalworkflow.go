@@ -168,6 +168,12 @@ func RequireComment(req *Request, action string) error {
 	)
 }
 
+// Clock is the moment the engine stamps transitions with, exposed so a
+// transition's own rules measure age against the same instant.
+func (e Engine[T, S]) Clock() int64 {
+	return e.now()
+}
+
 func (e Engine[T, S]) now() int64 {
 	if e.Now != nil {
 		return e.Now()

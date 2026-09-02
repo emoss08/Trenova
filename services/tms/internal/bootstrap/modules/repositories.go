@@ -90,6 +90,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fleetcoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplatereviewrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplatetestcaserepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplateversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fuelsurchargerepository"
@@ -177,6 +178,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	userrepository.New,
 	formulatemplaterepository.New,
 	formulatemplatetestcaserepository.New,
+	formulatemplatereviewrepository.New,
 	formulatemplateversionrepository.New,
 	tableconfigurationrepository.New,
 	pagefavoriterepository.New,

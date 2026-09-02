@@ -41,6 +41,14 @@ func (s *Service) Submit(
 			template.SubmittedAt = &now
 			template.ReviewComment = r.Comment
 		},
+		AfterSave: func(
+			aCtx context.Context,
+			updated *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
+				formulatemplate.ReviewDecisionSubmitted)
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -77,6 +85,10 @@ func (s *Service) Approve(
 					)
 				}
 
+				if formulatemplate.SubmissionIsStale(template.SubmittedAt, s.approvals().Clock()) {
+					return staleSubmissionError()
+				}
+
 				if err := s.validateTemplate(vCtx, template); err != nil {
 					return err
 				}
@@ -99,14 +111,18 @@ func (s *Service) Approve(
 				updated *formulatemplate.FormulaTemplate,
 				r *ApprovalActionRequest,
 			) error {
-				return s.createVersionSnapshot(
+				if err := s.createVersionSnapshot(
 					aCtx,
 					updated,
 					updated.CurrentVersionNumber,
 					r.TenantInfo.UserID,
 					"Approved",
 					nil,
-				)
+				); err != nil {
+					return err
+				}
+				return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
+					formulatemplate.ReviewDecisionApproved)
 			},
 		})
 		if txErr != nil {
@@ -123,7 +139,7 @@ func (s *Service) Approve(
 	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
 		Template:    approved,
 		SubmitterID: approved.SubmittedByID,
-		Approved:    true,
+		Decision:    formulatemplate.ReviewDecisionApproved,
 		Comment:     req.Comment,
 	})
 
@@ -163,7 +179,7 @@ func (s *Service) Reject(
 		AfterSave: func(
 			aCtx context.Context,
 			updated *formulatemplate.FormulaTemplate,
-			_ *ApprovalActionRequest,
+			r *ApprovalActionRequest,
 		) error {
 			cleared, clearErr := s.clearScheduledVersions(aCtx, updated)
 			if clearErr != nil {
@@ -175,7 +191,8 @@ func (s *Service) Reject(
 					zap.Int64("cleared", cleared),
 				)
 			}
-			return nil
+			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
+				formulatemplate.ReviewDecisionRejected)
 		},
 	})
 	if err != nil {
@@ -185,7 +202,7 @@ func (s *Service) Reject(
 	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
 		Template:    rejected,
 		SubmitterID: submitterID,
-		Approved:    false,
+		Decision:    formulatemplate.ReviewDecisionRejected,
 		Comment:     req.Comment,
 	})
 

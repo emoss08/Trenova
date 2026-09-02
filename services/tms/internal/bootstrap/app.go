@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/formulatemplatejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
@@ -87,6 +88,7 @@ func Options() fx.Option {
 		emailjobs.Module,
 		exchangeratejobs.Module,
 		fuelpricejobs.Module,
+		formulatemplatejobs.Module,
 		ratesimjobs.Module,
 		thumbnailjobs.Module,
 		smsjobs.Module,

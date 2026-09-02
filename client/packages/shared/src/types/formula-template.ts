@@ -967,6 +967,32 @@ export const standardTemplateSchema = z.object({
 export type StandardTemplate = z.output<typeof standardTemplateSchema>;
 export const listStandardsResponseSchema = z.array(standardTemplateSchema);
 
+export const formulaReviewDecisionSchema = z.enum([
+  "Submitted",
+  "Approved",
+  "Rejected",
+  "ChangesRequested",
+  "Expired",
+]);
+export type FormulaReviewDecision = z.infer<typeof formulaReviewDecisionSchema>;
+
+export const formulaTemplateReviewSchema = z.object({
+  id: z.string(),
+  templateId: z.string(),
+  round: z.number().int(),
+  decision: formulaReviewDecisionSchema,
+  actorId: z.string().nullish(),
+  comment: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  baseVersionNumber: z.number().int().default(0),
+  createdAt: z.number(),
+  actor: userSchema.nullish(),
+});
+export type FormulaTemplateReview = z.output<typeof formulaTemplateReviewSchema>;
+export const listFormulaTemplateReviewsResponseSchema = z.array(formulaTemplateReviewSchema);
+
 export const readinessResponseSchema = z.object({
   canSubmit: z.boolean(),
   canApprove: z.boolean(),

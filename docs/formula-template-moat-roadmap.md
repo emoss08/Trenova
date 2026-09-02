@@ -455,9 +455,14 @@ Every rating carries a trace that a non-programmer can read.
       (`List`, `CountUsages`, `SelectOptions`; the version repository too. The accessorial
       charge model does not map `formula_template_id`, so that one usage count builds its
       column through `buncolgen.NewColumn` until the model catches up)
-- [ ] Approval engine records review rounds (reviewer, decision, comment, diff-base
+- [x] Approval engine records review rounds (reviewer, decision, comment, diff-base
       version) with "request changes" distinct from Reject, and expiry on stale
-      submissions (`pkg/approvalworkflow`, migration)
+      submissions (`pkg/approvalworkflow`, migration) (`formula_template_reviews` history:
+      Submit opens or continues a round and captures the approved base version; Request
+      Changes returns the template to draft but keeps the author and the round open, Reject
+      clears the submission and closes it; approval refuses submissions older than 14 days,
+      readiness shows the age, and a daily job expires them back to draft with a
+      notification; `GET /:id/reviews` feeds the review history in the approval dialog)
 
 ---
 

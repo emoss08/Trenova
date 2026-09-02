@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,7 @@ func TestSubmit_NotifiesReviewers(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -76,7 +78,7 @@ func TestApprove_NotifiesSubmitter(t *testing.T) {
 
 	tenant := newTenantInfo()
 	submitterID := pulid.MustNew("usr_")
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview
@@ -112,7 +114,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	captured := withNotifications(t, deps)
 
 	submitterID := pulid.MustNew("usr_")
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview
@@ -148,7 +150,7 @@ func TestReject_SkipsNotificationWhenRejectorIsSubmitter(t *testing.T) {
 
 	tenant := newTenantInfo()
 	submitterID := tenant.UserID
-	submittedAt := int64(1700000000)
+	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusInReview

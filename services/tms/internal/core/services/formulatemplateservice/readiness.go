@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -28,6 +29,7 @@ const (
 const (
 	ReadinessCheckStatus      = "status"
 	ReadinessCheckReviewer    = "reviewer"
+	ReadinessCheckAge         = "submissionAge"
 	ReadinessCheckExpression  = "expression"
 	ReadinessCheckDescription = "description"
 	ReadinessCheckNullables   = "nullableFields"
@@ -83,7 +85,8 @@ func (s *Service) Readiness(
 	blocking := false
 
 	statusCheck, reviewerCheck := reviewStateChecks(template, req.TenantInfo.UserID)
-	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck)
+	ageCheck := submissionAgeCheck(template, timeutils.NowUnix())
+	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck, ageCheck)
 
 	expressionCheck := s.expressionReadiness(ctx, template)
 	resp.Checks = append(resp.Checks, expressionCheck)
@@ -103,7 +106,8 @@ func (s *Service) Readiness(
 	resp.CanSubmit = !blocking && submittable(template.Status)
 	resp.CanApprove = !blocking &&
 		template.Status == formulatemplate.StatusInReview &&
-		reviewerCheck.Status != ReadinessFail
+		reviewerCheck.Status != ReadinessFail &&
+		ageCheck.Status != ReadinessFail
 
 	return resp, nil
 }
@@ -289,4 +293,36 @@ func appendUnique(values []string, value string) []string {
 		return values
 	}
 	return append(values, value)
+}
+
+const agingSubmissionAfter int64 = 7 * 24 * 60 * 60
+
+// submissionAgeCheck warns a reviewer that a submission has been waiting and
+// fails once it has waited past the expiry, when approval is refused and the
+// sweep will return it to draft.
+func submissionAgeCheck(template *formulatemplate.FormulaTemplate, now int64) ReadinessCheck {
+	check := ReadinessCheck{Key: ReadinessCheckAge, Label: "Submission age"}
+	if template.Status != formulatemplate.StatusInReview || template.SubmittedAt == nil {
+		check.Status = ReadinessPass
+		check.Detail = "Applies once the template is in review"
+		return check
+	}
+
+	waited := now - *template.SubmittedAt
+	days := waited / (24 * 60 * 60)
+	switch {
+	case formulatemplate.SubmissionIsStale(template.SubmittedAt, now):
+		check.Status = ReadinessFail
+		check.Detail = fmt.Sprintf(
+			"Submitted %d days ago; older than the 14-day limit, so it must be resubmitted",
+			days,
+		)
+	case waited > agingSubmissionAfter:
+		check.Status = ReadinessWarn
+		check.Detail = fmt.Sprintf("Submitted %d days ago; decide soon or it expires at 14", days)
+	default:
+		check.Status = ReadinessPass
+		check.Detail = "Submitted recently"
+	}
+	return check
 }

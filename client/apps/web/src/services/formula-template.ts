@@ -2,7 +2,9 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
+  listFormulaTemplateReviewsResponseSchema,
   listStandardsResponseSchema,
+  type FormulaTemplateReview,
   readinessResponseSchema,
   reviewDiffResponseSchema,
   type StandardTemplate,
@@ -345,6 +347,30 @@ export class FormulaTemplateService {
     });
 
     return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async requestChanges(
+    templateId: FormulaTemplate["id"],
+    comment: string,
+  ): Promise<FormulaTemplate> {
+    const response = await api.post<FormulaTemplate>(
+      `/formula-templates/${templateId}/request-changes`,
+      { comment },
+    );
+
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async listReviews(templateId: FormulaTemplate["id"]): Promise<FormulaTemplateReview[]> {
+    const response = await api.get<FormulaTemplateReview[]>(
+      `/formula-templates/${templateId}/reviews`,
+    );
+
+    return safeParse(
+      listFormulaTemplateReviewsResponseSchema,
+      response,
+      "Formula Template Reviews",
+    );
   }
 
   public async updateVersionEffectiveDate(

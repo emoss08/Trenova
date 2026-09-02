@@ -4836,6 +4836,61 @@
                 },
                 "type": "object"
             },
+            "github_com_emoss08_trenova_internal_core_domain_formulatemplate.Review": {
+                "properties": {
+                    "actor": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                    },
+                    "actorId": {
+                        "type": "string"
+                    },
+                    "baseVersionNumber": {
+                        "type": "integer"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "comment": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "decision": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_formulatemplate.ReviewDecision"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "round": {
+                        "type": "integer"
+                    },
+                    "templateId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_domain_formulatemplate.ReviewDecision": {
+                "enum": [
+                    "Submitted",
+                    "Approved",
+                    "Rejected",
+                    "ChangesRequested",
+                    "Expired"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ReviewDecisionSubmitted",
+                    "ReviewDecisionApproved",
+                    "ReviewDecisionRejected",
+                    "ReviewDecisionChangesRequested",
+                    "ReviewDecisionExpired"
+                ]
+            },
             "github_com_emoss08_trenova_internal_core_domain_formulatemplate.Status": {
                 "enum": [
                     "Active",
@@ -36044,6 +36099,95 @@
                 ]
             }
         },
+        "/formula-templates/{templateID}/request-changes": {
+            "post": {
+                "operationId": "requestFormulaTemplateChanges",
+                "parameters": [
+                    {
+                        "description": "Template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/internal_api_handlers_formulatemplatehandler.approvalActionRequest"
+                            }
+                        }
+                    },
+                    "description": "Reviewer comment",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Request changes on a formula template under review",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
         "/formula-templates/{templateID}/review-diff": {
             "get": {
                 "operationId": "formulaTemplateReviewDiff",
@@ -36106,6 +36250,76 @@
                     }
                 ],
                 "summary": "Compare a formula template's pending content with its last approved snapshot",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/{templateID}/reviews": {
+            "get": {
+                "operationId": "listFormulaTemplateReviews",
+                "parameters": [
+                    {
+                        "description": "Template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_formulatemplate.Review"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List the review history of a formula template",
                 "tags": [
                     "Formula Templates"
                 ]
