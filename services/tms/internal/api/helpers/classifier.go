@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 
+	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/go-playground/validator/v10"
@@ -46,6 +47,7 @@ func NewDefaultClassifier() *ChainClassifier {
 	return NewChainClassifier(
 		ClassifierFunc(classifyTimeout),
 		ClassifierFunc(classifyValidation),
+		ClassifierFunc(classifyFormula),
 		ClassifierFunc(classifyBadRequest),
 		ClassifierFunc(classifyBusiness),
 		ClassifierFunc(classifyDatabase),
@@ -78,6 +80,32 @@ func classifyValidation(err error) (ProblemType, bool) {
 	if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
 		return ProblemTypeValidation, true
 	}
+	return "", false
+}
+
+// classifyFormula treats a formula that will not compile, resolve, or compute
+// as a validation problem. The expression is tenant-authored data; a fault in
+// it is something the author fixes in the Studio, and a 500 would hide the
+// message that tells them what to fix.
+func classifyFormula(err error) (ProblemType, bool) {
+	var (
+		schemaErr    *formulaerrors.SchemaError
+		computeErr   *formulaerrors.ComputeError
+		transformErr *formulaerrors.TransformError
+		variableErr  *formulaerrors.VariableError
+		resolveErr   *formulaerrors.ResolveError
+		missingErr   *formulaerrors.MissingFieldError
+	)
+
+	if errors.As(err, &schemaErr) ||
+		errors.As(err, &computeErr) ||
+		errors.As(err, &transformErr) ||
+		errors.As(err, &variableErr) ||
+		errors.As(err, &resolveErr) ||
+		errors.As(err, &missingErr) {
+		return ProblemTypeValidation, true
+	}
+
 	return "", false
 }
 

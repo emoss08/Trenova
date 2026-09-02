@@ -221,7 +221,7 @@ func (s *Service) AmendRules(
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateAmendment(agreement, req); multiErr != nil {
+	if multiErr := s.validator.ValidateAmendment(ctx, agreement, req); multiErr != nil {
 		return nil, multiErr
 	}
 

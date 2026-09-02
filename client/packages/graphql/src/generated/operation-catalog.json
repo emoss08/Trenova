@@ -3897,7 +3897,7 @@
       "kind": "query",
       "domain": "formula-template",
       "sourceFile": "src/operations/formula-template/table.graphql",
-      "hash": "sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722",
+      "hash": "sha256:58fed7b314c6fffe6a8cfa40f90466b48ca8cf6bf254f35f47a31af88b1ff9cc",
       "rootFields": [
         "formulaTemplates"
       ],
@@ -3913,7 +3913,7 @@
         "FormulaTemplateTableRowFields"
       ],
       "usages": [],
-      "sdl": "query FormulaTemplateTable($input: DataTableConnectionInput!) {\n  formulaTemplates(input: $input) {\n    edges {\n      node {\n        ...FormulaTemplateTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  version\n  currentVersionNumber\n  createdAt\n  updatedAt\n}"
+      "sdl": "query FormulaTemplateTable($input: DataTableConnectionInput!) {\n  formulaTemplates(input: $input) {\n    edges {\n      node {\n        ...FormulaTemplateTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  variableDefinitions {\n    name\n    type\n    description\n    required\n    defaultValue\n    source\n  }\n  breakdownDefinitions {\n    name\n    label\n    expression\n  }\n  minCharge\n  maxCharge\n  roundingMode\n  roundingPrecision\n  sourceTemplateId\n  sourceVersionNumber\n  version\n  currentVersionNumber\n  approvedAt\n  usageCount\n  scenarioCount\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "FuelDashboard",
@@ -10164,7 +10164,7 @@
         "FormulaTemplateTable"
       ],
       "usages": [],
-      "sdl": "fragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  version\n  currentVersionNumber\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  variableDefinitions {\n    name\n    type\n    description\n    required\n    defaultValue\n    source\n  }\n  breakdownDefinitions {\n    name\n    label\n    expression\n  }\n  minCharge\n  maxCharge\n  roundingMode\n  roundingPrecision\n  sourceTemplateId\n  sourceVersionNumber\n  version\n  currentVersionNumber\n  approvedAt\n  usageCount\n  scenarioCount\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "FuelIndexFields",

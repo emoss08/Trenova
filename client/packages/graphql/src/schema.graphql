@@ -4540,6 +4540,9 @@ type FormSubmissionField {
 }
 
 type FormulaTemplate {
+  approvedAt: Int
+  approvedById: ID
+  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
   businessUnit: BusinessUnit
   businessUnitId: ID!
   createdAt: Int!
@@ -4547,14 +4550,40 @@ type FormulaTemplate {
   description: String!
   expression: String!
   id: ID!
+  maxCharge: String
+  """
+  Formula template metadata is admin-defined and intentionally open-ended.
+  """
+  metadata: JSON
+  minCharge: String
   name: String!
   organization: Organization
   organizationId: ID!
+  reviewComment: String!
+  roundingMode: RateRoundingMode!
+  roundingPrecision: Int!
+  """How many saved scenarios gate this template's approval."""
+  scenarioCount: Int!
   schemaId: String!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
   status: FormulaTemplateStatus!
+  submittedAt: Int
+  submittedById: ID
   type: FormulaTemplateType!
   updatedAt: Int!
+  """
+  How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template.
+  """
+  usageCount: Int!
+  variableDefinitions: [FormulaTemplateVariableDefinition!]!
   version: Int!
+}
+
+type FormulaTemplateBreakdownDefinition {
+  expression: String!
+  label: String!
+  name: String!
 }
 
 type FormulaTemplateConnection {
@@ -4571,12 +4600,25 @@ type FormulaTemplateEdge {
 enum FormulaTemplateStatus {
   Active
   Draft
+  InReview
   Inactive
 }
 
 enum FormulaTemplateType {
   AccessorialCharge
   FreightCharge
+}
+
+type FormulaTemplateVariableDefinition {
+  """
+  Formula variable defaults can be scalar, array, object, or null by template design.
+  """
+  defaultValue: Any
+  description: String!
+  name: String!
+  required: Boolean!
+  source: String
+  type: String!
 }
 
 enum FreightClass {
@@ -5564,6 +5606,7 @@ type Location {
   state: UsState
   stateId: ID!
   status: EntityStatus!
+  timezone: String!
   updatedAt: Int!
   version: Int!
 }
@@ -7306,6 +7349,15 @@ enum RateQuotePurpose {
   Shopping
   Simulation
   WhatIf
+}
+
+"""How a formula's computed charge is reduced to its billable precision."""
+enum RateRoundingMode {
+  Down
+  HalfEven
+  HalfUp
+  None
+  Up
 }
 
 enum RateUnit {

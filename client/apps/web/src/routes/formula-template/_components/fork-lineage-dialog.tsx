@@ -52,8 +52,17 @@ function LineageNode({
               ? "border-primary bg-primary/5"
               : "border-border hover:border-muted-foreground/50"
           } ${onNavigateToTemplate && !isCurrent ? "cursor-pointer" : ""}`}
+          role={onNavigateToTemplate && !isCurrent ? "button" : undefined}
+          tabIndex={onNavigateToTemplate && !isCurrent ? 0 : undefined}
           onClick={() => {
             if (onNavigateToTemplate && !isCurrent) {
+              onNavigateToTemplate(node.templateId);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (!onNavigateToTemplate || isCurrent) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
               onNavigateToTemplate(node.templateId);
             }
           }}

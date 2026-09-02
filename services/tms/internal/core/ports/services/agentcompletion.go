@@ -50,6 +50,25 @@ type DiagnoseResult struct {
 	ModelIdentifier string
 }
 
+type StructuredCompletionRequest struct {
+	TenantInfo   pagination.TenantInfo
+	System       string
+	Context      DelimitedContext
+	OutputSchema map[string]any
+	MaxTokens    int
+}
+
+type StructuredCompletionResult struct {
+	Text            string
+	ModelIdentifier string
+	InputTokens     int
+	OutputTokens    int
+}
+
 type CompletionService interface {
 	Diagnose(ctx context.Context, req *DiagnoseRequest) (*DiagnoseResult, error)
+	CompleteStructured(
+		ctx context.Context,
+		req *StructuredCompletionRequest,
+	) (*StructuredCompletionResult, error)
 }

@@ -939,27 +939,31 @@ var RateMatrixDimensionTable = TableInfo{
 //	q.Where(RateMatrixDimensionColumns.ID.Eq(), id)           // WHERE rmd.id = ?
 //	q.Order(RateMatrixDimensionColumns.CreatedAt.OrderDesc())  // ORDER BY rmd.created_at DESC
 var RateMatrixDimensionColumns = struct {
-	ID             Column // "id" → qualified: "rmd.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "rmd.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "rmd.organization_id"
-	RateMatrixID   Column // "rate_matrix_id" → qualified: "rmd.rate_matrix_id"
-	Position       Column // "position" → qualified: "rmd.position"
-	Kind           Column // "kind" → qualified: "rmd.kind"
-	MatchMode      Column // "match_mode" → qualified: "rmd.match_mode"
-	Label          Column // "label" → qualified: "rmd.label"
-	CreatedAt      Column // "created_at" → qualified: "rmd.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "rmd.updated_at"
+	ID               Column // "id" → qualified: "rmd.id"
+	BusinessUnitID   Column // "business_unit_id" → qualified: "rmd.business_unit_id"
+	OrganizationID   Column // "organization_id" → qualified: "rmd.organization_id"
+	RateMatrixID     Column // "rate_matrix_id" → qualified: "rmd.rate_matrix_id"
+	Position         Column // "position" → qualified: "rmd.position"
+	Kind             Column // "kind" → qualified: "rmd.kind"
+	MatchMode        Column // "match_mode" → qualified: "rmd.match_mode"
+	Label            Column // "label" → qualified: "rmd.label"
+	KeyNormalization Column // "key_normalization" → qualified: "rmd.key_normalization"
+	RangeOverflow    Column // "range_overflow" → qualified: "rmd.range_overflow"
+	CreatedAt        Column // "created_at" → qualified: "rmd.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "rmd.updated_at"
 }{
-	ID:             NewColumn("id", "rmd"),
-	BusinessUnitID: NewColumn("business_unit_id", "rmd"),
-	OrganizationID: NewColumn("organization_id", "rmd"),
-	RateMatrixID:   NewColumn("rate_matrix_id", "rmd"),
-	Position:       NewColumn("position", "rmd"),
-	Kind:           NewColumn("kind", "rmd"),
-	MatchMode:      NewColumn("match_mode", "rmd"),
-	Label:          NewColumn("label", "rmd"),
-	CreatedAt:      NewColumn("created_at", "rmd"),
-	UpdatedAt:      NewColumn("updated_at", "rmd"),
+	ID:               NewColumn("id", "rmd"),
+	BusinessUnitID:   NewColumn("business_unit_id", "rmd"),
+	OrganizationID:   NewColumn("organization_id", "rmd"),
+	RateMatrixID:     NewColumn("rate_matrix_id", "rmd"),
+	Position:         NewColumn("position", "rmd"),
+	Kind:             NewColumn("kind", "rmd"),
+	MatchMode:        NewColumn("match_mode", "rmd"),
+	Label:            NewColumn("label", "rmd"),
+	KeyNormalization: NewColumn("key_normalization", "rmd"),
+	RangeOverflow:    NewColumn("range_overflow", "rmd"),
+	CreatedAt:        NewColumn("created_at", "rmd"),
+	UpdatedAt:        NewColumn("updated_at", "rmd"),
 }
 
 // RateMatrixDimensionFieldMap maps JSON API field names to database column names.
@@ -967,16 +971,18 @@ var RateMatrixDimensionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateMatrixDimension.GetStaticFieldMap().
 var RateMatrixDimensionFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"rateMatrixId":   "rate_matrix_id",
-	"position":       "position",
-	"kind":           "kind",
-	"matchMode":      "match_mode",
-	"label":          "label",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":               "id",
+	"businessUnitId":   "business_unit_id",
+	"organizationId":   "organization_id",
+	"rateMatrixId":     "rate_matrix_id",
+	"position":         "position",
+	"kind":             "kind",
+	"matchMode":        "match_mode",
+	"label":            "label",
+	"keyNormalization": "key_normalization",
+	"rangeOverflow":    "range_overflow",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
 }
 
 // RateMatrixDimensionInsertableColumns lists column names suitable for INSERT statements on the "rate_matrix_dimensions" table.
@@ -990,6 +996,8 @@ var RateMatrixDimensionInsertableColumns = []string{
 	"kind",
 	"match_mode",
 	"label",
+	"key_normalization",
+	"range_overflow",
 	"created_at",
 	"updated_at",
 }
@@ -1055,16 +1063,18 @@ func RateMatrixDimensionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQu
 //	RateMatrixDimensionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateMatrixDimensionFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RateMatrixID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
-	Position       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
-	Kind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	MatchMode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchMode" → DB: "match_mode"
-	Label          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "label" → DB: "label"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RateMatrixID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	Position         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
+	Kind             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	MatchMode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchMode" → DB: "match_mode"
+	Label            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "label" → DB: "label"
+	KeyNormalization func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "keyNormalization" → DB: "key_normalization"
+	RangeOverflow    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rangeOverflow" → DB: "range_overflow"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1089,6 +1099,12 @@ var RateMatrixDimensionFilter = struct {
 	},
 	Label: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("label", op, value)
+	},
+	KeyNormalization: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("keyNormalization", op, value)
+	},
+	RangeOverflow: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rangeOverflow", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

@@ -114,7 +114,7 @@ func (r *Registry) extractFieldSource(
 			fieldPath = fmt.Sprintf("%s.%s", prefix, fieldPath)
 		}
 
-		if prop.Source.Field != "" || prop.Source.Computed {
+		if prop.Source.Field != "" || prop.Source.Computed || prop.Source.Provided {
 			source := prop.Source
 			sources[fieldPath] = &source
 		}

@@ -3,33 +3,31 @@ package engine
 import (
 	"fmt"
 	"math"
+	"reflect"
 
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/expr-lang/expr"
+	"github.com/shopspring/decimal"
 )
 
 func BuiltinFunctions() []expr.Option {
-	return []expr.Option{
-		expr.Function("round", roundFn,
-			new(func(float64) float64),
-			new(func(float64, int) float64),
-		),
-		expr.Function("ceil", ceilFn, new(func(float64) float64)),
-		expr.Function("floor", floorFn, new(func(float64) float64)),
-		expr.Function("abs", absFn, new(func(float64) float64)),
-		expr.Function("min", minFn, new(func(float64, float64) float64)),
-		expr.Function("max", maxFn, new(func(float64, float64) float64)),
-		expr.Function("sum", sumFn, new(func(...float64) float64)),
-		expr.Function("avg", avgFn, new(func(...float64) float64)),
-		expr.Function("coalesce", coalesceFn, new(func(...any) any)),
-		expr.Function("clamp", clampFn, new(func(float64, float64, float64) float64)),
-		expr.Function("pow", powFn, new(func(float64, float64) float64)),
-		expr.Function("sqrt", sqrtFn, new(func(float64) float64)),
+	options := make([]expr.Option, 0, len(functionSpecs))
+	for _, spec := range functionSpecs {
+		if spec.fn == nil {
+			continue
+		}
+		options = append(options, expr.Function(spec.Name, spec.fn, spec.types...))
 	}
+	return options
 }
 
 const maxRoundDecimals = 12
 
-func roundFn(args ...any) (any, error) {
+// roundWith rounds through the decimal type rather than float arithmetic, so
+// round(2.675, 2) is 2.68 the way a person expects and not the 2.67 that
+// binary floating point produces. Every rounding function shares it; only
+// the mode differs.
+func roundWith(mode ratetypes.RoundingMode, args ...any) (any, error) {
 	value, err := toFloat64(args[0])
 	if err != nil {
 		return nil, err
@@ -49,8 +47,51 @@ func roundFn(args ...any) (any, error) {
 		decimals = d
 	}
 
-	multiplier := math.Pow(10, float64(decimals))
-	return math.Round(value*multiplier) / multiplier, nil
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return nil, fmt.Errorf("cannot round a non-finite value: %v", value)
+	}
+
+	return mode.Round(decimal.NewFromFloat(value), int32(decimals)).InexactFloat64(), nil
+}
+
+func roundFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeHalfUp, args...)
+}
+
+func roundUpFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeUp, args...)
+}
+
+func roundDownFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeDown, args...)
+}
+
+func roundHalfEvenFn(args ...any) (any, error) {
+	return roundWith(ratetypes.RoundingModeHalfEven, args...)
+}
+
+// roundToFn rounds to the nearest multiple of an increment: the nearest $5,
+// the nearest quarter, the nearest hundredweight.
+func roundToFn(args ...any) (any, error) {
+	value, err := toFloat64(args[0])
+	if err != nil {
+		return nil, err
+	}
+	increment, err := toFloat64(args[1])
+	if err != nil {
+		return nil, err
+	}
+	if increment <= 0 || math.IsNaN(increment) || math.IsInf(increment, 0) {
+		return nil, fmt.Errorf("roundTo increment must be a positive number, got %v", increment)
+	}
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return nil, fmt.Errorf("cannot round a non-finite value: %v", value)
+	}
+
+	step := decimal.NewFromFloat(increment)
+	multiples := decimal.NewFromFloat(value).Div(step).Round(0)
+
+	return multiples.Mul(step).InexactFloat64(), nil
 }
 
 func ceilFn(args ...any) (any, error) {
@@ -78,58 +119,84 @@ func absFn(args ...any) (any, error) {
 }
 
 func minFn(args ...any) (any, error) {
-	a, err := toFloat64(args[0])
-	if err != nil {
-		return nil, err
-	}
-	b, err := toFloat64(args[1])
-	if err != nil {
-		return nil, err
-	}
-	if a < b {
-		return a, nil
-	}
-	return b, nil
+	return extremum("min", args, func(candidate, best float64) bool { return candidate < best })
 }
 
 func maxFn(args ...any) (any, error) {
-	a, err := toFloat64(args[0])
+	return extremum("max", args, func(candidate, best float64) bool { return candidate > best })
+}
+
+func extremum(name string, args []any, better func(candidate, best float64) bool) (any, error) {
+	if len(args) == 0 {
+		return nil, fmt.Errorf("%s requires at least one argument", name)
+	}
+	best, err := toFloat64(args[0])
 	if err != nil {
 		return nil, err
 	}
-	b, err := toFloat64(args[1])
-	if err != nil {
-		return nil, err
+	for _, arg := range args[1:] {
+		candidate, convErr := toFloat64(arg)
+		if convErr != nil {
+			return nil, convErr
+		}
+		if better(candidate, best) {
+			best = candidate
+		}
 	}
-	if a > b {
-		return a, nil
-	}
-	return b, nil
+	return best, nil
 }
 
 func sumFn(args ...any) (any, error) {
+	values, err := flattenNumbers(args)
+	if err != nil {
+		return nil, err
+	}
 	var total float64
-	for _, arg := range args {
-		v, err := toFloat64(arg)
-		if err != nil {
-			return nil, err
-		}
+	for _, v := range values {
 		total += v
 	}
 	return total, nil
 }
 
 func avgFn(args ...any) (any, error) {
-	if len(args) == 0 {
-		return 0.0, nil
-	}
-	sum, err := sumFn(args...)
+	values, err := flattenNumbers(args)
 	if err != nil {
 		return nil, err
 	}
-	return sum.(float64) / float64( //nolint:errcheck // ignore error because we know the type is correct
-		len(args),
-	), nil
+	if len(values) == 0 {
+		return 0.0, nil
+	}
+	var total float64
+	for _, v := range values {
+		total += v
+	}
+	return total / float64(len(values)), nil
+}
+
+// flattenNumbers accepts the mix an aggregate is called with — plain numbers
+// and lists of numbers, including the list a map() over stops or commodities
+// produces — and returns every element as a float64.
+func flattenNumbers(args []any) ([]float64, error) {
+	values := make([]float64, 0, len(args))
+	for _, arg := range args {
+		v := reflect.ValueOf(arg)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			for i := 0; i < v.Len(); i++ {
+				element, err := toFloat64(v.Index(i).Interface())
+				if err != nil {
+					return nil, err
+				}
+				values = append(values, element)
+			}
+			continue
+		}
+		element, err := toFloat64(arg)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, element)
+	}
+	return values, nil
 }
 
 func coalesceFn(args ...any) (any, error) {

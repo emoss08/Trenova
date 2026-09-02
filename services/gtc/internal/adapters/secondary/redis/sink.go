@@ -12,6 +12,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	truncateScanCount   = 512
+	truncateDeleteBatch = 256
+)
+
 type baseSink struct {
 	client    *goredis.Client
 	logger    *zap.Logger
@@ -86,6 +91,10 @@ func (s *JSONSink) Shutdown(ctx context.Context) error {
 }
 
 func (s *JSONSink) writeJSON(ctx context.Context, projection domain.Projection, record domain.SourceRecord) error {
+	if record.Operation == domain.OperationTruncate {
+		return s.truncateJSON(ctx, projection, record)
+	}
+
 	key, err := s.renderTemplate(projection.Name, projection.Destination.KeyTemplate, projection.PrimaryKeys, record)
 	if err != nil {
 		return err
@@ -125,6 +134,77 @@ func (s *JSONSink) writeJSON(ctx context.Context, projection domain.Projection, 
 	}
 
 	return nil
+}
+
+func (s *JSONSink) truncateJSON(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
+	tmpl, err := s.template(projection.Name, projection.Destination.KeyTemplate)
+	if err != nil {
+		return err
+	}
+
+	pattern, err := tmpl.WildcardPattern(record, projection.PrimaryKeys)
+	if err != nil {
+		return fmt.Errorf("truncate projection %s: %w", projection.Name, err)
+	}
+
+	deleted, err := s.deleteMatchingKeys(ctx, pattern)
+	if err != nil {
+		return fmt.Errorf(
+			"truncate projection %s: delete keys matching %q: %w",
+			projection.Name,
+			pattern,
+			err,
+		)
+	}
+
+	s.logger.Info("truncated redis json projection",
+		zap.String("projection", projection.Name),
+		zap.String("table", record.FullTableName()),
+		zap.String("pattern", pattern),
+		zap.Int64("deleted_keys", deleted),
+	)
+
+	return nil
+}
+
+func (s *baseSink) deleteMatchingKeys(ctx context.Context, pattern string) (int64, error) {
+	var deleted int64
+	batch := make([]string, 0, truncateDeleteBatch)
+
+	flush := func() error {
+		if len(batch) == 0 {
+			return nil
+		}
+		removed, err := s.client.Unlink(ctx, batch...).Result()
+		if err != nil {
+			return err
+		}
+		deleted += removed
+		batch = batch[:0]
+		return nil
+	}
+
+	iter := s.client.Scan(ctx, 0, pattern, truncateScanCount).Iterator()
+	for iter.Next(ctx) {
+		batch = append(batch, iter.Val())
+		if len(batch) >= truncateDeleteBatch {
+			if err := flush(); err != nil {
+				return deleted, err
+			}
+		}
+	}
+	if err := iter.Err(); err != nil {
+		return deleted, err
+	}
+	if err := flush(); err != nil {
+		return deleted, err
+	}
+
+	return deleted, nil
 }
 
 func (s *StreamSink) Kind() domain.DestinationKind {
@@ -174,25 +254,35 @@ func (s *StreamSink) writeStream(ctx context.Context, projection domain.Projecti
 }
 
 func (s *baseSink) renderTemplate(name string, pattern string, primaryKeys []string, record domain.SourceRecord) (string, error) {
+	tmpl, err := s.template(name, pattern)
+	if err != nil {
+		return "", err
+	}
+
+	return tmpl.Execute(record, primaryKeys)
+}
+
+func (s *baseSink) template(name string, pattern string) (*Template, error) {
 	key := name + "::" + pattern
 
 	s.mu.RLock()
 	tmpl, ok := s.templates[key]
 	s.mu.RUnlock()
 
-	if !ok {
-		parsed, err := ParseTemplate(pattern)
-		if err != nil {
-			return "", err
-		}
-
-		s.mu.Lock()
-		s.templates[key] = parsed
-		s.mu.Unlock()
-		tmpl = parsed
+	if ok {
+		return tmpl, nil
 	}
 
-	return tmpl.Execute(record, primaryKeys)
+	parsed, err := ParseTemplate(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	s.mu.Lock()
+	s.templates[key] = parsed
+	s.mu.Unlock()
+
+	return parsed, nil
 }
 
 func streamArgs(stream string, payload string) *goredis.XAddArgs {

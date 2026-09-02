@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -242,4 +243,36 @@ func TestOrderedDimensionsSortsByPosition(t *testing.T) {
 	assert.Equal(t, int16(0), ordered[0].Position)
 	assert.Equal(t, int16(1), ordered[1].Position)
 	assert.Equal(t, int16(2), ordered[2].Position)
+}
+
+func TestKeyNormalizationApply(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, " Abc ", ratematrix.KeyNormalizationNone.Apply(" Abc "))
+	assert.Equal(t, "Abc", ratematrix.KeyNormalizationTrim.Apply(" Abc "))
+	assert.Equal(t, "ABC", ratematrix.KeyNormalizationUpper.Apply(" abc "))
+	assert.Equal(t, "752", ratematrix.KeyNormalizationZip3.Apply("75201-1234"))
+	assert.Equal(t, "K1A", ratematrix.KeyNormalizationZip3.Apply(" k1a 0b1"))
+	assert.Equal(t, "75", ratematrix.KeyNormalizationZip3.Apply("75"))
+}
+
+func TestDimensionModesMustMatchTheAxis(t *testing.T) {
+	t.Parallel()
+
+	banded := dim(0, ratematrix.DimensionKindWeightBreak, ratematrix.MatchModeRange)
+	banded.KeyNormalization = ratematrix.KeyNormalizationZip3
+	multiErr := errortypes.NewMultiError()
+	banded.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "normalising a banded axis is meaningless")
+
+	keyed := dim(0, ratematrix.DimensionKindZone, ratematrix.MatchModeExact)
+	keyed.RangeOverflow = ratematrix.RangeOverflowNearest
+	multiErr = errortypes.NewMultiError()
+	keyed.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "overflow only applies to bands")
+
+	plain := dim(0, ratematrix.DimensionKindZone, ratematrix.MatchModeExact)
+	multiErr = errortypes.NewMultiError()
+	plain.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), "unset modes default rather than fail")
 }

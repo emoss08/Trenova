@@ -151,3 +151,48 @@ func insertLookupFixture(
 
 	return matrix.ID
 }
+
+// The lookup stamp is what lets a process keep a built lookup across requests:
+// it must move whenever anything a formula could read has changed, including
+// a cell sheet replaced under an otherwise untouched matrix.
+func TestGetLookupStampMovesWhenCellsAreReplaced(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	tenantInfo := pagination.TenantInfo{
+		OrgID: data.Organization.ID,
+		BuID:  data.BusinessUnit.ID,
+	}
+
+	matrixID := insertLookupFixture(t, ctx, db, lookupFixture{
+		tenantInfo: tenantInfo,
+		code:       "stamped_tiers",
+		status:     domaintypes.StatusActive,
+		axes:       1,
+		cells:      []cellFixture{{min: "0", value: "1"}},
+	})
+
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+
+	before, err := repo.GetLookupStamp(ctx, tenantInfo)
+	require.NoError(t, err)
+	require.NotEmpty(t, before)
+
+	again, err := repo.GetLookupStamp(ctx, tenantInfo)
+	require.NoError(t, err)
+	assert.Equal(t, before, again, "nothing changed, so the stamp holds")
+
+	require.NoError(t, repo.ReplaceCells(ctx, &repositories.ReplaceRateMatrixCellsRequest{
+		RateMatrixID: matrixID,
+		TenantInfo:   tenantInfo,
+		Cells: []*ratematrix.RateMatrixCell{{
+			D0Min: decimal.NewNullDecimal(decimal.Zero),
+			Value: decimal.RequireFromString("2"),
+		}},
+	}))
+
+	after, err := repo.GetLookupStamp(ctx, tenantInfo)
+	require.NoError(t, err)
+	assert.NotEqual(t, before, after, "replacing the sheet must move the stamp")
+}

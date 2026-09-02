@@ -3,9 +3,12 @@ package fuelpricejobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
@@ -168,6 +171,8 @@ func (a *Activities) ReRateFallbackShipmentsActivity(
 	// rate tables. The memo makes the activity read them once rather than once
 	// per shipment.
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
+	ctx = effectiveversioncache.With(ctx)
 
 	reRated := 0
 	for idx, shipmentID := range shipmentIDs {

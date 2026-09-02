@@ -29,6 +29,9 @@ aliases:
 virtuals:
   ApiKey:
     - permissionScope
+  FormulaTemplate:
+    - usageCount
+    - scenarioCount
   RateMatrix:
     - formulaTemplateName
   VehiclePosition:

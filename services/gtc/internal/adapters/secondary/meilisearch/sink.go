@@ -51,6 +51,18 @@ func (s *Sink) Write(ctx context.Context, projection domain.Projection, record d
 		return err
 	}
 
+	if record.Operation == domain.OperationTruncate {
+		task, err := index.DeleteDocumentsByFilterWithContext(
+			ctx,
+			truncateFilter(projection),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("truncate projection %s: %w", projection.Name, err)
+		}
+		return s.waitForTask(ctx, projection, record, task, "truncate projection documents")
+	}
+
 	keyField, key, err := documentKey(record, projection.PrimaryKeys)
 	if err != nil {
 		return err
@@ -139,11 +151,7 @@ func (s *Sink) ensureFilterableAttributes(
 	index meilisearch.IndexManager,
 	projection domain.Projection,
 ) error {
-	if len(projection.FilterableFields) == 0 {
-		return nil
-	}
-
-	filterableFields := append([]string(nil), projection.FilterableFields...)
+	filterableFields := filterableFieldsFor(projection)
 	filterableSettings := make([]any, 0, len(filterableFields))
 	for _, field := range filterableFields {
 		filterableSettings = append(filterableSettings, field)
@@ -177,6 +185,26 @@ func (s *Sink) ensureFilterableAttributes(
 	}
 
 	return nil
+}
+
+func filterableFieldsFor(projection domain.Projection) []string {
+	fields := make([]string, 0, len(projection.FilterableFields)+2)
+	fields = append(fields, projection.FilterableFields...)
+	for _, meta := range []string{"_projection", "_source_table"} {
+		if !slices.Contains(fields, meta) {
+			fields = append(fields, meta)
+		}
+	}
+
+	return fields
+}
+
+func truncateFilter(projection domain.Projection) string {
+	return fmt.Sprintf(
+		"_projection = %q AND _source_table = %q",
+		projection.Name,
+		projection.FullTableName(),
+	)
 }
 
 func primaryKey(record domain.SourceRecord, keyFields []string) (string, error) {

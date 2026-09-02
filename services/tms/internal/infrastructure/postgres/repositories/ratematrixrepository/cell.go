@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -196,7 +197,11 @@ func (r *repository) ReplaceCells(
 			cell.BusinessUnitID = req.TenantInfo.BuID
 		}
 
-		return r.insertCellBatches(c, req.Cells)
+		if iErr := r.insertCellBatches(c, req.Cells); iErr != nil {
+			return iErr
+		}
+
+		return r.bumpMatrixVersion(c, req)
 	})
 	if err != nil {
 		log.Error("failed to replace rate matrix cells", zap.Error(err))
@@ -232,13 +237,14 @@ func (r *repository) insertCellBatches(
 	return nil
 }
 
-// GetLookupData reads every matrix a formula's lookup() call could address.
+// GetLookupData reads every matrix a formula's lookup() or lookup2() call
+// could address.
 //
-// The one-axis restriction is applied in the database, not after the load: a
-// class tariff with four axes and a hundred thousand cells must never ride
-// along just to be discarded. What survives the filter is rate-table sized —
-// dozens of cells — which is why loading it whole is affordable here and
-// nowhere else.
+// The axis-count restriction (one or two) is applied in the database, not
+// after the load: a class tariff with four axes and a hundred thousand cells
+// must never ride along just to be discarded. What survives the filter is
+// lookup-table sized — dozens to hundreds of cells — which is why loading it
+// whole is affordable here and nowhere else.
 func (r *repository) GetLookupData(
 	ctx context.Context,
 	req *repositories.GetRateMatrixLookupDataRequest,
@@ -261,7 +267,7 @@ func (r *repository) GetLookupData(
 					"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
 						dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
 						" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
-						") = 1",
+						") IN (1, 2)",
 				)
 		}).
 		Scan(ctx)
@@ -309,4 +315,27 @@ func (r *repository) GetLookupData(
 	}
 
 	return data, nil
+}
+
+// bumpMatrixVersion records that the matrix's content changed even though no
+// header field did, so lookup stamps and optimistic locks both see a new
+// sheet as a new matrix.
+func (r *repository) bumpMatrixVersion(
+	ctx context.Context,
+	req *repositories.ReplaceRateMatrixCellsRequest,
+) error {
+	matrixCols := buncolgen.RateMatrixColumns
+
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*ratematrix.RateMatrix)(nil)).
+		Set("? = ? + 1", bun.Ident(matrixCols.Version.Name), bun.Ident(matrixCols.Version.Name)).
+		Set(matrixCols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.RateMatrixScopeTenantUpdate(uq, req.TenantInfo).
+				Where(matrixCols.ID.Eq(), req.RateMatrixID)
+		}).
+		Exec(ctx)
+
+	return err
 }

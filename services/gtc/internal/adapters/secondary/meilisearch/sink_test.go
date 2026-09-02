@@ -1,10 +1,63 @@
 package meilisearch
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/emoss08/gtc/internal/core/domain"
 )
+
+func TestFilterableFieldsForAppendsMetadataFields(t *testing.T) {
+	t.Parallel()
+
+	fields := filterableFieldsFor(domain.Projection{
+		FilterableFields: []string{"organization_id", "business_unit_id"},
+	})
+
+	want := []string{"organization_id", "business_unit_id", "_projection", "_source_table"}
+	if !slices.Equal(fields, want) {
+		t.Fatalf("expected filterable fields %v, got %v", want, fields)
+	}
+}
+
+func TestFilterableFieldsForCoversProjectionsWithoutConfiguredFields(t *testing.T) {
+	t.Parallel()
+
+	fields := filterableFieldsFor(domain.Projection{})
+
+	want := []string{"_projection", "_source_table"}
+	if !slices.Equal(fields, want) {
+		t.Fatalf("expected filterable fields %v, got %v", want, fields)
+	}
+}
+
+func TestFilterableFieldsForDoesNotDuplicateMetadataFields(t *testing.T) {
+	t.Parallel()
+
+	fields := filterableFieldsFor(domain.Projection{
+		FilterableFields: []string{"_projection", "status"},
+	})
+
+	want := []string{"_projection", "status", "_source_table"}
+	if !slices.Equal(fields, want) {
+		t.Fatalf("expected filterable fields %v, got %v", want, fields)
+	}
+}
+
+func TestTruncateFilterScopesToProjectionAndSourceTable(t *testing.T) {
+	t.Parallel()
+
+	filter := truncateFilter(domain.Projection{
+		Name:         "shipment-search",
+		SourceSchema: "public",
+		SourceTable:  "shipments",
+	})
+
+	want := `_projection = "shipment-search" AND _source_table = "public.shipments"`
+	if filter != want {
+		t.Fatalf("expected filter %s, got %s", want, filter)
+	}
+}
 
 func TestDocumentKeyPrefersIDField(t *testing.T) {
 	t.Parallel()

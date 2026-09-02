@@ -62,6 +62,7 @@ var LocationColumns = struct {
 	AddressLine2         Column // "address_line_2" → qualified: "loc.address_line_2"
 	City                 Column // "city" → qualified: "loc.city"
 	PostalCode           Column // "postal_code" → qualified: "loc.postal_code"
+	Timezone             Column // "timezone" → qualified: "loc.timezone"
 	PlaceID              Column // "place_id" → qualified: "loc.place_id"
 	IsGeocoded           Column // "is_geocoded" → qualified: "loc.is_geocoded"
 	Longitude            Column // "longitude" → qualified: "loc.longitude"
@@ -89,6 +90,7 @@ var LocationColumns = struct {
 	AddressLine2:         NewColumn("address_line_2", "loc"),
 	City:                 NewColumn("city", "loc"),
 	PostalCode:           NewColumn("postal_code", "loc"),
+	Timezone:             NewColumn("timezone", "loc"),
 	PlaceID:              NewColumn("place_id", "loc"),
 	IsGeocoded:           NewColumn("is_geocoded", "loc"),
 	Longitude:            NewColumn("longitude", "loc"),
@@ -122,6 +124,7 @@ var LocationFieldMap = map[string]string{
 	"addressLine2":         "address_line_2",
 	"city":                 "city",
 	"postalCode":           "postal_code",
+	"timezone":             "timezone",
 	"placeId":              "place_id",
 	"isGeocoded":           "is_geocoded",
 	"longitude":            "longitude",
@@ -149,6 +152,7 @@ var LocationInsertableColumns = []string{
 	"address_line_2",
 	"city",
 	"postal_code",
+	"timezone",
 	"place_id",
 	"is_geocoded",
 	"longitude",
@@ -240,6 +244,7 @@ var LocationFilter = struct {
 	AddressLine2         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
 	City                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
 	PostalCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
+	Timezone             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
 	PlaceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "placeId" → DB: "place_id"
 	IsGeocoded           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isGeocoded" → DB: "is_geocoded"
 	Longitude            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "longitude" → DB: "longitude"
@@ -288,6 +293,9 @@ var LocationFilter = struct {
 	},
 	PostalCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("postalCode", op, value)
+	},
+	Timezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("timezone", op, value)
 	},
 	PlaceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("placeId", op, value)

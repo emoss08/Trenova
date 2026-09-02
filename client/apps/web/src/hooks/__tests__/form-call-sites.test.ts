@@ -62,7 +62,7 @@ export function collectFormCallSites(root: string) {
       continue;
     }
 
-    const rel = relative(root, file);
+    const rel = relative(root, file).replaceAll("\\", "/");
 
     // The prop this migration removed. Its presence means a call site still hands over a
     // bare setError, which cannot resolve registered leaves.

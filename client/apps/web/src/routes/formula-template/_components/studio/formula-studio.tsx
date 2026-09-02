@@ -1,0 +1,371 @@
+import {
+  ActiveEditorProvider,
+  useActiveEditorInsert,
+} from "@/components/formula-editor/active-editor";
+import { PreviewValuesProvider } from "@/components/formula-editor/preview-values";
+import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
+import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
+import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
+import { apiService } from "@/services/api";
+import {
+  buildTemplateExport,
+  downloadJson,
+  getExportFilename,
+} from "@/lib/formula-template-export";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@trenova/shared/components/ui/resizable";
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import type {
+  FormulaTemplate,
+  FormulaTemplateFormValues,
+  VariableDefinition,
+} from "@trenova/shared/types/formula-template";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router";
+import { toast } from "sonner";
+import { ApprovalActionDialog, type ApprovalAction } from "../approval-action-dialog";
+import { ForkLineageDialog } from "../fork-lineage-dialog";
+import { ForkTemplateDialog } from "../fork-template-dialog";
+import { VersionHistoryPanel } from "../version/version-history-panel";
+import { AiGeneratePanel } from "./ai/ai-generate-panel";
+import { BacktestSheet } from "./backtest-sheet";
+import { ImportTemplateDialog } from "./import-template-dialog";
+import { StudioEditorPane } from "./studio-editor-pane";
+import { StudioHeader } from "./studio-header";
+import { StudioPreviewPane } from "./studio-preview-pane";
+import { StudioReferencePane } from "./studio-reference-pane";
+import { StudioScenariosPane } from "./studio-scenarios-pane";
+import type { ScenarioPrefill } from "./scenario-dialog";
+import { useLivePreview } from "./use-live-preview";
+import { useLiveScenarios } from "./use-live-scenarios";
+import { Button } from "@trenova/shared/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
+
+const REFERENCE_SEARCH_ID = "formula-reference-search";
+
+const TAB_LABELS = {
+  preview: "Live Preview",
+  scenarios: "Scenarios",
+  reference: "Reference",
+} as const;
+
+type FormulaStudioProps = {
+  mode: "create" | "edit";
+  template: FormulaTemplate | null;
+  isSubmitting: boolean;
+  onSave: () => void;
+  onTemplateChanged?: (template: FormulaTemplate) => void;
+};
+
+export function FormulaStudio(props: FormulaStudioProps) {
+  return (
+    <ActiveEditorProvider>
+      <FormulaStudioBody {...props} />
+    </ActiveEditorProvider>
+  );
+}
+
+function FormulaStudioBody({
+  mode,
+  template,
+  isSubmitting,
+  onSave,
+  onTemplateChanged,
+}: FormulaStudioProps) {
+  const form = useFormContext<FormulaTemplateFormValues>();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+
+  const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [forkDialogOpen, setForkDialogOpen] = useState(false);
+  const [lineageDialogOpen, setLineageDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [backtestOpen, setBacktestOpen] = useState(false);
+  const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
+  const [rightTab, setRightTab] = useState<"preview" | "scenarios" | "reference">("preview");
+  const isNarrow = useMediaQuery("(max-width: 1100px)");
+
+  const templateName = useWatch({ control: form.control, name: "name" });
+  const schemaId = useWatch({ control: form.control, name: "schemaId" });
+  const templateType = useWatch({ control: form.control, name: "type" });
+  const customVariables = useWatch({ control: form.control, name: "variableDefinitions" });
+
+  const known = useKnownIdentifiers(schemaId || "shipment", customVariables ?? []);
+  const preview = useLivePreview();
+  const liveScenarios = useLiveScenarios(template?.id ?? null);
+  const [pinDraft, setPinDraft] = useState<ScenarioPrefill | null>(null);
+
+  const scenarioSummary = liveScenarios.results
+    ? {
+        passed: liveScenarios.results.passed,
+        total: liveScenarios.results.total,
+        isStale: liveScenarios.isStale,
+        isPending: liveScenarios.isPending,
+      }
+    : null;
+
+  const handlePinScenario = useCallback(
+    (sample: { variables: Record<string, unknown>; result: number }) => {
+      setPinDraft({ variables: sample.variables, result: sample.result });
+      setRightTab("scenarios");
+    },
+    [],
+  );
+
+  const insertIntoActiveEditor = useActiveEditorInsert();
+
+  // A reviewer following a notification lands on the decision, not the
+  // editor: the approve dialog opens itself, then the marker is dropped from
+  // the URL so a refresh does not reopen it.
+  const reviewStep = searchParams.get("review");
+  useEffect(() => {
+    if (reviewStep === "approve" && template?.status === "InReview") {
+      setApprovalAction("approve");
+      setSearchParams(
+        (params) => {
+          params.delete("review");
+          return params;
+        },
+        { replace: true },
+      );
+    }
+  }, [reviewStep, template?.status, setSearchParams]);
+
+  const isDirty = form.formState.isDirty;
+  const shortcutHandlers = useMemo(
+    () => ({
+      save: () => {
+        if (isSubmitting) return;
+        if (mode === "create" || isDirty) onSave();
+      },
+      run: preview.runNow,
+      search: () => document.getElementById(REFERENCE_SEARCH_ID)?.focus(),
+      preview: () => setRightTab("preview"),
+      scenarios: () => setRightTab("scenarios"),
+    }),
+    [isSubmitting, isDirty, mode, onSave, preview.runNow],
+  );
+  useStudioShortcuts(shortcutHandlers);
+  const handleInsert = useCallback(
+    (text: string, cursorOffset?: number) => {
+      insertIntoActiveEditor(text, cursorOffset);
+    },
+    [insertIntoActiveEditor],
+  );
+
+  const handleAiInsert = useCallback(
+    (result: { expression: string; variableDefinitions: VariableDefinition[] }) => {
+      form.setValue("expression", result.expression, { shouldDirty: true, shouldValidate: true });
+
+      if (result.variableDefinitions.length > 0) {
+        const existing = form.getValues("variableDefinitions") ?? [];
+        const existingNames = new Set(existing.map((variable) => variable.name));
+        const additions = result.variableDefinitions.filter(
+          (variable) => !existingNames.has(variable.name),
+        );
+        if (additions.length > 0) {
+          form.setValue("variableDefinitions", [...existing, ...additions], {
+            shouldDirty: true,
+          });
+        }
+      }
+    },
+    [form],
+  );
+
+  const handleExport = useCallback(async () => {
+    if (!template) return;
+    try {
+      const testCases = await apiService.formulaTemplateService.listTestCases(template.id);
+      const exportData = buildTemplateExport(template, { testCases });
+      const filename = getExportFilename(template, false);
+      downloadJson(exportData, filename);
+      toast.success("Template exported", { description: filename });
+    } catch {
+      toast.error("Export failed", {
+        description: "Could not export the template. Please try again.",
+      });
+    }
+  }, [template]);
+
+  const previewPane = (
+    <StudioPreviewPane preview={preview} onPinScenario={template ? handlePinScenario : undefined} />
+  );
+  const scenariosPane = (
+    <StudioScenariosPane
+      templateId={template?.id ?? null}
+      preview={preview}
+      live={liveScenarios}
+      pinDraft={pinDraft}
+      onPinConsumed={() => setPinDraft(null)}
+    />
+  );
+  const referencePane = (
+    <StudioReferencePane known={known} schemaId={schemaId || "shipment"} onInsert={handleInsert} />
+  );
+  const rightPane =
+    rightTab === "preview" ? previewPane : rightTab === "scenarios" ? scenariosPane : referencePane;
+
+  const tabStrip = (tabs: Array<typeof rightTab>) => (
+    <div className="flex gap-1 border-b px-2 pt-1.5 pb-1" role="tablist">
+      {tabs.map((tab) => (
+        <Button
+          key={tab}
+          type="button"
+          role="tab"
+          aria-selected={rightTab === tab}
+          variant={rightTab === tab ? "secondary" : "ghost"}
+          size="xs"
+          onClick={() => setRightTab(tab)}
+          className={cn("h-6 text-xs capitalize", rightTab !== tab && "text-muted-foreground")}
+        >
+          {TAB_LABELS[tab]}
+        </Button>
+      ))}
+    </div>
+  );
+
+  return (
+    <PreviewValuesProvider receipt={preview.result?.receipt}>
+      <div className="flex h-full flex-col overflow-hidden">
+        <UnsavedChangesGuard when={form.formState.isDirty} />
+        <StudioHeader
+          mode={mode}
+          template={template}
+          templateName={templateName ?? ""}
+          isSubmitting={isSubmitting}
+          isDirty={form.formState.isDirty}
+          scenarios={scenarioSummary}
+          onSave={onSave}
+          onApprovalAction={setApprovalAction}
+          onVersionHistory={() => setVersionHistoryOpen(true)}
+          onFork={() => setForkDialogOpen(true)}
+          onLineage={() => setLineageDialogOpen(true)}
+          onExport={() => void handleExport()}
+          onImport={() => setImportDialogOpen(true)}
+          onBacktest={() => setBacktestOpen(true)}
+        />
+
+        {isNarrow ? (
+          <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
+            <ResizablePanel defaultSize={60} minSize={30}>
+              <StudioEditorPane
+                mode={mode}
+                known={known}
+                editorRef={editorRef}
+                onOpenAiGenerate={() => setAiGenerateOpen(true)}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={40} minSize={20}>
+              <div className="flex h-full flex-col">
+                {tabStrip(["preview", "scenarios", "reference"])}
+                <div className="min-h-0 flex-1">{rightPane}</div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+          <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
+            <ResizablePanel defaultSize={55} minSize={40}>
+              <StudioEditorPane
+                mode={mode}
+                known={known}
+                editorRef={editorRef}
+                onOpenAiGenerate={() => setAiGenerateOpen(true)}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={45} minSize={28}>
+              <ResizablePanelGroup orientation="vertical">
+                <ResizablePanel defaultSize={55} minSize={30}>
+                  <div className="flex h-full flex-col">
+                    {tabStrip(["preview", "scenarios"])}
+                    <div className="min-h-0 flex-1">
+                      {rightTab === "reference" ? previewPane : rightPane}
+                    </div>
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={45} minSize={20}>
+                  {referencePane}
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
+
+        {approvalAction && (
+          <ApprovalActionDialog
+            open={approvalAction !== null}
+            onOpenChange={(open) => {
+              if (!open) setApprovalAction(null);
+            }}
+            action={approvalAction}
+            template={template}
+          />
+        )}
+
+        <VersionHistoryPanel
+          open={versionHistoryOpen}
+          onOpenChange={setVersionHistoryOpen}
+          template={template}
+          onRollback={(updatedTemplate) => {
+            form.reset(updatedTemplate as unknown as FormulaTemplateFormValues);
+            onTemplateChanged?.(updatedTemplate);
+          }}
+        />
+
+        <ForkTemplateDialog
+          open={forkDialogOpen}
+          onOpenChange={setForkDialogOpen}
+          template={template}
+          onForkSuccess={(forked) => {
+            setForkDialogOpen(false);
+            if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+          }}
+        />
+
+        <ForkLineageDialog
+          open={lineageDialogOpen}
+          onOpenChange={setLineageDialogOpen}
+          templateId={template?.id}
+          currentTemplateId={template?.id}
+          onNavigateToTemplate={(templateId) => {
+            setLineageDialogOpen(false);
+            if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
+          }}
+        />
+
+        <ImportTemplateDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImported={(response) => void navigate(importLandingRoute(response))}
+        />
+
+        <BacktestSheet
+          open={backtestOpen}
+          onOpenChange={setBacktestOpen}
+          form={form}
+          template={template}
+        />
+
+        <AiGeneratePanel
+          open={aiGenerateOpen}
+          onOpenChange={setAiGenerateOpen}
+          templateType={templateType ?? "FreightCharge"}
+          schemaId={schemaId || "shipment"}
+          templateId={template?.id ?? null}
+          onInsert={handleAiInsert}
+        />
+      </div>
+    </PreviewValuesProvider>
+  );
+}
