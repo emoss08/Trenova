@@ -297,10 +297,13 @@ func (s *Service) BuildLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (formulatemplatetypes.RateTableLookup, error) {
-	return ratetablecache.Get(
+	return ratetablecache.GetStamped(
 		ctx,
 		tenantInfo.OrgID,
 		tenantInfo.BuID,
+		func(ctx context.Context) (string, error) {
+			return s.rateMatrixRepo.GetLookupStamp(ctx, tenantInfo)
+		},
 		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
 			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,

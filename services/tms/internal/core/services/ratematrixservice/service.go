@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -94,6 +95,7 @@ func (s *Service) Create(
 	}
 
 	s.audit(log, created, nil, permission.OpCreate, userID, "Rate matrix created")
+	ratetablecache.Invalidate(created.OrganizationID, created.BusinessUnitID)
 
 	return created, nil
 }
@@ -134,6 +136,7 @@ func (s *Service) Update(
 	}
 
 	s.audit(log, updated, original, permission.OpUpdate, userID, "Rate matrix updated")
+	ratetablecache.Invalidate(updated.OrganizationID, updated.BusinessUnitID)
 
 	return updated, nil
 }
@@ -160,6 +163,7 @@ func (s *Service) Delete(
 	}
 
 	s.audit(log, existing, nil, permission.OpDelete, userID, "Rate matrix deleted")
+	ratetablecache.Invalidate(req.TenantInfo.OrgID, req.TenantInfo.BuID)
 
 	return nil
 }
@@ -208,6 +212,7 @@ func (s *Service) ReplaceCells(
 	}
 
 	s.audit(log, matrix, nil, permission.OpUpdate, userID, "Rate matrix cells replaced")
+	ratetablecache.Invalidate(req.TenantInfo.OrgID, req.TenantInfo.BuID)
 
 	return nil
 }

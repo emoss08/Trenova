@@ -2623,3 +2623,7 @@ func newFormulaServiceWithProviders(
 		ContextProviders: providers,
 	})
 }
+
+func (*stubMatrixLookupRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}

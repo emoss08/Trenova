@@ -372,12 +372,12 @@ func newIntegrationService(
 	})
 	require.NoError(t, err)
 	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:        zap.NewNop(),
-		Registry:      registry,
-		Engine:        formulaEngine,
-		Resolver:      res,
-		Repo:          formulaRepo,
-		VersionRepo:   moveIntgStubVersionRepo{},
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         formulaEngine,
+		Resolver:       res,
+		Repo:           formulaRepo,
+		VersionRepo:    moveIntgStubVersionRepo{},
 		RateMatrixRepo: moveIntgStubMatrixRepo{},
 	})
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
@@ -438,4 +438,8 @@ func (moveIntgStubMatrixRepo) GetLookupData(
 	_ *repositories.GetRateMatrixLookupDataRequest,
 ) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
+}
+
+func (*moveIntgStubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
 }

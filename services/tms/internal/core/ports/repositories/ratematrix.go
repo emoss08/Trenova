@@ -110,6 +110,7 @@ type RateMatrixRepository interface {
 		ctx context.Context,
 		req *LookupRateMatrixCellsRequest,
 	) ([]*ratematrix.RateMatrixCell, error)
+	GetLookupStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
 	GetLookupData(
 		ctx context.Context,
 		req *GetRateMatrixLookupDataRequest,

@@ -3108,3 +3108,7 @@ func TestFormulaTemplateHandler_ListStandards(t *testing.T) {
 		assert.True(t, hasVariables, "variableDefinitions must serialize as an array")
 	}
 }
+
+func (*stubRateMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}

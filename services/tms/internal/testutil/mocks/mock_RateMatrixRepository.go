@@ -833,3 +833,58 @@ func (_c *MockRateMatrixRepository_Update_Call) RunAndReturn(run func(ctx contex
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetLookupStamp provides a mock function for the type MockRateMatrixRepository
+func (_mock *MockRateMatrixRepository) GetLookupStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error) {
+	ret := _mock.Called(ctx, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLookupStamp")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (string, error)); ok {
+		return returnFunc(ctx, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) string); ok {
+		r0 = returnFunc(ctx, tenantInfo)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateMatrixRepository_GetLookupStamp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLookupStamp'
+type MockRateMatrixRepository_GetLookupStamp_Call struct {
+	*mock.Call
+}
+
+// GetLookupStamp is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockRateMatrixRepository_Expecter) GetLookupStamp(ctx interface{}, tenantInfo interface{}) *MockRateMatrixRepository_GetLookupStamp_Call {
+	return &MockRateMatrixRepository_GetLookupStamp_Call{Call: _e.mock.On("GetLookupStamp", ctx, tenantInfo)}
+}
+
+func (_c *MockRateMatrixRepository_GetLookupStamp_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockRateMatrixRepository_GetLookupStamp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(pagination.TenantInfo))
+	})
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_GetLookupStamp_Call) Return(s string, err error) *MockRateMatrixRepository_GetLookupStamp_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_GetLookupStamp_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)) *MockRateMatrixRepository_GetLookupStamp_Call {
+	_c.Call.Return(run)
+	return _c
+}

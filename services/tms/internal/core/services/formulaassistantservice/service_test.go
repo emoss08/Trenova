@@ -334,3 +334,7 @@ func TestGenerateFormula_PricesProposedScenarios(t *testing.T) {
 	assert.Nil(t, broken.ExpectedAmount)
 	assert.NotEmpty(t, broken.Error)
 }
+
+func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}

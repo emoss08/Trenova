@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -196,7 +197,11 @@ func (r *repository) ReplaceCells(
 			cell.BusinessUnitID = req.TenantInfo.BuID
 		}
 
-		return r.insertCellBatches(c, req.Cells)
+		if iErr := r.insertCellBatches(c, req.Cells); iErr != nil {
+			return iErr
+		}
+
+		return r.bumpMatrixVersion(c, req)
 	})
 	if err != nil {
 		log.Error("failed to replace rate matrix cells", zap.Error(err))
@@ -310,4 +315,27 @@ func (r *repository) GetLookupData(
 	}
 
 	return data, nil
+}
+
+// bumpMatrixVersion records that the matrix's content changed even though no
+// header field did, so lookup stamps and optimistic locks both see a new
+// sheet as a new matrix.
+func (r *repository) bumpMatrixVersion(
+	ctx context.Context,
+	req *repositories.ReplaceRateMatrixCellsRequest,
+) error {
+	matrixCols := buncolgen.RateMatrixColumns
+
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*ratematrix.RateMatrix)(nil)).
+		Set("? = ? + 1", bun.Ident(matrixCols.Version.Name), bun.Ident(matrixCols.Version.Name)).
+		Set(matrixCols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.RateMatrixScopeTenantUpdate(uq, req.TenantInfo).
+				Where(matrixCols.ID.Eq(), req.RateMatrixID)
+		}).
+		Exec(ctx)
+
+	return err
 }

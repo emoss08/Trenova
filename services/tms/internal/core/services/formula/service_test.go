@@ -1095,3 +1095,7 @@ func (m *mockFormulaTemplateRepo) CountStatsByIDs(
 ) (map[pulid.ID]repositories.TemplateStats, error) {
 	return map[pulid.ID]repositories.TemplateStats{}, nil
 }
+
+func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}

@@ -715,3 +715,7 @@ func ptrFloat(value float64) *float64 {
 }
 
 var _ repositories.FormulaTemplateRepository = (*stubFormulaTemplateRepository)(nil)
+
+func (*stubTotalsMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}

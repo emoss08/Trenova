@@ -420,9 +420,12 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 4.3 Performance
 
-- [ ] Process-level rate-table cache keyed by tenant + matrix version stamp,
+- [x] Process-level rate-table cache keyed by tenant + matrix version stamp,
       invalidated from the rate-matrix write path, replacing per-request full loads
-      (`pkg/ratetablecache`, `formula/service.go` `buildLookup`)
+      (`pkg/ratetablecache` `GetStamped`/`Invalidate`; the stamp is count, max version, and
+      max updated_at over the tenant's matrices, cell replacement bumps the matrix version
+      so a new sheet moves it; the per-context memo still answers first, and an empty or
+      failing stamp degrades to a plain build)
 - [ ] Compile-cache key hashes declared schema types, not runtime nil-vs-float
       shapes; key computed once per `Evaluate`; size configurable
       (`formula/engine/engine.go`)

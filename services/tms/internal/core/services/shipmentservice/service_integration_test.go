@@ -1230,3 +1230,7 @@ func (shipIntgStubMatrixRepo) GetLookupData(
 ) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }
+
+func (*shipIntgStubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}
