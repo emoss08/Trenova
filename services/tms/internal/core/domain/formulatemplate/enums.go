@@ -39,7 +39,7 @@ func StatusFromString(s string) (Status, error) {
 // since changed and nobody has looked at it in a while.
 var allowedTransitions = map[Status][]Status{
 	StatusDraft:    {StatusInReview},
-	StatusInReview: {StatusActive, StatusDraft},
+	StatusInReview: {StatusActive, StatusInactive, StatusDraft},
 	StatusActive:   {StatusInactive, StatusDraft},
 	StatusInactive: {StatusInReview},
 }

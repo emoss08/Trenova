@@ -1672,7 +1672,7 @@ func TestApprovalTransitions(t *testing.T) {
 			"reject",
 			formulatemplate.StatusInReview,
 			"needs work",
-			formulatemplate.StatusDraft,
+			formulatemplate.StatusInactive,
 			false,
 		},
 		{"reject from draft", "reject", formulatemplate.StatusDraft, "needs work", "", true},
@@ -1869,7 +1869,7 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, formulatemplate.StatusDraft, result.Status)
+	assert.Equal(t, formulatemplate.StatusInactive, result.Status, "a rejection archives the template")
 	assert.Nil(t, result.SubmittedByID)
 	assert.Nil(t, result.SubmittedAt)
 	assert.Equal(t, "expression is wrong", result.ReviewComment)

@@ -89,3 +89,17 @@ func TestReviewValidate_RequiresAnActorExceptForExpiry(t *testing.T) {
 		})
 	}
 }
+
+func TestRejectArchivesWhileRequestChangesReturnsToDraft(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, formulatemplate.CanTransition(
+		formulatemplate.StatusInReview, formulatemplate.StatusInactive,
+	), "a rejected template is archived; it is resubmitted from the archive")
+	assert.True(t, formulatemplate.CanTransition(
+		formulatemplate.StatusInReview, formulatemplate.StatusDraft,
+	), "a change request hands it back to the author")
+	assert.True(t, formulatemplate.CanTransition(
+		formulatemplate.StatusInactive, formulatemplate.StatusInReview,
+	), "the archive can be resubmitted")
+}

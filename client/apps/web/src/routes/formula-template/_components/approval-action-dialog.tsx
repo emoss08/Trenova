@@ -68,10 +68,10 @@ const ACTION_CONFIG: Record<
   reject: {
     title: "Reject Template",
     description:
-      "Rejecting closes this review round and returns the template to draft without an author on it. Use Request Changes to keep the conversation going instead.",
+      "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.",
     confirmLabel: "Reject",
     loadingLabel: "Rejecting...",
-    successMessage: "Template rejected and returned to draft",
+    successMessage: "Template rejected and archived",
     commentLabel: "Comment (required)",
     commentPlaceholder: "Explain why this template is being rejected",
     icon: XIcon,

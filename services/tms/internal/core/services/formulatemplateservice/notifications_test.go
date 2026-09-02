@@ -141,6 +141,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	require.NotNil(t, notified.TargetUserID)
 	assert.Equal(t, submitterID, *notified.TargetUserID)
 	assert.Contains(t, notified.Message, "expression is wrong")
+	assert.Contains(t, notified.Message, "archived")
 }
 
 func TestReject_SkipsNotificationWhenRejectorIsSubmitter(t *testing.T) {

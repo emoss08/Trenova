@@ -160,7 +160,7 @@ func (s *Service) Reject(
 	rejected, err := s.approvals().Apply(ctx, req, templateTransition{
 		Operation:    "Reject",
 		From:         formulatemplate.StatusInReview,
-		To:           formulatemplate.StatusDraft,
+		To:           formulatemplate.StatusInactive,
 		PermissionOp: permission.OpReject,
 		AuditComment: "Formula template rejected",
 		Apply: func(

@@ -69,7 +69,7 @@ func (s *Service) RequestChanges(
 				return errortypes.NewValidationError(
 					"approvedById",
 					errortypes.ErrInvalid,
-					"A template's submitter cannot review it; withdraw it by rejecting instead",
+					"A template's submitter cannot review it; ask another reviewer or archive it",
 				)
 			}
 			return nil

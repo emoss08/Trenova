@@ -120,7 +120,7 @@ func describeReviewOutcome(
 	switch outcome.Decision {
 	case formulatemplate.ReviewDecisionRejected:
 		return "Formula template rejected",
-			fmt.Sprintf("%q was rejected and returned to draft: %s", name, outcome.Comment),
+			fmt.Sprintf("%q was rejected and archived: %s Edit and resubmit it from the archive if it should be reconsidered.", name, outcome.Comment),
 			eventTemplateRejected,
 			notification.PriorityHigh
 	case formulatemplate.ReviewDecisionChangesRequested:

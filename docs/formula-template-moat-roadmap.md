@@ -460,7 +460,7 @@ Every rating carries a trace that a non-programmer can read.
       submissions (`pkg/approvalworkflow`, migration) (`formula_template_reviews` history:
       Submit opens or continues a round and captures the approved base version; Request
       Changes returns the template to draft but keeps the author and the round open, Reject
-      clears the submission and closes it; approval refuses submissions older than 14 days,
+      archives it (InReview → Inactive), clears the submission, and closes the round; approval refuses submissions older than 14 days,
       readiness shows the age, and a daily job expires them back to draft with a
       notification; `GET /:id/reviews` feeds the review history in the approval dialog)
 

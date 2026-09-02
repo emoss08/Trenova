@@ -2661,7 +2661,7 @@ func TestFormulaTemplateHandler_Reject_Success(t *testing.T) {
 
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "Draft", resp["status"])
+	assert.Equal(t, "Inactive", resp["status"])
 	assert.Equal(t, "needs work", resp["reviewComment"])
 }
 
