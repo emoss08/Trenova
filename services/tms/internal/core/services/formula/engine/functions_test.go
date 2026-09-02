@@ -1030,3 +1030,14 @@ func TestMinMax_AreVariadic(t *testing.T) {
 	assert.InDelta(t, 10, evalFloat(t, "min(10)"), 0.0001)
 	assert.InDelta(t, -8, evalFloat(t, "min(-5, -3, -8)"), 0.0001)
 }
+
+func TestSumAndAvg_AcceptArraysAndMappedCollections(t *testing.T) {
+	t.Parallel()
+
+	assert.InDelta(t, 6.5, evalFloat(t, "sum([1.0, 2.0, 3.5])"), 0.0001)
+	assert.InDelta(t, 6, evalFloat(t, "sum([1, 2], 3)"), 0.0001, "arrays and numbers mix")
+	assert.InDelta(t, 0, evalFloat(t, "sum([])"), 0.0001)
+	assert.InDelta(t, 5, evalFloat(t, `sum(map([{"w": 2.0}, {"w": 3.0}], .w))`), 0.0001)
+	assert.InDelta(t, 3, evalFloat(t, "avg([2.0, 4.0])"), 0.0001)
+	assert.InDelta(t, 2.5, evalFloat(t, "avg([1, 2], [3, 4])"), 0.0001, "averages every element")
+}

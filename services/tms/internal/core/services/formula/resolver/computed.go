@@ -25,6 +25,8 @@ func RegisterDefaultComputed(r *Resolver) {
 	r.RegisterComputed("computeTotalPieces", computeTotalPieces)
 	r.RegisterComputed("computeTotalLinearFeet", computeTotalLinearFeet)
 	r.RegisterComputed("computeTotalHours", computeTotalHours)
+	r.RegisterComputed("computeStops", computeStops)
+	r.RegisterComputed("computeCommodities", computeCommodities)
 	registerLaneComputed(r)
 	r.RegisterComputed("computeBaseRate", computeBaseRate)
 	r.RegisterComputed("computeFreightChargeAmount", computeFreightChargeAmount)

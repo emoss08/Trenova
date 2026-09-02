@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"math"
+	"reflect"
 
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/expr-lang/expr"
@@ -146,28 +147,56 @@ func extremum(name string, args []any, better func(candidate, best float64) bool
 }
 
 func sumFn(args ...any) (any, error) {
+	values, err := flattenNumbers(args)
+	if err != nil {
+		return nil, err
+	}
 	var total float64
-	for _, arg := range args {
-		v, err := toFloat64(arg)
-		if err != nil {
-			return nil, err
-		}
+	for _, v := range values {
 		total += v
 	}
 	return total, nil
 }
 
 func avgFn(args ...any) (any, error) {
-	if len(args) == 0 {
-		return 0.0, nil
-	}
-	sum, err := sumFn(args...)
+	values, err := flattenNumbers(args)
 	if err != nil {
 		return nil, err
 	}
-	return sum.(float64) / float64( //nolint:errcheck // ignore error because we know the type is correct
-		len(args),
-	), nil
+	if len(values) == 0 {
+		return 0.0, nil
+	}
+	var total float64
+	for _, v := range values {
+		total += v
+	}
+	return total / float64(len(values)), nil
+}
+
+// flattenNumbers accepts the mix an aggregate is called with — plain numbers
+// and lists of numbers, including the list a map() over stops or commodities
+// produces — and returns every element as a float64.
+func flattenNumbers(args []any) ([]float64, error) {
+	values := make([]float64, 0, len(args))
+	for _, arg := range args {
+		v := reflect.ValueOf(arg)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			for i := 0; i < v.Len(); i++ {
+				element, err := toFloat64(v.Index(i).Interface())
+				if err != nil {
+					return nil, err
+				}
+				values = append(values, element)
+			}
+			continue
+		}
+		element, err := toFloat64(arg)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, element)
+	}
+	return values, nil
 }
 
 func coalesceFn(args ...any) (any, error) {

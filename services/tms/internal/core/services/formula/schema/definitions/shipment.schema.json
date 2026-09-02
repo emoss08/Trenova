@@ -480,6 +480,65 @@
                 ]
             }
         },
+        "stops": {
+            "description": "Every stop on the shipment in move and sequence order, with its type, status, window, actuals, and location. Use with map, filter, and sum: count(stops, .type == \"Delivery\"), sum(map(stops, .weight ?? 0))",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "description": "Pickup, Delivery, SplitPickup, or SplitDelivery"},
+                    "status": {"type": "string", "description": "Stop status such as New, InTransit, Completed, or Canceled"},
+                    "scheduleType": {"type": "string", "description": "Open or Appointment"},
+                    "sequence": {"type": "integer", "description": "Zero-based order of the stop within its move"},
+                    "pieces": {"type": ["number", "null"], "description": "Pieces handled at this stop; empty when not recorded"},
+                    "weight": {"type": ["number", "null"], "description": "Weight handled at this stop; empty when not recorded"},
+                    "windowStart": {"type": ["integer", "null"], "description": "Scheduled window start as unix seconds; empty when not set"},
+                    "windowEnd": {"type": ["integer", "null"], "description": "Scheduled window end as unix seconds; empty when not set"},
+                    "actualArrival": {"type": ["integer", "null"], "description": "Actual arrival as unix seconds; empty until the driver arrives"},
+                    "actualDeparture": {"type": ["integer", "null"], "description": "Actual departure as unix seconds; empty until the driver departs"},
+                    "city": {"type": "string", "description": "City of the stop's location"},
+                    "state": {"type": "string", "description": "State abbreviation of the stop's location"},
+                    "zip": {"type": "string", "description": "Postal code of the stop's location"},
+                    "timezone": {"type": "string", "description": "IANA timezone of the stop's location; empty when the location has none"}
+                }
+            },
+            "x-source": {
+                "computed": true,
+                "function": "computeStops",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "commodities": {
+            "description": "Every commodity line with its class, dimensions, cube, density, and hazmat flag. Use with map, filter, and sum: sum(map(commodities, .cubicFeet ?? 0)), any(commodities, .freightClass == \"85\")",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Commodity name; empty when the line has no commodity record"},
+                    "freightClass": {"type": "string", "description": "NMFC freight class of the commodity, such as 55 or 85"},
+                    "weight": {"type": "number", "description": "Weight of this line"},
+                    "pieces": {"type": "number", "description": "Pieces on this line"},
+                    "lengthFeet": {"type": ["number", "null"], "description": "Length per piece in feet; empty when not recorded"},
+                    "widthFeet": {"type": ["number", "null"], "description": "Width per piece in feet; empty when not recorded"},
+                    "heightFeet": {"type": ["number", "null"], "description": "Height per piece in feet; empty when not recorded"},
+                    "cubicFeet": {"type": ["number", "null"], "description": "Length × width × height × pieces; empty when any dimension is missing"},
+                    "density": {"type": ["number", "null"], "description": "Pounds per cubic foot, weight ÷ cubicFeet; empty without a cube"},
+                    "hazmat": {"type": "boolean", "description": "Whether the commodity is a hazardous material"},
+                    "stackable": {"type": "boolean", "description": "Whether the commodity can be stacked"}
+                }
+            },
+            "x-source": {
+                "computed": true,
+                "function": "computeCommodities",
+                "requires": [
+                    "Commodities",
+                    "Commodities.Commodity",
+                    "Commodities.Commodity.HazardousMaterial"
+                ]
+            }
+        },
         "pickupDate": {
             "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first stop's actual arrival or scheduled window. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no stops",
             "type": ["string", "null"],

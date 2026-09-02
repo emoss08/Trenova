@@ -398,9 +398,13 @@ Every rating carries a trace that a non-programmer can read.
       in the schema because the 2020-12 metaschema has no date type, and the engine binds
       them as real `time.Time` values, coercing text samples from the studio; a location
       without a timezone, or with one the runtime cannot load, stays UTC)
-- [ ] `stops[]` (state, type, appointment window) and `commodities[]` (class,
+- [x] `stops[]` (state, type, appointment window) and `commodities[]` (class,
       dims, hazmat) exposed as arrays; stop shadowing expr's `sum` so `map`/
-      `filter`/`sum` work over them
+      `filter`/`sum` work over them (computed `stops` and `commodities` records with
+      location, window, actuals, cube, and density; `sum`/`avg` now flatten lists so
+      `sum(map(stops, .weight ?? 0))` works while `sum(a, b, c)` keeps working, which is why
+      the shadow stays; the studio's sample editor shows arrays as read-only text, so
+      scenarios cannot yet author stop lists)
 - [ ] Dimensions and freight class for dim-weight formulas; `serviceType`,
       `shipmentType`, `currency`
 - [ ] `fuelPrice` as a schema-level computed variable fed by the fuel-price job so

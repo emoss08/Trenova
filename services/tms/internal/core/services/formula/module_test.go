@@ -43,3 +43,24 @@ func TestShipmentSchema_MatchesCurrentShipmentModel(t *testing.T) {
 	_, hasTotalDistance := definition.Properties["totalDistance"]
 	assert.True(t, hasTotalDistance)
 }
+
+func TestShipmentSchema_ExposesStopAndCommodityCollections(t *testing.T) {
+	t.Parallel()
+
+	registry, err := newSchemaRegistry()
+	require.NoError(t, err)
+
+	definition, ok := registry.Get("shipment")
+	require.True(t, ok)
+
+	for _, name := range []string{"stops", "commodities"} {
+		prop, has := definition.Properties[name]
+		require.True(t, has, "%s is a schema property", name)
+		assert.Equal(t, "array", prop.Type, "%s is an array", name)
+		assert.True(t, prop.Source.Computed)
+		require.NotNil(t, prop.Items, "%s declares its element shape", name)
+		assert.NotEmpty(t, prop.Items.Properties)
+	}
+	assert.NotEmpty(t, definition.Properties["stops"].Items.Properties["state"].Description)
+	assert.NotEmpty(t, definition.Properties["commodities"].Items.Properties["freightClass"].Description)
+}
