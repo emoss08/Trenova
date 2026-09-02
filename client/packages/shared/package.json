@@ -23,7 +23,7 @@
     "@shadcn/react": "^0.3.0",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-table": "^9.1.0",
-    "@tiptap/core": "^3.29.2",
+    "@tiptap/core": "^3.30.4",
     "@tiptap/extension-link": "^3.29.2",
     "@tiptap/extension-mention": "^3.29.2",
     "@tiptap/extension-placeholder": "^3.29.2",
