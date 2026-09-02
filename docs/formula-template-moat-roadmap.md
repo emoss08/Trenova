@@ -243,17 +243,17 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.7 Dead-ends and wiring
 
-- [ ] Lineage dialog nodes navigate to the template (wire `onNavigateToTemplate`
+- [x] Lineage dialog nodes navigate to the template (wire `onNavigateToTemplate`
       from `formula-studio.tsx` and `formula-template-table.tsx`)
-- [ ] Fork success navigates into the new template's studio
-- [ ] Import from inside the studio navigates to the imported template (or the
+- [x] Fork success navigates into the new template's studio
+- [x] Import from inside the studio navigates to the imported template (or the
       list when several)
-- [ ] Fork dialog resets its defaults when the target template changes
+- [x] Fork dialog resets its defaults when the target template changes
       (`fork-template-dialog.tsx`)
-- [ ] Query keys go through `queries.formulaTemplate.*` everywhere
+- [x] Query keys go through `queries.formulaTemplate.*` everywhere
       (`approval-action-dialog.tsx`, `rollback-confirm-dialog.tsx`,
       `fork-template-dialog.tsx`)
-- [ ] Route strings centralised in one `formulaTemplateRoutes` helper
+- [x] Route strings centralised in one `formulaTemplateRoutes` helper
 
 ### 2.8 Keyboard, layout, accessibility
 
