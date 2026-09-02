@@ -19,8 +19,12 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
-import type { FieldChange, TemplateUsageResponse } from "@trenova/shared/types/formula-template";
+import { queries } from "@/lib/queries";
+import type {
+  FormulaTemplate,
+  FieldChange,
+  TemplateUsageResponse,
+} from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
@@ -32,6 +36,7 @@ type RollbackConfirmDialogProps = {
   currentVersion: number;
   targetVersion: number;
   usageData?: TemplateUsageResponse | null;
+  templateStatus?: FormulaTemplate["status"];
   onConfirm: () => void;
   isLoading: boolean;
 };
@@ -42,6 +47,10 @@ function formatUsageType(type: string): string {
       return "shipments";
     case "accessorial_charge":
       return "accessorial charges";
+    case "rate_agreement_rule":
+      return "rate agreement rules";
+    case "rate_agreement_accessorial":
+      return "rate agreement accessorials";
     default:
       return type;
   }
@@ -169,15 +178,14 @@ export function RollbackConfirmDialog({
   currentVersion,
   targetVersion,
   usageData,
+  templateStatus,
   onConfirm,
   isLoading,
 }: RollbackConfirmDialogProps) {
   const [confirmed, setConfirmed] = useState(false);
 
   const { data: diff, isLoading: isLoadingDiff } = useQuery({
-    queryKey: ["formulaTemplate", "compare", templateId, targetVersion, currentVersion],
-    queryFn: () =>
-      apiService.formulaTemplateService.compareVersions(templateId, targetVersion, currentVersion),
+    ...queries.formulaTemplate.versionDiff(templateId, targetVersion, currentVersion),
     enabled: open && !!templateId && currentVersion > 0 && targetVersion > 0,
   });
 
@@ -220,7 +228,10 @@ export function RollbackConfirmDialog({
                           {u.count} {formatUsageType(u.type)}
                         </span>
                       ))}
-                      . Rolling back may affect active calculations.
+                      .{" "}
+                      {templateStatus === "Active" || templateStatus === "InReview"
+                        ? "Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again."
+                        : "Rolling back changes the content the next approval will review."}
                     </span>
                   </div>
                 )}

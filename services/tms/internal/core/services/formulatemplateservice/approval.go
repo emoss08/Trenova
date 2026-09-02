@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -21,9 +24,10 @@ func (s *Service) Submit(
 	ctx context.Context,
 	req *ApprovalActionRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.approvals().Apply(ctx, req, templateTransition{
+	submitted, err := s.approvals().Apply(ctx, req, templateTransition{
 		Operation:    "Submit",
 		From:         formulatemplate.StatusDraft,
+		AlsoFrom:     []formulatemplate.Status{formulatemplate.StatusInactive},
 		To:           formulatemplate.StatusInReview,
 		PermissionOp: permission.OpSubmit,
 		AuditComment: "Formula template submitted for review",
@@ -37,30 +41,109 @@ func (s *Service) Submit(
 			template.SubmittedAt = &now
 			template.ReviewComment = r.Comment
 		},
+		AfterSave: func(
+			aCtx context.Context,
+			updated *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
+				formulatemplate.ReviewDecisionSubmitted)
+		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifySubmitted(ctx, req.TenantInfo, submitted)
+
+	return submitted, nil
 }
 
 func (s *Service) Approve(
 	ctx context.Context,
 	req *ApprovalActionRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.approvals().Apply(ctx, req, templateTransition{
-		Operation:    "Approve",
-		From:         formulatemplate.StatusInReview,
-		To:           formulatemplate.StatusActive,
-		PermissionOp: permission.OpApprove,
-		AuditComment: "Formula template approved",
-		Apply: func(
-			template *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-			now int64,
-		) {
-			userID := r.TenantInfo.UserID
-			template.ApprovedByID = &userID
-			template.ApprovedAt = &now
-			template.ReviewComment = r.Comment
-		},
+	var approved *formulatemplate.FormulaTemplate
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		result, txErr := s.approvals().Apply(txCtx, req, templateTransition{
+			Operation:    "Approve",
+			From:         formulatemplate.StatusInReview,
+			To:           formulatemplate.StatusActive,
+			PermissionOp: permission.OpApprove,
+			AuditComment: "Formula template approved",
+			Validate: func(
+				vCtx context.Context,
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				if template.SubmittedByID != nil &&
+					*template.SubmittedByID == r.TenantInfo.UserID {
+					return errortypes.NewValidationError(
+						"approvedById",
+						errortypes.ErrInvalid,
+						"A template cannot be approved by its submitter",
+					)
+				}
+
+				if formulatemplate.SubmissionIsStale(template.SubmittedAt, s.approvals().Clock()) {
+					return staleSubmissionError()
+				}
+
+				if err := s.validateTemplate(vCtx, template); err != nil {
+					return err
+				}
+
+				return s.requirePassingTestCases(vCtx, template, r.TenantInfo)
+			},
+			Apply: func(
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+				now int64,
+			) {
+				userID := r.TenantInfo.UserID
+				template.ApprovedByID = &userID
+				template.ApprovedAt = &now
+				template.ReviewComment = r.Comment
+				template.CurrentVersionNumber++
+			},
+			AfterSave: func(
+				aCtx context.Context,
+				updated *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				if err := s.createVersionSnapshot(
+					aCtx,
+					updated,
+					updated.CurrentVersionNumber,
+					r.TenantInfo.UserID,
+					"Approved",
+					nil,
+				); err != nil {
+					return err
+				}
+				return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
+					formulatemplate.ReviewDecisionApproved)
+			},
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		approved = result
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
+		Template:    approved,
+		SubmitterID: approved.SubmittedByID,
+		Decision:    formulatemplate.ReviewDecisionApproved,
+		Comment:     req.Comment,
+	})
+
+	return approved, nil
 }
 
 func (s *Service) Reject(
@@ -71,10 +154,13 @@ func (s *Service) Reject(
 		return nil, err
 	}
 
-	return s.approvals().Apply(ctx, req, templateTransition{
+	// Reject clears the submission stamp, so the submitter is captured before
+	// Apply wipes it — they are the one who needs to hear the outcome.
+	var submitterID *pulid.ID
+	rejected, err := s.approvals().Apply(ctx, req, templateTransition{
 		Operation:    "Reject",
 		From:         formulatemplate.StatusInReview,
-		To:           formulatemplate.StatusDraft,
+		To:           formulatemplate.StatusInactive,
 		PermissionOp: permission.OpReject,
 		AuditComment: "Formula template rejected",
 		Apply: func(
@@ -82,11 +168,45 @@ func (s *Service) Reject(
 			r *ApprovalActionRequest,
 			_ int64,
 		) {
+			if template.SubmittedByID != nil {
+				captured := *template.SubmittedByID
+				submitterID = &captured
+			}
 			template.SubmittedByID = nil
 			template.SubmittedAt = nil
 			template.ReviewComment = r.Comment
 		},
+		AfterSave: func(
+			aCtx context.Context,
+			updated *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			cleared, clearErr := s.clearScheduledVersions(aCtx, updated)
+			if clearErr != nil {
+				return clearErr
+			}
+			if cleared > 0 {
+				s.l.Info("rejection cleared scheduled versions",
+					zap.String("templateID", updated.ID.String()),
+					zap.Int64("cleared", cleared),
+				)
+			}
+			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
+				formulatemplate.ReviewDecisionRejected)
+		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
+		Template:    rejected,
+		SubmitterID: submitterID,
+		Decision:    formulatemplate.ReviewDecisionRejected,
+		Comment:     req.Comment,
+	})
+
+	return rejected, nil
 }
 
 // approvals binds the shared review cycle to this service's repository, status

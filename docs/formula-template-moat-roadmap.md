@@ -1,0 +1,478 @@
+# Formula Template Moat Roadmap
+
+Working checklist from the 2026-09-01 review of the formula template engine, service,
+and Formula Studio. Goal: formula templates are Trenova's moat, so the Studio must show
+authors the same numbers production charges, the approval workflow must be enforced by
+the API rather than the UI, and the experience must be system-driven (the system
+surfaces what to do next instead of the user having to know).
+
+Items are checked off as they are implemented **and verified** (build + tests green,
+manual check in the running app where noted). Each item names the file(s) it lands in.
+Work the phases in order; phase 1 is trust and nothing in phases 3–4 is worth shipping
+on top of numbers people cannot believe.
+
+Companion doc: [formula-template-roadmap.md](formula-template-roadmap.md) (2026-08-31
+items #2–#5, all complete).
+
+---
+
+## Phase 1 — Trust: the Studio must show what production charges
+
+### 1.1 Rate-table lookups in preview and scenarios
+
+`EvaluateWithEnv` passes a nil lookup, so the engine injects a stub that returns `0`
+for every `lookup`/`lookup2` call. Any matrix-based template previews wrong and its
+approval-gating scenarios prove nothing.
+
+- [x] Thread the tenant `RateTableLookup` into `formula.Service.EvaluateWithEnv` and
+      `formulatemplateservice.TestExpression` (`formula/service.go`,
+      `formulatemplateservice/service.go` `testExpressionWithEnv`), using
+      `ratetablecache.With` so a preview loads tables once
+- [x] Scenario runs (`formulatemplateservice/testcases.go` `runSingleCase`) evaluate
+      with real tables; a scenario referencing a missing table fails with a readable
+      error instead of passing at `$0`
+- [x] `lookupOr` swallows only "key not found"; arity, key-type, and missing-table
+      errors propagate (`formula/engine/lookup.go`)
+- [x] `EvaluatePredicate` keeps the documented stub behaviour, but the stub is opt-in
+      by name, not the silent default for every nil provider
+- [x] Tests: preview with a lookup returns the matrix value; scenario against a
+      missing table fails; `lookupOr` arity error is not swallowed
+
+### 1.2 Approval impact compares against what was actually charged
+
+`ResolveEffectiveTemplate` only diverges from the current row when a scheduled
+`effective_from` version exists. Normal saves and approvals never set one, so
+`POST /:id/impact` re-rates the pending content against itself and the approve
+dialog nearly always reports "pricing-neutral". Same flaw affects backtest's
+"current" side.
+
+- [x] "Current" for each shipment = `RatingDetail.Result` when present (what the
+      customer was charged), else re-rate with the version recorded in
+      `RatingDetail.VersionNumber`, else the last `Active` snapshot
+      (`formulatemplateservice/impact.go`, `backtest.go` `resolveEffectiveForShipment`)
+- [x] Version repo gains `GetLastActiveSnapshot(templateID)`
+      (`formulatemplateversionrepository`)
+- [x] Tests: impact with a template whose content changed since the shipment was
+      rated reports a non-zero delta; backtest current side uses the recorded version
+- [ ] Manual: approve dialog shows movers for a template with edited content
+
+### 1.3 Status is owned by the workflow, not the payload
+
+`Update` permits any `CanTransition` move (InReview→Active included) with update
+permission only; `Create` never forces Draft; bulk status flips Inactive→Active
+without re-validation; any snapshot (Draft included) can be scheduled onto an
+Active template.
+
+- [x] `Create` forces `Status = Draft` and clears approval fields regardless of
+      payload (`formulatemplateservice/service.go`)
+- [x] `Update` rejects any status change in the payload with a field error on
+      `status`; Submit/Approve/Reject are the only movers
+- [x] `BulkUpdateStatus` restricted to archiving (→Inactive); an archived template
+      is reactivated by Submit → Approve (`Inactive → InReview` is now the only
+      transition out of Inactive; the Studio labels it "Reactivate via Review")
+- [x] `UpdateVersionEffectiveDate` requires the snapshot to be `Active`
+      (`formulatemplateservice/effectivedate.go`); Reject and material Update clear
+      pending scheduled versions (`versionRepo.ClearScheduled`; the Update audit
+      comment carries the count)
+- [x] `PATCH /:id` handler stops binding `status` (`formulatemplatehandler/handler.go`)
+- [x] Tests: create-with-Active lands Draft; PUT InReview→Active is 422; scheduling a
+      Draft snapshot is 422; reject clears schedules
+
+### 1.4 One rounding step for money
+
+Money is float64 end-to-end; `round()` is binary half-away; agreement rules round
+with the agreement's mode; the fallback-template path never rounds and Postgres
+truncates to 4dp. Preview ≠ stored ≠ agreement-path to the cent.
+
+- [x] Template gains `RoundingMode` (half-up, half-even, up, down) and `Precision`
+      (default 2) (`domain/formulatemplate/formulatemplate.go`, migration + SQLite
+      mirror, GraphQL SDL, client zod schema)
+- [x] `formula.ApplyChargePolicy` (guardrails, then rounding) is the single step
+      behind `Rate`, the Studio preview, and scenarios, so production, preview,
+      backtest, and impact all land on the same cents (`formula/service.go`).
+      Agreement-priced rules still apply the agreement's own rounding on top,
+      as the contract's outer policy
+- [x] Decimal-aware `round`, `roundUp`, `roundDown`, `roundTo(x, increment)`,
+      `roundHalfEven` in the function library using `shopspring/decimal`
+      (`formula/engine/functions.go`, `functionmeta.go`); client fallback list mirrored
+- [x] `bool` results are rejected for rating (`engine.go` `toDecimal`), not coerced
+      to `$1`
+- [x] Studio: rounding controls beside Guardrails; preview shows raw vs rounded when
+      they differ
+- [x] Tests: half-even vs half-up on `2.675`; production and preview produce the
+      same cents for the same input
+
+### 1.5 Timeout race in the engine
+
+After the 5s deadline fires, the caller deletes `__ctx` from `env` while the
+abandoned VM goroutine may still read it. Concurrent map access is a fatal runtime
+crash.
+
+- [x] `run()` evaluates against a shallow copy of `env` and the post-timeout
+      `delete` is removed (`formula/engine/engine.go` `run`, `evaluateProgram`)
+- [x] Deadline configurable per caller via `engine.WithEvaluationTimeout`; the
+      Studio preview runs on a 2s leash, batch paths keep the 5s default
+- [x] Test: a blocking function outlives the deadline, the caller gets
+      `DeadlineExceeded` on time, the caller's env is untouched after the
+      goroutine finishes, and the goroutine exits (`engine_ctx_test.go`; the
+      race detector needs gcc, which this machine lacks, so run `-race` in CI)
+
+### 1.6 Null-safe schema fields
+
+Validation substitutes `0` for nullable numbers, so `weight * rate` validates and
+then fails on a shipment with no weight, blocking the shipment save.
+
+- [x] `engine.UnguardedNullableFields` re-compiles the expression with each
+      referenced nullable field nil-shaped; the preview returns the result as
+      `warnings[]` (scope, field, suggestion) and save-time validation logs it
+      (`formula/engine/nullable.go`, `formulatemplateservice/service.go`)
+- [x] `TestExpressionResponse.warnings` rendered in the preview pane as an amber
+      notice per field with a one-click "Use coalesce(field, 0)" fix that rewrites
+      the expression or breakdown line in place (`guard-nullable.ts`)
+- [x] Rating a shipment whose nullable field is empty yields
+      `MissingFieldError` (names the field and the guard) which `Rate` maps to a
+      validation error, so it surfaces as a 4xx naming the field instead of a 500
+- [x] Tests: unguarded `weight` warns (engine, service, breakdown scope); guarded
+      does not; nil `weight` on a real record is a validation error naming it
+
+### 1.7 Error classification and small correctness fixes
+
+- [x] `SchemaError`/`ComputeError`/`TransformError`/`VariableError`/`ResolveError`/
+      `MissingFieldError` classify as validation problems (`classifyFormula` in
+      `internal/api/helpers/classifier.go`); the engine's own deadline is
+      `engine.ErrEvaluationTimeout`, distinct from a caller's context deadline
+- [x] Version repo wraps `sql.ErrNoRows` (`formulatemplateversionrepository.go`
+      `GetByTemplateAndVersion`, `UpdateTags`, `UpdateEffectiveDate`); unique
+      violations on test-case names map to 409/422
+- [x] `compareVersions` routes errors through `ErrorHandler`
+      (`formulatemplatehandler/handler.go`)
+- [x] Permission middleware on `select-options` routes; shipment-read check on
+      `backtest` and `impact`
+- [x] `Fork` fails when the requested version does not exist instead of forking
+      latest (`service.go` `resolveTemplateSnapshot`)
+- [x] `Rollback` and `CreateVersion` run `validateTemplate`; `CreateVersion` writes
+      an audit entry
+- [x] `CountUsages` includes rate agreement rules and rate agreement accessorials
+      (the only other tables that reference templates; quotes are records, not
+      consumers) and the Studio/rollback dialog label them
+      (`formulatemplaterepository/formulatemplate.go`)
+- [x] Unique index `(organization_id, business_unit_id, name)` and list index
+      `(organization_id, business_unit_id, created_at DESC)`; index on
+      `accessorial_charges.formula_template_id` (migration `20261002000000`);
+      duplicates pick a free "(Copy N)" name and a name collision on create or
+      update is a 409 on `name`
+- [x] Field caps: expression ≤ 10,000 chars, ≤ 50 custom variables (breakdowns
+      were already capped at 20), `templateIds` 1–100 on duplicate/bulk status
+      (`domain/formulatemplate/formulatemplate.go`, service `validateBulkTemplateIDs`)
+
+---
+
+## Phase 2 — Feedback loop: the Studio tells you what is wrong and what is next
+
+### 2.1 Surface real errors
+
+- [x] Approval dialog shows the server's reason inline (self-approval, failing
+      scenarios, invalid expression) via `describeApiError`
+      (`lib/api-error-message.ts`, `approval-action-dialog.tsx`)
+- [x] Preview shows an error card when the test request fails; previous result is
+      dimmed while pending; last successful run is timestamped
+      (`studio/use-live-preview.ts`, `studio/studio-preview-pane.tsx`)
+- [x] Schema fetch failure shows a non-blocking banner ("using built-in reference")
+      instead of silently linting against the fallback (`hooks/use-formula-schema.ts`)
+- [x] Validation errors in the collapsed Details section auto-expand it and badge
+      the trigger (`studio/studio-editor-pane.tsx`)
+- [x] Save handlers use `mutate` or catch, no more `void onSave()` over a rejecting
+      `mutateAsync` (`new/page.tsx`, `[id]/page.tsx`)
+
+### 2.2 Scenarios stay live
+
+- [x] Scenarios run on the same debounce as preview against the editor candidate;
+      header shows a live `n/m passing` badge (`studio/studio-scenarios-pane.tsx`,
+      `studio/studio-header.tsx`)
+- [x] Results are marked stale (not cleared) when the expression changes and re-run
+      automatically after add/edit/delete
+- [x] "Pin as scenario" button on a green preview card, prefilled from the current
+      sample and result (`studio/studio-preview-pane.tsx`)
+- [x] "Use these values" on the resolved-variables view of a real-shipment preview
+      copies them into test data or a new scenario
+
+### 2.3 Readiness checklist gates Submit and Approve
+
+- [x] `ReadinessPanel` (`_components/readiness-panel.tsx`) renders the server's
+      checks (review state, independent reviewer, expression + rate tables,
+      description, unguarded optional fields, scenarios) so the list can never
+      disagree with the gate
+- [x] Submit button disabled while dirty with a tooltip explaining why; Approve
+      dialog shows the checklist above the impact panel
+- [x] Server-side `GET /:id/readiness` returning the same checks so the list page
+      and notifications can use it (`formulatemplateservice/readiness.go`,
+      handler route)
+
+### 2.4 Say what saving will do
+
+- [x] Saving a material change to an Active or InReview template shows a confirm
+      dialog: "This will return the template to Draft and stop it rating shipments
+      until re-approved" (`[id]/page.tsx`)
+- [x] Usage chip copy is state-aware; the rollback dialog copy says the template
+      returns to Draft on material change (`studio/studio-header.tsx`,
+      `version/rollback-confirm-dialog.tsx`)
+- [x] Save toast reports the resulting status when it changed
+
+### 2.5 Schema-driven test data
+
+- [x] `TestDataEditor` iterates the fetched schema (`useFormulaSchema`) instead of
+      the hardcoded fallback list; custom variables get their own section; enum
+      fields render as selects (`components/formula-editor/test-data-editor.tsx`)
+- [x] Scenario dialog validates through `formulaTestCaseInputSchema` (name ≤ 100,
+      etc.) instead of hand-rolled checks (`studio/scenario-dialog.tsx`)
+- [x] Custom-variable default coercion re-runs when the declared type changes
+      (`components/formula-editor/variable-definition-editor.tsx`)
+- [x] Duplicate custom-variable and breakdown names (against each other and the
+      schema) produce field errors
+
+### 2.6 Editor correctness and performance
+
+- [x] Editor theme uses `useResolvedTheme` so system-dark users get the dark
+      CodeMirror theme (`components/formula-editor/expression-editor.tsx`)
+- [x] Language/completion extensions live in a `Compartment` reconfigured on
+      identifier changes instead of rebuilding every editor on each keystroke
+- [x] Reference pane inserts into the focused editor (main or breakdown mini),
+      not always the main one (`studio/formula-studio.tsx` `handleInsert`)
+- [x] Explain panel clears or marks stale when the expression changes
+      (`studio/ai/ai-explain-panel.tsx`)
+
+### 2.7 Dead-ends and wiring
+
+- [x] Lineage dialog nodes navigate to the template (wire `onNavigateToTemplate`
+      from `formula-studio.tsx` and `formula-template-table.tsx`)
+- [x] Fork success navigates into the new template's studio
+- [x] Import from inside the studio navigates to the imported template (or the
+      list when several)
+- [x] Fork dialog resets its defaults when the target template changes
+      (`fork-template-dialog.tsx`)
+- [x] Query keys go through `queries.formulaTemplate.*` everywhere
+      (`approval-action-dialog.tsx`, `rollback-confirm-dialog.tsx`,
+      `fork-template-dialog.tsx`)
+- [x] Route strings centralised in one `formulaTemplateRoutes` helper
+
+### 2.8 Keyboard, layout, accessibility
+
+- [x] Shortcuts: `Ctrl/Cmd+S` save, `Ctrl/Cmd+Enter` run preview, `Ctrl/Cmd+K`
+      focus reference search, `Ctrl/Cmd+1/2` toggle Preview/Scenarios; shortcut
+      hints in tooltips
+- [x] Below ~1100px the right column stacks under the editor as tabs instead of
+      nested resizable panes; sheets use `max-w` not fixed widths
+- [x] Hover-only delete buttons get `focus-visible:opacity-100`; icon buttons get
+      `aria-label`; labels get `htmlFor`; clickable `div`s in lineage/version
+      history become buttons
+- [x] Terminology pass: "Scenarios" everywhere in the UI (API keeps `testCases`),
+      "Sample Data" as the single term for preview inputs, status shown once,
+      reference and sample-data categories share one label map keyed by the
+      schema's category ids
+
+### 2.9 List page carries decision info
+
+- [x] Columns: in-use count and scenario count (per-row via a dataloader over
+      `CountStatsByIDs`, one query per page), approved at, updated at
+      (`formula-template-columns.tsx`, GraphQL `usageCount`/`scenarioCount`).
+      Pass state per row is deliberately not computed in the list (it would
+      re-run every scenario on every page); the readiness badge covers it in
+      the studio. Approver name needs a User loader and is deferred
+- [x] Filters: pending review via the status filter; invalid `type`/`status`
+      values on the REST list are validation errors instead of being silently
+      dropped (`formulatemplaterepository` `filterQuery`). Filters by approver,
+      source template, and referenced rate table are deferred to a later pass
+
+---
+
+## Phase 3 — Differentiators: transparency nobody else has
+
+### 3.1 Calculation receipt
+
+Every rating carries a trace that a non-programmer can read.
+
+- [x] Recording `RateTableLookup` decorator captures `{table, keys, matchedKey or
+      band, value}` per call (`formula/engine/lookup.go`)
+- [x] Variable provenance map (schema field, override, declared default, caller
+      variable, computed) built alongside the env (`formula/engine/engine.go`
+      `Evaluate`, `environment.go`)
+- [x] `Receipt` on `EvaluationResult`, `CalculateResponse`, and the preview
+      response: pre-clamp raw value, version + `EffectiveFrom`, lookups with scope,
+      provenance, evaluation time (`pkg/formulatypes/receipt.go`); breakdown line
+      results stay on `Breakdown` beside it
+- [x] Trace carried into `ratetypes.Component.Detail` and
+      `shipment.RatingDetail` (replace the intentionally-empty `ResolvedVariables`)
+      (`rateengine/pricing.go`, `shipmentcommercial/commercial.go`)
+- [x] Studio preview renders the receipt: variables with source badges, lookup hits
+      with the matched band, guardrail clamp, rounding step
+- [x] The shipment's Rating Breakdown card shows the same receipt (collapsible)
+      with an "Open template vN" link into the studio; the rate-quote "Why this
+      rate" popover is unchanged and still explains contract selection
+- [x] Func values stripped at the engine boundary, not in the handler
+
+### 3.2 Reviewer sees a diff
+
+- [x] `GET /:id/review-diff` compares the last `Active` snapshot with the current
+      content (`formulatemplateservice/reviewdiff.go`)
+- [x] Approve dialog shows expression diff (reuse `ExpressionDiff`) plus the
+      corrected impact panel; Submit dialog shows the same to the author
+- [x] Notification for reviewers links to the studio with the diff open
+
+### 3.3 Hover-to-evaluate
+
+- [x] CodeMirror `hoverTooltip` shows each identifier's value and source from the
+      last preview receipt ("weight = 12000 (from shipment)"), fed through a
+      `PreviewValuesProvider` ref so previews never rebuild editor extensions
+      (`components/formula-editor/expr-hover.ts`, `preview-values.tsx`)
+- [ ] Ternary branches that fired in the last run are subtly highlighted; the other
+      branch is dimmed. Deferred: needs the engine to trace which conditional
+      branches evaluated (expr does not expose this without instrumenting the
+      compiled program), which is a separate engine change
+
+### 3.4 Breakdown reconciliation
+
+- [x] Preview shows Σ breakdown vs total and an "unallocated" residual row
+- [x] Warning when guardrails clamped the total but breakdown lines still sum to the
+      raw amount. The optional "scale lines to clamped total" template setting is
+      deferred: it is a rating-behaviour change (a new template field and a
+      migration) rather than a display fix, and belongs with a decision on
+      whether invoices should show scaled or raw lines
+- [x] Breakdown row errors map back to the matching mini-editor as inline
+      diagnostics
+
+### 3.5 Library and starters
+
+- [x] Starter picker sourced from the standard catalog endpoint instead of the four
+      hardcoded starters (`GET /formula-templates/standards`; `starter-templates.ts` deleted;
+      picker filters by template type and applies a standard's schema, expression, variables,
+      and a default charge policy)
+- [x] "Start from existing template" option that forks in place (create-mode picker copies a
+      chosen template's formula, variables, lines, and charge policy into the new draft;
+      lineage stays with the explicit Fork action)
+- [x] AI generate returns two or three proposed scenarios with expected amounts
+      computed through `/formula-templates/test`; author accepts them one click
+      (model proposes inputs only, the engine prices each; unpriceable scenarios show why;
+      Add / Add all create test cases and refresh the scenarios pane; create mode explains
+      that scenarios need a saved template)
+
+### 3.6 Backtest drill-in
+
+- [x] Rows link to the shipment; summary counts guardrail clamps and evaluation
+      failures; CSV export (summary gains `guardrailCount`, `currentErrorCount`,
+      `candidateErrorCount`; Pro # opens the shipment panel; Export CSV writes every row
+      with amounts, delta, clamp flag, and both error columns)
+- [x] Version picker is a dropdown from `listVersions` with tags and dates, not a
+      free number (`formula-template-backtest-tab.tsx`)
+- [x] Backtest sheet shows a skeleton while lazy-loading (`backtest-sheet.tsx`)
+
+---
+
+## Phase 4 — Expressiveness and scale
+
+### 4.1 Function library
+
+- [x] Variadic `min`/`max`, `avg`; publish expr's string builtins (`startsWith`,
+      `contains`, `matches`, slicing) in `DescribeSchema` so the reference pane and
+      linter know them (`formula/engine/functionmeta.go`; specs carry `operator` so the
+      editor inserts `text startsWith ""` infix and highlights operator words as keywords
+      instead of flagging them as unknown variables; "Text" category in the reference pane)
+- [x] Lookup key normalisation modes: `trim`, `upper`, `zip3`, and nearest/clamp-to-
+      top-band options (`formula/matrix_lookup.go`; modes live on the rate-matrix axis as
+      `keyNormalization` and `rangeOverflow`, set in the matrix editor, applied to stored and
+      looked-up keys alike; receipts mark a band the key was moved into. The rate-matrix
+      service's own cell selection still matches SQL-narrowed exact keys; normalisation there
+      would need the repository query to normalise too)
+- [x] `lookupInterp(table, key)` linear interpolation between bands (curve through band
+      floors; edge values held, never extrapolated; `BandedLookup` optional interface so
+      stubs validate and the receipt traces the call)
+- [x] Deficit-weight helper for CWT pricing ("rate as next break if cheaper")
+      (`deficitWeight(table, weight)` returns the billable weight; both helpers count as
+      single-axis table references for validation and are reserved names)
+
+### 4.2 Schema expansion
+
+- [x] `pickupDate`/`deliveryDate` as expr dates plus per-location timezone (new
+      `timezone` column on `locations`, IANA) so `pickupHour`/`isWeekendPickup` are
+      local-time correct (`formula/resolver/computed_lane.go`,
+      `schema/definitions/shipment.schema.json`; dates are `string` + `format: date-time`
+      in the schema because the 2020-12 metaschema has no date type, and the engine binds
+      them as real `time.Time` values, coercing text samples from the studio; a location
+      without a timezone, or with one the runtime cannot load, stays UTC)
+- [x] `stops[]` (state, type, appointment window) and `commodities[]` (class,
+      dims, hazmat) exposed as arrays; stop shadowing expr's `sum` so `map`/
+      `filter`/`sum` work over them (computed `stops` and `commodities` records with
+      location, window, actuals, cube, and density; `sum`/`avg` now flatten lists so
+      `sum(map(stops, .weight ?? 0))` works while `sum(a, b, c)` keeps working, which is why
+      the shadow stays; the studio's sample editor shows arrays as read-only text, so
+      scenarios cannot yet author stop lists)
+- [x] Dimensions and freight class for dim-weight formulas; `serviceType`,
+      `shipmentType`, `currency` (`totalCubicFeet`, `density`, `primaryFreightClass`,
+      `highestFreightClass` rollups over the commodity lines; `serviceType` and
+      `shipmentType` objects with code and description. `currency` is deferred: neither the
+      shipment nor the organization carries a currency field today, only fuel indices do)
+- [x] `fuelPrice` as a schema-level computed variable fed by the fuel-price job so
+      FSC tables work in preview and scenarios (schema properties marked `provided` are
+      filled per tenant by `ContextVariableProvider`s; the fuel surcharge service supplies
+      `fuelPrice`, `fuelPriceDate`, and `fuelIndexCode` from the freshest active index,
+      memoized per batch; previews and live rating both see them, scenario variables can pin
+      them, receipts trace them as market data, and a failing feed leaves the nullable
+      placeholder so `coalesce(fuelPrice, 0)` keeps pricing)
+
+### 4.3 Performance
+
+- [x] Process-level rate-table cache keyed by tenant + matrix version stamp,
+      invalidated from the rate-matrix write path, replacing per-request full loads
+      (`pkg/ratetablecache` `GetStamped`/`Invalidate`; the stamp is count, max version, and
+      max updated_at over the tenant's matrices, cell replacement bumps the matrix version
+      so a new sheet moves it; the per-context memo still answers first, and an empty or
+      failing stamp degrades to a plain build)
+- [x] Compile-cache key hashes declared schema types, not runtime nil-vs-float
+      shapes; key computed once per `Evaluate`; size configurable
+      (`formula/engine/engine.go`; the evaluation compiles against a shape whose
+      schema-nullable paths hold their declared type's zero, so records with and without a
+      value share one program and `== nil` compiles either way; the shape's signature is
+      hashed once and reused by every breakdown line; a record that truly lacks a value
+      now fails at run time and is mapped to the same missing-field guidance;
+      `Params.CompileCacheSize`)
+- [x] Boxed `Moves`/`Stops` walk cached once per env build
+      (`resolver.Memoize` wraps the record for computed calls; every stop walker reads
+      through one memoized `orderedStops`, and field accessors unwrap transparently)
+- [x] Two-axis range-row tables use a sorted index instead of a linear scan (cells grouped
+      by row band; a lookup walks the sorted band floors and stops at the first floor above
+      the quantity, keeping overlapping bands as candidates)
+
+### 4.4 Service-layer structure
+
+- [x] Split `formulatemplateservice/service.go` into `versions.go`,
+      `testexpression.go`, `validator.go` (pure move; service.go keeps the CRUD, duplicate,
+      bulk status, and lookup helpers)
+- [x] One `templateSnapshot`-based constructor used by Fork, Duplicate, Import, and
+      InstallStandards; `buildDuplicateEntity` moves out of the repository
+      (`formulatemplate.Seed` with `SeedFromTemplate`/`SeedFromVersion`; `Build` applies
+      Draft, the shipment schema, empty collections, cloned metadata, version one, and
+      rounding normalisation; the repository's duplicate path builds from the seed too)
+- [x] Repositories use `buncolgen` column helpers and `DBForContext` everywhere
+      (`List`, `CountUsages`, `SelectOptions`; the version repository too. The accessorial
+      charge model does not map `formula_template_id`, so that one usage count builds its
+      column through `buncolgen.NewColumn` until the model catches up)
+- [x] Approval engine records review rounds (reviewer, decision, comment, diff-base
+      version) with "request changes" distinct from Reject, and expiry on stale
+      submissions (`pkg/approvalworkflow`, migration) (`formula_template_reviews` history:
+      Submit opens or continues a round and captures the approved base version; Request
+      Changes returns the template to draft but keeps the author and the round open, Reject
+      archives it (InReview → Inactive), clears the submission, and closes the round; approval refuses submissions older than 14 days,
+      readiness shows the age, and a daily job expires them back to draft with a
+      notification; `GET /:id/reviews` feeds the review history in the approval dialog)
+
+---
+
+## Verification checklist per phase
+
+- Backend: `task lint`, `task test`; `task test-integration` for repo/migration
+  items; `task docs-generate` after handler changes; `task gqlgen` after SDL changes
+- Client: `pnpm --filter @trenova/web typecheck`, `lint`, `test`;
+  `pnpm --filter @trenova/graphql codegen` after fragment changes
+- Manual (`task run-watch` + `pnpm dev`): preview a lookup-based template and
+  confirm the matrix value; approve a template with edited content and confirm
+  movers; PUT a status change and confirm 422; toggle system dark mode and confirm
+  the editor follows

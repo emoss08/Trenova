@@ -2,6 +2,7 @@ package errors
 
 import (
 	"fmt"
+	"strings"
 )
 
 type ResolveError struct {
@@ -128,5 +129,31 @@ func NewSchemaError(schemaID, action string, cause error) *SchemaError {
 		SchemaID: schemaID,
 		Action:   action,
 		Cause:    cause,
+	}
+}
+
+// MissingFieldError explains a compile failure that happened because a record
+// arrived without a value for a nullable field the expression relies on. It is
+// the author's problem to fix, not the system's, so it names the field and the
+// guard that fixes it.
+type MissingFieldError struct {
+	Expression  string
+	Fields      []string
+	Suggestions []string
+}
+
+func (e *MissingFieldError) Error() string {
+	return fmt.Sprintf(
+		"no value for %s on this record; write %s so the formula still prices when it is missing",
+		strings.Join(e.Fields, ", "),
+		strings.Join(e.Suggestions, ", "),
+	)
+}
+
+func NewMissingFieldError(expression string, fields, suggestions []string) *MissingFieldError {
+	return &MissingFieldError{
+		Expression:  expression,
+		Fields:      fields,
+		Suggestions: suggestions,
 	}
 }

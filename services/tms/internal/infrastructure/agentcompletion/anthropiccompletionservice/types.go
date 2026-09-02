@@ -5,7 +5,7 @@ import "github.com/emoss08/trenova/internal/core/domain/agent"
 const (
 	anthropicMessagesURL = "https://api.anthropic.com/v1/messages"
 	anthropicVersion     = "2023-06-01"
-	defaultModel         = "claude-opus-4-8"
+	defaultModel         = "claude-opus-5"
 	defaultMaxTokens     = 8192
 )
 

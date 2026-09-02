@@ -1,24 +1,43 @@
 import type {
   FormulaTemplate,
   FormulaTemplateVersion,
+  FormulaTestCase,
 } from "@trenova/shared/types/formula-template";
 import { downloadJsonFile } from "@trenova/shared/lib/utils";
 
+export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.3";
+
+export type ExportedTestCase = {
+  name: string;
+  description: string;
+  variables: Record<string, unknown>;
+  expectedAmount: number;
+  tolerance: number;
+};
+
+export type FormulaTemplateExportPayload = {
+  name: string;
+  description: string;
+  type: FormulaTemplate["type"];
+  expression: string;
+  status: FormulaTemplate["status"];
+  schemaId: string;
+  variableDefinitions: FormulaTemplate["variableDefinitions"];
+  breakdownDefinitions: FormulaTemplate["breakdownDefinitions"];
+  minCharge: FormulaTemplate["minCharge"];
+  maxCharge: FormulaTemplate["maxCharge"];
+  roundingMode: FormulaTemplate["roundingMode"];
+  roundingPrecision: FormulaTemplate["roundingPrecision"];
+  metadata: FormulaTemplate["metadata"];
+  sourceTemplateId: string | null | undefined;
+  sourceVersionNumber: number | null | undefined;
+  testCases?: ExportedTestCase[];
+};
+
 export type FormulaTemplateExport = {
-  exportVersion: "1.0";
+  exportVersion: typeof FORMULA_TEMPLATE_EXPORT_VERSION;
   exportedAt: string;
-  template: {
-    name: string;
-    description: string;
-    type: FormulaTemplate["type"];
-    expression: string;
-    status: FormulaTemplate["status"];
-    schemaId: string;
-    variableDefinitions: FormulaTemplate["variableDefinitions"];
-    metadata: FormulaTemplate["metadata"];
-    sourceTemplateId: string | null | undefined;
-    sourceVersionNumber: number | null | undefined;
-  };
+  template: FormulaTemplateExportPayload;
   versionHistory?: Array<{
     versionNumber: number;
     name: string;
@@ -28,6 +47,11 @@ export type FormulaTemplateExport = {
     status: FormulaTemplate["status"];
     schemaId: string;
     variableDefinitions: FormulaTemplate["variableDefinitions"];
+    breakdownDefinitions: FormulaTemplate["breakdownDefinitions"];
+    minCharge: FormulaTemplate["minCharge"];
+    maxCharge: FormulaTemplate["maxCharge"];
+    roundingMode: FormulaTemplate["roundingMode"];
+    roundingPrecision: FormulaTemplate["roundingPrecision"];
     metadata: FormulaTemplate["metadata"];
     changeMessage?: string;
     tags: string[];
@@ -36,9 +60,9 @@ export type FormulaTemplateExport = {
 };
 
 export type BulkFormulaTemplateExport = {
-  exportVersion: "1.0";
+  exportVersion: typeof FORMULA_TEMPLATE_EXPORT_VERSION;
   exportedAt: string;
-  templates: Array<FormulaTemplateExport["template"]>;
+  templates: Array<FormulaTemplateExportPayload>;
 };
 
 export function slugify(name: string): string {
@@ -52,25 +76,59 @@ export function downloadJson(data: unknown, filename: string): void {
   downloadJsonFile(filename, data);
 }
 
+export function toExportedTestCase(testCase: FormulaTestCase): ExportedTestCase {
+  return {
+    name: testCase.name,
+    description: testCase.description,
+    variables: testCase.variables,
+    expectedAmount: testCase.expectedAmount,
+    tolerance: testCase.tolerance,
+  };
+}
+
+function toExportPayload(
+  template: FormulaTemplate,
+  testCases?: FormulaTestCase[],
+): FormulaTemplateExportPayload {
+  const payload: FormulaTemplateExportPayload = {
+    name: template.name,
+    description: template.description,
+    type: template.type,
+    expression: template.expression,
+    status: template.status,
+    schemaId: template.schemaId,
+    variableDefinitions: template.variableDefinitions,
+    breakdownDefinitions: template.breakdownDefinitions,
+    minCharge: template.minCharge,
+    maxCharge: template.maxCharge,
+    roundingMode: template.roundingMode,
+    roundingPrecision: template.roundingPrecision,
+    metadata: template.metadata,
+    sourceTemplateId: template.sourceTemplateId,
+    sourceVersionNumber: template.sourceVersionNumber,
+  };
+
+  if (testCases && testCases.length > 0) {
+    payload.testCases = testCases.map(toExportedTestCase);
+  }
+
+  return payload;
+}
+
+export type TemplateExportOptions = {
+  versions?: FormulaTemplateVersion[];
+  testCases?: FormulaTestCase[];
+};
+
 export function buildTemplateExport(
   template: FormulaTemplate,
-  versions?: FormulaTemplateVersion[],
+  options?: TemplateExportOptions,
 ): FormulaTemplateExport {
+  const { versions, testCases } = options ?? {};
   const exportData: FormulaTemplateExport = {
-    exportVersion: "1.0",
+    exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    template: {
-      name: template.name,
-      description: template.description,
-      type: template.type,
-      expression: template.expression,
-      status: template.status,
-      schemaId: template.schemaId,
-      variableDefinitions: template.variableDefinitions,
-      metadata: template.metadata,
-      sourceTemplateId: template.sourceTemplateId,
-      sourceVersionNumber: template.sourceVersionNumber,
-    },
+    template: toExportPayload(template, testCases),
   };
 
   if (versions && versions.length > 0) {
@@ -83,6 +141,11 @@ export function buildTemplateExport(
       status: v.status,
       schemaId: v.schemaId,
       variableDefinitions: v.variableDefinitions,
+      breakdownDefinitions: v.breakdownDefinitions,
+      minCharge: v.minCharge,
+      maxCharge: v.maxCharge,
+      roundingMode: v.roundingMode,
+      roundingPrecision: v.roundingPrecision,
       metadata: v.metadata,
       changeMessage: v.changeMessage,
       tags: v.tags,
@@ -93,28 +156,59 @@ export function buildTemplateExport(
   return exportData;
 }
 
-export function buildBulkExport(templates: FormulaTemplate[]): BulkFormulaTemplateExport {
+// A version export deliberately carries no test scenarios: scenarios live on
+// the template and pin its current behaviour, which an older version's
+// expression has no obligation to satisfy.
+export function buildVersionExport(
+  template: Pick<FormulaTemplate, "name">,
+  version: FormulaTemplateVersion,
+): FormulaTemplateExport {
   return {
-    exportVersion: "1.0",
+    exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    templates: templates.map((template) => ({
+    template: {
       name: template.name,
-      description: template.description,
-      type: template.type,
-      expression: template.expression,
-      status: template.status,
-      schemaId: template.schemaId,
-      variableDefinitions: template.variableDefinitions,
-      metadata: template.metadata,
-      sourceTemplateId: template.sourceTemplateId,
-      sourceVersionNumber: template.sourceVersionNumber,
-    })),
+      description: version.description ?? "",
+      type: version.type,
+      expression: version.expression,
+      status: version.status,
+      schemaId: version.schemaId,
+      variableDefinitions: version.variableDefinitions,
+      breakdownDefinitions: version.breakdownDefinitions,
+      minCharge: version.minCharge,
+      maxCharge: version.maxCharge,
+      roundingMode: version.roundingMode,
+      roundingPrecision: version.roundingPrecision,
+      metadata: version.metadata,
+      sourceTemplateId: undefined,
+      sourceVersionNumber: version.versionNumber,
+    },
+  };
+}
+
+export function buildBulkExport(
+  templates: FormulaTemplate[],
+  testCasesByTemplateId?: Record<string, FormulaTestCase[]>,
+): BulkFormulaTemplateExport {
+  return {
+    exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    templates: templates.map((template) =>
+      toExportPayload(template, template.id ? testCasesByTemplateId?.[template.id] : undefined),
+    ),
   };
 }
 
 export function getExportFilename(template: FormulaTemplate, includeVersions: boolean): string {
   const slug = slugify(template.name);
   return includeVersions ? `${slug}.formula-template-full.json` : `${slug}.formula-template.json`;
+}
+
+export function getVersionExportFilename(
+  template: Pick<FormulaTemplate, "name">,
+  versionNumber: number,
+): string {
+  return `${slugify(template.name)}.v${versionNumber}.formula-template.json`;
 }
 
 export function getBulkExportFilename(): string {

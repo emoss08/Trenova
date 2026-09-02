@@ -16,6 +16,7 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewOrderByIDLoaderFactory,
 	loaders.NewShipmentProfitabilityLoaderFactory,
 	loaders.NewEDIPartnerByCustomerIDLoaderFactory,
+	loaders.NewFormulaTemplateStatsLoaderFactory,
 ))
 
 var graphQLResolverModule = fx.Module("api-graphql-resolvers", fx.Provide(

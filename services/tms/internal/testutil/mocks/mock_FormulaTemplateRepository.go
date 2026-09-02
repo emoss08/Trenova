@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -108,6 +109,74 @@ func (_c *MockFormulaTemplateRepository_BulkDuplicate_Call) RunAndReturn(run fun
 	return _c
 }
 
+// FindByNames provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) FindByNames(ctx context.Context, req repositories.GetFormulaTemplatesByNamesRequest) ([]*formulatemplate.FormulaTemplate, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByNames")
+	}
+
+	var r0 []*formulatemplate.FormulaTemplate
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetFormulaTemplatesByNamesRequest) ([]*formulatemplate.FormulaTemplate, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetFormulaTemplatesByNamesRequest) []*formulatemplate.FormulaTemplate); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*formulatemplate.FormulaTemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetFormulaTemplatesByNamesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_FindByNames_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByNames'
+type MockFormulaTemplateRepository_FindByNames_Call struct {
+	*mock.Call
+}
+
+// FindByNames is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetFormulaTemplatesByNamesRequest
+func (_e *MockFormulaTemplateRepository_Expecter) FindByNames(ctx any, req any) *MockFormulaTemplateRepository_FindByNames_Call {
+	return &MockFormulaTemplateRepository_FindByNames_Call{Call: _e.mock.On("FindByNames", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_FindByNames_Call) Run(run func(ctx context.Context, req repositories.GetFormulaTemplatesByNamesRequest)) *MockFormulaTemplateRepository_FindByNames_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetFormulaTemplatesByNamesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetFormulaTemplatesByNamesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_FindByNames_Call) Return(formulaTemplates []*formulatemplate.FormulaTemplate, err error) *MockFormulaTemplateRepository_FindByNames_Call {
+	_c.Call.Return(formulaTemplates, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_FindByNames_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetFormulaTemplatesByNamesRequest) ([]*formulatemplate.FormulaTemplate, error)) *MockFormulaTemplateRepository_FindByNames_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // BulkUpdateStatus provides a mock function for the type MockFormulaTemplateRepository
 func (_mock *MockFormulaTemplateRepository) BulkUpdateStatus(ctx context.Context, req *repositories.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error) {
 	ret := _mock.Called(ctx, req)
@@ -172,6 +241,74 @@ func (_c *MockFormulaTemplateRepository_BulkUpdateStatus_Call) Return(formulaTem
 }
 
 func (_c *MockFormulaTemplateRepository_BulkUpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error)) *MockFormulaTemplateRepository_BulkUpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountStatsByIDs provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) CountStatsByIDs(ctx context.Context, req *repositories.GetFormulaTemplateStatsRequest) (map[pulid.ID]repositories.TemplateStats, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountStatsByIDs")
+	}
+
+	var r0 map[pulid.ID]repositories.TemplateStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetFormulaTemplateStatsRequest) (map[pulid.ID]repositories.TemplateStats, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetFormulaTemplateStatsRequest) map[pulid.ID]repositories.TemplateStats); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID]repositories.TemplateStats)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetFormulaTemplateStatsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_CountStatsByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountStatsByIDs'
+type MockFormulaTemplateRepository_CountStatsByIDs_Call struct {
+	*mock.Call
+}
+
+// CountStatsByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetFormulaTemplateStatsRequest
+func (_e *MockFormulaTemplateRepository_Expecter) CountStatsByIDs(ctx any, req any) *MockFormulaTemplateRepository_CountStatsByIDs_Call {
+	return &MockFormulaTemplateRepository_CountStatsByIDs_Call{Call: _e.mock.On("CountStatsByIDs", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_CountStatsByIDs_Call) Run(run func(ctx context.Context, req *repositories.GetFormulaTemplateStatsRequest)) *MockFormulaTemplateRepository_CountStatsByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetFormulaTemplateStatsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetFormulaTemplateStatsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_CountStatsByIDs_Call) Return(stats map[pulid.ID]repositories.TemplateStats, err error) *MockFormulaTemplateRepository_CountStatsByIDs_Call {
+	_c.Call.Return(stats, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_CountStatsByIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetFormulaTemplateStatsRequest) (map[pulid.ID]repositories.TemplateStats, error)) *MockFormulaTemplateRepository_CountStatsByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/graph-gophers/dataloader/v7"
@@ -25,6 +26,7 @@ type FactoryParams struct {
 	OrderByID                 *OrderByIDLoaderFactory
 	ShipmentProfitabilityByID *ShipmentProfitabilityLoaderFactory
 	EDIPartnerByCustomerID    *EDIPartnerByCustomerIDLoaderFactory
+	FormulaTemplateStatsByID  *FormulaTemplateStatsLoaderFactory
 }
 
 type Factory struct {
@@ -34,6 +36,7 @@ type Factory struct {
 	orderByID                 *OrderByIDLoaderFactory
 	shipmentProfitabilityByID *ShipmentProfitabilityLoaderFactory
 	ediPartnerByCustomerID    *EDIPartnerByCustomerIDLoaderFactory
+	formulaTemplateStatsByID  *FormulaTemplateStatsLoaderFactory
 }
 
 type Loaders struct {
@@ -43,6 +46,7 @@ type Loaders struct {
 	OrderByID                 *dataloader.Loader[string, *order.Order]
 	ShipmentProfitabilityByID *dataloader.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
 	EDIPartnerByCustomerID    *dataloader.Loader[string, *edi.EDIPartner]
+	FormulaTemplateStatsByID  *dataloader.Loader[string, repositories.TemplateStats]
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -53,6 +57,7 @@ func NewFactory(p FactoryParams) *Factory {
 		orderByID:                 p.OrderByID,
 		shipmentProfitabilityByID: p.ShipmentProfitabilityByID,
 		ediPartnerByCustomerID:    p.EDIPartnerByCustomerID,
+		formulaTemplateStatsByID:  p.FormulaTemplateStatsByID,
 	}
 }
 
@@ -64,6 +69,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		OrderByID:                 f.orderByID.NewForTenant(tenantInfo),
 		ShipmentProfitabilityByID: f.shipmentProfitabilityByID.NewForTenant(tenantInfo),
 		EDIPartnerByCustomerID:    f.ediPartnerByCustomerID.NewForTenant(tenantInfo),
+		FormulaTemplateStatsByID:  f.formulaTemplateStatsByID.NewForTenant(tenantInfo),
 	}
 }
 

@@ -177,6 +177,140 @@ func (_c *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call) Run
 	return _c
 }
 
+// ClearScheduled provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) ClearScheduled(ctx context.Context, req *repositories.ListScheduledVersionsRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearScheduled")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListScheduledVersionsRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListScheduledVersionsRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListScheduledVersionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_ClearScheduled_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearScheduled'
+type MockFormulaTemplateVersionRepository_ClearScheduled_Call struct {
+	*mock.Call
+}
+
+// ClearScheduled is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListScheduledVersionsRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) ClearScheduled(ctx any, req any) *MockFormulaTemplateVersionRepository_ClearScheduled_Call {
+	return &MockFormulaTemplateVersionRepository_ClearScheduled_Call{Call: _e.mock.On("ClearScheduled", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ClearScheduled_Call) Run(run func(ctx context.Context, req *repositories.ListScheduledVersionsRequest)) *MockFormulaTemplateVersionRepository_ClearScheduled_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListScheduledVersionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListScheduledVersionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ClearScheduled_Call) Return(n int64, err error) *MockFormulaTemplateVersionRepository_ClearScheduled_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ClearScheduled_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListScheduledVersionsRequest) (int64, error)) *MockFormulaTemplateVersionRepository_ClearScheduled_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetLatestByStatus provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) GetLatestByStatus(ctx context.Context, req *repositories.GetLatestVersionByStatusRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestByStatus")
+	}
+
+	var r0 *formulatemplate.FormulaTemplateVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetLatestVersionByStatusRequest) (*formulatemplate.FormulaTemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetLatestVersionByStatusRequest) *formulatemplate.FormulaTemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*formulatemplate.FormulaTemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetLatestVersionByStatusRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_GetLatestByStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestByStatus'
+type MockFormulaTemplateVersionRepository_GetLatestByStatus_Call struct {
+	*mock.Call
+}
+
+// GetLatestByStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetLatestVersionByStatusRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetLatestByStatus(ctx any, req any) *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call {
+	return &MockFormulaTemplateVersionRepository_GetLatestByStatus_Call{Call: _e.mock.On("GetLatestByStatus", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call) Run(run func(ctx context.Context, req *repositories.GetLatestVersionByStatusRequest)) *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetLatestVersionByStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetLatestVersionByStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call) Return(formulaTemplateVersion *formulatemplate.FormulaTemplateVersion, err error) *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call {
+	_c.Call.Return(formulaTemplateVersion, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetLatestVersionByStatusRequest) (*formulatemplate.FormulaTemplateVersion, error)) *MockFormulaTemplateVersionRepository_GetLatestByStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetEffectiveVersion provides a mock function for the type MockFormulaTemplateVersionRepository
 func (_mock *MockFormulaTemplateVersionRepository) GetEffectiveVersion(ctx context.Context, req *repositories.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 	ret := _mock.Called(ctx, req)

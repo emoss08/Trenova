@@ -21,7 +21,11 @@
             "Customer",
             "TractorType",
             "TrailerType",
+            "ServiceType",
+            "ShipmentType",
             "Moves.Stops",
+            "Moves.Stops.Location",
+            "Moves.Stops.Location.State",
             "AdditionalCharges.AccessorialCharge",
             "Commodities.Commodity",
             "Commodities.Commodity.HazardousMaterial"
@@ -345,6 +349,354 @@
                 "requires": [
                     "Commodities",
                     "Commodities.Commodity"
+                ]
+            }
+        },
+        "origin": {
+            "description": "The shipment's first pickup stop",
+            "type": "object",
+            "properties": {
+                "city": {
+                    "description": "City of the first pickup stop's location; empty when the stop has no location",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeOriginCity",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                },
+                "state": {
+                    "description": "State abbreviation of the first pickup stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeOriginState",
+                        "preload": [
+                            "Moves.Stops.Location",
+                            "Moves.Stops.Location.State"
+                        ]
+                    }
+                },
+                "zip": {
+                    "description": "Postal code of the first pickup stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeOriginZip",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                }
+            }
+        },
+        "destination": {
+            "description": "The shipment's final delivery stop",
+            "type": "object",
+            "properties": {
+                "city": {
+                    "description": "City of the final delivery stop's location; empty when the stop has no location",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeDestinationCity",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                },
+                "state": {
+                    "description": "State abbreviation of the final delivery stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeDestinationState",
+                        "preload": [
+                            "Moves.Stops.Location",
+                            "Moves.Stops.Location.State"
+                        ]
+                    }
+                },
+                "zip": {
+                    "description": "Postal code of the final delivery stop's location; empty when unavailable",
+                    "type": "string",
+                    "x-source": {
+                        "computed": true,
+                        "function": "computeDestinationZip",
+                        "preload": [
+                            "Moves.Stops.Location"
+                        ]
+                    }
+                }
+            }
+        },
+        "pickupDayOfWeek": {
+            "description": "Day of week of the pickup (0 = Sunday through 6 = Saturday) in the pickup location's local time, or UTC when the location has no timezone; from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "x-source": {
+                "computed": true,
+                "function": "computePickupDayOfWeek",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "pickupHour": {
+            "description": "Hour of the pickup (0-23) in the pickup location's local time, or UTC when the location has no timezone; from the first stop's actual arrival or scheduled window; 0 when the shipment has no stops",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "x-source": {
+                "computed": true,
+                "function": "computePickupHour",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "pickupMonth": {
+            "description": "Month of the pickup (1-12) in the pickup location's local time, or UTC when the location has no timezone; 0 when the shipment has no stops",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12,
+            "x-source": {
+                "computed": true,
+                "function": "computePickupMonth",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "isWeekendPickup": {
+            "description": "Whether the pickup falls on a Saturday or Sunday in the pickup location's local time, or UTC when the location has no timezone",
+            "type": "boolean",
+            "x-source": {
+                "computed": true,
+                "function": "computeIsWeekendPickup",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "fuelPrice": {
+            "description": "Latest fuel price per gallon from the organization's freshest active fuel index, supplied at rating time; empty when no index has a price, so guard it with coalesce(fuelPrice, 0) or a fallback lookup",
+            "type": ["number", "null"],
+            "minimum": 0,
+            "x-source": {
+                "provided": true,
+                "nullable": true
+            }
+        },
+        "fuelPriceDate": {
+            "description": "Date (YYYY-MM-DD) of the fuel price behind fuelPrice; empty when no index has a price",
+            "type": ["string", "null"],
+            "x-source": {
+                "provided": true,
+                "nullable": true
+            }
+        },
+        "fuelIndexCode": {
+            "description": "Code of the fuel index behind fuelPrice, such as DOE_US; empty when no index has a price",
+            "type": ["string", "null"],
+            "x-source": {
+                "provided": true,
+                "nullable": true
+            }
+        },
+        "serviceType": {
+            "description": "Service level the shipment was booked under",
+            "type": ["object", "null"],
+            "x-source": {
+                "relation": "ServiceType",
+                "nullable": true
+            },
+            "properties": {
+                "code": {
+                    "description": "Service type code, such as STD or EXP",
+                    "type": "string",
+                    "x-source": {
+                        "path": "ServiceType.Code"
+                    }
+                },
+                "description": {
+                    "description": "Service type description",
+                    "type": "string",
+                    "x-source": {
+                        "path": "ServiceType.Description"
+                    }
+                }
+            }
+        },
+        "shipmentType": {
+            "description": "Kind of shipment, such as truckload, LTL, or intermodal",
+            "type": ["object", "null"],
+            "x-source": {
+                "relation": "ShipmentType",
+                "nullable": true
+            },
+            "properties": {
+                "code": {
+                    "description": "Shipment type code",
+                    "type": "string",
+                    "x-source": {
+                        "path": "ShipmentType.Code"
+                    }
+                },
+                "description": {
+                    "description": "Shipment type description",
+                    "type": "string",
+                    "x-source": {
+                        "path": "ShipmentType.Description"
+                    }
+                }
+            }
+        },
+        "totalCubicFeet": {
+            "description": "Sum of length × width × height × pieces across commodity lines that have all three dimensions; lines without dimensions add nothing",
+            "type": "number",
+            "minimum": 0,
+            "x-source": {
+                "computed": true,
+                "function": "computeTotalCubicFeet",
+                "requires": [
+                    "Commodities"
+                ]
+            }
+        },
+        "density": {
+            "description": "Total weight over total cubic feet in pounds per cubic foot; empty when no commodity line has dimensions",
+            "type": ["number", "null"],
+            "x-source": {
+                "computed": true,
+                "function": "computeDensity",
+                "nullable": true,
+                "requires": [
+                    "Commodities"
+                ]
+            }
+        },
+        "primaryFreightClass": {
+            "description": "Freight class of the heaviest commodity line; empty when no line has a class",
+            "type": "string",
+            "x-source": {
+                "computed": true,
+                "function": "computePrimaryFreightClass",
+                "requires": [
+                    "Commodities",
+                    "Commodities.Commodity"
+                ]
+            }
+        },
+        "highestFreightClass": {
+            "description": "Numerically highest freight class on the shipment, which governs a mixed LTL shipment without a mixing exception; empty when no line has a class",
+            "type": "string",
+            "x-source": {
+                "computed": true,
+                "function": "computeHighestFreightClass",
+                "requires": [
+                    "Commodities",
+                    "Commodities.Commodity"
+                ]
+            }
+        },
+        "stops": {
+            "description": "Every stop on the shipment in move and sequence order, with its type, status, window, actuals, and location. Use with map, filter, and sum: count(stops, .type == \"Delivery\"), sum(map(stops, .weight ?? 0))",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "description": "Pickup, Delivery, SplitPickup, or SplitDelivery"},
+                    "status": {"type": "string", "description": "Stop status such as New, InTransit, Completed, or Canceled"},
+                    "scheduleType": {"type": "string", "description": "Open or Appointment"},
+                    "sequence": {"type": "integer", "description": "Zero-based order of the stop within its move"},
+                    "pieces": {"type": ["number", "null"], "description": "Pieces handled at this stop; empty when not recorded"},
+                    "weight": {"type": ["number", "null"], "description": "Weight handled at this stop; empty when not recorded"},
+                    "windowStart": {"type": ["integer", "null"], "description": "Scheduled window start as unix seconds; empty when not set"},
+                    "windowEnd": {"type": ["integer", "null"], "description": "Scheduled window end as unix seconds; empty when not set"},
+                    "actualArrival": {"type": ["integer", "null"], "description": "Actual arrival as unix seconds; empty until the driver arrives"},
+                    "actualDeparture": {"type": ["integer", "null"], "description": "Actual departure as unix seconds; empty until the driver departs"},
+                    "city": {"type": "string", "description": "City of the stop's location"},
+                    "state": {"type": "string", "description": "State abbreviation of the stop's location"},
+                    "zip": {"type": "string", "description": "Postal code of the stop's location"},
+                    "timezone": {"type": "string", "description": "IANA timezone of the stop's location; empty when the location has none"}
+                }
+            },
+            "x-source": {
+                "computed": true,
+                "function": "computeStops",
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "commodities": {
+            "description": "Every commodity line with its class, dimensions, cube, density, and hazmat flag. Use with map, filter, and sum: sum(map(commodities, .cubicFeet ?? 0)), any(commodities, .freightClass == \"85\")",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Commodity name; empty when the line has no commodity record"},
+                    "freightClass": {"type": "string", "description": "NMFC freight class of the commodity, such as 55 or 85"},
+                    "weight": {"type": "number", "description": "Weight of this line"},
+                    "pieces": {"type": "number", "description": "Pieces on this line"},
+                    "lengthFeet": {"type": ["number", "null"], "description": "Length per piece in feet; empty when not recorded"},
+                    "widthFeet": {"type": ["number", "null"], "description": "Width per piece in feet; empty when not recorded"},
+                    "heightFeet": {"type": ["number", "null"], "description": "Height per piece in feet; empty when not recorded"},
+                    "cubicFeet": {"type": ["number", "null"], "description": "Length × width × height × pieces; empty when any dimension is missing"},
+                    "density": {"type": ["number", "null"], "description": "Pounds per cubic foot, weight ÷ cubicFeet; empty without a cube"},
+                    "hazmat": {"type": "boolean", "description": "Whether the commodity is a hazardous material"},
+                    "stackable": {"type": "boolean", "description": "Whether the commodity can be stacked"}
+                }
+            },
+            "x-source": {
+                "computed": true,
+                "function": "computeCommodities",
+                "requires": [
+                    "Commodities",
+                    "Commodities.Commodity",
+                    "Commodities.Commodity.HazardousMaterial"
+                ]
+            }
+        },
+        "pickupDate": {
+            "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first stop's actual arrival or scheduled window. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no stops",
+            "type": ["string", "null"],
+            "format": "date-time",
+            "x-source": {
+                "computed": true,
+                "function": "computePickupDate",
+                "nullable": true,
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "deliveryDate": {
+            "description": "The delivery as a date in the delivery location's local time (UTC when the location has no timezone), from the last stop's actual departure, actual arrival, or scheduled window end; empty when the shipment has no stops",
+            "type": ["string", "null"],
+            "format": "date-time",
+            "x-source": {
+                "computed": true,
+                "function": "computeDeliveryDate",
+                "nullable": true,
+                "requires": [
+                    "Moves"
+                ]
+            }
+        },
+        "totalHours": {
+            "description": "Hours from the first stop arrival to the last stop departure, using actual times and falling back to the scheduled windows",
+            "type": "number",
+            "minimum": 0,
+            "x-source": {
+                "computed": true,
+                "function": "computeTotalHours",
+                "requires": [
+                    "Moves"
                 ]
             }
         },

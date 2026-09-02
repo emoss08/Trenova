@@ -8,8 +8,30 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  roundingMode
+  roundingPrecision
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
 }

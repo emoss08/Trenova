@@ -6,15 +6,26 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
+)
+
+const (
+	// MaxExpressionLength bounds a single expression. The engine already caps
+	// the parsed node count; this keeps the text itself from being used as a
+	// payload, and ten thousand characters is far past any real tariff.
+	MaxExpressionLength = 10_000
+	// MaxVariableDefinitions bounds the custom variables a template declares.
+	MaxVariableDefinitions = 50
 )
 
 var (
@@ -41,6 +52,8 @@ type FormulaTemplate struct {
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions" bun:"breakdown_definitions,type:JSONB,notnull,default:'[]'"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"            bun:"min_charge,type:NUMERIC(19,4)"`
 	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"            bun:"max_charge,type:NUMERIC(19,4)"`
+	RoundingMode         ratetypes.RoundingMode              `json:"roundingMode"         bun:"rounding_mode,type:rate_rounding_mode_enum,notnull,default:'HalfUp'"`
+	RoundingPrecision    int32                               `json:"roundingPrecision"    bun:"rounding_precision,type:SMALLINT,notnull,default:2"`
 	SubmittedByID        *pulid.ID                           `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100)"`
 	SubmittedAt          *int64                              `json:"submittedAt"          bun:"submitted_at,type:BIGINT"`
 	ApprovedByID         *pulid.ID                           `json:"approvedById"         bun:"approved_by_id,type:VARCHAR(100)"`
@@ -65,7 +78,11 @@ type FormulaTemplate struct {
 func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(ft,
 		validation.Field(&ft.Name, validation.Required, validation.Length(1, 100)),
-		validation.Field(&ft.Expression, validation.Required),
+		validation.Field(&ft.Expression,
+			validation.Required,
+			validation.Length(1, MaxExpressionLength).
+				Error("Expression cannot exceed 10,000 characters"),
+		),
 		validation.Field(&ft.Type, validation.Required, validation.In(
 			TemplateTypeFreightCharge,
 			TemplateTypeAccessorialCharge,
@@ -76,9 +93,27 @@ func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 			StatusDraft,
 			StatusInReview,
 		)),
+		validation.Field(&ft.RoundingMode,
+			validation.When(
+				ft.RoundingMode != "",
+				domainvalidation.ValidEnum[ratetypes.RoundingMode]("Rounding mode is invalid"),
+			),
+		),
+		validation.Field(&ft.RoundingPrecision,
+			validation.Min(int32(0)).Error("Rounding precision cannot be negative"),
+			validation.Max(formulatypes.MaxRoundingPrecision).
+				Error("Rounding precision cannot exceed 4"),
+		),
 	))
 
 	ft.validateGuardrails(multiErr)
+	if len(ft.VariableDefinitions) > MaxVariableDefinitions {
+		multiErr.Add(
+			"variableDefinitions",
+			errortypes.ErrInvalid,
+			"A template cannot declare more than 50 custom variables",
+		)
+	}
 	formulatypes.ValidateBreakdownDefinitions(ft.BreakdownDefinitions, multiErr)
 }
 
@@ -110,8 +145,39 @@ func (ft *FormulaTemplate) ApplyVersion(version *FormulaTemplateVersion) *Formul
 	resolved.BreakdownDefinitions = version.BreakdownDefinitions
 	resolved.MinCharge = version.MinCharge
 	resolved.MaxCharge = version.MaxCharge
+	resolved.RoundingMode = version.RoundingMode
+	resolved.RoundingPrecision = version.RoundingPrecision
 	resolved.CurrentVersionNumber = version.VersionNumber
 	return &resolved
+}
+
+// ChargePolicy is what the template does to a raw evaluation before it is
+// billable. Snapshots taken before rounding existed carry an empty mode, which
+// Normalized resolves to the half-up-to-the-cent every rating used to get.
+func (ft *FormulaTemplate) ChargePolicy() formulatypes.ChargePolicy {
+	return formulatypes.ChargePolicy{
+		MinCharge:         ft.MinCharge,
+		MaxCharge:         ft.MaxCharge,
+		RoundingMode:      ft.RoundingMode,
+		RoundingPrecision: ft.RoundingPrecision,
+	}.Normalized()
+}
+
+// NormalizeRounding writes the default policy onto a template that never chose
+// one, so a record built by a seeder, an import of an older export, or the
+// standard catalog stores the same policy it will rate with.
+func (ft *FormulaTemplate) NormalizeRounding() {
+	policy := ft.ChargePolicy()
+	ft.RoundingMode = policy.RoundingMode
+	ft.RoundingPrecision = policy.RoundingPrecision
+}
+
+func (ft *FormulaTemplate) ApplyVersionFull(version *FormulaTemplateVersion) *FormulaTemplate {
+	resolved := ft.ApplyVersion(version)
+	resolved.Name = version.Name
+	resolved.Description = version.Description
+	resolved.Metadata = version.Metadata
+	return resolved
 }
 
 func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
@@ -124,6 +190,8 @@ func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
 		ft.Type != other.Type ||
 		!nullDecimalEqual(ft.MinCharge, other.MinCharge) ||
 		!nullDecimalEqual(ft.MaxCharge, other.MaxCharge) ||
+		ft.ChargePolicy().RoundingMode != other.ChargePolicy().RoundingMode ||
+		ft.ChargePolicy().RoundingPrecision != other.ChargePolicy().RoundingPrecision ||
 		!variableDefinitionsEqual(ft.VariableDefinitions, other.VariableDefinitions) ||
 		!breakdownDefinitionsEqual(ft.BreakdownDefinitions, other.BreakdownDefinitions)
 }
@@ -176,6 +244,7 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 		if ft.ID.IsNil() {
 			ft.ID = pulid.MustNew("ft_")
 		}
+		ft.NormalizeRounding()
 		ft.CreatedAt = now
 	case *bun.UpdateQuery:
 		ft.UpdatedAt = now

@@ -18,16 +18,10 @@ This directory contains comprehensive documentation for the Trenova Formula pack
 - **[Function Reference](function-reference.md)** - Detailed documentation of all built-in functions
 - **[Integration Guide](integration-guide.md)** - How to integrate formulas into Trenova applications
 
-### API Documentation
+### For Developers
 
-The `api/` subdirectory contains technical documentation for developers:
-
-- **[API Overview](api/README.md)** - Technical API overview
-- **[Type Conversion](api/conversion.md)** - Type system and conversion rules
-- **[Error Handling](api/errors.md)** - Error types and handling
-- **[Expression Engine](api/expression.md)** - Expression parsing and evaluation
-- **[Schema System](api/schema.md)** - JSON Schema integration
-- **[Variable System](api/variables.md)** - Variable registration and resolution
+- **[Design](DESIGN.md)** - Architecture and design decisions for the formula package
+- **[User Guide](USER_GUIDE.md)** - End-to-end walkthrough of authoring and testing templates
 
 ## Quick Links
 
@@ -39,9 +33,8 @@ The `api/` subdirectory contains technical documentation for developers:
 
 ### For Developers
 
-1. Read the [main README](../README.md) for architecture overview
+1. Read the [Design document](DESIGN.md) for architecture overview
 2. Follow the [Integration Guide](integration-guide.md) for implementation patterns
-3. Consult the [API documentation](api/) for technical details
 
 ## Common Use Cases
 
@@ -83,7 +76,6 @@ is_expedited && distance < 500 ? 8 : 24
 - Check the [Expression Syntax Guide](expression-syntax.md) for syntax questions
 - See the [Function Reference](function-reference.md) for function usage
 - Review the [Integration Guide](integration-guide.md) for implementation help
-- Consult the [API documentation](api/) for technical details
 
 ## Contributing
 

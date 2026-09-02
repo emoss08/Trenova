@@ -218,9 +218,15 @@ tan(3.142)             // ~0 (tan of π)
 
 ### Rounding
 
+All rounding functions work in decimal arithmetic, so `round(2.675, 2)` is `2.68` the
+way a person expects rather than the `2.67` binary floating point produces. Note that
+the template's own **charge policy** (rounding mode and precision) is applied to the
+final amount after guardrails, so an expression rarely needs to round its own result;
+these functions are for intermediate steps such as per-unit rates.
+
 #### round(x, precision?)
 
-Rounds a number to the specified decimal places.
+Rounds half up to the specified decimal places.
 
 **Parameters:**
 
@@ -234,10 +240,50 @@ Rounds a number to the specified decimal places.
 ```javascript
 round(3.14159)         // 3
 round(3.14159, 2)      // 3.14
-round(3.14159, 4)      // 3.1416
+round(2.675, 2)        // 2.68
 round(1234.5)          // 1235
 round(1234.5, -2)      // 1200
 round(1.5, 400)        // Error: round decimals must be between -12 and 12
+```
+
+#### roundUp(x, precision?)
+
+Rounds toward positive infinity at the given decimal places. This is what a tariff
+means by "rounded up to the nearest cent".
+
+```javascript
+roundUp(2.001, 2)      // 2.01
+roundUp(2.0, 2)        // 2
+```
+
+#### roundDown(x, precision?)
+
+Rounds toward negative infinity at the given decimal places.
+
+```javascript
+roundDown(2.999, 2)    // 2.99
+```
+
+#### roundHalfEven(x, precision?)
+
+Banker's rounding: an exact half goes to the even neighbour, so a large book of
+charges does not drift upward.
+
+```javascript
+roundHalfEven(2.665, 2)   // 2.66
+roundHalfEven(2.675, 2)   // 2.68
+roundHalfEven(2.5)        // 2
+```
+
+#### roundTo(x, increment)
+
+Rounds to the nearest multiple of `increment`: the nearest $5, the nearest quarter,
+the nearest hundredweight. The increment must be positive.
+
+```javascript
+roundTo(123.4, 5)      // 125
+roundTo(10.13, 0.25)   // 10.25
+roundTo(10, 0)         // Error: roundTo increment must be a positive number
 ```
 
 #### floor(x)
@@ -582,11 +628,12 @@ coalesce(null, null)             // null
 
 ## Lookup Table Functions
 
-A lookup table is a rate matrix with a single axis, managed under Billing → Rate Matrices and
-referenced by its code. Two match modes exist: **Exact** (string key → value) and **Range**
-(numeric key matched against bands; band minimum inclusive, maximum exclusive, open-ended final
-band allowed). Matrices with more than one axis cannot be addressed from a formula — lookup()
-supplies a single key, and a multi-axis grid needs one value per axis.
+A lookup table is a rate matrix managed under Billing → Rate Matrices and referenced by its
+code. Two match modes exist per axis: **Exact** (string key → value) and **Range** (numeric key
+matched against bands; band minimum inclusive, maximum exclusive, open-ended final band
+allowed). Single-axis matrices are addressed with `lookup`/`lookupOr`; two-axis matrices (a
+class tariff's weight break × zone, for example) with `lookup2`/`lookup2Or`. Matrices with more
+than two axes cannot be addressed from a formula.
 
 #### lookup(table, key)
 
@@ -619,9 +666,75 @@ Like `lookup`, but returns `default` instead of erroring when the table or entry
 lookupOr("lane_rate", laneCode, 0)       // 0 when the lane has no configured rate
 ```
 
+#### lookup2(table, rowKey, colKey)
+
+Returns the value at the row/column intersection of the two-axis matrix whose code is `table`.
+The row key addresses the axis at position 0, the column key the axis at position 1, and each
+axis matches by its own mode — an exact zone key beside a banded weight axis is the typical
+class-tariff shape.
+
+**Parameters:**
+
+- `table` (string): The matrix code (must exist, be active, and have exactly two axes)
+- `rowKey` (string | number): Key for the first axis (exact key or numeric value for range axes)
+- `colKey` (string | number): Key for the second axis
+
+**Returns:** number
+
+**Errors:** unknown table, no matching intersection, or a non-numeric key against a range axis.
+
+**Examples:**
+
+```javascript
+lookup2("class_rates", "ZONE_5", 8500)             // rate for zone 5, 5000–10000 lb band
+totalWeight * lookup2("class_rates", destination.state, totalWeight)
+```
+
+#### lookup2Or(table, rowKey, colKey, default)
+
+Like `lookup2`, but returns `default` instead of erroring when the table or intersection is
+missing.
+
+**Examples:**
+
+```javascript
+lookup2Or("zone_weight_rates", origin.zip, totalWeight, 0)
+```
+
+#### lookupInterp(table, key)
+
+Reads a banded single-axis table as a curve. Between two band floors the value is interpolated
+linearly between those bands' values; below the first floor or past the last floor the edge
+band's value is held, so the curve never extrapolates.
+
+**Examples:**
+
+```javascript
+// bands: 2.00 → 0.10, 3.00 → 0.20, 4.00 → 0.40
+lookupInterp("fuel_curve", 3.5)      // 0.30
+baseRate * (1 + lookupInterp("fuel_curve", fuelPrice))
+```
+
+#### deficitWeight(table, weight)
+
+The weight to bill under a per-unit break table such as a hundredweight tariff. Returns the
+actual weight, unless charging the next break's minimum weight at the next break's rate is
+cheaper, in which case that minimum is returned. Pair it with `lookup` on the same table.
+
+**Examples:**
+
+```javascript
+// bands: 0–500 @ 30, 500–1000 @ 20
+deficitWeight("cwt", 450)            // 500 (500 × 20 < 450 × 30)
+deficitWeight("cwt", 300)            // 300
+deficitWeight("cwt", totalWeight) / 100 * lookup("cwt", deficitWeight("cwt", totalWeight))
+```
+
 Template validation verifies that every string-literal table name referenced by
-`lookup`/`lookupOr` names an active single-axis matrix in your organization. `lookup` and `lookupOr` are reserved names —
-variables and schema fields cannot use them.
+`lookup`/`lookupOr`/`lookupInterp`/`deficitWeight` names an active single-axis matrix in your
+organization, and that every one referenced by `lookup2`/`lookup2Or` names an active two-axis
+matrix. `lookup`, `lookupOr`, `lookup2`, `lookup2Or`, `lookupInterp`, and `deficitWeight` are
+reserved names — variables and schema fields cannot use them.
 
 ## Function Composition
 

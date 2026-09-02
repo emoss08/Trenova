@@ -3370,6 +3370,10 @@ definitions:
                 type: string
             reviewComment:
                 type: string
+            roundingMode:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+            roundingPrecision:
+                type: integer
             schemaId:
                 type: string
             sourceTemplate:
@@ -3438,6 +3442,10 @@ definitions:
                 type: string
             organizationId:
                 type: string
+            roundingMode:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+            roundingPrecision:
+                type: integer
             schemaId:
                 type: string
             status:
@@ -3457,6 +3465,45 @@ definitions:
             versionNumber:
                 type: integer
         type: object
+    github_com_emoss08_trenova_internal_core_domain_formulatemplate.Review:
+        properties:
+            actor:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            actorId:
+                type: string
+            baseVersionNumber:
+                type: integer
+            businessUnitId:
+                type: string
+            comment:
+                type: string
+            createdAt:
+                type: integer
+            decision:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.ReviewDecision'
+            id:
+                type: string
+            organizationId:
+                type: string
+            round:
+                type: integer
+            templateId:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_formulatemplate.ReviewDecision:
+        enum:
+            - Submitted
+            - Approved
+            - Rejected
+            - ChangesRequested
+            - Expired
+        type: string
+        x-enum-varnames:
+            - ReviewDecisionSubmitted
+            - ReviewDecisionApproved
+            - ReviewDecisionRejected
+            - ReviewDecisionChangesRequested
+            - ReviewDecisionExpired
     github_com_emoss08_trenova_internal_core_domain_formulatemplate.Status:
         enum:
             - Active
@@ -3477,6 +3524,36 @@ definitions:
         x-enum-varnames:
             - TemplateTypeFreightCharge
             - TemplateTypeAccessorialCharge
+    github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase:
+        properties:
+            businessUnitId:
+                type: string
+            createdAt:
+                type: integer
+            createdById:
+                type: string
+            description:
+                type: string
+            expectedAmount:
+                type: number
+            id:
+                type: string
+            name:
+                type: string
+            organizationId:
+                type: string
+            templateId:
+                type: string
+            tolerance:
+                type: number
+            updatedAt:
+                type: integer
+            variables:
+                additionalProperties: {}
+                type: object
+            version:
+                type: integer
+        type: object
     github_com_emoss08_trenova_internal_core_domain_formulatemplate.VersionTag:
         enum:
             - Stable
@@ -4687,6 +4764,8 @@ definitions:
                 type: string
             status:
                 $ref: '#/definitions/github_com_emoss08_trenova_pkg_domaintypes.Status'
+            timezone:
+                type: string
             updatedAt:
                 type: integer
             version:
@@ -6402,6 +6481,18 @@ definitions:
             - DimensionKindServiceType
             - DimensionKindCustom
             - DimensionKindQuantity
+    github_com_emoss08_trenova_internal_core_domain_ratematrix.KeyNormalization:
+        enum:
+            - None
+            - Trim
+            - Upper
+            - Zip3
+        type: string
+        x-enum-varnames:
+            - KeyNormalizationNone
+            - KeyNormalizationTrim
+            - KeyNormalizationUpper
+            - KeyNormalizationZip3
     github_com_emoss08_trenova_internal_core_domain_ratematrix.MatchMode:
         enum:
             - Exact
@@ -6410,6 +6501,16 @@ definitions:
         x-enum-varnames:
             - MatchModeExact
             - MatchModeRange
+    github_com_emoss08_trenova_internal_core_domain_ratematrix.RangeOverflow:
+        enum:
+            - Error
+            - ClampToTopBand
+            - Nearest
+        type: string
+        x-enum-varnames:
+            - RangeOverflowError
+            - RangeOverflowClampToTopBand
+            - RangeOverflowNearest
     github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix:
         properties:
             businessUnitId:
@@ -6505,6 +6606,8 @@ definitions:
                 type: integer
             id:
                 type: string
+            keyNormalization:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.KeyNormalization'
             kind:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.DimensionKind'
             label:
@@ -6515,6 +6618,8 @@ definitions:
                 type: string
             position:
                 type: integer
+            rangeOverflow:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.RangeOverflow'
             rateMatrixId:
                 type: string
             updatedAt:
@@ -7586,6 +7691,13 @@ definitions:
                 type: string
             ratedAt:
                 type: integer
+            receipt:
+                allOf:
+                    - $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.Receipt'
+                description: |-
+                    Receipt is the formula's calculation receipt when a formula priced the
+                    load: variables with their sources, rate-table rows consulted, and the
+                    amount before guardrails and rounding.
             resolvedVariables:
                 additionalProperties: {}
                 type: object
@@ -11179,6 +11291,64 @@ definitions:
             name:
                 type: string
         type: object
+    github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaRequest:
+        properties:
+            expression:
+                type: string
+            schemaId:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaResponse:
+        properties:
+            explanation:
+                type: string
+            modelIdentifier:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaRequest:
+        properties:
+            instruction:
+                type: string
+            schemaId:
+                type: string
+            templateType:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType'
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaResponse:
+        properties:
+            explanation:
+                type: string
+            expression:
+                type: string
+            modelIdentifier:
+                type: string
+            scenarios:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ProposedScenario'
+                type: array
+            validation:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestExpressionResponse'
+            variableDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ProposedScenario:
+        properties:
+            description:
+                type: string
+            error:
+                type: string
+            expectedAmount:
+                type: number
+            name:
+                type: string
+            valid:
+                type: boolean
+            variables:
+                additionalProperties: {}
+                type: object
+        type: object
     github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestResponse:
         properties:
             results:
@@ -11211,9 +11381,13 @@ definitions:
         type: object
     github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestSummary:
         properties:
+            candidateErrorCount:
+                type: integer
             candidateTotal:
                 type: number
             changedCount:
+                type: integer
+            currentErrorCount:
                 type: integer
             currentTotal:
                 type: number
@@ -11222,6 +11396,8 @@ definitions:
             errorCount:
                 type: integer
             evaluatedCount:
+                type: integer
+            guardrailCount:
                 type: integer
             increasedCount:
                 type: integer
@@ -11236,6 +11412,232 @@ definitions:
             totalDeltaPct:
                 type: number
         type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning:
+        properties:
+            field:
+                type: string
+            message:
+                type: string
+            scope:
+                type: string
+            suggestion:
+                type: string
+            type:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload:
+        properties:
+            breakdownDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.BreakdownDefinition'
+                type: array
+            description:
+                type: string
+            expression:
+                type: string
+            maxCharge:
+                $ref: '#/definitions/decimal.NullDecimal'
+            metadata:
+                additionalProperties: {}
+                type: object
+            minCharge:
+                $ref: '#/definitions/decimal.NullDecimal'
+            name:
+                type: string
+            roundingMode:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+            roundingPrecision:
+                type: integer
+            schemaId:
+                type: string
+            sourceTemplateId:
+                type: string
+            sourceVersionNumber:
+                type: integer
+            testCases:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput'
+                type: array
+            type:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType'
+            variableDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesRequest:
+        properties:
+            exportVersion:
+                type: string
+            onConflict:
+                type: string
+            template:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload'
+            templates:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload'
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesResponse:
+        properties:
+            created:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate'
+                type: array
+            renamed:
+                additionalProperties:
+                    type: string
+                type: object
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.InstallStandardsResponse:
+        properties:
+            installed:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate'
+                type: array
+            skipped:
+                items:
+                    type: string
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessCheck:
+        properties:
+            detail:
+                type: string
+            key:
+                type: string
+            label:
+                type: string
+            status:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessResponse:
+        properties:
+            canApprove:
+                type: boolean
+            canSubmit:
+                type: boolean
+            checks:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessCheck'
+                type: array
+            scenarioFailing:
+                items:
+                    type: string
+                type: array
+            scenarioPassed:
+                type: integer
+            scenarioTotal:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReviewDiffResponse:
+        properties:
+            baseExpression:
+                type: string
+            baseVersion:
+                type: integer
+            changeCount:
+                type: integer
+            changes:
+                additionalProperties:
+                    $ref: '#/definitions/jsonutils.FieldChange'
+                type: object
+            currentExpression:
+                type: string
+            currentVersion:
+                type: integer
+            hasApprovedBase:
+                type: boolean
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesRequest:
+        properties:
+            candidate:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseCandidate'
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesResponse:
+        properties:
+            failed:
+                type: integer
+            passed:
+                type: integer
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseResult'
+                type: array
+            total:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.StandardTemplate:
+        properties:
+            description:
+                type: string
+            expression:
+                type: string
+            name:
+                type: string
+            schemaId:
+                type: string
+            type:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType'
+            variableDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseCandidate:
+        properties:
+            breakdownDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.BreakdownDefinition'
+                type: array
+            expression:
+                type: string
+            maxCharge:
+                $ref: '#/definitions/decimal.NullDecimal'
+            minCharge:
+                $ref: '#/definitions/decimal.NullDecimal'
+            roundingMode:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+            roundingPrecision:
+                type: integer
+            variableDefinitions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition'
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput:
+        properties:
+            description:
+                type: string
+            expectedAmount:
+                type: number
+            name:
+                type: string
+            tolerance:
+                type: number
+            variables:
+                additionalProperties: {}
+                type: object
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseResult:
+        properties:
+            actualAmount:
+                type: number
+            difference:
+                type: number
+            error:
+                type: string
+            expectedAmount:
+                type: number
+            name:
+                type: string
+            passed:
+                type: boolean
+            testCaseId:
+                type: string
+            tolerance:
+                type: number
+        type: object
     github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestExpressionResponse:
         properties:
             breakdown:
@@ -11244,14 +11646,40 @@ definitions:
                 type: array
             error:
                 type: string
+            guardrail:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.GuardrailResult'
             message:
                 type: string
+            receipt:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.Receipt'
             resolvedVariables:
                 additionalProperties: {}
                 type: object
             result: {}
+            rounding:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult'
             valid:
                 type: boolean
+            warnings:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning'
+                type: array
+        type: object
+    github_com_emoss08_trenova_internal_core_services_formulatemplateservice.UpdateTestCaseRequest:
+        properties:
+            description:
+                type: string
+            expectedAmount:
+                type: number
+            name:
+                type: string
+            tolerance:
+                type: number
+            variables:
+                additionalProperties: {}
+                type: object
+            version:
+                type: integer
         type: object
     github_com_emoss08_trenova_internal_core_services_pagefavoriteservice.ToggleResult:
         properties:
@@ -11502,6 +11930,77 @@ definitions:
             name:
                 type: string
         type: object
+    github_com_emoss08_trenova_pkg_formulatemplatetypes.GuardrailResult:
+        properties:
+            applied:
+                type: boolean
+            bound:
+                type: string
+            maxCharge:
+                type: number
+            minCharge:
+                type: number
+            rawAmount:
+                type: number
+        type: object
+    github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult:
+        properties:
+            applied:
+                type: boolean
+            mode:
+                type: string
+            precision:
+                type: integer
+            unroundedAmount:
+                type: number
+        type: object
+    github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaDescription:
+        properties:
+            functions:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaFunctionInfo'
+                type: array
+            schemaId:
+                type: string
+            variables:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaVariableInfo'
+                type: array
+        type: object
+    github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaFunctionInfo:
+        properties:
+            category:
+                type: string
+            description:
+                type: string
+            example:
+                type: string
+            name:
+                type: string
+            operator:
+                type: boolean
+            signature:
+                type: string
+        type: object
+    github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaVariableInfo:
+        properties:
+            category:
+                type: string
+            computed:
+                type: boolean
+            description:
+                type: string
+            enum:
+                items:
+                    type: string
+                type: array
+            name:
+                type: string
+            nullable:
+                type: boolean
+            type:
+                type: string
+        type: object
     github_com_emoss08_trenova_pkg_formulatypes.BreakdownDefinition:
         properties:
             expression:
@@ -11511,6 +12010,74 @@ definitions:
             name:
                 type: string
         type: object
+    github_com_emoss08_trenova_pkg_formulatypes.LookupMatch:
+        properties:
+            adjusted:
+                description: |-
+                    Adjusted says the axis's overflow policy moved the key into this band
+                    because no band covered it.
+                type: boolean
+            bandMax:
+                type: number
+            bandMin:
+                type: number
+            matchedKey:
+                type: string
+        type: object
+    github_com_emoss08_trenova_pkg_formulatypes.LookupTrace:
+        properties:
+            error:
+                type: string
+            keys:
+                items: {}
+                type: array
+            match:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.LookupMatch'
+            scope:
+                description: Scope is "expression" for the main formula or the breakdown line's name.
+                type: string
+            table:
+                type: string
+            value:
+                type: number
+        type: object
+    github_com_emoss08_trenova_pkg_formulatypes.Receipt:
+        properties:
+            durationMicros:
+                type: integer
+            effectiveFrom:
+                type: integer
+            lookups:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.LookupTrace'
+                type: array
+            rawAmount:
+                type: number
+            variables:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableProvenance'
+                type: array
+            versionNumber:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_pkg_formulatypes.ValueSource:
+        enum:
+            - field
+            - computed
+            - input
+            - override
+            - default
+            - provided
+            - sample
+        type: string
+        x-enum-varnames:
+            - ValueSourceField
+            - ValueSourceComputed
+            - ValueSourceInput
+            - ValueSourceOverride
+            - ValueSourceDefault
+            - ValueSourceProvided
+            - ValueSourceSample
     github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition:
         properties:
             defaultValue: {}
@@ -11524,6 +12091,14 @@ definitions:
                 type: string
             type:
                 $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.VariableValueType'
+        type: object
+    github_com_emoss08_trenova_pkg_formulatypes.VariableProvenance:
+        properties:
+            name:
+                type: string
+            source:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatypes.ValueSource'
+            value: {}
         type: object
     github_com_emoss08_trenova_pkg_formulatypes.VariableValueType:
         enum:
@@ -12981,6 +13556,11 @@ definitions:
             comment:
                 type: string
         type: object
+    internal_api_handlers_formulatemplatehandler.approvalImpactRequest:
+        properties:
+            limit:
+                type: integer
+        type: object
     internal_api_handlers_formulatemplatehandler.backtestRequest:
         properties:
             expression:
@@ -13019,6 +13599,17 @@ definitions:
                 type: array
             expression:
                 type: string
+            maxCharge:
+                type: string
+            minCharge:
+                type: string
+            roundingMode:
+                description: |-
+                    RoundingMode and RoundingPrecision are the charge policy under test;
+                    omitted means the default the template would store.
+                type: string
+            roundingPrecision:
+                type: integer
             schemaId:
                 type: string
             shipmentId:
@@ -20901,7 +21492,7 @@ paths:
                 "400":
                     description: Bad Request
                     schema:
-                        $ref: '#/definitions/gin.H'
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
                 "401":
                     description: Unauthorized
                     schema:
@@ -20956,6 +21547,51 @@ paths:
             summary: Fork a formula template
             tags:
                 - Formula Templates
+    /formula-templates/{templateID}/impact:
+        post:
+            consumes:
+                - application/json
+            operationId: formulaTemplateApprovalImpact
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Impact request
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_formulatemplatehandler.approvalImpactRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestResponse'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Compare a template's pending content against the versions its shipments actually priced with
+            tags:
+                - Formula Templates
     /formula-templates/{templateID}/lineage:
         get:
             operationId: getFormulaTemplateLineage
@@ -20987,6 +21623,39 @@ paths:
             security:
                 - BearerAuth: []
             summary: Get formula template lineage
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/readiness:
+        get:
+            operationId: formulaTemplateReadiness
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessResponse'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Report whether a formula template is ready to submit or approve
             tags:
                 - Formula Templates
     /formula-templates/{templateID}/reject:
@@ -21032,6 +21701,119 @@ paths:
             security:
                 - BearerAuth: []
             summary: Reject a formula template
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/request-changes:
+        post:
+            consumes:
+                - application/json
+            operationId: requestFormulaTemplateChanges
+            parameters:
+                - description: Template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Reviewer comment
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_formulatemplatehandler.approvalActionRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Request changes on a formula template under review
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/review-diff:
+        get:
+            operationId: formulaTemplateReviewDiff
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReviewDiffResponse'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Compare a formula template's pending content with its last approved snapshot
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/reviews:
+        get:
+            operationId: listFormulaTemplateReviews
+            parameters:
+                - description: Template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.Review'
+                        type: array
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List the review history of a formula template
             tags:
                 - Formula Templates
     /formula-templates/{templateID}/rollback:
@@ -21118,6 +21900,213 @@ paths:
             security:
                 - BearerAuth: []
             summary: Submit a formula template for review
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/test-cases:
+        get:
+            operationId: listFormulaTemplateTestCases
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase'
+                        type: array
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List a formula template's saved test scenarios
+            tags:
+                - Formula Templates
+        post:
+            consumes:
+                - application/json
+            operationId: createFormulaTemplateTestCase
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Test scenario
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Create a test scenario for a formula template
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/test-cases/{testCaseID}:
+        delete:
+            operationId: deleteFormulaTemplateTestCase
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Test scenario ID
+                  in: path
+                  name: testCaseID
+                  required: true
+                  type: string
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Delete a formula template test scenario
+            tags:
+                - Formula Templates
+        put:
+            consumes:
+                - application/json
+            operationId: updateFormulaTemplateTestCase
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Test scenario ID
+                  in: path
+                  name: testCaseID
+                  required: true
+                  type: string
+                - description: Test scenario
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.UpdateTestCaseRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TestCase'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Update a formula template test scenario
+            tags:
+                - Formula Templates
+    /formula-templates/{templateID}/test-cases/run:
+        post:
+            consumes:
+                - application/json
+            operationId: runFormulaTemplateTestCases
+            parameters:
+                - description: Formula template ID
+                  in: path
+                  name: templateID
+                  required: true
+                  type: string
+                - description: Optional candidate content
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesResponse'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Run a formula template's test scenarios
             tags:
                 - Formula Templates
     /formula-templates/{templateID}/usage:
@@ -21412,6 +22401,86 @@ paths:
             summary: List scheduled formula template versions
             tags:
                 - Formula Templates
+    /formula-templates/ai/explain:
+        post:
+            consumes:
+                - application/json
+            operationId: explainFormulaExpression
+            parameters:
+                - description: Explanation request
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.ExplainFormulaResponse'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Explain a formula expression in plain English
+            tags:
+                - Formula Templates
+    /formula-templates/ai/generate:
+        post:
+            consumes:
+                - application/json
+            operationId: generateFormulaExpression
+            parameters:
+                - description: Generation request
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulaassistantservice.GenerateFormulaResponse'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Generate a formula expression from a natural-language description
+            tags:
+                - Formula Templates
     /formula-templates/bulk-update-status:
         post:
             consumes:
@@ -21488,6 +22557,106 @@ paths:
             summary: Duplicate formula templates
             tags:
                 - Formula Templates
+    /formula-templates/import:
+        post:
+            consumes:
+                - application/json
+            operationId: importFormulaTemplates
+            parameters:
+                - description: Import request
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatesResponse'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Import formula templates from an exported JSON payload
+            tags:
+                - Formula Templates
+    /formula-templates/install-standards:
+        post:
+            operationId: installStandardFormulaTemplates
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.InstallStandardsResponse'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Install the standard formula template library for this organization
+            tags:
+                - Formula Templates
+    /formula-templates/schema:
+        get:
+            operationId: getFormulaSchema
+            parameters:
+                - default: shipment
+                  description: Formula schema identifier
+                  in: query
+                  name: schemaId
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_formulatemplatetypes.SchemaDescription'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Describe the variables and functions available to formula expressions
+            tags:
+                - Formula Templates
     /formula-templates/select-options/:
         get:
             operationId: listFormulaTemplateOptions
@@ -21558,6 +22727,31 @@ paths:
             security:
                 - BearerAuth: []
             summary: Get a formula template option
+            tags:
+                - Formula Templates
+    /formula-templates/standards:
+        get:
+            operationId: listStandardFormulaTemplates
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.StandardTemplate'
+                        type: array
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List the standard formula template catalog
             tags:
                 - Formula Templates
     /formula-templates/test:

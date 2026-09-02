@@ -1152,6 +1152,7 @@ export type ForkCannedReportInput = {
 export type FormulaTemplateStatus =
   | 'Active'
   | 'Draft'
+  | 'InReview'
   | 'Inactive';
 
 export type FormulaTemplateType =
@@ -1754,6 +1755,14 @@ export type RateQuotePurpose =
   | 'Shopping'
   | 'Simulation'
   | 'WhatIf';
+
+/** How a formula's computed charge is reduced to its billable precision. */
+export type RateRoundingMode =
+  | 'Down'
+  | 'HalfEven'
+  | 'HalfUp'
+  | 'None'
+  | 'Up';
 
 export type RateUnit =
   | 'Day'
@@ -4671,7 +4680,7 @@ export type FleetCodeTableQueryVariables = Exact<{
 
 export type FleetCodeTableQuery = { fleetCodes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, version: number, currentVersionNumber: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
+export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, minCharge: string | null, maxCharge: string | null, roundingMode: RateRoundingMode, roundingPrecision: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, approvedAt: number | null, usageCount: number, scenarioCount: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }>, breakdownDefinitions: Array<{ name: string, label: string, expression: string }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
 export type FormulaTemplateTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -7679,8 +7688,30 @@ export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  roundingMode
+  roundingPrecision
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
 }
@@ -16548,11 +16579,33 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   expression
   status
   schemaId
+  variableDefinitions {
+    name
+    type
+    description
+    required
+    defaultValue
+    source
+  }
+  breakdownDefinitions {
+    name
+    label
+    expression
+  }
+  minCharge
+  maxCharge
+  roundingMode
+  roundingPrecision
+  sourceTemplateId
+  sourceVersionNumber
   version
   currentVersionNumber
+  approvedAt
+  usageCount
+  scenarioCount
   createdAt
   updatedAt
-}`, {"hash":"sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+}`, {"hash":"sha256:58fed7b314c6fffe6a8cfa40f90466b48ca8cf6bf254f35f47a31af88b1ff9cc"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
 export const FuelIndexTableDocument = new TypedDocumentString(`
     query FuelIndexTable($input: DataTableConnectionInput!) {
   fuelIndexes(input: $input) {
