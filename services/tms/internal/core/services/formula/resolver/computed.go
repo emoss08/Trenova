@@ -24,6 +24,14 @@ func RegisterDefaultComputed(r *Resolver) {
 	r.RegisterComputed("computeTotalWeight", computeTotalWeight)
 	r.RegisterComputed("computeTotalPieces", computeTotalPieces)
 	r.RegisterComputed("computeTotalLinearFeet", computeTotalLinearFeet)
+	r.RegisterComputed("computeTotalHours", computeTotalHours)
+	r.RegisterComputed("computeStops", computeStops)
+	r.RegisterComputed("computeCommodities", computeCommodities)
+	r.RegisterComputed("computeTotalCubicFeet", computeTotalCubicFeet)
+	r.RegisterComputed("computeDensity", computeDensity)
+	r.RegisterComputed("computePrimaryFreightClass", computePrimaryFreightClass)
+	r.RegisterComputed("computeHighestFreightClass", computeHighestFreightClass)
+	registerLaneComputed(r)
 	r.RegisterComputed("computeBaseRate", computeBaseRate)
 	r.RegisterComputed("computeFreightChargeAmount", computeFreightChargeAmount)
 	r.RegisterComputed("computeOtherChargeAmount", computeOtherChargeAmount)
@@ -31,7 +39,7 @@ func RegisterDefaultComputed(r *Resolver) {
 }
 
 func computeTotalDistance(entity any) (any, error) {
-	moves, err := getFieldSlice(entity, "Moves")
+	moves, err := movesOf(entity)
 	if err != nil {
 		return 0.0, err
 	}
@@ -47,18 +55,12 @@ func computeTotalDistance(entity any) (any, error) {
 }
 
 func computeTotalStops(entity any) (any, error) {
-	moves, err := getFieldSlice(entity, "Moves")
+	stops, err := orderedStops(entity)
 	if err != nil {
 		return 0, err
 	}
 
-	var total int
-	for _, move := range moves {
-		stops, stopsErr := getFieldSlice(move, "Stops")
-		if stopsErr == nil {
-			total += len(stops)
-		}
-	}
+	total := len(stops)
 
 	return total, nil
 }
@@ -179,8 +181,72 @@ func computeTotalLinearFeet(entity any) (any, error) {
 	return total, nil
 }
 
+func computeTotalHours(entity any) (any, error) {
+	stops, err := orderedStops(entity)
+	if err != nil {
+		return 0.0, err
+	}
+
+	var (
+		windowStart int64
+		windowEnd   int64
+		found       bool
+	)
+
+	for _, stop := range stops {
+		start, ok := stopWindowStart(stop)
+		if !ok {
+			continue
+		}
+
+		end := stopWindowEnd(stop, start)
+
+		if !found || start < windowStart {
+			windowStart = start
+		}
+		if !found || end > windowEnd {
+			windowEnd = end
+		}
+		found = true
+	}
+
+	if !found || windowEnd <= windowStart {
+		return 0.0, nil
+	}
+
+	return float64(windowEnd-windowStart) / 3600.0, nil
+}
+
+func stopWindowStart(stop any) (int64, bool) {
+	if arrival, err := getFieldInt64(stop, "ActualArrival"); err == nil {
+		return arrival, true
+	}
+
+	if scheduled, err := getFieldInt64(stop, "ScheduledWindowStart"); err == nil && scheduled > 0 {
+		return scheduled, true
+	}
+
+	return 0, false
+}
+
+func stopWindowEnd(stop any, fallback int64) int64 {
+	if departure, err := getFieldInt64(stop, "ActualDeparture"); err == nil {
+		return departure
+	}
+
+	if arrival, err := getFieldInt64(stop, "ActualArrival"); err == nil {
+		return arrival
+	}
+
+	if scheduledEnd, err := getFieldInt64(stop, "ScheduledWindowEnd"); err == nil {
+		return scheduledEnd
+	}
+
+	return fallback
+}
+
 func getFieldValue(entity any, fieldName string) (any, error) {
-	v := reflect.ValueOf(entity)
+	v := reflect.ValueOf(Unwrap(entity))
 	if v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return nil, ErrNilPointer

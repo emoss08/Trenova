@@ -17,6 +17,7 @@ package approvalworkflow
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,12 +40,27 @@ type Request struct {
 // submitter, the approver, the comment. Everything around it is the same
 // whatever is being reviewed.
 type Transition[T any, S comparable] struct {
-	Operation    string
-	From         S
+	Operation string
+	From      S
+	// AlsoFrom lists further statuses the step may start from, for a cycle
+	// where two states share a next step — an archived template is submitted
+	// for review the same way a draft is.
+	AlsoFrom     []S
 	To           S
 	PermissionOp permission.Operation
 	AuditComment string
 	Apply        func(entity T, req *Request, now int64)
+
+	// Validate runs after the status check and before anything is stamped or
+	// saved, so a transition-specific rule can refuse the move while the entity
+	// is still untouched. Nil means no extra rule.
+	Validate func(ctx context.Context, entity T, req *Request) error
+
+	// AfterSave runs after the entity is saved and before the audit record, for
+	// work that must land with the transition, such as a version snapshot. Its
+	// error fails the transition, so callers wanting atomicity run Apply inside
+	// a transaction. Nil means no extra work.
+	AfterSave func(ctx context.Context, updated T, req *Request) error
 }
 
 // Engine binds a review cycle to one entity's storage, status rules and audit
@@ -89,7 +105,7 @@ func (e Engine[T, S]) Apply(
 	}
 
 	current := e.StatusOf(entity)
-	if current != transition.From || !e.CanTransition(current, transition.To) {
+	if !transition.startsFrom(current) || !e.CanTransition(current, transition.To) {
 		return zero, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -102,6 +118,12 @@ func (e Engine[T, S]) Apply(
 		)
 	}
 
+	if transition.Validate != nil {
+		if err = transition.Validate(ctx, entity, req); err != nil {
+			return zero, err
+		}
+	}
+
 	original := e.Snapshot(entity)
 
 	e.SetStatus(entity, transition.To)
@@ -112,11 +134,21 @@ func (e Engine[T, S]) Apply(
 		return zero, err
 	}
 
+	if transition.AfterSave != nil {
+		if err = transition.AfterSave(ctx, updated, req); err != nil {
+			return zero, err
+		}
+	}
+
 	if e.Audit != nil {
 		e.Audit(updated, original, transition.PermissionOp, req, transition.AuditComment)
 	}
 
 	return updated, nil
+}
+
+func (t Transition[T, S]) startsFrom(status S) bool {
+	return status == t.From || slices.Contains(t.AlsoFrom, status)
 }
 
 // RequireComment refuses a transition that would leave no record of why.
@@ -134,6 +166,12 @@ func RequireComment(req *Request, action string) error {
 		errortypes.ErrRequired,
 		"A comment is required when "+action,
 	)
+}
+
+// Clock is the moment the engine stamps transitions with, exposed so a
+// transition's own rules measure age against the same instant.
+func (e Engine[T, S]) Clock() int64 {
+	return e.now()
 }
 
 func (e Engine[T, S]) now() int64 {

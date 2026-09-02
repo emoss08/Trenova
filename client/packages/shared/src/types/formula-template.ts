@@ -54,6 +54,19 @@ export type FormulaTemplateStatus = z.infer<typeof formulaTemplateStatusSchema>;
 export const formulaTemplateTypeSchema = z.enum(["FreightCharge", "AccessorialCharge"]);
 export type FormulaTemplateType = z.infer<typeof formulaTemplateTypeSchema>;
 
+export const formulaRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
+export type FormulaRoundingMode = z.infer<typeof formulaRoundingModeSchema>;
+
+export const DEFAULT_ROUNDING_MODE: FormulaRoundingMode = "HalfUp";
+export const DEFAULT_ROUNDING_PRECISION = 2;
+export const MAX_ROUNDING_PRECISION = 4;
+
+const roundingPrecisionSchema = z
+  .number()
+  .int("Rounding precision must be a whole number")
+  .min(0, "Rounding precision cannot be negative")
+  .max(MAX_ROUNDING_PRECISION, `Rounding precision cannot exceed ${MAX_ROUNDING_PRECISION}`);
+
 export const formulaTemplateSchema = z
   .object({
     id: z.string().optional(),
@@ -69,6 +82,8 @@ export const formulaTemplateSchema = z
     breakdownDefinitions: breakdownDefinitionsSchema,
     minCharge: decimalStringSchema,
     maxCharge: decimalStringSchema,
+    roundingMode: formulaRoundingModeSchema.default(DEFAULT_ROUNDING_MODE),
+    roundingPrecision: roundingPrecisionSchema.default(DEFAULT_ROUNDING_PRECISION),
     submittedById: z.string().nullish(),
     submittedAt: z.number().nullish(),
     approvedById: z.string().nullish(),
@@ -81,8 +96,42 @@ export const formulaTemplateSchema = z
     currentVersionNumber: z.number().optional(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
+    usageCount: z.number().optional(),
+    scenarioCount: z.number().optional(),
   })
   .superRefine((value, ctx) => {
+    const seenVariables = new Map<string, number>();
+    value.variableDefinitions.forEach((definition, index) => {
+      const name = definition.name.trim();
+      if (!name) return;
+      const first = seenVariables.get(name);
+      if (first !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Duplicate variable name; first declared as variable ${first + 1}`,
+          path: ["variableDefinitions", index, "name"],
+        });
+      } else {
+        seenVariables.set(name, index);
+      }
+    });
+
+    const seenBreakdowns = new Map<string, number>();
+    value.breakdownDefinitions.forEach((definition, index) => {
+      const name = definition.name.trim();
+      if (!name) return;
+      const first = seenBreakdowns.get(name);
+      if (first !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Duplicate breakdown name; first used by item ${first + 1}`,
+          path: ["breakdownDefinitions", index, "name"],
+        });
+      } else {
+        seenBreakdowns.set(name, index);
+      }
+    });
+
     if (value.minCharge != null && value.minCharge < 0) {
       ctx.addIssue({
         code: "custom",
@@ -178,6 +227,8 @@ export const formulaTemplateVersionSchema = z.object({
   breakdownDefinitions: breakdownDefinitionsSchema,
   minCharge: decimalStringSchema,
   maxCharge: decimalStringSchema,
+  roundingMode: formulaRoundingModeSchema.default(DEFAULT_ROUNDING_MODE),
+  roundingPrecision: roundingPrecisionSchema.default(DEFAULT_ROUNDING_PRECISION),
   effectiveFrom: z.number().nullish(),
   metadata: z.record(z.any(), z.any()).nullish(),
   changeMessage: z.string().optional(),
@@ -224,8 +275,29 @@ export const testExpressionRequestSchema = z.object({
   variables: z.record(z.any(), z.any()).default({}),
   shipmentId: z.string().optional(),
   breakdowns: z.array(breakdownDefinitionSchema).optional(),
+  minCharge: z.string().optional(),
+  maxCharge: z.string().optional(),
+  roundingMode: formulaRoundingModeSchema.optional(),
+  roundingPrecision: z.number().int().optional(),
 });
 export type TestExpressionRequest = z.infer<typeof testExpressionRequestSchema>;
+
+export const guardrailResultSchema = z.object({
+  applied: z.boolean(),
+  bound: z.enum(["min", "max"]).optional(),
+  rawAmount: z.coerce.number(),
+  minCharge: z.coerce.number().nullish(),
+  maxCharge: z.coerce.number().nullish(),
+});
+export type GuardrailResult = z.output<typeof guardrailResultSchema>;
+
+export const roundingResultSchema = z.object({
+  mode: z.string(),
+  precision: z.number(),
+  applied: z.boolean(),
+  unroundedAmount: z.coerce.number(),
+});
+export type RoundingResult = z.output<typeof roundingResultSchema>;
 
 export const testBreakdownItemSchema = z.object({
   name: z.string(),
@@ -235,6 +307,60 @@ export const testBreakdownItemSchema = z.object({
 });
 export type TestBreakdownItem = z.output<typeof testBreakdownItemSchema>;
 
+export const formulaValueSourceSchema = z.enum([
+  "field",
+  "computed",
+  "input",
+  "override",
+  "default",
+  "sample",
+  "provided",
+]);
+export type FormulaValueSource = z.infer<typeof formulaValueSourceSchema>;
+
+export const lookupMatchSchema = z.object({
+  matchedKey: z.string().optional(),
+  adjusted: z.boolean().optional(),
+  bandMin: z.coerce.number().nullish(),
+  bandMax: z.coerce.number().nullish(),
+});
+export type LookupMatch = z.output<typeof lookupMatchSchema>;
+
+export const lookupTraceSchema = z.object({
+  scope: z.string(),
+  table: z.string(),
+  keys: z.array(z.any()),
+  value: z.number(),
+  match: lookupMatchSchema.nullish(),
+  error: z.string().optional(),
+});
+export type LookupTrace = z.output<typeof lookupTraceSchema>;
+
+export const formulaReceiptSchema = z.object({
+  variables: z.array(
+    z.object({
+      name: z.string(),
+      value: z.any(),
+      source: formulaValueSourceSchema.catch("sample"),
+    }),
+  ),
+  lookups: z.array(lookupTraceSchema).nullish(),
+  rawAmount: z.coerce.number(),
+  versionNumber: z.number().optional(),
+  effectiveFrom: z.number().nullish(),
+  durationMicros: z.number().optional(),
+});
+export type FormulaReceipt = z.output<typeof formulaReceiptSchema>;
+
+export const expressionWarningSchema = z.object({
+  scope: z.string(),
+  field: z.string(),
+  type: z.string().optional(),
+  message: z.string(),
+  suggestion: z.string(),
+});
+export type ExpressionWarning = z.output<typeof expressionWarningSchema>;
+
 export const testExpressionResponseSchema = z.object({
   valid: z.boolean(),
   result: z.any().optional(),
@@ -242,6 +368,10 @@ export const testExpressionResponseSchema = z.object({
   message: z.string(),
   resolvedVariables: z.record(z.string(), z.any()).nullish(),
   breakdown: z.array(testBreakdownItemSchema).nullish(),
+  guardrail: guardrailResultSchema.nullish(),
+  rounding: roundingResultSchema.nullish(),
+  warnings: z.array(expressionWarningSchema).nullish(),
+  receipt: formulaReceiptSchema.nullish(),
 });
 export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
 
@@ -288,6 +418,9 @@ export const backtestSummarySchema = z.object({
   increasedCount: z.number(),
   decreasedCount: z.number(),
   errorCount: z.number(),
+  currentErrorCount: z.number().default(0),
+  candidateErrorCount: z.number().default(0),
+  guardrailCount: z.number().default(0),
   currentTotal: z.coerce.number(),
   candidateTotal: z.coerce.number(),
   totalDelta: z.coerce.number(),
@@ -325,6 +458,8 @@ export const VARIABLE_CATEGORIES = [
   { id: "shipment", label: "Shipment Fields" },
   { id: "customer", label: "Customer" },
   { id: "equipment", label: "Equipment" },
+  { id: "origin", label: "Origin" },
+  { id: "destination", label: "Destination" },
   { id: "computed", label: "Computed Rollups" },
 ] as const;
 
@@ -406,6 +541,46 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
     nullable: true,
   },
 
+  // Origin
+  {
+    name: "origin.city",
+    type: "String",
+    description: "City of the first pickup stop",
+    category: "origin",
+  },
+  {
+    name: "origin.state",
+    type: "String",
+    description: "State abbreviation of the first pickup stop",
+    category: "origin",
+  },
+  {
+    name: "origin.zip",
+    type: "String",
+    description: "Postal code of the first pickup stop",
+    category: "origin",
+  },
+
+  // Destination
+  {
+    name: "destination.city",
+    type: "String",
+    description: "City of the final delivery stop",
+    category: "destination",
+  },
+  {
+    name: "destination.state",
+    type: "String",
+    description: "State abbreviation of the final delivery stop",
+    category: "destination",
+  },
+  {
+    name: "destination.zip",
+    type: "String",
+    description: "Postal code of the final delivery stop",
+    category: "destination",
+  },
+
   // Computed Rollups
   {
     name: "totalDistance",
@@ -435,6 +610,36 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
     name: "totalLinearFeet",
     type: "Number",
     description: "Total linear feet",
+    category: "computed",
+  },
+  {
+    name: "totalHours",
+    type: "Number",
+    description: "Hours from first stop arrival to last stop departure",
+    category: "computed",
+  },
+  {
+    name: "pickupDayOfWeek",
+    type: "Integer",
+    description: "Pickup day of week in UTC (0 = Sunday through 6 = Saturday)",
+    category: "computed",
+  },
+  {
+    name: "pickupHour",
+    type: "Integer",
+    description: "Pickup hour of day in UTC (0-23)",
+    category: "computed",
+  },
+  {
+    name: "pickupMonth",
+    type: "Integer",
+    description: "Pickup month in UTC (1-12)",
+    category: "computed",
+  },
+  {
+    name: "isWeekendPickup",
+    type: "Boolean",
+    description: "Whether the pickup falls on a Saturday or Sunday (UTC)",
     category: "computed",
   },
   {
@@ -481,18 +686,16 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
   },
 ];
 
-export const AVAILABLE_VARIABLES = SHIPMENT_VARIABLES;
-
 export const AVAILABLE_FUNCTIONS = [
   { name: "abs", signature: "abs(x)", description: "Absolute value" },
   {
     name: "min",
-    signature: "min(a, b, ...)",
+    signature: "min(...values)",
     description: "Minimum of values",
   },
   {
     name: "max",
-    signature: "max(a, b, ...)",
+    signature: "max(...values)",
     description: "Maximum of values",
   },
   {
@@ -503,10 +706,30 @@ export const AVAILABLE_FUNCTIONS = [
   {
     name: "round",
     signature: "round(x, decimals?)",
-    description: "Round to decimal places",
+    description: "Round half up to decimal places",
   },
-  { name: "ceil", signature: "ceil(x)", description: "Round up" },
-  { name: "floor", signature: "floor(x)", description: "Round down" },
+  {
+    name: "roundUp",
+    signature: "roundUp(x, decimals?)",
+    description: "Round up at decimal places",
+  },
+  {
+    name: "roundDown",
+    signature: "roundDown(x, decimals?)",
+    description: "Round down at decimal places",
+  },
+  {
+    name: "roundHalfEven",
+    signature: "roundHalfEven(x, decimals?)",
+    description: "Banker's rounding at decimal places",
+  },
+  {
+    name: "roundTo",
+    signature: "roundTo(x, increment)",
+    description: "Round to the nearest multiple of increment",
+  },
+  { name: "ceil", signature: "ceil(x)", description: "Round up to a whole number" },
+  { name: "floor", signature: "floor(x)", description: "Round down to a whole number" },
   { name: "sqrt", signature: "sqrt(x)", description: "Square root" },
   {
     name: "sum",
@@ -527,6 +750,39 @@ export const AVAILABLE_FUNCTIONS = [
     name: "clamp",
     signature: "clamp(value, min, max)",
     description: "Clamp value to range",
+  },
+  {
+    name: "lookup",
+    signature: "lookup(table, key)",
+    description: "Value for key in a single-axis rate matrix",
+  },
+  {
+    name: "lookupOr",
+    signature: "lookupOr(table, key, fallback)",
+    description:
+      "Like lookup, with a fallback when the key has no entry (a missing table still errors)",
+  },
+  {
+    name: "lookup2",
+    signature: "lookup2(table, rowKey, colKey)",
+    description: "Value at a row/column intersection of a two-axis rate matrix",
+  },
+  {
+    name: "lookup2Or",
+    signature: "lookup2Or(table, rowKey, colKey, fallback)",
+    description:
+      "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)",
+  },
+  {
+    name: "lookupInterp",
+    signature: "lookupInterp(table, key)",
+    description: "Linear interpolation between the floors of a banded single-axis rate matrix",
+  },
+  {
+    name: "deficitWeight",
+    signature: "deficitWeight(table, weight)",
+    description:
+      "Billable weight under a break table: the next break's minimum when that is cheaper",
   },
 ] as const;
 
@@ -574,3 +830,229 @@ export const templateUsageResponseSchema = z.object({
   usages: z.array(templateUsageCountSchema),
 });
 export type TemplateUsageResponse = z.infer<typeof templateUsageResponseSchema>;
+
+export const formulaSchemaVariableSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  description: z.string().default(""),
+  category: z.string().default(""),
+  nullable: z.boolean().default(false),
+  computed: z.boolean().default(false),
+  enum: z.array(z.string()).nullish(),
+});
+export type FormulaSchemaVariable = z.output<typeof formulaSchemaVariableSchema>;
+
+export const formulaSchemaFunctionSchema = z.object({
+  name: z.string(),
+  signature: z.string(),
+  description: z.string().default(""),
+  example: z.string().default(""),
+  category: z.string().default(""),
+  operator: z.boolean().default(false),
+});
+export type FormulaSchemaFunction = z.output<typeof formulaSchemaFunctionSchema>;
+
+export const formulaSchemaResponseSchema = z.object({
+  schemaId: z.string(),
+  variables: z.array(formulaSchemaVariableSchema),
+  functions: z.array(formulaSchemaFunctionSchema),
+});
+export type FormulaSchemaResponse = z.output<typeof formulaSchemaResponseSchema>;
+
+export const importTemplatesResponseSchema = z.object({
+  created: listFormulaTemplateResponseSchema,
+  renamed: z.record(z.string(), z.string()).nullish(),
+});
+export type ImportTemplatesResponse = z.output<typeof importTemplatesResponseSchema>;
+
+export const formulaTestCaseSchema = z.object({
+  id: z.string(),
+  templateId: z.string(),
+  organizationId: z.string(),
+  businessUnitId: z.string(),
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  variables: z
+    .record(z.string(), z.any())
+    .nullish()
+    .transform((v) => v ?? {}),
+  expectedAmount: z.coerce.number(),
+  tolerance: z.coerce.number(),
+  version: z.number().optional(),
+  createdById: z.string(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+export type FormulaTestCase = z.output<typeof formulaTestCaseSchema>;
+
+export const formulaTestCaseInputSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  description: z.string().default(""),
+  variables: z.record(z.string(), z.any()).default({}),
+  expectedAmount: z.coerce.number().min(0, "Expected amount cannot be negative"),
+  tolerance: z.coerce.number().min(0, "Tolerance cannot be negative").default(0.01),
+});
+export type FormulaTestCaseInput = z.input<typeof formulaTestCaseInputSchema>;
+export type FormulaTestCaseValues = z.output<typeof formulaTestCaseInputSchema>;
+
+export const testCaseResultSchema = z.object({
+  testCaseId: z.string(),
+  name: z.string(),
+  passed: z.boolean(),
+  expectedAmount: z.coerce.number(),
+  actualAmount: z.coerce.number(),
+  difference: z.coerce.number(),
+  tolerance: z.coerce.number(),
+  error: z.string().optional(),
+});
+export type TestCaseResult = z.output<typeof testCaseResultSchema>;
+
+export const runTestCasesResponseSchema = z.object({
+  results: z
+    .array(testCaseResultSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  total: z.number(),
+  passed: z.number(),
+  failed: z.number(),
+});
+export type RunTestCasesResponse = z.output<typeof runTestCasesResponseSchema>;
+
+export type TestCaseCandidate = {
+  expression: string;
+  variableDefinitions?: VariableDefinitionInput[];
+  breakdownDefinitions?: BreakdownDefinitionInput[];
+  minCharge?: number | string | null;
+  maxCharge?: number | string | null;
+  roundingMode?: FormulaRoundingMode;
+  roundingPrecision?: number;
+};
+
+export const reviewDiffResponseSchema = z.object({
+  hasApprovedBase: z.boolean(),
+  baseVersion: z.number(),
+  currentVersion: z.number(),
+  baseExpression: z.string(),
+  currentExpression: z.string(),
+  changes: z.record(z.string(), fieldChangeSchema),
+  changeCount: z.number(),
+});
+export type ReviewDiffResponse = z.output<typeof reviewDiffResponseSchema>;
+
+export const readinessCheckSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  status: z.enum(["pass", "warn", "fail"]),
+  detail: z.string().optional(),
+});
+export type ReadinessCheck = z.output<typeof readinessCheckSchema>;
+
+export const standardTemplateSchema = z.object({
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  type: formulaTemplateTypeSchema,
+  expression: z.string(),
+  schemaId: z.string(),
+  variableDefinitions: z
+    .array(variableDefinitionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+export type StandardTemplate = z.output<typeof standardTemplateSchema>;
+export const listStandardsResponseSchema = z.array(standardTemplateSchema);
+
+export const formulaReviewDecisionSchema = z.enum([
+  "Submitted",
+  "Approved",
+  "Rejected",
+  "ChangesRequested",
+  "Expired",
+]);
+export type FormulaReviewDecision = z.infer<typeof formulaReviewDecisionSchema>;
+
+export const formulaTemplateReviewSchema = z.object({
+  id: z.string(),
+  templateId: z.string(),
+  round: z.number().int(),
+  decision: formulaReviewDecisionSchema,
+  actorId: z.string().nullish(),
+  comment: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  baseVersionNumber: z.number().int().default(0),
+  createdAt: z.number(),
+  actor: userSchema.nullish(),
+});
+export type FormulaTemplateReview = z.output<typeof formulaTemplateReviewSchema>;
+export const listFormulaTemplateReviewsResponseSchema = z.array(formulaTemplateReviewSchema);
+
+export const readinessResponseSchema = z.object({
+  canSubmit: z.boolean(),
+  canApprove: z.boolean(),
+  checks: z.array(readinessCheckSchema),
+  scenarioTotal: z.number(),
+  scenarioPassed: z.number(),
+  scenarioFailing: z.array(z.string()).nullish(),
+});
+export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
+
+export const installStandardsResponseSchema = z.object({
+  installed: listFormulaTemplateResponseSchema,
+  skipped: z
+    .array(z.string())
+    .nullish()
+    .transform((v) => v ?? []),
+});
+export type InstallStandardsResponse = z.output<typeof installStandardsResponseSchema>;
+
+export const generateFormulaRequestSchema = z.object({
+  instruction: z.string().min(1, "An instruction is required").max(4000),
+  schemaId: z.string().optional(),
+  templateType: formulaTemplateTypeSchema.optional(),
+});
+export type GenerateFormulaRequest = z.infer<typeof generateFormulaRequestSchema>;
+
+export const proposedScenarioSchema = z.object({
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
+  variables: z
+    .record(z.string(), z.any())
+    .nullish()
+    .transform((v) => v ?? {}),
+  expectedAmount: z.number().nullish(),
+  valid: z.boolean(),
+  error: z.string().nullish(),
+});
+export type ProposedScenario = z.output<typeof proposedScenarioSchema>;
+
+export const generateFormulaResponseSchema = z.object({
+  expression: z.string(),
+  variableDefinitions: z
+    .array(variableDefinitionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  explanation: z.string(),
+  validation: testExpressionResponseSchema.nullish(),
+  scenarios: z
+    .array(proposedScenarioSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  modelIdentifier: z.string().optional(),
+});
+export type GenerateFormulaResponse = z.output<typeof generateFormulaResponseSchema>;
+
+export const explainFormulaResponseSchema = z.object({
+  explanation: z.string(),
+  modelIdentifier: z.string().optional(),
+});
+export type ExplainFormulaResponse = z.output<typeof explainFormulaResponseSchema>;

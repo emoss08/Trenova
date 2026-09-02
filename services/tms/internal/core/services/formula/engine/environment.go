@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
@@ -42,13 +43,21 @@ func (b *EnvironmentBuilder) Build(
 
 	env := make(map[string]any, len(definition.FieldSources))
 	resolveFailures := make(map[string]error)
+	// Computed variables share one walk of the record's moves and stops for
+	// this build; field reads go straight to the record.
+	computedEntity := resolver.Memoize(entity)
 
 	for fieldPath, source := range definition.FieldSources {
 		var value any
 		var err error
 
+		if source.Provided {
+			formulatypes.SetNestedValue(env, fieldPath, nil)
+			continue
+		}
+
 		if source.Computed {
-			value, err = b.resolver.ResolveComputed(entity, source.Function)
+			value, err = b.resolver.ResolveComputed(computedEntity, source.Function)
 		} else {
 			value, err = b.resolver.ResolveField(entity, source)
 		}
@@ -71,11 +80,25 @@ func (b *EnvironmentBuilder) BuildWithVariables(
 	schemaID string,
 	variables map[string]any,
 ) (map[string]any, map[string]error, error) {
+	return b.BuildWithProvided(entity, schemaID, nil, variables)
+}
+
+// BuildWithProvided layers an evaluation environment: the record's fields and
+// computed values first, then tenant-level provided values from external
+// feeds, then the caller's variables, so each later layer may shadow the one
+// beneath it and a scenario can pin a value the feed disagrees with.
+func (b *EnvironmentBuilder) BuildWithProvided(
+	entity any,
+	schemaID string,
+	provided map[string]any,
+	variables map[string]any,
+) (map[string]any, map[string]error, error) {
 	env, resolveFailures, err := b.Build(entity, schemaID)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	mergeVariables(env, provided)
 	mergeVariables(env, variables)
 
 	return env, resolveFailures, nil
@@ -85,12 +108,21 @@ func (b *EnvironmentBuilder) BuildValidationEnvironment(
 	schemaID string,
 	variables map[string]any,
 ) (map[string]any, map[string]error, error) {
+	return b.BuildValidationEnvironmentWithProvided(schemaID, nil, variables)
+}
+
+func (b *EnvironmentBuilder) BuildValidationEnvironmentWithProvided(
+	schemaID string,
+	provided map[string]any,
+	variables map[string]any,
+) (map[string]any, map[string]error, error) {
 	definition, ok := b.registry.Get(schemaID)
 	if !ok {
 		return nil, nil, fmt.Errorf("%w: %s", ErrSchemaNotFound, schemaID)
 	}
 
 	env := buildPropertyValidationEnvironment(definition.Properties)
+	mergeVariables(env, provided)
 	mergeVariables(env, variables)
 
 	return env, nil, nil
@@ -149,6 +181,9 @@ func buildPropertyValidationEnvironment(
 }
 
 func defaultValueForProperty(property formulatypes.Property) any {
+	if property.IsDateTime() {
+		return time.Time{}
+	}
 	switch normalizePropertyType(property.Type) {
 	case "object":
 		if property.Properties == nil {
@@ -209,6 +244,10 @@ func mergeVariables(env map[string]any, variables map[string]any) {
 			continue
 		}
 
+		if _, isDate := env[key].(time.Time); isDate {
+			value = coerceDateSample(value)
+		}
+
 		if merged, ok := mergeMapValues(env[key], value); ok {
 			env[key] = merged
 			continue
@@ -242,4 +281,29 @@ func mergeMapValues(existing, incoming any) (map[string]any, bool) {
 	}
 
 	return merged, true
+}
+
+var dateSampleLayouts = []string{
+	time.RFC3339,
+	"2006-01-02T15:04:05",
+	"2006-01-02T15:04",
+	"2006-01-02 15:04",
+	"2006-01-02",
+}
+
+// coerceDateSample turns the text a sample-data editor holds for a datetime
+// variable into a real date, so a preview override compiles against the same
+// type the live environment carries. Anything unparseable is left alone and
+// surfaces as the type error it is.
+func coerceDateSample(value any) any {
+	text, ok := value.(string)
+	if !ok {
+		return value
+	}
+	for _, layout := range dateSampleLayouts {
+		if parsed, err := time.Parse(layout, text); err == nil {
+			return parsed
+		}
+	}
+	return value
 }

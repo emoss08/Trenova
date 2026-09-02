@@ -24,6 +24,7 @@ type Location {
   addressLine2: String!
   city: String!
   postalCode: String!
+  timezone: String!
   placeId: String!
   isGeocoded: Boolean!
   longitude: Float

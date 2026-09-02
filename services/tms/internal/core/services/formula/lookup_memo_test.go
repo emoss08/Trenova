@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -65,10 +66,10 @@ func setupCountingService(t *testing.T, repo repositories.RateMatrixRepository) 
 	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:        zap.NewNop(),
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
 		VersionRepo:    &stubVersionRepo{},
 		RateMatrixRepo: repo,
 	})
@@ -221,4 +222,8 @@ func TestRateTableCache_NestedInstallKeepsTheOuterMemo(t *testing.T) {
 
 func memoShipment() *shipment.Shipment {
 	return &shipment.Shipment{ID: pulid.MustNew("shp_")}
+}
+
+func (*countingMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
 }

@@ -3,13 +3,18 @@ package formulatemplateservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratesimulation"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -47,18 +52,21 @@ type BacktestResult struct {
 // backtest calls them current and candidate while a rate simulation calls them
 // before and after. The arithmetic is shared; only the words differ.
 type BacktestSummary struct {
-	ShipmentCount  int             `json:"shipmentCount"`
-	EvaluatedCount int             `json:"evaluatedCount"`
-	ChangedCount   int             `json:"changedCount"`
-	IncreasedCount int             `json:"increasedCount"`
-	DecreasedCount int             `json:"decreasedCount"`
-	ErrorCount     int             `json:"errorCount"`
-	CurrentTotal   decimal.Decimal `json:"currentTotal"`
-	CandidateTotal decimal.Decimal `json:"candidateTotal"`
-	TotalDelta     decimal.Decimal `json:"totalDelta"`
-	TotalDeltaPct  decimal.Decimal `json:"totalDeltaPct"`
-	MaxIncrease    decimal.Decimal `json:"maxIncrease"`
-	MaxDecrease    decimal.Decimal `json:"maxDecrease"`
+	ShipmentCount       int             `json:"shipmentCount"`
+	EvaluatedCount      int             `json:"evaluatedCount"`
+	ChangedCount        int             `json:"changedCount"`
+	IncreasedCount      int             `json:"increasedCount"`
+	DecreasedCount      int             `json:"decreasedCount"`
+	ErrorCount          int             `json:"errorCount"`
+	CurrentErrorCount   int             `json:"currentErrorCount"`
+	CandidateErrorCount int             `json:"candidateErrorCount"`
+	GuardrailCount      int             `json:"guardrailCount"`
+	CurrentTotal        decimal.Decimal `json:"currentTotal"`
+	CandidateTotal      decimal.Decimal `json:"candidateTotal"`
+	TotalDelta          decimal.Decimal `json:"totalDelta"`
+	TotalDeltaPct       decimal.Decimal `json:"totalDeltaPct"`
+	MaxIncrease         decimal.Decimal `json:"maxIncrease"`
+	MaxDecrease         decimal.Decimal `json:"maxDecrease"`
 }
 
 type BacktestResponse struct {
@@ -78,6 +86,10 @@ func (s *Service) Backtest(
 	if err := validateBacktestRequest(req); err != nil {
 		return nil, err
 	}
+
+	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
+	ctx = effectiveversioncache.With(ctx)
 
 	limit := req.Limit
 	if limit <= 0 {
@@ -201,7 +213,7 @@ func (s *Service) backtestShipment(
 		ProNumber:  entity.ProNumber,
 	}
 
-	current, err := s.resolveEffectiveForShipment(ctx, template, entity, tenantInfo)
+	current, err := s.resolveCurrentForShipment(ctx, template, entity, tenantInfo)
 	if err != nil {
 		result.CurrentError = err.Error()
 	} else if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
@@ -241,12 +253,114 @@ func (s *Service) backtestShipment(
 	return result
 }
 
-func (s *Service) resolveEffectiveForShipment(
+// resolveCurrentForShipment reconstructs the content a shipment was actually
+// charged with, so the "current" side of a backtest is the number on the
+// invoice rather than whatever the template row happens to hold today.
+//
+// The row is the wrong baseline more often than not: while a template is in
+// review the row already carries the pending edit, and a template under
+// revision has been demoted to Draft. So the search goes from most to least
+// specific — the version stamped on the shipment's own rating detail, then a
+// version scheduled into effect for its ship date, then the newest snapshot
+// the template took while Active — and only falls back to the row when the
+// template has no approved history at all.
+func (s *Service) resolveCurrentForShipment(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplate, error) {
+	if recorded := recordedVersionNumber(template, entity); recorded > 0 {
+		version, err := effectiveversioncache.GetVersion(
+			ctx,
+			template.ID,
+			recorded,
+			func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
+				return s.lookupVersion(loadCtx, template.ID, recorded, tenantInfo)
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		if version != nil {
+			return template.ApplyVersion(version), nil
+		}
+	}
+
+	scheduled, err := s.formulaService.ResolveScheduledVersion(
+		ctx,
+		template,
+		tenantInfo,
+		shipmentRatingDate(entity),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if scheduled != nil {
+		return template.ApplyVersion(scheduled), nil
+	}
+
+	active, err := effectiveversioncache.GetLatestActive(
+		ctx,
+		template.ID,
+		func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
+			return s.versionRepo.GetLatestByStatus(
+				loadCtx,
+				&repositories.GetLatestVersionByStatusRequest{
+					TenantInfo: tenantInfo,
+					TemplateID: template.ID,
+					Status:     formulatemplate.StatusActive,
+				},
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if active != nil {
+		return template.ApplyVersion(active), nil
+	}
+
+	return template, nil
+}
+
+// lookupVersion fetches one numbered snapshot, treating "no such version" as
+// nil so a stale stamp on a shipment degrades to the next resolution step
+// instead of failing the whole backtest row.
+func (s *Service) lookupVersion(
+	ctx context.Context,
+	templateID pulid.ID,
+	versionNumber int64,
+	tenantInfo pagination.TenantInfo,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+		TenantInfo:    tenantInfo,
+		TemplateID:    templateID,
+		VersionNumber: versionNumber,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) || dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil version means the stamp points at nothing
+		}
+		return nil, err
+	}
+
+	return version, nil
+}
+
+func recordedVersionNumber(
+	template *formulatemplate.FormulaTemplate,
+	entity *shipment.Shipment,
+) int64 {
+	detail := entity.RatingDetail
+	if detail == nil || detail.FormulaTemplateID != template.ID.String() {
+		return 0
+	}
+
+	return detail.VersionNumber
+}
+
+func shipmentRatingDate(entity *shipment.Shipment) int64 {
 	asOf := entity.CreatedAt
 	if entity.ActualShipDate != nil && *entity.ActualShipDate > 0 {
 		asOf = *entity.ActualShipDate
@@ -255,47 +369,48 @@ func (s *Service) resolveEffectiveForShipment(
 		asOf = timeutils.NowUnix()
 	}
 
-	version, err := s.versionRepo.GetEffectiveVersion(ctx, &repositories.GetEffectiveVersionRequest{
-		TenantInfo: tenantInfo,
-		TemplateID: template.ID,
-		AsOf:       asOf,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if version == nil {
-		return template, nil
-	}
-
-	return template.ApplyVersion(version), nil
+	return asOf
 }
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 	var acc ratesimulation.Accumulator
+	var currentErrors, candidateErrors, clamps int
 
 	for _, result := range results {
+		failed := result.CurrentError != "" || result.CandidateError != ""
 		acc.Add(ratesimulation.Delta{
 			Before: result.CurrentAmount,
 			After:  result.CandidateAmount,
-			Failed: result.CurrentError != "" || result.CandidateError != "",
+			Failed: failed,
 		})
+		if result.CurrentError != "" {
+			currentErrors++
+		}
+		if result.CandidateError != "" {
+			candidateErrors++
+		}
+		if result.GuardrailApplied && !failed {
+			clamps++
+		}
 	}
 
 	shared := acc.Summary()
 
 	return BacktestSummary{
-		ShipmentCount:  shared.ShipmentCount,
-		EvaluatedCount: shared.EvaluatedCount,
-		ChangedCount:   shared.ChangedCount,
-		IncreasedCount: shared.IncreasedCount,
-		DecreasedCount: shared.DecreasedCount,
-		ErrorCount:     shared.ErrorCount,
-		CurrentTotal:   shared.BeforeTotal,
-		CandidateTotal: shared.AfterTotal,
-		TotalDelta:     shared.TotalDelta,
-		TotalDeltaPct:  shared.TotalDeltaPct,
-		MaxIncrease:    shared.MaxIncrease,
-		MaxDecrease:    shared.MaxDecrease,
+		ShipmentCount:       shared.ShipmentCount,
+		EvaluatedCount:      shared.EvaluatedCount,
+		ChangedCount:        shared.ChangedCount,
+		IncreasedCount:      shared.IncreasedCount,
+		DecreasedCount:      shared.DecreasedCount,
+		ErrorCount:          shared.ErrorCount,
+		CurrentErrorCount:   currentErrors,
+		CandidateErrorCount: candidateErrors,
+		GuardrailCount:      clamps,
+		CurrentTotal:        shared.BeforeTotal,
+		CandidateTotal:      shared.AfterTotal,
+		TotalDelta:          shared.TotalDelta,
+		TotalDeltaPct:       shared.TotalDeltaPct,
+		MaxIncrease:         shared.MaxIncrease,
+		MaxDecrease:         shared.MaxDecrease,
 	}
 }

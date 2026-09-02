@@ -1,10 +1,13 @@
 package formulatemplate
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -657,4 +660,124 @@ func TestForkLineage_NoSource(t *testing.T) {
 	assert.Nil(t, lineage.SourceTemplateID)
 	assert.Nil(t, lineage.SourceVersion)
 	assert.Nil(t, lineage.ForkedTemplates)
+}
+
+func TestCanTransition_ArchivedTemplatesReenterReview(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, CanTransition(StatusInactive, StatusInReview))
+	assert.False(t, CanTransition(StatusInactive, StatusActive))
+	assert.False(t, CanTransition(StatusDraft, StatusActive))
+	assert.True(t, CanTransition(StatusInReview, StatusActive))
+}
+
+func TestFormulaTemplate_ChargePolicyDefaults(t *testing.T) {
+	t.Parallel()
+
+	blank := &FormulaTemplate{}
+	policy := blank.ChargePolicy()
+	assert.Equal(t, ratetypes.RoundingModeHalfUp, policy.RoundingMode)
+	assert.Equal(t, formulatypes.DefaultRoundingPrecision, policy.RoundingPrecision)
+
+	whole := &FormulaTemplate{RoundingMode: ratetypes.RoundingModeUp, RoundingPrecision: 0}
+	assert.Equal(t, int32(0), whole.ChargePolicy().RoundingPrecision,
+		"zero precision beside a chosen mode is a real choice")
+
+	blank.NormalizeRounding()
+	assert.Equal(t, ratetypes.RoundingModeHalfUp, blank.RoundingMode)
+	assert.Equal(t, int32(2), blank.RoundingPrecision)
+}
+
+func TestFormulaTemplate_RoundingIsMaterialAndSnapshotted(t *testing.T) {
+	t.Parallel()
+
+	base := &FormulaTemplate{Expression: "x", SchemaID: "shipment", Type: TemplateTypeFreightCharge}
+	changed := *base
+	changed.RoundingMode = ratetypes.RoundingModeUp
+	changed.RoundingPrecision = 2
+	assert.True(t, changed.HasMaterialChange(base))
+
+	sameAsDefault := *base
+	sameAsDefault.RoundingMode = ratetypes.RoundingModeHalfUp
+	sameAsDefault.RoundingPrecision = 2
+	assert.False(t, sameAsDefault.HasMaterialChange(base),
+		"spelling out the default policy is not a change")
+
+	version := NewVersionFromTemplate(&changed, 2, pulid.MustNew("usr_"), "", nil)
+	assert.Equal(t, ratetypes.RoundingModeUp, version.RoundingMode)
+	assert.Equal(t, int32(2), version.RoundingPrecision)
+
+	restored := base.ApplyVersion(version)
+	assert.Equal(t, ratetypes.RoundingModeUp, restored.RoundingMode)
+	assert.Equal(t, int32(2), restored.RoundingPrecision)
+}
+
+func TestFormulaTemplate_ValidateRoundingPolicy(t *testing.T) {
+	t.Parallel()
+
+	tooPrecise := &FormulaTemplate{
+		Name:              "t",
+		Expression:        "x",
+		Type:              TemplateTypeFreightCharge,
+		Status:            StatusDraft,
+		RoundingMode:      ratetypes.RoundingModeHalfUp,
+		RoundingPrecision: 5,
+	}
+	multiErr := errortypes.NewMultiError()
+	tooPrecise.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors())
+
+	badMode := &FormulaTemplate{
+		Name:         "t",
+		Expression:   "x",
+		Type:         TemplateTypeFreightCharge,
+		Status:       StatusDraft,
+		RoundingMode: ratetypes.RoundingMode("Sideways"),
+	}
+	multiErr = errortypes.NewMultiError()
+	badMode.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors())
+
+	unset := &FormulaTemplate{
+		Name:       "t",
+		Expression: "x",
+		Type:       TemplateTypeFreightCharge,
+		Status:     StatusDraft,
+	}
+	multiErr = errortypes.NewMultiError()
+	unset.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), "an unset policy is normalized, not rejected")
+}
+
+func TestFormulaTemplate_ValidateCaps(t *testing.T) {
+	t.Parallel()
+
+	tooLong := &FormulaTemplate{
+		Name:       "t",
+		Expression: strings.Repeat("1+", MaxExpressionLength/2) + "1",
+		Type:       TemplateTypeFreightCharge,
+		Status:     StatusDraft,
+	}
+	multiErr := errortypes.NewMultiError()
+	tooLong.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "expression over the cap must be rejected")
+
+	tooMany := &FormulaTemplate{
+		Name:       "t",
+		Expression: "x",
+		Type:       TemplateTypeFreightCharge,
+		Status:     StatusDraft,
+	}
+	for i := range MaxVariableDefinitions + 1 {
+		tooMany.VariableDefinitions = append(
+			tooMany.VariableDefinitions,
+			&formulatypes.VariableDefinition{
+				Name: fmt.Sprintf("v%d", i),
+				Type: formulatypes.VariableValueTypeNumber,
+			},
+		)
+	}
+	multiErr = errortypes.NewMultiError()
+	tooMany.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "too many variables must be rejected")
 }

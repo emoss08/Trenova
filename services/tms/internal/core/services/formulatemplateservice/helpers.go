@@ -1,7 +1,10 @@
 package formulatemplateservice
 
 import (
+	goErrors "errors"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
 )
 
 var versionDiffIgnoreFields = []string{
@@ -13,12 +16,34 @@ var versionDiffIgnoreFields = []string{
 	"changeSummary",
 }
 
+func expressionErrorMessage(err error) string {
+	message := err.Error()
+	for {
+		var schemaErr *formulaerrors.SchemaError
+		if !goErrors.As(err, &schemaErr) || schemaErr.Cause == nil {
+			return message
+		}
+		err = schemaErr.Cause
+		message = err.Error()
+	}
+}
+
 func clearApprovalFields(template *formulatemplate.FormulaTemplate) {
 	template.SubmittedByID = nil
 	template.SubmittedAt = nil
 	template.ApprovedByID = nil
 	template.ApprovedAt = nil
 	template.ReviewComment = ""
+}
+
+// carryApprovalFields keeps the review stamps the workflow wrote, whatever an
+// update payload says about them.
+func carryApprovalFields(template, original *formulatemplate.FormulaTemplate) {
+	template.SubmittedByID = original.SubmittedByID
+	template.SubmittedAt = original.SubmittedAt
+	template.ApprovedByID = original.ApprovedByID
+	template.ApprovedAt = original.ApprovedAt
+	template.ReviewComment = original.ReviewComment
 }
 
 func extractVersionPair(

@@ -63,10 +63,21 @@ func TestRegisterDefaultComputed(t *testing.T) {
 		"computeTotalWeight",
 		"computeTotalPieces",
 		"computeTotalLinearFeet",
+		"computeTotalHours",
 		"computeBaseRate",
 		"computeFreightChargeAmount",
 		"computeOtherChargeAmount",
 		"computeCurrentTotalCharge",
+		"computeOriginCity",
+		"computeOriginState",
+		"computeOriginZip",
+		"computeDestinationCity",
+		"computeDestinationState",
+		"computeDestinationZip",
+		"computePickupDayOfWeek",
+		"computePickupHour",
+		"computePickupMonth",
+		"computeIsWeekendPickup",
 	}
 
 	for _, fn := range expectedFunctions {

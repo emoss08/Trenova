@@ -1091,6 +1091,8 @@ var ShipmentColumns = struct {
 	RateOverrideByID          Column // "rate_override_by_id" → qualified: "sp.rate_override_by_id"
 	RateOverrideAt            Column // "rate_override_at" → qualified: "sp.rate_override_at"
 	RateLocked                Column // "rate_locked" → qualified: "sp.rate_locked"
+	AutoRated                 Column // "auto_rated" → qualified: "sp.auto_rated"
+	AutoRatedAt               Column // "auto_rated_at" → qualified: "sp.auto_rated_at"
 	SearchVector              Column // "search_vector" → qualified: "sp.search_vector"
 	Rank                      Column // "rank" → qualified: "sp.rank"
 	Version                   Column // "version" → qualified: "sp.version"
@@ -1147,6 +1149,8 @@ var ShipmentColumns = struct {
 	RateOverrideByID:          NewColumn("rate_override_by_id", "sp"),
 	RateOverrideAt:            NewColumn("rate_override_at", "sp"),
 	RateLocked:                NewColumn("rate_locked", "sp"),
+	AutoRated:                 NewColumn("auto_rated", "sp"),
+	AutoRatedAt:               NewColumn("auto_rated_at", "sp"),
 	SearchVector:              NewColumn("search_vector", "sp"),
 	Rank:                      NewColumn("rank", "sp"),
 	Version:                   NewColumn("version", "sp"),
@@ -1209,6 +1213,8 @@ var ShipmentFieldMap = map[string]string{
 	"rateOverrideById":          "rate_override_by_id",
 	"rateOverrideAt":            "rate_override_at",
 	"rateLocked":                "rate_locked",
+	"autoRated":                 "auto_rated",
+	"autoRatedAt":               "auto_rated_at",
 	"version":                   "version",
 	"createdAt":                 "created_at",
 	"updatedAt":                 "updated_at",
@@ -1267,6 +1273,8 @@ var ShipmentInsertableColumns = []string{
 	"rate_override_by_id",
 	"rate_override_at",
 	"rate_locked",
+	"auto_rated",
+	"auto_rated_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1411,6 +1419,8 @@ var ShipmentFilter = struct {
 	RateOverrideByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateOverrideById" → DB: "rate_override_by_id"
 	RateOverrideAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateOverrideAt" → DB: "rate_override_at"
 	RateLocked                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateLocked" → DB: "rate_locked"
+	AutoRated                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoRated" → DB: "auto_rated"
+	AutoRatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoRatedAt" → DB: "auto_rated_at"
 	Version                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1564,6 +1574,12 @@ var ShipmentFilter = struct {
 	},
 	RateLocked: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("rateLocked", op, value)
+	},
+	AutoRated: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoRated", op, value)
+	},
+	AutoRatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoRatedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -17,3 +17,17 @@ func (e *FormulaTemplate) GetStaticFieldMap() map[string]string {
 func (e *FormulaTemplateVersion) GetStaticFieldMap() map[string]string {
 	return buncolgen.FormulaTemplateVersionFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Review].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ReviewFieldMap] instead of parsing struct tags via reflection.
+func (e *Review) GetStaticFieldMap() map[string]string {
+	return buncolgen.ReviewFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TestCase].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TestCaseFieldMap] instead of parsing struct tags via reflection.
+func (e *TestCase) GetStaticFieldMap() map[string]string {
+	return buncolgen.TestCaseFieldMap
+}

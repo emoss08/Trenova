@@ -14,9 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -55,6 +57,13 @@ func (m *mockFormulaTemplateRepo) GetByID(
 func (m *mockFormulaTemplateRepo) GetByIDs(
 	_ context.Context,
 	_ repositories.GetFormulaTemplatesByIDsRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	return nil, nil
+}
+
+func (m *mockFormulaTemplateRepo) FindByNames(
+	_ context.Context,
+	_ repositories.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
@@ -145,6 +154,23 @@ func setupServiceWithRepo(
 	repo repositories.FormulaTemplateRepository,
 ) *formula.Service {
 	t.Helper()
+	return setupServiceWithRepoAndMatrixData(t, repo, nil)
+}
+
+func setupServiceWithMatrixData(
+	t *testing.T,
+	data []*repositories.RateMatrixLookupData,
+) *formula.Service {
+	t.Helper()
+	return setupServiceWithRepoAndMatrixData(t, nil, data)
+}
+
+func setupServiceWithRepoAndMatrixData(
+	t *testing.T,
+	repo repositories.FormulaTemplateRepository,
+	data []*repositories.RateMatrixLookupData,
+) *formula.Service {
+	t.Helper()
 
 	registry := newTestRegistry(t)
 	res := resolver.NewResolver()
@@ -164,13 +190,13 @@ func setupServiceWithRepo(
 	logger := zap.NewNop()
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:        logger,
-		Registry:      registry,
-		Engine:        eng,
-		Resolver:      res,
-		Repo:          repo,
-		VersionRepo:   &stubVersionRepo{},
-		RateMatrixRepo: &stubMatrixRepo{},
+		Logger:         logger,
+		Registry:       registry,
+		Engine:         eng,
+		Resolver:       res,
+		Repo:           repo,
+		VersionRepo:    &stubVersionRepo{},
+		RateMatrixRepo: &stubMatrixRepo{data: data},
 	})
 }
 
@@ -184,6 +210,16 @@ func (s *stubVersionRepo) GetEffectiveVersion(
 	_ *repositories.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return s.effectiveVersion, nil
+}
+
+func (s *stubVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	if s.effectiveVersion == nil {
+		return nil, nil
+	}
+	return []*formulatemplate.FormulaTemplateVersion{s.effectiveVersion}, nil
 }
 
 type stubMatrixRepo struct {
@@ -383,15 +419,13 @@ func TestService_EvaluateWithEnv(t *testing.T) {
 			name:       "boolean true result",
 			expression: "a > b",
 			env:        map[string]any{"a": 10.0, "b": 5.0},
-			want:       decimal.NewFromInt(1),
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name:       "boolean false result",
 			expression: "a > b",
 			env:        map[string]any{"a": 3.0, "b": 5.0},
-			want:       decimal.NewFromInt(0),
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name:       "NaN result errors",
@@ -442,7 +476,10 @@ func TestService_EvaluateWithEnv(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.wantErrIs != nil {
@@ -639,7 +676,10 @@ func TestService_EvaluateWithEnvClampFormulas(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			require.NoError(t, err)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
 		})
@@ -680,7 +720,10 @@ func TestService_EvaluateWithEnvWeightBased(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(
+				t.Context(),
+				&formulatemplatetypes.EnvEvaluationRequest{Expression: tt.expression, Env: tt.env},
+			)
 			require.NoError(t, err)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
 		})
@@ -950,4 +993,109 @@ func TestService_EvaluatePredicate(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestApplyChargePolicy_GuardrailsThenRounding(t *testing.T) {
+	t.Parallel()
+
+	policy := formulatypes.ChargePolicy{
+		MinCharge:         decimal.NewNullDecimal(decimal.NewFromInt(250)),
+		RoundingMode:      ratetypes.RoundingModeUp,
+		RoundingPrecision: 0,
+	}
+
+	amount, guardrail, rounding := formula.ApplyChargePolicy(
+		policy,
+		decimal.RequireFromString("249.996"),
+	)
+	require.NotNil(t, guardrail)
+	assert.True(t, guardrail.Applied)
+	assert.True(t, decimal.NewFromInt(250).Equal(amount), amount.String())
+	require.NotNil(t, rounding)
+	assert.False(t, rounding.Applied, "the floor is already whole")
+	assert.Equal(t, "Up", rounding.Mode)
+
+	amount, _, rounding = formula.ApplyChargePolicy(policy, decimal.RequireFromString("312.01"))
+	assert.True(t, decimal.NewFromInt(313).Equal(amount), amount.String())
+	assert.True(t, rounding.Applied)
+	assert.True(t, decimal.RequireFromString("312.01").Equal(rounding.UnroundedAmount))
+}
+
+func TestApplyChargePolicy_DefaultsAndNone(t *testing.T) {
+	t.Parallel()
+
+	amount, _, rounding := formula.ApplyChargePolicy(
+		formulatypes.ChargePolicy{},
+		decimal.RequireFromString("2.675"),
+	)
+	assert.True(t, decimal.RequireFromString("2.68").Equal(amount), amount.String())
+	assert.Equal(t, "HalfUp", rounding.Mode)
+	assert.Equal(t, int32(2), rounding.Precision)
+
+	amount, _, rounding = formula.ApplyChargePolicy(
+		formulatypes.ChargePolicy{RoundingMode: ratetypes.RoundingModeNone},
+		decimal.RequireFromString("2.675"),
+	)
+	assert.True(t, decimal.RequireFromString("2.675").Equal(amount))
+	assert.False(t, rounding.Applied)
+}
+
+func TestService_Rate_AppliesTemplateRoundingPolicy(t *testing.T) {
+	t.Parallel()
+
+	svc := setupService(t)
+	template := &formulatemplate.FormulaTemplate{
+		ID:                pulid.MustNew("ft_"),
+		Name:              "thirds",
+		Expression:        "10 / 3",
+		SchemaID:          "shipment",
+		Status:            formulatemplate.StatusActive,
+		RoundingMode:      ratetypes.RoundingModeHalfEven,
+		RoundingPrecision: 3,
+	}
+
+	resp, err := svc.Rate(t.Context(), &formula.RateRequest{
+		Template: template,
+		Entity:   &shipment.Shipment{},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, decimal.RequireFromString("3.333").Equal(resp.Amount), resp.Amount.String())
+	require.NotNil(t, resp.Rounding)
+	assert.True(t, resp.Rounding.Applied)
+	assert.Equal(t, "HalfEven", resp.Rounding.Mode)
+}
+
+func TestService_Rate_MissingNullableFieldIsAValidationError(t *testing.T) {
+	t.Parallel()
+
+	svc := setupService(t)
+	template := &formulatemplate.FormulaTemplate{
+		ID:         pulid.MustNew("ft_"),
+		Name:       "per pound",
+		Expression: "weight * 0.5",
+		SchemaID:   "shipment",
+		Status:     formulatemplate.StatusActive,
+	}
+
+	_, err := svc.Rate(t.Context(), &formula.RateRequest{
+		Template: template,
+		Entity:   &shipment.Shipment{},
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err), "must surface as a validation problem, not a 500")
+	assert.Contains(t, err.Error(), "weight")
+	assert.Contains(t, err.Error(), "coalesce(weight, 0)")
+}
+
+func (m *mockFormulaTemplateRepo) CountStatsByIDs(
+	context.Context,
+	*repositories.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]repositories.TemplateStats, error) {
+	return map[pulid.ID]repositories.TemplateStats{}, nil
+}
+
+func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
 }
