@@ -426,9 +426,14 @@ Every rating carries a trace that a non-programmer can read.
       max updated_at over the tenant's matrices, cell replacement bumps the matrix version
       so a new sheet moves it; the per-context memo still answers first, and an empty or
       failing stamp degrades to a plain build)
-- [ ] Compile-cache key hashes declared schema types, not runtime nil-vs-float
+- [x] Compile-cache key hashes declared schema types, not runtime nil-vs-float
       shapes; key computed once per `Evaluate`; size configurable
-      (`formula/engine/engine.go`)
+      (`formula/engine/engine.go`; the evaluation compiles against a shape whose
+      schema-nullable paths hold their declared type's zero, so records with and without a
+      value share one program and `== nil` compiles either way; the shape's signature is
+      hashed once and reused by every breakdown line; a record that truly lacks a value
+      now fails at run time and is mapped to the same missing-field guidance;
+      `Params.CompileCacheSize`)
 - [ ] Boxed `Moves`/`Stops` walk cached once per env build
       (`formula/resolver/computed_lane.go`)
 - [ ] Two-axis range-row tables use a sorted index instead of a linear scan

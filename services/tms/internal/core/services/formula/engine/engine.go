@@ -64,6 +64,11 @@ type Params struct {
 	Registry   *schema.Registry
 	Resolver   *resolver.Resolver
 	EnvBuilder *EnvironmentBuilder
+
+	// CompileCacheSize bounds the compiled-program cache; zero means the
+	// default. One entry per distinct expression and schema shape is enough
+	// for a tenant's live templates, so the default is generous.
+	CompileCacheSize int `optional:"true"`
 }
 
 type Engine struct {
@@ -75,7 +80,11 @@ type Engine struct {
 }
 
 func NewEngine(p Params) (*Engine, error) {
-	cache, err := lru.New[string, *CompiledExpression](compileCacheSize)
+	size := p.CompileCacheSize
+	if size <= 0 {
+		size = compileCacheSize
+	}
+	cache, err := lru.New[string, *CompiledExpression](size)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compile cache: %w", err)
 	}
@@ -178,7 +187,8 @@ func (e *Engine) Evaluate(
 	sources.markPaths(e.applyVariableDefaults(req.Template, env), formulatypes.ValueSourceDefault)
 
 	recorder := newLookupRecorder(req.Lookup)
-	result, err := e.evaluateProgram(ctx, req.Template.Expression, env, recorder, resolveFailures)
+	shape := e.shapeFor(ctx, definition, env, recorder)
+	result, err := e.evaluateShaped(ctx, req.Template.Expression, env, shape, resolveFailures)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +196,7 @@ func (e *Engine) Evaluate(
 		return nil, err
 	}
 
-	result.Breakdown = e.evaluateBreakdowns(ctx, req.Template.BreakdownDefinitions, env, recorder)
+	result.Breakdown = e.evaluateBreakdowns(ctx, req.Template.BreakdownDefinitions, env, shape)
 	result.Receipt = &formulatypes.Receipt{
 		Variables: receiptVariables(env, sources),
 		Lookups:   recorder.entries,
@@ -242,7 +252,12 @@ func (e *Engine) EvaluateExpression(
 	sources.markAll(req.Variables, formulatypes.ValueSourceInput)
 
 	recorder := newLookupRecorder(req.Lookup)
-	result, err := e.evaluateProgram(ctx, req.Expression, env, recorder, resolveFailures)
+	var definition *formulatypes.Definition
+	if known, ok := e.registry.Get(req.SchemaID); ok {
+		definition = known
+	}
+	shape := e.shapeFor(ctx, definition, env, recorder)
+	result, err := e.evaluateShaped(ctx, req.Expression, env, shape, resolveFailures)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +267,7 @@ func (e *Engine) EvaluateExpression(
 		}
 	}
 
-	result.Breakdown = e.evaluateBreakdowns(ctx, req.Breakdowns, env, recorder)
+	result.Breakdown = e.evaluateBreakdowns(ctx, req.Breakdowns, env, shape)
 	result.Receipt = &formulatypes.Receipt{
 		Variables: receiptVariables(env, sources),
 		Lookups:   recorder.entries,
@@ -293,12 +308,26 @@ func (e *Engine) evaluateProgram(
 	lookup formulatemplatetypes.RateTableLookup,
 	resolveFailures map[string]error,
 ) (*formulatemplatetypes.EvaluationResult, error) {
-	injectLookupFunctions(env, lookup)
+	shape := e.shapeFor(ctx, nil, env, lookup)
+	return e.evaluateShaped(ctx, expression, env, shape, resolveFailures)
+}
+
+// evaluateShaped compiles against the evaluation's shape — computed once, so
+// the main expression and every breakdown line share the schema-level cache
+// key — and runs against the real environment.
+func (e *Engine) evaluateShaped(
+	ctx context.Context,
+	expression string,
+	env map[string]any,
+	shape *compileShape,
+	resolveFailures map[string]error,
+) (*formulatemplatetypes.EvaluationResult, error) {
+	injectLookupFunctions(env, shape.lookup)
 
 	env[ctxEnvKey] = ctx
 	defer delete(env, ctxEnvKey)
 
-	compiled, err := e.Compile(expression, env)
+	compiled, err := e.compileShaped(expression, shape)
 	if err != nil {
 		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
 			return nil, missing
@@ -308,6 +337,12 @@ func (e *Engine) evaluateProgram(
 
 	output, err := e.run(ctx, compiled.program, env)
 	if err != nil {
+		// The program was compiled against the schema's declared types, so a
+		// record that lacks a nullable value fails here rather than at
+		// compile time. It is the same authoring problem with the same fix.
+		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
+			return nil, missing
+		}
 		return nil, errors.NewComputeError(
 			expression,
 			"expression",
@@ -340,14 +375,14 @@ func (e *Engine) evaluateBreakdowns(
 	ctx context.Context,
 	definitions []*formulatypes.BreakdownDefinition,
 	env map[string]any,
-	recorder *lookupRecorder,
+	shape *compileShape,
 ) []formulatemplatetypes.BreakdownAmount {
 	if len(definitions) == 0 {
 		return nil
 	}
 
 	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(definitions))
-	defer recorder.setScope(mainExpressionScope)
+	defer shape.recorder().setScope(mainExpressionScope)
 
 	for _, def := range definitions {
 		if def == nil {
@@ -359,8 +394,8 @@ func (e *Engine) evaluateBreakdowns(
 			Label: def.Label,
 		}
 
-		recorder.setScope(def.Name)
-		result, err := e.evaluateProgram(ctx, def.Expression, env, recorder, nil)
+		shape.recorder().setScope(def.Name)
+		result, err := e.evaluateShaped(ctx, def.Expression, env, shape, nil)
 		if err != nil {
 			item.Error = err.Error()
 		} else {
@@ -680,4 +715,112 @@ func writeValueSignature(digest hash.Hash, value any) {
 	default:
 		writeLenPrefixed(digest, reflect.TypeOf(value).String())
 	}
+}
+
+// compileShape is what an evaluation compiles against: the environment with
+// every schema-nullable path set to its declared type's zero, so one program
+// serves records with and without the value, plus that environment's
+// signature hashed once. A nil at compile time types the path as unknown and
+// rejects arithmetic outright, while the declared zero compiles arithmetic,
+// coalesce, ?? and == nil alike; at run time expr's arithmetic is dynamic, so
+// a record that really lacks the value still fails the way it always did.
+type compileShape struct {
+	env       map[string]any
+	signature string
+	lookup    formulatemplatetypes.RateTableLookup
+}
+
+func (s *compileShape) recorder() *lookupRecorder {
+	if rec, ok := s.lookup.(*lookupRecorder); ok {
+		return rec
+	}
+	return newLookupRecorder(s.lookup)
+}
+
+func (e *Engine) shapeFor(
+	ctx context.Context,
+	definition *formulatypes.Definition,
+	env map[string]any,
+	lookup formulatemplatetypes.RateTableLookup,
+) *compileShape {
+	shaped := make(map[string]any, len(env)+lookupFunctionCount+1)
+	maps.Copy(shaped, env)
+	injectLookupFunctions(shaped, lookup)
+	shaped[ctxEnvKey] = ctx
+
+	if definition != nil {
+		for path, fieldType := range nullablePaths(definition.Properties, "") {
+			shapePath(shaped, path, declaredZero(fieldType))
+		}
+	}
+
+	digest := sha256.New()
+	writeEnvSignature(digest, shaped)
+
+	return &compileShape{
+		env:       shaped,
+		signature: hex.EncodeToString(digest.Sum(nil)),
+		lookup:    lookup,
+	}
+}
+
+// declaredZero is the compile-time stand-in for a nullable field: the zero of
+// its declared type, matching what a validation environment would hold.
+func declaredZero(fieldType string) any {
+	switch fieldType {
+	case "boolean":
+		return false
+	case "string":
+		return ""
+	case "integer":
+		return int64(0)
+	case "datetime":
+		return time.Time{}
+	default:
+		return 0.0
+	}
+}
+
+// shapePath sets a dotted path in a copy of the environment without touching
+// the nested maps the real environment still owns.
+func shapePath(env map[string]any, path string, value any) {
+	segments := strings.Split(path, ".")
+	current := env
+	for _, segment := range segments[:len(segments)-1] {
+		nested, ok := current[segment].(map[string]any)
+		if !ok {
+			return
+		}
+		cloned := make(map[string]any, len(nested))
+		maps.Copy(cloned, nested)
+		current[segment] = cloned
+		current = cloned
+	}
+	if _, present := current[segments[len(segments)-1]]; present {
+		current[segments[len(segments)-1]] = value
+	}
+}
+
+func (e *Engine) compileShaped(
+	expression string,
+	shape *compileShape,
+) (*CompiledExpression, error) {
+	digest := sha256.New()
+	writeLenPrefixed(digest, expression)
+	writeLenPrefixed(digest, shape.signature)
+	cacheKey := hex.EncodeToString(digest.Sum(nil))
+
+	if cached, ok := e.cache.Get(cacheKey); ok {
+		return cached, nil
+	}
+
+	program, err := expr.Compile(expression, e.compileOptions(shape.env)...)
+	if err != nil {
+		return nil, errors.NewSchemaError(expression, "compile", err)
+	}
+
+	compiled := &CompiledExpression{program: program, expression: expression}
+	e.cache.Add(cacheKey, compiled)
+
+	return compiled, nil
 }

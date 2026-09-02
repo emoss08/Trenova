@@ -17,6 +17,8 @@ const (
 
 	lookupInterpFuncName  = "lookupInterp"
 	deficitWeightFuncName = "deficitWeight"
+
+	lookupFunctionCount = 6
 )
 
 var ErrReservedVariableName = goErrors.New("variable name is reserved")
