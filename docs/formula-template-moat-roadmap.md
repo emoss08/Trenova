@@ -443,8 +443,9 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 4.4 Service-layer structure
 
-- [ ] Split `formulatemplateservice/service.go` into `versions.go`,
-      `testexpression.go`, `validator.go`
+- [x] Split `formulatemplateservice/service.go` into `versions.go`,
+      `testexpression.go`, `validator.go` (pure move; service.go keeps the CRUD, duplicate,
+      bulk status, and lookup helpers)
 - [ ] One `templateSnapshot`-based constructor used by Fork, Duplicate, Import, and
       InstallStandards; `buildDuplicateEntity` moves out of the repository
 - [ ] Repositories use `buncolgen` column helpers and `DBForContext` everywhere
