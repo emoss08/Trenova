@@ -59,7 +59,7 @@ func (r *repository) filterQuery(
 			))
 		}
 
-		q = q.Where("ft.type = ?", t)
+		q = q.Where(buncolgen.FormulaTemplateColumns.Type.Eq(), t)
 	}
 
 	if req.Status != "" {
@@ -73,10 +73,10 @@ func (r *repository) filterQuery(
 			))
 		}
 
-		q = q.Where("ft.status = ?", s)
+		q = q.Where(buncolgen.FormulaTemplateColumns.Status.Eq(), s)
 	}
 
-	q = q.Order("ft.created_at DESC")
+	q = q.Order(buncolgen.FormulaTemplateColumns.CreatedAt.OrderDesc())
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -91,7 +91,7 @@ func (r *repository) List(
 	)
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
+	total, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -279,9 +279,8 @@ func (r *repository) GetByID(
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("ft.id = ?", req.TemplateID).
-				Where("ft.organization_id = ?", req.TenantInfo.OrgID).
-				Where("ft.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.FormulaTemplateColumns.ID.Eq(), req.TemplateID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -306,9 +305,8 @@ func (r *repository) GetByIDs(
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("ft.organization_id = ?", req.TenantInfo.OrgID).
-				Where("ft.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("ft.id IN (?)", bun.List(req.TemplateIDs))
+			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -337,9 +335,8 @@ func (r *repository) FindByNames(
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("ft.organization_id = ?", req.TenantInfo.OrgID).
-				Where("ft.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("ft.name IN (?)", bun.List(req.Names))
+			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.FormulaTemplateColumns.Name.In(), bun.List(req.Names))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -364,9 +361,8 @@ func (r *repository) BulkUpdateStatus(
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("ft.organization_id = ?", req.TenantInfo.OrgID).
-				Where("ft.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("ft.id IN (?)", bun.List(req.TemplateIDs))
+			return buncolgen.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
+				Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
 		}).
 		Set("status = ?", req.Status).
 		Returning("*").
@@ -509,49 +505,29 @@ func (r *repository) CountUsages(
 		Count int    `bun:"count"`
 	}
 
-	shipmentUsage := r.db.DBForContext(ctx).NewSelect().
-		ColumnExpr("'shipment' as type").
-		ColumnExpr("COUNT(*) as count").
-		TableExpr("shipments").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("formula_template_id = ?", req.TemplateID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
-		})
-
-	accessorialUsage := r.db.DBForContext(ctx).NewSelect().
-		ColumnExpr("'accessorial_charge' as type").
-		ColumnExpr("COUNT(*) as count").
-		TableExpr("accessorial_charges").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("formula_template_id = ?", req.TemplateID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
-		})
-
-	ruleUsage := r.db.DBForContext(ctx).NewSelect().
-		ColumnExpr("'rate_agreement_rule' as type").
-		ColumnExpr("COUNT(*) as count").
-		TableExpr("rate_agreement_rules").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("formula_template_id = ?", req.TemplateID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
-		})
-
-	agreementAccessorialUsage := r.db.DBForContext(ctx).NewSelect().
-		ColumnExpr("'rate_agreement_accessorial' as type").
-		ColumnExpr("COUNT(*) as count").
-		TableExpr("rate_agreement_accessorials").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("formula_template_id = ?", req.TemplateID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
-		})
+	shipmentUsage := r.usageCount(ctx, req, "shipment",
+		buncolgen.ShipmentTable,
+		buncolgen.ShipmentColumns.FormulaTemplateID,
+		buncolgen.ShipmentScopeTenant,
+	)
+	accessorialUsage := r.usageCount(ctx, req, "accessorial_charge",
+		buncolgen.AccessorialChargeTable,
+		// accessorial_charges.formula_template_id exists in the schema but the
+		// accessorial charge model does not map it, so the generator has no
+		// helper for it; the column is still built through buncolgen.
+		buncolgen.NewColumn("formula_template_id", buncolgen.AccessorialChargeTable.Alias),
+		buncolgen.AccessorialChargeScopeTenant,
+	)
+	ruleUsage := r.usageCount(ctx, req, "rate_agreement_rule",
+		buncolgen.RateAgreementRuleTable,
+		buncolgen.RateAgreementRuleColumns.FormulaTemplateID,
+		buncolgen.RateAgreementRuleScopeTenant,
+	)
+	agreementAccessorialUsage := r.usageCount(ctx, req, "rate_agreement_accessorial",
+		buncolgen.RateAgreementAccessorialTable,
+		buncolgen.RateAgreementAccessorialColumns.FormulaTemplateID,
+		buncolgen.RateAgreementAccessorialScopeTenant,
+	)
 
 	var results []usageResult
 	err := r.db.DBForContext(ctx).NewSelect().
@@ -587,26 +563,28 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+	cols := buncolgen.FormulaTemplateColumns
+
 	return dbhelper.SelectOptions[*formulatemplate.FormulaTemplate](
 		ctx,
-		r.db.DB(),
+		r.db.DBForContext(ctx),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
 			Columns: []string{
-				"id",
-				"name",
-				"description",
-				"expression",
+				cols.ID.Name,
+				cols.Name.Name,
+				cols.Description.Name,
+				cols.Expression.Name,
 			},
-			OrgColumn: "ft.organization_id",
-			BuColumn:  "ft.business_unit_id",
+			OrgColumn: cols.OrganizationID.Qualified(),
+			BuColumn:  cols.BusinessUnitID.Qualified(),
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("ft.status = ?", formulatemplate.StatusActive.String())
+				return q.Where(cols.Status.Eq(), formulatemplate.StatusActive.String())
 			},
 			EntityName: "FormulaTemplate",
 			SearchColumns: []string{
-				"ft.name",
-				"ft.description",
+				cols.Name.Qualified(),
+				cols.Description.Qualified(),
 			},
 		},
 	)
@@ -618,4 +596,24 @@ func duplicateTemplateName(name string) error {
 		errortypes.ErrDuplicate,
 		fmt.Sprintf("A formula template named %q already exists", name),
 	)
+}
+
+// usageCount is one branch of the usage union: how many rows of a table point
+// at the template, labelled so the caller can tell shipments from rules.
+func (r *repository) usageCount(
+	ctx context.Context,
+	req *repositories.GetTemplateUsageRequest,
+	label string,
+	table buncolgen.TableInfo,
+	templateColumn buncolgen.Column,
+	scope func(*bun.SelectQuery, pagination.TenantInfo) *bun.SelectQuery,
+) *bun.SelectQuery {
+	return r.db.DBForContext(ctx).NewSelect().
+		ColumnExpr("? as type", label).
+		ColumnExpr("COUNT(*) as count").
+		TableExpr("? AS ?", bun.Ident(table.Name), bun.Ident(table.Alias)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return scope(sq, req.TenantInfo).
+				Where(templateColumn.Eq(), req.TemplateID)
+		})
 }

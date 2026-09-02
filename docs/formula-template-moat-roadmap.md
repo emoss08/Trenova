@@ -451,8 +451,10 @@ Every rating carries a trace that a non-programmer can read.
       (`formulatemplate.Seed` with `SeedFromTemplate`/`SeedFromVersion`; `Build` applies
       Draft, the shipment schema, empty collections, cloned metadata, version one, and
       rounding normalisation; the repository's duplicate path builds from the seed too)
-- [ ] Repositories use `buncolgen` column helpers and `DBForContext` everywhere
-      (`List`, `CountUsages`, `SelectOptions`)
+- [x] Repositories use `buncolgen` column helpers and `DBForContext` everywhere
+      (`List`, `CountUsages`, `SelectOptions`; the version repository too. The accessorial
+      charge model does not map `formula_template_id`, so that one usage count builds its
+      column through `buncolgen.NewColumn` until the model catches up)
 - [ ] Approval engine records review rounds (reviewer, decision, comment, diff-base
       version) with "request changes" distinct from Reject, and expiry on stale
       submissions (`pkg/approvalworkflow`, migration)
