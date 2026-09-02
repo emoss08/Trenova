@@ -1231,6 +1231,6 @@ func (shipIntgStubMatrixRepo) GetLookupData(
 	return nil, nil
 }
 
-func (*shipIntgStubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
+func (shipIntgStubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
 	return "", nil
 }
