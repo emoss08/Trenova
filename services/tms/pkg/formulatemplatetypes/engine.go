@@ -1,6 +1,7 @@
 package formulatemplatetypes
 
 import (
+	"context"
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -52,10 +53,20 @@ type EnvEvaluationRequest struct {
 	Lookup     RateTableLookup
 }
 
+// ContextVariableProvider supplies variables no record carries — market data
+// such as the tenant's latest fuel price — so a formula can read them like any
+// other field. Providers are asked per tenant, once per batch.
+type ContextVariableProvider interface {
+	ContextVariables(ctx context.Context, tenantInfo pagination.TenantInfo) (map[string]any, error)
+}
+
 type EvaluationRequest struct {
 	Template  *formulatemplate.FormulaTemplate
 	Entity    any
 	Variables map[string]any
+	// Provided are tenant-level values from external feeds. They sit beneath
+	// caller variables, so a scenario can pin a fuel price the feed disagrees with.
+	Provided map[string]any
 	// Overrides are engine-supplied bindings that may shadow schema fields —
 	// the rate engine binding a rule's rate or a matrix cell as baseRate.
 	// Caller-supplied variables can never shadow a field; overrides exist so
@@ -69,6 +80,7 @@ type ExpressionEvaluationRequest struct {
 	Entity     any
 	SchemaID   string
 	Variables  map[string]any
+	Provided   map[string]any
 	Breakdowns []*formulatypes.BreakdownDefinition
 	Lookup     RateTableLookup
 	// AllowBoolean lets a yes-or-no expression evaluate to true or false. A

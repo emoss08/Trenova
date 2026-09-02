@@ -131,9 +131,12 @@ func (p provenance) markPaths(paths []string, source formulatypes.ValueSource) {
 func provenanceForSchema(definition *formulatypes.Definition) provenance {
 	sources := make(provenance, len(definition.FieldSources))
 	for path, source := range definition.FieldSources {
-		if source != nil && source.Computed {
+		switch {
+		case source != nil && source.Provided:
+			sources[path] = formulatypes.ValueSourceProvided
+		case source != nil && source.Computed:
 			sources[path] = formulatypes.ValueSourceComputed
-		} else {
+		default:
 			sources[path] = formulatypes.ValueSourceField
 		}
 	}

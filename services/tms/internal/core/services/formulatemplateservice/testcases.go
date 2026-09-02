@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -261,7 +263,7 @@ func (s *Service) RunTestCases(
 	}
 
 	return s.runCasesAgainstCandidate(
-		ratetablecache.With(ctx),
+		contextvariablecache.With(ratetablecache.With(ctx)),
 		template.SchemaID,
 		req.TenantInfo,
 		cases,
@@ -375,7 +377,7 @@ func (s *Service) requirePassingTestCases(
 	}
 
 	run := s.runCasesAgainstCandidate(
-		ratetablecache.With(ctx),
+		contextvariablecache.With(ratetablecache.With(ctx)),
 		template.SchemaID,
 		tenantInfo,
 		cases,

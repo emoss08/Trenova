@@ -410,8 +410,13 @@ Every rating carries a trace that a non-programmer can read.
       `highestFreightClass` rollups over the commodity lines; `serviceType` and
       `shipmentType` objects with code and description. `currency` is deferred: neither the
       shipment nor the organization carries a currency field today, only fuel indices do)
-- [ ] `fuelPrice` as a schema-level computed variable fed by the fuel-price job so
-      FSC tables work in preview and scenarios
+- [x] `fuelPrice` as a schema-level computed variable fed by the fuel-price job so
+      FSC tables work in preview and scenarios (schema properties marked `provided` are
+      filled per tenant by `ContextVariableProvider`s; the fuel surcharge service supplies
+      `fuelPrice`, `fuelPriceDate`, and `fuelIndexCode` from the freshest active index,
+      memoized per batch; previews and live rating both see them, scenario variables can pin
+      them, receipts trace them as market data, and a failing feed leaves the nullable
+      placeholder so `coalesce(fuelPrice, 0)` keeps pricing)
 
 ### 4.3 Performance
 

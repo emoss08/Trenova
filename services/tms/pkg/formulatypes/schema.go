@@ -54,6 +54,9 @@ type FieldSource struct {
 	Nullable  bool     `json:"nullable,omitempty"`
 	Transform string   `json:"transform,omitempty"`
 	Type      string   `json:"type,omitempty"`
+	// Provided marks a variable no record carries: an external feed such as
+	// the fuel-price index supplies it per tenant at evaluation time.
+	Provided bool `json:"provided,omitempty"`
 }
 
 type Property struct {

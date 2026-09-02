@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -929,7 +931,10 @@ func (s *Service) TestExpression(
 	ctx context.Context,
 	req *TestExpressionRequest,
 ) *TestExpressionResponse {
-	ctx = engine.WithEvaluationTimeout(ratetablecache.With(ctx), previewEvaluationTimeout)
+	ctx = engine.WithEvaluationTimeout(
+		contextvariablecache.With(ratetablecache.With(ctx)),
+		previewEvaluationTimeout,
+	)
 
 	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
@@ -1106,7 +1111,12 @@ func (s *Service) testExpressionWithEnv(
 	req *TestExpressionRequest,
 	lookup formulatemplatetypes.RateTableLookup,
 ) *TestExpressionResponse {
-	env, err := s.formulaService.BuildValidationEnvironment(req.SchemaID, req.Variables)
+	env, err := s.formulaService.BuildValidationEnvironmentForTenant(
+		ctx,
+		req.TenantInfo,
+		req.SchemaID,
+		req.Variables,
+	)
 	if err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,

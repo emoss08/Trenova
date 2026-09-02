@@ -482,6 +482,31 @@
                 ]
             }
         },
+        "fuelPrice": {
+            "description": "Latest fuel price per gallon from the organization's freshest active fuel index, supplied at rating time; empty when no index has a price, so guard it with coalesce(fuelPrice, 0) or a fallback lookup",
+            "type": ["number", "null"],
+            "minimum": 0,
+            "x-source": {
+                "provided": true,
+                "nullable": true
+            }
+        },
+        "fuelPriceDate": {
+            "description": "Date (YYYY-MM-DD) of the fuel price behind fuelPrice; empty when no index has a price",
+            "type": ["string", "null"],
+            "x-source": {
+                "provided": true,
+                "nullable": true
+            }
+        },
+        "fuelIndexCode": {
+            "description": "Code of the fuel index behind fuelPrice, such as DOE_US; empty when no index has a price",
+            "type": ["string", "null"],
+            "x-source": {
+                "provided": true,
+                "nullable": true
+            }
+        },
         "serviceType": {
             "description": "Service level the shipment was booked under",
             "type": ["object", "null"],

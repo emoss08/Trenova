@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -2591,4 +2592,34 @@ func TestBulkUpdateStatus_RejectsEmptyAndOversizedBatches(t *testing.T) {
 	)
 	require.Error(t, err)
 	deps.repo.AssertNotCalled(t, "GetByIDs", mock.Anything, mock.Anything)
+}
+
+func newFormulaServiceWithProviders(
+	t *testing.T,
+	providers ...formulatemplatetypes.ContextVariableProvider,
+) *formula.Service {
+	t.Helper()
+
+	registry := schema.NewRegistry()
+	registerShipmentSchema(registry)
+	res := resolver.NewResolver()
+	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+		Registry: registry,
+		Resolver: res,
+	})
+	eng, err := engine.NewEngine(engine.Params{
+		Registry:   registry,
+		Resolver:   res,
+		EnvBuilder: envBuilder,
+	})
+	require.NoError(t, err)
+	return formula.NewService(formula.ServiceParams{
+		Logger:           zap.NewNop(),
+		Registry:         registry,
+		Engine:           eng,
+		Resolver:         res,
+		VersionRepo:      &stubFormulaVersionRepo{},
+		RateMatrixRepo:   &stubMatrixLookupRepo{},
+		ContextProviders: providers,
+	})
 }

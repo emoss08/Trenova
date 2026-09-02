@@ -159,15 +159,17 @@ func (e *Engine) Evaluate(
 		return nil, err
 	}
 
-	env, resolveFailures, err := e.envBuilder.BuildWithVariables(
+	env, resolveFailures, err := e.envBuilder.BuildWithProvided(
 		req.Entity,
 		req.Template.SchemaID,
+		req.Provided,
 		req.Variables,
 	)
 	if err != nil {
 		return nil, errors.NewSchemaError(req.Template.SchemaID, "build environment", err)
 	}
 	sources := provenanceForSchema(definition)
+	sources.markAll(req.Provided, formulatypes.ValueSourceProvided)
 	sources.markAll(req.Variables, formulatypes.ValueSourceInput)
 
 	mergeVariables(env, req.Overrides)
@@ -220,9 +222,10 @@ func (e *Engine) EvaluateExpression(
 		}
 	}
 
-	env, resolveFailures, err := e.envBuilder.BuildWithVariables(
+	env, resolveFailures, err := e.envBuilder.BuildWithProvided(
 		req.Entity,
 		req.SchemaID,
+		req.Provided,
 		req.Variables,
 	)
 	if err != nil {
@@ -233,8 +236,9 @@ func (e *Engine) EvaluateExpression(
 	if definition, ok := e.registry.Get(req.SchemaID); ok {
 		sources = provenanceForSchema(definition)
 	} else {
-		sources = make(provenance, len(req.Variables))
+		sources = make(provenance, len(req.Variables)+len(req.Provided))
 	}
+	sources.markAll(req.Provided, formulatypes.ValueSourceProvided)
 	sources.markAll(req.Variables, formulatypes.ValueSourceInput)
 
 	recorder := newLookupRecorder(req.Lookup)

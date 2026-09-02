@@ -5,6 +5,8 @@ import (
 	"context"
 	"math"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
@@ -164,6 +166,7 @@ func (c *Calculator) calculateCommercialTotals(
 	// tables. A caller walking a batch installs its own memo first, and this
 	// one steps aside for it.
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	if sync.detention {

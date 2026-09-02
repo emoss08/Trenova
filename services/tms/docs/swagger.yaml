@@ -12028,6 +12028,7 @@ definitions:
             - input
             - override
             - default
+            - provided
             - sample
         type: string
         x-enum-varnames:
@@ -12036,6 +12037,7 @@ definitions:
             - ValueSourceInput
             - ValueSourceOverride
             - ValueSourceDefault
+            - ValueSourceProvided
             - ValueSourceSample
     github_com_emoss08_trenova_pkg_formulatypes.VariableDefinition:
         properties:

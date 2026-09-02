@@ -17,6 +17,7 @@ const SOURCE_WORDS: Record<FormulaValueSource, string> = {
   override: "engine override",
   default: "declared default",
   sample: "sample data",
+  provided: "market data feed",
 };
 
 /** The variable identifier under a document position, if the position is on one. */

@@ -314,6 +314,7 @@ export const formulaValueSourceSchema = z.enum([
   "override",
   "default",
   "sample",
+  "provided",
 ]);
 export type FormulaValueSource = z.infer<typeof formulaValueSourceSchema>;
 

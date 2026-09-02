@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,6 +46,7 @@ func (s *Service) ApprovalImpact(
 	}
 
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	limit := req.Limit

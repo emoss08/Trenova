@@ -1,12 +1,14 @@
 package formulatemplateservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -572,4 +574,33 @@ func TestBuildBacktestSummary_CountsClampsAndFailuresSeparately(t *testing.T) {
 	assert.Equal(t, 2, summary.CurrentErrorCount)
 	assert.Equal(t, 2, summary.CandidateErrorCount)
 	assert.Equal(t, 3, summary.ErrorCount)
+}
+
+type stubContextProvider struct {
+	variables map[string]any
+}
+
+func (s *stubContextProvider) ContextVariables(
+	_ context.Context,
+	_ pagination.TenantInfo,
+) (map[string]any, error) {
+	return s.variables, nil
+}
+
+func TestTestExpression_PreviewSeesProvidedContextVariables(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.formulaService = newFormulaServiceWithProviders(
+		t,
+		&stubContextProvider{variables: map[string]any{"fuelPrice": 3.85}},
+	)
+
+	resp := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "100 * fuelPrice",
+		SchemaID:   "shipment",
+		TenantInfo: newTenantInfo(),
+	})
+
+	require.True(t, resp.Valid, resp.Error)
+	assert.InDelta(t, 385, resultAmount(t, resp).InexactFloat64(), 0.0001)
 }

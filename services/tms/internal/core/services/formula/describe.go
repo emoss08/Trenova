@@ -9,7 +9,10 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatypes"
 )
 
-const computedVariableCategory = "computed"
+const (
+	computedVariableCategory = "computed"
+	providedVariableCategory = "context"
+)
 
 func (s *Service) DescribeSchema(
 	schemaID string,
@@ -89,6 +92,9 @@ func collectSchemaVariables(
 		variableCategory := category
 		if prop.Source.Computed && prefix == "" {
 			variableCategory = computedVariableCategory
+		}
+		if prop.Source.Provided {
+			variableCategory = providedVariableCategory
 		}
 
 		variables = append(variables, formulatemplatetypes.SchemaVariableInfo{

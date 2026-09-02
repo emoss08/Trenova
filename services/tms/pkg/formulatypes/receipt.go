@@ -19,6 +19,9 @@ const (
 	ValueSourceOverride ValueSource = "override"
 	// ValueSourceDefault is a template variable's declared default.
 	ValueSourceDefault ValueSource = "default"
+	// ValueSourceProvided is a value an external feed supplied for the tenant,
+	// such as the latest fuel price.
+	ValueSourceProvided ValueSource = "provided"
 	// ValueSourceSample is a value from a synthetic environment: a preview
 	// or a saved scenario rather than a real record.
 	ValueSourceSample ValueSource = "sample"

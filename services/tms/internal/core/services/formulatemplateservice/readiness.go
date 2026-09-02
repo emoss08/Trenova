@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -75,6 +77,7 @@ func (s *Service) Readiness(
 	}
 
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
 
 	resp := &ReadinessResponse{Checks: make([]ReadinessCheck, 0, 6)}
 	blocking := false

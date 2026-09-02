@@ -48,6 +48,11 @@ func (b *EnvironmentBuilder) Build(
 		var value any
 		var err error
 
+		if source.Provided {
+			formulatypes.SetNestedValue(env, fieldPath, nil)
+			continue
+		}
+
 		if source.Computed {
 			value, err = b.resolver.ResolveComputed(entity, source.Function)
 		} else {
@@ -72,11 +77,25 @@ func (b *EnvironmentBuilder) BuildWithVariables(
 	schemaID string,
 	variables map[string]any,
 ) (map[string]any, map[string]error, error) {
+	return b.BuildWithProvided(entity, schemaID, nil, variables)
+}
+
+// BuildWithProvided layers an evaluation environment: the record's fields and
+// computed values first, then tenant-level provided values from external
+// feeds, then the caller's variables, so each later layer may shadow the one
+// beneath it and a scenario can pin a value the feed disagrees with.
+func (b *EnvironmentBuilder) BuildWithProvided(
+	entity any,
+	schemaID string,
+	provided map[string]any,
+	variables map[string]any,
+) (map[string]any, map[string]error, error) {
 	env, resolveFailures, err := b.Build(entity, schemaID)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	mergeVariables(env, provided)
 	mergeVariables(env, variables)
 
 	return env, resolveFailures, nil
@@ -86,12 +105,21 @@ func (b *EnvironmentBuilder) BuildValidationEnvironment(
 	schemaID string,
 	variables map[string]any,
 ) (map[string]any, map[string]error, error) {
+	return b.BuildValidationEnvironmentWithProvided(schemaID, nil, variables)
+}
+
+func (b *EnvironmentBuilder) BuildValidationEnvironmentWithProvided(
+	schemaID string,
+	provided map[string]any,
+	variables map[string]any,
+) (map[string]any, map[string]error, error) {
 	definition, ok := b.registry.Get(schemaID)
 	if !ok {
 		return nil, nil, fmt.Errorf("%w: %s", ErrSchemaNotFound, schemaID)
 	}
 
 	env := buildPropertyValidationEnvironment(definition.Properties)
+	mergeVariables(env, provided)
 	mergeVariables(env, variables)
 
 	return env, nil, nil

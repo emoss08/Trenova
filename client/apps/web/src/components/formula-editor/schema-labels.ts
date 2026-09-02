@@ -9,6 +9,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   serviceType: "Service Type",
   shipmentType: "Shipment Type",
   computed: "Computed Rollups",
+  context: "Market Data",
   custom: "Custom Variables",
 };
 

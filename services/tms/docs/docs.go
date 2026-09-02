@@ -49049,6 +49049,7 @@ const docTemplate = `{
                 "input",
                 "override",
                 "default",
+                "provided",
                 "sample"
             ],
             "x-enum-varnames": [
@@ -49057,6 +49058,7 @@ const docTemplate = `{
                 "ValueSourceInput",
                 "ValueSourceOverride",
                 "ValueSourceDefault",
+                "ValueSourceProvided",
                 "ValueSourceSample"
             ]
         },

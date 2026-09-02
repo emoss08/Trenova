@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -1794,6 +1796,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	// Every leg of a multi-leg order re-rates against the same tenant's rate
 	// tables, so the invoice reads them once instead of once per leg.
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	lines := make([]*invoice.InoviceLine, 0, len(entity.Lines))

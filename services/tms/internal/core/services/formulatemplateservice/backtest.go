@@ -3,6 +3,8 @@ package formulatemplateservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -86,6 +88,7 @@ func (s *Service) Backtest(
 	}
 
 	ctx = ratetablecache.With(ctx)
+	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	limit := req.Limit

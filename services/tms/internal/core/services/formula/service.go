@@ -3,11 +3,14 @@ package formula
 import (
 	"context"
 	goErrors "errors"
+	"fmt"
+	"maps"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
@@ -34,16 +37,19 @@ type ServiceParams struct {
 	Repo           repositories.FormulaTemplateRepository
 	VersionRepo    repositories.FormulaTemplateVersionRepository
 	RateMatrixRepo repositories.RateMatrixRepository
+
+	ContextProviders []formulatemplatetypes.ContextVariableProvider `group:"formula_context_variables"`
 }
 
 type Service struct {
-	l              *zap.Logger
-	registry       *schema.Registry
-	engine         *engine.Engine
-	resolver       *resolver.Resolver
-	repo           repositories.FormulaTemplateRepository
-	versionRepo    repositories.FormulaTemplateVersionRepository
-	rateMatrixRepo repositories.RateMatrixRepository
+	l                *zap.Logger
+	registry         *schema.Registry
+	engine           *engine.Engine
+	resolver         *resolver.Resolver
+	repo             repositories.FormulaTemplateRepository
+	versionRepo      repositories.FormulaTemplateVersionRepository
+	rateMatrixRepo   repositories.RateMatrixRepository
+	contextProviders []formulatemplatetypes.ContextVariableProvider
 }
 
 //nolint:gocritic // fx param structs are passed by value
@@ -51,14 +57,46 @@ func NewService(p ServiceParams) *Service {
 	resolver.RegisterDefaultComputed(p.Resolver)
 
 	return &Service{
-		l:              p.Logger.Named("service.formula"),
-		registry:       p.Registry,
-		engine:         p.Engine,
-		resolver:       p.Resolver,
-		repo:           p.Repo,
-		versionRepo:    p.VersionRepo,
-		rateMatrixRepo: p.RateMatrixRepo,
+		l:                p.Logger.Named("service.formula"),
+		registry:         p.Registry,
+		engine:           p.Engine,
+		resolver:         p.Resolver,
+		repo:             p.Repo,
+		versionRepo:      p.VersionRepo,
+		rateMatrixRepo:   p.RateMatrixRepo,
+		contextProviders: p.ContextProviders,
 	}
+}
+
+// ContextVariables gathers tenant-level values from every registered feed. A
+// feed that fails costs only its own variables: the formula still prices with
+// the schema's nullable placeholder in their place, and the failure is logged.
+// The result is memoized per context when a caller installed
+// contextvariablecache.With, so a batch asks each feed once.
+func (s *Service) ContextVariables(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) map[string]any {
+	if len(s.contextProviders) == 0 {
+		return nil
+	}
+
+	key := tenantInfo.OrgID.String() + "/" + tenantInfo.BuID.String()
+	return contextvariablecache.Get(ctx, key, func(ctx context.Context) map[string]any {
+		variables := make(map[string]any, 4)
+		for _, provider := range s.contextProviders {
+			provided, err := provider.ContextVariables(ctx, tenantInfo)
+			if err != nil {
+				s.l.Warn("context variable provider failed",
+					zap.String("provider", fmt.Sprintf("%T", provider)),
+					zap.Error(err),
+				)
+				continue
+			}
+			maps.Copy(variables, provided)
+		}
+		return variables
+	})
 }
 
 func (s *Service) Calculate(
@@ -192,10 +230,11 @@ func (s *Service) Rate(
 ) (*formulatemplatetypes.CalculateResponse, error) {
 	started := time.Now()
 
-	lookup, err := s.BuildLookup(ctx, pagination.TenantInfo{
+	tenantInfo := pagination.TenantInfo{
 		OrgID: req.Template.OrganizationID,
 		BuID:  req.Template.BusinessUnitID,
-	})
+	}
+	lookup, err := s.BuildLookup(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +243,7 @@ func (s *Service) Rate(
 		Template:  req.Template,
 		Entity:    req.Entity,
 		Variables: req.Variables,
+		Provided:  s.ContextVariables(ctx, tenantInfo),
 		Overrides: req.Overrides,
 		Lookup:    lookup,
 	})
@@ -368,6 +408,7 @@ func (s *Service) EvaluateExpression(
 			Entity:     req.Entity,
 			SchemaID:   req.SchemaID,
 			Variables:  req.Variables,
+			Provided:   s.ContextVariables(ctx, req.TenantInfo),
 			Breakdowns: req.Breakdowns,
 			Lookup:     lookup,
 		},
@@ -543,6 +584,24 @@ func (s *Service) BuildValidationEnvironment(
 ) (map[string]any, error) {
 	env, _, err := s.engine.GetEnvironmentBuilder().
 		BuildValidationEnvironment(schemaID, variables)
+	return env, err
+}
+
+// BuildValidationEnvironmentForTenant is the synthetic environment a preview
+// runs against, with the tenant's provided values from external feeds in
+// place, so a fuel-surcharge formula previews at today's price.
+func (s *Service) BuildValidationEnvironmentForTenant(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	schemaID string,
+	variables map[string]any,
+) (map[string]any, error) {
+	env, _, err := s.engine.GetEnvironmentBuilder().
+		BuildValidationEnvironmentWithProvided(
+			schemaID,
+			s.ContextVariables(ctx, tenantInfo),
+			variables,
+		)
 	return env, err
 }
 

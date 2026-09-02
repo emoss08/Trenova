@@ -22,6 +22,10 @@ const SOURCE_LABELS: Record<FormulaValueSource, { label: string; className: stri
   },
   default: { label: "default", className: "bg-muted text-muted-foreground" },
   sample: { label: "sample", className: "bg-muted text-muted-foreground" },
+  provided: {
+    label: "market data",
+    className: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+  },
 };
 
 /** Words for which entry answered a lookup, for the receipt and dispute letters alike. */
