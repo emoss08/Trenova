@@ -484,6 +484,14 @@ export type CreateSettlementDisputeInput = {
   settlementLineId?: string | number | null | undefined;
 };
 
+export type CreateWorkerPtoInput = {
+  endDate: number;
+  reason: string;
+  startDate: number;
+  type: PtoType;
+  workerId: string | number;
+};
+
 export type CustomerBillingCycleType =
   | 'BiWeekly'
   | 'Daily'
@@ -6173,6 +6181,13 @@ export type PatchWorkerMutationVariables = Exact<{
 
 
 export type PatchWorkerMutation = { patchWorker: { ' $fragmentRefs'?: { 'WorkerTableRowFieldsFragment': WorkerTableRowFieldsFragment } } };
+
+export type CreateWorkerPtoMutationVariables = Exact<{
+  input: CreateWorkerPtoInput;
+}>;
+
+
+export type CreateWorkerPtoMutation = { createWorkerPTO: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } };
 
 export type ApproveWorkerPtoMutationVariables = Exact<{
   id: string | number;
@@ -26595,6 +26610,38 @@ fragment WorkerTableRowFields on Worker {
     ...WorkerProfileTableFields
   }
 }`, {"hash":"sha256:7f614eb64dd42991c84620d0626f29319de8c30660b54dc87adb74e2e9b9b816"}) as unknown as TypedDocumentString<PatchWorkerMutation, PatchWorkerMutationVariables>;
+export const CreateWorkerPtoDocument = new TypedDocumentString(`
+    mutation CreateWorkerPto($input: CreateWorkerPTOInput!) {
+  createWorkerPTO(input: $input) {
+    ...WorkerPtoRowFields
+  }
+}
+    fragment WorkerPtoWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+fragment WorkerPtoRowFields on WorkerPTO {
+  id
+  workerId
+  organizationId
+  businessUnitId
+  approverId
+  rejectorId
+  status
+  type
+  startDate
+  endDate
+  reason
+  version
+  createdAt
+  updatedAt
+  worker {
+    ...WorkerPtoWorkerFields
+  }
+}`, {"hash":"sha256:e942c74696cc17f2d2c5e715c8a2818c0625fddefcc9f902ec860d0843216c39"}) as unknown as TypedDocumentString<CreateWorkerPtoMutation, CreateWorkerPtoMutationVariables>;
 export const ApproveWorkerPtoDocument = new TypedDocumentString(`
     mutation ApproveWorkerPto($id: ID!) {
   approveWorkerPTO(id: $id) {

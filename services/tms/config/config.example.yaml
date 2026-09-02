@@ -18,6 +18,7 @@ platform:
     apiKey: "" # Set from TRENOVA_CONTROL_PLANE_API_KEY
     timeout: 5s
     heartbeatInterval: 5m
+    tenantSyncInterval: 1h
     failOpenOnError: false # Development only
 
 # HTTP Server configuration

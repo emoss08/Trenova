@@ -259,6 +259,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("platform.controlPlane.enabled", false)
 	l.viper.SetDefault("platform.controlPlane.timeout", "5s")
 	l.viper.SetDefault("platform.controlPlane.heartbeatInterval", "5m")
+	l.viper.SetDefault("platform.controlPlane.tenantSyncInterval", "1h")
 	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
 
 	// Storage defaults
@@ -275,6 +276,10 @@ func (l *Loader) bindControlPlaneEnvAliases() {
 	_ = l.viper.BindEnv(
 		"platform.controlPlane.heartbeatInterval",
 		"TRENOVA_CONTROL_PLANE_HEARTBEAT_INTERVAL",
+	)
+	_ = l.viper.BindEnv(
+		"platform.controlPlane.tenantSyncInterval",
+		"TRENOVA_CONTROL_PLANE_TENANT_SYNC_INTERVAL",
 	)
 	_ = l.viper.BindEnv(
 		"platform.controlPlane.failOpenOnError",

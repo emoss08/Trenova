@@ -141,21 +141,6 @@ type JurisdictionRuleRepository interface {
 	DeleteOverride(ctx context.Context, req *DeleteOverrideRequest) error
 }
 
-type JurisdictionRuleCacheRepository interface {
-	GetResolved(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) (map[pulid.ID]*jurisdictionrule.Resolved, error)
-
-	SetResolved(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		resolved map[pulid.ID]*jurisdictionrule.Resolved,
-	) error
-
-	Invalidate(ctx context.Context, tenantInfo pagination.TenantInfo) error
-}
-
 type ListPermitsRequest struct {
 	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID
