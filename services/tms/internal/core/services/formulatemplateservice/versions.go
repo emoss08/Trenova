@@ -266,26 +266,13 @@ func (s *Service) Fork(
 		return nil, err
 	}
 
-	forkedTemplate := &formulatemplate.FormulaTemplate{
-		OrganizationID:       req.TenantInfo.OrgID,
-		BusinessUnitID:       req.TenantInfo.BuID,
-		Name:                 req.NewName,
-		Description:          snapshot.Description,
-		Type:                 snapshot.Type,
-		Expression:           snapshot.Expression,
-		Status:               formulatemplate.StatusDraft,
-		SchemaID:             snapshot.SchemaID,
-		VariableDefinitions:  snapshot.VariableDefinitions,
-		BreakdownDefinitions: snapshot.BreakdownDefinitions,
-		MinCharge:            snapshot.MinCharge,
-		MaxCharge:            snapshot.MaxCharge,
-		RoundingMode:         snapshot.RoundingMode,
-		RoundingPrecision:    snapshot.RoundingPrecision,
-		Metadata:             snapshot.Metadata,
-		SourceTemplateID:     &req.SourceTemplateID,
-		SourceVersionNumber:  &sourceVersionNum,
-		CurrentVersionNumber: 1,
-	}
+	seed := snapshot
+	seed.OrganizationID = req.TenantInfo.OrgID
+	seed.BusinessUnitID = req.TenantInfo.BuID
+	seed.Name = req.NewName
+	seed.SourceTemplateID = &req.SourceTemplateID
+	seed.SourceVersionNumber = &sourceVersionNum
+	forkedTemplate := seed.Build()
 
 	changeMessage := req.ChangeMessage
 	if changeMessage == "" {
@@ -491,7 +478,7 @@ func (s *Service) resolveTemplateSnapshot(
 	template *formulatemplate.FormulaTemplate,
 	requestedVersion *int64,
 	tenant pagination.TenantInfo,
-) (templateSnapshot, int64, error) {
+) (formulatemplate.Seed, int64, error) {
 	if requestedVersion != nil {
 		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
 			TenantInfo:    tenant,
@@ -499,18 +486,18 @@ func (s *Service) resolveTemplateSnapshot(
 			VersionNumber: *requestedVersion,
 		})
 		if err != nil {
-			return templateSnapshot{}, 0, err
+			return formulatemplate.Seed{}, 0, err
 		}
-		return snapshotFromVersion(version), version.VersionNumber, nil
+		return formulatemplate.SeedFromVersion(version), version.VersionNumber, nil
 	}
 
 	version, err := s.versionRepo.GetLatestVersion(ctx, template.ID, tenant)
 	if err == nil && version != nil {
-		return snapshotFromVersion(version), version.VersionNumber, nil
+		return formulatemplate.SeedFromVersion(version), version.VersionNumber, nil
 	}
 	if err != nil {
 		log.Warn("no version snapshot found, forking the template row", zap.Error(err))
 	}
 
-	return snapshotFromTemplate(template), template.CurrentVersionNumber, nil
+	return formulatemplate.SeedFromTemplate(template), template.CurrentVersionNumber, nil
 }

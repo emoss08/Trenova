@@ -99,18 +99,17 @@ func (s *Service) InstallStandards(
 			continue
 		}
 
-		entity := &formulatemplate.FormulaTemplate{
-			OrganizationID:       tenantInfo.OrgID,
-			BusinessUnitID:       tenantInfo.BuID,
-			Name:                 entry.Name,
-			Description:          entry.Description,
-			Type:                 entry.Type,
-			Expression:           entry.Expression,
-			Status:               formulatemplate.StatusActive,
-			SchemaID:             entry.SchemaID,
-			VariableDefinitions:  entry.VariableDefinitions,
-			CurrentVersionNumber: 1,
-		}
+		entity := formulatemplate.Seed{
+			OrganizationID:      tenantInfo.OrgID,
+			BusinessUnitID:      tenantInfo.BuID,
+			Name:                entry.Name,
+			Description:         entry.Description,
+			Type:                entry.Type,
+			Expression:          entry.Expression,
+			SchemaID:            entry.SchemaID,
+			VariableDefinitions: entry.VariableDefinitions,
+			Status:              formulatemplate.StatusActive,
+		}.Build()
 
 		if vErr := s.validateTemplate(ctx, entity); vErr != nil {
 			log.Error("standard template failed validation",

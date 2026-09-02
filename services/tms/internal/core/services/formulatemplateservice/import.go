@@ -288,20 +288,14 @@ func (s *Service) buildImportEntities(
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0, len(payloads))
 	for index, payload := range payloads {
-		schemaID := payload.SchemaID
-		if schemaID == "" {
-			schemaID = "shipment"
-		}
-
-		entity := &formulatemplate.FormulaTemplate{
+		entity := formulatemplate.Seed{
 			OrganizationID:       req.TenantInfo.OrgID,
 			BusinessUnitID:       req.TenantInfo.BuID,
 			Name:                 payload.Name,
 			Description:          payload.Description,
 			Type:                 payload.Type,
 			Expression:           payload.Expression,
-			Status:               formulatemplate.StatusDraft,
-			SchemaID:             schemaID,
+			SchemaID:             payload.SchemaID,
 			VariableDefinitions:  payload.VariableDefinitions,
 			BreakdownDefinitions: payload.BreakdownDefinitions,
 			MinCharge:            payload.MinCharge,
@@ -309,14 +303,7 @@ func (s *Service) buildImportEntities(
 			RoundingMode:         payload.RoundingMode,
 			RoundingPrecision:    importedPrecision(payload),
 			Metadata:             payload.Metadata,
-			CurrentVersionNumber: 1,
-		}
-		if entity.VariableDefinitions == nil {
-			entity.VariableDefinitions = []*formulatypes.VariableDefinition{}
-		}
-		if entity.BreakdownDefinitions == nil {
-			entity.BreakdownDefinitions = []*formulatypes.BreakdownDefinition{}
-		}
+		}.Build()
 
 		if payload.SourceTemplateID != nil && !payload.SourceTemplateID.IsNil() {
 			if _, ok := resolvableSources[*payload.SourceTemplateID]; ok {

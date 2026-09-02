@@ -446,8 +446,11 @@ Every rating carries a trace that a non-programmer can read.
 - [x] Split `formulatemplateservice/service.go` into `versions.go`,
       `testexpression.go`, `validator.go` (pure move; service.go keeps the CRUD, duplicate,
       bulk status, and lookup helpers)
-- [ ] One `templateSnapshot`-based constructor used by Fork, Duplicate, Import, and
+- [x] One `templateSnapshot`-based constructor used by Fork, Duplicate, Import, and
       InstallStandards; `buildDuplicateEntity` moves out of the repository
+      (`formulatemplate.Seed` with `SeedFromTemplate`/`SeedFromVersion`; `Build` applies
+      Draft, the shipment schema, empty collections, cloned metadata, version one, and
+      rounding normalisation; the repository's duplicate path builds from the seed too)
 - [ ] Repositories use `buncolgen` column helpers and `DBForContext` everywhere
       (`List`, `CountUsages`, `SelectOptions`)
 - [ ] Approval engine records review rounds (reviewer, decision, comment, diff-base

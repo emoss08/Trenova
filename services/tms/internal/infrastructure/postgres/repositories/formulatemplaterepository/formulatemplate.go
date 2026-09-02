@@ -415,7 +415,9 @@ func (r *repository) BulkDuplicate(
 	for _, e := range entities {
 		name := nextAvailableName(taken, e.Name+" (Copy)")
 		taken[name] = struct{}{}
-		newEntities = append(newEntities, buildDuplicateEntity(e, name))
+		seed := formulatemplate.SeedFromTemplate(e)
+		seed.Name = name
+		newEntities = append(newEntities, seed.Build())
 	}
 
 	results, err := r.db.DBForContext(ctx).
@@ -490,35 +492,6 @@ func nextAvailableName(taken map[string]struct{}, base string) string {
 		if _, exists := taken[candidate]; !exists {
 			return candidate
 		}
-	}
-}
-
-func buildDuplicateEntity(
-	source *formulatemplate.FormulaTemplate,
-	name string,
-) *formulatemplate.FormulaTemplate {
-	sourceID := source.ID
-	sourceVersion := source.CurrentVersionNumber
-
-	return &formulatemplate.FormulaTemplate{
-		OrganizationID:       source.OrganizationID,
-		BusinessUnitID:       source.BusinessUnitID,
-		Name:                 name,
-		Description:          source.Description,
-		Type:                 source.Type,
-		Expression:           source.Expression,
-		Status:               formulatemplate.StatusDraft,
-		SchemaID:             source.SchemaID,
-		VariableDefinitions:  source.VariableDefinitions,
-		BreakdownDefinitions: source.BreakdownDefinitions,
-		MinCharge:            source.MinCharge,
-		MaxCharge:            source.MaxCharge,
-		RoundingMode:         source.RoundingMode,
-		RoundingPrecision:    source.RoundingPrecision,
-		Metadata:             source.Metadata,
-		SourceTemplateID:     &sourceID,
-		SourceVersionNumber:  &sourceVersion,
-		CurrentVersionNumber: 1,
 	}
 }
 
