@@ -751,53 +751,486 @@ leave the enum value and implement TOTP only), SAML.
 
 ## 3. P1 workstreams — commercial blockers
 
-Specified at the same level of detail once a P0 workstream frees an agent. Scope
-summaries and the decisions already made:
+### WS6 — Live ETA and customer portal
 
-### WS6 — Customer portal and live ETA
-Two halves, buildable independently.
+**Gap:** analysis §3. Two halves that ship independently. Build the ETA first —
+the portal is far less useful without it, and the ETA has value on the internal
+dispatch board on its own.
 
-**Live ETA.** Add `EstimatedArrival *int64`, `ETASource`, `ETACalculatedAt` to
-`domain/shipment/stop.go`. New `internal/core/services/etaservice/` recomputing
-from the latest telematics position, remaining route distance, and the HOS
-projection that already exists in `services/hosprojection/` — an ETA that
-ignores a driver's remaining drive time is wrong, and the projection is already
-there. Recompute on each position update and on stop actuals. Emit a
-`shipmentevent` when the ETA crosses the appointment window so service failures
-can be predicted rather than recorded after the fact.
+**Reference implementations:** `services/hosprojection/` (the ETA engine input),
+`services/driverportalservice/` + `client/apps/dash/` (the portal, end to end).
 
-**Portal.** New `apps/portal` in the client workspace, mirroring how
-`apps/dash` is structured. Backend `customerportalservice` modelled directly on
-`driverportalservice` — including its `features.go` per-tenant flag pattern and
-`invitation.go` token flow. Scope: shipment list and detail, live ETA and
-milestone timeline, POD download, invoice list and download, and a quote request
-against the existing rate engine. Reuse the existing `CommentVisibilityCustomer`
-and `ShipmentHold.VisibleToCustomer` flags, which currently have no consumer.
+#### 6A — Live ETA
+
+Today the only forward-looking arrival is `CandidateScore.ProjectedArrival`,
+computed at dispatch time in `dispatchcandidateservice/service.go`. Nothing
+recomputes once a truck is rolling.
+
+**Do not write a new drive-time simulator.** `services/hosprojection/trip.go`
+already exposes exactly what is needed:
+
+```go
+func PlanTrip(tripDriveMs int64, start Clocks, limits Limits) (TripPlan, Limiter)
+```
+
+`Clocks` and `Limits` are `{DriveMs, ShiftMs, CycleMs, BreakMs}`. `TripPlan` is
+`{TotalMs, Breaks, Resets, Arrival, MarginMs}`. It inserts the mandated 30-minute
+break and 10-hour resets and returns a `Limiter` when the trip is infeasible. An
+ETA that ignores remaining drive time is wrong, and this already solves it.
+
+**Schema.** Add to `domain/shipment/stop.go`:
+
+| Field | Type | Notes |
+|---|---|---|
+| `EstimatedArrival` | `*int64` | epoch seconds |
+| `ETASource` | `ETASource` | `Telematics`, `Schedule`, `Manual` |
+| `ETACalculatedAt` | `*int64` | |
+| `ETAConfidence` | `ETAConfidence` | `High`, `Medium`, `Low` — `Low` when the position is stale |
+| `ETAInfeasible` | `bool` | `PlanTrip` returned a non-`LimiterNone` limiter |
+
+**Service — `internal/core/services/etaservice/`:**
+
+`service.go` exposes `RecalculateForMove(ctx, moveID)`:
+1. Load the move's remaining stops in sequence.
+2. Get the tractor's latest `telematics.VehiclePosition`. If older than a
+   configurable staleness threshold (default 30 minutes), fall back to the last
+   completed stop's `ActualDeparture` and set `ETAConfidenceLow`.
+3. Remaining road distance from the current position to the next stop, then
+   stop-to-stop, via the existing `distancecalculationservice` — do not call a
+   mapping provider directly.
+4. Convert distance to drive milliseconds using the org's planning speed.
+5. Feed each leg through `hosprojection.PlanTrip` with the driver's current
+   clocks from `domain/telematics/hosstate.go`, accumulating dwell at each stop.
+6. Write `EstimatedArrival` per stop.
+
+`trigger.go` recomputes on: a new vehicle position for an assigned tractor
+(hook into `telematicsservice/poll.go` and `webhook.go`), a stop actual being
+recorded, and an assignment change. Debounce per move — a position feed can
+arrive every few seconds and a recompute per position is wasteful.
+
+**Slip detection.** When `EstimatedArrival` crosses `ScheduledWindowEnd`, emit a
+`shipmentevent` with a new type `ETASlipDetected`, severity `danger`, and the
+predicted late minutes in `Metadata`. `domain/shipmentevent/event.go` already has
+`Metadata map[string]any` and `CorrelationID` — use them; do not add parallel
+fields. This turns service failures from something recorded after the fact into
+something predicted, which is the point of the workstream.
+
+#### 6B — Customer portal
+
+**Backend — `internal/core/services/customerportalservice/`.** Mirror
+`driverportalservice/` file for file: `service.go`, `portal.go`, `features.go`,
+`invitation.go`, `documents.go`, `actions.go`, `templatecontext.go`.
+
+Copy the feature-gate pattern exactly. `driverportalservice/features.go` defines
+a `PortalFeatures` struct read from the org's `DashControl` and a
+`requireFeature(ctx, tenantInfo, enabled, message)` helper returning
+`errortypes.NewValidationError` when a capability is off. Add a
+`CustomerPortalControl` to `domain/tenant/` alongside `DashControl` with:
+
+`AllowShipmentTracking`, `AllowDocumentDownload`, `AllowInvoiceView`,
+`AllowQuoteRequests`, `AllowOrderSubmission`, `ShowDriverName`,
+`ShowDriverPhone`, `ShowLivePosition`, `AllowDisputeSubmission`.
+
+The last three matter: many carriers will not expose driver identity or live GPS
+to a shipper. Default them off.
+
+**Identity.** New `domain/customer/portalinvitation.go` modelled on
+`domain/worker/portalinvitation.go` — same shape: `CustomerID`, `Email`,
+`TokenHash VARCHAR(64)`, `Status` (`Pending`/`Accepted`/`Revoked`), `ExpiresAt`,
+`InvitedByID`, `AcceptedAt`, `AcceptedUserID`. Portal users are scoped to one
+customer and must never reach another customer's data.
+
+**Consume the flags that already exist and have no reader:**
+`shipment.CommentVisibilityCustomer` and `ShipmentHold.VisibleToCustomer` are
+both defined and unused. The portal is their consumer. A hold that is not
+`VisibleToCustomer` must not appear, and must not be inferable from a status
+gap either.
+
+**Invoice documents.** `domain/invoice/invoice.go` already defines
+`DocumentShareToken` (`invoice_document_share_tokens`, with `TokenHash`,
+`ExpiresAt`, `DownloadedAt`, `RevokedAt`). Reuse it for portal invoice
+downloads rather than adding a second token mechanism.
+
+**Quoting.** A quote request calls the existing rate engine with
+`ratequote.PurposeQuote` against the customer's own rate agreements. Never
+expose buy-side rates, margin, or cost — assert this in a test.
+
+**Frontend — `client/apps/portal/`.** New app in the pnpm workspace, scaffolded
+from `client/apps/dash/` (same Vite + wrangler + Tailwind setup, same
+`@trenova/shared` and `@trenova/graphql` dependencies). Routes: `login`,
+`accept` (invitation), `shipments`, `shipment-detail` (timeline, live ETA, map
+when `ShowLivePosition`), `documents`, `invoices`, `quote-request`.
+
+Unlike `apps/dash`, this one needs a desktop layout — shippers use laptops.
+
+**Acceptance:**
+- ETA recomputes within one poll cycle of a new position and accounts for a
+  required 10-hour reset — assert a long trip's ETA is later than
+  distance ÷ speed alone.
+- A stale position downgrades confidence to `Low` rather than silently
+  producing a confident wrong number.
+- An ETA crossing the appointment window emits `ETASlipDetected` exactly once
+  per crossing, not once per recompute.
+- A portal user for customer A receives 404 (not 403 — do not confirm
+  existence) for customer B's shipment, through REST and GraphQL.
+- A hold with `VisibleToCustomer=false` is absent from the portal payload.
+- A quote response contains no buy-side or margin field — asserted by a test
+  over the serialized response.
+- With `ShowLivePosition=false` no coordinate appears in any portal response.
+
+**Out of scope:** customer-initiated order submission beyond a quote request,
+payment collection, EDI onboarding self-service.
+
+---
 
 ### WS7 — Outbound webhooks
-New `domain/webhook/` — `WebhookSubscription` (URL, secret, event types, active,
-retry policy) and `WebhookDelivery` (attempt log with status, response code,
-next retry). Publish from the existing `shipmentevent` taxonomy — do not invent
-a second event vocabulary. HMAC-SHA256 signature over the body with a timestamp
-header. Delivery through a Temporal workflow with exponential backoff and a DLQ,
-following `edijobs`. Add subscription management under admin.
+
+**Gap:** analysis §3. There is no webhook domain, service, subscription table,
+signing, retry, or delivery log. The only webhook code is *inbound* (Samsara,
+Postmark). No external system can subscribe to anything Trenova does.
+
+**Reference implementations:** `shared/samsara/webhooks/signature.go` for HMAC;
+`temporaljobs/edijobs/` for retry and dead-lettering; `domain/apikey/` for
+secret storage.
+
+#### 7.1 Do not invent an event vocabulary
+
+`domain/shipmentevent/enums.go` already defines 30 typed events with severity
+and actor, and `Event` carries `Metadata` and `CorrelationID`. Publish from
+that taxonomy. Adding a second parallel event vocabulary is the main way this
+workstream goes wrong.
+
+Where a domain outside shipments needs to publish (invoice posted, settlement
+finalized), extend the existing event model rather than creating a new one.
+
+#### 7.2 Domain — `internal/core/domain/webhook/`
+
+`subscription.go` — `Subscription`: prefix `whs_`.
+`Name`, `URL` (https only — validate in `Validate`), `SecretHash` and
+`SecretPrefix` (follow `domain/apikey/` — store a salted hash, show the secret
+once at creation), `EventTypes []string` (array column, validated against
+`shipmentevent.Type`), `Active bool`, `Description`,
+`MaxAttempts int` (default 6), `LastSuccessAt *int64`,
+`ConsecutiveFailures int`, `DisabledReason string`.
+
+`delivery.go` — `Delivery`: `SubscriptionID`, `EventID`, `EventType`,
+`Payload map[string]any` (JSONB), `Status` (`Pending`, `Delivering`,
+`Delivered`, `Failed`, `DeadLettered`), `AttemptCount`,
+`LastAttemptAt *int64`, `NextAttemptAt *int64`, `ResponseStatusCode *int`,
+`ResponseBodySnippet string` (truncate — never store an unbounded response),
+`ErrorMessage string`, `DeliveredAt *int64`.
+
+#### 7.3 Signing — generalize what exists
+
+`shared/samsara/webhooks/signature.go` already implements the exact pattern
+(HMAC-SHA256 over `timestamp + body`, `v1=` prefix, `hmac.Equal` comparison,
+timestamp skew tolerance). Extract it into `shared/webhooksig/` as a
+provider-neutral package and have the Samsara package call it, per the CLAUDE.md
+rule against duplicating utilities. Do not copy-paste it.
+
+Outbound headers: `X-Trenova-Signature: v1=<hex>`, `X-Trenova-Timestamp`,
+`X-Trenova-Event`, `X-Trenova-Delivery-Id`.
+
+#### 7.4 Delivery — `internal/core/temporaljobs/webhookjobs/`
+
+Follow `edijobs`. One workflow per delivery with a Temporal `RetryPolicy`
+(`InitialInterval: 10s`, `BackoffCoefficient: 2.0`, `MaximumAttempts` from the
+subscription). Non-2xx or timeout retries; 4xx other than 408/429 fails
+immediately — the endpoint is rejecting the payload, not overloaded.
+
+On exhausting attempts, mark `DeadLettered` and increment
+`ConsecutiveFailures`. At 20 consecutive failures auto-disable the subscription,
+set `DisabledReason`, and notify via `notificationservice`. A permanently broken
+endpoint must not retry forever.
+
+Add a manual replay action on a dead-lettered delivery, mirroring the EDI
+replay tooling.
+
+**SSRF.** The URL is attacker-controlled from the platform's perspective. Use
+`shared/httpsafe` — it exists for this. Reject private, loopback, and
+link-local ranges at both validation and request time (DNS can rebind between
+the two).
+
+#### 7.5 Surfaces
+
+REST `/api/v1/webhook-subscriptions` plus
+`/webhook-subscriptions/:id/deliveries` and `.../deliveries/:deliveryId/replay`.
+Permission resource `webhook_subscription`, category `Administration`,
+`SensitivityConfidential`. Client route under `admin/webhooks` with the
+subscription list, a one-time secret reveal on create, and a delivery log with
+status, response code, and replay.
+
+**Acceptance:**
+- A subscription receives a signed POST when a subscribed event fires, and the
+  receiver can verify it with the documented algorithm.
+- An unsubscribed event type produces no delivery.
+- A 500 retries with exponential backoff and stops at `MaxAttempts`.
+- A 400 does not retry.
+- 20 consecutive failures disable the subscription and notify.
+- A URL resolving to a private range is rejected at create and at delivery.
+- The secret is shown once and is not retrievable afterwards — assert the API
+  never returns it.
+- Replaying a dead-lettered delivery re-sends the original payload unchanged.
+
+**Out of scope:** a subscriber-facing portal, webhook event filtering beyond
+event type, guaranteed ordering.
+
+---
 
 ### WS8 — Safety module
-`domain/safety/` — `Accident` (DOT-recordable flag, preventability, injuries,
-fatalities, tow-away, citations, drug-test linkage into WS1), `Incident`,
-`CargoClaim` (OS&D: overage, shortage, damage, refusal, concealed damage; with
-reserve, recovery, and links to shipment, invoice adjustment, and carrier),
-`RoadsideInspection` (level 1–6, violations, OOS flags — feeding WS2 defects).
-Links to `servicefailure` where an accident caused one.
+
+**Gap:** analysis §2.2. No accidents, incidents, cargo claims, OS&D, roadside or
+annual inspections, DataQs, or CSA scores. `domain/servicefailure/` covers late
+and missed stops with fault attribution but explicitly not damage, shortage, or
+overage.
+
+**Depends on:** WS1 (accident → post-accident drug test) and WS2 (roadside
+violation → defect → work order). Buildable before either, but wire the links
+when those land.
+
+**Reference implementation:** `domain/servicefailure/` — study its lifecycle
+(`Open` → `Reviewed` → `Resolved` / `Voided` with reviewer, resolver, voider IDs
+and a void reason, plus a `Number` from the sequence generator and a
+`ReasonCodeID` FK to a configurable reason table). Every entity below follows
+that same shape.
+
+#### 8.1 `internal/core/domain/safety/accident.go`
+
+`Accident`: prefix `acc_`. `Number`, `OccurredAt`, `ReportedAt`,
+`WorkerID`, `TractorID`, `TrailerID`, `ShipmentID *pulid.ID`,
+`StateID`, `City`, `Latitude`, `Longitude`, `Description`,
+`Preventability` (`Undetermined` | `Preventable` | `NonPreventable`),
+`PreventabilityDeterminedByID`, `Status` (`Reported`, `UnderInvestigation`,
+`Closed`, `Voided`).
+
+DOT-recordable fields, which drive FMCSA reporting:
+`Injuries int`, `Fatalities int`, `TowAway bool`, `HazmatRelease bool`,
+`IsDOTRecordable bool`.
+
+Add `func (a *Accident) DeriveDOTRecordable() bool` returning true when
+`Fatalities > 0 || Injuries > 0 || TowAway`. Compute it, do not trust user
+input — this is the definition in 49 CFR 390.5 and getting it wrong understates
+the carrier's accident register.
+
+Also: `CitationIssued bool`, `CitationDetail`, `PoliceReportNumber`,
+`EstimatedDamageAmount` + minor, `DrugTestID *pulid.ID` (WS1),
+`InsuranceClaimNumber`, `Narrative`.
+
+#### 8.2 `incident.go`
+
+`Incident` — non-DOT events worth tracking: `Type` (`NearMiss`,
+`PropertyDamage`, `Injury`, `Theft`, `Vandalism`, `Spill`, `Other`),
+`OccurredAt`, `WorkerID`, equipment refs, `ShipmentID`, `Description`,
+`Severity`, `Status`, `CorrectiveAction`.
+
+#### 8.3 `cargoclaim.go` — OS&D
+
+`CargoClaim`: prefix `clm_`. `Number`, `ShipmentID`, `StopID *pulid.ID`,
+`CustomerID`, `CarrierID *pulid.ID` (when a brokered carrier is at fault),
+`ClaimType` (`Overage`, `Shortage`, `Damage`, `Refusal`, `ConcealedDamage`,
+`Delay`, `Temperature`), `DiscoveredAt`, `ReportedAt`,
+`ClaimantName`, `ClaimantReference`,
+`ClaimedAmount` + minor, `ReserveAmount` + minor, `SettledAmount` + minor,
+`RecoveredAmount` + minor (from carrier or insurer),
+`Status` (`Open`, `UnderInvestigation`, `Approved`, `Denied`, `Settled`,
+`Closed`, `Voided`),
+`ResponsibleParty` (`Carrier`, `Driver`, `Shipper`, `Consignee`, `Facility`,
+`Undetermined`), `RootCause`, `DenialReason`,
+`InvoiceAdjustmentID *pulid.ID` — a settled claim credits the customer through
+the existing adjustment engine rather than a bespoke credit path,
+`CarrierSettlementDeductionID *pulid.ID` — carrier-fault recovery flows through
+the existing carrier settlement deduction.
+
+`claimitem.go` — `ClaimItem`: `ClaimID`, `CommodityID`, `Description`,
+`QuantityClaimed`, `UnitValue`, `TotalValue`, `Disposition` (`Salvage`,
+`Destroyed`, `Returned`, `Accepted`).
+
+Reserve accounting matters: a claim's reserve is a liability the moment it is
+credible, not when it settles. Post reserves to the GL through the existing
+posting repository with a new journal source event, and reverse on settlement.
+
+#### 8.4 `roadsideinspection.go`
+
+`RoadsideInspection`: `InspectionDate`, `ReportNumber`, `StateID`,
+`Level` (1–6 — model as an enum, `Level1` through `Level6`),
+`WorkerID`, `TractorID`, `TrailerID`,
+`ViolationCount`, `OOSViolationCount`,
+`DriverOOS bool`, `VehicleOOS bool`, `HazmatOOS bool`,
+`Status`, `DataQsChallengeFiled bool`, `DataQsResult`.
+
+`inspectionviolation.go` — `InspectionViolation`: `InspectionID`,
+`ViolationCode` (FMCSA code), `Section` (CFR cite), `Description`,
+`BASICCategory` (`UnsafeDriving`, `HOSCompliance`, `DriverFitness`,
+`ControlledSubstances`, `VehicleMaintenance`, `HazmatCompliance`,
+`CrashIndicator`), `IsOOS bool`, `SeverityWeight int`,
+`DefectID *pulid.ID` — a vehicle-maintenance violation creates a WS2 `Defect`,
+which is what actually gets the repair done.
+
+A clean inspection (zero violations) is worth recording — it improves the
+carrier's CSA percentile. Do not require at least one violation.
+
+#### 8.5 Integration
+
+- An accident with `IsDOTRecordable` creates a WS1 post-accident drug test
+  requirement and notifies compliance.
+- A `VehicleOOS` inspection sets the unit's status to `OutOfService` and creates
+  WS2 defects from its maintenance violations, which then block dispatch.
+- A `DriverOOS` inspection blocks the driver through a new
+  `dispatcheligibility` finding `CodeDriverOOS = "driver.out_of_service"`.
+- Where an accident or claim caused a late delivery, link the existing
+  `servicefailure` record rather than duplicating the narrative.
+
+#### 8.6 Surfaces
+
+REST `/api/v1/accidents`, `/incidents`, `/cargo-claims`,
+`/roadside-inspections`. Permission resources `accident`, `incident`,
+`cargo_claim`, `roadside_inspection`, category `Compliance`. Accidents and
+claims are `SensitivityConfidential` — they contain injury detail and legal
+exposure.
+
+Client routes for each plus a Safety section in navigation. Canned reports
+`accident-register` (the DOT-required register), `claims-ratio`, and
+`inspection-summary` in a new
+`reporting/canned/library_safety.go`. Register `accidents`, `cargo_claims`,
+`roadside_inspections` in `reportcatalog.yml`.
+
+**Acceptance:**
+- An accident with a fatality is DOT-recordable regardless of what the user set.
+- The accident register report matches the FMCSA-required columns for a given
+  date range.
+- A settled claim produces a customer credit through the invoice adjustment
+  engine, not a bespoke path.
+- A claim reserve posts to the GL and reverses on settlement, leaving no
+  residual balance.
+- A `VehicleOOS` inspection makes the unit unassignable until its defects clear.
+- A zero-violation inspection can be recorded.
+
+**Out of scope:** FMCSA SMS/SAFER score ingestion, DataQs electronic filing,
+insurance carrier integration.
+
+---
 
 ### WS9 — Consolidated invoicing and invoice tax
-**Consolidation:** the schema exists and is unused (`consolidation_groups`,
-`consolidation_settings`, `SequenceTypeConsolidation`). Decide first — either
-implement grouping in `billingqueueservice` producing one invoice with lines
-across shipments, or delete the tables. Do not leave it as is.
-**Tax:** add `TaxAmount` + minor and an `InvoiceTaxLine` child to
-`domain/invoice/`, plus a `TaxRate` entity keyed on jurisdiction and effective
-date. Required before any Canadian operation.
+
+**Gap:** analysis §3. Two independent halves.
+
+> **Read this before starting — the analysis conflated two different things.**
+> There are **two** unrelated consolidation concepts in this codebase:
+> - **Freight consolidation** — `consolidation_groups` / `consolidation_settings`
+>   tables plus `customers.allow_consolidation`, `exclusive_consolidation`,
+>   `consolidation_priority`. Multiple shipments moving together. This is the
+>   orphaned schema in C2 and is **not** part of this workstream.
+> - **Invoice consolidation** — one invoice covering many shipments. This is
+>   WS9.
+>
+> Do not delete one while implementing the other.
+
+#### 9A — Invoice consolidation
+
+The configuration already exists and is fully modelled on
+`domain/customer/billingprofile.go:46-48`:
+
+- `AllowInvoiceConsolidation bool`
+- `ConsolidationPeriodDays int8` (default 7, validated ≥ 1)
+- `ConsolidationGroupBy` — `None`, `Location`, `PONumber`, `BOL`, `Division`
+  (`domain/customer/enums.go:55-62`)
+
+All three are surfaced through GraphQL and **consumed by nothing** — grep for
+`ConsolidationGroupBy` outside generated code returns no service. This is
+config with no engine. You are writing the engine, not the model.
+
+`InoviceLine` (`domain/invoice/invoice.go:114` — note the existing misspelling,
+see C4) already carries `ShipmentID`, `ShipmentProNumber`, and `ShipmentBOL`
+per line, so the line schema already supports many shipments on one invoice.
+
+**The one real blocker:** `Invoice.BillingQueueItemID` is `notnull`
+(`invoice.go`), which hard-codes one-queue-item-to-one-invoice. Change it to
+nullable and add an `invoice_billing_queue_items` join table
+(`InvoiceID`, `BillingQueueItemID`, composite PK). Backfill existing rows into
+the join table in the same migration so nothing loses its link.
+
+**Service.** New `internal/core/services/billingqueueservice/consolidation.go`:
+1. Select approved queue items whose customer has `AllowInvoiceConsolidation`
+   and whose oldest item is older than `ConsolidationPeriodDays`.
+2. Group by customer, then by the `ConsolidationGroupBy` key. `None` means one
+   invoice per customer per period.
+3. Create one invoice with one `InoviceLine` set per shipment, `LineNumber`
+   sequential across the whole invoice.
+4. Sum to `SubtotalAmount`, `OtherAmount`, `TotalAmount` and their minor-unit
+   columns. Assert minor units equal the decimal sum rounded — a mismatch here
+   is a silent revenue error.
+5. Use `SequenceTypeInvoice`; do not add a new sequence type.
+
+Run it from a scheduled Temporal workflow in the existing `billingjobs` package.
+
+Everything downstream must keep working: PDF rendering
+(`invoiceservice/invoice_pdf.go`), delivery (`delivery.go`, 2,431 lines), EDI
+210 generation, and the correction chain via `CorrectionGroupID`. A consolidated
+invoice that cannot be corrected or emailed is not done.
+
+#### 9B — Invoice tax
+
+Today `Invoice` has only `SubtotalAmount`, `OtherAmount`, `TotalAmount`. There
+is no tax code, rate, jurisdiction, or line. `customer.tax_exempt` and
+`tax_exempt_number` exist, and `DefaultTaxLiabilityAccountID` is configured and
+never posted to.
+
+> `domain/jurisdictionrule/` is **not** tax — it is oversize/overweight
+> permitting. Do not extend it.
+
+**Domain — `internal/core/domain/tax/`:**
+
+`taxcode.go` — `TaxCode`: `Code`, `Name`, `Description`,
+`TaxType` (`Sales`, `GST`, `HST`, `PST`, `QST`, `VAT`, `Excise`),
+`GLAccountID` (the liability account), `Active`, `Compounds bool`
+(QST compounds on GST — get this wrong and every Quebec invoice is wrong).
+
+`taxrate.go` — `TaxRate`: `TaxCodeID`, `StateID *pulid.ID`,
+`CountryCode`, `RatePercent decimal`, `EffectiveFrom`, `EffectiveTo *int64`.
+Effective-dated; never mutate a rate in place.
+
+`taxexemption.go` — `TaxExemption`: `CustomerID`, `TaxCodeID`,
+`CertificateNumber`, `EffectiveFrom`, `ExpiresAt *int64`,
+`DocumentID *pulid.ID`. Replaces the flat `customer.tax_exempt` boolean, which
+cannot express "exempt from PST but not GST".
+
+**Line-level, not invoice-level.** Add `TaxCodeID *pulid.ID` to `InoviceLine`
+and a `TaxLine` child of `Invoice` (`TaxCodeID`, `TaxableAmount`, `RatePercent`,
+`TaxAmount` + minor). Freight is often taxable while a fuel surcharge or a
+specific accessorial is not; an invoice-level rate cannot represent that.
+
+Add `TaxAmount decimal` + `TaxAmountMinor` to `Invoice` and include them in
+`TotalAmount`.
+
+**Posting.** Credit the tax liability account per tax code when the invoice
+posts, in `invoiceservice/accounting_helpers.go`. Use
+`DefaultTaxLiabilityAccountID` as the fallback when a code has no account —
+this is the config that currently does nothing.
+
+**Acceptance (9A):**
+- A customer with a 7-day period and `GroupBy=None` receives one invoice per
+  week covering every approved shipment, with one line set per shipment.
+- `GroupBy=PONumber` produces one invoice per distinct PO.
+- Consolidated totals equal the sum of constituent shipment charges, and minor
+  units equal the rounded decimal sum.
+- A consolidated invoice renders a PDF, emails, generates a valid EDI 210, and
+  can be corrected through the existing correction chain.
+- Existing single-shipment invoices are unaffected and their queue-item link
+  survives the migration.
+
+**Acceptance (9B):**
+- A taxable line on a 5% jurisdiction produces a tax line of exactly 5% of the
+  taxable amount, and an exempt line contributes zero.
+- A compounding tax computes on base plus the tax it compounds over.
+- A customer with a valid exemption certificate for one tax code is still taxed
+  for others.
+- An expired certificate stops exempting from its expiry date.
+- Posting credits the correct liability account per tax code and the entry
+  balances.
+- A rate change does not alter previously posted invoices.
+
+**Out of scope:** Avalara/Vertex integration, tax return filing, US sales-tax
+nexus determination.
 
 ---
 
@@ -818,15 +1251,37 @@ API. Add a test asserting that.
 
 ### C2 — Orphaned schema decision
 Three artifacts imply features that do not exist. Each needs an explicit
-decision recorded in the commit message:
-- `consolidation_groups` / `consolidation_settings` — owned by WS9; leave until
-  WS9 decides.
-- `domain/dedicatedlane/` plus its three migrations — the only live reference is
-  a permission constant at `handlers/analyticshandler/handler.go:34`. Delete the
-  domain package, the migrations (with a new down migration; do not edit shipped
-  migrations), and the permission constant, unless dedicated lanes are on the
-  near-term roadmap.
-- `hazmat_expirations` — created 2024-12-28, referenced by nothing. Delete.
+decision recorded in the commit message.
+
+**Freight consolidation.** `consolidation_groups` + `consolidation_settings`
+(`20250628004846_add_consolidations`), plus `customers.allow_consolidation`,
+`exclusive_consolidation`, and `consolidation_priority`, and
+`shipments.consolidation_group_id`. `consolidation_settings` carries tuned
+matching parameters (`max_pickup_distance` 25, `max_route_detour` 15,
+`max_time_window_gap` 240, `max_shipments_per_group` 3) and even an
+`updated_at` trigger — somebody designed this properly and then stopped. No Go
+code reads or writes any of it.
+
+This is **operational** consolidation — multiple shipments moving together. It
+is **not** the invoice consolidation in WS9, which is a separate concept with
+its own separate config on the customer billing profile. Do not conflate them;
+deleting one while implementing the other would be an expensive mistake.
+
+Decide: implement freight consolidation as its own workstream, or drop the
+tables and columns. Given the ALNS planner already exists, the matching logic
+these settings describe is closer than it looks — recommend keeping and
+scheduling rather than deleting.
+
+**Dedicated lanes.** `domain/dedicatedlane/` (pattern, patternconfig,
+suggestion, errors) plus three migrations. The only live reference is a
+permission mapping constant at `handlers/analyticshandler/handler.go:34`
+(`services.DedicatedLaneSuggestionsPage: permission.ResourceShipment`). No
+service, repository, resolver, or route. Delete the domain package, the
+permission constant, and the tables via a new down-migration — never edit a
+shipped migration — unless dedicated lanes are on the near-term roadmap.
+
+**`hazmat_expirations`.** Created in `20241228042029_compliance`, referenced by
+nothing. Delete.
 
 ### C3 — AP configuration honesty
 `domain/tenant/accountingcontrol.go` declares
@@ -837,6 +1292,16 @@ reserved in the validator's error messages or remove them. Do not leave
 configuration that silently does nothing.
 
 ---
+
+### C4 — Fix the `InoviceLine` misspelling
+`domain/invoice/invoice.go:114` declares `type InoviceLine struct` — the type
+name is misspelled. It maps to a correctly-named `invoice_lines` table, so this
+is a Go identifier rename only, with no migration. Rename to `InvoiceLine`
+across the domain, repositories, services, GraphQL mapping, and generated
+column helpers, then run `task generate-columns` and `task gqlgen`.
+
+Do this **before** WS9, which touches this type heavily — renaming afterwards
+means a larger conflict.
 
 ## 5. Cross-cutting requirements
 
@@ -880,13 +1345,25 @@ Update as part of your final commit for a workstream.
 | WS3 | Fuel purchases + IFTA | P0 | WS2 §2.2 | Not started | |
 | WS4 | Fiscal close accounting | P0 | — | Not started | |
 | WS5 | Native MFA | P0 | — | Not started | |
-| WS6 | Customer portal + live ETA | P1 | — | Not started | |
+| WS6 | Live ETA + customer portal | P1 | 6B after 6A | Not started | |
 | WS7 | Outbound webhooks | P1 | — | Not started | |
-| WS8 | Safety module | P1 | WS1, WS2 | Not started | |
-| WS9 | Consolidated invoicing + tax | P1 | — | Not started | |
+| WS8 | Safety module | P1 | links to WS1, WS2 | Not started | |
+| WS9 | Invoice consolidation + tax | P1 | C4 | Not started | |
 | C1 | Report catalog financial datasets | — | — | Not started | |
-| C2 | Orphaned schema decision | — | WS9 (partial) | Not started | |
+| C2 | Orphaned schema decision | — | — | Not started | |
 | C3 | AP configuration honesty | — | — | Not started | |
+| C4 | Fix `InoviceLine` misspelling | — | before WS9 | Not started | |
 
-WS1, WS2, WS4, and WS5 are fully independent and can run in parallel by four
-agents, subject to the shared-file conflict policy in §0.4.
+### Parallelization
+
+- **Independent, start any time:** WS1, WS2, WS4, WS5, WS7, C1, C3, C4 — subject
+  to the shared-file conflict policy in §0.4.
+- **WS3** wants WS2 §2.2 (odometer on equipment) first.
+- **WS6** splits: 6A (live ETA) is independent; 6B (portal) is best after 6A.
+- **WS8** is buildable alone, but its links into WS1 (post-accident testing) and
+  WS2 (violation → defect) should be wired when those land.
+- **WS9** should follow C4 — it touches `InoviceLine` heavily and renaming
+  afterwards means a larger conflict.
+- **C2** is now independent of WS9: the orphaned schema is *freight*
+  consolidation, which is a different concept from the *invoice* consolidation
+  in WS9. Read C2 before touching either.
