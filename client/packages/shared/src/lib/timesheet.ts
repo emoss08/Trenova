@@ -48,6 +48,67 @@ export function elapsedMinutes(clockedInAt: number, nowSeconds: number): number 
   return Math.floor(seconds / 60);
 }
 
+/**
+ * What a hand-recorded period would pay. It never goes negative: the dialog
+ * previews the figure while somebody is still typing, and a half-entered
+ * finish time must not read as a debt.
+ */
+export function paidMinutesFor(
+  clockedInAt: number,
+  clockedOutAt: number,
+  breakMinutes: number,
+): number {
+  const span = Math.floor((clockedOutAt - clockedInAt) / 60);
+  return Math.max(0, span - Math.max(0, breakMinutes));
+}
+
+export type ManualEntryLike = {
+  clockedInAt: number;
+  clockedOutAt: number | null | undefined;
+  breakMinutes: number;
+  note: string | null | undefined;
+  editReason: string | null | undefined;
+};
+
+export type ManualEntryDefaults = {
+  clockedInAt: number;
+  clockedOutAt: number;
+  breakMinutes: number;
+  note: string | null;
+  reason: string;
+};
+
+const FRESH_ENTRY_START_HOUR = 8;
+const FRESH_ENTRY_END_HOUR = 16;
+
+/**
+ * Where the record-hours form starts from. A correction starts from what was
+ * punched; a fresh entry starts on a working day rather than at midnight. The
+ * reason is always blank — it is the reason for *this* change, not the one
+ * recorded last time.
+ */
+export function manualEntryDefaults(
+  entry: ManualEntryLike | null,
+  clock: { dayStart: number; now: number },
+): ManualEntryDefaults {
+  if (!entry) {
+    return {
+      clockedInAt: clock.dayStart + FRESH_ENTRY_START_HOUR * 3600,
+      clockedOutAt: clock.dayStart + FRESH_ENTRY_END_HOUR * 3600,
+      breakMinutes: 0,
+      note: null,
+      reason: "",
+    };
+  }
+  return {
+    clockedInAt: entry.clockedInAt,
+    clockedOutAt: entry.clockedOutAt ?? clock.now,
+    breakMinutes: entry.breakMinutes,
+    note: entry.note ?? null,
+    reason: "",
+  };
+}
+
 export type TimesheetAction = "submit" | "approve" | "reject";
 
 /**

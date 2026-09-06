@@ -135,6 +135,18 @@ export function describeShiftPattern(mask: string, cycleWeeks: number): string {
   return description;
 }
 
+/** Minutes a week the pattern works: the figure the office reasons about when it builds a shift. */
+export function weeklyShiftMinutes(mask: string, durationMinutes: number): number {
+  return dayMaskToDays(mask).length * Math.max(0, durationMinutes);
+}
+
+export const DAY_MASK_PRESETS = [
+  { label: "Mon–Fri", mask: "0111110" },
+  { label: "Mon–Sat", mask: "0111111" },
+  { label: "Weekend", mask: "1000001" },
+  { label: "Every day", mask: "1111111" },
+] as const;
+
 function formatRun(start: number, end: number): string {
   if (start === end) return DAY_LABELS[start];
   if (end === start + 1) return `${DAY_LABELS[start]}, ${DAY_LABELS[end]}`;

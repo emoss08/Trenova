@@ -11,6 +11,7 @@ import {
   startOfRotaWeek,
   summariseRotaRow,
   swapActionsFor,
+  weeklyShiftMinutes,
 } from "../scheduling";
 
 describe("dayMaskToDays", () => {
@@ -196,5 +197,18 @@ describe("clockToMinutes", () => {
     expect(clockToMinutes("25:00")).toBe(-1);
     expect(clockToMinutes("6:75")).toBe(-1);
     expect(clockToMinutes("six")).toBe(-1);
+  });
+});
+
+describe("weeklyShiftMinutes", () => {
+  // The figure the office actually reasons about when it builds a shift is
+  // hours a week, not hours a day.
+  it("multiplies the working days by the shift length", () => {
+    expect(weeklyShiftMinutes("0111110", 600)).toBe(3000);
+    expect(weeklyShiftMinutes("1111111", 480)).toBe(3360);
+  });
+
+  it("is zero for a pattern with no working days", () => {
+    expect(weeklyShiftMinutes("0000000", 600)).toBe(0);
   });
 });

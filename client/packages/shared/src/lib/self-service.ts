@@ -52,6 +52,34 @@ export const POLICY_STANDING_TONES: Record<PolicyStandingValue, { badge: string;
     },
   };
 
+const STANDING_RANK: Record<PolicyStandingValue, number> = {
+  outstanding: 0,
+  unread: 1,
+  signed: 2,
+  read: 3,
+};
+
+/**
+ * Policies in the order a driver wants them: what still needs doing first,
+ * signatures before reading, and what is done underneath. Stable within a
+ * group, so the carrier's own ordering survives.
+ */
+export function orderPoliciesForSigning<
+  T extends { acknowledgedAt: number | null | undefined; requiresSignature: boolean },
+>(policies: readonly T[]): T[] {
+  return policies
+    .map((policy, index) => ({ policy, index, rank: STANDING_RANK[policyStanding(policy)] }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((row) => row.policy);
+}
+
+/** The signed share of everybody a policy applies to. Nobody in scope is 0, not a division by nothing. */
+export function compliancePercent(signed: number, outstanding: number): number {
+  const total = signed + outstanding;
+  if (total <= 0) return 0;
+  return Math.round((signed / total) * 100);
+}
+
 type FieldChangeLike = {
   field: string;
   label: string;

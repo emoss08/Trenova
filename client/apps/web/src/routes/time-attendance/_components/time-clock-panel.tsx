@@ -21,11 +21,19 @@ import { formatShiftDate, startOfRotaWeek } from "@trenova/shared/lib/scheduling
 import { elapsedMinutes, formatHours } from "@trenova/shared/lib/timesheet";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ClockIcon, PenLineIcon, PlayIcon, SquareIcon, UserRoundSearchIcon } from "lucide-react";
+import {
+  ClockIcon,
+  PenLineIcon,
+  PlayIcon,
+  SquareIcon,
+  Trash2Icon,
+  UserRoundSearchIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { RecordEntryDialog } from "./record-entry-dialog";
+import { RecordEntryDialog, type EditableTimeEntry } from "./record-entry-dialog";
+import { RemoveEntryDialog, type RemovableTimeEntry } from "./remove-entry-dialog";
 
 type PickerValues = { workerId: string };
 
@@ -56,7 +64,8 @@ export function TimeClockPanel() {
   const queryClient = useQueryClient();
   const { allowed: canRecord } = usePermission(Resource.Timesheet, Operation.Create);
   const { allowed: canCorrect } = usePermission(Resource.Timesheet, Operation.Update);
-  const [entryDialog, setEntryDialog] = useState(false);
+  const [entryDialog, setEntryDialog] = useState<{ entry: EditableTimeEntry | null } | null>(null);
+  const [removing, setRemoving] = useState<RemovableTimeEntry | null>(null);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   const form = useForm<PickerValues>({ defaultValues: { workerId: "" } });
@@ -197,7 +206,7 @@ export function TimeClockPanel() {
 
           <div className="relative flex items-center gap-2">
             {canCorrect ? (
-              <Button size="sm" variant="outline" onClick={() => setEntryDialog(true)}>
+              <Button size="sm" variant="outline" onClick={() => setEntryDialog({ entry: null })}>
                 <PenLineIcon className="size-3.5" />
                 Record hours
               </Button>
@@ -241,7 +250,7 @@ export function TimeClockPanel() {
               {[...entries].reverse().map((row) => (
                 <li
                   key={row.id}
-                  className="hover:bg-muted/40 -mx-2 flex flex-wrap items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
+                  className="group/row hover:bg-muted/40 -mx-2 flex flex-wrap items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
                 >
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <span
@@ -265,10 +274,33 @@ export function TimeClockPanel() {
                       <span className="text-muted-foreground truncate">· {row.editReason}</span>
                     ) : null}
                   </span>
-                  <span className="font-mono tabular-nums">
-                    {row.clockedOutAt ? formatHours(row.paidMinutes) : "Running"}
-                    {row.breakMinutes > 0 ? (
-                      <span className="text-muted-foreground"> · {row.breakMinutes}m break</span>
+                  <span className="flex items-center gap-1">
+                    <span className="font-mono tabular-nums">
+                      {row.clockedOutAt ? formatHours(row.paidMinutes) : "Running"}
+                      {row.breakMinutes > 0 ? (
+                        <span className="text-muted-foreground"> · {row.breakMinutes}m break</span>
+                      ) : null}
+                    </span>
+                    {canCorrect && row.clockedOutAt ? (
+                      <span className="flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label="Correct this entry"
+                          onClick={() => setEntryDialog({ entry: row })}
+                        >
+                          <PenLineIcon className="size-3.5" />
+                        </Button>
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          aria-label="Remove this entry"
+                          onClick={() => setRemoving(row)}
+                        >
+                          <Trash2Icon className="size-3.5" />
+                        </Button>
+                      </span>
                     ) : null}
                   </span>
                 </li>
@@ -279,10 +311,16 @@ export function TimeClockPanel() {
       ) : null}
 
       <RecordEntryDialog
-        open={entryDialog}
-        onOpenChange={setEntryDialog}
+        open={entryDialog !== null}
+        onOpenChange={(open) => !open && setEntryDialog(null)}
         workerId={workerId}
+        entry={entryDialog?.entry ?? null}
         onRecorded={invalidate}
+      />
+      <RemoveEntryDialog
+        entry={removing}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        onRemoved={invalidate}
       />
     </div>
   );

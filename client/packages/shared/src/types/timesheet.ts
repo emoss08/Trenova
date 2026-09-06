@@ -43,6 +43,12 @@ export const recordTimeEntryFormSchema = z
   });
 export type RecordTimeEntryFormValues = z.infer<typeof recordTimeEntryFormSchema>;
 
+/** Taking a punch off the record. The reason is required for the same reason a correction's is. */
+export const removeTimeEntryFormSchema = z.object({
+  reason: z.string().min(1, "Removing somebody's hours needs a reason").max(500),
+});
+export type RemoveTimeEntryFormValues = z.infer<typeof removeTimeEntryFormSchema>;
+
 /**
  * Handing a payroll run out. The period is a range of weeks rather than one, so
  * a fortnightly or monthly payroll takes several sheets in one file.

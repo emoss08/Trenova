@@ -22,17 +22,19 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate } from "@trenova/shared/lib/scheduling";
-import { changeRequestTone, describeChanges } from "@trenova/shared/lib/self-service";
+import { changeRequestTone } from "@trenova/shared/lib/self-service";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   decideProfileChangeFormSchema,
   type DecideProfileChangeFormValues,
 } from "@trenova/shared/types/self-service";
-import { ClipboardPenIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon, ClipboardPenIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+
+type FieldChange = ProfileChangeRequestRow["changes"][number];
 
 /**
  * What the driver has asked to change on their own record. The changes are
@@ -55,16 +57,30 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
   });
 
   if (!canRead) return null;
-  if (requests.isLoading) return <Skeleton className="h-24 w-full rounded-lg" />;
+  if (requests.isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
 
   const rows = requests.data ?? [];
   if (rows.length === 0) return null;
 
+  const pendingCount = rows.filter((row) => row.status === "Pending").length;
+
   return (
-    <div className="border-border rounded-lg border p-4">
-      <div className="flex items-center gap-2">
-        <ClipboardPenIcon className="text-muted-foreground size-4" />
-        <p className="text-sm font-semibold">Profile changes</p>
+    <div className="border-border/80 bg-card rounded-xl border p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "grid size-7 place-items-center rounded-lg",
+              pendingCount > 0
+                ? "bg-amber-500/12 text-amber-600 dark:text-amber-300"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            <ClipboardPenIcon className="size-3.5" />
+          </span>
+          <p className="text-sm font-semibold">Profile changes</p>
+        </div>
+        {pendingCount > 0 ? <Badge variant="warning">{pendingCount} waiting on you</Badge> : null}
       </div>
       <p className="text-muted-foreground mt-1 text-xs">
         Changes the driver asked for from Dash. An approval writes exactly what is listed onto the
@@ -76,7 +92,13 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
           const tone = changeRequestTone(request.status);
           const pending = request.status === "Pending";
           return (
-            <li key={request.id} className="rounded-md border p-3 text-xs">
+            <li
+              key={request.id}
+              className={cn(
+                "border-border/80 rounded-xl border p-3 text-xs transition-colors",
+                pending && "border-l-4 border-l-amber-500/60",
+              )}
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <span className="text-muted-foreground tabular-nums">
@@ -92,25 +114,21 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
                         variant="outline"
                         onClick={() => setDeciding({ request, approve: false })}
                       >
+                        <XIcon className="size-3" />
                         Turn down
                       </Button>
                     ) : null}
                     {canApprove ? (
                       <Button size="xs" onClick={() => setDeciding({ request, approve: true })}>
+                        <CheckIcon className="size-3" />
                         Approve
                       </Button>
                     ) : null}
                   </span>
                 ) : null}
               </div>
-              <ul className="mt-2 flex flex-col gap-0.5">
-                {describeChanges(request.changes).map((line) => (
-                  <li key={line} className="tabular-nums">
-                    {line}
-                  </li>
-                ))}
-              </ul>
-              {request.note ? <p className="text-muted-foreground mt-1">“{request.note}”</p> : null}
+              <ChangeList changes={request.changes} className="mt-2" />
+              {request.note ? <p className="text-muted-foreground mt-2">“{request.note}”</p> : null}
               {request.decisionNote ? (
                 <p className="text-muted-foreground mt-1">Office: {request.decisionNote}</p>
               ) : null}
@@ -125,6 +143,36 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
         onOpenChange={(open) => !open && setDeciding(null)}
       />
     </div>
+  );
+}
+
+function shown(value: string): string {
+  return value.trim() === "" ? "(blank)" : value;
+}
+
+/** Each field as before → after, so the eye lands on what actually moves. */
+function ChangeList({
+  changes,
+  className,
+}: {
+  changes: readonly FieldChange[];
+  className?: string;
+}) {
+  return (
+    <dl className={cn("grid grid-cols-[auto_1fr] gap-x-3 gap-y-1", className)}>
+      {changes.map((change) => (
+        <div key={change.field} className="contents">
+          <dt className="text-muted-foreground">{change.label}</dt>
+          <dd className="flex min-w-0 flex-wrap items-center gap-1.5 tabular-nums">
+            <span className="text-muted-foreground line-through decoration-muted-foreground/50">
+              {shown(change.from)}
+            </span>
+            <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" />
+            <span className="font-medium">{shown(change.to)}</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -184,11 +232,10 @@ function DecideDialog({
           </DialogDescription>
         </DialogHeader>
         {state ? (
-          <ul className="flex flex-col gap-0.5 rounded-md border p-3 text-xs tabular-nums">
-            {describeChanges(state.request.changes).map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
+          <ChangeList
+            changes={state.request.changes}
+            className="border-border/80 bg-muted/30 rounded-xl border p-3 text-xs"
+          />
         ) : null}
         <FormProvider {...form}>
           <Form

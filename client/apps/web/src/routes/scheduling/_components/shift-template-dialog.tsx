@@ -13,6 +13,7 @@ import {
 } from "@/lib/graphql/scheduling";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -27,16 +28,21 @@ import { Label } from "@trenova/shared/components/ui/label";
 import {
   clockToMinutes,
   DAY_LABELS,
+  DAY_MASK_PRESETS,
   dayMaskToDays,
   daysToDayMask,
+  describeShiftPattern,
   formatShiftWindow,
   minutesToClock,
+  weeklyShiftMinutes,
 } from "@trenova/shared/lib/scheduling";
+import { formatHours } from "@trenova/shared/lib/timesheet";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   shiftTemplateFormSchema,
   type ShiftTemplateFormValues,
 } from "@trenova/shared/types/scheduling";
+import { CalendarDaysIcon, ClockIcon, RepeatIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,6 +51,8 @@ const STATUS_OPTIONS = [
   { value: "Active", label: "Active" },
   { value: "Inactive", label: "Retired" },
 ];
+
+const FALLBACK_COLOR = "var(--primary)";
 
 export type ShiftTemplateDialogProps = {
   open: boolean;
@@ -79,6 +87,11 @@ function defaultsFor(template: ShiftTemplateRow | null): ShiftTemplateFormValues
   };
 }
 
+/**
+ * A shift is described the way it is said out loud — which days, from when,
+ * for how long — and the preview beside the form is the same card the board
+ * draws, so what is being built is never a surprise.
+ */
 export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTemplateDialogProps) {
   const queryClient = useQueryClient();
   const isEdit = Boolean(template);
@@ -93,12 +106,14 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
     reset(defaultsFor(template));
   }, [open, template, reset]);
 
-  const daysOfWeek = useWatch({ control, name: "daysOfWeek" });
-  const startTime = useWatch({ control, name: "startTime" });
-  const durationHours = useWatch({ control, name: "durationHours" });
-  const selectedDays = dayMaskToDays(daysOfWeek ?? "");
-  const startMinute = clockToMinutes(startTime ?? "");
-  const durationMinutes = Math.round((durationHours ?? 0) * 60);
+  const watched = useWatch({ control });
+  const daysOfWeek = watched.daysOfWeek ?? "";
+  const selectedDays = dayMaskToDays(daysOfWeek);
+  const startMinute = clockToMinutes(watched.startTime ?? "");
+  const durationMinutes = Math.round((watched.durationHours ?? 0) * 60);
+  const cycleWeeks = watched.cycleWeeks ?? 1;
+  const accent = watched.color || FALLBACK_COLOR;
+  const validWindow = startMinute >= 0 && durationMinutes > 0;
 
   const { mutateAsync, isPending } = useApiMutation<
     { id: string },
@@ -130,16 +145,20 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
     },
   });
 
+  function setDays(mask: string) {
+    setValue("daysOfWeek", mask, { shouldDirty: true, shouldValidate: true });
+  }
+
   function toggleDay(day: number) {
     const next = selectedDays.includes(day)
       ? selectedDays.filter((value) => value !== day)
       : [...selectedDays, day].sort((a, b) => a - b);
-    setValue("daysOfWeek", daysToDayMask(next), { shouldDirty: true, shouldValidate: true });
+    setDays(daysToDayMask(next));
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit the shift" : "Add a shift"}</DialogTitle>
           <DialogDescription>
@@ -155,118 +174,151 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
               void handleSubmit((values) => mutateAsync(values))(submitEvent);
             }}
           >
-            <FormGroup className="pb-2" cols={2}>
-              <FormControl>
-                <InputField<ShiftTemplateFormValues>
-                  control={control}
-                  name="code"
-                  label="Code"
-                  placeholder="e.g. DAY-A"
-                  rules={{ required: true }}
-                />
-              </FormControl>
-              <FormControl>
-                <InputField<ShiftTemplateFormValues>
-                  control={control}
-                  name="name"
-                  label="Name"
-                  placeholder="e.g. Weekday days"
-                  rules={{ required: true }}
-                />
-              </FormControl>
+            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_240px]">
+              <FormGroup className="pb-2" cols={2}>
+                <FormControl>
+                  <InputField<ShiftTemplateFormValues>
+                    control={control}
+                    name="code"
+                    label="Code"
+                    placeholder="e.g. DAY-A"
+                    rules={{ required: true }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <InputField<ShiftTemplateFormValues>
+                    control={control}
+                    name="name"
+                    label="Name"
+                    placeholder="e.g. Weekday days"
+                    rules={{ required: true }}
+                  />
+                </FormControl>
 
-              <FormControl cols="full">
-                <div className="flex flex-col gap-1.5">
-                  <Label>Working days</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {DAY_LABELS.map((label, day) => (
-                      <button
-                        key={label}
-                        type="button"
-                        onClick={() => toggleDay(day)}
-                        aria-pressed={selectedDays.includes(day)}
-                        className={cn(
-                          "h-8 w-12 rounded-md border text-xs font-medium transition-colors",
-                          selectedDays.includes(day)
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-muted",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                <FormControl cols="full">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Label>Working days</Label>
+                      <div className="flex flex-wrap gap-1">
+                        {DAY_MASK_PRESETS.map((preset) => (
+                          <button
+                            key={preset.mask}
+                            type="button"
+                            onClick={() => setDays(preset.mask)}
+                            aria-pressed={daysOfWeek === preset.mask}
+                            className={cn(
+                              "text-muted-foreground hover:text-foreground hover:bg-muted rounded-full border border-transparent px-2 py-0.5 text-[11px] transition-colors",
+                              daysOfWeek === preset.mask &&
+                                "border-border bg-muted text-foreground",
+                            )}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                      {DAY_LABELS.map((label, day) => {
+                        const on = selectedDays.includes(day);
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => toggleDay(day)}
+                            aria-pressed={on}
+                            className={cn(
+                              "h-9 rounded-lg border text-xs font-medium transition-[transform,background-color,color,border-color] active:scale-95",
+                              on
+                                ? "border-transparent text-white shadow-sm"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            )}
+                            style={on ? { backgroundColor: accent } : undefined}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {formState.errors.daysOfWeek ? (
+                      <p className="text-destructive text-xs">
+                        {formState.errors.daysOfWeek.message}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="text-muted-foreground text-xs">
-                    Indexed from Sunday, the same way the rota reads it.
-                  </p>
-                  {formState.errors.daysOfWeek ? (
-                    <p className="text-destructive text-xs">
-                      {formState.errors.daysOfWeek.message}
-                    </p>
-                  ) : null}
-                </div>
-              </FormControl>
+                </FormControl>
 
-              <FormControl>
-                <InputField<ShiftTemplateFormValues>
-                  control={control}
-                  name="startTime"
-                  label="Starts at"
-                  type="time"
-                  step={300}
-                  rules={{ required: true }}
-                />
-              </FormControl>
-              <FormControl>
-                <NumberField<ShiftTemplateFormValues>
-                  control={control}
-                  name="durationHours"
-                  label="Length (hours)"
-                  step={0.25}
-                  rules={{ required: true }}
-                  description={
-                    startMinute >= 0 && durationMinutes > 0
-                      ? formatShiftWindow(startMinute, durationMinutes)
-                      : "How long the shift runs"
-                  }
-                />
-              </FormControl>
-              <FormControl>
-                <NumberField<ShiftTemplateFormValues>
-                  control={control}
-                  name="cycleWeeks"
-                  label="Rotation (weeks)"
-                  rules={{ required: true }}
-                  description="1 works every week. 2 alternates, which is how an A/B pair is built."
-                />
-              </FormControl>
-              <FormControl>
-                <SelectField<ShiftTemplateFormValues>
-                  control={control}
-                  name="status"
-                  label="Status"
-                  options={STATUS_OPTIONS}
-                  rules={{ required: true }}
-                  description="Retiring a shift is refused while anybody is still on it."
-                />
-              </FormControl>
-              <FormControl>
-                <ColorField<ShiftTemplateFormValues>
-                  control={control}
-                  name="color"
-                  label="Colour"
-                  description="How the shift reads on the board."
-                />
-              </FormControl>
-              <FormControl cols="full">
-                <TextareaField<ShiftTemplateFormValues>
-                  control={control}
-                  name="description"
-                  label="Description"
-                  placeholder="What this shift covers"
-                />
-              </FormControl>
-            </FormGroup>
+                <FormControl>
+                  <InputField<ShiftTemplateFormValues>
+                    control={control}
+                    name="startTime"
+                    label="Starts at"
+                    type="time"
+                    step={300}
+                    rules={{ required: true }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <NumberField<ShiftTemplateFormValues>
+                    control={control}
+                    name="durationHours"
+                    label="Length (hours)"
+                    step={0.25}
+                    min={0.25}
+                    max={24}
+                    rules={{ required: true }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <NumberField<ShiftTemplateFormValues>
+                    control={control}
+                    name="cycleWeeks"
+                    label="Rotation (weeks)"
+                    min={1}
+                    max={8}
+                    rules={{ required: true }}
+                    description="1 works every week. 2 alternates, which is how an A/B pair is built."
+                  />
+                </FormControl>
+                <FormControl>
+                  <SelectField<ShiftTemplateFormValues>
+                    control={control}
+                    name="status"
+                    label="Status"
+                    options={STATUS_OPTIONS}
+                    rules={{ required: true }}
+                    description="Retiring is refused while anybody is still on it."
+                  />
+                </FormControl>
+                <FormControl>
+                  <ColorField<ShiftTemplateFormValues>
+                    control={control}
+                    name="color"
+                    label="Colour"
+                    description="How the shift reads on the board."
+                  />
+                </FormControl>
+                <FormControl cols="full">
+                  <TextareaField<ShiftTemplateFormValues>
+                    control={control}
+                    name="description"
+                    label="Description"
+                    placeholder="What this shift covers"
+                  />
+                </FormControl>
+              </FormGroup>
+
+              <ShiftPreview
+                code={watched.code ?? ""}
+                name={watched.name ?? ""}
+                accent={accent}
+                selectedDays={selectedDays}
+                daysOfWeek={daysOfWeek}
+                window={validWindow ? formatShiftWindow(startMinute, durationMinutes) : null}
+                weeklyMinutes={validWindow ? weeklyShiftMinutes(daysOfWeek, durationMinutes) : 0}
+                cycleWeeks={cycleWeeks}
+                retired={watched.status === "Inactive"}
+              />
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -280,5 +332,102 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
         </FormProvider>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ShiftPreview({
+  code,
+  name,
+  accent,
+  selectedDays,
+  daysOfWeek,
+  window,
+  weeklyMinutes,
+  cycleWeeks,
+  retired,
+}: {
+  code: string;
+  name: string;
+  accent: string;
+  selectedDays: number[];
+  daysOfWeek: string;
+  window: string | null;
+  weeklyMinutes: number;
+  cycleWeeks: number;
+  retired: boolean;
+}) {
+  return (
+    <aside
+      className={cn(
+        "border-border/80 bg-muted/30 relative flex h-fit flex-col gap-3 overflow-hidden rounded-xl border p-4 md:sticky md:top-0",
+        retired && "opacity-70",
+      )}
+      aria-label="Shift preview"
+    >
+      <span
+        className="absolute inset-y-0 left-0 w-1 transition-colors"
+        style={{ backgroundColor: accent }}
+        aria-hidden
+      />
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        On the board
+      </p>
+      <div className="flex items-center gap-2">
+        <span
+          className="grid size-9 shrink-0 place-items-center rounded-lg text-xs font-semibold"
+          style={{
+            backgroundColor: `color-mix(in oklch, ${accent} 16%, transparent)`,
+            color: accent,
+          }}
+        >
+          {code.trim().slice(0, 3).toUpperCase() || "—"}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{name.trim() || "Unnamed shift"}</p>
+          <p className="text-muted-foreground truncate text-xs">
+            {describeShiftPattern(daysOfWeek, cycleWeeks)}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-0.5">
+        {DAY_LABELS.map((label, day) => {
+          const on = selectedDays.includes(day);
+          return (
+            <span
+              key={label}
+              className={cn(
+                "grid h-6 place-items-center rounded text-[10px] transition-colors",
+                on ? "text-white" : "bg-muted text-muted-foreground/70",
+              )}
+              style={on ? { backgroundColor: accent } : undefined}
+              aria-hidden
+            >
+              {label[0]}
+            </span>
+          );
+        })}
+      </div>
+
+      <dl className="flex flex-col gap-1.5 text-xs">
+        <div className="flex items-center gap-2">
+          <ClockIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <dd className="tabular-nums">{window ?? "Set a start and a length"}</dd>
+        </div>
+        <div className="flex items-center gap-2">
+          <CalendarDaysIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <dd className="tabular-nums">
+            {selectedDays.length} day{selectedDays.length === 1 ? "" : "s"} ·{" "}
+            {formatHours(weeklyMinutes)} a week
+          </dd>
+        </div>
+        <div className="flex items-center gap-2">
+          <RepeatIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <dd>{cycleWeeks > 1 ? `${cycleWeeks}-week rotation` : "Same every week"}</dd>
+        </div>
+      </dl>
+
+      {retired ? <Badge variant="inactive">Retired</Badge> : null}
+    </aside>
   );
 }

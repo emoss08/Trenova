@@ -3,6 +3,8 @@ import {
   buildPayrollCsv,
   elapsedMinutes,
   formatHours,
+  manualEntryDefaults,
+  paidMinutesFor,
   timesheetActionsFor,
   timesheetStatusTone,
   totalHours,
@@ -121,5 +123,67 @@ describe("buildPayrollCsv", () => {
   it("quotes a value containing a comma or a quote", () => {
     const csv = buildPayrollCsv([{ ...rows[0], workerName: 'Byron, Ada "Countess"' }]);
     expect(csv).toContain('"Byron, Ada ""Countess"""');
+  });
+});
+
+describe("paidMinutesFor", () => {
+  it("takes the unpaid break off the span", () => {
+    expect(paidMinutesFor(1_000_000, 1_000_000 + 8 * 3600, 30)).toBe(450);
+  });
+
+  // The dialog previews the figure while somebody is still typing, so a
+  // half-entered finish time must never read as negative pay.
+  it("never goes below zero while the times are still being typed", () => {
+    expect(paidMinutesFor(1_000_000, 900_000, 0)).toBe(0);
+    expect(paidMinutesFor(1_000_000, 1_000_000 + 600, 30)).toBe(0);
+  });
+});
+
+describe("manualEntryDefaults", () => {
+  const dayStart = 1_800_000_000;
+
+  it("starts a fresh entry on a working day rather than at midnight", () => {
+    const values = manualEntryDefaults(null, { dayStart, now: dayStart + 10 * 3600 });
+    expect(values.clockedInAt).toBe(dayStart + 8 * 3600);
+    expect(values.clockedOutAt).toBe(dayStart + 16 * 3600);
+    expect(values.breakMinutes).toBe(0);
+    expect(values.reason).toBe("");
+  });
+
+  // A correction starts from what was punched, but the reason is the reason
+  // for *this* change, not the one recorded last time.
+  it("copies the punches of the entry being corrected and leaves the reason blank", () => {
+    const values = manualEntryDefaults(
+      {
+        clockedInAt: dayStart + 7 * 3600,
+        clockedOutAt: dayStart + 15 * 3600,
+        breakMinutes: 45,
+        note: "Yard shift",
+        editReason: "Missed clock-out",
+      },
+      { dayStart, now: dayStart + 20 * 3600 },
+    );
+    expect(values).toEqual({
+      clockedInAt: dayStart + 7 * 3600,
+      clockedOutAt: dayStart + 15 * 3600,
+      breakMinutes: 45,
+      note: "Yard shift",
+      reason: "",
+    });
+  });
+
+  it("closes a still-open punch at the current time", () => {
+    const now = dayStart + 11 * 3600;
+    const values = manualEntryDefaults(
+      {
+        clockedInAt: dayStart + 6 * 3600,
+        clockedOutAt: null,
+        breakMinutes: 0,
+        note: null,
+        editReason: null,
+      },
+      { dayStart, now },
+    );
+    expect(values.clockedOutAt).toBe(now);
   });
 });

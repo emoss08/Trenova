@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   changeRequestTone,
+  compliancePercent,
   describeChanges,
+  orderPoliciesForSigning,
   policyAudienceLabel,
   policyStanding,
   signatureMatches,
@@ -79,5 +81,48 @@ describe("changeRequestTone", () => {
 
   it("falls back rather than rendering nothing", () => {
     expect(changeRequestTone("Other")).toEqual(changeRequestTone("Pending"));
+  });
+});
+
+describe("orderPoliciesForSigning", () => {
+  const policy = (id: string, requiresSignature: boolean, acknowledgedAt: number | null) => ({
+    id,
+    requiresSignature,
+    acknowledgedAt,
+  });
+
+  // The driver opens the card to find out what is asked of them. What they
+  // have already done belongs underneath, however the server happened to
+  // order the rows.
+  it("puts what still needs doing before what is done, signatures first", () => {
+    const ordered = orderPoliciesForSigning([
+      policy("signed", true, 1_800_000_000),
+      policy("read", false, 1_800_000_000),
+      policy("unread", false, null),
+      policy("outstanding", true, null),
+    ]);
+    expect(ordered.map((row) => row.id)).toEqual(["outstanding", "unread", "signed", "read"]);
+  });
+
+  it("keeps the server's order inside a group", () => {
+    const ordered = orderPoliciesForSigning([
+      policy("a", true, null),
+      policy("b", true, null),
+      policy("c", false, null),
+    ]);
+    expect(ordered.map((row) => row.id)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("compliancePercent", () => {
+  it("is the signed share of everybody the policy applies to", () => {
+    expect(compliancePercent(3, 1)).toBe(75);
+    expect(compliancePercent(1, 2)).toBe(33);
+  });
+
+  // A policy that applies to nobody yet is not "0% compliant"; it is simply
+  // not owed by anyone.
+  it("is zero when nobody is in scope rather than dividing by nothing", () => {
+    expect(compliancePercent(0, 0)).toBe(0);
   });
 });
