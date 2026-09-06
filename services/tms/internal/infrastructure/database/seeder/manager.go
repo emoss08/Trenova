@@ -70,7 +70,10 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 	}
 
 	dbConfig := createDBConfig(db, cfg.Config)
-	mig := migrator.NewMigrator(dbConfig)
+	mig, err := migrator.NewMigrator(dbConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create migrator: %w", err)
+	}
 	engine := NewEngine(db, cfg.Registry, cfg.Config)
 
 	return &Manager{

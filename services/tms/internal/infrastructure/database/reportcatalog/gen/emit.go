@@ -93,7 +93,8 @@ func EmitSource(catalog *reportcatalog.Catalog, version string) ([]byte, error) 
 
 	fmt.Fprintf(&out, "const Version = %q\n\n", version)
 
-	out.WriteString("var Default = Catalog{\n")
+	out.WriteString("var Default = indexed(defaultCatalog)\n\n")
+	out.WriteString("var defaultCatalog = Catalog{\n")
 	out.WriteString("\tVersion: Version,\n")
 	out.WriteString("\tEntities: []Entity{\n")
 
@@ -102,8 +103,7 @@ func EmitSource(catalog *reportcatalog.Catalog, version string) ([]byte, error) 
 	}
 
 	out.WriteString("\t},\n")
-	out.WriteString("}\n\n")
-	out.WriteString("func init() { Default.index() }\n")
+	out.WriteString("}\n")
 
 	formatted, err := format.Source([]byte(out.String()))
 	if err != nil {

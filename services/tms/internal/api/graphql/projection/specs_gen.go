@@ -438,6 +438,11 @@ var WorkerShiftAssignmentSpec TypeSpec
 
 var WorkerTrainingRecordSpec TypeSpec
 
+// The specs are assigned in init rather than declared as var initialisers:
+// relations point at each other by address (&OrderSpec inside CustomerSpec and
+// back), and Go rejects that as an initialisation cycle when written as
+// package-level initialisers. Assigning inside init lets the zero-valued vars
+// exist first and be filled in afterwards.
 func init() {
 	AccessorialChargeSpec = TypeSpec{
 		TypeName: "AccessorialCharge",

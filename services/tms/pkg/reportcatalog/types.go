@@ -165,6 +165,13 @@ func (c *Catalog) Entity(key string) (*Entity, bool) {
 	return &c.Entities[idx], true
 }
 
+// indexed builds the lookup maps over a catalog literal so the generated
+// Default can be a plain var initialiser rather than an init function.
+func indexed(c Catalog) Catalog {
+	c.index()
+	return c
+}
+
 func (c *Catalog) index() {
 	c.byKey = make(map[string]int, len(c.Entities))
 	for i := range c.Entities {

@@ -86,6 +86,8 @@ func TestOperationDefinition_FallsBackToDocument(t *testing.T) {
 func TestLimitErrorCodesAreRegisteredAsProtocolErrors(t *testing.T) {
 	t.Parallel()
 
+	registerQueryLimitErrorCodes()
+
 	for _, code := range []string{
 		querycost.DepthLimitErrorCode,
 		querycost.ComplexityLimitErrorCode,

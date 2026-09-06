@@ -7,23 +7,15 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-var Migrations = migrate.NewMigrations()
-
 //go:embed *.sql
 var sqlMigrations embed.FS
 
-func init() {
-	if err := Migrations.Discover(sqlMigrations); err != nil {
-		panic(err)
-	}
-}
-
-func Setup() *migrate.Migrations {
+// Migrations discovers the embedded SQL migrations into a fresh registry.
+func Migrations() (*migrate.Migrations, error) {
 	migrations := migrate.NewMigrations()
-
 	if err := migrations.Discover(sqlMigrations); err != nil {
-		panic(fmt.Errorf("failed to discover migrations: %w", err))
+		return nil, fmt.Errorf("discover embedded sqlite migrations: %w", err)
 	}
 
-	return migrations
+	return migrations, nil
 }

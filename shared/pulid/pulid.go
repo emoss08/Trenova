@@ -30,13 +30,9 @@ var Nil = ID("")
 var NilPtr = &Nil
 
 var (
-	defaultEntropySource *ulid.MonotonicEntropy
+	defaultEntropySource = ulid.Monotonic(rand.Reader, 0)
 	entropyMutex         sync.Mutex
 )
-
-func init() {
-	defaultEntropySource = ulid.Monotonic(rand.Reader, 0)
-}
 
 func newULID() ulid.ULID {
 	entropyMutex.Lock()

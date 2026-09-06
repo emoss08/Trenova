@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	sqlitemigrations "github.com/emoss08/trenova/internal/infrastructure/sqlite/migrations"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -103,7 +102,7 @@ func TestSQLiteCoverageTypeIndexTargetsCarrierCoverage(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
 
-	migrator := migrate.NewMigrator(db, sqlitemigrations.Migrations)
+	migrator := migrate.NewMigrator(db, sqliteMigrations(t))
 	require.NoError(t, migrator.Init(ctx))
 	_, err := migrator.Migrate(ctx)
 	require.NoError(t, err)
@@ -134,7 +133,7 @@ func migrateBefore(
 	t.Helper()
 
 	priors := migrate.NewMigrations()
-	for _, candidate := range sqlitemigrations.Migrations.Sorted() {
+	for _, candidate := range sqliteMigrations(t).Sorted() {
 		if candidate.Name >= version {
 			break
 		}
@@ -159,7 +158,7 @@ func runMigrationUp(
 ) {
 	t.Helper()
 
-	for _, candidate := range sqlitemigrations.Migrations.Sorted() {
+	for _, candidate := range sqliteMigrations(t).Sorted() {
 		if candidate.Name != version {
 			continue
 		}

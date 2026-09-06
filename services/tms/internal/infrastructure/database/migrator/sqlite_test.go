@@ -20,7 +20,7 @@ func TestSQLiteMigrationsApplyCleanly(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
 
-	migrator := migrate.NewMigrator(db, sqlitemigrations.Migrations)
+	migrator := migrate.NewMigrator(db, sqliteMigrations(t))
 	require.NoError(t, migrator.Init(ctx))
 
 	group, err := migrator.Migrate(ctx)
@@ -39,7 +39,7 @@ func TestSQLiteMigrationsAreIdempotent(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
 
-	migrator := migrate.NewMigrator(db, sqlitemigrations.Migrations)
+	migrator := migrate.NewMigrator(db, sqliteMigrations(t))
 	require.NoError(t, migrator.Init(ctx))
 
 	_, err := migrator.Migrate(ctx)
@@ -54,7 +54,7 @@ func TestSQLiteCoreTablesExist(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
 
-	migrator := migrate.NewMigrator(db, sqlitemigrations.Migrations)
+	migrator := migrate.NewMigrator(db, sqliteMigrations(t))
 	require.NoError(t, migrator.Init(ctx))
 	_, err := migrator.Migrate(ctx)
 	require.NoError(t, err)
@@ -76,13 +76,14 @@ func TestSQLiteResetRecreatesSchema(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
 
-	m := migrator.NewMigrator(&common.DatabaseConfig{
+	m, err := migrator.NewMigrator(&common.DatabaseConfig{
 		DB:          db,
 		Environment: common.EnvDevelopment,
 	})
+	require.NoError(t, err)
 	require.NoError(t, m.Initialize(ctx))
 
-	_, err := m.Migrate(ctx, common.OperationOptions{Force: true})
+	_, err = m.Migrate(ctx, common.OperationOptions{Force: true})
 	require.NoError(t, err)
 
 	result, err := m.Reset(ctx, common.OperationOptions{Force: true})
@@ -112,4 +113,13 @@ func newSQLiteDB(t *testing.T) *bun.DB {
 	t.Cleanup(func() { _ = db.Close() })
 
 	return db
+}
+
+func sqliteMigrations(t *testing.T) *migrate.Migrations {
+	t.Helper()
+
+	migrations, err := sqlitemigrations.Migrations()
+	require.NoError(t, err)
+
+	return migrations
 }

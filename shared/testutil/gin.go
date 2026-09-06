@@ -21,10 +21,6 @@ var (
 	TestBuID   = pulid.MustNew("bu")
 )
 
-func init() {
-	gin.SetMode(gin.TestMode)
-}
-
 type GinTestContext struct {
 	Context  *gin.Context
 	Recorder *httptest.ResponseRecorder
@@ -32,6 +28,8 @@ type GinTestContext struct {
 }
 
 func NewGinTestContext() *GinTestContext {
+	gin.SetMode(gin.TestMode)
+
 	recorder := httptest.NewRecorder()
 	c, engine := gin.CreateTestContext(recorder)
 	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
@@ -137,6 +135,8 @@ func (g *GinTestContext) ResponseHeader(key string) string {
 }
 
 func (g *GinTestContext) Reset() *GinTestContext {
+	gin.SetMode(gin.TestMode)
+
 	g.Recorder = httptest.NewRecorder()
 	g.Context, g.Engine = gin.CreateTestContext(g.Recorder)
 	g.Context.Request = httptest.NewRequest(http.MethodGet, "/", nil)

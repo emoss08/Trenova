@@ -36,7 +36,7 @@ func TestFullSeedRunOnSQLite(t *testing.T) {
 	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 
-	migrator := migrate.NewMigrator(db, sqlitemigrations.Migrations)
+	migrator := migrate.NewMigrator(db, sqliteMigrations(t))
 	require.NoError(t, migrator.Init(ctx))
 	_, err = migrator.Migrate(ctx)
 	require.NoError(t, err)
@@ -57,4 +57,13 @@ func TestFullSeedRunOnSQLite(t *testing.T) {
 
 	_, err = engine.Execute(ctx, seeder.ExecuteOptions{Environment: "development"})
 	require.NoError(t, err)
+}
+
+func sqliteMigrations(t *testing.T) *migrate.Migrations {
+	t.Helper()
+
+	migrations, err := sqlitemigrations.Migrations()
+	require.NoError(t, err)
+
+	return migrations
 }

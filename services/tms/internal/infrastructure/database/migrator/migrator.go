@@ -23,15 +23,18 @@ type Migrator struct {
 	reporter common.ProgressReporter
 }
 
-func NewMigrator(config *common.DatabaseConfig) *Migrator {
-	migrator := migrate.NewMigrator(config.DB, migrationsFor(config.DB))
+func NewMigrator(config *common.DatabaseConfig) (*Migrator, error) {
+	migrations, err := migrationsFor(config.DB)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Migrator{
 		db:       config.DB,
-		migrator: migrator,
+		migrator: migrate.NewMigrator(config.DB, migrations),
 		config:   config,
 		reporter: common.NewConsoleProgressReporter(),
-	}
+	}, nil
 }
 
 func (m *Migrator) SetProgressReporter(reporter common.ProgressReporter) {

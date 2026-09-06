@@ -18,15 +18,17 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-var Migrations = migrate.NewMigrations()
-
 //go:embed *.sql
 var sqlMigrations embed.FS
 
-func init() {
-	if err := Migrations.Discover(sqlMigrations); err != nil {
-		panic(err)
+// Migrations discovers the embedded SQL migrations into a fresh registry.
+func Migrations() (*migrate.Migrations, error) {
+	migrations := migrate.NewMigrations()
+	if err := migrations.Discover(sqlMigrations); err != nil {
+		return nil, fmt.Errorf("discover embedded postgres migrations: %w", err)
 	}
+
+	return migrations, nil
 }
 
 // Fingerprint returns a stable hex digest of every embedded migration file.

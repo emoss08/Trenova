@@ -10,6 +10,11 @@ import "github.com/emoss08/trenova/pkg/buncolgen"
 var {{ .Name }}Spec TypeSpec
 
 {{ end -}}
+// The specs are assigned in init rather than declared as var initialisers:
+// relations point at each other by address (&OrderSpec inside CustomerSpec and
+// back), and Go rejects that as an initialisation cycle when written as
+// package-level initialisers. Assigning inside init lets the zero-valued vars
+// exist first and be filled in afterwards.
 func init() {
 {{ range . -}}
 	{{ .Name }}Spec = TypeSpec{

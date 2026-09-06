@@ -12,7 +12,9 @@ import (
 
 const Version = "sha256:728c3fa08fa2046b1af7c7121d0e58eecdfd311335f0d88ed025467da32a544e"
 
-var Default = Catalog{
+var Default = indexed(defaultCatalog)
+
+var defaultCatalog = Catalog{
 	Version: Version,
 	Entities: []Entity{
 		{
@@ -8565,5 +8567,3 @@ var Default = Catalog{
 		},
 	},
 }
-
-func init() { Default.index() }

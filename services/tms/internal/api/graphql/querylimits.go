@@ -12,7 +12,7 @@ import (
 
 const depthLimitExtensionName = "OperationDepthLimit"
 
-func init() {
+func registerQueryLimitErrorCodes() {
 	errcode.RegisterErrorType(querycost.DepthLimitErrorCode, errcode.KindProtocol)
 	errcode.RegisterErrorType(querycost.ComplexityLimitErrorCode, errcode.KindProtocol)
 }

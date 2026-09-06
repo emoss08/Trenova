@@ -8,14 +8,10 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-func migrationsFor(db *bun.DB) *migrate.Migrations {
-	if db == nil {
-		return pgmigrations.Migrations
+func migrationsFor(db *bun.DB) (*migrate.Migrations, error) {
+	if db != nil && db.Dialect().Name() == dialect.SQLite {
+		return sqlitemigrations.Migrations()
 	}
 
-	if db.Dialect().Name() == dialect.SQLite {
-		return sqlitemigrations.Migrations
-	}
-
-	return pgmigrations.Migrations
+	return pgmigrations.Migrations()
 }

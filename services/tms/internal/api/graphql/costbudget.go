@@ -26,10 +26,6 @@ const (
 	minCostBudgetRetryAfter   = time.Second
 )
 
-func init() {
-	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
-}
-
 type CostBudgetParams struct {
 	fx.In
 
@@ -72,6 +68,8 @@ func newCostBudgetExtension(
 	graphQLMetrics *metrics.GraphQL,
 	logger *zap.Logger,
 ) *CostBudgetExtension {
+	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
+
 	return &CostBudgetExtension{
 		cfg:     cfg,
 		metrics: graphQLMetrics,
