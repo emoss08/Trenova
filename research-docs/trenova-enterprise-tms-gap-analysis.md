@@ -2,6 +2,8 @@
 
 Date: 2026-05-26
 
+> **Superseded by [`trenova-enterprise-tms-gap-analysis-2026-09.md`](./trenova-enterprise-tms-gap-analysis-2026-09.md) (2026-09-04).** Retained as a record of what closed between May and September 2026 — the Order/Shipment split, carrier procurement, routing guides, driver and carrier settlements, rate agreements, fuel surcharge programs, AS2, and SCIM have all landed since this was written.
+
 ## Executive Summary
 
 Trenova is not a basic CRUD starter. The codebase already has a serious foundation for an enterprise transportation management system:
