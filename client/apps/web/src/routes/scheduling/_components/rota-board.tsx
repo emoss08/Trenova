@@ -38,12 +38,12 @@ export function RotaBoard({ rota, onSelectDay }: RotaBoardProps) {
   return (
     <div
       key={rota.weekStart}
-      className="border-border/80 animate-in fade-in-0 overflow-x-auto rounded-xl border duration-200"
+      className="border-border animate-in fade-in-0 overflow-x-auto rounded-lg border duration-200"
     >
       <table className="w-full min-w-[56rem] border-separate border-spacing-0 text-xs">
         <thead>
           <tr>
-            <th className="bg-muted/40 sticky left-0 z-10 w-56 rounded-tl-xl px-3 py-2 text-left font-medium">
+            <th className="bg-muted/40 sticky left-0 z-10 w-56 rounded-tl-lg px-3 py-2 text-left font-medium">
               Worker
             </th>
             {columns.map((day, index) => (
@@ -57,7 +57,7 @@ export function RotaBoard({ rota, onSelectDay }: RotaBoardProps) {
                 <DayHeading date={day.date} today={index === todayIndex} />
               </th>
             ))}
-            <th className="bg-muted/40 rounded-tr-xl px-3 py-2 text-right font-medium">Week</th>
+            <th className="bg-muted/40 rounded-tr-lg px-3 py-2 text-right font-medium">Week</th>
           </tr>
         </thead>
         <tbody>
@@ -68,14 +68,7 @@ export function RotaBoard({ rota, onSelectDay }: RotaBoardProps) {
                 <td className="bg-background group-hover:bg-muted/30 sticky left-0 z-10 border-t px-3 py-1.5 align-middle transition-colors">
                   <div className="flex items-center gap-2.5">
                     <Avatar className="size-7">
-                      <AvatarFallback
-                        className="text-[10px] font-medium"
-                        style={
-                          row.fleetColor
-                            ? { backgroundColor: `${row.fleetColor}22`, color: row.fleetColor }
-                            : undefined
-                        }
-                      >
+                      <AvatarFallback className="text-[10px] font-medium">
                         {initials(...splitName(row.name))}
                       </AvatarFallback>
                     </Avatar>
@@ -169,10 +162,10 @@ function RotaCell({
   const cell = (
     <div
       className={cn(
-        "relative flex h-12 w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-1 transition-[transform,box-shadow] duration-150",
+        "relative flex h-12 w-full flex-col items-center justify-center gap-0.5 rounded-md border px-1 transition-colors",
         tone.cell,
         day.isConflict && "ring-destructive/60 ring-offset-background ring-2 ring-offset-1",
-        interactive && "cursor-pointer hover:-translate-y-px hover:shadow-sm",
+        interactive && "cursor-pointer hover:brightness-95",
       )}
     >
       {day.scheduled ? (

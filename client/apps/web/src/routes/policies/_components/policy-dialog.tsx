@@ -290,8 +290,8 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                 <FormControl cols="full">
                   <div className="flex flex-col gap-1.5">
                     {documentId ? (
-                      <div className="border-border/80 bg-muted/30 flex items-center gap-3 rounded-xl border p-3">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-500/12 text-blue-600 dark:text-blue-300">
+                      <div className="bg-muted/30 flex items-center gap-3 rounded-lg border p-3">
+                        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
                           <FileTextIcon className="size-4" />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -340,7 +340,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                         onDragLeave={() => setDragging(false)}
                         onDrop={onDrop}
                         className={cn(
-                          "text-muted-foreground hover:border-border hover:bg-muted/40 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-6 text-center text-xs transition-colors",
+                          "text-muted-foreground hover:border-border hover:bg-muted/40 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-4 py-6 text-center text-xs transition-colors",
                           dragging && "border-primary bg-primary/5 text-foreground",
                           bodyError && "border-destructive/60",
                         )}
@@ -375,7 +375,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
 
               {wordsChanged ? (
                 <div
-                  className="col-span-full flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200"
+                  className="border-warning/40 bg-warning/10 text-warning-foreground col-span-full flex items-start gap-2 rounded-lg border px-3 py-2 text-xs"
                   role="status"
                 >
                   <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />

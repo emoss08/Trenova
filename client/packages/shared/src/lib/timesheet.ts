@@ -8,6 +8,8 @@
  * take.
  */
 
+import type { BadgeVariant } from "@trenova/shared/types/badge";
+
 const MINUTES_PER_HOUR = 60;
 
 /** Minutes as hours for a person to read. The part hour is kept: it is what overtime is usually made of. */
@@ -132,31 +134,16 @@ export function timesheetActionsFor(
 }
 
 export type TimesheetTone = {
-  badge: string;
+  variant: BadgeVariant;
   label: string;
 };
 
 const TIMESHEET_TONES: Record<string, TimesheetTone> = {
-  Open: {
-    badge: "bg-muted text-muted-foreground border-transparent",
-    label: "Open",
-  },
-  Submitted: {
-    badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-    label: "Awaiting approval",
-  },
-  Approved: {
-    badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    label: "Approved",
-  },
-  Rejected: {
-    badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    label: "Sent back",
-  },
-  Locked: {
-    badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-    label: "Paid",
-  },
+  Open: { variant: "secondary", label: "Open" },
+  Submitted: { variant: "warning", label: "Awaiting approval" },
+  Approved: { variant: "active", label: "Approved" },
+  Rejected: { variant: "inactive", label: "Sent back" },
+  Locked: { variant: "info", label: "Paid" },
 };
 
 export function timesheetStatusTone(status: string): TimesheetTone {

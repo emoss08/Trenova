@@ -177,13 +177,10 @@ export function AssignShiftDialog({
                             key={label}
                             className={cn(
                               "grid h-6 flex-1 place-items-center rounded-md text-[10px] font-medium",
-                              on ? "text-white" : "bg-muted text-muted-foreground",
-                            )}
-                            style={
                               on
-                                ? { backgroundColor: preview.color || "var(--primary)" }
-                                : undefined
-                            }
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground",
+                            )}
                           >
                             {label[0]}
                           </span>

@@ -249,7 +249,7 @@ export default function SchedulingConsole() {
             </div>
 
             {rotaQuery.isLoading ? (
-              <Skeleton className="h-72 w-full rounded-xl" />
+              <Skeleton className="h-72 w-full rounded-lg" />
             ) : rota && rota.rows.length > 0 ? (
               <RotaBoard rota={rota} />
             ) : (
@@ -300,9 +300,9 @@ export default function SchedulingConsole() {
 
             {templatesQuery.isLoading ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <Skeleton className="h-36 rounded-xl" />
-                <Skeleton className="h-36 rounded-xl" />
-                <Skeleton className="h-36 rounded-xl" />
+                <Skeleton className="h-36 rounded-lg" />
+                <Skeleton className="h-36 rounded-lg" />
+                <Skeleton className="h-36 rounded-lg" />
               </div>
             ) : templates.length === 0 ? (
               <EmptyState
@@ -353,23 +353,26 @@ export default function SchedulingConsole() {
 function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: () => void }) {
   const days = dayMaskToDays(template.daysOfWeek);
   const retired = template.status !== "Active";
-  const accent = template.color || "var(--primary)";
 
   return (
     <div
       className={cn(
-        "border-border/80 bg-card hover:border-border group relative flex flex-col gap-3 overflow-hidden rounded-xl border p-4 transition-colors",
+        "border-border/80 hover:border-border group flex flex-col gap-3 rounded-lg border p-3 transition-colors",
         retired && "opacity-70",
       )}
     >
-      <span
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ backgroundColor: accent }}
-        aria-hidden
-      />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{template.name}</p>
+          <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+            {template.color ? (
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: template.color }}
+                aria-hidden
+              />
+            ) : null}
+            {template.name}
+          </p>
           <p className="text-muted-foreground text-xs tabular-nums">
             {template.code} · {describeShiftPattern(template.daysOfWeek, template.cycleWeeks)}
           </p>
@@ -390,9 +393,8 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
               key={label}
               className={cn(
                 "grid h-6 flex-1 place-items-center rounded-md text-[10px] font-medium",
-                on ? "text-white" : "bg-muted text-muted-foreground",
+                on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
               )}
-              style={on ? { backgroundColor: accent } : undefined}
             >
               {label[0]}
             </span>

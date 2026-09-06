@@ -104,19 +104,18 @@ export function ScheduleCard() {
   return (
     <div className="border-border bg-card rounded-2xl border p-4" data-testid="schedule-card">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <span
-            className="grid size-9 shrink-0 place-items-center rounded-xl"
-            style={{
-              backgroundColor: `color-mix(in oklch, ${week.shiftColor || "var(--primary)"} 14%, transparent)`,
-              color: week.shiftColor || "var(--primary)",
-            }}
-          >
-            <CalendarClockIcon className="size-4" />
-          </span>
+        <div className="flex items-start gap-2">
+          <CalendarClockIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Your schedule</p>
-            <p className="text-muted-foreground text-xs">
+            <h2 className="text-sm font-semibold">Your schedule</h2>
+            <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              {week.shiftColor ? (
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: week.shiftColor }}
+                  aria-hidden
+                />
+              ) : null}
               {week.shiftName ?? "No shift"} · {week.scheduledDays} day
               {week.scheduledDays === 1 ? "" : "s"} over two weeks
             </p>
@@ -141,7 +140,7 @@ export function ScheduleCard() {
                   aria-pressed={isFocused}
                   aria-label={`${DAY_LABELS_LONG[date.getUTCDay()]} ${date.getUTCDate()}: ${tone.label}`}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[11px] transition-[transform,box-shadow] active:scale-95",
+                    "flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-[11px] transition-colors active:brightness-95",
                     tone.cell,
                     isFocused && "ring-primary/60 ring-2",
                   )}
@@ -166,7 +165,7 @@ export function ScheduleCard() {
       </div>
 
       {focused ? (
-        <div className="bg-muted/40 mt-3 flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-xs">
+        <div className="bg-muted/30 border-border mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-xs">
           <div>
             <p className="font-medium">{formatShiftDate(focused.date)}</p>
             <p className="text-muted-foreground">
@@ -178,7 +177,7 @@ export function ScheduleCard() {
                 : ""}
             </p>
           </div>
-          <Badge className={cn("border", rotaStateTone(focused.state).cell)}>
+          <Badge variant={rotaStateTone(focused.state).variant}>
             {rotaStateTone(focused.state).label}
           </Badge>
         </div>
@@ -226,12 +225,15 @@ export function ScheduleCard() {
               const tone = SWAP_STATUS_TONES[swap.status] ?? SWAP_STATUS_TONES.Withdrawn;
               const actions = swapActionsFor(swap);
               return (
-                <li key={swap.id} className="bg-muted/30 rounded-xl p-3 text-xs">
+                <li
+                  key={swap.id}
+                  className="bg-muted/30 border-border rounded-lg border p-3 text-xs"
+                >
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-medium tabular-nums">
                       {formatShiftDate(swap.shiftDate)}
                     </span>
-                    <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+                    <Badge variant={tone.variant}>{tone.label}</Badge>
                     {swap.counterpartyName ? (
                       <span className="text-muted-foreground">
                         {swap.outgoing ? "to" : "from"} {swap.counterpartyName}

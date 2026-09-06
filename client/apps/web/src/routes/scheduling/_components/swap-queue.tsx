@@ -14,7 +14,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate, isSwapOpen, SWAP_STATUS_TONES } from "@trenova/shared/lib/scheduling";
-import { cn, initials } from "@trenova/shared/lib/utils";
+import { initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowRightIcon, CheckIcon, RepeatIcon, UsersIcon, XIcon } from "lucide-react";
 import { useState } from "react";
@@ -77,8 +77,8 @@ export function SwapQueue() {
 
       {swapsQuery.isLoading ? (
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-16 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
         </div>
       ) : swaps.length === 0 ? (
         <EmptyState
@@ -123,12 +123,7 @@ function SwapRow({
   const decidable = swap.status === "Accepted";
 
   return (
-    <li
-      className={cn(
-        "border-border/80 bg-card hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-xs transition-colors",
-        decidable && "border-l-4 border-l-amber-500/60",
-      )}
-    >
+    <li className="border-border/80 hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs transition-colors">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex items-center gap-1.5">
           <Person person={swap.requestingWorker} />
@@ -141,7 +136,7 @@ function SwapRow({
             <span className="text-muted-foreground">
               → {nameOf(swap.counterpartyWorker) ?? "whoever the office finds"}
             </span>
-            <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+            <Badge variant={tone.variant}>{tone.label}</Badge>
           </span>
           <span className="text-muted-foreground tabular-nums">
             Giving up {formatShiftDate(swap.shiftDate)}

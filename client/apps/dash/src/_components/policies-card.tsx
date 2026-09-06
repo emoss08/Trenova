@@ -25,7 +25,6 @@ import {
   POLICY_STANDING_TONES,
   policyStanding,
   signatureMatches,
-  type PolicyStandingValue,
 } from "@trenova/shared/lib/self-service";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -39,13 +38,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashProfile } from "./dash-layout";
-
-const STANDING_ACCENT: Record<PolicyStandingValue, string> = {
-  outstanding: "var(--color-amber-500)",
-  unread: "var(--color-blue-500)",
-  signed: "var(--color-emerald-500)",
-  read: "var(--color-emerald-500)",
-};
 
 /**
  * Policies the driver is bound by, signed or not. What still needs doing sits
@@ -74,23 +66,10 @@ export function PoliciesCard() {
   return (
     <div className="border-border bg-card rounded-2xl border p-4" data-testid="policies-card">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <span
-            className={cn(
-              "grid size-9 shrink-0 place-items-center rounded-xl",
-              outstanding > 0
-                ? "bg-amber-500/12 text-amber-600 dark:text-amber-300"
-                : "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300",
-            )}
-          >
-            {outstanding > 0 ? (
-              <FileSignatureIcon className="size-4" />
-            ) : (
-              <CheckIcon className="size-4" />
-            )}
-          </span>
+        <div className="flex items-start gap-2">
+          <FileSignatureIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Policies</p>
+            <h2 className="text-sm font-semibold">Policies</h2>
             <p className="text-muted-foreground text-xs">
               {outstanding === 0 ? "You are up to date." : `${outstanding} to read and sign.`}
             </p>
@@ -103,11 +82,9 @@ export function PoliciesCard() {
         ) : null}
       </div>
 
-      <ul className="mt-3 flex flex-col gap-1.5">
+      <ul className="divide-border border-border mt-3 divide-y border-t">
         {rows.map((policy) => {
-          const standing = policyStanding(policy);
-          const tone = POLICY_STANDING_TONES[standing];
-          const accent = STANDING_ACCENT[standing];
+          const tone = POLICY_STANDING_TONES[policyStanding(policy)];
           const done = Boolean(policy.acknowledgedAt);
           return (
             <li key={policy.id} data-testid="policy-row" data-policy-id={policy.id}>
@@ -115,28 +92,15 @@ export function PoliciesCard() {
                 type="button"
                 onClick={() => setOpen(policy)}
                 className={cn(
-                  "border-border/70 bg-background/60 hover:bg-muted/50 relative flex w-full items-center gap-3 overflow-hidden rounded-xl border p-3 text-left text-sm transition-[transform,background-color] active:scale-[0.99]",
+                  "flex w-full items-center gap-3 py-2.5 text-left text-sm",
                   done && "opacity-80",
                 )}
               >
-                <span
-                  className="absolute inset-y-0 left-0 w-1"
-                  style={{ backgroundColor: accent }}
-                  aria-hidden
-                />
-                <span
-                  className="grid size-8 shrink-0 place-items-center rounded-lg"
-                  style={{
-                    backgroundColor: `color-mix(in oklch, ${accent} 14%, transparent)`,
-                    color: accent,
-                  }}
-                >
-                  {policy.hasDocument ? (
-                    <FileTextIcon className="size-4" />
-                  ) : (
-                    <PenLineIcon className="size-4" />
-                  )}
-                </span>
+                {policy.hasDocument ? (
+                  <FileTextIcon className="text-muted-foreground size-4 shrink-0" />
+                ) : (
+                  <PenLineIcon className="text-muted-foreground size-4 shrink-0" />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{policy.title}</span>
                   <span className="text-muted-foreground block truncate text-xs">
@@ -148,7 +112,9 @@ export function PoliciesCard() {
                         : ""}
                   </span>
                 </span>
-                <Badge className={cn("shrink-0 border", tone.badge)}>{tone.label}</Badge>
+                <Badge variant={tone.variant} className="shrink-0">
+                  {tone.label}
+                </Badge>
                 <ChevronRightIcon className="text-muted-foreground size-4 shrink-0" />
               </button>
             </li>
@@ -221,7 +187,7 @@ function PolicyDrawer({
         <div className="flex max-h-[55vh] flex-col gap-3 overflow-y-auto px-4">
           {policy?.summary ? <p className="text-sm">{policy.summary}</p> : null}
           {policy?.body ? (
-            <div className="border-border bg-muted/30 rounded-xl border p-3 text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="border-border bg-muted/30 rounded-lg border p-3 text-sm leading-relaxed whitespace-pre-wrap">
               {policy.body}
             </div>
           ) : null}
@@ -241,7 +207,7 @@ function PolicyDrawer({
           ) : null}
 
           {signed ? (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">
+            <div className="border-success/40 bg-success/10 text-success-foreground flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
               <CheckIcon className="size-4 shrink-0" />
               {policy?.signatureName
                 ? `Signed “${policy.signatureName}” on ${formatShiftDate(policy.acknowledgedAt ?? 0)}.`
@@ -273,14 +239,11 @@ function PolicyDrawer({
                       value={signature}
                       onChange={(event) => setSignature(event.target.value)}
                       aria-invalid={Boolean(signature) && !nameOk}
-                      className={cn(
-                        "h-11 pr-9 font-serif text-base italic transition-colors",
-                        signature && nameOk && "border-emerald-500/60",
-                      )}
+                      className={cn("h-11 pr-9", signature && nameOk && "border-success/60")}
                     />
                     {signature && nameOk ? (
                       <CheckIcon
-                        className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-emerald-600 dark:text-emerald-300"
+                        className="text-success pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
                         aria-hidden
                       />
                     ) : null}

@@ -128,9 +128,9 @@ export function PayrollPanel() {
         />
       </div>
 
-      <section className="border-border/80 bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold">Run payroll</p>
+          <h3 className="text-sm font-semibold">Run payroll</h3>
           <div className="flex items-center gap-1">
             <Button
               size="sm"
@@ -180,8 +180,8 @@ export function PayrollPanel() {
 
       {exports.isLoading ? (
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-16 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
         </div>
       ) : runs.length === 0 ? (
         <EmptyState
@@ -229,17 +229,12 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
   return (
     <li
       className={cn(
-        "border-border/80 bg-card hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-xs transition-colors",
+        "border-border/80 hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs transition-colors",
         voided && "opacity-70",
       )}
     >
       <div className="flex items-center gap-3">
-        <span
-          className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-lg",
-            voided ? "bg-muted text-muted-foreground" : "bg-emerald-500/10 text-emerald-600",
-          )}
-        >
+        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
           <FileSpreadsheetIcon className="size-4" />
         </span>
         <div className="flex flex-col">

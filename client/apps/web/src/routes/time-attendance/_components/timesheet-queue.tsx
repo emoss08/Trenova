@@ -1,6 +1,7 @@
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { EmptyState } from "@/components/empty-state";
 import { SegmentedBar } from "@/components/kpi/segmented-bar";
+import { toneVar } from "@/components/kpi/tone";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchTimesheet,
@@ -31,7 +32,7 @@ import {
   timesheetActionsFor,
   timesheetStatusTone,
 } from "@trenova/shared/lib/timesheet";
-import { cn, initials } from "@trenova/shared/lib/utils";
+import { initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   CheckIcon,
@@ -55,9 +56,9 @@ const STATUS_ITEMS = [
   { value: "Locked", label: "Paid" },
 ] satisfies { value: StatusFilter; label: string }[];
 
-const REGULAR = "var(--color-blue-500)";
-const OVERTIME = "var(--color-amber-500)";
-const LEAVE = "var(--color-purple-500)";
+const REGULAR = toneVar("brand");
+const OVERTIME = toneVar("warning");
+const LEAVE = toneVar("info");
 
 function hourSegments(sheet: {
   regularMinutes: number;
@@ -154,9 +155,9 @@ export function TimesheetQueue() {
 
       {sheets.isLoading ? (
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-16 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
@@ -210,12 +211,7 @@ function QueueRow({
   const name = sheet.worker ? `${sheet.worker.firstName} ${sheet.worker.lastName}` : sheet.workerId;
 
   return (
-    <li
-      className={cn(
-        "border-border/80 bg-card hover:border-border flex flex-wrap items-center gap-4 rounded-xl border p-3 text-xs transition-colors",
-        sheet.status === "Submitted" && "border-l-4 border-l-amber-500/60",
-      )}
-    >
+    <li className="border-border/80 hover:border-border flex flex-wrap items-center gap-4 rounded-lg border p-3 text-xs transition-colors">
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
@@ -232,7 +228,7 @@ function QueueRow({
             <span className="text-muted-foreground tabular-nums">
               Week of {formatShiftDate(sheet.periodStart)}
             </span>
-            <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+            <Badge variant={tone.variant}>{tone.label}</Badge>
           </span>
           <div className="max-w-md">
             <SegmentedBar segments={hourSegments(sheet)} />
@@ -296,7 +292,7 @@ function TimesheetSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             {sheet?.worker ? `${sheet.worker.firstName} ${sheet.worker.lastName}` : "Timesheet"}
-            {tone ? <Badge className={cn("border", tone.badge)}>{tone.label}</Badge> : null}
+            {tone ? <Badge variant={tone.variant}>{tone.label}</Badge> : null}
           </SheetTitle>
           <SheetDescription>
             {sheet
@@ -314,7 +310,7 @@ function TimesheetSheet({
           </div>
         ) : (
           <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-4">
-            <div className="bg-muted/30 rounded-xl border p-3">
+            <div className="bg-muted/30 rounded-lg border p-3">
               <p className="font-mono text-2xl font-semibold tabular-nums">
                 {formatHours(sheet.totalMinutes)}
               </p>

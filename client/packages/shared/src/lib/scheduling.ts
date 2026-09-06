@@ -13,6 +13,8 @@ const DAYS_IN_WEEK = 7;
 const MINUTES_IN_DAY = 1440;
 const SECONDS_IN_DAY = 86400;
 
+import type { BadgeVariant } from "@trenova/shared/types/badge";
+
 export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 export const DAY_LABELS_LONG = [
@@ -220,7 +222,13 @@ export function summariseRotaRow(row: { days: readonly RotaDayLike[] }): RotaRow
   };
 }
 
+/**
+ * A rota state as the design system draws it: the Badge variant for the state,
+ * plus the same palette applied to a board cell and a legend dot. The cell and
+ * dot classes are the badge colours, not a second palette.
+ */
 export type RotaTone = {
+  variant: BadgeVariant;
   cell: string;
   dot: string;
   label: string;
@@ -228,33 +236,39 @@ export type RotaTone = {
 
 const ROTA_TONES: Record<string, RotaTone> = {
   Off: {
+    variant: "outline",
     cell: "bg-muted/30 text-muted-foreground border-transparent",
     dot: "bg-muted-foreground/40",
     label: "Off",
   },
   Scheduled: {
-    cell: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-    dot: "bg-blue-500",
+    variant: "info",
+    cell: "border-blue-600/30 bg-blue-600/10 text-blue-700 dark:text-blue-400",
+    dot: "bg-blue-600",
     label: "Scheduled",
   },
   Assigned: {
-    cell: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    dot: "bg-emerald-500",
+    variant: "active",
+    cell: "border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400",
+    dot: "bg-green-600",
     label: "Assigned",
   },
   TimeOff: {
-    cell: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-    dot: "bg-amber-500",
+    variant: "warning",
+    cell: "border-yellow-600/30 bg-yellow-600/10 text-yellow-700 dark:text-yellow-400",
+    dot: "bg-yellow-600",
     label: "Time off",
   },
   Leave: {
-    cell: "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30",
-    dot: "bg-purple-500",
+    variant: "purple",
+    cell: "border-purple-600/30 bg-purple-600/10 text-purple-700 dark:text-purple-400",
+    dot: "bg-purple-600",
     label: "Leave",
   },
   Unavailable: {
-    cell: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    dot: "bg-rose-500",
+    variant: "inactive",
+    cell: "border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400",
+    dot: "bg-red-600",
     label: "Unavailable",
   },
 };
@@ -264,46 +278,21 @@ export function rotaStateTone(state: string): RotaTone {
   return ROTA_TONES[state] ?? ROTA_TONES.Off;
 }
 
-export const AVAILABILITY_TONES: Record<string, { badge: string; label: string }> = {
-  Preferred: {
-    badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    label: "Preferred",
-  },
-  Available: {
-    badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-    label: "Available",
-  },
-  Unavailable: {
-    badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    label: "Unavailable",
-  },
+export type StatusTone = { variant: BadgeVariant; label: string };
+
+export const AVAILABILITY_TONES: Record<string, StatusTone> = {
+  Preferred: { variant: "active", label: "Preferred" },
+  Available: { variant: "info", label: "Available" },
+  Unavailable: { variant: "inactive", label: "Unavailable" },
 };
 
-export const SWAP_STATUS_TONES: Record<string, { badge: string; label: string }> = {
-  Proposed: {
-    badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-    label: "Awaiting colleague",
-  },
-  Accepted: {
-    badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-    label: "Awaiting approval",
-  },
-  Approved: {
-    badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    label: "Approved",
-  },
-  Declined: {
-    badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    label: "Declined",
-  },
-  Rejected: {
-    badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    label: "Rejected",
-  },
-  Withdrawn: {
-    badge: "bg-muted text-muted-foreground border-transparent",
-    label: "Withdrawn",
-  },
+export const SWAP_STATUS_TONES: Record<string, StatusTone> = {
+  Proposed: { variant: "info", label: "Awaiting colleague" },
+  Accepted: { variant: "warning", label: "Awaiting approval" },
+  Approved: { variant: "active", label: "Approved" },
+  Declined: { variant: "inactive", label: "Declined" },
+  Rejected: { variant: "inactive", label: "Rejected" },
+  Withdrawn: { variant: "secondary", label: "Withdrawn" },
 };
 
 export type SwapAction = "accept" | "decline" | "withdraw";

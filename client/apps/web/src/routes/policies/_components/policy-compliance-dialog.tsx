@@ -20,7 +20,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { compliancePercent } from "@trenova/shared/lib/self-service";
-import { cn, initials } from "@trenova/shared/lib/utils";
+import { initials } from "@trenova/shared/lib/utils";
 import { CheckIcon, FileSignatureIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -84,12 +84,12 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
 
         {compliance.isLoading || !view ? (
           <div className="flex flex-col gap-3 px-4">
-            <Skeleton className="h-24 w-full rounded-xl" />
-            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
-            <section className="border-border/80 bg-card flex items-center gap-4 rounded-xl border p-4">
+            <section className="bg-muted/30 flex items-center gap-4 rounded-lg border p-3">
               <RingGauge
                 value={total === 0 ? 0 : percent / 100}
                 size={72}
@@ -152,18 +152,12 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                 icons={[UsersIcon, FileSignatureIcon, CheckIcon]}
               />
             ) : (
-              <ul className="flex min-h-0 flex-col gap-1 overflow-y-auto">
+              <ul className="divide-border flex min-h-0 flex-col divide-y overflow-y-auto">
                 {rows.map((row) => {
                   const [first, last] = splitName(row.workerName);
                   const done = Boolean(row.acknowledgedAt);
                   return (
-                    <li
-                      key={row.workerId}
-                      className={cn(
-                        "hover:bg-muted/40 flex items-center gap-3 rounded-lg px-2 py-1.5 text-xs transition-colors",
-                        !done && "border-l-2 border-l-amber-500/60",
-                      )}
-                    >
+                    <li key={row.workerId} className="flex items-center gap-3 py-2 text-xs">
                       <Avatar className="size-7">
                         <AvatarFallback className="text-[10px] font-medium">
                           {initials(first, last)}

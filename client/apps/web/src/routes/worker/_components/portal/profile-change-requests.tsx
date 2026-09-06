@@ -57,7 +57,7 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
   });
 
   if (!canRead) return null;
-  if (requests.isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
+  if (requests.isLoading) return <Skeleton className="h-24 w-full rounded-lg" />;
 
   const rows = requests.data ?? [];
   if (rows.length === 0) return null;
@@ -65,20 +65,11 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
   const pendingCount = rows.filter((row) => row.status === "Pending").length;
 
   return (
-    <div className="border-border/80 bg-card rounded-xl border p-4">
+    <div className="rounded-lg border p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "grid size-7 place-items-center rounded-lg",
-              pendingCount > 0
-                ? "bg-amber-500/12 text-amber-600 dark:text-amber-300"
-                : "bg-muted text-muted-foreground",
-            )}
-          >
-            <ClipboardPenIcon className="size-3.5" />
-          </span>
-          <p className="text-sm font-semibold">Profile changes</p>
+          <ClipboardPenIcon className="text-muted-foreground size-4" />
+          <h3 className="text-sm font-semibold">Profile changes</h3>
         </div>
         {pendingCount > 0 ? <Badge variant="warning">{pendingCount} waiting on you</Badge> : null}
       </div>
@@ -92,19 +83,13 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
           const tone = changeRequestTone(request.status);
           const pending = request.status === "Pending";
           return (
-            <li
-              key={request.id}
-              className={cn(
-                "border-border/80 rounded-xl border p-3 text-xs transition-colors",
-                pending && "border-l-4 border-l-amber-500/60",
-              )}
-            >
+            <li key={request.id} className="rounded-lg border p-3 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <span className="text-muted-foreground tabular-nums">
                     Asked {formatShiftDate(request.submittedAt)}
                   </span>
-                  <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+                  <Badge variant={tone.variant}>{tone.label}</Badge>
                 </span>
                 {pending ? (
                   <span className="flex items-center gap-1.5">
@@ -234,7 +219,7 @@ function DecideDialog({
         {state ? (
           <ChangeList
             changes={state.request.changes}
-            className="border-border/80 bg-muted/30 rounded-xl border p-3 text-xs"
+            className="bg-muted/30 rounded-lg border p-3 text-xs"
           />
         ) : null}
         <FormProvider {...form}>

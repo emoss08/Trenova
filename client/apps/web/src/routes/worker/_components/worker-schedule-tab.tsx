@@ -100,8 +100,8 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
   if (assignmentsQuery.isLoading) {
     return (
       <div className="flex flex-col gap-4">
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     );
   }
@@ -111,34 +111,27 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
   const history = assignments.filter((row) => row.id !== current?.id);
   const preferences = preferencesQuery.data ?? [];
   const swaps = swapsQuery.data ?? [];
-  const accent = current?.shiftTemplate?.color || "var(--primary)";
   const currentDays = current?.shiftTemplate ? dayMaskToDays(current.shiftTemplate.daysOfWeek) : [];
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="border-border/80 bg-card relative overflow-hidden rounded-xl border p-4">
-        {current ? (
-          <span
-            className="absolute inset-y-0 left-0 w-1"
-            style={{ backgroundColor: accent }}
-            aria-hidden
-          />
-        ) : null}
+      <section className="rounded-lg border p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div
-              className="grid size-10 shrink-0 place-items-center rounded-lg"
-              style={{
-                backgroundColor: `color-mix(in oklch, ${accent} 14%, transparent)`,
-                color: accent,
-              }}
-            >
-              <CalendarClockIcon className="size-5" />
-            </div>
+            <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
+              <CalendarClockIcon className="size-4" />
+            </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                {current?.shiftTemplate?.color ? (
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: current.shiftTemplate.color }}
+                    aria-hidden
+                  />
+                ) : null}
                 {current?.shiftTemplate?.name ?? "Not on a shift"}
-              </p>
+              </h3>
               <p className="text-muted-foreground text-xs">
                 {current?.shiftTemplate
                   ? `${describeShiftPattern(current.shiftTemplate.daysOfWeek, current.shiftTemplate.cycleWeeks)} · ${formatShiftWindow(current.shiftTemplate.startMinute, current.shiftTemplate.durationMinutes)}`
@@ -183,9 +176,8 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                   key={label}
                   className={cn(
                     "grid h-7 flex-1 place-items-center rounded-md text-[11px] font-medium",
-                    on ? "text-white" : "bg-muted text-muted-foreground",
+                    on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
                   )}
-                  style={on ? { backgroundColor: accent } : undefined}
                 >
                   {label}
                 </span>
@@ -203,7 +195,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
         ) : null}
       </section>
 
-      <section className="border-border/80 bg-card rounded-xl border p-4">
+      <section className="rounded-lg border p-4">
         <h3 className="text-sm font-semibold">Stated availability</h3>
         <p className="text-muted-foreground text-xs">
           A statement, never a constraint. Dispatch can override it, and the rota shows where it did
@@ -226,7 +218,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                   <span className="flex items-center gap-2">
                     <span className="w-24 font-medium">{label}</span>
                     {tone ? (
-                      <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+                      <Badge variant={tone.variant}>{tone.label}</Badge>
                     ) : (
                       <span className="text-muted-foreground">Nothing said</span>
                     )}
@@ -251,7 +243,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
       </section>
 
       {canReadSwaps ? (
-        <section className="border-border/80 bg-card rounded-xl border p-4">
+        <section className="rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <RepeatIcon className="text-muted-foreground size-4" />
             <h3 className="text-sm font-semibold">Swaps</h3>
@@ -276,7 +268,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                         {formatShiftDate(swap.shiftDate)}
                       </span>
                     </span>
-                    <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+                    <Badge variant={tone.variant}>{tone.label}</Badge>
                   </li>
                 );
               })}

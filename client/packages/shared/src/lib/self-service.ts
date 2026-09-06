@@ -4,6 +4,8 @@
  * describe the same request the same way.
  */
 
+import type { BadgeVariant } from "@trenova/shared/types/badge";
+
 /**
  * Whether a typed signature is the worker's own name. Case and surrounding
  * space do not make a different person; a different name does. The server
@@ -32,25 +34,14 @@ export function policyStanding(policy: {
   return done ? "read" : "unread";
 }
 
-export const POLICY_STANDING_TONES: Record<PolicyStandingValue, { badge: string; label: string }> =
-  {
-    signed: {
-      badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-      label: "Signed",
-    },
-    outstanding: {
-      badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-      label: "Needs your signature",
-    },
-    read: {
-      badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-      label: "Read",
-    },
-    unread: {
-      badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-      label: "Please read",
-    },
-  };
+export type StandingTone = { variant: BadgeVariant; label: string };
+
+export const POLICY_STANDING_TONES: Record<PolicyStandingValue, StandingTone> = {
+  signed: { variant: "active", label: "Signed" },
+  outstanding: { variant: "warning", label: "Needs your signature" },
+  read: { variant: "active", label: "Read" },
+  unread: { variant: "info", label: "Please read" },
+};
 
 const STANDING_RANK: Record<PolicyStandingValue, number> = {
   outstanding: 0,
@@ -105,25 +96,13 @@ export function policyAudienceLabel(audience: string): string {
 
 export const POLICY_AUDIENCE_ORDER = ["All", "Employees", "Contractors"] as const;
 
-export type ChangeRequestTone = { badge: string; label: string };
+export type ChangeRequestTone = { variant: BadgeVariant; label: string };
 
 const CHANGE_REQUEST_TONES: Record<string, ChangeRequestTone> = {
-  Pending: {
-    badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-    label: "Waiting on the office",
-  },
-  Approved: {
-    badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    label: "Approved",
-  },
-  Rejected: {
-    badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    label: "Not approved",
-  },
-  Withdrawn: {
-    badge: "bg-muted text-muted-foreground border-transparent",
-    label: "Withdrawn",
-  },
+  Pending: { variant: "warning", label: "Waiting on the office" },
+  Approved: { variant: "active", label: "Approved" },
+  Rejected: { variant: "inactive", label: "Not approved" },
+  Withdrawn: { variant: "secondary", label: "Withdrawn" },
 };
 
 export function changeRequestTone(status: string): ChangeRequestTone {

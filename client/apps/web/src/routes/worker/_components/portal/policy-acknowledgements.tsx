@@ -26,18 +26,16 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
   });
 
   if (!canRead) return null;
-  if (acks.isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
+  if (acks.isLoading) return <Skeleton className="h-24 w-full rounded-lg" />;
 
   const rows = acks.data ?? [];
 
   return (
-    <div className="border-border/80 bg-card rounded-xl border p-4">
+    <div className="rounded-lg border p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-lg bg-emerald-500/12 text-emerald-600 dark:text-emerald-300">
-            <FileSignatureIcon className="size-3.5" />
-          </span>
-          <p className="text-sm font-semibold">Policies signed</p>
+          <FileSignatureIcon className="text-muted-foreground size-4" />
+          <h3 className="text-sm font-semibold">Policies signed</h3>
         </div>
         <span className="text-muted-foreground text-xs tabular-nums">
           {rows.length} signature{rows.length === 1 ? "" : "s"}
@@ -57,7 +55,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                   <span
                     className={cn(
                       "mt-1.5 size-2 shrink-0 rounded-full",
-                      superseded ? "bg-muted-foreground/40" : "bg-emerald-500",
+                      superseded ? "bg-muted-foreground/40" : "bg-primary",
                     )}
                   />
                   {index < rows.length - 1 ? <span className="bg-border my-1 w-px flex-1" /> : null}
@@ -75,7 +73,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                     {ack.signatureName ? (
                       <>
                         <PenLineIcon className="size-3" />
-                        <span className="font-serif italic">{ack.signatureName}</span>
+                        <span>{ack.signatureName}</span>
                       </>
                     ) : (
                       " · read"

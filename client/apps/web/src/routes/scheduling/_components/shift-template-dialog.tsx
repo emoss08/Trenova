@@ -52,8 +52,6 @@ const STATUS_OPTIONS = [
   { value: "Inactive", label: "Retired" },
 ];
 
-const FALLBACK_COLOR = "var(--primary)";
-
 export type ShiftTemplateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -112,7 +110,6 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
   const startMinute = clockToMinutes(watched.startTime ?? "");
   const durationMinutes = Math.round((watched.durationHours ?? 0) * 60);
   const cycleWeeks = watched.cycleWeeks ?? 1;
-  const accent = watched.color || FALLBACK_COLOR;
   const validWindow = startMinute >= 0 && durationMinutes > 0;
 
   const { mutateAsync, isPending } = useApiMutation<
@@ -227,12 +224,11 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                             onClick={() => toggleDay(day)}
                             aria-pressed={on}
                             className={cn(
-                              "h-9 rounded-lg border text-xs font-medium transition-[transform,background-color,color,border-color] active:scale-95",
+                              "h-8 rounded-md border text-xs font-medium transition-colors",
                               on
-                                ? "border-transparent text-white shadow-sm"
+                                ? "border-primary bg-primary text-primary-foreground"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
                             )}
-                            style={on ? { backgroundColor: accent } : undefined}
                           >
                             {label}
                           </button>
@@ -310,7 +306,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
               <ShiftPreview
                 code={watched.code ?? ""}
                 name={watched.name ?? ""}
-                accent={accent}
+                color={watched.color ?? null}
                 selectedDays={selectedDays}
                 daysOfWeek={daysOfWeek}
                 window={validWindow ? formatShiftWindow(startMinute, durationMinutes) : null}
@@ -338,7 +334,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
 function ShiftPreview({
   code,
   name,
-  accent,
+  color,
   selectedDays,
   daysOfWeek,
   window,
@@ -348,7 +344,7 @@ function ShiftPreview({
 }: {
   code: string;
   name: string;
-  accent: string;
+  color: string | null;
   selectedDays: number[];
   daysOfWeek: string;
   window: string | null;
@@ -359,31 +355,27 @@ function ShiftPreview({
   return (
     <aside
       className={cn(
-        "border-border/80 bg-muted/30 relative flex h-fit flex-col gap-3 overflow-hidden rounded-xl border p-4 md:sticky md:top-0",
+        "bg-muted/30 flex h-fit flex-col gap-3 rounded-lg border p-3 md:sticky md:top-0",
         retired && "opacity-70",
       )}
       aria-label="Shift preview"
     >
-      <span
-        className="absolute inset-y-0 left-0 w-1 transition-colors"
-        style={{ backgroundColor: accent }}
-        aria-hidden
-      />
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-        On the board
-      </p>
+      <p className="text-muted-foreground text-[11px] font-medium uppercase">On the board</p>
       <div className="flex items-center gap-2">
-        <span
-          className="grid size-9 shrink-0 place-items-center rounded-lg text-xs font-semibold"
-          style={{
-            backgroundColor: `color-mix(in oklch, ${accent} 16%, transparent)`,
-            color: accent,
-          }}
-        >
+        <span className="bg-accent grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold">
           {code.trim().slice(0, 3).toUpperCase() || "—"}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{name.trim() || "Unnamed shift"}</p>
+          <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+            {color ? (
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+                aria-hidden
+              />
+            ) : null}
+            {name.trim() || "Unnamed shift"}
+          </p>
           <p className="text-muted-foreground truncate text-xs">
             {describeShiftPattern(daysOfWeek, cycleWeeks)}
           </p>
@@ -397,10 +389,9 @@ function ShiftPreview({
             <span
               key={label}
               className={cn(
-                "grid h-6 place-items-center rounded text-[10px] transition-colors",
-                on ? "text-white" : "bg-muted text-muted-foreground/70",
+                "grid h-6 place-items-center rounded text-[10px]",
+                on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground/70",
               )}
-              style={on ? { backgroundColor: accent } : undefined}
               aria-hidden
             >
               {label[0]}

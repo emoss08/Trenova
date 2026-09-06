@@ -164,33 +164,27 @@ export function TimeClockPanel() {
           icons={[UserRoundSearchIcon, ClockIcon, PenLineIcon]}
         />
       ) : openEntry.isLoading ? (
-        <Skeleton className="h-28 w-full rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-lg" />
       ) : (
         <section
           className={cn(
-            "border-border/80 bg-card relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-xl border p-5 transition-colors",
-            entry && "border-emerald-500/40",
+            "flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4 transition-colors",
+            entry && "border-success/40 bg-success/5",
           )}
         >
-          {entry ? (
-            <span
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgb(16_185_129/0.10),transparent_60%)]"
-              aria-hidden
-            />
-          ) : null}
-          <div className="relative flex items-center gap-4">
-            <span className="relative grid size-12 place-items-center rounded-full border">
+          <div className="flex items-center gap-4">
+            <span className="relative grid size-10 place-items-center rounded-full border">
               {entry ? (
                 <>
-                  <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500/20" />
-                  <span className="size-3 rounded-full bg-emerald-500" />
+                  <span className="bg-success/20 absolute inset-0 animate-ping rounded-full" />
+                  <span className="bg-success size-2.5 rounded-full" />
                 </>
               ) : (
                 <ClockIcon className="text-muted-foreground size-5" />
               )}
             </span>
             <div>
-              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+              <p className="text-muted-foreground text-[11px] font-medium uppercase">
                 {entry ? "On the clock" : "Off the clock"}
               </p>
               <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
@@ -204,7 +198,7 @@ export function TimeClockPanel() {
             </div>
           </div>
 
-          <div className="relative flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {canCorrect ? (
               <Button size="sm" variant="outline" onClick={() => setEntryDialog({ entry: null })}>
                 <PenLineIcon className="size-3.5" />
@@ -234,7 +228,7 @@ export function TimeClockPanel() {
       )}
 
       {workerId ? (
-        <section className="border-border/80 bg-card rounded-xl border p-4">
+        <section className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Last two weeks</h3>
             <span className="text-muted-foreground text-xs tabular-nums">
@@ -246,17 +240,17 @@ export function TimeClockPanel() {
           ) : entries.length === 0 ? (
             <p className="text-muted-foreground mt-2 text-xs">No punches recorded.</p>
           ) : (
-            <ul className="mt-3 flex flex-col">
+            <ul className="divide-border mt-3 divide-y">
               {[...entries].reverse().map((row) => (
                 <li
                   key={row.id}
-                  className="group/row hover:bg-muted/40 -mx-2 flex flex-wrap items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
+                  className="group/row flex flex-wrap items-center justify-between gap-2 py-2 text-xs"
                 >
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <span
                       className={cn(
                         "size-1.5 shrink-0 rounded-full",
-                        row.clockedOutAt ? "bg-muted-foreground/50" : "bg-emerald-500",
+                        row.clockedOutAt ? "bg-muted-foreground/50" : "bg-success",
                       )}
                       aria-hidden
                     />

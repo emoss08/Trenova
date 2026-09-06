@@ -136,7 +136,7 @@ export function RecordEntryDialog({
 
         <div
           className={cn(
-            "border-border/80 bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors",
+            "bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors",
             backwards && "border-destructive/40 bg-destructive/5",
           )}
           aria-live="polite"
@@ -152,9 +152,7 @@ export function RecordEntryDialog({
             </span>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-              Would be paid
-            </p>
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">Would be paid</p>
             <p className="font-mono text-xl leading-none font-semibold tabular-nums">
               {formatHours(paidMinutes)}
             </p>

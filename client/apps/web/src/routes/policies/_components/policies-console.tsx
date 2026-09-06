@@ -36,12 +36,6 @@ const SCOPE_ITEMS = [
   { value: "all", label: "Everything" },
 ] satisfies { value: Scope; label: string }[];
 
-const AUDIENCE_ACCENT: Record<string, string> = {
-  All: "var(--color-blue-500)",
-  Employees: "var(--color-emerald-500)",
-  Contractors: "var(--color-amber-500)",
-};
-
 export default function PoliciesConsole() {
   const { allowed: canRead } = usePermission(Resource.WorkerPolicy, Operation.Read);
   const { allowed: canCreate } = usePermission(Resource.WorkerPolicy, Operation.Create);
@@ -104,9 +98,9 @@ export default function PoliciesConsole() {
 
       {policies.isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Skeleton className="h-40 rounded-xl" />
-          <Skeleton className="h-40 rounded-xl" />
-          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-40 rounded-lg" />
+          <Skeleton className="h-40 rounded-lg" />
+          <Skeleton className="h-40 rounded-lg" />
         </div>
       ) : shown.length === 0 ? (
         <EmptyState
@@ -160,28 +154,16 @@ function PolicyCard({
   onEdit?: () => void;
 }) {
   const retired = policy.status !== "Active";
-  const accent = AUDIENCE_ACCENT[policy.appliesTo] ?? "var(--primary)";
 
   return (
     <div
       className={cn(
-        "border-border/80 bg-card hover:border-border group relative flex flex-col gap-3 overflow-hidden rounded-xl border p-4 transition-colors",
+        "border-border/80 hover:border-border group flex flex-col gap-3 rounded-lg border p-3 transition-colors",
         retired && "opacity-70",
       )}
     >
-      <span
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ backgroundColor: accent }}
-        aria-hidden
-      />
       <div className="flex items-start gap-3">
-        <span
-          className="grid size-9 shrink-0 place-items-center rounded-lg"
-          style={{
-            backgroundColor: `color-mix(in oklch, ${accent} 14%, transparent)`,
-            color: accent,
-          }}
-        >
+        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
           {policy.documentId ? (
             <FileTextIcon className="size-4" />
           ) : (
