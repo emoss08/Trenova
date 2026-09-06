@@ -11,10 +11,8 @@ import {
   AlertDialogTrigger,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  CommentEditor,
-  type CommentEditorHandle,
-} from "@trenova/shared/components/comment-editor/comment-editor";
+import type { CommentEditorHandle } from "@trenova/shared/components/comment-editor/comment-editor";
+import { LazyCommentEditor } from "@trenova/shared/components/comment-editor/lazy-comment-editor";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -524,11 +522,12 @@ function CommentEditForm({
 
   return (
     <div className="mt-2">
-      <CommentEditor
+      <LazyCommentEditor
         ref={editorRef}
         initialBody={comment.body ?? null}
         initialComment={comment.comment}
         compact
+        autoFocus
         onSubmit={handleSave}
         onEscape={onCancel}
         fetchMentionCandidates={fetchMentionCandidates}

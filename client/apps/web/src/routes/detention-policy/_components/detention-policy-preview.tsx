@@ -374,7 +374,8 @@ export function DetentionPolicyPreview() {
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queries: SCENARIOS.map((definition) => ({
       queryKey: ["detention", "preview", definition.key, definition.scenario, fingerprint],
-      queryFn: () => apiService.detentionPolicyService.preview(policy, definition.scenario),
+      queryFn: ({ signal }) =>
+        apiService.detentionPolicyService.preview(policy, definition.scenario, { signal }),
       enabled: ready && isVisible,
       retry: false,
       staleTime: Infinity,

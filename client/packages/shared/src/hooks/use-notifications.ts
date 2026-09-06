@@ -3,7 +3,11 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
 import { notificationService } from "@trenova/shared/services/notification";
 import type { NotificationScope } from "@trenova/shared/services/notification";
-import type { Notification, NotificationFeed, NotificationState } from "@trenova/shared/types/notification";
+import type {
+  Notification,
+  NotificationFeed,
+  NotificationState,
+} from "@trenova/shared/types/notification";
 import {
   useInfiniteQuery,
   useMutation,
@@ -36,14 +40,17 @@ export function useNotificationFeed(
   return useInfiniteQuery({
     queryKey: feedQueryKey(filters, scope),
     initialPageParam: null as string | null,
-    queryFn: async ({ pageParam }) =>
-      notificationService.listNotifications({
-        first: FEED_PAGE_SIZE,
-        after: pageParam,
-        state: filters.state,
-        unreadOnly: filters.unreadOnly,
-        scope,
-      }),
+    queryFn: async ({ pageParam, signal }) =>
+      notificationService.listNotifications(
+        {
+          first: FEED_PAGE_SIZE,
+          after: pageParam,
+          state: filters.state,
+          unreadOnly: filters.unreadOnly,
+          scope,
+        },
+        { signal },
+      ),
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage && lastPage.endCursor ? lastPage.endCursor : undefined,
     enabled,

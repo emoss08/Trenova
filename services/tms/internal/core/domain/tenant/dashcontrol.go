@@ -16,6 +16,35 @@ const (
 	maxDetentionAlertMinutes = int16(1440)
 )
 
+// DriverDigestCadence is how a driver hears about what they owe. Immediate
+// keeps one notice per obligation, which is what a carrier already relying on
+// them expects; Daily and Weekly bundle everything a driver owes into a single
+// notice, so a week of renewals arrives once instead of six times.
+type DriverDigestCadence string
+
+const (
+	DigestImmediate = DriverDigestCadence("Immediate")
+	DigestDaily     = DriverDigestCadence("Daily")
+	DigestWeekly    = DriverDigestCadence("Weekly")
+)
+
+func (c DriverDigestCadence) String() string { return string(c) }
+
+func (c DriverDigestCadence) IsValid() bool {
+	switch c {
+	case DigestImmediate, DigestDaily, DigestWeekly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Bundles reports whether the cadence collects obligations rather than sending
+// one notice each.
+func (c DriverDigestCadence) Bundles() bool {
+	return c == DigestDaily || c == DigestWeekly
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*DashControl)(nil)
 	_ validationframework.TenantedEntity = (*DashControl)(nil)
@@ -42,6 +71,18 @@ type DashControl struct {
 	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"       bun:"allow_contact_info_edit,type:BOOLEAN,notnull,default:true"`
 	AllowPtoRequests           bool `json:"allowPtoRequests"           bun:"allow_pto_requests,type:BOOLEAN,notnull,default:true"`
 	SendCredentialReminders    bool `json:"sendCredentialReminders"    bun:"send_credential_reminders,type:BOOLEAN,notnull,default:true"`
+	// RequireContactChangeApproval makes a driver's own contact edits wait on
+	// the office instead of landing straight on the record. Off keeps the
+	// behaviour every existing carrier relies on.
+	RequireContactChangeApproval bool `json:"requireContactChangeApproval" bun:"require_contact_change_approval,type:BOOLEAN,notnull"`
+
+	// DriverDigestCadence bundles a driver's obligations into one notice
+	// instead of one each. Immediate is the default so no carrier silently
+	// loses notices they already rely on.
+	DriverDigestCadence DriverDigestCadence `json:"driverDigestCadence" bun:"driver_digest_cadence,type:driver_digest_cadence_enum,notnull,default:'Immediate'"`
+	// DriverDigestWeekday is the day the weekly digest goes out, 0 = Sunday.
+	// Ignored unless the cadence is Weekly.
+	DriverDigestWeekday int16 `json:"driverDigestWeekday" bun:"driver_digest_weekday,type:SMALLINT,notnull,default:1"`
 
 	EnableDetentionAlerts          bool  `json:"enableDetentionAlerts"          bun:"enable_detention_alerts,type:BOOLEAN,notnull,default:true"`
 	DetentionAlertThresholdMinutes int16 `json:"detentionAlertThresholdMinutes" bun:"detention_alert_threshold_minutes,type:INTEGER,notnull,default:120"`
@@ -92,7 +133,27 @@ func (dc *DashControl) Validate(multiErr *errortypes.MultiError) {
 				"Receipt requirement only applies when expense submission is enabled",
 			)),
 		),
+		validation.Field(&dc.DriverDigestCadence,
+			validation.Required.Error("Digest cadence is required"),
+			validation.In(DigestImmediate, DigestDaily, DigestWeekly).Error(
+				"Digest cadence must be Immediate, Daily or Weekly",
+			),
+		),
+		validation.Field(&dc.DriverDigestWeekday,
+			validation.Min(int16(0)).Error("Digest day must be a day of the week"),
+			validation.Max(int16(6)).Error("Digest day must be a day of the week"),
+		),
 	))
+
+	// A digest with reminders switched off would collect obligations and send
+	// nothing, which reads as a working setting that quietly does nothing.
+	if dc.DriverDigestCadence.Bundles() && !dc.SendCredentialReminders {
+		multiErr.Add(
+			"driverDigestCadence",
+			errortypes.ErrInvalidOperation,
+			"A digest needs driver reminders switched on — there would be nothing to bundle",
+		)
+	}
 }
 
 func (dc *DashControl) GetID() pulid.ID { return dc.ID }
@@ -109,6 +170,9 @@ func (dc *DashControl) BeforeAppendModel(_ context.Context, query bun.Query) err
 	case *bun.InsertQuery:
 		if dc.ID.IsNil() {
 			dc.ID = pulid.MustNew("dashc_")
+		}
+		if dc.DriverDigestCadence == "" {
+			dc.DriverDigestCadence = DigestImmediate
 		}
 		dc.CreatedAt = now
 	case *bun.UpdateQuery:

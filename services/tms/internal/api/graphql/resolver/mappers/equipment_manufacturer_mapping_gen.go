@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,17 +31,38 @@ func ApplyEquipmentManufacturerPatch(
 	entity *equipmentmanufacturer.EquipmentManufacturer,
 	input gqlmodel.EquipmentManufacturerPatchInput,
 ) error {
-	if input.Description != nil {
-		entity.Description = *input.Description
+	if descriptionValue, ok := input.Description.ValueOK(); ok {
+		entity.Description = StringValue(descriptionValue)
 	}
-	if input.Name != nil {
-		entity.Name = *input.Name
+	if nameValue, ok := input.Name.ValueOK(); ok {
+		if nameValue == nil {
+			return errortypes.NewValidationError(
+				"name",
+				errortypes.ErrRequired,
+				"Name cannot be cleared",
+			)
+		}
+		entity.Name = *nameValue
 	}
-	if input.Status != nil {
-		entity.Status = *input.Status
+	if statusValue, ok := input.Status.ValueOK(); ok {
+		if statusValue == nil {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrRequired,
+				"Status cannot be cleared",
+			)
+		}
+		entity.Status = *statusValue
 	}
-	if input.Version != nil {
-		entity.Version = int64(*input.Version)
+	if versionValue, ok := input.Version.ValueOK(); ok {
+		if versionValue == nil {
+			return errortypes.NewValidationError(
+				"version",
+				errortypes.ErrRequired,
+				"Version cannot be cleared",
+			)
+		}
+		entity.Version = int64(*versionValue)
 	}
 	return nil
 }

@@ -53,21 +53,25 @@ func (r *indexRepository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*fuelsurcharge.FuelIndex)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				buncolgen.FuelIndexTable.Alias,
-				req.Filter,
-				(*fuelsurcharge.FuelIndex)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count fuel indices", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*fuelsurcharge.FuelIndex)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.FuelIndexTable.Alias,
+					req.Filter,
+					(*fuelsurcharge.FuelIndex)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count fuel indices", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -75,7 +79,7 @@ func (r *indexRepository) ListConnection(
 		dbhelper.CursorListParams[*fuelsurcharge.FuelIndex]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*fuelsurcharge.FuelIndex) *bun.SelectQuery {
 				return dba.
 					NewSelect().

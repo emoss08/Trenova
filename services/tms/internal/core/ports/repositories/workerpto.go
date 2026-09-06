@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type ListPTORequest struct {
@@ -41,10 +42,35 @@ type ListUpcomingPTORequest struct {
 }
 
 type UpdatePTOStatusRequest struct {
-	ID         pulid.ID              `json:"id"`
+	ID              pulid.ID              `json:"id"`
+	TenantInfo      pagination.TenantInfo `json:"tenantInfo"`
+	Status          worker.PTOStatus      `json:"status"`
+	UserID          pulid.ID              `json:"userId"`
+	Reason          string                `json:"reason"`
+	ExpectedVersion int64                 `json:"expectedVersion"`
+	// OnBehalfOf is the manager whose authority a delegate used. Empty when the
+	// approver acted in their own right, so the audit trail can tell a decision
+	// somebody made from one they made in somebody else's place.
+	OnBehalfOf pulid.ID `json:"onBehalfOf"`
+}
+
+type GetPTOsByIDsRequest struct {
+	IDs        []pulid.ID            `json:"ids"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	Status     worker.PTOStatus      `json:"status"`
-	UserID     pulid.ID              `json:"userId"` // User approving/rejecting
+}
+
+type SetPTOBalanceAfterRequest struct {
+	ID               pulid.ID              `json:"id"`
+	TenantInfo       pagination.TenantInfo `json:"tenantInfo"`
+	BalanceAfterDays decimal.Decimal       `json:"balanceAfterDays"`
+}
+
+type PTOOverlapRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
+	StartDate  int64                 `json:"startDate"`
+	EndDate    int64                 `json:"endDate"`
+	ExcludeID  pulid.ID              `json:"excludeId"`
 }
 
 type PTOChartWorker struct {
@@ -88,7 +114,20 @@ type WorkerPTORepository interface {
 		ctx context.Context,
 		req *GetPTOByIDRequest,
 	) (*worker.WorkerPTO, error)
+	GetByIDs(
+		ctx context.Context,
+		req *GetPTOsByIDsRequest,
+	) ([]*worker.WorkerPTO, error)
+	HasOverlap(
+		ctx context.Context,
+		req *PTOOverlapRequest,
+	) (bool, error)
+	SetBalanceAfter(ctx context.Context, req *SetPTOBalanceAfterRequest) error
 	Create(
+		ctx context.Context,
+		entity *worker.WorkerPTO,
+	) (*worker.WorkerPTO, error)
+	Update(
 		ctx context.Context,
 		entity *worker.WorkerPTO,
 	) (*worker.WorkerPTO, error)

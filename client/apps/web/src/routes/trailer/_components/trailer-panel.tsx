@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import type { TrailerRow } from "@/lib/graphql/equipment-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { trailerSchema, type Trailer } from "@/types/trailer";
+import { trailerSchema } from "@/types/trailer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileTextIcon } from "lucide-react";
 import { lazy, useMemo } from "react";
@@ -10,7 +11,7 @@ import { TrailerForm } from "./trailer-form";
 
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 
-export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Trailer>) {
+export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<TrailerRow>) {
   const form = useForm({
     resolver: zodResolver(trailerSchema),
     defaultValues: {

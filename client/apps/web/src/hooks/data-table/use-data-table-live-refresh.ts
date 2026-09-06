@@ -3,7 +3,7 @@ import {
   fetchDataTablePage,
 } from "@/hooks/data-table/use-data-table-query";
 import type {
-  DataTableGraphQLConfig,
+  DataTableGraphQLSource,
   DataTableQueryOptions,
 } from "@trenova/shared/types/data-table";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
@@ -16,7 +16,7 @@ type UseDataTableLiveRefreshParams<TData extends Record<string, unknown>> = {
   intervalMs: number | undefined;
   enabled: boolean;
   queryKey: string;
-  graphql: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLSource<TData>;
   pagination: PaginationState;
   options: DataTableQueryOptions;
   currentResults: TData[] | undefined;

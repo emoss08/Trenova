@@ -28,14 +28,14 @@ fragment ManualJournalTableRowFields on ManualJournal {
   updatedAt
 }
 
-query ManualJournalTable($input: DataTableConnectionInput!) {
+query ManualJournalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   manualJournals(input: $input) {
     edges {
       node {
         ...ManualJournalTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

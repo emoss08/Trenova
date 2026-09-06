@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { distanceOverrideSchema, type DistanceOverride } from "@/types/distance-override";
+import type { DistanceOverrideRow } from "@/lib/graphql/distance-override-table";
+import { distanceOverrideSchema } from "@/types/distance-override";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { DistanceOverrideForm } from "./distance-override-form";
@@ -11,7 +12,7 @@ export function DistanceOverridePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<DistanceOverride>) {
+}: DataTablePanelProps<DistanceOverrideRow>) {
   const form = useForm({
     resolver: zodResolver(distanceOverrideSchema),
     defaultValues: {

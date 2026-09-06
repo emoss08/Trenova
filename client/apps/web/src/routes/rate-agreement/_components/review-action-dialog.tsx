@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import type { RateAgreement } from "@trenova/shared/types/rate";
+import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 import { ArchiveIcon, CheckIcon, PauseIcon, PlayIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -112,7 +112,7 @@ type ReviewActionDialogProps = {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly action: RateAgreementReviewAction;
-  readonly agreement: RateAgreement | null;
+  readonly agreement: RateAgreementRow | null;
 };
 
 export function ReviewActionDialog({

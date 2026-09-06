@@ -182,6 +182,105 @@ entities:
     edges:
       fleetCode: { label: "Fleet Code" }
       profile: { label: Profile }
+      position: { label: Position }
+      pto: { label: "Time Off" }
+
+  job_position:
+    struct: worker.JobPosition
+    resource: job_position
+    label: Job Position
+    pluralLabel: Job Positions
+    description: Job titles the roster is counted by, and the reporting lines between them
+    category: Parties
+    fields:
+      code: { label: "Code" }
+      title: { label: "Title" }
+      department: { label: "Department" }
+      flsaExempt: { label: "Exempt from Overtime" }
+      isDrivingPosition: { label: "Driving Position" }
+    edges:
+      reportsTo: { label: "Reports To" }
+
+  worker_credential:
+    struct: worker.WorkerCredential
+    resource: worker_credential
+    label: Worker Credential
+    pluralLabel: Worker Credentials
+    description: Licences and certificates a worker holds, with their expiry and verification
+    category: Parties
+    fields:
+      status: { label: "Status" }
+      number: { label: "Number" }
+      issuingAuthority: { label: "Issuing Authority" }
+      issuedAt: { label: "Issued", type: epoch }
+      expiresAt: { label: "Expires", type: epoch }
+      verifiedAt: { label: "Verified", type: epoch }
+    edges:
+      worker: { label: Worker }
+      credentialType: { label: "Credential Type" }
+
+  worker_credential_type:
+    struct: worker.WorkerCredentialType
+    resource: worker_credential_type
+    label: Credential Type
+    pluralLabel: Credential Types
+    description: The catalog of credentials a carrier tracks
+    category: Parties
+    fields:
+      code: { label: "Code" }
+      name: { label: "Name" }
+      category: { label: "Category" }
+      isRequired: { label: "Required" }
+      validityMonths: { label: "Valid For (months)", format: count }
+      renewalWindowDays: { label: "Renewal Window (days)", format: count }
+
+  worker_employment_event:
+    struct: worker.WorkerEmploymentEvent
+    resource: worker_employment_event
+    label: Employment Event
+    pluralLabel: Employment Events
+    description: Hires, transfers, leave, suspensions and terminations, with who recorded them
+    category: Parties
+    fields:
+      kind: { label: "Event" }
+      effectiveAt: { label: "Effective", type: epoch }
+      reason: { label: "Reason" }
+      notes: { label: "Notes" }
+    edges:
+      worker: { label: Worker }
+
+  worker_pto_balance:
+    struct: worker.WorkerPTOBalance
+    resource: worker_pto
+    label: PTO Balance
+    pluralLabel: PTO Balances
+    description: What each worker has accrued, used and carried, per time-off type
+    category: Parties
+    fields:
+      ptoType: { label: "Time Off Type" }
+      balanceDays: { label: "Balance (days)" }
+      accruedYtdDays: { label: "Accrued YTD (days)" }
+      usedYtdDays: { label: "Used YTD (days)" }
+      carriedDays: { label: "Carried (days)" }
+    edges:
+      worker: { label: Worker }
+
+  worker_pto:
+    struct: worker.WorkerPTO
+    resource: worker_pto
+    label: Time Off Request
+    pluralLabel: Time Off Requests
+    description: Time-off requests and the days booked against them
+    category: Parties
+    fields:
+      status: { label: "Status" }
+      type: { label: "Type" }
+      startDate: { label: "Starts", type: epoch }
+      endDate: { label: "Ends", type: epoch }
+      days: { label: "Days" }
+      reason: { label: "Reason" }
+    edges:
+      worker: { label: Worker }
 
   worker_profile:
     struct: worker.WorkerProfile

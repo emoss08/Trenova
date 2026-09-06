@@ -33,11 +33,9 @@ import {
   type UpdateReportDashboardInput,
   type ReportDefinitionFieldsFragment,
   type ReportDefinitionRevisionsQuery,
-  type ReportDefinitionsTableQueryVariables,
   type ReportIrInput,
   type ReportRunFieldsFragment,
   type ReportRunsFilterInput,
-  type ReportRunsTableQueryVariables,
   type ReportScheduleFieldsFragment,
   type ReportViewFieldsFragment,
   type RunReportInput,
@@ -67,20 +65,14 @@ export type ReportPreview = ReportPreviewFieldsFragment;
 export type ReportPreviewColumn = ReportPreview["columns"][number];
 export type ReportDashboard = ReportDashboardFieldsFragment;
 
-export const reportDefinitionsTableGraphQLConfig = defineDataTableGraphQLConfig<
-  ReportDefinition & Record<string, unknown>,
-  ReportDefinitionsTableQueryVariables
->({
+export const reportDefinitionsTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: ReportDefinitionsTableDocument,
   operationName: "ReportDefinitionsTable",
   connectionKey: "reportDefinitions",
 });
 
 export function reportRunsTableGraphQLConfig(filter?: ReportRunsFilterInput) {
-  return defineDataTableGraphQLConfig<
-    ReportRun & Record<string, unknown>,
-    ReportRunsTableQueryVariables
-  >({
+  return defineDataTableGraphQLConfig({
     document: ReportRunsTableDocument,
     operationName: "ReportRunsTable",
     connectionKey: "reportRuns",

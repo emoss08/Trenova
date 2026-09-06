@@ -82,12 +82,17 @@ export default function ApprovedPTOChart({
   }, [data]);
 
   if (isLoading) {
-    return <LoadingSkeletonState description="Loading chart data..." className="h-75 w-full" />;
+    return (
+      <LoadingSkeletonState
+        description="Loading chart data..."
+        className="min-h-40 w-full flex-1"
+      />
+    );
   }
 
   if (isError) {
     return (
-      <div className="flex h-100 w-full items-center justify-center">
+      <div className="flex min-h-40 w-full flex-1 items-center justify-center">
         <div className="text-center">
           <p className="text-destructive text-sm">Failed to load chart data</p>
           <p className="text-muted-foreground text-xs">{errorMessage || "An error occurred"}</p>
@@ -98,7 +103,7 @@ export default function ApprovedPTOChart({
 
   if (!chartData || chartData.length === 0) {
     return (
-      <div className="flex h-100 w-full items-center justify-center">
+      <div className="flex min-h-40 w-full flex-1 items-center justify-center">
         <p className="text-muted-foreground text-sm">
           No PTO data available for the selected period
         </p>
@@ -204,5 +209,5 @@ export default function ApprovedPTOChart({
   );
 }
 function ChartOuter({ children }: { children: React.ReactNode }) {
-  return <div className="relative h-75 w-full">{children}</div>;
+  return <div className="relative min-h-40 w-full flex-1">{children}</div>;
 }

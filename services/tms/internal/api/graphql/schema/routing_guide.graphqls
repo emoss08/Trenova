@@ -6,12 +6,16 @@ type RoutingGuideEntry {
   carrierId: ID!
   rank: Int!
   rateMethod: CarrierRateMethod!
-  rate: String!
+  rate: Decimal!
+  """
+  Offer what the carrier's contract says today instead of the entry's fixed rate.
+  """
+  useContractRate: Boolean!
   offerTtlSeconds: Int!
   channel: TenderChannel!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   carrier: Carrier
 }
 
@@ -30,8 +34,8 @@ type RoutingGuide {
   destinationState: String!
   specificity: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   entries: [RoutingGuideEntry!]
 }
 

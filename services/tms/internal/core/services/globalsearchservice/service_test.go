@@ -115,7 +115,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 	require.Equal(t, "Sam Carter", result.Groups[0].Hits[0].Title)
 	require.Equal(
 		t,
-		"/dispatch/workers?panelEntityId=wrk_123&panelType=edit",
+		"/hr/workers?panelEntityId=wrk_123&panelType=edit",
 		result.Groups[0].Hits[0].Href,
 	)
 }

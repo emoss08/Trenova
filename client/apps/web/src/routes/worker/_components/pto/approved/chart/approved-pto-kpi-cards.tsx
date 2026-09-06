@@ -22,7 +22,7 @@ export function ApprovedPTOKPICards({
   }
 
   return (
-    <div className="mb-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="mb-3 grid shrink-0 grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
       <MetricCard
         label="Approved PTO Days"
         value={metrics.approvedPtoDays.toLocaleString()}

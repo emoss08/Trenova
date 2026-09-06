@@ -13,9 +13,8 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiKeyTableGraphQLConfig } from "@/lib/graphql/api-key-table";
+import { apiKeyTableGraphQLConfig, type ApiKeyRow } from "@/lib/graphql/api-key-table";
 import { apiService } from "@/services/api";
-import type { ApiKey } from "@/types/api-key";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,11 +26,11 @@ import { APIKeyPanel } from "./api-key-panel";
 
 export default function APIKeyTable() {
   const queryClient = useQueryClient();
-  const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null);
+  const [selectedKey, setSelectedKey] = useState<ApiKeyRow | null>(null);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
 
   const revokeMutation = useApiMutation({
-    mutationFn: async (id: ApiKey["id"]) => apiService.apiKeyService.revoke(id),
+    mutationFn: async (id: ApiKeyRow["id"]) => apiService.apiKeyService.revoke(id),
     onSuccess: async () => {
       toast.success("API key revoked");
       setRevokeDialogOpen(false);
@@ -41,14 +40,14 @@ export default function APIKeyTable() {
     resourceName: "API Key",
   });
 
-  const handleRevoke = useCallback((row: Row<ApiKey>) => {
+  const handleRevoke = useCallback((row: Row<ApiKeyRow>) => {
     setSelectedKey(row.original);
     setRevokeDialogOpen(true);
   }, []);
 
   const columns = useMemo(() => getColumns(), []);
 
-  const contextMenuActions = useMemo<RowAction<ApiKey>[]>(
+  const contextMenuActions = useMemo<RowAction<ApiKeyRow>[]>(
     () => [
       {
         id: "revoke",
@@ -64,7 +63,7 @@ export default function APIKeyTable() {
 
   return (
     <>
-      <DataTable<ApiKey>
+      <DataTable<ApiKeyRow>
         name="API Key"
         queryKey="api-key-list"
         graphql={apiKeyTableGraphQLConfig}

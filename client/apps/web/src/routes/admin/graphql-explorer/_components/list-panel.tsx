@@ -7,6 +7,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { SearchIcon, SearchXIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type CatalogFilter, searchCatalog } from "./catalog";
+import { useCatalog } from "./use-catalog";
 
 const ROW_HEIGHT = 30;
 const HEADER_HEIGHT = 28;
@@ -139,11 +140,12 @@ export function ListPanel({
   onFilterChange: (value: CatalogFilter) => void;
   onSelect: (selection: CatalogSelection) => void;
 }) {
-  const results = useMemo(() => searchCatalog(query, filter), [query, filter]);
+  const { catalog } = useCatalog();
+  const results = useMemo(() => searchCatalog(catalog, query, filter), [catalog, query, filter]);
   const needle = query.trim().toLowerCase();
 
   const counts = useMemo(() => {
-    const all = searchCatalog(query, "all");
+    const all = searchCatalog(catalog, query, "all");
     let queries = 0;
     let mutations = 0;
     for (const operation of all.operations) {
@@ -154,7 +156,7 @@ export function ListPanel({
       }
     }
     return { all: all.total, query: queries, mutation: mutations, fragment: all.fragments.length };
-  }, [query]);
+  }, [catalog, query]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 

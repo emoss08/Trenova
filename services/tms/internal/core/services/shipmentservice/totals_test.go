@@ -262,9 +262,14 @@ func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChar
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.RequireFromString("9302.44").Equal(resp.FreightChargeAmount))
-	assert.True(t, decimal.NewFromInt(200).Equal(resp.OtherChargeAmount))
-	assert.True(t, decimal.RequireFromString("9502.44").Equal(resp.TotalChargeAmount))
+	// decimal.Equal ignores exponent, so the comparison cannot be assert.Equal.
+	// The message carries both sides, which "Should be true" does not.
+	assert.True(t, decimal.RequireFromString("9302.44").Equal(resp.FreightChargeAmount),
+		"freight: want 9302.44, got %s", resp.FreightChargeAmount)
+	assert.True(t, decimal.NewFromInt(200).Equal(resp.OtherChargeAmount),
+		"other: want 200, got %s", resp.OtherChargeAmount)
+	assert.True(t, decimal.RequireFromString("9502.44").Equal(resp.TotalChargeAmount),
+		"total: want 9502.44, got %s", resp.TotalChargeAmount)
 }
 
 func TestServiceCalculateTotals_PropagatesFormulaErrors(t *testing.T) {
@@ -519,6 +524,16 @@ func (stubTotalsVersionRepo) GetEffectiveVersion(
 	_ context.Context,
 	_ *repositories.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+// ListScheduled is reached through the effective-version cache whenever a
+// formula resolves. The embedded interface is nil, so leaving it unimplemented
+// panics rather than failing: these tests have no scheduled versions.
+func (stubTotalsVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 

@@ -23,7 +23,7 @@ export function OrderForm({ mode }: OrderFormProps) {
 
   const { data: order } = useQuery({
     queryKey: ["order-detail", orderId],
-    queryFn: () => fetchOrderDetail(orderId!),
+    queryFn: ({ signal }) => fetchOrderDetail(orderId!, { signal }),
     enabled: mode === "edit" && !!orderId,
   });
 

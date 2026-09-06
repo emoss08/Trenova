@@ -60,6 +60,7 @@ const (
 	WidgetEDIAttention     = "edi-attention"
 	//nolint:gosec // G101: a dashboard widget identifier, not a credential
 	WidgetExpiringCredentials = "expiring-credentials"
+	WidgetWorkerAttention     = "worker-attention"
 
 	WidgetKPI          = "kpi"
 	WidgetKPIRow       = "kpi-row"
@@ -269,6 +270,21 @@ func workWidgets() []WidgetDefinition {
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
 			DefaultW:    4, DefaultH: 3, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+		},
+		{
+			Key:         WidgetWorkerAttention,
+			Label:       "Workforce Attention",
+			Description: "Drivers who are non-compliant, overdue on training, at risk, or about to lapse",
+			Category:    CategoryWork,
+			Resource:    permission.ResourceWorker,
+			Operation:   permission.OpRead,
+			ConfigKind:  ConfigKindNone,
+			DefaultW:    4,
+			DefaultH:    4,
+			MinW:        3,
+			MinH:        3,
+			MaxW:        12,
+			MaxH:        8,
 		},
 		{
 			Key:         WidgetExpiringCredentials,

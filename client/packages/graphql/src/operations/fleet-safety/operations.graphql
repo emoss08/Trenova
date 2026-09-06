@@ -1,0 +1,115 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query FleetSafety($input: FleetSafetyInput) {
+  fleetSafety(input: $input) {
+    asOf
+    windowMonths
+    workers
+    averageScore
+    atRisk
+    watch
+    totalEvents
+    totalPoints
+    openEvents
+    outOfServiceOrders
+    basicsInferred
+    ratings {
+      rating
+      workers
+    }
+    basics {
+      basic
+      violations
+      events
+      weightedScore
+      outOfService
+      inferred
+    }
+    kinds {
+      kind
+      events
+      points
+      preventable
+      outOfService
+      open
+    }
+    terminals {
+      fleetCodeId
+      code
+      description
+      color
+      workers
+      atRisk
+      watch
+      averageScore
+    }
+    trend {
+      periodStart
+      events
+      accidents
+      preventable
+      citations
+      inspections
+      outOfService
+      points
+    }
+    worst {
+      workerId
+      name
+      fleetCodeId
+      fleetCode
+      fleetColor
+      rating
+      score
+      activePoints
+      events
+      lastEventAt
+    }
+    best {
+      workerId
+      name
+      fleetCodeId
+      fleetCode
+      fleetColor
+      rating
+      score
+      activePoints
+      events
+      lastEventAt
+    }
+  }
+}
+
+query WorkerSafetyViolations($safetyEventId: ID, $workerId: ID) {
+  workerSafetyViolations(safetyEventId: $safetyEventId, workerId: $workerId) {
+    id
+    safetyEventId
+    workerId
+    basic
+    code
+    description
+    severityWeight
+    outOfService
+    version
+  }
+}
+
+mutation RecordSafetyViolation($input: RecordSafetyViolationInput!) {
+  recordSafetyViolation(input: $input) {
+    id
+    basic
+    version
+  }
+}
+
+mutation UpdateSafetyViolation($input: UpdateSafetyViolationInput!) {
+  updateSafetyViolation(input: $input) {
+    id
+    basic
+    version
+  }
+}
+
+mutation DeleteSafetyViolation($id: ID!) {
+  deleteSafetyViolation(id: $id)
+}

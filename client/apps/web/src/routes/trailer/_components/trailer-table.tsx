@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon, MapPinIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
+import { equipmentTableGraphQLConfigs, type TrailerRow } from "@/lib/graphql/equipment-table";
 import { LocateTrailerDialog } from "./locate-trailer-dialog";
 import { getColumns } from "./trailer-columns";
 import { TrailerPanel } from "./trailer-panel";
@@ -19,7 +19,7 @@ export default function Table() {
   const [locateTrailerId, setLocateTrailerId] = useState<string | null>(null);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Trailer[], status: string) => {
+    async (rows: TrailerRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.trailerService.bulkUpdateStatus({
@@ -42,7 +42,7 @@ export default function Table() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Trailer>[]>(
+  const dockActions = useMemo<DockAction<TrailerRow>[]>(
     () => [
       {
         id: "status-update",
@@ -58,7 +58,7 @@ export default function Table() {
     [handleBulkStatusUpdate],
   );
 
-  const contextMenuActions = useMemo<RowAction<Trailer>[]>(
+  const contextMenuActions = useMemo<RowAction<TrailerRow>[]>(
     () => [
       {
         id: "locate",
@@ -72,7 +72,7 @@ export default function Table() {
 
   return (
     <>
-      <DataTable<Trailer>
+      <DataTable<TrailerRow>
         name="Trailer"
         queryKey="trailer-list"
         graphql={equipmentTableGraphQLConfigs.trailer}

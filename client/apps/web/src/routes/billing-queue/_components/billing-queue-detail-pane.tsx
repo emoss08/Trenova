@@ -8,7 +8,7 @@ import { exceptionReasonLabels } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import ShipmentCommentsTab from "@/routes/shipment/_components/comments";
+import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
 import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,12 +18,16 @@ import {
   RefreshCwIcon,
   TimerIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
+
+// The comments tab brings the realtime comment stack with it; the billing queue
+// opens on the Charges tab, so it only pays for that once someone switches.
+const ShipmentCommentsTab = lazy(() => import("@/routes/shipment/_components/comments"));
 
 export default function BillingQueueDetailPane({
   selectedItemId,
@@ -174,7 +178,9 @@ export default function BillingQueueDetailPane({
           />
         </TabsContent>
         <TabsContent value="comments" className="mt-0 min-h-0 flex-1">
-          <ShipmentCommentsTab shipmentId={item.shipmentId} />
+          <Suspense fallback={<CommentsTabSkeleton />}>
+            <ShipmentCommentsTab shipmentId={item.shipmentId} />
+          </Suspense>
         </TabsContent>
         <TabsContent value="activity" className="mt-0 min-h-0 flex-1">
           <ScrollArea className="h-full">

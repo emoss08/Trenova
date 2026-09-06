@@ -149,9 +149,10 @@ func TestDataScope_Level(t *testing.T) {
 		expected int
 	}{
 		{DataScopeOwn, 0},
-		{DataScopeOrganization, 1},
-		{DataScopeBusinessUnit, 2},
-		{DataScopeAll, 3},
+		{DataScopeTeam, 1},
+		{DataScopeOrganization, 2},
+		{DataScopeBusinessUnit, 3},
+		{DataScopeAll, 4},
 		{DataScope("unknown"), 0},
 	}
 
@@ -233,6 +234,7 @@ func TestDataScope_IsValid(t *testing.T) {
 		{DataScopeOrganization, true},
 		{DataScopeBusinessUnit, true},
 		{DataScopeAll, true},
+		{DataScopeTeam, true},
 		{DataScope("unknown"), false},
 		{DataScope(""), false},
 		{DataScope("OWN"), false},

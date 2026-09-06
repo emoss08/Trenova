@@ -324,7 +324,7 @@ func TestSelectOptions_EDIConnectionByIDsResolvesLabels(t *testing.T) {
 	)
 
 	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
-		Resource: gqlmodel.SelectOptionResourceEdiConnection,
+		Resource: gqlmodel.SelectOptionResourceEDIConnection,
 		Ids:      []string{firstID.String(), secondID.String()},
 	})
 	require.NoError(t, err)
@@ -375,7 +375,7 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 	)
 
 	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
-		Resource: gqlmodel.SelectOptionResourceEdiConnection,
+		Resource: gqlmodel.SelectOptionResourceEDIConnection,
 		Query:    stringPtr("Acme"),
 	})
 	require.NoError(t, err)

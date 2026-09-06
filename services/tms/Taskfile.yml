@@ -209,20 +209,54 @@ tasks:
   gqlgen:
     desc: Generate GraphQL server code
     cmds:
-      - go run github.com/99designs/gqlgen generate
+      - |
+        # gqlgen's model plugin writes models_gen.go and then reloads its own
+        # package cache. When the schema introduces a new model that reload can
+        # miss the file it just wrote, so BuildData fails with "merging type
+        # systems failed" -- after the previous exec output has already been
+        # deleted. The retry loads the models from disk and completes.
+        if ! go tool gqlgen generate; then
+          echo "gqlgen: first pass failed, retrying against regenerated models" >&2
+          if ! go tool gqlgen generate; then
+            # Generated output is not hand-edited, so restoring it is safe and
+            # leaves a compilable tree. Resolvers hold hand-written code and are
+            # deliberately left alone.
+            echo "gqlgen: generation failed, restoring committed generated code" >&2
+            git checkout -- internal/api/graphql/generated internal/api/graphql/gqlmodel
+            exit 1
+          fi
+        fi
 
   gqlgen-check:
     desc: Check GraphQL server generated code is up to date
     cmds:
+      - task: gqlgen
       - |
-        go run github.com/99designs/gqlgen generate
-        if git diff --quiet -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver; then
+        # follow-schema layout writes one file per schema, so a new schema file
+        # produces a new *untracked* generated file. git diff cannot see those,
+        # so check porcelain status instead.
+        PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver"
+        if [ -z "$(git status --porcelain -- $PATHS)" ]; then
           echo "GraphQL server generated code is up to date"
         else
           echo "GraphQL server generated code is out of date"
-          git diff --stat -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver
+          git status --porcelain -- $PATHS
           exit 1
         fi
+
+  gqlschema-diff:
+    desc: Report GraphQL schema changes against a git ref (default origin/master); fails on breaking changes
+    vars:
+      BASE_REF: '{{.BASE_REF | default "origin/master"}}'
+      SCHEMA_DIR: internal/api/graphql/schema
+    cmds:
+      - |
+        set -euo pipefail
+        BASE_DIR="$(mktemp -d)"
+        trap 'rm -rf "$BASE_DIR"' EXIT
+        # git archive needs the ref locally; a shallow CI clone will not have it.
+        git archive "{{.BASE_REF}}" "{{.SCHEMA_DIR}}" | tar -x -C "$BASE_DIR"
+        go run ./internal/api/graphql/schemadiff/cmd -base "$BASE_DIR/{{.SCHEMA_DIR}}" -head "{{.SCHEMA_DIR}}"
 
   docs-generate:
     desc: Generate Swagger docs for the TMS API

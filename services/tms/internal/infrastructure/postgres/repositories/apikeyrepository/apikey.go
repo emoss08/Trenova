@@ -111,16 +111,20 @@ func (r *repository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*apikey.Key)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count api keys", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*apikey.Key)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count api keys", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -128,7 +132,7 @@ func (r *repository) ListConnection(
 		dbhelper.CursorListParams[*apikey.Key]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*apikey.Key) *bun.SelectQuery {
 				return dba.
 					NewSelect().

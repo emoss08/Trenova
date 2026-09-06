@@ -27,14 +27,17 @@ fragment HazardousMaterialTableRowFields on HazardousMaterial {
   updatedAt
 }
 
-query HazardousMaterialTable($input: DataTableConnectionInput!) {
+query HazardousMaterialTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   hazardousMaterials(input: $input) {
     edges {
       node {
         ...HazardousMaterialTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -40,8 +40,9 @@ type BulkUpdateCustomerStatusRequest struct {
 }
 
 type GetCustomersByIDsRequest struct {
-	TenantInfo  pagination.TenantInfo `json:"-"`
-	CustomerIDs []pulid.ID            `json:"customerIds"`
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	CustomerIDs           []pulid.ID            `json:"customerIds"`
+	CustomerFilterOptions `json:"-"`
 }
 
 type CustomerSelectOptionsRequest struct {

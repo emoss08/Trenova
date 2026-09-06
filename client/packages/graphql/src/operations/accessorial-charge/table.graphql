@@ -13,14 +13,17 @@ fragment AccessorialChargeTableRowFields on AccessorialCharge {
   updatedAt
 }
 
-query AccessorialChargeTable($input: DataTableConnectionInput!) {
+query AccessorialChargeTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   accessorialCharges(input: $input) {
     edges {
       node {
         ...AccessorialChargeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { CarrierRow } from "@/lib/graphql/carrier-table";
 import { carrierSchema, type Carrier } from "@trenova/shared/types/carrier";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,7 +45,7 @@ const DEFAULT_VALUES: Carrier = {
   insurancePolicies: [],
 };
 
-export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Carrier>) {
+export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<CarrierRow>) {
   const form = useForm({
     resolver: zodResolver(carrierSchema),
     defaultValues: DEFAULT_VALUES,

@@ -220,6 +220,29 @@ func (s *Service) RevokeAccess(
 	return nil
 }
 
+// RevokeOnTermination shuts off portal access because employment ended. It
+// reports whether the worker had anything to shut off — a linked sign-in or an
+// invitation still open — so a termination summary does not claim it revoked
+// access for a driver who was never invited.
+func (s *Service) RevokeOnTermination(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	actor *serviceports.RequestActor,
+) (bool, error) {
+	status, err := s.GetPortalStatus(ctx, tenantInfo, workerID)
+	if err != nil {
+		return false, err
+	}
+	if !status.Linked && status.PendingInvitation == nil {
+		return false, nil
+	}
+	if err = s.RevokeAccess(ctx, tenantInfo, workerID, actor); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (s *Service) GetPortalStatus(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

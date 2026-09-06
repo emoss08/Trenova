@@ -16,6 +16,17 @@ func TestNowEpoch(t *testing.T) {
 	assert.Equal(t, "unixepoch()", dbdialect.SQLite.NowEpoch())
 }
 
+func TestMonthStartEpoch(t *testing.T) {
+	assert.Equal(t,
+		"extract(epoch from date_trunc('month', to_timestamp(wsev.occurred_at) at time zone 'UTC'))::bigint",
+		dbdialect.Postgres.MonthStartEpoch("wsev.occurred_at"),
+	)
+	assert.Equal(t,
+		"unixepoch(strftime('%Y-%m-01 00:00:00', wsev.occurred_at, 'unixepoch'))",
+		dbdialect.SQLite.MonthStartEpoch("wsev.occurred_at"),
+	)
+}
+
 // TestNoHardcodedEpochExpression guards the class of bug that broke login on
 // SQLite: a Postgres-only epoch expression written straight into query SQL.
 // Model `default:` tags are exempt because bun only emits them for zero values,

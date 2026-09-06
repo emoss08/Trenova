@@ -3,7 +3,8 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { recurringShipmentStatusChoices } from "@/lib/choices";
 import { describeCron } from "@/lib/cron";
 import { cn } from "@trenova/shared/lib/utils";
-import type { RecurringShipment, RecurringShipmentStatus } from "@/types/recurring-shipment";
+import type { RecurringShipmentRow } from "@/lib/graphql/recurring-shipment-table";
+import type { RecurringShipmentStatus } from "@/types/recurring-shipment";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -21,7 +22,7 @@ export function RecurringShipmentStatusBadge({ status }: { status: RecurringShip
   );
 }
 
-function LaneCell({ row }: { row: RecurringShipment }) {
+function LaneCell({ row }: { row: RecurringShipmentRow }) {
   const origin = row.originLocation?.name ?? row.originLocation?.code;
   const destination = row.destinationLocation?.name ?? row.destinationLocation?.code;
 
@@ -38,7 +39,7 @@ function LaneCell({ row }: { row: RecurringShipment }) {
   );
 }
 
-function ScheduleCell({ row }: { row: RecurringShipment }) {
+function ScheduleCell({ row }: { row: RecurringShipmentRow }) {
   return (
     <div className="flex flex-col">
       <span className="text-sm">{describeCron(row.cronExpression)}</span>
@@ -47,7 +48,7 @@ function ScheduleCell({ row }: { row: RecurringShipment }) {
   );
 }
 
-export function getColumns(): ColumnDef<RecurringShipment>[] {
+export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
   return [
     {
       accessorKey: "status",

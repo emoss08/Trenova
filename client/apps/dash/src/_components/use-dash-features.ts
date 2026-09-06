@@ -1,4 +1,7 @@
-import { fetchMyPortalFeatures, type PortalFeatures } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  fetchMyPortalFeatures,
+  type PortalFeatures,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 
 const ALL_ENABLED: PortalFeatures = {
@@ -15,6 +18,12 @@ const ALL_ENABLED: PortalFeatures = {
   allowProfileDocumentUpload: true,
   allowContactInfoEdit: true,
   allowPtoRequests: true,
+  ptoBalances: false,
+  leaveBalance: false,
+  schedule: false,
+  shiftSwaps: false,
+  requireContactChangeApproval: false,
+  policiesOutstanding: 0,
 };
 
 // The server enforces every toggle; this only decides what UI to render, so
@@ -23,7 +32,7 @@ const ALL_ENABLED: PortalFeatures = {
 export function useDashFeatures(): PortalFeatures {
   const features = useQuery({
     queryKey: ["dash-features"],
-    queryFn: fetchMyPortalFeatures,
+    queryFn: ({ signal }) => fetchMyPortalFeatures({ signal }),
     staleTime: 5 * 60 * 1000,
   });
   return features.data ?? ALL_ENABLED;

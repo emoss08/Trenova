@@ -59,7 +59,7 @@ func applyOrderInput(entity *order.Order, input gqlmodel.OrderInput) error {
 	entity.OwnerID = ownerID
 
 	entity.PONumber = stringValue(input.PoNumber)
-	entity.BOL = stringValue(input.Bol)
+	entity.BOL = stringValue(input.BOL)
 
 	entity.CurrencyCode = stringValue(input.CurrencyCode)
 	if entity.CurrencyCode == "" {

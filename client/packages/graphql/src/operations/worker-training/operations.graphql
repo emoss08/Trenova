@@ -1,0 +1,310 @@
+fragment TrainingCourseFields on TrainingCourse {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  category
+  status
+  delivery
+  contentUrl
+  durationMinutes
+  passingScore
+  validityMonths
+  renewalWindowDays
+  isRequired
+  requiredForDriverTypes
+  dueDaysAfterAssignment
+  requiresAcknowledgement
+  sortOrder
+  openRecordCount
+  version
+  createdAt
+  updatedAt
+}
+
+fragment WorkerTrainingRecordFields on WorkerTrainingRecord {
+  id
+  businessUnitId
+  organizationId
+  workerId
+  courseId
+  course {
+    id
+    businessUnitId
+    organizationId
+    code
+    name
+    description
+    category
+    status
+    delivery
+    contentUrl
+    durationMinutes
+    passingScore
+    validityMonths
+    renewalWindowDays
+    isRequired
+    requiredForDriverTypes
+    dueDaysAfterAssignment
+    requiresAcknowledgement
+    sortOrder
+    openRecordCount
+    version
+    createdAt
+    updatedAt
+  }
+  status
+  assignedAt
+  dueAt
+  startedAt
+  completedAt
+  expiresAt
+  score
+  passed
+  acknowledgedAt
+  documentId
+  document {
+    id
+    fileName
+    originalName
+    fileType
+    fileSize
+    createdAt
+  }
+  assignedById
+  assignedBy {
+    id
+    name
+  }
+  recordedById
+  recordedBy {
+    id
+    name
+  }
+  notes
+  waivedReason
+  health
+  daysUntilDue
+  daysUntilExpiry
+  version
+  createdAt
+  updatedAt
+}
+
+query TrainingCourseTable($input: TrainingCoursesInput!, $includeTotalCount: Boolean = true) {
+  trainingCourses(input: $input) {
+    edges {
+      node {
+        ...TrainingCourseFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}
+
+query ActiveTrainingCourses {
+  activeTrainingCourses {
+    ...TrainingCourseFields
+  }
+}
+
+query WorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean) {
+  workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+query WorkerTrainingSummary($workerId: ID!) {
+  workerTrainingSummary(workerId: $workerId) {
+    workerId
+    compliant
+    requiredCount
+    currentCount
+    dueCount
+    overdueCount
+    expiringCount
+    expiredCount
+    missingCount
+    items {
+      course {
+        id
+        businessUnitId
+        organizationId
+        code
+        name
+        description
+        category
+        status
+        delivery
+        contentUrl
+        durationMinutes
+        passingScore
+        validityMonths
+        renewalWindowDays
+        isRequired
+        requiredForDriverTypes
+        dueDaysAfterAssignment
+        requiresAcknowledgement
+        sortOrder
+        openRecordCount
+        version
+        createdAt
+        updatedAt
+      }
+      record {
+        id
+        businessUnitId
+        organizationId
+        workerId
+        courseId
+        course {
+          id
+          businessUnitId
+          organizationId
+          code
+          name
+          description
+          category
+          status
+          delivery
+          contentUrl
+          durationMinutes
+          passingScore
+          validityMonths
+          renewalWindowDays
+          isRequired
+          requiredForDriverTypes
+          dueDaysAfterAssignment
+          requiresAcknowledgement
+          sortOrder
+          openRecordCount
+          version
+          createdAt
+          updatedAt
+        }
+        status
+        assignedAt
+        dueAt
+        startedAt
+        completedAt
+        expiresAt
+        score
+        passed
+        acknowledgedAt
+        documentId
+        document {
+          id
+          fileName
+          originalName
+          fileType
+          fileSize
+          createdAt
+        }
+        assignedById
+        assignedBy {
+          id
+          name
+        }
+        recordedById
+        recordedBy {
+          id
+          name
+        }
+        notes
+        waivedReason
+        health
+        daysUntilDue
+        daysUntilExpiry
+        version
+        createdAt
+        updatedAt
+      }
+      health
+      daysUntilDue
+      daysUntilExpiry
+      required
+    }
+  }
+}
+
+mutation CreateTrainingCourse($input: TrainingCourseInput!) {
+  createTrainingCourse(input: $input) {
+    ...TrainingCourseFields
+  }
+}
+
+mutation UpdateTrainingCourse($id: ID!, $input: TrainingCourseInput!) {
+  updateTrainingCourse(id: $id, input: $input) {
+    ...TrainingCourseFields
+  }
+}
+
+mutation ArchiveTrainingCourse($id: ID!, $version: Int) {
+  archiveTrainingCourse(id: $id, version: $version) {
+    ...TrainingCourseFields
+  }
+}
+
+mutation RestoreTrainingCourse($id: ID!, $version: Int) {
+  restoreTrainingCourse(id: $id, version: $version) {
+    ...TrainingCourseFields
+  }
+}
+
+mutation AssignWorkerTraining($input: AssignWorkerTrainingInput!) {
+  assignWorkerTraining(input: $input) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+mutation BulkAssignTraining($input: BulkAssignTrainingInput!) {
+  bulkAssignTraining(input: $input) {
+    assignedCount
+    skippedCount
+    failedCount
+    outcomes {
+      workerId
+      courseId
+      recordId
+      skipped
+      error
+    }
+  }
+}
+
+mutation AssignRequiredWorkerTraining($workerId: ID!) {
+  assignRequiredWorkerTraining(workerId: $workerId) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+mutation CompleteWorkerTraining($input: CompleteWorkerTrainingInput!) {
+  completeWorkerTraining(input: $input) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+mutation WaiveWorkerTraining($input: WaiveWorkerTrainingInput!) {
+  waiveWorkerTraining(input: $input) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+mutation CancelWorkerTraining($input: CancelWorkerTrainingInput!) {
+  cancelWorkerTraining(input: $input) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+mutation AttachWorkerTrainingDocument($input: AttachWorkerTrainingDocumentInput!) {
+  attachWorkerTrainingDocument(input: $input) {
+    ...WorkerTrainingRecordFields
+  }
+}

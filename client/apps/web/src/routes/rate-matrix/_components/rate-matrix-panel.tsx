@@ -1,6 +1,7 @@
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
+import type { RateMatrixRow } from "@/lib/graphql/rate-tables";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -29,7 +30,7 @@ export function RateMatrixPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<RateMatrix>) {
+}: DataTablePanelProps<RateMatrixRow>) {
   const form = useForm<RateMatrix>({
     resolver: zodResolver(rateMatrixSchema) as Resolver<RateMatrix>,
     defaultValues: DEFAULT_MATRIX as RateMatrix,
@@ -73,7 +74,7 @@ export function RateMatrixPanel({
 
   if (mode === "edit") {
     return (
-      <TabbedFormEditPanel<RateMatrix, RateMatrix>
+      <TabbedFormEditPanel<RateMatrix, RateMatrixRow>
         open={open}
         onOpenChange={onOpenChange}
         row={row}

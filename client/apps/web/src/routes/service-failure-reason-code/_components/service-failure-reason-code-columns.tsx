@@ -7,10 +7,10 @@ import {
   serviceFailureReasonCategoryChoices,
   serviceFailureReasonCodeAppliesToChoices,
 } from "@/lib/choices";
-import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
+import type { ServiceFailureReasonCodeRow } from "@/lib/graphql/service-failure-reason-code-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<ServiceFailureReasonCode>[] {
+export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
   return [
     {
       accessorKey: "active",

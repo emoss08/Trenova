@@ -169,27 +169,31 @@ func (r *repository) ListTestCasesCursor(
 		return sq
 	}
 
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDITestCase)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"etc",
-				req.Filter,
-				(*edi.EDITestCase)(nil),
-			)
-			return extraFilters(sq)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDITestCase)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"etc",
+					req.Filter,
+					(*edi.EDITestCase)(nil),
+				)
+				return extraFilters(sq)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITestCase]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDITestCase) *bun.SelectQuery {
 			return dba.
 				NewSelect().

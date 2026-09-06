@@ -40,6 +40,74 @@ func (_m *MockDocumentTemplateRepository) EXPECT() *MockDocumentTemplateReposito
 	return &MockDocumentTemplateRepository_Expecter{mock: &_m.Mock}
 }
 
+// GetByIDs provides a mock function for the type MockDocumentTemplateRepository
+func (_mock *MockDocumentTemplateRepository) GetByIDs(context1 context.Context, getDocumentTemplatesByIDsRequest *repositories.GetDocumentTemplatesByIDsRequest) ([]*documenttemplate.DocumentTemplate, error) {
+	ret := _mock.Called(context1, getDocumentTemplatesByIDsRequest)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*documenttemplate.DocumentTemplate
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetDocumentTemplatesByIDsRequest) ([]*documenttemplate.DocumentTemplate, error)); ok {
+		return returnFunc(context1, getDocumentTemplatesByIDsRequest)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetDocumentTemplatesByIDsRequest) []*documenttemplate.DocumentTemplate); ok {
+		r0 = returnFunc(context1, getDocumentTemplatesByIDsRequest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*documenttemplate.DocumentTemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetDocumentTemplatesByIDsRequest) error); ok {
+		r1 = returnFunc(context1, getDocumentTemplatesByIDsRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentTemplateRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockDocumentTemplateRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - context1 context.Context
+//   - getDocumentTemplatesByIDsRequest *repositories.GetDocumentTemplatesByIDsRequest
+func (_e *MockDocumentTemplateRepository_Expecter) GetByIDs(context1 any, getDocumentTemplatesByIDsRequest any) *MockDocumentTemplateRepository_GetByIDs_Call {
+	return &MockDocumentTemplateRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", context1, getDocumentTemplatesByIDsRequest)}
+}
+
+func (_c *MockDocumentTemplateRepository_GetByIDs_Call) Run(run func(context1 context.Context, getDocumentTemplatesByIDsRequest *repositories.GetDocumentTemplatesByIDsRequest)) *MockDocumentTemplateRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetDocumentTemplatesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetDocumentTemplatesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentTemplateRepository_GetByIDs_Call) Return(documentTemplates []*documenttemplate.DocumentTemplate, err error) *MockDocumentTemplateRepository_GetByIDs_Call {
+	_c.Call.Return(documentTemplates, err)
+	return _c
+}
+
+func (_c *MockDocumentTemplateRepository_GetByIDs_Call) RunAndReturn(run func(context1 context.Context, getDocumentTemplatesByIDsRequest *repositories.GetDocumentTemplatesByIDsRequest) ([]*documenttemplate.DocumentTemplate, error)) *MockDocumentTemplateRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockDocumentTemplateRepository
 func (_mock *MockDocumentTemplateRepository) List(context1 context.Context, listDocumentTemplatesRequest *repositories.ListDocumentTemplatesRequest) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 	ret := _mock.Called(context1, listDocumentTemplatesRequest)

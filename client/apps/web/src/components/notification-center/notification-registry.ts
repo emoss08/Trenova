@@ -4,18 +4,22 @@ import {
   AtSignIcon,
   BanIcon,
   BellIcon,
+  CalendarClockIcon,
   CalendarOffIcon,
   CircleCheckIcon,
   CircleDollarSignIcon,
   DatabaseZapIcon,
+  FileCheckIcon,
   FileDownIcon,
   FileWarningIcon,
   FileXIcon,
   FilterXIcon,
+  IdCardIcon,
   LandmarkIcon,
   MailWarningIcon,
   OctagonAlertIcon,
   ReceiptTextIcon,
+  ShieldAlertIcon,
   TriangleAlertIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -95,7 +99,49 @@ const REPORT_READY: NotificationDescriptor = {
   getLink: reportRunsLink,
 };
 
+function workerCredentialsLink(notification: Pick<Notification, "data">): string {
+  const workerId = notificationDataString(notification, "workerId");
+  return workerId
+    ? `/hr/workers?panelType=edit&panelEntityId=${encodeURIComponent(workerId)}&tab=credentials`
+    : "/hr/workers";
+}
+
 const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
+  "dash.pto_requested": {
+    category: "Workers",
+    icon: CalendarClockIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand/10",
+    getLink: () => "/hr/workers?pageTab=pto",
+  },
+  "dash.credential_expiring": {
+    category: "Workers",
+    icon: IdCardIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning/10",
+    getLink: workerCredentialsLink,
+  },
+  credential_expiring: {
+    category: "Workers",
+    icon: IdCardIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning/10",
+    getLink: workerCredentialsLink,
+  },
+  credential_expired: {
+    category: "Workers",
+    icon: ShieldAlertIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: workerCredentialsLink,
+  },
+  credential_document_uploaded: {
+    category: "Workers",
+    icon: FileCheckIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand/10",
+    getLink: workerCredentialsLink,
+  },
   report_run_completed: REPORT_READY,
   report_run_delivered: { ...REPORT_READY, iconClass: "text-brand", tileClass: "bg-brand/10" },
   report_run_failed: {

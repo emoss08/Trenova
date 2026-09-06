@@ -1,6 +1,11 @@
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Message, MessageContent, MessageFooter, MessageHeader } from "@trenova/shared/components/ui/message";
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+  MessageHeader,
+} from "@trenova/shared/components/ui/message";
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -88,7 +93,7 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
 
   const comments = useQuery({
     queryKey: ["dash-load-comments", shipmentId],
-    queryFn: () => fetchMyLoadComments(shipmentId),
+    queryFn: ({ signal }) => fetchMyLoadComments(shipmentId, { signal }),
     enabled: shipmentId.length > 0,
   });
 

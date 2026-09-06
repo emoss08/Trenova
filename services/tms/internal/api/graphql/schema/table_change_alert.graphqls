@@ -16,8 +16,8 @@ type TCASubscription {
   priority: String!
   status: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type TCASubscriptionEdge {

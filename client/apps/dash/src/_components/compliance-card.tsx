@@ -11,12 +11,14 @@ import {
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { daysUntil, formatUnixDate } from "@trenova/shared/lib/date";
 import {
   fetchMyComplianceProfile,
+  fetchMyProfileChangeRequests,
   updateMyContactInfo,
+  withdrawMyProfileChange,
   type PortalComplianceProfile,
 } from "@trenova/shared/lib/graphql/driver-portal";
+import { changeRequestTone, describeChanges } from "@trenova/shared/lib/self-service";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PencilIcon, ShieldCheckIcon, ShieldAlertIcon } from "lucide-react";
@@ -24,49 +26,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
 
-type ExpiryTone = "ok" | "soon" | "overdue";
-
-function expiryTone(unixSeconds: number | null | undefined): ExpiryTone | null {
-  if (!unixSeconds) return null;
-  const days = daysUntil(unixSeconds);
-  if (days < 0) return "overdue";
-  if (days <= 30) return "soon";
-  return "ok";
-}
-
-function ExpiryRow({ label, value }: { label: string; value: number | null | undefined }) {
-  if (!value) return null;
-  const tone = expiryTone(value);
-  const days = daysUntil(value);
-  return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="flex items-center gap-2">
-        <span
-          className={cn(
-            "text-sm font-medium tabular-nums",
-            tone === "overdue" && "text-red-600 dark:text-red-400",
-            tone === "soon" && "text-amber-600 dark:text-amber-400",
-          )}
-        >
-          {formatUnixDate(value)}
-        </span>
-        {tone === "overdue" ? (
-          <Badge variant="inactive">Expired</Badge>
-        ) : tone === "soon" ? (
-          <Badge variant="warning">{days === 0 ? "Today" : `${days}d`}</Badge>
-        ) : null}
-      </span>
-    </div>
-  );
-}
-
 export function ComplianceCard() {
   const features = useDashFeatures();
   const [editOpen, setEditOpen] = useState(false);
   const profile = useQuery({
     queryKey: ["dash-compliance-profile"],
-    queryFn: fetchMyComplianceProfile,
+    queryFn: ({ signal }) => fetchMyComplianceProfile({ signal }),
   });
 
   if (profile.isPending) {
@@ -110,17 +75,8 @@ export function ComplianceCard() {
         ) : null}
       </dl>
 
-      <div className="mt-2 divide-y divide-border border-t border-border">
-        <ExpiryRow label="CDL expires" value={data.licenseExpiry} />
-        <ExpiryRow label="Medical card" value={data.medicalCardExpiry} />
-        <ExpiryRow label="Hazmat" value={data.hazmatExpiry} />
-        <ExpiryRow label="Physical due" value={data.physicalDueDate} />
-        <ExpiryRow label="MVR review" value={data.mvrDueDate} />
-        <ExpiryRow label="TWIC" value={data.twicExpiry} />
-      </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        License and medical dates are managed by your carrier — if something is wrong, upload the
-        updated document below and tell your fleet manager.
+        Expiry dates for every card and endorsement are tracked under Credentials below.
       </p>
 
       <div className="mt-3 border-t border-border pt-3">
@@ -156,7 +112,65 @@ export function ComplianceCard() {
         </dl>
       </div>
 
+      <PendingChangeNotice />
+
       <ContactEditDrawer profile={data} open={editOpen} onOpenChange={setEditOpen} />
+    </div>
+  );
+}
+
+/**
+ * A change the driver asked for that is still with the office, or the most
+ * recent answer. Shown beside the details it would change, so the record and
+ * the request are never read apart from each other.
+ */
+function PendingChangeNotice() {
+  const queryClient = useQueryClient();
+  const requests = useQuery({
+    queryKey: ["dash-profile-change-requests"],
+    queryFn: ({ signal }) => fetchMyProfileChangeRequests({ signal }),
+    staleTime: 60 * 1000,
+  });
+
+  const withdraw = useMutation({
+    mutationFn: (id: string) => withdrawMyProfileChange(id),
+    onSuccess: async () => {
+      toast.success("Request withdrawn.");
+      await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });
+    },
+    onError: (error: Error) => toast.error(error.message || "Could not withdraw it."),
+  });
+
+  const latest = requests.data?.[0];
+  if (!latest) return null;
+  const pending = latest.status === "Pending";
+  if (!pending && latest.status !== "Rejected") return null;
+  const tone = changeRequestTone(latest.status);
+
+  return (
+    <div className="border-border bg-muted/30 mt-3 rounded-lg border p-3 text-xs">
+      <div className="flex items-center justify-between gap-2">
+        <Badge className={cn("border", tone.badge)}>{tone.label}</Badge>
+        {pending ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7"
+            disabled={withdraw.isPending}
+            onClick={() => withdraw.mutate(latest.id)}
+          >
+            Withdraw
+          </Button>
+        ) : null}
+      </div>
+      <ul className="mt-2 flex flex-col gap-0.5 tabular-nums">
+        {describeChanges(latest.changes).map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+      {latest.decisionNote ? (
+        <p className="text-muted-foreground mt-1">Your carrier said: {latest.decisionNote}</p>
+      ) : null}
     </div>
   );
 }
@@ -179,6 +193,7 @@ type ContactEditDrawerProps = {
 
 function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerProps) {
   const queryClient = useQueryClient();
+  const requiresApproval = useDashFeatures().requireContactChangeApproval;
   const [form, setForm] = useState(() => ({
     phoneNumber: profile.phoneNumber,
     addressLine1: profile.addressLine1,
@@ -201,9 +216,14 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
         emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
       }),
     onSuccess: async () => {
-      toast.success("Contact details updated.");
+      toast.success(
+        requiresApproval
+          ? "Sent to your carrier — your record changes once they approve it."
+          : "Contact details updated.",
+      );
       await queryClient.invalidateQueries({ queryKey: ["dash-compliance-profile"] });
       await queryClient.invalidateQueries({ queryKey: ["dash-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });
       onOpenChange(false);
     },
     onError: (error: Error) => toast.error(error.message || "We couldn't save your changes."),
@@ -224,7 +244,9 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
         <DrawerHeader>
           <DrawerTitle>Update contact details</DrawerTitle>
           <DrawerDescription>
-            Keep your phone and address current so dispatch and payroll can reach you.
+            {requiresApproval
+              ? "Your carrier checks contact changes before they land on your record. Only the fields you change are sent."
+              : "Keep your phone and address current so dispatch and payroll can reach you."}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -274,7 +296,7 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
             disabled={!canSave || save.isPending}
             onClick={() => save.mutate()}
           >
-            {save.isPending ? "Saving..." : "Save"}
+            {save.isPending ? "Sending..." : requiresApproval ? "Send for approval" : "Save"}
           </Button>
         </DrawerFooter>
       </DrawerContent>

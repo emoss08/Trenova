@@ -1,7 +1,5 @@
-import {
-  CommentEditor,
-  type CommentEditorHandle,
-} from "@trenova/shared/components/comment-editor/comment-editor";
+import type { CommentEditorHandle } from "@trenova/shared/components/comment-editor/comment-editor";
+import { LazyCommentEditor } from "@trenova/shared/components/comment-editor/lazy-comment-editor";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import {
@@ -289,7 +287,7 @@ export function CommentComposer({
         onRetry={retryUpload}
         onRemove={handleRemoveUpload}
       />
-      <CommentEditor
+      <LazyCommentEditor
         ref={editorRef}
         compact={compact}
         autoFocus={autoFocus}

@@ -72,21 +72,25 @@ func (r *batchRepository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*carriersettlement.CarrierSettlementBatch)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				buncolgen.CarrierSettlementBatchTable.Alias,
-				req.Filter,
-				(*carriersettlement.CarrierSettlementBatch)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count carrier settlement batches", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*carriersettlement.CarrierSettlementBatch)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.CarrierSettlementBatchTable.Alias,
+					req.Filter,
+					(*carriersettlement.CarrierSettlementBatch)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count carrier settlement batches", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -94,7 +98,7 @@ func (r *batchRepository) ListConnection(
 		dbhelper.CursorListParams[*carriersettlement.CarrierSettlementBatch]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*carriersettlement.CarrierSettlementBatch) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).

@@ -53,6 +53,12 @@ security:
     domain: ""
   rateLimit:
     requestsPerMinute: 30
+  graphql:
+    maxRequestBodyBytes: 1048576
+    costBudget:
+      enabled: true
+      pointsPerMinute: 6000000
+      burst: 3000000
   csrf:
     trustedOrigins:
       - https://trenova.app
@@ -89,6 +95,12 @@ monitoring:
     endpoint: localhost:4317
     serviceName: trenova
     samplingRate: 1.0
+  graphql:
+    # Per-resolver metrics and spans stay off in production; enable temporarily
+    # when investigating N+1 queries on a specific operation.
+    resolverMetrics: false
+    slowOperationAfter: 1s
+    maxTrackedOperations: 2000
 
 # HTML-to-PDF rendering sidecar. Must be reachable only from this process:
 # internal network, no published port, never proxied.

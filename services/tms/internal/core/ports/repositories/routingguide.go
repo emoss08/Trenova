@@ -31,6 +31,12 @@ type GetRoutingGuideByIDRequest struct {
 	RoutingGuideFilterOptions ` form:"routingGuideFilterOptions"`
 }
 
+type GetRoutingGuidesByIDsRequest struct {
+	TenantInfo                pagination.TenantInfo `json:"-"`
+	RoutingGuideIDs           []pulid.ID            `json:"routingGuideIds"`
+	RoutingGuideFilterOptions `json:"-"`
+}
+
 type DeleteRoutingGuideRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ID         pulid.ID              `json:"id"`
@@ -59,6 +65,10 @@ type RoutingGuideRepository interface {
 		ctx context.Context,
 		req GetRoutingGuideByIDRequest,
 	) (*tender.RoutingGuide, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetRoutingGuidesByIDsRequest,
+	) ([]*tender.RoutingGuide, error)
 	Create(
 		ctx context.Context,
 		entity *tender.RoutingGuide,

@@ -69,6 +69,13 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req repositories.GetRoutingGuidesByIDsRequest,
+) ([]*tender.RoutingGuide, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 // MatchLane resolves the most specific active guide for a lane, used both by
 // tender creation and by the dispatch preview.
 func (s *Service) MatchLane(

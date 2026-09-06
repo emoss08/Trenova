@@ -1,7 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { customFieldDefinitionTableGraphQLConfig } from "@/lib/graphql/custom-field-definition-table";
+import {
+  customFieldDefinitionTableGraphQLConfig,
+  type CustomFieldDefinitionRow,
+} from "@/lib/graphql/custom-field-definition-table";
 import { CustomFieldService } from "@/services/custom-field";
-import type { CustomFieldDefinition } from "@/types/custom-field";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,14 +19,16 @@ const customFieldService = new CustomFieldService();
 export default function CustomFieldDefinitionTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedDefinition, setSelectedDefinition] = useState<CustomFieldDefinition | null>(null);
+  const [selectedDefinition, setSelectedDefinition] = useState<CustomFieldDefinitionRow | null>(
+    null,
+  );
 
   const toggleActiveMutation = useMutation({
     mutationFn: async ({
       id,
       isActive,
     }: {
-      id: CustomFieldDefinition["id"];
+      id: CustomFieldDefinitionRow["id"];
       isActive: boolean;
     }) => {
       return customFieldService.patch(id, { isActive });
@@ -45,13 +49,13 @@ export default function CustomFieldDefinitionTable() {
     },
   });
 
-  const handleDelete = useCallback((row: Row<CustomFieldDefinition>) => {
+  const handleDelete = useCallback((row: Row<CustomFieldDefinitionRow>) => {
     setSelectedDefinition(row.original);
     setDeleteDialogOpen(true);
   }, []);
 
   const handleToggleActive = useCallback(
-    (row: Row<CustomFieldDefinition>) => {
+    (row: Row<CustomFieldDefinitionRow>) => {
       toggleActiveMutation.mutate({
         id: row.original.id,
         isActive: !row.original.isActive,
@@ -67,7 +71,7 @@ export default function CustomFieldDefinitionTable() {
 
   const columns = useMemo(() => getColumns(), []);
 
-  const contextMenuActions = useMemo<RowAction<CustomFieldDefinition>[]>(
+  const contextMenuActions = useMemo<RowAction<CustomFieldDefinitionRow>[]>(
     () => [
       {
         id: "deactivate",
@@ -98,7 +102,7 @@ export default function CustomFieldDefinitionTable() {
 
   return (
     <>
-      <DataTable<CustomFieldDefinition>
+      <DataTable<CustomFieldDefinitionRow>
         name="Custom Field Definition"
         queryKey="custom-field-definition-list"
         graphql={customFieldDefinitionTableGraphQLConfig}

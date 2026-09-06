@@ -61,21 +61,25 @@ func (r *repository) List(
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	dba := r.db.DBForContext(ctx)
 
-	total, err := dba.
-		NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return countShipmentListQuery(sq, dba, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return countShipmentListQuery(sq, dba, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
 			return dba.NewSelect().
 				Model(items).
@@ -256,28 +260,32 @@ func (r *repository) GetUnassigned(
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	dba := r.db.DBForContext(ctx)
 
-	total, err := dba.
-		NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			countReq := repositories.ListShipmentsRequest{
-				Filter: req.Filter,
-				ShipmentOptions: repositories.ShipmentOptions{
-					Status: string(shipment.StatusNew),
-				},
-			}
-			return countShipmentListQuery(sq, dba, &countReq).
-				Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				countReq := repositories.ListShipmentsRequest{
+					Filter: req.Filter,
+					ShipmentOptions: repositories.ShipmentOptions{
+						Status: string(shipment.StatusNew),
+					},
+				}
+				return countShipmentListQuery(sq, dba, &countReq).
+					Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
 			return dba.NewSelect().
 				Model(items).

@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import type { TractorRow } from "@/lib/graphql/equipment-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { tractorSchema, type Tractor } from "@/types/tractor";
+import { tractorSchema } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClipboardCheckIcon, FileTextIcon } from "lucide-react";
 import { lazy, useMemo } from "react";
@@ -11,7 +12,7 @@ import { TractorForm } from "./tractor-form";
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const InspectionsTab = lazy(() => import("./tractor-inspections-tab"));
 
-export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Tractor>) {
+export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<TractorRow>) {
   const form = useForm({
     resolver: zodResolver(tractorSchema),
     defaultValues: {

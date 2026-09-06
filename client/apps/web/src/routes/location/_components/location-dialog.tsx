@@ -21,6 +21,7 @@ import {
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { LocationRow } from "@/lib/graphql/location-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { locationSchema, type Location } from "@trenova/shared/types/location";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,7 +72,12 @@ const CREATE_DEFAULT_VALUES: LocationFormInput = {
   geofenceVertices: [],
 };
 
-export function LocationDialog({ open, onOpenChange, mode, row }: DataTablePanelProps<Location>) {
+export function LocationDialog({
+  open,
+  onOpenChange,
+  mode,
+  row,
+}: DataTablePanelProps<LocationRow>) {
   if (mode === "edit") {
     return <EditDialog open={open} onOpenChange={onOpenChange} row={row} />;
   }
@@ -200,7 +206,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
 type EditDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  row: Location | null;
+  row: LocationRow | null;
 };
 
 function EditDialog({ open, onOpenChange, row }: EditDialogProps) {

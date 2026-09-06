@@ -63,16 +63,16 @@ export function DashHomePage() {
   const { data: profile } = useDashProfile();
   const period = useQuery({
     queryKey: ["dash-period-summary"],
-    queryFn: fetchMyPeriodSummary,
+    queryFn: ({ signal }) => fetchMyPeriodSummary({ signal }),
   });
   const loads = useMyLoads("Active");
   const events = useQuery({
     queryKey: ["dash-recent-pay-events"],
-    queryFn: () => fetchMyRecentPayEvents(5),
+    queryFn: ({ signal }) => fetchMyRecentPayEvents(5, { signal }),
   });
   const hos = useQuery({
     queryKey: ["dash-hos-state"],
-    queryFn: fetchMyHosState,
+    queryFn: ({ signal }) => fetchMyHosState({ signal }),
     staleTime: 30_000,
   });
 

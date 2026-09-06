@@ -121,16 +121,20 @@ func (r *repository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*locationcategory.LocationCategory)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count location categories", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*locationcategory.LocationCategory)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count location categories", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -138,7 +142,7 @@ func (r *repository) ListConnection(
 		dbhelper.CursorListParams[*locationcategory.LocationCategory]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*locationcategory.LocationCategory) *bun.SelectQuery {
 				return dba.
 					NewSelect().

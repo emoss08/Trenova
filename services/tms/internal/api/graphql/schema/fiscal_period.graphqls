@@ -22,14 +22,14 @@ type FiscalPeriod {
   periodType: PeriodType!
   status: FiscalPeriodStatus!
   name: String!
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   isAdjusting: Boolean!
   allowAdjustingEntries: Boolean!
-  adjustmentDeadline: Int
-  lockedAt: Int
-  closedAt: Int
+  adjustmentDeadline: Timestamp
+  lockedAt: Timestamp
+  closedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }

@@ -46,7 +46,8 @@ export function UnsettledDriversDialog({
     refetch,
   } = useQuery({
     queryKey: ["unsettled-worker-summaries", summary.periodStart, summary.periodEnd],
-    queryFn: () => fetchUnsettledWorkerSummaries(summary.periodStart, summary.periodEnd),
+    queryFn: ({ signal }) =>
+      fetchUnsettledWorkerSummaries(summary.periodStart, summary.periodEnd, { signal }),
     enabled: open,
   });
 

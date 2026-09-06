@@ -156,6 +156,65 @@ func (d DeductionFrequency) IsValid() bool {
 	}
 }
 
+// DeductionKind separates the three reasons money comes off a settlement.
+// They travel down the same path — the settlement builder does not care why —
+// but a garnishment carries a court order and a benefit carries an enrollment,
+// and neither can be told from an ordinary deduction without this.
+type DeductionKind string
+
+const (
+	DeductionKindStandard    = DeductionKind("Standard")
+	DeductionKindGarnishment = DeductionKind("Garnishment")
+	DeductionKindBenefit     = DeductionKind("Benefit")
+)
+
+func (d DeductionKind) String() string { return string(d) }
+
+func (d DeductionKind) IsValid() bool {
+	switch d {
+	case DeductionKindStandard, DeductionKindGarnishment, DeductionKindBenefit:
+		return true
+	default:
+		return false
+	}
+}
+
+// DefaultPriority is the order deductions are taken in when pay will not cover
+// them all. A court order outranks a voluntary deduction, so a garnishment
+// sorts first; a benefit a worker chose sorts last.
+func (d DeductionKind) DefaultPriority() int16 {
+	switch d {
+	case DeductionKindGarnishment:
+		return 10
+	case DeductionKindBenefit:
+		return 200
+	default:
+		return 100
+	}
+}
+
+// EarningKind separates ongoing pay from a one-off. A bonus is an ordinary
+// earning whose cap equals its amount, so it pays once and completes itself
+// through the same path everything else uses; the kind is what lets a screen
+// offer it as a bonus rather than making somebody set the cap by hand.
+type EarningKind string
+
+const (
+	EarningKindStandard = EarningKind("Standard")
+	EarningKindBonus    = EarningKind("Bonus")
+)
+
+func (e EarningKind) String() string { return string(e) }
+
+func (e EarningKind) IsValid() bool {
+	switch e {
+	case EarningKindStandard, EarningKindBonus:
+		return true
+	default:
+		return false
+	}
+}
+
 type DeductionStatus string
 
 const (

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -20,6 +21,17 @@ func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 
 	return func(ctx context.Context, err error) *gqlerror.Error {
 		gqlErr := graphql.DefaultErrorPresenter(ctx, err)
+
+		if code, ok := protocolErrorCode(gqlErr); ok {
+			gqlErr.Extensions = map[string]any{
+				"code":    code,
+				"type":    baseURI + string(protocolProblemType(code)),
+				"traceId": gqlctx.RequestID(ctx),
+			}
+
+			return gqlErr
+		}
+
 		problemType := classifier.Classify(err)
 		gqlErr.Message = sanitizer.SanitizeMessage(err, problemType)
 		gqlErr.Extensions = map[string]any{
@@ -37,6 +49,30 @@ func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 
 		return gqlErr
 	}
+}
+
+func protocolErrorCode(gqlErr *gqlerror.Error) (string, bool) {
+	if gqlErr == nil || gqlErr.Extensions == nil {
+		return "", false
+	}
+
+	code, ok := gqlErr.Extensions["code"].(string)
+	if !ok || code == "" {
+		return "", false
+	}
+	if errcode.GetErrorKind(gqlerror.List{gqlErr}) != errcode.KindProtocol {
+		return "", false
+	}
+
+	return code, true
+}
+
+func protocolProblemType(code string) helpers.ProblemType {
+	if code == CostBudgetErrorCode {
+		return helpers.ProblemTypeRateLimit
+	}
+
+	return helpers.ProblemTypeValidation
 }
 
 func errorCode(err error, problemType helpers.ProblemType) errortypes.ErrorCode {

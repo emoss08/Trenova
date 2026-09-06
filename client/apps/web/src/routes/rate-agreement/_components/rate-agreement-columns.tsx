@@ -8,10 +8,10 @@ import {
 } from "@/lib/choices";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import type { RateAgreement } from "@trenova/shared/types/rate";
+import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 
 /** An agreement with no end date runs until somebody ends it. */
-function effectiveWindow(row: RateAgreement) {
+function effectiveWindow(row: RateAgreementRow) {
   if (!row.effectiveTo) {
     return <span className="text-muted-foreground">No end date</span>;
   }
@@ -19,7 +19,7 @@ function effectiveWindow(row: RateAgreement) {
   return <HoverCardTimestamp timestamp={row.effectiveTo} />;
 }
 
-export function getColumns(): ColumnDef<RateAgreement>[] {
+export function getColumns(): ColumnDef<RateAgreementRow>[] {
   return [
     {
       accessorKey: "status",

@@ -13,8 +13,8 @@ type DistanceOverride {
   customerId: ID
   distance: Float!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   originLocation: Location
   destinationLocation: Location
   customer: Customer

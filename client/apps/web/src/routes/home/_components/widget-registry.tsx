@@ -36,6 +36,7 @@ import {
   SavedViewsWidget,
 } from "./widgets/orientation-widgets";
 import { AnnouncementWidget, MapWidget } from "./widgets/comms-widgets";
+import { WorkerAttentionWidget } from "./widgets/worker-attention-widget";
 
 export type WidgetProps = {
   widget: HomeWidget;
@@ -60,6 +61,7 @@ export const WIDGET_COMPONENTS: Record<string, ComponentType<WidgetProps>> = {
   "service-failures": ServiceFailuresWidget,
   "edi-attention": EDIAttentionWidget,
   "expiring-credentials": ExpiringCredentialsWidget,
+  "worker-attention": WorkerAttentionWidget,
 
   // Pulse
   kpi: KPIWidget,

@@ -4,6 +4,7 @@ import { GeocodedBadge } from "@/components/geocode-badge";
 import { DialogDescription, DialogTitle } from "@trenova/shared/components/ui/dialog";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { CustomerRow } from "@/lib/graphql/customer-table";
 import { customerSchema, type Customer } from "@trenova/shared/types/customer";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -83,11 +84,11 @@ const DEFAULT_VALUES: Customer = {
   },
 };
 
-export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Customer>) {
+export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<CustomerRow>) {
   const user = useAuthStore((s) => s.user);
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(
-        row.updatedAt as number,
+        row.updatedAt,
         {
           timeFormat: user?.timeFormat || "24-hour",
         },

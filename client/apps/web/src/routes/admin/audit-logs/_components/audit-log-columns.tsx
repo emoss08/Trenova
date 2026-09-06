@@ -1,6 +1,6 @@
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import type { AuditEntry } from "@/types/audit-entry";
+import type { AuditEntryRow } from "@/lib/graphql/audit-log-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { auditOperationFilterOptions, operationLabel, resourceLabel } from "./audit-log-formatters";
@@ -10,7 +10,7 @@ const auditResourceFilterOptions = Object.values(Resource).map((value) => ({
   label: resourceLabel(value),
 }));
 
-export function getColumns(): ColumnDef<AuditEntry>[] {
+export function getColumns(): ColumnDef<AuditEntryRow>[] {
   return [
     {
       accessorKey: "resourceId",

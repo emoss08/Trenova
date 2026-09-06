@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { ShipmentTypeRow } from "@/lib/graphql/shipment-type-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { shipmentTypeSchema, type ShipmentType } from "@/types/shipment-type";
+import { shipmentTypeSchema } from "@/types/shipment-type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ShipmentTypeForm } from "./shipment-type-form";
@@ -11,7 +12,7 @@ export function ShipmentTypePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<ShipmentType>) {
+}: DataTablePanelProps<ShipmentTypeRow>) {
   const form = useForm({
     resolver: zodResolver(shipmentTypeSchema),
     defaultValues: {

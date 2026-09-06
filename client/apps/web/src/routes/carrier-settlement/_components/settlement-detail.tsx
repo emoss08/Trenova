@@ -83,7 +83,7 @@ export function CarrierSettlementDetail({
   const queryClient = useQueryClient();
   const { data: settlement, isLoading } = useQuery({
     queryKey: ["carrier-settlement-detail", settlementId],
-    queryFn: () => fetchCarrierSettlementDetail(settlementId),
+    queryFn: ({ signal }) => fetchCarrierSettlementDetail(settlementId, { signal }),
   });
 
   const invalidate = () => invalidateCarrierWorkspace(queryClient);
@@ -848,7 +848,8 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
 function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData }) {
   const { data, isLoading } = useQuery({
     queryKey: ["carrier-settlement-invoice-matches", settlement.carrierId],
-    queryFn: () => fetchCarrierInvoiceMatches({ carrierId: settlement.carrierId, limit: 100 }),
+    queryFn: ({ signal }) =>
+      fetchCarrierInvoiceMatches({ carrierId: settlement.carrierId, limit: 100 }, { signal }),
   });
 
   const matches = useMemo(

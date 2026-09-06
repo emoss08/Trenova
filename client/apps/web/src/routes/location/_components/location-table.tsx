@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { locationTableGraphQLConfig } from "@/lib/graphql/location-table";
+import { locationTableGraphQLConfig, type LocationRow } from "@/lib/graphql/location-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@trenova/shared/types/data-table";
@@ -17,7 +17,7 @@ export default function LocationTable() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Location[], status: string) => {
+    async (rows: LocationRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.locationService.bulkUpdateStatus({
@@ -40,7 +40,7 @@ export default function LocationTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Location>[]>(
+  const dockActions = useMemo<DockAction<LocationRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +57,7 @@ export default function LocationTable() {
   );
 
   return (
-    <DataTable<Location>
+    <DataTable<LocationRow>
       name="Location"
       queryKey="location-list"
       graphql={locationTableGraphQLConfig}

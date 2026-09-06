@@ -1,4 +1,7 @@
-query CarrierSettlementTable($input: DataTableConnectionInput!) {
+query CarrierSettlementTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   carrierSettlements(input: $input) {
     edges {
       node {
@@ -28,7 +31,7 @@ query CarrierSettlementTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -102,7 +105,10 @@ query CarrierSettlementDetail($id: ID!) {
   }
 }
 
-query CarrierSettlementBatchTable($input: DataTableConnectionInput!) {
+query CarrierSettlementBatchTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   carrierSettlementBatches(input: $input) {
     edges {
       node {
@@ -126,7 +132,7 @@ query CarrierSettlementBatchTable($input: DataTableConnectionInput!) {
         updatedAt
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -165,7 +171,7 @@ query CarrierSettlementBatchDetail($id: ID!) {
   }
 }
 
-query CarrierCostEventTable($input: DataTableConnectionInput!) {
+query CarrierCostEventTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   carrierCostEvents(input: $input) {
     edges {
       node {
@@ -196,7 +202,7 @@ query CarrierCostEventTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -231,7 +237,7 @@ query CurrentCarrierSettlementPeriod {
   }
 }
 
-query CarrierSettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
+query CarrierSettlementWorkspaceSummary($periodStart: Timestamp, $periodEnd: Timestamp) {
   carrierSettlementWorkspaceSummary(periodStart: $periodStart, periodEnd: $periodEnd) {
     periodStart
     periodEnd

@@ -6,6 +6,12 @@ import {
   useUpdateHomeLayout,
 } from "@/hooks/use-home-layout";
 import { DEFAULT_HOME_LAYOUT, toWidgetInput, type HomeWidget } from "@/lib/graphql/home-layout";
+import { analytics } from "@/lib/queries/analytics";
+import { queries } from "@/lib/queries";
+import { ensurePermissionManifest } from "@/lib/route-permission";
+import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
@@ -15,6 +21,30 @@ import { toast } from "sonner";
 import { BriefingBar } from "./_components/briefing-bar";
 import { HomeCanvas } from "./_components/home-canvas";
 import { useHomeData } from "./_components/use-home-data";
+
+// Mirrors useHomeLayout's staleTime so a return visit inside that window reuses the
+// layout the way the page itself would rather than fetching it again from the loader.
+const HOME_LAYOUT_STALE_TIME = 60_000;
+
+// The layout and the attention summary are asked for on every visit. The briefing bar
+// reads the shipment analytics payload too, but only for a viewer who can read shipments;
+// the home route has no permission loader of its own, so the manifest is settled here
+// the same way createPermissionLoader settles it for every other route.
+export const prefetch: RoutePrefetch = async () => {
+  const list: RoutePrefetchQuery[] = [
+    { ...queries.homeLayout.effective(), staleTime: HOME_LAYOUT_STALE_TIME },
+    queries.attention.summary(),
+  ];
+
+  if (
+    (await ensurePermissionManifest()) &&
+    usePermissionStore.getState().hasPermission(Resource.Shipment, Operation.Read)
+  ) {
+    list.push(analytics.get("shipment-management"));
+  }
+
+  return list;
+};
 
 function sameWidgets(a: HomeWidget[], b: HomeWidget[]): boolean {
   if (a.length !== b.length) return false;

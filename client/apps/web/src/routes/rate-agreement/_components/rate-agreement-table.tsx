@@ -1,11 +1,10 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
-import { rateAgreementTableGraphQLConfig } from "@/lib/graphql/rate-tables";
+import { rateAgreementTableGraphQLConfig, type RateAgreementRow } from "@/lib/graphql/rate-tables";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AddRecordAction, DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { RateAgreement } from "@trenova/shared/types/rate";
 import { CopyIcon, FileUpIcon, TrendingUpIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -21,7 +20,7 @@ export default function RateAgreementTable() {
 
   const [importOpen, setImportOpen] = useState(false);
   const [increaseOpen, setIncreaseOpen] = useState(false);
-  const [increaseSelection, setIncreaseSelection] = useState<RateAgreement[]>([]);
+  const [increaseSelection, setIncreaseSelection] = useState<RateAgreementRow[]>([]);
 
   const { mutate: duplicateAgreement } = useMutation({
     mutationFn: (id: string) => apiService.rateAgreementService.duplicate(id),
@@ -55,7 +54,7 @@ export default function RateAgreementTable() {
     [],
   );
 
-  const dockActions = useMemo<DockAction<RateAgreement>[]>(
+  const dockActions = useMemo<DockAction<RateAgreementRow>[]>(
     () => [
       {
         id: "rate-increase-selected",
@@ -71,7 +70,7 @@ export default function RateAgreementTable() {
     [],
   );
 
-  const contextMenuActions = useMemo<RowAction<RateAgreement>[]>(
+  const contextMenuActions = useMemo<RowAction<RateAgreementRow>[]>(
     () => [
       {
         id: "duplicate-agreement",
@@ -89,7 +88,7 @@ export default function RateAgreementTable() {
 
   return (
     <>
-      <DataTable<RateAgreement>
+      <DataTable<RateAgreementRow>
         name="Rate Agreement"
         queryKey="rate-agreement-list"
         graphql={rateAgreementTableGraphQLConfig}

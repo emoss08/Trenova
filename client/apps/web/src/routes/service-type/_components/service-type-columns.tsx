@@ -6,12 +6,13 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { ServiceTypeRow } from "@/lib/graphql/service-type-table";
 import type { ServiceType } from "@/types/service-type";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function ServiceTypeStatusCell({ row }: { row: ServiceType }) {
+function ServiceTypeStatusCell({ row }: { row: ServiceTypeRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -37,7 +38,7 @@ function ServiceTypeStatusCell({ row }: { row: ServiceType }) {
   );
 }
 
-export function getColumns(): ColumnDef<ServiceType>[] {
+export function getColumns(): ColumnDef<ServiceTypeRow>[] {
   return [
     {
       accessorKey: "status",
@@ -62,7 +63,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
       enableCellEditing: true,
       cell: ({ row }) => {
         const { code, color } = row.original;
-        return <DataTableColorColumn text={code} color={color} />;
+        return <DataTableColorColumn text={code} color={color ?? undefined} />;
       },
       meta: {
         apiField: "code",

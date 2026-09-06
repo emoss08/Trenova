@@ -2,11 +2,11 @@ import { AccountingStatusBadge } from "@/components/accounting/accounting-status
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { journalReversalStatusChoices } from "@/lib/choices";
-import type { JournalReversal } from "@/types/journal-reversal";
+import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 
-export function getColumns(): ColumnDef<JournalReversal>[] {
+export function getColumns(): ColumnDef<JournalReversalRow>[] {
   return [
     {
       accessorKey: "status",

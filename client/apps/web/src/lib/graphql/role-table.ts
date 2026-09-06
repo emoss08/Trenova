@@ -1,12 +1,11 @@
-import {
-  RoleTableDocument,
-  type RoleTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { RoleTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { Role } from "@trenova/shared/types/role";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const roleTableGraphQLConfig = defineDataTableGraphQLConfig<Role, RoleTableQueryVariables>({
+export const roleTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RoleTableDocument,
   operationName: "RoleTable",
   connectionKey: "roles",
 });
+
+export type RoleRow = DataTableConfigRow<typeof roleTableGraphQLConfig>;

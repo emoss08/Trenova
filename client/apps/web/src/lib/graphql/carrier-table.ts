@@ -1,15 +1,11 @@
-import {
-  CarrierTableDocument,
-  type CarrierTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { CarrierTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { Carrier } from "@trenova/shared/types/carrier";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const carrierTableGraphQLConfig = defineDataTableGraphQLConfig<
-  Carrier,
-  CarrierTableQueryVariables
->({
+export const carrierTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CarrierTableDocument,
   operationName: "CarrierTable",
   connectionKey: "carriers",
 });
+
+export type CarrierRow = DataTableConfigRow<typeof carrierTableGraphQLConfig>;

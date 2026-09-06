@@ -58,6 +58,7 @@ import {
   type CommandCenterPageSize,
   type CommandCenterViewMode,
 } from "./url-state";
+import { SHIPMENT_TABLE_RESOURCE_NAME } from "../shipment-queries";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 const DataTableFilterBuilder = lazy(
@@ -131,7 +132,6 @@ function TableBodySkeleton({ columnCount, rowCount }: { columnCount: number; row
 }
 
 const QUERY_KEY = "shipment-list";
-const RESOURCE_NAME = "Shipment";
 
 type CommandCenterTableProps = {
   columns: ColumnDef<Shipment>[];
@@ -304,7 +304,7 @@ export function CommandCenterTable({
   });
 
   const { data: defaultConfig } = useQuery({
-    ...queries.tableConfiguration.default(RESOURCE_NAME),
+    ...queries.tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME),
     retry: false,
     staleTime: Infinity,
   });
@@ -360,7 +360,7 @@ export function CommandCenterTable({
       {timelineAvailable && <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
       <Suspense fallback={<ToolbarButtonSkeleton />}>
         <DataTableConfigManager
-          resource={RESOURCE_NAME}
+          resource={SHIPMENT_TABLE_RESOURCE_NAME}
           onApplyConfig={handleApplyConfig}
           onSaveConfig={() => setSaveDialogOpen(true)}
         />
@@ -504,7 +504,7 @@ export function CommandCenterTable({
         <DataTableSaveConfigDialog
           open={saveDialogOpen}
           onOpenChange={setSaveDialogOpen}
-          resource={RESOURCE_NAME}
+          resource={SHIPMENT_TABLE_RESOURCE_NAME}
           currentConfig={currentConfig}
         />
       </Suspense>

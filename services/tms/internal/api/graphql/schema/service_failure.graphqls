@@ -48,15 +48,26 @@ type ServiceFailure {
   source: ServiceFailureSource!
   status: ServiceFailureStatus!
   stopType: StopType!
-  scheduledCutoff: Int!
-  actualArrival: Int!
+  scheduledCutoff: Timestamp!
+  actualArrival: Timestamp!
   gracePeriodMinutes: Int!
   lateMinutes: Int!
   notes: String!
-  detectedAt: Int!
+  """
+  Notes kept off the customer-facing record and the EDI 214.
+  """
+  internalNotes: String!
+  """
+  Three-character X12 codes that replace the ones derived from the failure type
+  when the 214 is built; blank means derive.
+  """
+  x12StatusCodeOverride: String!
+  x12ReasonCodeOverride: String!
+  x12ExceptionCode: String!
+  detectedAt: Timestamp!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   shipment: ServiceFailureShipment
   stop: ServiceFailureStop
   reasonCode: ServiceFailureReasonCode

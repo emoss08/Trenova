@@ -1,11 +1,15 @@
-import { fetchMyLoads, type PortalLoad, type PortalStop } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  fetchMyLoads,
+  type PortalLoad,
+  type PortalStop,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import type { PortalLoadScope } from "@trenova/graphql/generated/graphql";
 import { useQueries, useQuery } from "@tanstack/react-query";
 
 export function useMyLoads(scope: PortalLoadScope) {
   return useQuery({
     queryKey: ["dash-loads", scope],
-    queryFn: () => fetchMyLoads(scope, 25),
+    queryFn: ({ signal }) => fetchMyLoads(scope, 25, { signal }),
   });
 }
 
@@ -13,7 +17,7 @@ export function useLoad(assignmentId: string) {
   const results = useQueries({
     queries: (["Active", "History"] as const).map((scope) => ({
       queryKey: ["dash-loads", scope],
-      queryFn: () => fetchMyLoads(scope, 25),
+      queryFn: ({ signal }) => fetchMyLoads(scope, 25, { signal }),
     })),
   });
 

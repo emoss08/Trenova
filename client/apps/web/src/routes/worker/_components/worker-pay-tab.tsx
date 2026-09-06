@@ -30,6 +30,8 @@ function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
+import { WorkerBenefitsSection } from "./benefits/worker-benefits-section";
+
 export default function WorkerPayTab({ workerId }: { workerId: string }) {
   const queryClient = useQueryClient();
   const [assignOpen, setAssignOpen] = useState(false);
@@ -37,15 +39,15 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
 
   const { data: assignment, isLoading: assignmentLoading } = useQuery({
     queryKey: ["worker-pay", "effective-assignment", workerId],
-    queryFn: () => fetchEffectiveWorkerPayAssignment(workerId),
+    queryFn: ({ signal }) => fetchEffectiveWorkerPayAssignment(workerId, { signal }),
   });
   const { data: history } = useQuery({
     queryKey: ["worker-pay", "assignment-history", workerId],
-    queryFn: () => fetchWorkerPayAssignments(workerId),
+    queryFn: ({ signal }) => fetchWorkerPayAssignments(workerId, { signal }),
   });
   const { data: earnings } = useQuery({
     queryKey: ["worker-pay", "earnings-summary", workerId],
-    queryFn: () => fetchWorkerEarningsSummary(workerId),
+    queryFn: ({ signal }) => fetchWorkerEarningsSummary(workerId, { signal }),
   });
 
   const invalidate = () => {
@@ -184,6 +186,8 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
           onEnded={invalidate}
         />
       )}
+
+      <WorkerBenefitsSection workerId={workerId} />
     </div>
   );
 }

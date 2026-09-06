@@ -23,8 +23,10 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+export type ForkableTemplate = Pick<FormulaTemplate, "id" | "name" | "currentVersionNumber">;
+
 /** Form defaults for forking a template; recomputed whenever the target changes. */
-export function forkDefaultsFor(template: FormulaTemplate | null): ForkRequest {
+export function forkDefaultsFor(template: ForkableTemplate | null): ForkRequest {
   return {
     newName: template ? `${template.name} (Fork)` : "",
     sourceVersion: template?.currentVersionNumber,
@@ -35,7 +37,7 @@ export function forkDefaultsFor(template: FormulaTemplate | null): ForkRequest {
 type ForkTemplateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template: FormulaTemplate | null;
+  template: ForkableTemplate | null;
   onForkSuccess?: (forkedTemplate: FormulaTemplate) => void;
 };
 

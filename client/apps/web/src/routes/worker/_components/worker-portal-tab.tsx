@@ -24,6 +24,8 @@ import { CheckIcon, CopyIcon, SmartphoneIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { PolicyAcknowledgements } from "./portal/policy-acknowledgements";
+import { ProfileChangeRequests } from "./portal/profile-change-requests";
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -44,7 +46,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
 
   const status = useQuery({
     queryKey: ["worker-portal-status", workerId],
-    queryFn: () => fetchWorkerPortalStatus(workerId),
+    queryFn: ({ signal }) => fetchWorkerPortalStatus(workerId, { signal }),
     enabled: workerId.length > 0,
   });
 
@@ -220,6 +222,10 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           </ul>
         </div>
       ) : null}
+
+      <ProfileChangeRequests workerId={workerId} />
+
+      <PolicyAcknowledgements workerId={workerId} />
 
       <AlertDialog open={confirmRevoke} onOpenChange={setConfirmRevoke}>
         <AlertDialogContent>

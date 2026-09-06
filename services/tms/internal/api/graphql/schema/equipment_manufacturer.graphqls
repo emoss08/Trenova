@@ -17,8 +17,8 @@ type EquipmentManufacturer {
   name: String!
   description: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -31,10 +31,14 @@ input EquipmentManufacturerInput {
 }
 
 input EquipmentManufacturerPatchInput {
-  status: EntityStatus
-  name: String
-  description: String
-  version: Int
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
 }
 
 input BulkUpdateEquipmentManufacturerStatusInput {

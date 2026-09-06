@@ -3,34 +3,54 @@ package graphql
 import (
 	gqlhandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
+	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.uber.org/fx"
 )
 
-const complexityLimit = 1000
+const (
+	queryCacheSize   = 1024
+	parserTokenLimit = 15000
+)
 
 type ServerParams struct {
 	fx.In
 
-	Config   *config.Config
-	Resolver *resolver.Resolver
+	Config        *config.Config
+	Resolver      *resolver.Resolver
+	Observability *ObservabilityExtension
+	CostBudget    *CostBudgetExtension
 }
 
 func NewServer(p ServerParams) *gqlhandler.Server {
-	srv := gqlhandler.New(generated.NewExecutableSchema(generated.Config{
-		Resolvers:  p.Resolver,
-		Complexity: complexityRoot(),
-	}))
+	srv := gqlhandler.New(newCostLimitedSchema(generated.NewExecutableSchema(generated.Config{
+		Resolvers: p.Resolver,
+	})))
 	srv.AddTransport(transport.POST{})
-	srv.Use(extension.FixedComplexityLimit(complexityLimit))
-	if p.Config.App.Debug || p.Config.App.IsDevelopment() || p.Config.App.IsTest() {
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](queryCacheSize))
+	srv.SetParserTokenLimit(parserTokenLimit)
+	srv.Use(operationDepthLimit{max: querycost.MaxOperationDepth})
+	srv.Use(extension.FixedComplexityLimit(querycost.MaxOperationCost))
+	srv.Use(p.CostBudget)
+	srv.Use(p.Observability)
+
+	if devToolingEnabled(p.Config) {
 		srv.Use(extension.Introspection{})
+	} else {
+		srv.SetDisableSuggestion(true)
 	}
+
 	srv.SetErrorPresenter(newErrorPresenter(p.Config))
 	srv.SetRecoverFunc(recoverFunc)
 
 	return srv
+}
+
+func devToolingEnabled(cfg *config.Config) bool {
+	return cfg.App.Debug || cfg.App.IsDevelopment() || cfg.App.IsTest()
 }

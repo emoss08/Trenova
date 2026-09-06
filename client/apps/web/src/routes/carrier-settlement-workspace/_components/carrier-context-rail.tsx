@@ -99,7 +99,7 @@ function RailSection({
 function UnsettledCostSection({ carrierId }: { carrierId: string }) {
   const { data: events, isLoading } = useQuery({
     queryKey: ["carrier-pending-cost-events", carrierId],
-    queryFn: () => fetchCarrierPendingCostEvents(carrierId),
+    queryFn: ({ signal }) => fetchCarrierPendingCostEvents(carrierId, { signal }),
   });
 
   if (isLoading) {
@@ -159,7 +159,7 @@ function RecentSettlementsSection({
 }) {
   const { data: settlements, isLoading } = useQuery({
     queryKey: ["carrier-recent-settlements", carrierId],
-    queryFn: () => fetchCarrierRecentSettlements(carrierId, 5),
+    queryFn: ({ signal }) => fetchCarrierRecentSettlements(carrierId, 5, { signal }),
   });
 
   if (isLoading) {
@@ -211,7 +211,7 @@ function RecentSettlementsSection({
 function LedgerSection({ carrierId }: { carrierId: string }) {
   const { data: entries, isLoading } = useQuery({
     queryKey: ["carrier-ledger-entries", carrierId],
-    queryFn: () => fetchCarrierLedgerEntries(carrierId, 100),
+    queryFn: ({ signal }) => fetchCarrierLedgerEntries(carrierId, 100, { signal }),
   });
 
   if (isLoading) {

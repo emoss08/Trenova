@@ -38,7 +38,7 @@ type DispatchCandidate {
   blocked: Boolean!
   deadheadMiles: Float
   estimatedDriveMs: Int!
-  projectedArrival: Int!
+  projectedArrival: Timestamp!
   minutesOfSlack: Int!
   driveRemainingMs: Int!
   shiftRemainingMs: Int!
@@ -50,7 +50,7 @@ type DispatchCandidate {
   """
   hosStrategy: String!
   "Latest unix time the required pre-departure rest must start; 0 when none is needed."
-  hosRestStartDeadline: Int!
+  hosRestStartDeadline: Timestamp!
   hosProjectedDriveMs: Int!
   hosProjectedShiftMs: Int!
   hosProjectedCycleMs: Int!
@@ -69,7 +69,7 @@ type DispatchBoardTenderSummary {
   currentRank: Int!
   offerCount: Int!
   currentCarrierName: String!
-  currentOfferExpiresAt: Int
+  currentOfferExpiresAt: Timestamp
 }
 
 type DispatchBoardMove {
@@ -106,9 +106,9 @@ type DispatchBoardMove {
   originState: String!
   originLatitude: Float
   originLongitude: Float
-  originWindowStart: Int!
-  originWindowEnd: Int
-  originActualArrival: Int
+  originWindowStart: Timestamp!
+  originWindowEnd: Timestamp
+  originActualArrival: Timestamp
 
   destinationStopId: ID
   destinationLocationId: ID
@@ -117,8 +117,8 @@ type DispatchBoardMove {
   destinationState: String!
   destinationLatitude: Float
   destinationLongitude: Float
-  destinationWindowStart: Int!
-  destinationWindowEnd: Int
+  destinationWindowStart: Timestamp!
+  destinationWindowEnd: Timestamp
 
   assignmentId: ID
   assignedWorkerId: ID
@@ -148,8 +148,8 @@ type DispatchCommitment {
   shipmentId: ID!
   proNumber: String!
   moveStatus: String!
-  windowStart: Int!
-  windowEnd: Int!
+  windowStart: Timestamp!
+  windowEnd: Timestamp!
   destinationCity: String!
   destinationState: String!
   destinationLatitude: Float
@@ -158,8 +158,8 @@ type DispatchCommitment {
 }
 
 type DispatchTimeOff {
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   type: String!
 }
 
@@ -190,13 +190,13 @@ type DispatchBoardDriver {
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!
   breakRemainingMs: Int!
-  hosRecordedAt: Int!
+  hosRecordedAt: Timestamp!
   hosIsStale: Boolean!
 
   latitude: Float
   longitude: Float
   formattedLocation: String!
-  positionRecordedAt: Int!
+  positionRecordedAt: Timestamp!
 
   projectedTimeAvailable: Int!
   committedMiles: Float!
@@ -225,9 +225,9 @@ type DispatchBoard {
   moves: [DispatchBoardMove!]!
   drivers: [DispatchBoardDriver!]!
   summary: DispatchBoardSummary!
-  windowStart: Int!
-  windowEnd: Int!
-  generatedAt: Int!
+  windowStart: Timestamp!
+  windowEnd: Timestamp!
+  generatedAt: Timestamp!
 }
 
 type DispatchDriverMoveMatch {
@@ -269,8 +269,8 @@ type DispatchBulkAssignResult {
 }
 
 input DispatchBoardInput {
-  windowStart: Int
-  windowEnd: Int
+  windowStart: Timestamp
+  windowEnd: Timestamp
   fleetCodeIds: [ID!]
   customerIds: [ID!]
   serviceTypeIds: [ID!]
@@ -289,8 +289,8 @@ input DispatchMoveCandidatesInput {
 
 input DispatchDriverMovesInput {
   workerId: ID!
-  windowStart: Int
-  windowEnd: Int
+  windowStart: Timestamp
+  windowEnd: Timestamp
   limit: Int
 }
 
@@ -317,15 +317,15 @@ input DispatchAssignMoveInput {
 input DispatchCarrierAccessorialInput {
   accessorialChargeId: ID
   description: String!
-  amount: String!
+  amount: Decimal!
 }
 
 input DispatchAssignMoveToCarrierInput {
   moveId: ID!
   carrierId: ID!
   rateMethod: CarrierRateMethod!
-  baseRate: String!
-  fuelSurcharge: String
+  baseRate: Decimal!
+  fuelSurcharge: Decimal
   accessorials: [DispatchCarrierAccessorialInput!]
   proNumber: String
   externalDriverName: String
@@ -405,8 +405,8 @@ type DispatchPlannedAssignment {
   When the driver is projected to start and finish this move, and the drive time left
   on their clock afterwards. These are projections from the plan, not commitments.
   """
-  projectedStartAt: Int!
-  projectedCompleteAt: Int!
+  projectedStartAt: Timestamp!
+  projectedCompleteAt: Timestamp!
   projectedDriveRemainingMs: Int!
 }
 
@@ -420,8 +420,8 @@ type DispatchTour {
   workerId: ID!
   workerName: String!
   moveIds: [ID!]!
-  startsAt: Int!
-  endsAt: Int!
+  startsAt: Timestamp!
+  endsAt: Timestamp!
   totalScore: Int!
   totalDeadheadMiles: Float!
 }
@@ -454,12 +454,12 @@ type DispatchPlan {
   shadowMode: Boolean!
   autonomyTier: String!
   totalScore: Int!
-  generatedAt: Int!
+  generatedAt: Timestamp!
 }
 
 input DispatchPlanInput {
-  windowStart: Int
-  windowEnd: Int
+  windowStart: Timestamp
+  windowEnd: Timestamp
   fleetCodeIds: [ID!]
   moveIds: [ID!]
   """

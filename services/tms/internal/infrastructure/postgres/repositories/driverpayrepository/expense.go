@@ -96,21 +96,25 @@ func (r *driverExpenseRepository) ListConnection(
 	alias := buncolgen.ExpenseTable.Alias
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*driverpay.Expense)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				alias,
-				req.Filter,
-				(*driverpay.Expense)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count driver expenses", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*driverpay.Expense)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					alias,
+					req.Filter,
+					(*driverpay.Expense)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count driver expenses", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -118,7 +122,7 @@ func (r *driverExpenseRepository) ListConnection(
 		dbhelper.CursorListParams[*driverpay.Expense]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*driverpay.Expense) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).

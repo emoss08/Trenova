@@ -176,6 +176,13 @@ func (s *Service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req repositories.GetInvoicesByIDsRequest,
+) ([]*invoice.Invoice, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) CreateFromApprovedBillingQueueItem(
 	ctx context.Context,
 	req *servicesports.CreateInvoiceFromBillingQueueRequest,

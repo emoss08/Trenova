@@ -6,16 +6,16 @@ type ApiKey {
   description: String!
   keyPrefix: String!
   status: String!
-  expiresAt: Int!
-  lastUsedAt: Int!
+  expiresAt: Timestamp!
+  lastUsedAt: Timestamp!
   lastUsedIp: String!
   lastUsedUserAgent: String!
   createdById: ID!
   revokedById: ID!
-  revokedAt: Int!
+  revokedAt: Timestamp!
   permissionScope: String!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ApiKeyEdge {

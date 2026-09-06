@@ -27,7 +27,11 @@ fragment ReportRunFields on ReportRun {
   createdAt
 }
 
-query ReportRunsTable($input: DataTableConnectionInput!, $filter: ReportRunsFilterInput) {
+query ReportRunsTable(
+  $input: DataTableConnectionInput!
+  $filter: ReportRunsFilterInput
+  $includeTotalCount: Boolean = true
+) {
   reportRuns(input: $input, filter: $filter) {
     edges {
       node {
@@ -35,7 +39,7 @@ query ReportRunsTable($input: DataTableConnectionInput!, $filter: ReportRunsFilt
       }
       cursor
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -38,11 +39,25 @@ func ApplyEquipmentTypePatch(
 	entity *equipmenttype.EquipmentType,
 	input gqlmodel.EquipmentTypePatchInput,
 ) error {
-	if input.Class != nil {
-		entity.Class = *input.Class
+	if classValue, ok := input.Class.ValueOK(); ok {
+		if classValue == nil {
+			return errortypes.NewValidationError(
+				"class",
+				errortypes.ErrRequired,
+				"Class cannot be cleared",
+			)
+		}
+		entity.Class = *classValue
 	}
-	if input.Code != nil {
-		entity.Code = *input.Code
+	if codeValue, ok := input.Code.ValueOK(); ok {
+		if codeValue == nil {
+			return errortypes.NewValidationError(
+				"code",
+				errortypes.ErrRequired,
+				"Code cannot be cleared",
+			)
+		}
+		entity.Code = *codeValue
 	}
 	if colorValue, ok := input.Color.ValueOK(); ok {
 		entity.Color = StringValue(colorValue)
@@ -53,11 +68,25 @@ func ApplyEquipmentTypePatch(
 	if interiorLengthValue, ok := input.InteriorLength.ValueOK(); ok {
 		entity.InteriorLength = interiorLengthValue
 	}
-	if input.Status != nil {
-		entity.Status = *input.Status
+	if statusValue, ok := input.Status.ValueOK(); ok {
+		if statusValue == nil {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrRequired,
+				"Status cannot be cleared",
+			)
+		}
+		entity.Status = *statusValue
 	}
-	if input.Version != nil {
-		entity.Version = int64(*input.Version)
+	if versionValue, ok := input.Version.ValueOK(); ok {
+		if versionValue == nil {
+			return errortypes.NewValidationError(
+				"version",
+				errortypes.ErrRequired,
+				"Version cannot be cleared",
+			)
+		}
+		entity.Version = int64(*versionValue)
 	}
 	return nil
 }

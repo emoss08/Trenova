@@ -5,10 +5,10 @@ import {
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fiscalYearStatusChoices } from "@/lib/choices";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import type { FiscalYear } from "@/types/fiscal-year";
+import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<FiscalYear>[] {
+export function getColumns(): ColumnDef<FiscalYearRow>[] {
   return [
     {
       accessorKey: "status",

@@ -5,10 +5,11 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const attention = createQueryKeys("attention", {
   summary: () => ({
     queryKey: ["summary"],
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       requestGraphQL({
         document: AttentionSummaryDocument,
         operationName: "AttentionSummary",
+        signal,
       }),
   }),
   recentActivity: null,

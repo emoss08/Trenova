@@ -54,10 +54,7 @@ type NotificationActionKind = "read" | "unread" | "dismiss" | "restore";
  */
 const ACTION_OPERATIONS: Record<
   NotificationScope,
-  Record<
-    NotificationActionKind,
-    { document: GraphQLExecutableDocument; operationName: string }
-  >
+  Record<NotificationActionKind, { document: GraphQLExecutableDocument; operationName: string }>
 > = {
   all: {
     read: { document: MarkNotificationsReadDocument, operationName: "MarkNotificationsRead" },
@@ -77,7 +74,10 @@ const ACTION_OPERATIONS: Record<
 };
 
 export class NotificationService {
-  public async listNotifications(params?: NotificationFeedParams) {
+  public async listNotifications(
+    params?: NotificationFeedParams,
+    options?: { signal?: AbortSignal },
+  ) {
     const variables = {
       input: { first: params?.first ?? 30, after: params?.after ?? null },
       filter: {
@@ -93,6 +93,7 @@ export class NotificationService {
               document: MyNotificationListDocument,
               operationName: "MyNotificationList",
               variables,
+              signal: options?.signal,
             })) as MyNotificationListQuery
           ).myNotifications
         : (
@@ -100,6 +101,7 @@ export class NotificationService {
               document: NotificationListDocument,
               operationName: "NotificationList",
               variables,
+              signal: options?.signal,
             })) as NotificationListQuery
           ).notifications;
 
@@ -118,12 +120,16 @@ export class NotificationService {
     );
   }
 
-  public async getUnreadCount(scope: NotificationScope = "all") {
+  public async getUnreadCount(
+    scope: NotificationScope = "all",
+    options?: { signal?: AbortSignal },
+  ) {
     if (scope === "mine") {
       const response = (await requestGraphQL({
         document: MyNotificationUnreadCountDocument,
         operationName: "MyNotificationUnreadCount",
         variables: {},
+        signal: options?.signal,
       })) as MyNotificationUnreadCountQuery;
 
       return response.myNotificationUnreadCount;
@@ -133,6 +139,7 @@ export class NotificationService {
       document: NotificationUnreadCountDocument,
       operationName: "NotificationUnreadCount",
       variables: {},
+      signal: options?.signal,
     })) as NotificationUnreadCountQuery;
 
     return response.notificationUnreadCount;

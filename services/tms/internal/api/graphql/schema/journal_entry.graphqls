@@ -28,7 +28,7 @@ type JournalEntry {
   entryNumber: String!
   entryType: String!
   status: String!
-  accountingDate: Int!
+  accountingDate: Timestamp!
   description: String!
   referenceType: String!
   referenceId: String!
@@ -38,7 +38,7 @@ type JournalEntry {
   isReversal: Boolean!
   reversalOfId: ID
   reversedById: ID
-  reversalDate: Int
+  reversalDate: Timestamp
   reversalReason: String!
   lines: [JournalEntryLine!]
 }

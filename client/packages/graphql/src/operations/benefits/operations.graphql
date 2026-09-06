@@ -1,0 +1,145 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query BenefitPlans($activeOnly: Boolean, $planYear: Int) {
+  benefitPlans(activeOnly: $activeOnly, planYear: $planYear) {
+    id
+    status
+    code
+    name
+    description
+    planType
+    carrier
+    policyNumber
+    payCodeId
+    planYear
+    employeeCostMinor
+    employerCostMinor
+    currencyCode
+    waitingPeriodDays
+    version
+    payCode {
+      id
+      code
+      description
+    }
+  }
+}
+
+query WorkerBenefitEnrollments($workerId: ID!, $openOnly: Boolean) {
+  workerBenefitEnrollments(workerId: $workerId, openOnly: $openOnly) {
+    id
+    workerId
+    benefitPlanId
+    status
+    coverageTier
+    effectiveFrom
+    effectiveTo
+    employeeCostMinor
+    employerCostMinor
+    recurringDeductionId
+    waivedReason
+    notes
+    version
+    benefitPlan {
+      id
+      code
+      name
+      planType
+      carrier
+    }
+  }
+}
+
+query BenefitCosts($planYear: Int) {
+  benefitCosts(planYear: $planYear) {
+    planId
+    planName
+    planType
+    enrolled
+    waived
+    employeeCostMinor
+    employerCostMinor
+  }
+}
+
+query WorkerTotalCompensation($workerId: ID!, $planYear: Int) {
+  workerTotalCompensation(workerId: $workerId, planYear: $planYear) {
+    asOf
+    planYear
+    grossPayMinor
+    employerBenefitMinor
+    employeeBenefitMinor
+    accruedTimeOffDays
+    totalCompensationMinor
+    enrollments {
+      id
+      status
+      coverageTier
+      employeeCostMinor
+      employerCostMinor
+      benefitPlan {
+        id
+        name
+        planType
+      }
+    }
+  }
+}
+
+query MyTotalCompensation($planYear: Int) {
+  myTotalCompensation(planYear: $planYear) {
+    asOf
+    planYear
+    grossPayMinor
+    employerBenefitMinor
+    employeeBenefitMinor
+    accruedTimeOffDays
+    totalCompensationMinor
+    enrollments {
+      id
+      status
+      coverageTier
+      employeeCostMinor
+      employerCostMinor
+      benefitPlan {
+        id
+        name
+        planType
+      }
+    }
+  }
+}
+
+mutation CreateBenefitPlan($input: BenefitPlanInput!) {
+  createBenefitPlan(input: $input) {
+    id
+    name
+    version
+  }
+}
+
+mutation UpdateBenefitPlan($input: UpdateBenefitPlanInput!) {
+  updateBenefitPlan(input: $input) {
+    id
+    name
+    version
+  }
+}
+
+mutation EnrollBenefit($input: EnrollBenefitInput!) {
+  enrollBenefit(input: $input) {
+    id
+    status
+    employeeCostMinor
+    version
+  }
+}
+
+mutation EndBenefitEnrollment($input: EndBenefitEnrollmentInput!) {
+  endBenefitEnrollment(input: $input) {
+    id
+    status
+    effectiveTo
+    version
+  }
+}

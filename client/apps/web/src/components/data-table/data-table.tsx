@@ -63,6 +63,14 @@ import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
 
 const BULK_SELECT_MAX = 1000;
+
+type CursorState = {
+  scopeKey: string;
+  cursors: Record<number, string | null>;
+  totalCount: number | null;
+};
+
+const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, totalCount: null };
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 
 export function DataTable<TData extends Record<string, any>>({
@@ -93,10 +101,7 @@ export function DataTable<TData extends Record<string, any>>({
   const { pageIndex, pageSize, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
     searchParams;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [cursorState, setCursorState] = useState<{
-    scopeKey: string;
-    cursors: Record<number, string | null>;
-  }>({ scopeKey: "", cursors: { 0: null } });
+  const [cursorState, setCursorState] = useState<CursorState>(EMPTY_CURSOR_STATE);
   const [activeView, setActiveView] = useState<ActiveTableView | null>(null);
   const [density, setDensity] = useState<TableDensity>("comfortable");
   const [formatRules, setFormatRules] = useState<TableFormatRule[]>([]);
@@ -256,8 +261,9 @@ export function DataTable<TData extends Record<string, any>>({
       query,
     ],
   );
-  const pageCursors = cursorState.scopeKey === cursorScopeKey ? cursorState.cursors : { 0: null };
-  const currentCursor = pageCursors[zeroBasedPageIndex];
+  const scopedCursorState =
+    cursorState.scopeKey === cursorScopeKey ? cursorState : EMPTY_CURSOR_STATE;
+  const currentCursor = scopedCursorState.cursors[zeroBasedPageIndex];
   const canFetchPage = zeroBasedPageIndex === 0 || currentCursor !== undefined;
 
   const baseQueryOptions = useMemo(
@@ -303,23 +309,31 @@ export function DataTable<TData extends Record<string, any>>({
 
   useEffect(() => {
     const pageInfo = dataQuery.data?.pageInfo;
-    if (pageInfo?.mode !== "cursor" || !pageInfo.hasNextPage || !pageInfo.endCursor) {
+    if (pageInfo?.mode !== "cursor") {
       return;
     }
 
     const nextPageIndex = zeroBasedPageIndex + 1;
+    const nextCursor = pageInfo.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : null;
+    const pageTotalCount = pageInfo.totalCount ?? null;
     setCursorState((current) => {
-      const cursors = current.scopeKey === cursorScopeKey ? current.cursors : { 0: null };
-      if (cursors[nextPageIndex] === pageInfo.endCursor) {
+      const inScope = current.scopeKey === cursorScopeKey;
+      const scoped = inScope ? current : EMPTY_CURSOR_STATE;
+      const totalCount = pageTotalCount ?? scoped.totalCount;
+      const cursorKnown = nextCursor === null || scoped.cursors[nextPageIndex] === nextCursor;
+      if (inScope && cursorKnown && totalCount === scoped.totalCount) {
         return current;
       }
 
       return {
         scopeKey: cursorScopeKey,
-        cursors: {
-          ...cursors,
-          [nextPageIndex]: pageInfo.endCursor,
-        },
+        cursors: cursorKnown
+          ? scoped.cursors
+          : {
+              ...scoped.cursors,
+              [nextPageIndex]: nextCursor,
+            },
+        totalCount,
       };
     });
   }, [cursorScopeKey, dataQuery.data?.pageInfo, zeroBasedPageIndex]);
@@ -336,7 +350,7 @@ export function DataTable<TData extends Record<string, any>>({
   const currentPageResults = dataQuery.data?.results;
   const currentPageRowCount = currentPageResults?.length ?? 0;
   const totalCount = cursorPageInfo
-    ? (cursorPageInfo.totalCount ?? null)
+    ? (cursorPageInfo.totalCount ?? scopedCursorState.totalCount)
     : (dataQuery.data?.count ?? null);
   const rowCount =
     totalCount ??

@@ -1,0 +1,96 @@
+"""
+The one-word answer to whether a worker is in good standing right now.
+Blocked means they cannot be put on a load today; AtRisk means something on the
+record has already lapsed; Watch means something is about to.
+"""
+enum WorkerStanding {
+  Good
+  Watch
+  AtRisk
+  Blocked
+}
+
+enum WorkerConcernSeverity {
+  Critical
+  Warning
+  Info
+}
+
+"""
+One thing wrong with a worker's record, in the words the office would use.
+`code` is a stable key the client draws an icon from and must not be parsed for
+meaning; `tab` names the worker-panel tab that fixes it.
+"""
+type WorkerConcern {
+  severity: WorkerConcernSeverity!
+  code: String!
+  headline: String!
+  detail: String!
+  tab: String!
+}
+
+"""
+Everything needed to answer "is this worker in good standing" without opening
+six tabs. A section is null when the signed-in user cannot read that part of
+the record, which is the same shape as having nothing to report — the standing
+counts neither as a problem, so a viewer never sees a verdict built on evidence
+they are not allowed to see.
+"""
+type WorkerOverview {
+  worker: Worker!
+  asOf: Timestamp!
+  standing: WorkerStanding!
+  """
+  Ranked worst-first. Empty means nothing needs attention.
+  """
+  concerns: [WorkerConcern!]!
+  credentials: WorkerCredentialSummary
+  training: WorkerTrainingSummary
+  safety: SafetyScorecard
+  """
+  The open checklist the office should be working on, newest first when a
+  worker has more than one running.
+  """
+  checklist: WorkerChecklist
+  pto: [WorkerPTOBalance!]
+  openReview: PerformanceReview
+  lastReview: PerformanceReview
+  """
+  When the next review falls due, from the last review that closed. Null while
+  a review is already under way, because one in flight is not also overdue.
+  """
+  nextReviewAt: Timestamp
+}
+
+"""
+Where HR needs to look today, counted across the whole organisation. Every
+number matches a saved view on the workers roster, so the tile and the list it
+links to always agree. Counts cover active workers only.
+"""
+type WorkerRosterAttention {
+  activeWorkers: Int!
+  nonCompliant: Int!
+  trainingOverdue: Int!
+  atRisk: Int!
+  expiringSoon: Int!
+  """
+  Reviews a manager has submitted and the worker has not yet signed. Drafts are
+  excluded: they are still being written and are nobody else's queue.
+  """
+  reviewsAwaitingSignOff: Int!
+  """
+  Total accrued time off the organisation is carrying, in days.
+  """
+  ptoLiabilityDays: Decimal!
+  """
+  Leave cases waiting on a medical certification the employee owes. Past the
+  deadline the employer may deny the leave (29 CFR 825.313), so this is a
+  queue rather than a statistic.
+  """
+  leaveCertificationsOutstanding: Int!
+}
+
+extend type Query {
+  workerOverview(workerId: ID!): WorkerOverview!
+  workerRosterAttention: WorkerRosterAttention!
+}

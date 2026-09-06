@@ -3,14 +3,14 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { formulaTemplateStatusChoices, formulaTemplateTypeChoices } from "@/lib/choices";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
+import type { FormulaTemplateRow } from "@/lib/graphql/formula-template-table";
 
 const TYPE_BADGE_VARIANT: Record<string, "info" | "purple"> = {
   FreightCharge: "info",
   AccessorialCharge: "purple",
 };
 
-export function getColumns(): ColumnDef<FormulaTemplate>[] {
+export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
   return [
     {
       accessorKey: "name",

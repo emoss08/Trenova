@@ -1,9 +1,10 @@
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel, type FormTabConfig } from "@/components/tabbed-form-edit-panel";
 import { Button } from "@trenova/shared/components/ui/button";
+import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type { EDICommunicationProfile, EDIConnectionTestResult } from "@trenova/shared/types/edi";
+import type { EDIConnectionTestResult } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, RadioTowerIcon, ServerIcon, ShieldCheckIcon } from "lucide-react";
@@ -44,12 +45,15 @@ function notifyConnectionTestResult(result: EDIConnectionTestResult) {
   toast.error("Connection test failed", { description: describe(["failed", "warning"]) });
 }
 
+type CommunicationProfileEditRow = CommunicationProfileFormValues &
+  Pick<EDICommunicationProfileRow, "id" | "name" | "updatedAt" | "version">;
+
 export function CommunicationProfilePanel({
   open,
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<EDICommunicationProfile>) {
+}: DataTablePanelProps<EDICommunicationProfileRow>) {
   const queryClient = useQueryClient();
   const profile = mode === "edit" ? row : null;
   const form = useForm<CommunicationProfileFormValues>({
@@ -85,14 +89,14 @@ export function CommunicationProfilePanel({
   );
 
   if (mode === "edit") {
-    const editRow = profile
-      ? ({
+    const editRow: CommunicationProfileEditRow | null = profile
+      ? {
           ...getProfileFormDefaults(profile),
           id: profile.id,
           name: profile.name,
           updatedAt: profile.updatedAt,
           version: profile.version,
-        } as unknown as EDICommunicationProfile)
+        }
       : null;
 
     const canTestConnection = method !== "Internal";

@@ -180,6 +180,9 @@ import type {
   PTOType,
   WorkerType,
 } from "@trenova/shared/types/worker";
+import type { DrugAlcoholStatus } from "@trenova/shared/types/worker-drug-alcohol-status";
+import type { SafetyRating } from "@trenova/shared/types/worker-safety";
+import type { WorkerTrainingHealth } from "@trenova/shared/types/worker-training";
 
 export const formulaTemplateStatusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
@@ -894,6 +897,31 @@ export const complianceStatusChoices = [
   { value: "NonCompliant", label: "Non-Compliant", color: "#dc2626" },
   { value: "Pending", label: "Pending", color: "#f59e0b" },
 ] satisfies ReadonlyArray<GenericSelectOption<ComplianceStatus>>;
+
+export const trainingHealthChoices = [
+  { value: "Current", label: "Current", color: "#15803d" },
+  { value: "Scheduled", label: "Scheduled", color: "#0ea5e9" },
+  { value: "DueSoon", label: "Due soon", color: "#f59e0b" },
+  { value: "ExpiringSoon", label: "Expiring soon", color: "#f59e0b" },
+  { value: "Overdue", label: "Overdue", color: "#dc2626" },
+  { value: "Expired", label: "Expired", color: "#dc2626" },
+  { value: "Failed", label: "Failed", color: "#dc2626" },
+  { value: "Missing", label: "Never assigned", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<WorkerTrainingHealth>>;
+
+export const safetyRatingChoices = [
+  { value: "Excellent", label: "Excellent", color: "#15803d" },
+  { value: "Good", label: "Good", color: "#0ea5e9" },
+  { value: "Watch", label: "Watch", color: "#f59e0b" },
+  { value: "AtRisk", label: "At risk", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<SafetyRating>>;
+
+export const drugAlcoholStatusChoices = [
+  { value: "Clear", label: "Clear", color: "#15803d" },
+  { value: "Pending", label: "Awaiting result", color: "#f59e0b" },
+  { value: "Prohibited", label: "Prohibited", color: "#dc2626" },
+  { value: "Unknown", label: "Not on file", color: "#a3a3a3" },
+] satisfies ReadonlyArray<GenericSelectOption<DrugAlcoholStatus>>;
 
 export const ptoStatusChoices = [
   { value: "Requested", label: "Requested", color: "#3b82f6" },

@@ -22,7 +22,7 @@ import { toast } from "sonner";
 type ExportTemplateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template: FormulaTemplate | null;
+  template: Pick<FormulaTemplate, "id" | "name"> | null;
 };
 
 export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTemplateDialogProps) {
@@ -33,6 +33,7 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
     if (!template?.id) return;
 
     setIsExporting(true);
+    const templatePromise = apiService.formulaTemplateService.get(template.id);
     const versionsPromise = includeVersionHistory
       ? apiService.formulaTemplateService
           .listVersions(template.id, { limit: 1000 })
@@ -40,10 +41,10 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
       : Promise.resolve(undefined);
     const testCasesPromise = apiService.formulaTemplateService.listTestCases(template.id);
 
-    await Promise.all([versionsPromise, testCasesPromise])
-      .then(([versions, testCases]) => {
-        const exportData = buildTemplateExport(template, { versions, testCases });
-        const filename = getExportFilename(template, includeVersionHistory);
+    await Promise.all([templatePromise, versionsPromise, testCasesPromise])
+      .then(([fullTemplate, versions, testCases]) => {
+        const exportData = buildTemplateExport(fullTemplate, { versions, testCases });
+        const filename = getExportFilename(fullTemplate, includeVersionHistory);
         downloadJson(exportData, filename);
 
         toast.success("Template exported successfully", {

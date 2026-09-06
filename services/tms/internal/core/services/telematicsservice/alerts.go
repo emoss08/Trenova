@@ -164,7 +164,7 @@ func (s *Service) sendHOSAlert(
 		Title:          alert.Title,
 		Message:        alert.Message,
 		Data: map[string]any{
-			"link": "/dispatch/workers?panelType=edit&panelEntityId=" + workerID.String() + "&tab=hos",
+			"link": "/hr/workers?panelType=edit&panelEntityId=" + workerID.String() + "&tab=hos",
 		},
 		RelatedEntities: map[string]any{
 			"workerId": workerID.String(),

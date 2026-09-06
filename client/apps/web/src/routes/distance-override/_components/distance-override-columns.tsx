@@ -1,12 +1,10 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { formatLocation } from "@trenova/shared/lib/utils";
-import type { Customer } from "@trenova/shared/types/customer";
-import type { DistanceOverride } from "@/types/distance-override";
-import type { Location } from "@trenova/shared/types/location";
+import type { DistanceOverrideRow } from "@/lib/graphql/distance-override-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<DistanceOverride>[] {
+export function getColumns(): ColumnDef<DistanceOverrideRow>[] {
   return [
     {
       accessorKey: "originLocationId",
@@ -18,7 +16,7 @@ export function getColumns(): ColumnDef<DistanceOverride>[] {
         }
 
         return (
-          <EntityRefCell<Location, DistanceOverride>
+          <EntityRefCell
             entity={originLocation}
             config={{
               basePath: "/dispatch/configuration-files/locations",
@@ -53,7 +51,7 @@ export function getColumns(): ColumnDef<DistanceOverride>[] {
         }
 
         return (
-          <EntityRefCell<Location, DistanceOverride>
+          <EntityRefCell
             entity={destinationLocation}
             config={{
               basePath: "/dispatch/configuration-files/locations",
@@ -105,7 +103,7 @@ export function getColumns(): ColumnDef<DistanceOverride>[] {
         }
 
         return (
-          <EntityRefCell<Customer, DistanceOverride>
+          <EntityRefCell
             entity={customer}
             config={{
               basePath: "/billing/configuration-files/customers",

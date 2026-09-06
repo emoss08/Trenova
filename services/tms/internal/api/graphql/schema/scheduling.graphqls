@@ -1,0 +1,258 @@
+"""
+What a driver would rather work on a weekday. It is a statement, never a
+constraint: dispatch is free to override it, and the rota shows where it did so
+the override is visible rather than silent.
+"""
+enum AvailabilityPreference {
+  Preferred
+  Available
+  Unavailable
+}
+
+"""
+How far a swap has got. Two acceptances are needed — the colleague's and a
+manager's — because a swap the office never saw is a shift nobody is covering.
+"""
+enum ShiftSwapStatus {
+  Proposed
+  Accepted
+  Declined
+  Approved
+  Rejected
+  Withdrawn
+}
+
+"""
+What one worker is doing on one day. Anything above Scheduled overrides the
+pattern, and the strongest override wins, so a driver on approved leave never
+shows as rostered.
+"""
+enum RotaDayState {
+  Off
+  Scheduled
+  Assigned
+  TimeOff
+  Leave
+  Unavailable
+}
+
+"A repeating pattern of working days."
+type ShiftTemplate {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String
+  color: String
+  """
+  Seven characters indexed from Sunday: 0111110 is Monday to Friday. A mask
+  rather than an array so a pattern reads at a glance and compares without
+  unpacking.
+  """
+  daysOfWeek: String!
+  startMinute: Int!
+  durationMinutes: Int!
+  """
+  How many weeks the pattern rotates over. An A/B rotation is one template with
+  a cycle of two and two assignments at different offsets.
+  """
+  cycleWeeks: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  "How many workers are currently on this pattern."
+  activeAssignmentCount: Int!
+}
+
+input ShiftTemplateInput {
+  code: String!
+  name: String!
+  description: String
+  color: String
+  daysOfWeek: String!
+  startMinute: Int!
+  durationMinutes: Int!
+  cycleWeeks: Int!
+  status: EntityStatus
+}
+
+"Which pattern a worker is on, for which period."
+type WorkerShiftAssignment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  shiftTemplateId: ID!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  "Which week of the template's cycle this worker starts on."
+  cycleOffsetWeeks: Int!
+  notes: String
+  assignedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  shiftTemplate: ShiftTemplate
+  worker: Worker
+}
+
+input AssignShiftInput {
+  workerId: ID!
+  shiftTemplateId: ID!
+  effectiveFrom: Timestamp!
+  cycleOffsetWeeks: Int
+  notes: String
+}
+
+"What a worker would rather work on one weekday, 0 for Sunday."
+type WorkerAvailabilityPreference {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  dayOfWeek: Int!
+  preference: AvailabilityPreference!
+  note: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input SetAvailabilityPreferenceInput {
+  workerId: ID!
+  dayOfWeek: Int!
+  preference: AvailabilityPreference!
+  note: String
+}
+
+"One driver asking another to take a day."
+type ShiftSwapRequest {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  requestingWorkerId: ID!
+  counterpartyWorkerId: ID
+  status: ShiftSwapStatus!
+  "The day being given up."
+  shiftDate: Timestamp!
+  "The day offered back, when the swap is a trade rather than a hand-off."
+  counterpartyShiftDate: Timestamp
+  reason: String
+  responseNote: String
+  respondedAt: Timestamp
+  decidedAt: Timestamp
+  decidedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  requestingWorker: Worker
+  counterpartyWorker: Worker
+}
+
+input ProposeShiftSwapInput {
+  requestingWorkerId: ID!
+  counterpartyWorkerId: ID
+  "The day being given up."
+  shiftDate: Timestamp!
+  "The day offered back, when the swap is a trade rather than a hand-off."
+  counterpartyShiftDate: Timestamp
+  reason: String
+}
+
+input TransitionShiftSwapInput {
+  id: ID!
+  status: ShiftSwapStatus!
+  note: String
+}
+
+"One worker's one day on the board."
+type RotaDay {
+  "The day this row describes, as the Unix timestamp of its start."
+  date: Timestamp!
+  state: RotaDayState!
+  """
+  Whether the pattern covers this day, whatever the state ended up being. It is
+  what makes a conflict visible: a day that is both scheduled and TimeOff is a
+  hole in the roster, and a day that is only TimeOff is not.
+  """
+  scheduled: Boolean!
+  startMinute: Int!
+  durationMinutes: Int!
+  """
+  The driver's own statement about this weekday, carried through even when
+  something stronger decided the state, so the rota can show where dispatch
+  overrode it rather than hiding the override.
+  """
+  preference: AvailabilityPreference
+  assignmentCount: Int!
+  "A day the pattern rosters somebody onto that they cannot work."
+  isConflict: Boolean!
+}
+
+"One worker's week."
+type RotaRow {
+  workerId: ID!
+  name: String!
+  fleetCode: String
+  fleetColor: String
+  shiftCode: String
+  shiftName: String
+  shiftColor: String
+  days: [RotaDay!]!
+  scheduledDays: Int!
+  conflicts: Int!
+}
+
+"""
+The composed board. It is derived on every read and never stored: a stored week
+would be wrong within the hour, and the only way to keep it right would be to
+invalidate it from five other services.
+"""
+type Rota {
+  weekStart: Timestamp!
+  weekEnd: Timestamp!
+  weeks: Int!
+  rows: [RotaRow!]!
+  scheduledDays: Int!
+  conflicts: Int!
+}
+
+input RotaFilterInput {
+  "Any instant in the week wanted; it resolves back to the Sunday that starts it."
+  at: Timestamp
+  weeks: Int
+  fleetCodeId: ID
+  workerIds: [ID!]
+  "Narrows the board to the people a manager answers for."
+  teamOnly: Boolean
+  limit: Int
+}
+
+extend type Query {
+  shiftTemplates(activeOnly: Boolean, limit: Int): [ShiftTemplate!]!
+  shiftTemplate(id: ID!): ShiftTemplate!
+  workerShiftAssignments(workerId: ID!, activeOnly: Boolean): [WorkerShiftAssignment!]!
+  workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
+  shiftSwapRequests(
+    workerId: ID
+    openOnly: Boolean
+    since: Timestamp
+    limit: Int
+  ): [ShiftSwapRequest!]!
+  shiftSwapRequest(id: ID!): ShiftSwapRequest!
+  rota(filter: RotaFilterInput): Rota!
+}
+
+extend type Mutation {
+  createShiftTemplate(input: ShiftTemplateInput!): ShiftTemplate!
+  updateShiftTemplate(id: ID!, input: ShiftTemplateInput!): ShiftTemplate!
+  assignWorkerShift(input: AssignShiftInput!): WorkerShiftAssignment!
+  endWorkerShiftAssignment(id: ID!, effectiveTo: Timestamp!): WorkerShiftAssignment!
+  setWorkerAvailabilityPreference(
+    input: SetAvailabilityPreferenceInput!
+  ): WorkerAvailabilityPreference!
+  proposeShiftSwap(input: ProposeShiftSwapInput!): ShiftSwapRequest!
+  transitionShiftSwap(input: TransitionShiftSwapInput!): ShiftSwapRequest!
+}

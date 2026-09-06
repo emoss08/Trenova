@@ -6,77 +6,83 @@ import {
   EdiPartnerTableDocument,
   EdiTestCaseTableDocument,
   EdiTransferTableDocument,
-  type EdiCommunicationProfileTableQueryVariables,
-  type EdiInboundFileTableQueryVariables,
-  type EdiMappingProfileTableQueryVariables,
-  type EdiMessageTableQueryVariables,
-  type EdiPartnerTableQueryVariables,
-  type EdiTestCaseTableQueryVariables,
   type EdiTransferDirection,
-  type EdiTransferTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type {
-  EDICommunicationProfile,
-  EDIInboundFile,
-  EDIMappingProfile,
-  EDIMessage,
-  EDIPartner,
-  EDITestCaseRow,
-  EDITransfer,
-} from "@trenova/shared/types/edi";
+import type { DataTableConfigRow, DataTableRow } from "@trenova/shared/types/data-table";
+import { ediMappingResolutionSchema, loadTenderPayloadSchema } from "@trenova/shared/types/edi";
+import { z } from "zod";
+
+const mappingSnapshotSchema = z.array(ediMappingResolutionSchema);
+
+type EdiTransferNode = DataTableRow<typeof EdiTransferTableDocument, "ediTransfers">;
+
+function parseTransferRow(node: EdiTransferNode) {
+  return {
+    ...node,
+    tenderPayload: loadTenderPayloadSchema.parse(node.tenderPayload),
+    mappingSnapshot: mappingSnapshotSchema.parse(node.mappingSnapshot ?? []),
+  };
+}
 
 export const ediTableGraphQLConfigs = {
-  partners: defineDataTableGraphQLConfig<EDIPartner, EdiPartnerTableQueryVariables>({
+  partners: defineDataTableGraphQLConfig({
     document: EdiPartnerTableDocument,
     operationName: "EdiPartnerTable",
     connectionKey: "ediPartners",
   }),
-  communicationProfiles: defineDataTableGraphQLConfig<
-    EDICommunicationProfile,
-    EdiCommunicationProfileTableQueryVariables
-  >({
+  communicationProfiles: defineDataTableGraphQLConfig({
     document: EdiCommunicationProfileTableDocument,
     operationName: "EdiCommunicationProfileTable",
     connectionKey: "ediCommunicationProfiles",
   }),
-  inboundTransfers: defineDataTableGraphQLConfig<EDITransfer, EdiTransferTableQueryVariables>({
+  inboundTransfers: defineDataTableGraphQLConfig({
     document: EdiTransferTableDocument,
     operationName: "EdiTransferTable",
     connectionKey: "ediTransfers",
     extraVariables: {
       direction: "Inbound" satisfies EdiTransferDirection,
     },
+    mapNode: parseTransferRow,
   }),
-  outboundTransfers: defineDataTableGraphQLConfig<EDITransfer, EdiTransferTableQueryVariables>({
+  outboundTransfers: defineDataTableGraphQLConfig({
     document: EdiTransferTableDocument,
     operationName: "EdiTransferTable",
     connectionKey: "ediTransfers",
     extraVariables: {
       direction: "Outbound" satisfies EdiTransferDirection,
     },
+    mapNode: parseTransferRow,
   }),
-  messages: defineDataTableGraphQLConfig<EDIMessage, EdiMessageTableQueryVariables>({
+  messages: defineDataTableGraphQLConfig({
     document: EdiMessageTableDocument,
     operationName: "EdiMessageTable",
     connectionKey: "ediMessages",
   }),
-  inboundFiles: defineDataTableGraphQLConfig<EDIInboundFile, EdiInboundFileTableQueryVariables>({
+  inboundFiles: defineDataTableGraphQLConfig({
     document: EdiInboundFileTableDocument,
     operationName: "EdiInboundFileTable",
     connectionKey: "ediInboundFiles",
   }),
-  mappingProfiles: defineDataTableGraphQLConfig<
-    EDIMappingProfile,
-    EdiMappingProfileTableQueryVariables
-  >({
+  mappingProfiles: defineDataTableGraphQLConfig({
     document: EdiMappingProfileTableDocument,
     operationName: "EdiMappingProfileTable",
     connectionKey: "ediMappingProfiles",
   }),
-  testCases: defineDataTableGraphQLConfig<EDITestCaseRow, EdiTestCaseTableQueryVariables>({
+  testCases: defineDataTableGraphQLConfig({
     document: EdiTestCaseTableDocument,
     operationName: "EdiTestCaseTable",
     connectionKey: "ediTestCases",
   }),
 } as const;
+
+export type EDIMappingProfileRow = DataTableConfigRow<
+  typeof ediTableGraphQLConfigs.mappingProfiles
+>;
+export type EDICommunicationProfileRow = DataTableConfigRow<
+  typeof ediTableGraphQLConfigs.communicationProfiles
+>;
+export type EDITransferRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.inboundTransfers>;
+export type EDIMessageRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.messages>;
+export type EDIInboundFileRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.inboundFiles>;
+export type EDITestCaseTableRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.testCases>;

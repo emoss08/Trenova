@@ -1,0 +1,304 @@
+enum SafetyEventKind {
+  Accident
+  Incident
+  NearMiss
+  Citation
+  Inspection
+}
+
+enum SafetySeverity {
+  Minor
+  Moderate
+  Major
+  Critical
+}
+
+enum SafetyEventStatus {
+  Open
+  UnderReview
+  Closed
+}
+
+enum InspectionResult {
+  Pass
+  Fail
+  OutOfService
+}
+
+enum SafetyRating {
+  Excellent
+  Good
+  Watch
+  AtRisk
+}
+
+enum DisciplinaryLevel {
+  Coaching
+  VerbalWarning
+  WrittenWarning
+  FinalWarning
+  Suspension
+  Termination
+}
+
+enum DisciplinaryStatus {
+  Active
+  Expired
+  Rescinded
+}
+
+enum RecognitionKind {
+  SafetyMilestone
+  CustomerPraise
+  Performance
+  Tenure
+  TeamPlayer
+  Other
+}
+
+type WorkerSafetyEvent {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  kind: SafetyEventKind!
+  severity: SafetySeverity!
+  status: SafetyEventStatus!
+  occurredAt: Timestamp!
+  location: String
+  description: String!
+  preventable: Boolean!
+  points: Int!
+  pointsExpireAt: Timestamp
+  """
+  Points still counting today (zero once they roll off).
+  """
+  activePoints: Int!
+  referenceNumber: String
+  shipmentId: ID
+  inspectionLevel: Int
+  inspectionResult: InspectionResult
+  outOfService: Boolean!
+  fineAmount: Decimal
+  costAmount: Decimal
+  documentId: ID
+  document: WorkerCredentialDocument
+  recordedById: ID
+  recordedBy: User
+  closedById: ID
+  closedBy: User
+  closedAt: Timestamp
+  resolution: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+}
+
+"""
+Twelve-month record plus the points still active from the two-year look-back.
+"""
+type SafetyScorecard {
+  workerId: ID!
+  asOf: Timestamp!
+  score: Int!
+  rating: SafetyRating!
+  activePoints: Int!
+  pointsWatchThreshold: Int!
+  pointsAtRiskThreshold: Int!
+  accidents: Int!
+  preventableAccidents: Int!
+  incidents: Int!
+  nearMisses: Int!
+  citations: Int!
+  inspections: Int!
+  inspectionsPassed: Int!
+  inspectionsFailed: Int!
+  outOfServiceOrders: Int!
+  cleanInspectionRate: Float
+  openEvents: Int!
+  activeDiscipline: Int!
+  highestDiscipline: DisciplinaryLevel
+  daysSinceLastEvent: Int
+  lastEventAt: Timestamp
+  recognitions: Int!
+}
+
+type WorkerDisciplinaryAction {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  level: DisciplinaryLevel!
+  status: DisciplinaryStatus!
+  reason: String!
+  details: String
+  occurredAt: Timestamp
+  issuedAt: Timestamp!
+  expiresAt: Timestamp
+  suspensionDays: Int
+  safetyEventId: ID
+  safetyEvent: WorkerSafetyEvent
+  documentId: ID
+  issuedById: ID
+  issuedBy: User
+  acknowledgedAt: Timestamp
+  workerComment: String
+  rescindedAt: Timestamp
+  rescindedById: ID
+  rescindReason: String
+  """
+  Whether the action still counts on the ladder today.
+  """
+  active: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type DisciplinaryLadder {
+  activeActions: [WorkerDisciplinaryAction!]!
+  highestLevel: DisciplinaryLevel
+  suggestedLevel: DisciplinaryLevel!
+  atFinalStep: Boolean!
+}
+
+type WorkerRecognition {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  kind: RecognitionKind!
+  title: String!
+  message: String
+  occurredAt: Timestamp!
+  awardedById: ID
+  awardedBy: User
+  visibleToWorker: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type IssueDisciplinaryActionPayload {
+  action: WorkerDisciplinaryAction!
+  employmentEvent: WorkerEmploymentEvent
+}
+
+input WorkerSafetyEventInput {
+  workerId: ID!
+  kind: SafetyEventKind!
+  severity: SafetySeverity!
+  occurredAt: Timestamp!
+  location: String
+  description: String!
+  preventable: Boolean
+  """
+  Leave null to take the default for the kind and severity.
+  """
+  points: Int
+  pointsExpireAt: Timestamp
+  referenceNumber: String
+  shipmentId: ID
+  inspectionLevel: Int
+  inspectionResult: InspectionResult
+  outOfService: Boolean
+  fineAmount: Decimal
+  costAmount: Decimal
+  documentId: ID
+}
+
+input UpdateWorkerSafetyEventInput {
+  id: ID!
+  kind: SafetyEventKind!
+  severity: SafetySeverity!
+  occurredAt: Timestamp!
+  location: String
+  description: String!
+  preventable: Boolean
+  points: Int!
+  pointsExpireAt: Timestamp
+  referenceNumber: String
+  shipmentId: ID
+  inspectionLevel: Int
+  inspectionResult: InspectionResult
+  outOfService: Boolean
+  fineAmount: Decimal
+  costAmount: Decimal
+  documentId: ID
+  resolution: String
+  version: Int!
+}
+
+input SafetyEventStatusInput {
+  id: ID!
+  resolution: String
+  version: Int
+}
+
+input IssueDisciplinaryActionInput {
+  workerId: ID!
+  level: DisciplinaryLevel!
+  reason: String!
+  details: String
+  occurredAt: Timestamp
+  expiresAt: Timestamp
+  suspensionDays: Int
+  safetyEventId: ID
+  documentId: ID
+  """
+  Also record a Suspended / Terminated event on the timeline.
+  """
+  recordEmploymentEvent: Boolean
+}
+
+input RescindDisciplinaryActionInput {
+  id: ID!
+  reason: String!
+  version: Int
+}
+
+input WorkerRecognitionInput {
+  workerId: ID!
+  kind: RecognitionKind!
+  title: String!
+  message: String
+  occurredAt: Timestamp
+  visibleToWorker: Boolean
+}
+
+extend type Query {
+  workerSafetyEvents(workerId: ID!): [WorkerSafetyEvent!]!
+  workerSafetyEvent(id: ID!): WorkerSafetyEvent!
+  workerSafetyScorecard(workerId: ID!): SafetyScorecard!
+  workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
+  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder!
+  workerRecognitions(workerId: ID!): [WorkerRecognition!]!
+  """
+  Suggested points for a kind, severity and outcome, so the form starts from
+  the house scale.
+  """
+  defaultSafetyPoints(
+    kind: SafetyEventKind!
+    severity: SafetySeverity!
+    preventable: Boolean
+    inspectionResult: InspectionResult
+  ): Int!
+  mySafetyScorecard: SafetyScorecard!
+  myRecognitions: [WorkerRecognition!]!
+  myDisciplinaryActions: [WorkerDisciplinaryAction!]!
+}
+
+extend type Mutation {
+  createWorkerSafetyEvent(input: WorkerSafetyEventInput!): WorkerSafetyEvent!
+  updateWorkerSafetyEvent(input: UpdateWorkerSafetyEventInput!): WorkerSafetyEvent!
+  closeWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  deleteWorkerSafetyEvent(id: ID!): Boolean!
+  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
+  rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
+  giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
+  deleteWorkerRecognition(id: ID!): Boolean!
+  acknowledgeMyDisciplinaryAction(id: ID!, comment: String): WorkerDisciplinaryAction!
+}

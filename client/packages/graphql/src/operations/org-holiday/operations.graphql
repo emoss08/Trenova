@@ -1,0 +1,35 @@
+fragment OrgHolidayFields on OrgHoliday {
+  id
+  businessUnitId
+  organizationId
+  name
+  holidayDate
+  kind
+  recursAnnually
+  description
+  version
+  createdAt
+  updatedAt
+}
+
+query OrgHolidays($year: Int) {
+  orgHolidays(year: $year) {
+    ...OrgHolidayFields
+  }
+}
+
+mutation CreateOrgHoliday($input: OrgHolidayInput!) {
+  createOrgHoliday(input: $input) {
+    ...OrgHolidayFields
+  }
+}
+
+mutation UpdateOrgHoliday($id: ID!, $input: OrgHolidayInput!) {
+  updateOrgHoliday(id: $id, input: $input) {
+    ...OrgHolidayFields
+  }
+}
+
+mutation DeleteOrgHoliday($id: ID!) {
+  deleteOrgHoliday(id: $id)
+}

@@ -1,11 +1,11 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { manualJournalStatusChoices } from "@/lib/choices";
-import type { ManualJournal } from "@/types/manual-journal";
+import type { ManualJournalRow } from "@/lib/graphql/manual-journal-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 
-export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
+export function getManualJournalColumns(): ColumnDef<ManualJournalRow>[] {
   return [
     {
       accessorKey: "requestNumber",

@@ -10,6 +10,6 @@ type EquipmentContinuity {
   currentLocationName: String!
   isCurrent: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }

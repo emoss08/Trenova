@@ -4,7 +4,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import type { AuditEntry } from "@/types/audit-entry";
+import type { AuditEntryRow } from "@/lib/graphql/audit-log-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useState } from "react";
 import {
@@ -137,7 +137,7 @@ function ChangeRow({
   );
 }
 
-export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<AuditEntry>) {
+export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<AuditEntryRow>) {
   if (!row) {
     return (
       <DataTablePanelContainer
@@ -152,7 +152,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
     );
   }
 
-  const changedFields = normalizeAuditChanges(row.changes ?? {});
+  const changedFields = normalizeAuditChanges(isRecordValue(row.changes) ? row.changes : {});
 
   return (
     <DataTablePanelContainer

@@ -17,8 +17,11 @@ const (
 	regLicense             = "49 CFR 391.11(b)(5)"
 	regMedicalCert         = "49 CFR 391.45"
 	regDrugAndAlcohol      = "49 CFR 382.301(a)"
-	regMVR                 = "49 CFR 391.25(c)(2)"
-	regHazmatEndorsement   = "49 CFR 383.93"
+	//nolint:gosec // G101: a regulation citation, not a credential
+	regDrugAndAlcoholProhibition = "49 CFR 382.501"
+	regClearinghouse             = "49 CFR 382.701(b)"
+	regMVR                       = "49 CFR 391.25(c)(2)"
+	regHazmatEndorsement         = "49 CFR 383.93"
 )
 
 type WorkerComplianceInput struct {
@@ -108,6 +111,15 @@ func evaluateMedicalCert(in WorkerComplianceInput, severity Severity, eval *Eval
 	}
 }
 
+// evaluateDrugAndAlcohol reads the standing the testing programme keeps on the
+// profile rather than re-deriving it here: the record lives in
+// worker_dot_tests, worker_dot_violations and worker_clearinghouse_queries, and
+// the profile column is the cache those three write.
+//
+// Only a standing prohibition blocks. A driver with nothing on file, or one
+// waiting on a laboratory, is a gap in the paperwork rather than a finding
+// against the driver, and grounding a fleet over paperwork is not what
+// 49 CFR 382 asks for — so those warn at every enforcement level.
 func evaluateDrugAndAlcohol(in WorkerComplianceInput, severity Severity, eval *Evaluation) {
 	if !in.Control.EnforceDrugAndAlcoholCompliance {
 		return
@@ -115,14 +127,60 @@ func evaluateDrugAndAlcohol(in WorkerComplianceInput, severity Severity, eval *E
 
 	profile := in.Worker.Profile
 
-	if profile.LastDrugTest > 0 && profile.LastDrugTest <= profile.HireDate {
+	switch profile.DrugAlcoholStatus.Normalized() {
+	case worker.DrugAlcoholProhibited:
 		eval.Add(Finding{
-			Code:       CodePreEmploymentDrugTest,
-			Severity:   severity,
-			Field:      "lastDrugTest",
-			Message:    "Pre-employment drug test is required before hire date (49 CFR 382.301(a))",
+			Code:       CodeDrugAlcoholProhibited,
+			Severity:   SeverityBlock,
+			Field:      "drugAlcoholStatus",
+			Message:    drugAlcoholProhibitedMessage(profile.ReturnToDutyStatus),
+			Regulation: regDrugAndAlcoholProhibition,
+		})
+	case worker.DrugAlcoholPending:
+		eval.Add(Finding{
+			Code:       CodeDrugAlcoholPending,
+			Severity:   SeverityWarn,
+			Field:      "drugAlcoholStatus",
+			Message:    "A drug or alcohol test is awaiting a result",
 			Regulation: regDrugAndAlcohol,
 		})
+	case worker.DrugAlcoholUnknown:
+		eval.Add(Finding{
+			Code:     CodeDrugAlcoholUnknown,
+			Severity: SeverityWarn,
+			Field:    "drugAlcoholStatus",
+			Message: "No pre-employment drug test is on file " +
+				"(49 CFR 382.301(a))",
+			Regulation: regDrugAndAlcohol,
+		})
+	case worker.DrugAlcoholClear:
+	}
+
+	if profile.NextClearinghouseQueryDue != nil &&
+		timeutils.IsOverdue(*profile.NextClearinghouseQueryDue) {
+		eval.Add(Finding{
+			Code:       CodeClearinghouseOverdue,
+			Severity:   severity,
+			Field:      "nextClearinghouseQueryDue",
+			Message:    "The annual Clearinghouse query is overdue (49 CFR 382.701(b))",
+			Regulation: regClearinghouse,
+		})
+	}
+}
+
+// drugAlcoholProhibitedMessage names the step that would clear the prohibition,
+// because "prohibited" on its own tells a dispatcher nothing they can act on.
+func drugAlcoholProhibitedMessage(rtd worker.ReturnToDutyStatus) string {
+	switch rtd {
+	case worker.ReturnToDutySAPEvaluation:
+		return "Prohibited from safety-sensitive duty: awaiting the SAP evaluation " +
+			"(49 CFR 382.501)"
+	case worker.ReturnToDutyRTDTestRequired:
+		return "Prohibited from safety-sensitive duty: the return-to-duty test has not " +
+			"been passed (49 CFR 382.309)"
+	default:
+		return "Prohibited from safety-sensitive duty by the drug and alcohol record " +
+			"(49 CFR 382.501)"
 	}
 }
 

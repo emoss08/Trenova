@@ -108,27 +108,31 @@ func (r *repository) ListMappingProfilesCursor(
 	req *repositories.ListEDIMappingProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDIMappingProfile)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"emp",
-				req.Filter,
-				(*edi.EDIMappingProfile)(nil),
-			)
-			return applyMappingProfileListFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDIMappingProfile)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"emp",
+					req.Filter,
+					(*edi.EDIMappingProfile)(nil),
+				)
+				return applyMappingProfileListFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMappingProfile]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDIMappingProfile) *bun.SelectQuery {
 			rel := buncolgen.EDIMappingProfileRelations
 			return dba.

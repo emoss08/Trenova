@@ -2,10 +2,10 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { OrderStatusBadge } from "@trenova/shared/components/status-badge";
 import { orderStatusChoices } from "@/lib/choices";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { Order } from "@trenova/shared/types/order";
+import type { OrderRow } from "@/lib/graphql/order-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<Order>[] {
+export function getColumns(): ColumnDef<OrderRow>[] {
   return [
     {
       accessorKey: "orderNumber",

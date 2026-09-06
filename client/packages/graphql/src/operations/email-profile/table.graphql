@@ -14,14 +14,14 @@ fragment EmailProfileTableRowFields on EmailProfile {
   updatedAt
 }
 
-query EmailProfileTable($input: DataTableConnectionInput!) {
+query EmailProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   emailProfiles(input: $input) {
     edges {
       node {
         ...EmailProfileTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

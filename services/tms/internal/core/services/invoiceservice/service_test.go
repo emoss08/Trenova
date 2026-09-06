@@ -84,6 +84,12 @@ func (f fakeWorkflowRun) GetWithOptions(
 	return nil
 }
 
+// GetFirstExecutionRunID identifies the run a continue-as-new chain started
+// from. Nothing here continues as new, so the first run is this one.
+func (f fakeWorkflowRun) GetFirstExecutionRunID() string {
+	return f.runID
+}
+
 func TestResolvePaymentTerm(t *testing.T) {
 	t.Parallel()
 

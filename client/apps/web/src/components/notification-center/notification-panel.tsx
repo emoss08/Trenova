@@ -1,0 +1,272 @@
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { SheetTitle } from "@trenova/shared/components/ui/sheet";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import {
+  useMarkAllNotificationsRead,
+  useNotificationAction,
+  useNotificationFeed,
+} from "@trenova/shared/hooks/use-notifications";
+import {
+  getNotificationDayGroup,
+  NOTIFICATION_DAY_GROUPS,
+  type NotificationDayGroup,
+} from "@/lib/notification-helpers";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Notification, NotificationState } from "@trenova/shared/types/notification";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  ArchiveIcon,
+  CheckCheckIcon,
+  CircleAlertIcon,
+  InboxIcon,
+  MailCheckIcon,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
+import { NotificationItem, type NotificationItemActions } from "./notification-item";
+import { NotificationFeedSkeleton } from "./notification-skeletons";
+
+function FeedEmptyState({ state, unreadOnly }: { state: NotificationState; unreadOnly: boolean }) {
+  const Icon = state === "archived" ? ArchiveIcon : unreadOnly ? MailCheckIcon : InboxIcon;
+  const title =
+    state === "archived"
+      ? "Nothing archived"
+      : unreadOnly
+        ? "No unread notifications"
+        : "You're all caught up";
+  const description =
+    state === "archived"
+      ? "Notifications you archive are kept here."
+      : unreadOnly
+        ? "Everything in your inbox has been read."
+        : "New activity that needs your attention will appear here.";
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-16">
+      <div className="border-border bg-muted/60 flex size-11 items-center justify-center rounded-full border">
+        <Icon className="text-muted-foreground/70 size-5" />
+      </div>
+      <div className="text-center">
+        <p className="text-foreground text-xs font-medium">{title}</p>
+        <p className="text-2xs text-muted-foreground/70 mt-0.5 max-w-56">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+const EMPTY_FEED: Notification[] = [];
+
+function groupNotifications(notifications: Notification[]) {
+  const groups = new Map<NotificationDayGroup, Notification[]>();
+  for (const item of notifications) {
+    const group = getNotificationDayGroup(item.createdAt);
+    const bucket = groups.get(group);
+    if (bucket) {
+      bucket.push(item);
+    } else {
+      groups.set(group, [item]);
+    }
+  }
+  return NOTIFICATION_DAY_GROUPS.filter((group) => groups.has(group)).map((group) => ({
+    label: group,
+    items: groups.get(group)!,
+  }));
+}
+
+export default function NotificationPanel({
+  open,
+  unreadCount,
+  onClose,
+}: {
+  open: boolean;
+  unreadCount: number;
+  onClose: () => void;
+}) {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<NotificationState>("inbox");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+
+  const filters = useMemo(
+    () => ({ state: tab, unreadOnly: tab === "inbox" && unreadOnly }),
+    [tab, unreadOnly],
+  );
+
+  const {
+    data: feed,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotificationFeed(filters, open);
+
+  const markRead = useNotificationAction("read");
+  const markUnread = useNotificationAction("unread");
+  const archive = useNotificationAction("dismiss");
+  const restore = useNotificationAction("restore");
+  const markAllRead = useMarkAllNotificationsRead();
+
+  const actions = useMemo<NotificationItemActions>(
+    () => ({
+      markRead: markRead.mutate,
+      markUnread: markUnread.mutate,
+      archive: archive.mutate,
+      restore: restore.mutate,
+    }),
+    [markRead.mutate, markUnread.mutate, archive.mutate, restore.mutate],
+  );
+
+  const handleNavigate = useCallback(
+    (link: string) => {
+      onClose();
+      void navigate(link);
+    },
+    [navigate, onClose],
+  );
+
+  const notifications = feed?.notifications ?? EMPTY_FEED;
+  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting) && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "120px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, groups.length]);
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2 py-3 pr-11 pl-4">
+        <div className="flex items-center gap-2">
+          <SheetTitle className="text-sm font-semibold">Notifications</SheetTitle>
+          {unreadCount > 0 && (
+            <Badge variant="info" className="text-2xs h-4.5 tabular-nums">
+              {unreadCount} new
+            </Badge>
+          )}
+        </div>
+        {unreadCount > 0 && tab === "inbox" && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="xxs"
+            className="text-2xs text-muted-foreground"
+            onClick={() => markAllRead.mutate()}
+          >
+            <CheckCheckIcon className="size-3" />
+            Mark all read
+          </Button>
+        )}
+      </div>
+
+      <div className="border-border flex items-center justify-between border-b pr-3 pl-2">
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as NotificationState)}
+          className="gap-0"
+        >
+          <TabsList variant="underline" className="py-0">
+            <TabsTab value="inbox" className="h-8 px-2.5 text-xs sm:h-8 sm:text-xs">
+              Inbox
+            </TabsTab>
+            <TabsTab value="archived" className="h-8 px-2.5 text-xs sm:h-8 sm:text-xs">
+              Archive
+            </TabsTab>
+          </TabsList>
+        </Tabs>
+        {tab === "inbox" && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xxs"
+                  aria-pressed={unreadOnly}
+                  className={cn(
+                    "text-2xs text-muted-foreground",
+                    unreadOnly && "bg-accent text-foreground",
+                  )}
+                  onClick={() => setUnreadOnly((value) => !value)}
+                />
+              }
+            >
+              Unread
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {unreadOnly ? "Show all notifications" : "Show unread only"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+
+      <ScrollArea className="min-h-0 flex-1" maskHeight={24}>
+        {isLoading && <NotificationFeedSkeleton />}
+
+        {isError && !isLoading && (
+          <div className="flex flex-col items-center justify-center gap-3 py-16">
+            <CircleAlertIcon className="text-destructive/60 size-5" />
+            <p className="text-2xs text-muted-foreground">Notifications couldn&apos;t be loaded.</p>
+            <Button type="button" variant="outline" size="xs" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {!isLoading && !isError && notifications.length === 0 && (
+          <FeedEmptyState state={tab} unreadOnly={filters.unreadOnly} />
+        )}
+
+        {!isLoading &&
+          groups.map((group) => (
+            <div key={group.label}>
+              <p className="text-2xs text-muted-foreground/70 px-4 pt-3 pb-1 font-medium tracking-wider uppercase">
+                {group.label}
+              </p>
+              <AnimatePresence initial={false}>
+                {group.items.map((notification) => (
+                  <motion.div
+                    key={notification.id}
+                    layout="position"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <NotificationItem
+                      notification={notification}
+                      actions={actions}
+                      onNavigate={handleNavigate}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          ))}
+
+        {hasNextPage && <div ref={sentinelRef} className="h-px w-full" />}
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center py-3">
+            <Spinner className="text-muted-foreground size-3.5" />
+          </div>
+        )}
+      </ScrollArea>
+    </>
+  );
+}

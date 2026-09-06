@@ -38,8 +38,8 @@ type JurisdictionRule {
 
   permitLeadTimeDays: Int!
   permitValidityDays: Int!
-  permitBaseFee: String
-  permitPerMileFee: String
+  permitBaseFee: Decimal
+  permitPerMileFee: Decimal
 
   """
   What this row was checked against. Seeded rows carry a note saying which
@@ -53,14 +53,14 @@ type JurisdictionRule {
   derived from an unverified row carry that state through to the operator.
   """
   verificationState: JurisdictionVerificationState!
-  verifiedAt: Int
+  verifiedAt: Timestamp
 
-  effectiveStartDate: Int
-  effectiveEndDate: Int
+  effectiveStartDate: Timestamp
+  effectiveEndDate: Timestamp
 
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 
   state: UsState
 }
@@ -109,8 +109,8 @@ type JurisdictionRuleOverride {
   reason: String!
 
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 
   state: UsState
 }

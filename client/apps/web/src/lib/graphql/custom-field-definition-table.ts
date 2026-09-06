@@ -1,15 +1,13 @@
-import {
-  CustomFieldDefinitionTableDocument,
-  type CustomFieldDefinitionTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { CustomFieldDefinitionTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { CustomFieldDefinition } from "@/types/custom-field";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const customFieldDefinitionTableGraphQLConfig = defineDataTableGraphQLConfig<
-  CustomFieldDefinition,
-  CustomFieldDefinitionTableQueryVariables
->({
+export const customFieldDefinitionTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CustomFieldDefinitionTableDocument,
   operationName: "CustomFieldDefinitionTable",
   connectionKey: "customFieldDefinitions",
 });
+
+export type CustomFieldDefinitionRow = DataTableConfigRow<
+  typeof customFieldDefinitionTableGraphQLConfig
+>;

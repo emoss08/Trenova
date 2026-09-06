@@ -20,7 +20,11 @@ var AgentRunSpec TypeSpec
 
 var ApiKeySpec TypeSpec
 
+var ApprovalDelegationSpec TypeSpec
+
 var AuditEntrySpec TypeSpec
+
+var BenefitPlanSpec TypeSpec
 
 var BillingQueueItemSpec TypeSpec
 
@@ -69,6 +73,12 @@ var CustomerEmailProfileSpec TypeSpec
 var CustomerPaymentSpec TypeSpec
 
 var CustomerPaymentApplicationSpec TypeSpec
+
+var DOTRandomDrawSpec TypeSpec
+
+var DOTRandomDrawEntrySpec TypeSpec
+
+var DOTRandomPoolSpec TypeSpec
 
 var DashControlSpec TypeSpec
 
@@ -174,6 +184,8 @@ var InvoiceSpec TypeSpec
 
 var InvoiceLineSpec TypeSpec
 
+var JobPositionSpec TypeSpec
+
 var JournalEntryLineAccountSpec TypeSpec
 
 var JournalReversalSpec TypeSpec
@@ -181,6 +193,8 @@ var JournalReversalSpec TypeSpec
 var JurisdictionRuleSpec TypeSpec
 
 var JurisdictionRuleOverrideSpec TypeSpec
+
+var LeaveControlSpec TypeSpec
 
 var LocationSpec TypeSpec
 
@@ -190,13 +204,21 @@ var ManualJournalSpec TypeSpec
 
 var NotificationSpec TypeSpec
 
+var OSHAAnnualSummarySpec TypeSpec
+
 var OrderSpec TypeSpec
 
 var OrderChargeSpec TypeSpec
 
 var OrderLegSpec TypeSpec
 
+var OrgHolidaySpec TypeSpec
+
 var OrganizationSpec TypeSpec
+
+var PTOPolicySpec TypeSpec
+
+var PTOPolicyRuleSpec TypeSpec
 
 var PayAdvanceSpec TypeSpec
 
@@ -207,6 +229,14 @@ var PayCodeGLAccountSpec TypeSpec
 var PayProfileSpec TypeSpec
 
 var PayProfileComponentSpec TypeSpec
+
+var PayrollExportSpec TypeSpec
+
+var PerformanceReviewSpec TypeSpec
+
+var PerformanceReviewTemplateSpec TypeSpec
+
+var PolicyComplianceRowSpec TypeSpec
 
 var PortalInvitationSpec TypeSpec
 
@@ -262,6 +292,10 @@ var SettlementControlSpec TypeSpec
 
 var SettlementDisputeSpec TypeSpec
 
+var ShiftSwapRequestSpec TypeSpec
+
+var ShiftTemplateSpec TypeSpec
+
 var ShipmentSpec TypeSpec
 
 var ShipmentAccessorialChargeSpec TypeSpec
@@ -270,9 +304,15 @@ var ShipmentAdditionalChargeSpec TypeSpec
 
 var ShipmentAssignmentSpec TypeSpec
 
+var ShipmentAssignmentEventSpec TypeSpec
+
+var ShipmentCarrierEventSpec TypeSpec
+
 var ShipmentCommentSpec TypeSpec
 
 var ShipmentCommentAcknowledgmentSpec TypeSpec
+
+var ShipmentCommentEventSpec TypeSpec
 
 var ShipmentCommentMentionSpec TypeSpec
 
@@ -282,13 +322,21 @@ var ShipmentCommodityDetailSpec TypeSpec
 
 var ShipmentCustomerSpec TypeSpec
 
-var ShipmentEventSpec TypeSpec
-
 var ShipmentFormulaTemplateSpec TypeSpec
+
+var ShipmentHoldEventSpec TypeSpec
+
+var ShipmentLifecycleEventSpec TypeSpec
 
 var ShipmentMoveSpec TypeSpec
 
+var ShipmentMoveEventSpec TypeSpec
+
+var ShipmentOwnershipEventSpec TypeSpec
+
 var ShipmentStopSpec TypeSpec
+
+var ShipmentTenderEventSpec TypeSpec
 
 var ShipmentTypeSpec TypeSpec
 
@@ -302,9 +350,15 @@ var TenderSpec TypeSpec
 
 var TenderOfferSpec TypeSpec
 
+var TimeClockEntrySpec TypeSpec
+
+var TimesheetSpec TypeSpec
+
 var TractorSpec TypeSpec
 
 var TrailerSpec TypeSpec
+
+var TrainingCourseSpec TypeSpec
 
 var UsStateSpec TypeSpec
 
@@ -316,17 +370,73 @@ var VehiclePositionSpec TypeSpec
 
 var WorkerSpec TypeSpec
 
+var WorkerAvailabilityPreferenceSpec TypeSpec
+
+var WorkerBenefitEnrollmentSpec TypeSpec
+
+var WorkerChecklistSpec TypeSpec
+
+var WorkerChecklistItemSpec TypeSpec
+
+var WorkerChecklistTemplateSpec TypeSpec
+
+var WorkerChecklistTemplateItemSpec TypeSpec
+
+var WorkerClearinghouseQuerySpec TypeSpec
+
+var WorkerCredentialSpec TypeSpec
+
+var WorkerCredentialDocumentSpec TypeSpec
+
+var WorkerCredentialTypeSpec TypeSpec
+
+var WorkerDOTTestSpec TypeSpec
+
+var WorkerDOTViolationSpec TypeSpec
+
+var WorkerDisciplinaryActionSpec TypeSpec
+
+var WorkerEmploymentEventSpec TypeSpec
+
+var WorkerEmploymentVerificationSpec TypeSpec
+
 var WorkerFormSubmissionSpec TypeSpec
 
 var WorkerHosStateSpec TypeSpec
 
 var WorkerHosViolationSpec TypeSpec
 
+var WorkerInjurySpec TypeSpec
+
+var WorkerLeaveCaseSpec TypeSpec
+
+var WorkerLeaveEntrySpec TypeSpec
+
 var WorkerPTOSpec TypeSpec
+
+var WorkerPTOLedgerEntrySpec TypeSpec
+
+var WorkerPTOPolicyAssignmentSpec TypeSpec
 
 var WorkerPayAssignmentSpec TypeSpec
 
+var WorkerPolicySpec TypeSpec
+
+var WorkerPolicyAcknowledgementSpec TypeSpec
+
 var WorkerProfileSpec TypeSpec
+
+var WorkerProfileChangeRequestSpec TypeSpec
+
+var WorkerRecognitionSpec TypeSpec
+
+var WorkerSafetyEventSpec TypeSpec
+
+var WorkerSafetyViolationSpec TypeSpec
+
+var WorkerShiftAssignmentSpec TypeSpec
+
+var WorkerTrainingRecordSpec TypeSpec
 
 func init() {
 	AccessorialChargeSpec = TypeSpec{
@@ -885,6 +995,91 @@ func init() {
 		},
 	}
 
+	ApprovalDelegationSpec = TypeSpec{
+		TypeName: "ApprovalDelegation",
+		FieldMap: buncolgen.ApprovalDelegationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "delegatorId",
+				FieldMapKey: "delegatorId",
+			},
+			{
+				Name:        "delegateId",
+				FieldMapKey: "delegateId",
+			},
+			{
+				Name:        "scope",
+				FieldMapKey: "scope",
+			},
+			{
+				Name:        "startsAt",
+				FieldMapKey: "startsAt",
+			},
+			{
+				Name:        "endsAt",
+				FieldMapKey: "endsAt",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "revokedById",
+				FieldMapKey: "revokedById",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "delegator",
+				FieldMapKey: "delegatorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "delegate",
+				FieldMapKey: "delegateId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
 	AuditEntrySpec = TypeSpec{
 		TypeName: "AuditEntry",
 		FieldMap: buncolgen.EntryFieldMap,
@@ -989,6 +1184,100 @@ func init() {
 				FieldMapKey: "userId",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
+	BenefitPlanSpec = TypeSpec{
+		TypeName: "BenefitPlan",
+		FieldMap: buncolgen.BenefitPlanFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "planType",
+				FieldMapKey: "planType",
+			},
+			{
+				Name:        "carrier",
+				FieldMapKey: "carrier",
+			},
+			{
+				Name:        "policyNumber",
+				FieldMapKey: "policyNumber",
+			},
+			{
+				Name:        "payCodeId",
+				FieldMapKey: "payCodeId",
+			},
+			{
+				Name:        "planYear",
+				FieldMapKey: "planYear",
+			},
+			{
+				Name:        "employeeCostMinor",
+				FieldMapKey: "employeeCostMinor",
+			},
+			{
+				Name:        "employerCostMinor",
+				FieldMapKey: "employerCostMinor",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "waitingPeriodDays",
+				FieldMapKey: "waitingPeriodDays",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "payCode",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &PayCodeSpec,
 				},
 			},
 		},
@@ -2692,6 +2981,22 @@ func init() {
 				FieldMapKey: "color",
 			},
 			{
+				Name:        "options",
+				FieldMapKey: "options",
+			},
+			{
+				Name:        "validationRules",
+				FieldMapKey: "validationRules",
+			},
+			{
+				Name:        "defaultValue",
+				FieldMapKey: "defaultValue",
+			},
+			{
+				Name:        "uiAttributes",
+				FieldMapKey: "uiAttributes",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -3292,9 +3597,281 @@ func init() {
 		},
 	}
 
+	DOTRandomDrawSpec = TypeSpec{
+		TypeName: "DOTRandomDraw",
+		FieldMap: buncolgen.DOTRandomDrawFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "poolId",
+				FieldMapKey: "poolId",
+			},
+			{
+				Name:        "periodKey",
+				FieldMapKey: "periodKey",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "poolSize",
+				FieldMapKey: "poolSize",
+			},
+			{
+				Name:        "drugTarget",
+				FieldMapKey: "drugTarget",
+			},
+			{
+				Name:        "alcoholTarget",
+				FieldMapKey: "alcoholTarget",
+			},
+			{
+				Name:        "drugSelected",
+				FieldMapKey: "drugSelected",
+			},
+			{
+				Name:        "alcoholSelected",
+				FieldMapKey: "alcoholSelected",
+			},
+			{
+				Name:        "seed",
+				FieldMapKey: "seed",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "drawnAt",
+				FieldMapKey: "drawnAt",
+			},
+			{
+				Name:        "drawnById",
+				FieldMapKey: "drawnById",
+			},
+			{
+				Name:        "finalizedAt",
+				FieldMapKey: "finalizedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "pool",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &DOTRandomPoolSpec,
+				},
+			},
+			{
+				Name:        "drawnBy",
+				FieldMapKey: "drawnById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name: "entries",
+				Relation: &RelationSpec{
+					Target: &DOTRandomDrawEntrySpec,
+				},
+			},
+		},
+	}
+
+	DOTRandomDrawEntrySpec = TypeSpec{
+		TypeName: "DOTRandomDrawEntry",
+		FieldMap: buncolgen.DOTRandomDrawEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "drawId",
+				FieldMapKey: "drawId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "substance",
+				FieldMapKey: "substance",
+			},
+			{
+				Name:        "rank",
+				FieldMapKey: "rank",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "notifiedAt",
+				FieldMapKey: "notifiedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "testId",
+				FieldMapKey: "testId",
+			},
+			{
+				Name:        "excuseReason",
+				FieldMapKey: "excuseReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	DOTRandomPoolSpec = TypeSpec{
+		TypeName: "DOTRandomPool",
+		FieldMap: buncolgen.DOTRandomPoolFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "period",
+				FieldMapKey: "period",
+			},
+			{
+				Name:        "drugRatePercent",
+				FieldMapKey: "drugRatePercent",
+			},
+			{
+				Name:        "alcoholRatePercent",
+				FieldMapKey: "alcoholRatePercent",
+			},
+			{
+				Name:        "includedDriverTypes",
+				FieldMapKey: "includedDriverTypes",
+			},
+			{
+				Name:        "isDefault",
+				FieldMapKey: "isDefault",
+			},
+			{
+				Name:    "meetsDotMinimums",
+				Special: "meetsDotMinimums",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	DashControlSpec = TypeSpec{
 		TypeName: "DashControl",
-		FieldMap: buncolgen.DashControlFieldMap,
+		FieldMap: map[string]string{"allowContactInfoEdit": "allow_contact_info_edit", "allowExpenseSubmission": "allow_expense_submission", "allowLoadComments": "allow_load_comments", "allowLoadDocumentUpload": "allow_load_document_upload", "allowLoadRefusals": "allow_load_refusals", "allowProfileDocumentUpload": "allow_profile_document_upload", "allowPtoRequests": "allow_pto_requests", "allowSettlementDisputes": "allow_settlement_disputes", "allowStopActions": "allow_stop_actions", "businessUnitId": "business_unit_id", "createdAt": "created_at", "detentionAlertThresholdMinutes": "detention_alert_threshold_minutes", "driverDigestCadence": "driver_digest_cadence", "driverDigestWeekday": "driver_digest_weekday", "enableDetentionAlerts": "enable_detention_alerts", "id": "id", "organizationId": "organization_id", "requireContactChangeApproval": "require_contact_change_approval", "requireExpenseReceipt": "require_expense_receipt", "requireLoadAcknowledgment": "require_load_acknowledgment", "sendCredentialReminders": "send_credential_reminders", "showLoadPay": "show_load_pay", "showPayEstimates": "show_pay_estimates", "updatedAt": "updated_at", "version": "version"},
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3367,6 +3944,18 @@ func init() {
 			{
 				Name:        "sendCredentialReminders",
 				FieldMapKey: "sendCredentialReminders",
+			},
+			{
+				Name:        "requireContactChangeApproval",
+				FieldMapKey: "requireContactChangeApproval",
+			},
+			{
+				Name:        "driverDigestCadence",
+				FieldMapKey: "driverDigestCadence",
+			},
+			{
+				Name:        "driverDigestWeekday",
+				FieldMapKey: "driverDigestWeekday",
 			},
 			{
 				Name:        "enableDetentionAlerts",
@@ -4040,6 +4629,22 @@ func init() {
 			{
 				Name:        "profileName",
 				FieldMapKey: "profileName",
+			},
+			{
+				Name:        "highwayOnly",
+				FieldMapKey: "highwayOnly",
+			},
+			{
+				Name:        "tollRoads",
+				FieldMapKey: "tollRoads",
+			},
+			{
+				Name:        "bordersOpen",
+				FieldMapKey: "bordersOpen",
+			},
+			{
+				Name:        "includeTollData",
+				FieldMapKey: "includeTollData",
 			},
 			{
 				Name:        "version",
@@ -5136,6 +5741,10 @@ func init() {
 			{
 				Name:        "description",
 				FieldMapKey: "description",
+			},
+			{
+				Name:        "config",
+				FieldMapKey: "config",
 			},
 			{
 				Name:    "secretState",
@@ -7847,6 +8456,80 @@ func init() {
 		},
 	}
 
+	JobPositionSpec = TypeSpec{
+		TypeName: "JobPosition",
+		FieldMap: buncolgen.JobPositionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "department",
+				FieldMapKey: "department",
+			},
+			{
+				Name:        "flsaExempt",
+				FieldMapKey: "flsaExempt",
+			},
+			{
+				Name:        "isDrivingPosition",
+				FieldMapKey: "isDrivingPosition",
+			},
+			{
+				Name:        "reportsToPositionId",
+				FieldMapKey: "reportsToPositionId",
+			},
+			{
+				Name:        "reportsTo",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &JobPositionSpec,
+				},
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	JournalEntryLineAccountSpec = TypeSpec{
 		TypeName: "JournalEntryLineAccount",
 		FieldMap: buncolgen.GLAccountFieldMap,
@@ -8185,6 +8868,53 @@ func init() {
 		},
 	}
 
+	LeaveControlSpec = TypeSpec{
+		TypeName: "LeaveControl",
+		FieldMap: buncolgen.LeaveControlFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "measurementMethod",
+				FieldMapKey: "measurementMethod",
+			},
+			{
+				Name:        "entitlementWeeks",
+				FieldMapKey: "entitlementWeeks",
+			},
+			{
+				Name:        "militaryCaregiverWeeks",
+				FieldMapKey: "militaryCaregiverWeeks",
+			},
+			{
+				Name:        "workweekHours",
+				FieldMapKey: "workweekHours",
+			},
+			{
+				Name:        "eligibilityMonths",
+				FieldMapKey: "eligibilityMonths",
+			},
+			{
+				Name:        "eligibilityHours",
+				FieldMapKey: "eligibilityHours",
+			},
+			{
+				Name:        "certificationDueDays",
+				FieldMapKey: "certificationDueDays",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
 	LocationSpec = TypeSpec{
 		TypeName: "Location",
 		FieldMap: buncolgen.LocationFieldMap,
@@ -8244,6 +8974,10 @@ func init() {
 			{
 				Name:        "postalCode",
 				FieldMapKey: "postalCode",
+			},
+			{
+				Name:        "timezone",
+				FieldMapKey: "timezone",
 			},
 			{
 				Name:        "placeId",
@@ -8627,6 +9361,85 @@ func init() {
 		},
 	}
 
+	OSHAAnnualSummarySpec = TypeSpec{
+		TypeName: "OSHAAnnualSummary",
+		FieldMap: buncolgen.OSHAAnnualSummaryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "year",
+				FieldMapKey: "year",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "naicsCode",
+				FieldMapKey: "naicsCode",
+			},
+			{
+				Name:        "averageEmployees",
+				FieldMapKey: "averageEmployees",
+			},
+			{
+				Name:        "totalHoursWorked",
+				FieldMapKey: "totalHoursWorked",
+			},
+			{
+				Name:        "executiveName",
+				FieldMapKey: "executiveName",
+			},
+			{
+				Name:        "executiveTitle",
+				FieldMapKey: "executiveTitle",
+			},
+			{
+				Name:        "executivePhone",
+				FieldMapKey: "executivePhone",
+			},
+			{
+				Name:        "certifiedAt",
+				FieldMapKey: "certifiedAt",
+			},
+			{
+				Name:        "certifiedById",
+				FieldMapKey: "certifiedById",
+			},
+			{
+				Name:        "postedFrom",
+				FieldMapKey: "postedFrom",
+			},
+			{
+				Name:        "postedThrough",
+				FieldMapKey: "postedThrough",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "submissionReference",
+				FieldMapKey: "submissionReference",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
 	OrderSpec = TypeSpec{
 		TypeName: "Order",
 		FieldMap: buncolgen.OrderFieldMap,
@@ -8811,6 +9624,61 @@ func init() {
 		},
 	}
 
+	OrgHolidaySpec = TypeSpec{
+		TypeName: "OrgHoliday",
+		FieldMap: buncolgen.OrgHolidayFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "holidayDate",
+				FieldMapKey: "holidayDate",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "recursAnnually",
+				FieldMapKey: "recursAnnually",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	OrganizationSpec = TypeSpec{
 		TypeName: "Organization",
 		FieldMap: buncolgen.OrganizationFieldMap,
@@ -8912,6 +9780,154 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
+			},
+		},
+	}
+
+	PTOPolicySpec = TypeSpec{
+		TypeName: "PTOPolicy",
+		FieldMap: buncolgen.PTOPolicyFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "isDefault",
+				FieldMapKey: "isDefault",
+			},
+			{
+				Name:        "yearBasis",
+				FieldMapKey: "yearBasis",
+			},
+			{
+				Name:        "countWeekends",
+				FieldMapKey: "countWeekends",
+			},
+			{
+				Name:        "waitingPeriodDays",
+				FieldMapKey: "waitingPeriodDays",
+			},
+			{
+				Name:        "requiresApproval",
+				FieldMapKey: "requiresApproval",
+			},
+			{
+				Name:        "enforceBalance",
+				FieldMapKey: "enforceBalance",
+			},
+			{
+				Name:        "allowNegative",
+				FieldMapKey: "allowNegative",
+			},
+			{
+				Name:        "negativeFloorDays",
+				FieldMapKey: "negativeFloorDays",
+			},
+			{
+				Name: "rules",
+				Relation: &RelationSpec{
+					Target: &PTOPolicyRuleSpec,
+				},
+			},
+			{
+				Name:    "openAssignmentCount",
+				Special: "openAssignmentCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	PTOPolicyRuleSpec = TypeSpec{
+		TypeName: "PTOPolicyRule",
+		FieldMap: buncolgen.PTOPolicyRuleFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "ptoPolicyId",
+				FieldMapKey: "ptoPolicyId",
+			},
+			{
+				Name:        "ptoType",
+				FieldMapKey: "ptoType",
+			},
+			{
+				Name:        "accrualMethod",
+				FieldMapKey: "accrualMethod",
+			},
+			{
+				Name:        "accrualAmountDays",
+				FieldMapKey: "accrualAmountDays",
+			},
+			{
+				Name:        "maxBalanceDays",
+				FieldMapKey: "maxBalanceDays",
+			},
+			{
+				Name:        "carryoverCapDays",
+				FieldMapKey: "carryoverCapDays",
+			},
+			{
+				Name:        "carryoverExpiryDays",
+				FieldMapKey: "carryoverExpiryDays",
+			},
+			{
+				Name:        "tiers",
+				FieldMapKey: "tiers",
+			},
+			{
+				Name:        "onTermination",
+				FieldMapKey: "onTermination",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
 			},
 		},
 	}
@@ -9244,6 +10260,311 @@ func init() {
 			{
 				Name:        "isActive",
 				FieldMapKey: "isActive",
+			},
+		},
+	}
+
+	PayrollExportSpec = TypeSpec{
+		TypeName: "PayrollExport",
+		FieldMap: buncolgen.PayrollExportFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "timesheetCount",
+				FieldMapKey: "timesheetCount",
+			},
+			{
+				Name:        "regularMinutes",
+				FieldMapKey: "regularMinutes",
+			},
+			{
+				Name:        "overtimeMinutes",
+				FieldMapKey: "overtimeMinutes",
+			},
+			{
+				Name:        "paidLeaveMinutes",
+				FieldMapKey: "paidLeaveMinutes",
+			},
+			{
+				Name:        "generatedAt",
+				FieldMapKey: "generatedAt",
+			},
+			{
+				Name:        "generatedById",
+				FieldMapKey: "generatedById",
+			},
+			{
+				Name:        "voidedAt",
+				FieldMapKey: "voidedAt",
+			},
+			{
+				Name:        "voidReason",
+				FieldMapKey: "voidReason",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
+	PerformanceReviewSpec = TypeSpec{
+		TypeName: "PerformanceReview",
+		FieldMap: buncolgen.PerformanceReviewFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "templateId",
+				FieldMapKey: "templateId",
+			},
+			{
+				Name:        "template",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &PerformanceReviewTemplateSpec,
+				},
+			},
+			{
+				Name:        "reviewerId",
+				FieldMapKey: "reviewerId",
+			},
+			{
+				Name:        "reviewer",
+				FieldMapKey: "reviewerId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "ratings",
+				FieldMapKey: "ratings",
+			},
+			{
+				Name:        "overallScore",
+				FieldMapKey: "overallScore",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "strengths",
+				FieldMapKey: "strengths",
+			},
+			{
+				Name:        "improvements",
+				FieldMapKey: "improvements",
+			},
+			{
+				Name:        "goals",
+				FieldMapKey: "goals",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "workerComment",
+				FieldMapKey: "workerComment",
+			},
+			{
+				Name:        "closedAt",
+				FieldMapKey: "closedAt",
+			},
+			{
+				Name:        "closedById",
+				FieldMapKey: "closedById",
+			},
+			{
+				Name:        "nextReviewAt",
+				FieldMapKey: "nextReviewAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	PerformanceReviewTemplateSpec = TypeSpec{
+		TypeName: "PerformanceReviewTemplate",
+		FieldMap: buncolgen.PerformanceReviewTemplateFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "isDefault",
+				FieldMapKey: "isDefault",
+			},
+			{
+				Name:        "cadenceMonths",
+				FieldMapKey: "cadenceMonths",
+			},
+			{
+				Name:        "items",
+				FieldMapKey: "items",
+			},
+			{
+				Name:    "openReviewCount",
+				Special: "openReviewCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	PolicyComplianceRowSpec = TypeSpec{
+		TypeName: "PolicyComplianceRow",
+		FieldMap: buncolgen.WorkerPolicyAcknowledgementFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:    "workerName",
+				Special: "workerName",
+			},
+			{
+				Name:    "workerType",
+				Special: "workerType",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "signatureName",
+				FieldMapKey: "signatureName",
 			},
 		},
 	}
@@ -10692,6 +12013,10 @@ func init() {
 				FieldMapKey: "rate",
 			},
 			{
+				Name:        "useContractRate",
+				FieldMapKey: "useContractRate",
+			},
+			{
 				Name:        "offerTtlSeconds",
 				FieldMapKey: "offerTtlSeconds",
 			},
@@ -10854,6 +12179,22 @@ func init() {
 			{
 				Name:        "notes",
 				FieldMapKey: "notes",
+			},
+			{
+				Name:        "internalNotes",
+				FieldMapKey: "internalNotes",
+			},
+			{
+				Name:        "x12StatusCodeOverride",
+				FieldMapKey: "x12StatusCodeOverride",
+			},
+			{
+				Name:        "x12ReasonCodeOverride",
+				FieldMapKey: "x12ReasonCodeOverride",
+			},
+			{
+				Name:        "x12ExceptionCode",
+				FieldMapKey: "x12ExceptionCode",
 			},
 			{
 				Name:        "detectedAt",
@@ -11413,6 +12754,170 @@ func init() {
 		},
 	}
 
+	ShiftSwapRequestSpec = TypeSpec{
+		TypeName: "ShiftSwapRequest",
+		FieldMap: buncolgen.ShiftSwapRequestFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "requestingWorkerId",
+				FieldMapKey: "requestingWorkerId",
+			},
+			{
+				Name:        "counterpartyWorkerId",
+				FieldMapKey: "counterpartyWorkerId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "shiftDate",
+				FieldMapKey: "shiftDate",
+			},
+			{
+				Name:        "counterpartyShiftDate",
+				FieldMapKey: "counterpartyShiftDate",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "responseNote",
+				FieldMapKey: "responseNote",
+			},
+			{
+				Name:        "respondedAt",
+				FieldMapKey: "respondedAt",
+			},
+			{
+				Name:        "decidedAt",
+				FieldMapKey: "decidedAt",
+			},
+			{
+				Name:        "decidedById",
+				FieldMapKey: "decidedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "requestingWorker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "counterpartyWorker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	ShiftTemplateSpec = TypeSpec{
+		TypeName: "ShiftTemplate",
+		FieldMap: buncolgen.ShiftTemplateFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "color",
+				FieldMapKey: "color",
+			},
+			{
+				Name:        "daysOfWeek",
+				FieldMapKey: "daysOfWeek",
+			},
+			{
+				Name:        "startMinute",
+				FieldMapKey: "startMinute",
+			},
+			{
+				Name:        "durationMinutes",
+				FieldMapKey: "durationMinutes",
+			},
+			{
+				Name:        "cycleWeeks",
+				FieldMapKey: "cycleWeeks",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "activeAssignmentCount",
+				Special: "activeAssignmentCount",
+			},
+		},
+	}
+
 	ShipmentSpec = TypeSpec{
 		TypeName: "Shipment",
 		FieldMap: buncolgen.ShipmentFieldMap,
@@ -11898,6 +13403,206 @@ func init() {
 		},
 	}
 
+	ShipmentAssignmentEventSpec = TypeSpec{
+		TypeName: "ShipmentAssignmentEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "moveId",
+				FieldMapKey: "moveId",
+			},
+			{
+				Name:        "assignmentId",
+				FieldMapKey: "assignmentId",
+			},
+			{
+				Name:        "primaryWorkerId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "secondaryWorkerId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "tractorId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "trailerId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "driverName",
+				FieldMapKey: "metadata",
+			},
+		},
+	}
+
+	ShipmentCarrierEventSpec = TypeSpec{
+		TypeName: "ShipmentCarrierEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "moveId",
+				FieldMapKey: "moveId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "carrierName",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "totalCost",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "metadata",
+			},
+		},
+	}
+
 	ShipmentCommentSpec = TypeSpec{
 		TypeName: "ShipmentComment",
 		FieldMap: buncolgen.ShipmentCommentFieldMap,
@@ -12075,6 +13780,104 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+		},
+	}
+
+	ShipmentCommentEventSpec = TypeSpec{
+		TypeName: "ShipmentCommentEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "commentId",
+				FieldMapKey: "commentId",
+			},
+			{
+				Name:        "commentBody",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "commentType",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "commentVisibility",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "commentPriority",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "mentionedUserIds",
+				FieldMapKey: "metadata",
 			},
 		},
 	}
@@ -12382,176 +14185,6 @@ func init() {
 		},
 	}
 
-	ShipmentEventSpec = TypeSpec{
-		TypeName: "ShipmentEvent",
-		FieldMap: buncolgen.EventFieldMap,
-		AlwaysColumns: []string{
-			"id",
-			"occurred_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:        "id",
-				FieldMapKey: "id",
-			},
-			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
-			},
-			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
-			},
-			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
-			},
-			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
-			},
-			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
-			},
-			{
-				Name:        "assignmentId",
-				FieldMapKey: "assignmentId",
-			},
-			{
-				Name:        "commentId",
-				FieldMapKey: "commentId",
-			},
-			{
-				Name:        "holdId",
-				FieldMapKey: "holdId",
-			},
-			{
-				Name:        "type",
-				FieldMapKey: "type",
-			},
-			{
-				Name:        "severity",
-				FieldMapKey: "severity",
-			},
-			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
-			},
-			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
-			},
-			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
-			},
-			{
-				Name:        "summary",
-				FieldMapKey: "summary",
-			},
-			{
-				Name:        "proNumber",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "previousStatus",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "newStatus",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "reason",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "previousOwnerId",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "newOwnerId",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "primaryWorkerId",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "secondaryWorkerId",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "tractorId",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "trailerId",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "driverName",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "holdType",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "holdSeverity",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "holdSource",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "commentBody",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "commentType",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "commentVisibility",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "commentPriority",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "mentionedUserIds",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
-			},
-			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
-			},
-			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
-			},
-			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
-				Relation: &RelationSpec{
-					Target: &UserSpec,
-				},
-			},
-			{
-				Name:    "shipment",
-				Special: "shipment",
-			},
-		},
-	}
-
 	ShipmentFormulaTemplateSpec = TypeSpec{
 		TypeName: "ShipmentFormulaTemplate",
 		FieldMap: buncolgen.FormulaTemplateFieldMap,
@@ -12627,6 +14260,186 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ShipmentHoldEventSpec = TypeSpec{
+		TypeName: "ShipmentHoldEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "holdId",
+				FieldMapKey: "holdId",
+			},
+			{
+				Name:        "holdType",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "holdSeverity",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "holdSource",
+				FieldMapKey: "metadata",
+			},
+		},
+	}
+
+	ShipmentLifecycleEventSpec = TypeSpec{
+		TypeName: "ShipmentLifecycleEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "previousStatus",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "newStatus",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "metadata",
 			},
 		},
 	}
@@ -12740,6 +14553,182 @@ func init() {
 		},
 	}
 
+	ShipmentMoveEventSpec = TypeSpec{
+		TypeName: "ShipmentMoveEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "moveId",
+				FieldMapKey: "moveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "previousStatus",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "newStatus",
+				FieldMapKey: "metadata",
+			},
+		},
+	}
+
+	ShipmentOwnershipEventSpec = TypeSpec{
+		TypeName: "ShipmentOwnershipEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "previousOwnerId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "newOwnerId",
+				FieldMapKey: "metadata",
+			},
+		},
+	}
+
 	ShipmentStopSpec = TypeSpec{
 		TypeName: "ShipmentStop",
 		FieldMap: buncolgen.StopFieldMap,
@@ -12838,6 +14827,132 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
+			},
+		},
+	}
+
+	ShipmentTenderEventSpec = TypeSpec{
+		TypeName: "ShipmentTenderEvent",
+		FieldMap: buncolgen.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"occurred_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actorLabel",
+				FieldMapKey: "actorLabel",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "metadata",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "shipment",
+				Special: "shipment",
+			},
+			{
+				Name:        "tenderId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "offerId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "moveId",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "carrierName",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "rank",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "channel",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "action",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "mode",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "reasons",
+				FieldMapKey: "metadata",
+			},
+			{
+				Name:        "warnings",
+				FieldMapKey: "metadata",
 			},
 		},
 	}
@@ -13421,6 +15536,186 @@ func init() {
 		},
 	}
 
+	TimeClockEntrySpec = TypeSpec{
+		TypeName: "TimeClockEntry",
+		FieldMap: buncolgen.TimeClockEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "timesheetId",
+				FieldMapKey: "timesheetId",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "clockedInAt",
+				FieldMapKey: "clockedInAt",
+			},
+			{
+				Name:        "clockedOutAt",
+				FieldMapKey: "clockedOutAt",
+			},
+			{
+				Name:        "breakMinutes",
+				FieldMapKey: "breakMinutes",
+			},
+			{
+				Name:        "payCodeId",
+				FieldMapKey: "payCodeId",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "editedById",
+				FieldMapKey: "editedById",
+			},
+			{
+				Name:        "editReason",
+				FieldMapKey: "editReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:    "paidMinutes",
+				Special: "paidMinutes",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	TimesheetSpec = TypeSpec{
+		TypeName: "Timesheet",
+		FieldMap: buncolgen.TimesheetFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "regularMinutes",
+				FieldMapKey: "regularMinutes",
+			},
+			{
+				Name:        "overtimeMinutes",
+				FieldMapKey: "overtimeMinutes",
+			},
+			{
+				Name:        "paidLeaveMinutes",
+				FieldMapKey: "paidLeaveMinutes",
+			},
+			{
+				Name:        "entryCount",
+				FieldMapKey: "entryCount",
+			},
+			{
+				Name:        "overtimeThresholdMinutes",
+				FieldMapKey: "overtimeThresholdMinutes",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "decisionNote",
+				FieldMapKey: "decisionNote",
+			},
+			{
+				Name:        "payrollExportId",
+				FieldMapKey: "payrollExportId",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:    "totalMinutes",
+				Special: "totalMinutes",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:    "entries",
+				Special: "entries",
+			},
+		},
+	}
+
 	TractorSpec = TypeSpec{
 		TypeName: "Tractor",
 		FieldMap: buncolgen.TractorFieldMap,
@@ -13765,6 +16060,109 @@ func init() {
 		},
 	}
 
+	TrainingCourseSpec = TypeSpec{
+		TypeName: "TrainingCourse",
+		FieldMap: buncolgen.TrainingCourseFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "delivery",
+				FieldMapKey: "delivery",
+			},
+			{
+				Name:        "contentUrl",
+				FieldMapKey: "contentUrl",
+			},
+			{
+				Name:        "durationMinutes",
+				FieldMapKey: "durationMinutes",
+			},
+			{
+				Name:        "passingScore",
+				FieldMapKey: "passingScore",
+			},
+			{
+				Name:        "validityMonths",
+				FieldMapKey: "validityMonths",
+			},
+			{
+				Name:        "renewalWindowDays",
+				FieldMapKey: "renewalWindowDays",
+			},
+			{
+				Name:        "isRequired",
+				FieldMapKey: "isRequired",
+			},
+			{
+				Name:        "requiredForDriverTypes",
+				FieldMapKey: "requiredForDriverTypes",
+			},
+			{
+				Name:        "dueDaysAfterAssignment",
+				FieldMapKey: "dueDaysAfterAssignment",
+			},
+			{
+				Name:        "requiresAcknowledgement",
+				FieldMapKey: "requiresAcknowledgement",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+			{
+				Name:    "openRecordCount",
+				Special: "openRecordCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	UsStateSpec = TypeSpec{
 		TypeName: "UsState",
 		FieldMap: buncolgen.UsStateFieldMap,
@@ -14085,6 +16483,10 @@ func init() {
 				FieldMapKey: "driverType",
 			},
 			{
+				Name:        "leaveType",
+				FieldMapKey: "leaveType",
+			},
+			{
 				Name:        "profilePicUrl",
 				FieldMapKey: "profilePicUrl",
 			},
@@ -14213,6 +16615,1460 @@ func init() {
 				Name: "pto",
 				Relation: &RelationSpec{
 					Target: &WorkerPTOSpec,
+				},
+			},
+		},
+	}
+
+	WorkerAvailabilityPreferenceSpec = TypeSpec{
+		TypeName: "WorkerAvailabilityPreference",
+		FieldMap: buncolgen.WorkerAvailabilityPreferenceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "dayOfWeek",
+				FieldMapKey: "dayOfWeek",
+			},
+			{
+				Name:        "preference",
+				FieldMapKey: "preference",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerBenefitEnrollmentSpec = TypeSpec{
+		TypeName: "WorkerBenefitEnrollment",
+		FieldMap: buncolgen.WorkerBenefitEnrollmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "benefitPlanId",
+				FieldMapKey: "benefitPlanId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "coverageTier",
+				FieldMapKey: "coverageTier",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "employeeCostMinor",
+				FieldMapKey: "employeeCostMinor",
+			},
+			{
+				Name:        "employerCostMinor",
+				FieldMapKey: "employerCostMinor",
+			},
+			{
+				Name:        "recurringDeductionId",
+				FieldMapKey: "recurringDeductionId",
+			},
+			{
+				Name:        "waivedReason",
+				FieldMapKey: "waivedReason",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "benefitPlan",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &BenefitPlanSpec,
+				},
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	WorkerChecklistSpec = TypeSpec{
+		TypeName: "WorkerChecklist",
+		FieldMap: buncolgen.WorkerChecklistFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "templateId",
+				FieldMapKey: "templateId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "dueAt",
+				FieldMapKey: "dueAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "cancelledAt",
+				FieldMapKey: "cancelledAt",
+			},
+			{
+				Name:        "cancelReason",
+				FieldMapKey: "cancelReason",
+			},
+			{
+				Name:        "sourceEventId",
+				FieldMapKey: "sourceEventId",
+			},
+			{
+				Name:        "startedById",
+				FieldMapKey: "startedById",
+			},
+			{
+				Name:        "startedBy",
+				FieldMapKey: "startedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "progress",
+				Special: "progress",
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &WorkerChecklistItemSpec,
+				},
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerChecklistItemSpec = TypeSpec{
+		TypeName: "WorkerChecklistItem",
+		FieldMap: buncolgen.WorkerChecklistItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "checklistId",
+				FieldMapKey: "checklistId",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "required",
+				FieldMapKey: "required",
+			},
+			{
+				Name:        "owner",
+				FieldMapKey: "owner",
+			},
+			{
+				Name:        "dueAt",
+				FieldMapKey: "dueAt",
+			},
+			{
+				Name:    "overdue",
+				Special: "overdue",
+			},
+			{
+				Name:        "credentialTypeId",
+				FieldMapKey: "credentialTypeId",
+			},
+			{
+				Name:        "credentialType",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialTypeSpec,
+				},
+			},
+			{
+				Name:        "documentTypeId",
+				FieldMapKey: "documentTypeId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "completedById",
+				FieldMapKey: "completedById",
+			},
+			{
+				Name:        "completedBy",
+				FieldMapKey: "completedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "autoCompleted",
+				FieldMapKey: "autoCompleted",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "evidenceDocumentId",
+				FieldMapKey: "evidenceDocumentId",
+			},
+			{
+				Name:        "evidenceDocument",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "evidenceCredentialId",
+				FieldMapKey: "evidenceCredentialId",
+			},
+			{
+				Name:        "evidenceCredential",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialSpec,
+				},
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
+	WorkerChecklistTemplateSpec = TypeSpec{
+		TypeName: "WorkerChecklistTemplate",
+		FieldMap: buncolgen.WorkerChecklistTemplateFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "trigger",
+				FieldMapKey: "trigger",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "isDefault",
+				FieldMapKey: "isDefault",
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &WorkerChecklistTemplateItemSpec,
+				},
+			},
+			{
+				Name:    "openChecklistCount",
+				Special: "openChecklistCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerChecklistTemplateItemSpec = TypeSpec{
+		TypeName: "WorkerChecklistTemplateItem",
+		FieldMap: buncolgen.WorkerChecklistTemplateItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "templateId",
+				FieldMapKey: "templateId",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "required",
+				FieldMapKey: "required",
+			},
+			{
+				Name:        "dueOffsetDays",
+				FieldMapKey: "dueOffsetDays",
+			},
+			{
+				Name:        "owner",
+				FieldMapKey: "owner",
+			},
+			{
+				Name:        "credentialTypeId",
+				FieldMapKey: "credentialTypeId",
+			},
+			{
+				Name:        "credentialType",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialTypeSpec,
+				},
+			},
+			{
+				Name:        "documentTypeId",
+				FieldMapKey: "documentTypeId",
+			},
+			{
+				Name:    "documentTypeName",
+				Special: "documentTypeName",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+		},
+	}
+
+	WorkerClearinghouseQuerySpec = TypeSpec{
+		TypeName: "WorkerClearinghouseQuery",
+		FieldMap: buncolgen.WorkerClearinghouseQueryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "queryType",
+				FieldMapKey: "queryType",
+			},
+			{
+				Name:        "result",
+				FieldMapKey: "result",
+			},
+			{
+				Name:        "consentObtainedAt",
+				FieldMapKey: "consentObtainedAt",
+			},
+			{
+				Name:        "consentExpiresAt",
+				FieldMapKey: "consentExpiresAt",
+			},
+			{
+				Name:        "requestedAt",
+				FieldMapKey: "requestedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "violationCount",
+				FieldMapKey: "violationCount",
+			},
+			{
+				Name:        "reference",
+				FieldMapKey: "reference",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "performedById",
+				FieldMapKey: "performedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerCredentialSpec = TypeSpec{
+		TypeName: "WorkerCredential",
+		FieldMap: buncolgen.WorkerCredentialFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "credentialTypeId",
+				FieldMapKey: "credentialTypeId",
+			},
+			{
+				Name:        "credentialType",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialTypeSpec,
+				},
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "number",
+				FieldMapKey: "number",
+			},
+			{
+				Name:        "issuingAuthority",
+				FieldMapKey: "issuingAuthority",
+			},
+			{
+				Name:        "issuedAt",
+				FieldMapKey: "issuedAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "verifiedById",
+				FieldMapKey: "verifiedById",
+			},
+			{
+				Name:        "verifiedBy",
+				FieldMapKey: "verifiedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "verifiedAt",
+				FieldMapKey: "verifiedAt",
+			},
+			{
+				Name:        "archivedById",
+				FieldMapKey: "archivedById",
+			},
+			{
+				Name:        "archivedAt",
+				FieldMapKey: "archivedAt",
+			},
+			{
+				Name:        "archiveReason",
+				FieldMapKey: "archiveReason",
+			},
+			{
+				Name:    "health",
+				Special: "health",
+			},
+			{
+				Name:    "daysUntilExpiry",
+				Special: "daysUntilExpiry",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	WorkerCredentialDocumentSpec = TypeSpec{
+		TypeName: "WorkerCredentialDocument",
+		FieldMap: buncolgen.DocumentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "fileName",
+				FieldMapKey: "fileName",
+			},
+			{
+				Name:        "originalName",
+				FieldMapKey: "originalName",
+			},
+			{
+				Name:        "fileType",
+				FieldMapKey: "fileType",
+			},
+			{
+				Name:        "fileSize",
+				FieldMapKey: "fileSize",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	WorkerCredentialTypeSpec = TypeSpec{
+		TypeName: "WorkerCredentialType",
+		FieldMap: buncolgen.WorkerCredentialTypeFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "isRequired",
+				FieldMapKey: "isRequired",
+			},
+			{
+				Name:        "requiredForDriverTypes",
+				FieldMapKey: "requiredForDriverTypes",
+			},
+			{
+				Name:        "renewalWindowDays",
+				FieldMapKey: "renewalWindowDays",
+			},
+			{
+				Name:        "validityMonths",
+				FieldMapKey: "validityMonths",
+			},
+			{
+				Name:        "requiresNumber",
+				FieldMapKey: "requiresNumber",
+			},
+			{
+				Name:        "requiresDocument",
+				FieldMapKey: "requiresDocument",
+			},
+			{
+				Name:        "profileField",
+				FieldMapKey: "profileField",
+			},
+			{
+				Name:        "isSystem",
+				FieldMapKey: "isSystem",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+			{
+				Name:    "activeCredentialCount",
+				Special: "activeCredentialCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerDOTTestSpec = TypeSpec{
+		TypeName: "WorkerDOTTest",
+		FieldMap: buncolgen.WorkerDOTTestFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "testType",
+				FieldMapKey: "testType",
+			},
+			{
+				Name:        "substance",
+				FieldMapKey: "substance",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "result",
+				FieldMapKey: "result",
+			},
+			{
+				Name:        "isDot",
+				FieldMapKey: "isDot",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "scheduledAt",
+				FieldMapKey: "scheduledAt",
+			},
+			{
+				Name:        "collectedAt",
+				FieldMapKey: "collectedAt",
+			},
+			{
+				Name:        "resultAt",
+				FieldMapKey: "resultAt",
+			},
+			{
+				Name:        "collectionSite",
+				FieldMapKey: "collectionSite",
+			},
+			{
+				Name:        "collectorName",
+				FieldMapKey: "collectorName",
+			},
+			{
+				Name:        "specimenId",
+				FieldMapKey: "specimenId",
+			},
+			{
+				Name:        "labName",
+				FieldMapKey: "labName",
+			},
+			{
+				Name:        "mroName",
+				FieldMapKey: "mroName",
+			},
+			{
+				Name:        "mroVerifiedAt",
+				FieldMapKey: "mroVerifiedAt",
+			},
+			{
+				Name:        "alcoholConcentration",
+				FieldMapKey: "alcoholConcentration",
+			},
+			{
+				Name:        "safetyEventId",
+				FieldMapKey: "safetyEventId",
+			},
+			{
+				Name:        "drawEntryId",
+				FieldMapKey: "drawEntryId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "orderedById",
+				FieldMapKey: "orderedById",
+			},
+			{
+				Name:        "recordedById",
+				FieldMapKey: "recordedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "orderedBy",
+				FieldMapKey: "orderedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "recordedBy",
+				FieldMapKey: "recordedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
+	WorkerDOTViolationSpec = TypeSpec{
+		TypeName: "WorkerDOTViolation",
+		FieldMap: buncolgen.WorkerDOTViolationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "violationType",
+				FieldMapKey: "violationType",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "sourceTestId",
+				FieldMapKey: "sourceTestId",
+			},
+			{
+				Name:        "reportedToClearinghouseAt",
+				FieldMapKey: "reportedToClearinghouseAt",
+			},
+			{
+				Name:        "sapName",
+				FieldMapKey: "sapName",
+			},
+			{
+				Name:        "sapReferredAt",
+				FieldMapKey: "sapReferredAt",
+			},
+			{
+				Name:        "sapEvaluationCompletedAt",
+				FieldMapKey: "sapEvaluationCompletedAt",
+			},
+			{
+				Name:        "rtdTestId",
+				FieldMapKey: "rtdTestId",
+			},
+			{
+				Name:        "rtdCompletedAt",
+				FieldMapKey: "rtdCompletedAt",
+			},
+			{
+				Name:        "followUpTestCount",
+				FieldMapKey: "followUpTestCount",
+			},
+			{
+				Name:        "followUpTestsCompleted",
+				FieldMapKey: "followUpTestsCompleted",
+			},
+			{
+				Name:        "followUpEndsAt",
+				FieldMapKey: "followUpEndsAt",
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "recordedById",
+				FieldMapKey: "recordedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "sourceTest",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerDOTTestSpec,
+				},
+			},
+			{
+				Name:    "rtdTest",
+				Special: "rtdTest",
+			},
+		},
+	}
+
+	WorkerDisciplinaryActionSpec = TypeSpec{
+		TypeName: "WorkerDisciplinaryAction",
+		FieldMap: buncolgen.WorkerDisciplinaryActionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "level",
+				FieldMapKey: "level",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "details",
+				FieldMapKey: "details",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "issuedAt",
+				FieldMapKey: "issuedAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "suspensionDays",
+				FieldMapKey: "suspensionDays",
+			},
+			{
+				Name:        "safetyEventId",
+				FieldMapKey: "safetyEventId",
+			},
+			{
+				Name:        "safetyEvent",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSafetyEventSpec,
+				},
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "issuedById",
+				FieldMapKey: "issuedById",
+			},
+			{
+				Name:        "issuedBy",
+				FieldMapKey: "issuedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "workerComment",
+				FieldMapKey: "workerComment",
+			},
+			{
+				Name:        "rescindedAt",
+				FieldMapKey: "rescindedAt",
+			},
+			{
+				Name:        "rescindedById",
+				FieldMapKey: "rescindedById",
+			},
+			{
+				Name:        "rescindReason",
+				FieldMapKey: "rescindReason",
+			},
+			{
+				Name:    "active",
+				Special: "active",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerEmploymentEventSpec = TypeSpec{
+		TypeName: "WorkerEmploymentEvent",
+		FieldMap: buncolgen.WorkerEmploymentEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "effectiveAt",
+				FieldMapKey: "effectiveAt",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "fromValues",
+				FieldMapKey: "fromValues",
+			},
+			{
+				Name:        "toValues",
+				FieldMapKey: "toValues",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "recordedById",
+				FieldMapKey: "recordedById",
+			},
+			{
+				Name:        "recordedBy",
+				FieldMapKey: "recordedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "amendedById",
+				FieldMapKey: "amendedById",
+			},
+			{
+				Name:        "amendedBy",
+				FieldMapKey: "amendedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "amendedAt",
+				FieldMapKey: "amendedAt",
+			},
+			{
+				Name:        "amendmentNote",
+				FieldMapKey: "amendmentNote",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerEmploymentVerificationSpec = TypeSpec{
+		TypeName: "WorkerEmploymentVerification",
+		FieldMap: buncolgen.WorkerEmploymentVerificationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "employerName",
+				FieldMapKey: "employerName",
+			},
+			{
+				Name:        "employerDotNumber",
+				FieldMapKey: "employerDotNumber",
+			},
+			{
+				Name:        "employerMcNumber",
+				FieldMapKey: "employerMcNumber",
+			},
+			{
+				Name:        "contactName",
+				FieldMapKey: "contactName",
+			},
+			{
+				Name:        "contactPhone",
+				FieldMapKey: "contactPhone",
+			},
+			{
+				Name:        "contactEmail",
+				FieldMapKey: "contactEmail",
+			},
+			{
+				Name:        "employedFrom",
+				FieldMapKey: "employedFrom",
+			},
+			{
+				Name:        "employedTo",
+				FieldMapKey: "employedTo",
+			},
+			{
+				Name:        "wasDotRegulated",
+				FieldMapKey: "wasDotRegulated",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "requestedAt",
+				FieldMapKey: "requestedAt",
+			},
+			{
+				Name:        "responseReceivedAt",
+				FieldMapKey: "responseReceivedAt",
+			},
+			{
+				Name:        "lastFollowUpAt",
+				FieldMapKey: "lastFollowUpAt",
+			},
+			{
+				Name:        "followUpCount",
+				FieldMapKey: "followUpCount",
+			},
+			{
+				Name:        "drugAlcoholResponseReceivedAt",
+				FieldMapKey: "drugAlcoholResponseReceivedAt",
+			},
+			{
+				Name:        "hadAccidents",
+				FieldMapKey: "hadAccidents",
+			},
+			{
+				Name:        "accidentCount",
+				FieldMapKey: "accidentCount",
+			},
+			{
+				Name:        "hadDrugAlcoholViolations",
+				FieldMapKey: "hadDrugAlcoholViolations",
+			},
+			{
+				Name:        "findings",
+				FieldMapKey: "findings",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 		},
@@ -14389,6 +18245,353 @@ func init() {
 		},
 	}
 
+	WorkerInjurySpec = TypeSpec{
+		TypeName: "WorkerInjury",
+		FieldMap: buncolgen.WorkerInjuryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "caseNumber",
+				FieldMapKey: "caseNumber",
+			},
+			{
+				Name:        "caseYear",
+				FieldMapKey: "caseYear",
+			},
+			{
+				Name:        "classification",
+				FieldMapKey: "classification",
+			},
+			{
+				Name:        "illnessType",
+				FieldMapKey: "illnessType",
+			},
+			{
+				Name:        "treatment",
+				FieldMapKey: "treatment",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:    "recordable",
+				Special: "recordable",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "reportedAt",
+				FieldMapKey: "reportedAt",
+			},
+			{
+				Name:        "returnedToWorkAt",
+				FieldMapKey: "returnedToWorkAt",
+			},
+			{
+				Name:        "location",
+				FieldMapKey: "location",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "bodyPart",
+				FieldMapKey: "bodyPart",
+			},
+			{
+				Name:        "harmfulAgent",
+				FieldMapKey: "harmfulAgent",
+			},
+			{
+				Name:        "daysAway",
+				FieldMapKey: "daysAway",
+			},
+			{
+				Name:        "daysRestricted",
+				FieldMapKey: "daysRestricted",
+			},
+			{
+				Name:        "privacyCase",
+				FieldMapKey: "privacyCase",
+			},
+			{
+				Name:    "logName",
+				Special: "logName",
+			},
+			{
+				Name:        "claimStatus",
+				FieldMapKey: "claimStatus",
+			},
+			{
+				Name:        "claimNumber",
+				FieldMapKey: "claimNumber",
+			},
+			{
+				Name:        "claimCarrier",
+				FieldMapKey: "claimCarrier",
+			},
+			{
+				Name:        "claimFiledAt",
+				FieldMapKey: "claimFiledAt",
+			},
+			{
+				Name:        "claimClosedAt",
+				FieldMapKey: "claimClosedAt",
+			},
+			{
+				Name:        "safetyEventId",
+				FieldMapKey: "safetyEventId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+		},
+	}
+
+	WorkerLeaveCaseSpec = TypeSpec{
+		TypeName: "WorkerLeaveCase",
+		FieldMap: buncolgen.WorkerLeaveCaseFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "leaveType",
+				FieldMapKey: "leaveType",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "frequency",
+				FieldMapKey: "frequency",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "fmlaDesignated",
+				FieldMapKey: "fmlaDesignated",
+			},
+			{
+				Name:        "militaryCaregiver",
+				FieldMapKey: "militaryCaregiver",
+			},
+			{
+				Name:        "requestedAt",
+				FieldMapKey: "requestedAt",
+			},
+			{
+				Name:        "startsAt",
+				FieldMapKey: "startsAt",
+			},
+			{
+				Name:        "endsAt",
+				FieldMapKey: "endsAt",
+			},
+			{
+				Name:        "decidedAt",
+				FieldMapKey: "decidedAt",
+			},
+			{
+				Name:        "closedAt",
+				FieldMapKey: "closedAt",
+			},
+			{
+				Name:        "certificationStatus",
+				FieldMapKey: "certificationStatus",
+			},
+			{
+				Name:        "certificationRequestedAt",
+				FieldMapKey: "certificationRequestedAt",
+			},
+			{
+				Name:        "certificationDueAt",
+				FieldMapKey: "certificationDueAt",
+			},
+			{
+				Name:        "certificationReceivedAt",
+				FieldMapKey: "certificationReceivedAt",
+			},
+			{
+				Name:        "recertificationDueAt",
+				FieldMapKey: "recertificationDueAt",
+			},
+			{
+				Name:    "certificationLate",
+				Special: "certificationLate",
+			},
+			{
+				Name:        "eligibilityHoursWorked",
+				FieldMapKey: "eligibilityHoursWorked",
+			},
+			{
+				Name:        "employmentEventId",
+				FieldMapKey: "employmentEventId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name: "entries",
+				Relation: &RelationSpec{
+					Target: &WorkerLeaveEntrySpec,
+				},
+			},
+		},
+	}
+
+	WorkerLeaveEntrySpec = TypeSpec{
+		TypeName: "WorkerLeaveEntry",
+		FieldMap: buncolgen.WorkerLeaveEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "leaveCaseId",
+				FieldMapKey: "leaveCaseId",
+			},
+			{
+				Name:        "usedOn",
+				FieldMapKey: "usedOn",
+			},
+			{
+				Name:        "hours",
+				FieldMapKey: "hours",
+			},
+			{
+				Name:        "countsAgainstEntitlement",
+				FieldMapKey: "countsAgainstEntitlement",
+			},
+			{
+				Name:        "ptoId",
+				FieldMapKey: "ptoId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
 	WorkerPTOSpec = TypeSpec{
 		TypeName: "WorkerPTO",
 		FieldMap: buncolgen.WorkerPTOFieldMap,
@@ -14422,6 +18625,10 @@ func init() {
 				FieldMapKey: "rejectorId",
 			},
 			{
+				Name:        "cancelledById",
+				FieldMapKey: "cancelledById",
+			},
+			{
 				Name:        "status",
 				FieldMapKey: "status",
 			},
@@ -14440,6 +18647,26 @@ func init() {
 			{
 				Name:        "reason",
 				FieldMapKey: "reason",
+			},
+			{
+				Name:        "rejectionReason",
+				FieldMapKey: "rejectionReason",
+			},
+			{
+				Name:        "cancellationReason",
+				FieldMapKey: "cancellationReason",
+			},
+			{
+				Name:        "days",
+				FieldMapKey: "days",
+			},
+			{
+				Name:        "balanceAfterDays",
+				FieldMapKey: "balanceAfterDays",
+			},
+			{
+				Name:        "autoApproved",
+				FieldMapKey: "autoApproved",
 			},
 			{
 				Name:        "version",
@@ -14473,6 +18700,154 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+			{
+				Name:        "cancelledBy",
+				FieldMapKey: "cancelledById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
+	WorkerPTOLedgerEntrySpec = TypeSpec{
+		TypeName: "WorkerPTOLedgerEntry",
+		FieldMap: buncolgen.WorkerPTOLedgerEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "ptoType",
+				FieldMapKey: "ptoType",
+			},
+			{
+				Name:        "entryType",
+				FieldMapKey: "entryType",
+			},
+			{
+				Name:        "amountDays",
+				FieldMapKey: "amountDays",
+			},
+			{
+				Name:        "balanceAfterDays",
+				FieldMapKey: "balanceAfterDays",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "effectiveAt",
+				FieldMapKey: "effectiveAt",
+			},
+			{
+				Name:        "periodKey",
+				FieldMapKey: "periodKey",
+			},
+			{
+				Name:        "sourcePtoId",
+				FieldMapKey: "sourcePtoId",
+			},
+			{
+				Name:        "assignmentId",
+				FieldMapKey: "assignmentId",
+			},
+			{
+				Name:        "ptoPolicyId",
+				FieldMapKey: "ptoPolicyId",
+			},
+			{
+				Name:        "actorType",
+				FieldMapKey: "actorType",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:    "sourcePto",
+				Special: "sourcePto",
+			},
+		},
+	}
+
+	WorkerPTOPolicyAssignmentSpec = TypeSpec{
+		TypeName: "WorkerPTOPolicyAssignment",
+		FieldMap: buncolgen.WorkerPTOPolicyAssignmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "ptoPolicyId",
+				FieldMapKey: "ptoPolicyId",
+			},
+			{
+				Name:    "ptoPolicy",
+				Special: "ptoPolicy",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "assignedById",
+				FieldMapKey: "assignedById",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
@@ -14553,6 +18928,158 @@ func init() {
 				FieldMapKey: "businessUnitId",
 				Relation: &RelationSpec{
 					Target: &PayProfileSpec,
+				},
+			},
+		},
+	}
+
+	WorkerPolicySpec = TypeSpec{
+		TypeName: "WorkerPolicy",
+		FieldMap: buncolgen.WorkerPolicyFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "body",
+				FieldMapKey: "body",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "versionLabel",
+				FieldMapKey: "versionLabel",
+			},
+			{
+				Name:        "requiresSignature",
+				FieldMapKey: "requiresSignature",
+			},
+			{
+				Name:        "appliesTo",
+				FieldMapKey: "appliesTo",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerPolicyAcknowledgementSpec = TypeSpec{
+		TypeName: "WorkerPolicyAcknowledgement",
+		FieldMap: buncolgen.WorkerPolicyAcknowledgementFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "policyId",
+				FieldMapKey: "policyId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "versionLabel",
+				FieldMapKey: "versionLabel",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "signatureName",
+				FieldMapKey: "signatureName",
+			},
+			{
+				Name:        "signatureIp",
+				FieldMapKey: "signatureIp",
+			},
+			{
+				Name:        "signatureUserAgent",
+				FieldMapKey: "signatureUserAgent",
+			},
+			{
+				Name:        "documentChecksum",
+				FieldMapKey: "documentChecksum",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "policy",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerPolicySpec,
 				},
 			},
 		},
@@ -14655,6 +19182,30 @@ func init() {
 				FieldMapKey: "complianceStatus",
 			},
 			{
+				Name:        "trainingHealth",
+				FieldMapKey: "trainingHealth",
+			},
+			{
+				Name:        "safetyRating",
+				FieldMapKey: "safetyRating",
+			},
+			{
+				Name:        "safetyScore",
+				FieldMapKey: "safetyScore",
+			},
+			{
+				Name:        "nextCredentialExpiry",
+				FieldMapKey: "nextCredentialExpiry",
+			},
+			{
+				Name:        "nextTrainingDue",
+				FieldMapKey: "nextTrainingDue",
+			},
+			{
+				Name:        "drugAlcoholStatus",
+				FieldMapKey: "drugAlcoholStatus",
+			},
+			{
 				Name:        "isQualified",
 				FieldMapKey: "isQualified",
 			},
@@ -14699,6 +19250,583 @@ func init() {
 				FieldMapKey: "licenseStateId",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
+				},
+			},
+		},
+	}
+
+	WorkerProfileChangeRequestSpec = TypeSpec{
+		TypeName: "WorkerProfileChangeRequest",
+		FieldMap: buncolgen.WorkerProfileChangeRequestFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "changes",
+				FieldMapKey: "changes",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "decidedAt",
+				FieldMapKey: "decidedAt",
+			},
+			{
+				Name:        "decidedById",
+				FieldMapKey: "decidedById",
+			},
+			{
+				Name:        "decisionNote",
+				FieldMapKey: "decisionNote",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	WorkerRecognitionSpec = TypeSpec{
+		TypeName: "WorkerRecognition",
+		FieldMap: buncolgen.WorkerRecognitionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "message",
+				FieldMapKey: "message",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "awardedById",
+				FieldMapKey: "awardedById",
+			},
+			{
+				Name:        "awardedBy",
+				FieldMapKey: "awardedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "visibleToWorker",
+				FieldMapKey: "visibleToWorker",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerSafetyEventSpec = TypeSpec{
+		TypeName: "WorkerSafetyEvent",
+		FieldMap: buncolgen.WorkerSafetyEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "location",
+				FieldMapKey: "location",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "preventable",
+				FieldMapKey: "preventable",
+			},
+			{
+				Name:        "points",
+				FieldMapKey: "points",
+			},
+			{
+				Name:        "pointsExpireAt",
+				FieldMapKey: "pointsExpireAt",
+			},
+			{
+				Name:    "activePoints",
+				Special: "activePoints",
+			},
+			{
+				Name:        "referenceNumber",
+				FieldMapKey: "referenceNumber",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "inspectionLevel",
+				FieldMapKey: "inspectionLevel",
+			},
+			{
+				Name:        "inspectionResult",
+				FieldMapKey: "inspectionResult",
+			},
+			{
+				Name:        "outOfService",
+				FieldMapKey: "outOfService",
+			},
+			{
+				Name:        "fineAmount",
+				FieldMapKey: "fineAmount",
+			},
+			{
+				Name:        "costAmount",
+				FieldMapKey: "costAmount",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "recordedById",
+				FieldMapKey: "recordedById",
+			},
+			{
+				Name:        "recordedBy",
+				FieldMapKey: "recordedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "closedById",
+				FieldMapKey: "closedById",
+			},
+			{
+				Name:        "closedBy",
+				FieldMapKey: "closedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "closedAt",
+				FieldMapKey: "closedAt",
+			},
+			{
+				Name:        "resolution",
+				FieldMapKey: "resolution",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	WorkerSafetyViolationSpec = TypeSpec{
+		TypeName: "WorkerSafetyViolation",
+		FieldMap: buncolgen.WorkerSafetyViolationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "safetyEventId",
+				FieldMapKey: "safetyEventId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "basic",
+				FieldMapKey: "basic",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "severityWeight",
+				FieldMapKey: "severityWeight",
+			},
+			{
+				Name:        "outOfService",
+				FieldMapKey: "outOfService",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	WorkerShiftAssignmentSpec = TypeSpec{
+		TypeName: "WorkerShiftAssignment",
+		FieldMap: buncolgen.WorkerShiftAssignmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "shiftTemplateId",
+				FieldMapKey: "shiftTemplateId",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "cycleOffsetWeeks",
+				FieldMapKey: "cycleOffsetWeeks",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "assignedById",
+				FieldMapKey: "assignedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "shiftTemplate",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &ShiftTemplateSpec,
+				},
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	WorkerTrainingRecordSpec = TypeSpec{
+		TypeName: "WorkerTrainingRecord",
+		FieldMap: buncolgen.WorkerTrainingRecordFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "courseId",
+				FieldMapKey: "courseId",
+			},
+			{
+				Name:        "course",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &TrainingCourseSpec,
+				},
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "assignedAt",
+				FieldMapKey: "assignedAt",
+			},
+			{
+				Name:        "dueAt",
+				FieldMapKey: "dueAt",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "score",
+				FieldMapKey: "score",
+			},
+			{
+				Name:        "passed",
+				FieldMapKey: "passed",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "assignedById",
+				FieldMapKey: "assignedById",
+			},
+			{
+				Name:        "assignedBy",
+				FieldMapKey: "assignedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "recordedById",
+				FieldMapKey: "recordedById",
+			},
+			{
+				Name:        "recordedBy",
+				FieldMapKey: "recordedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "waivedReason",
+				FieldMapKey: "waivedReason",
+			},
+			{
+				Name:    "health",
+				Special: "health",
+			},
+			{
+				Name:    "daysUntilDue",
+				Special: "daysUntilDue",
+			},
+			{
+				Name:    "daysUntilExpiry",
+				Special: "daysUntilExpiry",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
 				},
 			},
 		},

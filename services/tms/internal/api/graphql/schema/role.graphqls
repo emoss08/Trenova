@@ -9,8 +9,8 @@ type Role {
   maxSensitivity: String!
   isSystem: Boolean!
   createdBy: ID!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type RoleEdge {

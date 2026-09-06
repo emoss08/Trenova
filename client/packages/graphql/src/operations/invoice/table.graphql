@@ -29,14 +29,14 @@ fragment InvoiceTableRowFields on Invoice {
   }
 }
 
-query InvoiceTable($input: DataTableConnectionInput!) {
+query InvoiceTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   invoices(input: $input) {
     edges {
       node {
         ...InvoiceTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

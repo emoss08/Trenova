@@ -494,40 +494,17 @@ fragment ShipmentCommentFields on ShipmentComment {
 }
 
 fragment ShipmentEventFields on ShipmentEvent {
+  __typename
   id
   organizationId
   businessUnitId
   shipmentId
-  moveId
-  stopId
-  assignmentId
-  commentId
-  holdId
   type
   severity
   actorType
   actorId
   actorLabel
   summary
-  proNumber
-  previousStatus
-  newStatus
-  reason
-  previousOwnerId
-  newOwnerId
-  primaryWorkerId
-  secondaryWorkerId
-  tractorId
-  trailerId
-  driverName
-  holdType
-  holdSeverity
-  holdSource
-  commentBody
-  commentType
-  commentVisibility
-  commentPriority
-  mentionedUserIds
   metadata
   occurredAt
   correlationId
@@ -542,16 +519,79 @@ fragment ShipmentEventFields on ShipmentEvent {
     id
     proNumber
   }
+  ... on ShipmentLifecycleEvent {
+    proNumber
+    previousStatus
+    newStatus
+    reason
+  }
+  ... on ShipmentOwnershipEvent {
+    proNumber
+    previousOwnerId
+    newOwnerId
+  }
+  ... on ShipmentMoveEvent {
+    moveId
+    stopId
+    previousStatus
+    newStatus
+  }
+  ... on ShipmentAssignmentEvent {
+    moveId
+    assignmentId
+    primaryWorkerId
+    secondaryWorkerId
+    tractorId
+    trailerId
+    driverName
+  }
+  ... on ShipmentCarrierEvent {
+    moveId
+    carrierId
+    carrierName
+    totalCost
+    reason
+    proNumber
+  }
+  ... on ShipmentTenderEvent {
+    tenderId
+    offerId
+    moveId
+    carrierName
+    rank
+    channel
+    source
+    reason
+    action
+    mode
+    error
+    reasons
+    warnings
+  }
+  ... on ShipmentHoldEvent {
+    holdId
+    holdType
+    holdSeverity
+    holdSource
+  }
+  ... on ShipmentCommentEvent {
+    commentId
+    commentBody
+    commentType
+    commentVisibility
+    commentPriority
+    mentionedUserIds
+  }
 }
 
-query ShipmentCommandCenterTable($input: ShipmentsInput!) {
+query ShipmentCommandCenterTable($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {
   shipments(input: $input) {
     edges {
       node {
         ...ShipmentFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...ShipmentPageInfoFields
     }

@@ -13,14 +13,14 @@ fragment RoleTableRowFields on Role {
   updatedAt
 }
 
-query RoleTable($input: DataTableConnectionInput!) {
+query RoleTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   roles(input: $input) {
     edges {
       node {
         ...RoleTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

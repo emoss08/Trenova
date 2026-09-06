@@ -27,6 +27,15 @@ type Registry struct {
 	Document *Document
 	EDI      *EDI
 	Report   *Report
+	GraphQL  *GraphQL
+}
+
+func graphQLOptions(cfg *config.Config) GraphQLOptions {
+	gqlCfg := cfg.GetGraphQLObservConfig()
+	return GraphQLOptions{
+		ResolverMetrics: gqlCfg.ResolverMetrics,
+		MaxOperations:   gqlCfg.GetMaxTrackedOperations(),
+	}
 }
 
 func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
@@ -47,6 +56,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			Document: NewDocument(nil, logger, false),
 			EDI:      NewEDI(nil, logger, false),
 			Report:   NewReport(nil, logger, false),
+			GraphQL:  NewGraphQL(nil, logger, false, graphQLOptions(cfg)),
 		}, nil
 	}
 
@@ -67,6 +77,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		Document: NewDocument(registry, logger, true),
 		EDI:      NewEDI(registry, logger, true),
 		Report:   NewReport(registry, logger, true),
+		GraphQL:  NewGraphQL(registry, logger, true, graphQLOptions(cfg)),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -249,6 +250,28 @@ func applyDocumentTemplateVersionInput(
 	version.MarginBottom = input.MarginBottom
 	version.MarginLeft = input.MarginLeft
 	version.MarginRight = input.MarginRight
+}
+
+func (r *Resolver) documentTemplateVersionKind(
+	ctx context.Context,
+	version *documenttemplate.DocumentTemplateVersion,
+	tenant pagination.TenantInfo,
+) documenttemplate.Kind {
+	if version.Template != nil && version.Template.Kind != "" {
+		return version.Template.Kind
+	}
+
+	l, ok := loaders.FromContext(ctx)
+	if !ok || l == nil {
+		return r.documentTemplateService.KindOf(ctx, version, tenant)
+	}
+
+	kind, err := l.DocumentTemplateKindByTemplateID.Load(ctx, version.TemplateID.String())
+	if err != nil {
+		return ""
+	}
+
+	return kind
 }
 
 func templateString(value *string) string {

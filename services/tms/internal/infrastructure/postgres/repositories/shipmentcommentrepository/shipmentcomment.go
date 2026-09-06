@@ -71,18 +71,22 @@ func (r *repository) ListByShipmentID(
 		}
 	}
 
-	total, err := db.NewSelect().
-		Model((*shipment.ShipmentComment)(nil)).
-		Apply(r.applyListConditions(req)).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := db.NewSelect().
+			Model((*shipment.ShipmentComment)(nil)).
+			Apply(r.applyListConditions(req)).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.ShipmentComment]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(items *[]*shipment.ShipmentComment) *bun.SelectQuery {
 			q := db.NewSelect().
 				Model(items).

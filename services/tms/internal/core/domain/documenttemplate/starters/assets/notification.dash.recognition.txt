@@ -1,0 +1,1 @@
+{{ if .RecognitionMessage }}{{ .RecognitionMessage }}{{ else }}Your carrier recorded {{ if .RecognitionTitle }}"{{ .RecognitionTitle }}"{{ else }}a recognition{{ end }} on your record. Nice work.{{ end }}

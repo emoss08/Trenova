@@ -1,0 +1,72 @@
+fragment WorkerEmploymentEventFields on WorkerEmploymentEvent {
+  id
+  workerId
+  kind
+  effectiveAt
+  reason
+  notes
+  fromValues {
+    key
+    value
+  }
+  toValues {
+    key
+    value
+  }
+  documentId
+  document {
+    id
+    fileName
+    originalName
+    fileType
+    fileSize
+    createdAt
+  }
+  recordedById
+  recordedBy {
+    id
+    name
+  }
+  amendedById
+  amendedBy {
+    id
+    name
+  }
+  amendedAt
+  amendmentNote
+  version
+  createdAt
+  updatedAt
+}
+
+query WorkerEmploymentEvents($workerId: ID!, $kinds: [WorkerEmploymentEventKind!]) {
+  workerEmploymentEvents(workerId: $workerId, kinds: $kinds) {
+    ...WorkerEmploymentEventFields
+  }
+}
+
+mutation RecordWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) {
+  recordWorkerEmploymentEvent(input: $input) {
+    event {
+      ...WorkerEmploymentEventFields
+    }
+    cascade {
+      ptoAssignmentEnded
+      payAssignmentEnded
+      upcomingPtoCancelled
+      defaultPolicyApplied
+      checklistStarted
+      ptoPaidOutDays
+      ptoForfeitedDays
+      trainingAssigned
+      portalAccessRevoked
+      portalRevocationError
+    }
+  }
+}
+
+mutation AmendWorkerEmploymentEvent($input: AmendWorkerEmploymentEventInput!) {
+  amendWorkerEmploymentEvent(input: $input) {
+    ...WorkerEmploymentEventFields
+  }
+}

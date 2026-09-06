@@ -286,6 +286,7 @@ func collectFields(structType *ast.StructType) map[string]goField {
 			continue
 		}
 		ref := exprTypeRef(field.Type)
+		bun := bunFieldTag(field)
 		for _, name := range field.Names {
 			goName := name.Name
 			key := jsonName
@@ -296,6 +297,7 @@ func collectFields(structType *ast.StructType) map[string]goField {
 				GoName:   goName,
 				JSONName: key,
 				Type:     ref,
+				Bun:      bun,
 			}
 		}
 	}
@@ -304,19 +306,46 @@ func collectFields(structType *ast.StructType) map[string]goField {
 }
 
 func jsonFieldName(field *ast.Field) string {
-	if field.Tag == nil {
-		return ""
-	}
-	raw, err := strconv.Unquote(field.Tag.Value)
-	if err != nil {
-		return ""
-	}
-	tag := reflect.StructTag(raw).Get("json")
-	if tag == "" {
+	tag, ok := structTag(field, "json")
+	if !ok {
 		return ""
 	}
 	name, _, _ := strings.Cut(tag, ",")
 	return name
+}
+
+func bunFieldTag(field *ast.Field) bunTag {
+	tag, ok := structTag(field, "bun")
+	if !ok {
+		return bunTag{}
+	}
+	if tag == "-" {
+		return bunTag{Present: true, Ignored: true}
+	}
+	result := bunTag{Present: true}
+	for option := range strings.SplitSeq(tag, ",") {
+		if strings.TrimSpace(option) == "nullzero" {
+			result.Nullzero = true
+		}
+	}
+
+	return result
+}
+
+func structTag(field *ast.Field, key string) (string, bool) {
+	if field.Tag == nil {
+		return "", false
+	}
+	raw, err := strconv.Unquote(field.Tag.Value)
+	if err != nil {
+		return "", false
+	}
+	tag, ok := reflect.StructTag(raw).Lookup(key)
+	if !ok || tag == "" {
+		return "", false
+	}
+
+	return tag, true
 }
 
 func exprTypeRef(expr ast.Expr) typeRef {
@@ -640,11 +669,12 @@ func buildPatch(
 		if !ok {
 			return generatedPatch{}, false, false
 		}
-		assignment, usesPulID, ok := patchExpression(inputField, domainField)
+		assignment, usesPulID, ok := patchExpression(inputField, domainField, override)
 		if !ok {
 			return generatedPatch{}, false, false
 		}
 		patch.Fields = append(patch.Fields, assignment)
+		patch.NeedsErrortypes = patch.NeedsErrortypes || assignment.Required
 		needsPulID = needsPulID || usesPulID
 	}
 
@@ -765,29 +795,14 @@ func defaultExpression(
 	}, true
 }
 
-func patchExpression(inputField, domainField goField) (patchAssignment, bool, bool) {
+func patchExpression(
+	inputField,
+	domainField goField,
+	override typeOverride,
+) (patchAssignment, bool, bool) {
 	src := inputField.Type
 	if src.Omittable {
-		valueName := lowerFirst(inputField.GoName) + "Value"
-		expr, body, needsPulID, ok := assignmentBody(
-			"entity."+domainField.GoName,
-			valueName,
-			*src.OmittableType,
-			domainField.Type,
-			true,
-		)
-		if !ok {
-			return patchAssignment{}, false, false
-		}
-		if len(body) == 0 {
-			body = []string{"entity." + domainField.GoName + " = " + expr}
-		}
-		return patchAssignment{
-			FieldName: inputField.GoName,
-			Guard:     "valueOK",
-			ValueName: valueName,
-			Body:      body,
-		}, needsPulID, true
+		return omittablePatchExpression(inputField, domainField, override)
 	}
 
 	if src.Map || src.Slice {
@@ -827,12 +842,78 @@ func patchExpression(inputField, domainField goField) (patchAssignment, bool, bo
 	}, needsPulID, true
 }
 
+func omittablePatchExpression(
+	inputField,
+	domainField goField,
+	override typeOverride,
+) (patchAssignment, bool, bool) {
+	inner := *inputField.Type.OmittableType
+	required := requiredOnEntity(inputField.JSONName, domainField, override)
+	if required && !inner.Pointer && !inner.Map && !inner.Slice {
+		return patchAssignment{}, false, false
+	}
+
+	target := "entity." + domainField.GoName
+	valueName := lowerFirst(inputField.GoName) + "Value"
+	expr, body, needsPulID, ok := assignmentBody(
+		target,
+		valueName,
+		inner,
+		domainField.Type,
+		!required,
+	)
+	if !ok {
+		return patchAssignment{}, false, false
+	}
+	if len(body) == 0 {
+		body = []string{target + " = " + expr}
+	}
+	if required {
+		body = append(requiredGuard(valueName, inputField), body...)
+	}
+
+	return patchAssignment{
+		FieldName: inputField.GoName,
+		Guard:     "valueOK",
+		ValueName: valueName,
+		Required:  required,
+		Body:      body,
+	}, needsPulID, true
+}
+
+func requiredOnEntity(jsonName string, domainField goField, override typeOverride) bool {
+	if slices.Contains(override.Clearable, jsonName) {
+		return false
+	}
+	if slices.Contains(override.Required, jsonName) {
+		return true
+	}
+	ref := domainField.Type
+	if ref.Pointer || ref.Slice || ref.Map {
+		return false
+	}
+
+	return domainField.Bun.Present && !domainField.Bun.Ignored && !domainField.Bun.Nullzero
+}
+
+func requiredGuard(valueName string, inputField goField) []string {
+	return []string{
+		"if " + valueName + " == nil {",
+		"return errortypes.NewValidationError(",
+		strconv.Quote(inputField.JSONName) + ",",
+		"errortypes.ErrRequired,",
+		strconv.Quote(humanizeFieldName(inputField.GoName)+" cannot be cleared") + ",",
+		")",
+		"}",
+	}
+}
+
 func assignmentBody(
 	target,
 	source string,
 	src,
 	dest typeRef,
-	nullableID bool,
+	clearable bool,
 ) (expression string, body []string, needsPulID, ok bool) {
 	if isPulID(dest) {
 		if src.Name != typeNameString {
@@ -840,7 +921,7 @@ func assignmentBody(
 		}
 		if src.Pointer {
 			idVar := lowerFirst(strings.TrimPrefix(strings.TrimPrefix(target, "entity."), "*"))
-			if !nullableID {
+			if !clearable {
 				return "", []string{
 					idVar + ", err := pulid.MustParse(*" + source + ")",
 					"if err != nil {",
@@ -867,12 +948,15 @@ func assignmentBody(
 		}, true, true
 	}
 
-	if nullableID &&
+	if clearable &&
 		src.Pointer &&
 		src.Name == typeNameString &&
 		dest.Name == typeNameString &&
 		!dest.Pointer {
 		return "StringValue(" + source + ")", nil, false, true
+	}
+	if clearable && src.Map && equalTypes(src, dest) {
+		return "mapValue(" + source + ")", nil, false, true
 	}
 
 	expr, ok := valueExpression(source, src, dest, true)
@@ -997,6 +1081,12 @@ func renderHelpers(modulePath string) ([]byte, error) {
 	buf.WriteString("return 0\n")
 	buf.WriteString("}\n")
 	buf.WriteString("return int64(*value)\n")
+	buf.WriteString("}\n\n")
+	buf.WriteString("func mapValue[K comparable, V any](value map[K]V) map[K]V {\n")
+	buf.WriteString("if value == nil {\n")
+	buf.WriteString("return map[K]V{}\n")
+	buf.WriteString("}\n")
+	buf.WriteString("return value\n")
 	buf.WriteString("}\n")
 
 	output, err := format.Source(buf.Bytes())
@@ -1087,6 +1177,12 @@ func generatedImports(types []generatedType, modulePath string) []generatedImpor
 			pulidPath := modulePath + "/shared/pulid"
 			importsByPath[pulidPath] = generatedImport{
 				Path: pulidPath,
+			}
+		}
+		if item.Patch != nil && item.Patch.NeedsErrortypes {
+			errortypesPath := modulePath + "/pkg/errortypes"
+			importsByPath[errortypesPath] = generatedImport{
+				Path: errortypesPath,
 			}
 		}
 		if item.NeedsDomain {
@@ -1192,15 +1288,44 @@ func camelToSnake(value string) string {
 	var builder strings.Builder
 	runes := []rune(value)
 	for i, ch := range runes {
-		if i > 0 && unicode.IsUpper(ch) {
-			prev := runes[i-1]
-			nextIsLower := i+1 < len(runes) && unicode.IsLower(runes[i+1])
-			if unicode.IsLower(prev) || unicode.IsDigit(prev) || nextIsLower {
-				builder.WriteByte('_')
-			}
+		if isWordBoundary(runes, i) {
+			builder.WriteByte('_')
 		}
 		builder.WriteRune(unicode.ToLower(ch))
 	}
 
 	return builder.String()
+}
+
+func humanizeFieldName(value string) string {
+	if value == "" {
+		return ""
+	}
+
+	runes := []rune(value)
+	words := make([]string, 0, 4)
+	var current strings.Builder
+	for i, ch := range runes {
+		if isWordBoundary(runes, i) {
+			words = append(words, current.String())
+			current.Reset()
+		}
+		current.WriteRune(ch)
+	}
+	words = append(words, current.String())
+	if len(words) > 1 && words[len(words)-1] == "ID" {
+		words = words[:len(words)-1]
+	}
+
+	return strings.Join(words, " ")
+}
+
+func isWordBoundary(runes []rune, i int) bool {
+	if i == 0 || !unicode.IsUpper(runes[i]) {
+		return false
+	}
+	prev := runes[i-1]
+	nextIsLower := i+1 < len(runes) && unicode.IsLower(runes[i+1])
+
+	return unicode.IsLower(prev) || unicode.IsDigit(prev) || nextIsLower
 }

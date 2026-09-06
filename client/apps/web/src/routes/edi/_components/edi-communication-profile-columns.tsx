@@ -2,11 +2,11 @@ import { DataTablePlaceholder } from "@/components/data-table/_components/data-t
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
+import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { communicationProfileMethods, profileStatusOptions } from "./edi-schemas";
 
-export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProfile>[] {
+export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProfileRow>[] {
   return [
     {
       accessorKey: "name",
@@ -86,7 +86,7 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
         if (secretState != null && secretState.length > 0) {
           return (
             <div className="flex flex-wrap gap-1">
-              {row.original.secretState.map((secret) => (
+              {secretState.map((secret) => (
                 <Badge key={secret.key} variant="secondary">
                   {secret.key}
                 </Badge>

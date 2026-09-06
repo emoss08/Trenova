@@ -152,7 +152,14 @@ export function formatPerMile(value: number, digits: number = 2, currency: strin
   return `${formatted}/mi`;
 }
 
-export function formatLocation(location?: Location) {
+export type FormattableLocation = Pick<
+  Location,
+  "addressLine1" | "addressLine2" | "city" | "postalCode"
+> & {
+  state?: Pick<NonNullable<Location["state"]>, "abbreviation"> | null;
+};
+
+export function formatLocation(location?: FormattableLocation) {
   if (!location) {
     return "";
   }
@@ -187,6 +194,10 @@ export function getNameInitials(name?: string, fallback = "U") {
     .slice(0, 2);
 
   return letters || fallback;
+}
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function isAbsoluteUrl(value?: string | null) {

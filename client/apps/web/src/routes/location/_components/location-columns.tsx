@@ -2,12 +2,13 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { LocationRow } from "@/lib/graphql/location-table";
 import type { Location } from "@trenova/shared/types/location";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function LocationStatusCell({ row }: { row: Location }) {
+function LocationStatusCell({ row }: { row: LocationRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -33,7 +34,7 @@ function LocationStatusCell({ row }: { row: Location }) {
   );
 }
 
-export function getColumns(): ColumnDef<Location>[] {
+export function getColumns(): ColumnDef<LocationRow>[] {
   return [
     {
       accessorKey: "status",

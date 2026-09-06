@@ -113,17 +113,17 @@ export default function MatchingWorkspace() {
 
   const invoicesQuery = useQuery({
     queryKey: ["carrier-invoice-matching-invoices"],
-    queryFn: () => fetchEdiCarrierInvoices({ limit: 200 }),
+    queryFn: ({ signal }) => fetchEdiCarrierInvoices({ limit: 200 }, { signal }),
   });
 
   const matchesQuery = useQuery({
     queryKey: ["carrier-invoice-matching-matches"],
-    queryFn: () => fetchCarrierInvoiceMatches({ limit: 200 }),
+    queryFn: ({ signal }) => fetchCarrierInvoiceMatches({ limit: 200 }, { signal }),
   });
 
   const controlQuery = useQuery({
     queryKey: ["carrier-settlement-control"],
-    queryFn: fetchCarrierSettlementControl,
+    queryFn: ({ signal }) => fetchCarrierSettlementControl({ signal }),
   });
 
   const refresh = () => invalidateMatchingQueries(queryClient);

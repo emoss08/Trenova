@@ -212,16 +212,20 @@ func (r *repository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*tableconfiguration.TableConfiguration)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count table configurations", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*tableconfiguration.TableConfiguration)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count table configurations", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -229,7 +233,7 @@ func (r *repository) ListConnection(
 		dbhelper.CursorListParams[*tableconfiguration.TableConfiguration]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*tableconfiguration.TableConfiguration) *bun.SelectQuery {
 				return dba.
 					NewSelect().

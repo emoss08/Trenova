@@ -11,8 +11,18 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { dateToUnixTimestamp, formatRange, generateDateOnly } from "@trenova/shared/lib/date";
-import { cancelMyPto, fetchMyPto, requestMyPto } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  dateToUnixTimestamp,
+  formatRange,
+  generateDateOnly,
+  inclusiveDays,
+} from "@trenova/shared/lib/date";
+import {
+  cancelMyPto,
+  fetchMyPto,
+  requestMyPto,
+  type PortalPtoBalance,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PortalPtoType } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,19 +30,26 @@ import { CalendarDaysIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PtoStatusBadge, ptoTypeLabels } from "./portal-badges";
+import { PtoBalanceStrip, useMyPtoBalances } from "./pto-balance-strip";
+import { useDashFeatures } from "./use-dash-features";
 
 const ptoTypes = Object.keys(ptoTypeLabels) as PortalPtoType[];
 
 export function PtoSection() {
   const queryClient = useQueryClient();
   const [requestOpen, setRequestOpen] = useState(false);
-  const pto = useQuery({ queryKey: ["dash-pto"], queryFn: fetchMyPto });
+  const pto = useQuery({ queryKey: ["dash-pto"], queryFn: ({ signal }) => fetchMyPto({ signal }) });
+  const features = useDashFeatures();
+  const balances = useMyPtoBalances(features.ptoBalances);
 
   const cancel = useMutation({
     mutationFn: (id: string) => cancelMyPto(id),
     onSuccess: async () => {
       toast.success("Request cancelled.");
-      await queryClient.invalidateQueries({ queryKey: ["dash-pto"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["dash-pto"] }),
+        queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),
+      ]);
     },
     onError: (error: Error) => toast.error(error.message || "We couldn't cancel that request."),
   });
@@ -49,6 +66,10 @@ export function PtoSection() {
           Request
         </Button>
       </div>
+
+      {features.ptoBalances ? (
+        <PtoBalanceStrip balances={balances.data} isPending={balances.isPending} />
+      ) : null}
 
       {pto.isPending ? (
         <Skeleton className="h-16 w-full rounded-xl" />
@@ -91,17 +112,18 @@ export function PtoSection() {
         </p>
       )}
 
-      <PtoRequestDrawer open={requestOpen} onOpenChange={setRequestOpen} />
+      <PtoRequestDrawer balances={balances.data} open={requestOpen} onOpenChange={setRequestOpen} />
     </div>
   );
 }
 
 type PtoRequestDrawerProps = {
+  balances?: PortalPtoBalance[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-function PtoRequestDrawer({ open, onOpenChange }: PtoRequestDrawerProps) {
+function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProps) {
   const queryClient = useQueryClient();
   const [type, setType] = useState<PortalPtoType>("Personal");
   const [startDate, setStartDate] = useState("");
@@ -134,7 +156,10 @@ function PtoRequestDrawer({ open, onOpenChange }: PtoRequestDrawerProps) {
     },
     onSuccess: async () => {
       toast.success("Request sent — you'll get a notification when it's reviewed.");
-      await queryClient.invalidateQueries({ queryKey: ["dash-pto"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["dash-pto"] }),
+        queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),
+      ]);
       reset();
       onOpenChange(false);
     },
@@ -142,6 +167,17 @@ function PtoRequestDrawer({ open, onOpenChange }: PtoRequestDrawerProps) {
   });
 
   const canSubmit = startDate.length > 0 && endDate.length > 0 && reason.trim().length > 0;
+
+  const balance = balances?.find((entry) => entry.ptoType === type);
+  const requestedDays = (() => {
+    const start = generateDateOnly(startDate);
+    const end = generateDateOnly(endDate);
+    if (!start || !end || end < start) return 0;
+    return inclusiveDays(dateToUnixTimestamp(start), dateToUnixTimestamp(end));
+  })();
+  const available = balance ? Number(balance.availableDays) : null;
+  const overdrawn =
+    balance?.enforced && available !== null && requestedDays > 0 && requestedDays > available;
 
   return (
     <Drawer
@@ -194,6 +230,20 @@ function PtoRequestDrawer({ open, onOpenChange }: PtoRequestDrawerProps) {
               />
             </div>
           </div>
+          {requestedDays > 0 ? (
+            <p
+              className={cn("text-xs text-muted-foreground", overdrawn && "text-destructive")}
+              data-testid="pto-request-days"
+            >
+              {requestedDays} day{requestedDays === 1 ? "" : "s"}
+              {available !== null
+                ? ` · ${available.toFixed(available % 1 === 0 ? 0 : 2)} available`
+                : ""}
+              {overdrawn
+                ? " — more than you have banked; your manager may still approve it if days accrue by then."
+                : ""}
+            </p>
+          ) : null}
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}

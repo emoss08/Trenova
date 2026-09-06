@@ -59,6 +59,15 @@ export async function uploadMyProfileDocument(file: File, documentTypeId?: strin
   return api.upload<PortalLoadDocument>("/portal/profile/documents/", formData);
 }
 
+export async function uploadMyCredentialDocument(credentialId: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return api.upload<PortalLoadDocument>(
+    `/portal/credentials/${encodeURIComponent(credentialId)}/document/`,
+    formData,
+  );
+}
+
 export async function uploadMyExpenseReceipt(expenseId: string, file: File) {
   const formData = new FormData();
   formData.append("file", file);

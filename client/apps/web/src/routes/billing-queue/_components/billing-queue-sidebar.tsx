@@ -12,16 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
-import { api } from "@trenova/shared/lib/api";
 import { billTypeChoices, billingQueueStatusChoices } from "@/lib/choices";
-import { safeParse } from "@trenova/shared/lib/parse";
 import { apiService } from "@/services/api";
-import {
-  billingQueueItemSchema,
-  type BillingQueueFilterPreset,
-  type BillingQueueItem,
+import type {
+  BillingQueueFilterPreset,
+  BillingQueueItem,
 } from "@trenova/shared/types/billing-queue";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import type { User } from "@trenova/shared/types/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FilterIcon, InboxIcon, SaveIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
@@ -29,13 +25,18 @@ import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useState } from "react";
 import type { FieldValues } from "react-hook-form";
 import { toast } from "sonner";
+import {
+  BILLING_QUEUE_FILTER_PRESETS_KEY,
+  BILLING_QUEUE_LIST_KEY,
+  billingQueueFilterPresetsQuery,
+  billingQueueListQuery,
+} from "../billing-queue-queries";
 import { queueSidebarSearchParamsParser } from "../use-billing-queue-state";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueCancelDialog } from "./billing-queue-cancel-dialog";
 import { BillingQueueItemCard } from "./billing-queue-item-card";
 import { BillingQueueSavePresetDialog } from "./billing-queue-save-preset-dialog";
 
-const billingQueueListSchema = createLimitOffsetResponse(billingQueueItemSchema);
 const EMPTY_ITEMS: BillingQueueItem[] = [];
 
 function PresetSelector({
@@ -93,17 +94,13 @@ export function BillingQueueSidebar({
     (includePosted ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0 || !!search;
 
-  const { data: presetsData } = useQuery({
-    queryKey: ["billing-queue-filter-presets"],
-    queryFn: () => apiService.billingQueueService.listFilterPresets(),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: presetsData } = useQuery(billingQueueFilterPresetsQuery());
 
   const { mutate: deletePreset } = useMutation({
     mutationFn: (id: string) => apiService.billingQueueService.deleteFilterPreset(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ["billing-queue-filter-presets"],
+        queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY],
       });
       void setSearchParams({ preset: null });
       toast.success("Filter preset deleted");
@@ -138,59 +135,15 @@ export function BillingQueueSidebar({
     }
   };
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "billing-queue-list",
-      statusFilter,
-      billerFilter.join(","),
-      billerFilter[0],
-      billTypeFilter,
-      deferredSearch,
+  const { data, isLoading } = useQuery(
+    billingQueueListQuery({
+      status: statusFilter,
+      billers: billerFilter,
+      billType: billTypeFilter,
+      search: deferredSearch,
       includePosted,
-    ],
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: "100" });
-      const filters: Array<{
-        field: string;
-        operator: string;
-        value: string | string[];
-      }> = [];
-      if (statusFilter) {
-        filters.push({ field: "status", operator: "eq", value: statusFilter });
-      }
-      if (billerFilter.length === 1) {
-        filters.push({
-          field: "assignedBillerId",
-          operator: "eq",
-          value: billerFilter[0],
-        });
-      } else if (billerFilter.length > 1) {
-        filters.push({
-          field: "assignedBillerId",
-          operator: "in",
-          value: billerFilter,
-        });
-      }
-      if (billTypeFilter) {
-        filters.push({
-          field: "billType",
-          operator: "eq",
-          value: billTypeFilter,
-        });
-      }
-      if (deferredSearch.trim()) {
-        params.set("query", deferredSearch.trim());
-      }
-      if (includePosted) {
-        params.set("includePosted", "true");
-      }
-      if (filters.length > 0) {
-        params.set("fieldFilters", JSON.stringify(filters));
-      }
-      const response = await api.get(`/billing-queue/?${params.toString()}`);
-      return safeParse(billingQueueListSchema, response, "BillingQueueList");
-    },
-  });
+    }),
+  );
 
   const { mutate: updateStatus } = useMutation({
     mutationFn: ({ itemId, status }: { itemId: string; status: string }) =>
@@ -198,7 +151,7 @@ export function BillingQueueSidebar({
         status: status as any,
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
+      void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_LIST_KEY] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
     },
     onError: () => {

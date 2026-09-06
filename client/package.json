@@ -15,10 +15,10 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@tanstack/eslint-plugin-query": "^5.101.4",
+    "@tanstack/eslint-plugin-query": "^5.102.8",
     "eslint-plugin-better-tailwindcss": "^4.7.0",
-    "oxlint": "^1.77.0",
+    "oxlint": "^1.81.0",
     "oxlint-tsgolint": "^7.0.2001",
-    "turbo": "^2.10.8"
+    "turbo": "^2.10.12"
   }
 }

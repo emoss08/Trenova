@@ -258,27 +258,31 @@ func (r *repository) ListInboundFilesCursor(
 		return sq
 	}
 
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDIInboundFile)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"eif",
-				req.Filter,
-				(*edi.EDIInboundFile)(nil),
-			)
-			return extraFilters(sq)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDIInboundFile)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"eif",
+					req.Filter,
+					(*edi.EDIInboundFile)(nil),
+				)
+				return extraFilters(sq)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIInboundFile]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDIInboundFile) *bun.SelectQuery {
 			return dba.
 				NewSelect().

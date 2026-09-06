@@ -1,0 +1,260 @@
+"""
+The column of the OSHA 300 log a case lands in. The log records only the most
+serious outcome, so a case that was restricted and then went days-away is a
+days-away case.
+"""
+enum OSHACaseClassification {
+  NotRecordable
+  FirstAidOnly
+  OtherRecordable
+  JobTransferOrRestriction
+  DaysAway
+  Death
+}
+
+enum OSHAIllnessType {
+  Injury
+  SkinDisorder
+  RespiratoryCondition
+  Poisoning
+  HearingLoss
+  OtherIllness
+}
+
+enum InjuryTreatment {
+  None
+  FirstAid
+  MedicalTreatment
+  EmergencyRoom
+  Hospitalized
+}
+
+enum InjuryCaseStatus {
+  Open
+  Closed
+}
+
+enum WorkersCompClaimStatus {
+  NotFiled
+  Filed
+  Accepted
+  Denied
+  Closed
+}
+
+enum OSHASummaryStatus {
+  Draft
+  Certified
+}
+
+"""
+One injury or illness case. The recordable ones are the OSHA 300 log; the rest
+are kept because the decision not to record is itself worth a record.
+"""
+type WorkerInjury {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  """
+  Case numbers restart each calendar year, which is how the 300 log reads.
+  """
+  caseNumber: Int!
+  caseYear: Int!
+  classification: OSHACaseClassification!
+  illnessType: OSHAIllnessType!
+  treatment: InjuryTreatment!
+  status: InjuryCaseStatus!
+  recordable: Boolean!
+  occurredAt: Timestamp!
+  reportedAt: Timestamp
+  returnedToWorkAt: Timestamp
+  location: String
+  description: String!
+  bodyPart: String
+  harmfulAgent: String
+  """
+  Calendar days away from work, capped at 180 as the log requires.
+  """
+  daysAway: Int!
+  daysRestricted: Int!
+  """
+  A privacy concern case (29 CFR 1904.29(b)(6)): the name is withheld from the
+  posted log.
+  """
+  privacyCase: Boolean!
+  """
+  The name as it appears on the posted log — "Privacy Case" where the case is
+  one.
+  """
+  logName: String!
+  claimStatus: WorkersCompClaimStatus!
+  claimNumber: String
+  claimCarrier: String
+  claimFiledAt: Timestamp
+  claimClosedAt: Timestamp
+  safetyEventId: ID
+  documentId: ID
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+  document: WorkerCredentialDocument
+}
+
+"""
+The 300A summary for one establishment and year. The organisation is the
+establishment: it carries one address, which is what OSHA means by one.
+"""
+type OSHAAnnualSummary {
+  id: ID!
+  year: Int!
+  status: OSHASummaryStatus!
+  naicsCode: String
+  averageEmployees: Int!
+  totalHoursWorked: Int!
+  executiveName: String
+  executiveTitle: String
+  executivePhone: String
+  certifiedAt: Timestamp
+  certifiedById: ID
+  postedFrom: Timestamp
+  postedThrough: Timestamp
+  submittedAt: Timestamp
+  submissionReference: String
+  notes: String
+  version: Int!
+}
+
+"""
+The boxed part of the 300A, counted from the log rather than typed in.
+"""
+type OSHASummaryTotals {
+  deaths: Int!
+  daysAwayCases: Int!
+  jobTransferCases: Int!
+  otherRecordableCases: Int!
+  totalRecordableCases: Int!
+  totalDaysAway: Int!
+  totalDaysRestricted: Int!
+  injuryCount: Int!
+  skinDisorderCount: Int!
+  respiratoryCount: Int!
+  poisoningCount: Int!
+  hearingLossCount: Int!
+  otherIllnessCount: Int!
+  """
+  Cases still accruing days. Not part of the 300A, but a summary certified over
+  numbers that are still moving is a signature on a figure about to change.
+  """
+  openCases: Int!
+}
+
+"""
+One year of the log with its totals. The totals are counted on every read, so a
+case corrected years later cannot leave a stale summary behind it.
+"""
+type OSHALog {
+  year: Int!
+  cases: [WorkerInjury!]!
+  totals: OSHASummaryTotals!
+  summary: OSHAAnnualSummary
+  postFrom: Timestamp!
+  postThrough: Timestamp!
+  """
+  Recordable cases per 100 full-time workers a year. Null until the summary
+  records hours worked: a rate over zero hours is not a number.
+  """
+  totalRecordableIncidentRate: Float
+  """
+  The DART rate: cases serious enough to keep somebody off their job, per 100
+  full-time workers.
+  """
+  daysAwayRestrictedRate: Float
+}
+
+input RecordWorkerInjuryInput {
+  workerId: ID!
+  occurredAt: Timestamp!
+  description: String!
+  classification: OSHACaseClassification
+  illnessType: OSHAIllnessType
+  treatment: InjuryTreatment
+  reportedAt: Timestamp
+  returnedToWorkAt: Timestamp
+  location: String
+  bodyPart: String
+  harmfulAgent: String
+  daysAway: Int
+  daysRestricted: Int
+  privacyCase: Boolean
+  claimStatus: WorkersCompClaimStatus
+  claimNumber: String
+  claimCarrier: String
+  claimFiledAt: Timestamp
+  safetyEventId: ID
+  documentId: ID
+  notes: String
+}
+
+input UpdateWorkerInjuryInput {
+  injuryId: ID!
+  classification: OSHACaseClassification
+  illnessType: OSHAIllnessType
+  treatment: InjuryTreatment
+  status: InjuryCaseStatus
+  occurredAt: Timestamp
+  reportedAt: Timestamp
+  returnedToWorkAt: Timestamp
+  location: String
+  description: String
+  bodyPart: String
+  harmfulAgent: String
+  daysAway: Int
+  daysRestricted: Int
+  privacyCase: Boolean
+  claimStatus: WorkersCompClaimStatus
+  claimNumber: String
+  claimCarrier: String
+  claimFiledAt: Timestamp
+  claimClosedAt: Timestamp
+  safetyEventId: ID
+  documentId: ID
+  notes: String
+}
+
+input SaveOSHASummaryInput {
+  year: Int!
+  naicsCode: String
+  averageEmployees: Int
+  totalHoursWorked: Int
+  executiveName: String
+  executiveTitle: String
+  executivePhone: String
+  postedFrom: Timestamp
+  postedThrough: Timestamp
+  submittedAt: Timestamp
+  submissionReference: String
+  notes: String
+}
+
+extend type Query {
+  workerInjuries(workerId: ID!): [WorkerInjury!]!
+  workerInjury(id: ID!): WorkerInjury!
+  """
+  One year of the OSHA 300 log with its 300A totals. Leave the year empty for
+  the current one.
+  """
+  oshaLog(year: Int): OSHALog!
+  oshaSummaries: [OSHAAnnualSummary!]!
+}
+
+extend type Mutation {
+  recordWorkerInjury(input: RecordWorkerInjuryInput!): WorkerInjury!
+  updateWorkerInjury(input: UpdateWorkerInjuryInput!): WorkerInjury!
+  deleteWorkerInjury(id: ID!): Boolean!
+  saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
+  certifyOshaSummary(year: Int!): OSHAAnnualSummary!
+  uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
+}

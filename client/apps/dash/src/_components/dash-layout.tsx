@@ -25,7 +25,7 @@ const tabs = [
 export function useDashProfile() {
   return useQuery({
     queryKey: ["dash-profile"],
-    queryFn: fetchMyPortalProfile,
+    queryFn: ({ signal }) => fetchMyPortalProfile({ signal }),
     staleTime: 5 * 60 * 1000,
   });
 }

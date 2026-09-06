@@ -38,7 +38,7 @@ const carriersItem: NavItem = {
 const workersItem: NavItem = {
   id: "workers",
   label: "Workers",
-  path: "/dispatch/workers",
+  path: "/hr/workers",
   resource: Resource.Worker,
 };
 

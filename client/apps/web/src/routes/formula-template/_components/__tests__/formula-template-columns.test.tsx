@@ -1,9 +1,9 @@
-import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
+import type { FormulaTemplateRow } from "@/lib/graphql/formula-template-table";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getColumns } from "../formula-template-columns";
 
-function cellFor(accessorKey: string, original: Partial<FormulaTemplate>) {
+function cellFor(accessorKey: string, original: Partial<FormulaTemplateRow>) {
   const column = getColumns().find((c) => "accessorKey" in c && c.accessorKey === accessorKey);
   if (!column || typeof column.cell !== "function") {
     throw new Error(`no renderable column ${accessorKey}`);
@@ -15,14 +15,16 @@ function cellFor(accessorKey: string, original: Partial<FormulaTemplate>) {
 
 describe("formula template list columns", () => {
   it("shows how many things rate with a template and how many scenarios guard it", () => {
-    expect(cellFor("usageCount", { usageCount: 12 } as Partial<FormulaTemplate>)).toContain("12");
-    expect(cellFor("usageCount", { usageCount: 0 } as Partial<FormulaTemplate>)).toContain(
+    expect(cellFor("usageCount", { usageCount: 12 } as Partial<FormulaTemplateRow>)).toContain(
+      "12",
+    );
+    expect(cellFor("usageCount", { usageCount: 0 } as Partial<FormulaTemplateRow>)).toContain(
       "Not in use",
     );
-    expect(cellFor("scenarioCount", { scenarioCount: 3 } as Partial<FormulaTemplate>)).toContain(
+    expect(cellFor("scenarioCount", { scenarioCount: 3 } as Partial<FormulaTemplateRow>)).toContain(
       "3",
     );
-    expect(cellFor("scenarioCount", { scenarioCount: 0 } as Partial<FormulaTemplate>)).toContain(
+    expect(cellFor("scenarioCount", { scenarioCount: 0 } as Partial<FormulaTemplateRow>)).toContain(
       "None",
     );
   });

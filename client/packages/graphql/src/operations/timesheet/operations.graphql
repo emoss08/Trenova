@@ -1,0 +1,177 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query Timesheets($filter: TimesheetFilterInput) {
+  timesheets(filter: $filter) {
+    id
+    workerId
+    status
+    periodStart
+    periodEnd
+    regularMinutes
+    overtimeMinutes
+    paidLeaveMinutes
+    totalMinutes
+    entryCount
+    overtimeThresholdMinutes
+    submittedAt
+    approvedAt
+    decisionNote
+    payrollExportId
+    version
+    worker {
+      id
+      firstName
+      lastName
+      type
+    }
+  }
+}
+
+query Timesheet($id: ID!) {
+  timesheet(id: $id) {
+    id
+    workerId
+    status
+    periodStart
+    periodEnd
+    regularMinutes
+    overtimeMinutes
+    paidLeaveMinutes
+    totalMinutes
+    entryCount
+    overtimeThresholdMinutes
+    submittedAt
+    approvedAt
+    decisionNote
+    payrollExportId
+    version
+    worker {
+      id
+      firstName
+      lastName
+    }
+    entries {
+      id
+      workerId
+      source
+      clockedInAt
+      clockedOutAt
+      breakMinutes
+      paidMinutes
+      note
+      editReason
+      version
+    }
+  }
+}
+
+query OpenTimeClockEntry($workerId: ID!) {
+  openTimeClockEntry(workerId: $workerId) {
+    id
+    workerId
+    clockedInAt
+    source
+    note
+  }
+}
+
+query TimeClockEntries($workerId: ID!, $from: Timestamp, $to: Timestamp, $limit: Int) {
+  timeClockEntries(workerId: $workerId, from: $from, to: $to, limit: $limit) {
+    id
+    workerId
+    timesheetId
+    source
+    clockedInAt
+    clockedOutAt
+    breakMinutes
+    paidMinutes
+    note
+    editReason
+    version
+  }
+}
+
+query PayrollExports($limit: Int) {
+  payrollExports(limit: $limit) {
+    id
+    status
+    periodStart
+    periodEnd
+    timesheetCount
+    regularMinutes
+    overtimeMinutes
+    paidLeaveMinutes
+    generatedAt
+    voidedAt
+    voidReason
+    note
+    version
+  }
+}
+
+query PayrollExportRows($id: ID!) {
+  payrollExportRows(id: $id) {
+    workerId
+    workerName
+    periodStart
+    periodEnd
+    regularMinutes
+    overtimeMinutes
+    paidLeaveMinutes
+  }
+}
+
+mutation ClockIn($input: ClockInput!) {
+  clockIn(input: $input) {
+    id
+    clockedInAt
+  }
+}
+
+mutation ClockOut($input: ClockInput!) {
+  clockOut(input: $input) {
+    id
+    clockedOutAt
+    paidMinutes
+  }
+}
+
+mutation RecordTimeEntry($input: RecordTimeEntryInput!) {
+  recordTimeEntry(input: $input) {
+    id
+    clockedInAt
+    clockedOutAt
+    paidMinutes
+  }
+}
+
+mutation DeleteTimeEntry($input: DeleteTimeEntryInput!) {
+  deleteTimeEntry(input: $input)
+}
+
+mutation TransitionTimesheet($input: TransitionTimesheetInput!) {
+  transitionTimesheet(input: $input) {
+    id
+    status
+    submittedAt
+    approvedAt
+  }
+}
+
+mutation GeneratePayrollExport($input: GeneratePayrollExportInput!) {
+  generatePayrollExport(input: $input) {
+    id
+    status
+    timesheetCount
+    regularMinutes
+    overtimeMinutes
+  }
+}
+
+mutation VoidPayrollExport($input: VoidPayrollExportInput!) {
+  voidPayrollExport(input: $input) {
+    id
+    status
+    voidedAt
+  }
+}

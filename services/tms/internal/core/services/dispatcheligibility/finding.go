@@ -19,6 +19,10 @@ const (
 	CodeMedicalCardExpired    = "driver.medical_card_expired"
 	CodePhysicalOverdue       = "driver.physical_overdue"
 	CodePreEmploymentDrugTest = "driver.pre_employment_drug_test"
+	CodeDrugAlcoholProhibited = "driver.drug_alcohol_prohibited"
+	CodeDrugAlcoholPending    = "driver.drug_alcohol_pending"
+	CodeDrugAlcoholUnknown    = "driver.drug_alcohol_unknown"
+	CodeClearinghouseOverdue  = "driver.clearinghouse_query_overdue"
 	CodeMVROverdue            = "driver.mvr_overdue"
 	//nolint:gosec // G101: an eligibility finding code; "passed" is not a password
 	CodeMVRDueDatePassed         = "driver.mvr_due_date_passed"

@@ -6,13 +6,14 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { FleetCodeRow } from "@/lib/graphql/fleet-code-table";
 import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 // eslint-disable-next-line react-refresh/only-export-components
-function StatusCell({ row }: { row: FleetCode }) {
+function StatusCell({ row }: { row: FleetCodeRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -37,7 +38,7 @@ function StatusCell({ row }: { row: FleetCode }) {
     />
   );
 }
-export function getColumns(): ColumnDef<FleetCode>[] {
+export function getColumns(): ColumnDef<FleetCodeRow>[] {
   return [
     {
       accessorKey: "code",

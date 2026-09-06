@@ -94,22 +94,31 @@ func (r *repository) ListTemplatesCursor(
 	req *repositories.ListEDITemplatesRequest,
 ) (*pagination.CursorListResult[*edi.EDITemplate], error) {
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDITemplate)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFiltersWithoutSort(sq, "et", req.Filter, (*edi.EDITemplate)(nil))
-			return applyTemplateListFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDITemplate)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"et",
+					req.Filter,
+					(*edi.EDITemplate)(nil),
+				)
+				return applyTemplateListFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITemplate]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDITemplate) *bun.SelectQuery {
 			rel := buncolgen.EDITemplateRelations
 			return dba.

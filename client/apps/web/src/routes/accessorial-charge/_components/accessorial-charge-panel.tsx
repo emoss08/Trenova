@@ -1,9 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import {
-  accessorialChargeSchema,
-  type AccessorialCharge,
-} from "@trenova/shared/types/accessorial-charge";
+import type { AccessorialChargeRow } from "@/lib/graphql/accessorial-charge-table";
+import { accessorialChargeSchema } from "@trenova/shared/types/accessorial-charge";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,7 +12,7 @@ export function AccessorialChargePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<AccessorialCharge>) {
+}: DataTablePanelProps<AccessorialChargeRow>) {
   const form = useForm({
     resolver: zodResolver(accessorialChargeSchema),
     defaultValues: {

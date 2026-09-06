@@ -90,7 +90,7 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
             </Tooltip>
           )}
           <Link
-            to={`/dispatch/workers?panelType=edit&panelEntityId=${state.workerId}&tab=hos`}
+            to={`/hr/workers?panelType=edit&panelEntityId=${state.workerId}&tab=hos`}
             className={cn(
               "truncate text-[11px] font-semibold hover:underline",
               severity !== "normal" && SEVERITY_TEXT[severity],

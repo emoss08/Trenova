@@ -1,4 +1,5 @@
 import { NumberField } from "@/components/fields/number-field";
+import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import {
@@ -11,6 +12,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { fetchDashControl, updateDashControl } from "@trenova/shared/lib/graphql/driver-portal";
+import { digestCadenceLabel, WEEKDAY_LABELS } from "@trenova/shared/lib/csa";
 import {
   dashControlFormSchema,
   type DashControlFormValues,
@@ -21,11 +23,18 @@ import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
+const CADENCE_OPTIONS = (["Immediate", "Daily", "Weekly"] as const).map((value) => ({
+  value,
+  label: digestCadenceLabel(value),
+}));
+
+const WEEKDAY_OPTIONS = WEEKDAY_LABELS.map((label, value) => ({ value: String(value), label }));
+
 export default function DashControlForm() {
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["dash-control"],
-    queryFn: fetchDashControl,
+    queryFn: ({ signal }) => fetchDashControl({ signal }),
   });
 
   const form = useForm<DashControlFormValues>({
@@ -45,6 +54,11 @@ export default function DashControlForm() {
       allowContactInfoEdit: data.allowContactInfoEdit,
       allowPtoRequests: data.allowPtoRequests,
       sendCredentialReminders: data.sendCredentialReminders,
+      requireContactChangeApproval: data.requireContactChangeApproval,
+      driverDigestCadence: data.driverDigestCadence,
+      driverDigestWeekday: String(
+        data.driverDigestWeekday,
+      ) as DashControlFormValues["driverDigestWeekday"],
       enableDetentionAlerts: data.enableDetentionAlerts,
       detentionAlertThresholdMinutes: data.detentionAlertThresholdMinutes,
     },
@@ -56,6 +70,7 @@ export default function DashControlForm() {
       updateDashControl({
         version: data.version,
         ...values,
+        driverDigestWeekday: Number(values.driverDigestWeekday),
       }),
     onSuccess: (_, values) => {
       toast.success("Dash control updated — drivers see the change immediately");
@@ -261,6 +276,14 @@ function ProfileCard() {
           <FormControl>
             <SwitchField
               control={control}
+              name="requireContactChangeApproval"
+              label="Approve Contact Edits"
+              description="A driver's edit waits on the office as a change request instead of landing straight on the record."
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
               name="allowPtoRequests"
               label="Time-Off Requests"
               description="Drivers request PTO from Dash; requests land in the existing approval workflow."
@@ -275,6 +298,8 @@ function ProfileCard() {
 function AlertsCard() {
   const { control } = useFormContext<DashControlFormValues>();
   const detentionAlerts = useWatch({ control, name: "enableDetentionAlerts" });
+  const reminders = useWatch({ control, name: "sendCredentialReminders" });
+  const cadence = useWatch({ control, name: "driverDigestCadence" });
   return (
     <Card>
       <CardHeader>
@@ -291,6 +316,26 @@ function AlertsCard() {
               name="sendCredentialReminders"
               label="Credential Expiry Reminders"
               description="Push drivers reminders at 30/14/3 days before a credential expires. Compliance always gets expired-credential alerts."
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="driverDigestCadence"
+              label="How Drivers Are Told"
+              options={CADENCE_OPTIONS}
+              isReadOnly={!reminders}
+              description="Bundle everything a driver owes into one notice instead of one each. The per-obligation reminders are suppressed while a round-up is in use, so nobody is told twice."
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="driverDigestWeekday"
+              label="Weekly Round-Up Day"
+              options={WEEKDAY_OPTIONS}
+              isReadOnly={cadence !== "Weekly"}
+              description="The day the weekly notice goes out. A weekly round-up looks a fortnight ahead so nothing falls due in the gap between two of them."
             />
           </FormControl>
           <FormControl>

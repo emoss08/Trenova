@@ -39,4 +39,11 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewCarrierSeed())
 	r.MustRegister(development.NewRoutingGuideSeed())
 	r.MustRegister(development.NewRateAgreementSeed())
+	r.MustRegister(development.NewPTOPolicySeed())
+	r.MustRegister(development.NewWorkerCredentialSeed())
+	r.MustRegister(development.NewWorkerEmploymentEventSeed())
+	r.MustRegister(development.NewWorkerChecklistSeed())
+	r.MustRegister(development.NewOrgHolidaySeed())
+	r.MustRegister(development.NewWorkerTrainingSeed())
+	r.MustRegister(development.NewWorkerSafetySeed())
 }

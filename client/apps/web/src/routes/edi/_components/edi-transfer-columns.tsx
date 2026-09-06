@@ -3,12 +3,12 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediTransferStatusChoices } from "@/lib/choices";
-import type { EDITransfer } from "@trenova/shared/types/edi";
+import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { LinkIcon } from "lucide-react";
 import { Link } from "react-router";
 
-export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef<EDITransfer>[] {
+export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef<EDITransferRow>[] {
   return [
     {
       accessorKey: "status",

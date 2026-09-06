@@ -19,14 +19,17 @@ fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode {
   updatedAt
 }
 
-query ServiceFailureReasonCodeTable($input: DataTableConnectionInput!) {
+query ServiceFailureReasonCodeTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   serviceFailureReasonCodes(input: $input) {
     edges {
       node {
         ...ServiceFailureReasonCodeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

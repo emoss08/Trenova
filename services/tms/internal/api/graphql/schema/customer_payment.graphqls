@@ -21,8 +21,8 @@ type CustomerPaymentApplication {
   appliedAmountMinor: Int!
   shortPayAmountMinor: Int!
   lineNumber: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   invoice: Invoice
 }
 
@@ -31,8 +31,8 @@ type CustomerPayment {
   organizationId: ID!
   businessUnitId: ID!
   customerId: ID!
-  paymentDate: Int!
-  accountingDate: Int!
+  paymentDate: Timestamp!
+  accountingDate: Timestamp!
   amountMinor: Int!
   appliedAmountMinor: Int!
   unappliedAmountMinor: Int!
@@ -44,13 +44,13 @@ type CustomerPayment {
   postedBatchId: ID
   reversalBatchId: ID
   reversedById: ID
-  reversedAt: Int
+  reversedAt: Timestamp
   reversalReason: String!
   createdById: ID!
   updatedById: ID
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   customer: Customer
   applications: [CustomerPaymentApplication!]
 }
@@ -74,8 +74,8 @@ input CustomerPaymentApplicationInput {
 
 input PostCustomerPaymentInput {
   customerId: ID!
-  paymentDate: Int!
-  accountingDate: Int!
+  paymentDate: Timestamp!
+  accountingDate: Timestamp!
   amountMinor: Int!
   paymentMethod: CustomerPaymentMethod!
   referenceNumber: String
@@ -86,13 +86,13 @@ input PostCustomerPaymentInput {
 
 input ApplyCustomerPaymentInput {
   paymentId: ID!
-  accountingDate: Int!
+  accountingDate: Timestamp!
   applications: [CustomerPaymentApplicationInput!]!
 }
 
 input ReverseCustomerPaymentInput {
   paymentId: ID!
-  accountingDate: Int!
+  accountingDate: Timestamp!
   reason: String
 }
 

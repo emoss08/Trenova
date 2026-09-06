@@ -1,6 +1,13 @@
-import { UserSettingsDialog } from "@/components/navigation/user-settings-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useTheme } from "@trenova/shared/components/theme-provider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -17,8 +24,58 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ChevronsUpDown, LogOut, Palette, Settings, User } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router";
+
+// The settings dialog carries the timezone/time-format choice tables, the
+// avatar cropper and the react-hook-form field set — none of which belong in
+// the chunk that renders the sidebar on every page.
+const UserSettingsDialog = lazy(() =>
+  import("@/components/navigation/user-settings-dialog").then((module) => ({
+    default: module.UserSettingsDialog,
+  })),
+);
+
+function UserSettingsDialogSkeleton({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+          <DialogDescription>Manage your preferences and security.</DialogDescription>
+        </DialogHeader>
+        <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
+          <Skeleton className="size-14 shrink-0 rounded-md" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <Skeleton className="h-3.5 w-40 rounded" />
+            <Skeleton className="h-3 w-28 rounded" />
+            <Skeleton className="h-3 w-48 rounded" />
+          </div>
+        </div>
+        <div className="space-y-5">
+          {Array.from({ length: 3 }, (_, section) => (
+            <div key={section} className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-8 shrink-0 rounded-lg" />
+                <div className="flex flex-col gap-1.5">
+                  <Skeleton className="h-3.5 w-32 rounded" />
+                  <Skeleton className="h-3 w-56 rounded" />
+                </div>
+              </div>
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function UserMenu() {
   const user = useAuthStore((s) => s.user);
@@ -26,6 +83,7 @@ export function UserMenu() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsMounted, setSettingsMounted] = useState(false);
 
   const displayName = user?.name ?? user?.username ?? "User";
 
@@ -36,7 +94,15 @@ export function UserMenu() {
 
   return (
     <>
-      <UserSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {settingsMounted && (
+        <Suspense
+          fallback={
+            <UserSettingsDialogSkeleton open={settingsOpen} onOpenChange={setSettingsOpen} />
+          }
+        >
+          <UserSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        </Suspense>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -94,7 +160,10 @@ export function UserMenu() {
             <DropdownMenuItem
               title="Settings"
               startContent={<Settings className="size-4" />}
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => {
+                setSettingsMounted(true);
+                setSettingsOpen(true);
+              }}
             />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>

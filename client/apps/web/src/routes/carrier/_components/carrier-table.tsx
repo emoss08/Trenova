@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { carrierStatusChoices } from "@/lib/choices";
-import { carrierTableGraphQLConfig } from "@/lib/graphql/carrier-table";
+import { carrierTableGraphQLConfig, type CarrierRow } from "@/lib/graphql/carrier-table";
 import { apiService } from "@/services/api";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import type { DockAction } from "@trenova/shared/types/data-table";
@@ -17,11 +17,11 @@ export default function CarrierTable() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Carrier[], status: string) => {
+    async (rows: CarrierRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.carrierService.bulkUpdateStatus({
-          carrierIds: ids as string[],
+          carrierIds: ids,
           status: status as Carrier["status"],
         }),
         {
@@ -40,7 +40,7 @@ export default function CarrierTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Carrier>[]>(
+  const dockActions = useMemo<DockAction<CarrierRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +57,7 @@ export default function CarrierTable() {
   );
 
   return (
-    <DataTable<Carrier>
+    <DataTable<CarrierRow>
       name="Carrier"
       queryKey="carrier-list"
       resource={Resource.Carrier}

@@ -321,6 +321,15 @@ export const dashControlFormSchema = z
     allowContactInfoEdit: z.boolean(),
     allowPtoRequests: z.boolean(),
     sendCredentialReminders: z.boolean(),
+    requireContactChangeApproval: z.boolean(),
+    driverDigestCadence: z.enum(["Immediate", "Daily", "Weekly"]),
+    // A select writes strings, and the column is an integer. Keeping the form
+    // honest about that is better than a schema that quietly disagrees with
+    // the control bound to it; the integer is made at the call site.
+    // A select writes strings, and the column is an integer. Keeping the form
+    // honest about that is better than a schema that quietly disagrees with
+    // the control bound to it; the integer is made at the call site.
+    driverDigestWeekday: z.enum(["0", "1", "2", "3", "4", "5", "6"]),
     enableDetentionAlerts: z.boolean(),
     detentionAlertThresholdMinutes: z.number().int().min(15).max(1440),
   })
@@ -344,6 +353,15 @@ export const dashControlFormSchema = z
         code: z.ZodIssueCode.custom,
         path: ["requireExpenseReceipt"],
         message: "Receipt requirement only applies when expense submission is enabled",
+      });
+    }
+    // A digest with reminders switched off would collect obligations and send
+    // nothing, which reads as a working setting that quietly does nothing.
+    if (values.driverDigestCadence !== "Immediate" && !values.sendCredentialReminders) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["driverDigestCadence"],
+        message: "A digest needs driver reminders switched on — there would be nothing to bundle",
       });
     }
   });

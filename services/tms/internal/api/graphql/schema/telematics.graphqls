@@ -11,8 +11,8 @@ type VehiclePosition {
   fuelPercent: Float
   odometerMeters: Int
   formattedLocation: String
-  recordedAt: Int!
-  receivedAt: Int!
+  recordedAt: Timestamp!
+  receivedAt: Timestamp!
   primaryWorkerId: ID
   primaryWorkerName: String
 }
@@ -28,7 +28,7 @@ type WorkerHosState {
   cycleRemainingMs: Int!
   cycleTomorrowMs: Int!
   breakRemainingMs: Int!
-  cycleStartedAt: Int
+  cycleStartedAt: Timestamp
   shiftDrivingViolationMs: Int!
   cycleViolationMs: Int!
   currentVehicleId: String
@@ -40,7 +40,7 @@ type WorkerHosState {
   shiftLimitMs: Int!
   cycleLimitMs: Int!
   breakLimitMs: Int!
-  recordedAt: Int!
+  recordedAt: Timestamp!
 }
 
 type WorkerHosViolation {
@@ -48,10 +48,10 @@ type WorkerHosViolation {
   violationType: String!
   description: String
   durationMs: Int!
-  violationStartAt: Int!
-  dayStartAt: Int
-  dayEndAt: Int
-  detectedAt: Int!
+  violationStartAt: Timestamp!
+  dayStartAt: Timestamp
+  dayEndAt: Timestamp
+  detectedAt: Timestamp!
 }
 
 type TelematicsStatus {
@@ -59,8 +59,8 @@ type TelematicsStatus {
   enabled: Boolean!
   configured: Boolean!
   webhookConfigured: Boolean!
-  lastPolledAt: Int
-  lastSuccessAt: Int
+  lastPolledAt: Timestamp
+  lastSuccessAt: Timestamp
   failureCount: Int!
   lastError: String
   mappedTractors: Int!
@@ -70,8 +70,8 @@ type TelematicsStatus {
 
 type WorkerHosLogEntry {
   hosStatusType: String!
-  logStartAt: Int!
-  logEndAt: Int
+  logStartAt: Timestamp!
+  logEndAt: Timestamp
   remark: String
   vehicleId: String
   vehicleName: String
@@ -81,8 +81,8 @@ type WorkerHosLogEntry {
 }
 
 type WorkerHosDailyLog {
-  startAt: Int!
-  endAt: Int!
+  startAt: Timestamp!
+  endAt: Timestamp!
   driveDistanceMeters: Int!
   activeDurationMs: Int!
   driveDurationMs: Int!
@@ -92,7 +92,7 @@ type WorkerHosDailyLog {
   personalConveyanceDurationMs: Int!
   yardMoveDurationMs: Int!
   isCertified: Boolean!
-  certifiedAt: Int
+  certifiedAt: Timestamp
   shippingDocs: String
   vehicleNames: [String!]
 }
@@ -105,8 +105,8 @@ type VehicleInspection {
   tractorId: ID
   workerId: ID
   workerName: String
-  startedAt: Int!
-  endedAt: Int!
+  startedAt: Timestamp!
+  endedAt: Timestamp!
   odometerMeters: Int
   location: String
   signed: Boolean!
@@ -124,7 +124,7 @@ type WorkerFormSubmission {
   id: ID!
   templateId: String!
   templateName: String!
-  submittedAt: Int!
+  submittedAt: Timestamp!
   fields: [FormSubmissionField!]!
 }
 
@@ -148,7 +148,7 @@ type DriverFeasibility {
   reasons: [String!]!
   tractorId: ID
   tractorCode: String
-  recordedAt: Int!
+  recordedAt: Timestamp!
 }
 
 type TelematicsFormFieldValue {
@@ -166,7 +166,7 @@ type TelematicsFormSubmission {
   workerName: String!
   shipmentId: ID
   stopId: ID
-  submittedAt: Int!
+  submittedAt: Timestamp!
   applied: Boolean!
   appliedFields: Int!
   fields: [TelematicsFormFieldValue!]!
@@ -219,11 +219,11 @@ extend type Query {
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
   workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
   workerHosState(workerId: ID!): WorkerHosState
-  workerHosViolations(workerId: ID, since: Int, limit: Int): [WorkerHosViolation!]!
-  workerHosLogs(workerId: ID!, startTime: Int!, endTime: Int!): [WorkerHosLogEntry!]!
+  workerHosViolations(workerId: ID, since: Timestamp, limit: Int): [WorkerHosViolation!]!
+  workerHosLogs(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerHosLogEntry!]!
   workerHosDailyLogs(workerId: ID!, startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
-  vehicleInspections(tractorId: ID, workerId: ID, since: Int, limit: Int): [VehicleInspection!]!
-  workerFormSubmissions(workerId: ID!, startTime: Int!, endTime: Int!): [WorkerFormSubmission!]!
+  vehicleInspections(tractorId: ID, workerId: ID, since: Timestamp, limit: Int): [VehicleInspection!]!
+  workerFormSubmissions(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerFormSubmission!]!
   hosCertificationSummary(startDate: String!, endDate: String!): [HosCertificationSummary!]!
   telematicsStatus: TelematicsStatus!
 }

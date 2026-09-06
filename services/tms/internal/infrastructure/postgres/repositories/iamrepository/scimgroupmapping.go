@@ -103,16 +103,20 @@ func (r *repository) ListSCIMGroupRoleMappingsConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*iam.SCIMGroupRoleMapping)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyGroupRoleMappingCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count scim group role mappings", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*iam.SCIMGroupRoleMapping)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyGroupRoleMappingCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count scim group role mappings", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -120,7 +124,7 @@ func (r *repository) ListSCIMGroupRoleMappingsConnection(
 		dbhelper.CursorListParams[*iam.SCIMGroupRoleMapping]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*iam.SCIMGroupRoleMapping) *bun.SelectQuery {
 				return dba.
 					NewSelect().

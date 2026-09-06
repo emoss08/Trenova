@@ -84,13 +84,13 @@ export function AssignPayProfileDialog({
 
   const { data: profileOptions } = useQuery({
     queryKey: ["pay-profile-options"],
-    queryFn: () => fetchPayProfileOptions(),
+    queryFn: ({ signal }) => fetchPayProfileOptions(undefined, { signal }),
     enabled: open && !payProfileId,
   });
 
   const { data: selectedProfile } = useQuery({
     queryKey: ["pay-profile-detail", selectedProfileId],
-    queryFn: () => fetchPayProfileDetail(selectedProfileId),
+    queryFn: ({ signal }) => fetchPayProfileDetail(selectedProfileId, { signal }),
     enabled: open && !!selectedProfileId,
   });
 

@@ -72,15 +72,12 @@ import {
   type CreateRecurringDeductionInput,
   type CreateRecurringEarningInput,
   type DriverPayEventTableQuery,
-  type DriverPayEventTableQueryVariables,
   type DriverSettlementActionInput,
   type DriverSettlementDetailQuery,
   type DriverSettlementTableQuery,
-  type DriverSettlementTableQueryVariables,
   type EffectiveWorkerPayAssignmentQuery,
   type EndWorkerPayAssignmentInput,
   type EscrowAccountTableQuery,
-  type EscrowAccountTableQueryVariables,
   type GenerateDriverSettlementInput,
   type GenerateSettlementBatchInput,
   type IssuePayAdvanceInput,
@@ -89,22 +86,16 @@ import {
   type UnsettledPayEventsQuery,
   type OpenEscrowAccountInput,
   type PayAdvanceTableQuery,
-  type PayAdvanceTableQueryVariables,
   type PayProfileAssignmentsQuery,
   type PayProfileDetailQuery,
   type PayProfileTableQuery,
-  type PayProfileTableQueryVariables,
   type PayeeClassification,
   type PayCodeOptionsQuery,
   type PayCodeTableQuery,
-  type PayCodeTableQueryVariables,
   type RecurringDeductionTableQuery,
-  type RecurringDeductionTableQueryVariables,
   type RecurringEarningTableQuery,
-  type RecurringEarningTableQueryVariables,
   type RemoveSettlementAdjustmentInput,
   type SettlementBatchTableQuery,
-  type SettlementBatchTableQueryVariables,
   type UpdatePayProfileInput,
   type UpdatePayCodeInput,
   type UpdateRecurringDeductionInput,
@@ -160,88 +151,61 @@ export type SettlementWorkspaceSummary =
 export type UnsettledWorkerSummary =
   UnsettledWorkerSummariesQuery["unsettledWorkerSummaries"][number];
 
-export const payProfileTableGraphQLConfig = defineDataTableGraphQLConfig<
-  PayProfileRow,
-  PayProfileTableQueryVariables
->({
+export const payProfileTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: PayProfileTableDocument,
   operationName: "PayProfileTable",
   connectionKey: "payProfiles",
 });
 
-export const recurringDeductionTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RecurringDeductionRow,
-  RecurringDeductionTableQueryVariables
->({
+export const recurringDeductionTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RecurringDeductionTableDocument,
   operationName: "RecurringDeductionTable",
   connectionKey: "recurringDeductions",
 });
 
-export const payCodeTableGraphQLConfig = defineDataTableGraphQLConfig<
-  PayCodeRow,
-  PayCodeTableQueryVariables
->({
+export const payCodeTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: PayCodeTableDocument,
   operationName: "PayCodeTable",
   connectionKey: "payCodes",
 });
 
-export const recurringEarningTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RecurringEarningRow,
-  RecurringEarningTableQueryVariables
->({
+export const recurringEarningTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RecurringEarningTableDocument,
   operationName: "RecurringEarningTable",
   connectionKey: "recurringEarnings",
 });
 
-export const payAdvanceTableGraphQLConfig = defineDataTableGraphQLConfig<
-  PayAdvanceRow,
-  PayAdvanceTableQueryVariables
->({
+export const payAdvanceTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: PayAdvanceTableDocument,
   operationName: "PayAdvanceTable",
   connectionKey: "payAdvances",
 });
 
-export const escrowAccountTableGraphQLConfig = defineDataTableGraphQLConfig<
-  EscrowAccountRow,
-  EscrowAccountTableQueryVariables
->({
+export const escrowAccountTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: EscrowAccountTableDocument,
   operationName: "EscrowAccountTable",
   connectionKey: "escrowAccounts",
 });
 
-export const driverSettlementTableGraphQLConfig = defineDataTableGraphQLConfig<
-  DriverSettlementRow,
-  DriverSettlementTableQueryVariables
->({
+export const driverSettlementTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: DriverSettlementTableDocument,
   operationName: "DriverSettlementTable",
   connectionKey: "driverSettlements",
 });
 
-export const settlementBatchTableGraphQLConfig = defineDataTableGraphQLConfig<
-  SettlementBatchRow,
-  SettlementBatchTableQueryVariables
->({
+export const settlementBatchTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: SettlementBatchTableDocument,
   operationName: "SettlementBatchTable",
   connectionKey: "settlementBatches",
 });
 
-export const driverPayEventTableGraphQLConfig = defineDataTableGraphQLConfig<
-  DriverPayEventRow,
-  DriverPayEventTableQueryVariables
->({
+export const driverPayEventTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: DriverPayEventTableDocument,
   operationName: "DriverPayEventTable",
   connectionKey: "driverPayEvents",
 });
 
-export async function fetchPayProfileOptions(query?: string) {
+export async function fetchPayProfileOptions(query?: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: PayProfileOptionsDocument,
     operationName: "PayProfileOptions",
@@ -251,69 +215,89 @@ export async function fetchPayProfileOptions(query?: string) {
         query: query || undefined,
       },
     },
+    signal: options?.signal,
   });
   return (data.payProfiles.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchEffectiveWorkerPayAssignment(workerId: string) {
+export async function fetchEffectiveWorkerPayAssignment(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: EffectiveWorkerPayAssignmentDocument,
     operationName: "EffectiveWorkerPayAssignment",
     variables: { workerId },
+    signal: options?.signal,
   });
   return data.effectiveWorkerPayAssignment;
 }
 
-export async function fetchPayProfileAssignments(payProfileId: string) {
+export async function fetchPayProfileAssignments(
+  payProfileId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: PayProfileAssignmentsDocument,
     operationName: "PayProfileAssignments",
     variables: { payProfileId },
+    signal: options?.signal,
   });
   return data.payProfileAssignments;
 }
 
-export async function fetchPayProfileDetail(id: string) {
+export async function fetchPayProfileDetail(id: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: PayProfileDetailDocument,
     operationName: "PayProfileDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.payProfile;
 }
 
-export async function fetchWorkerPayAssignments(workerId: string) {
+export async function fetchWorkerPayAssignments(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: WorkerPayAssignmentsDocument,
     operationName: "WorkerPayAssignments",
     variables: { workerId },
+    signal: options?.signal,
   });
   return data.workerPayAssignments;
 }
 
-export async function fetchDriverSettlementDetail(id: string) {
+export async function fetchDriverSettlementDetail(id: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: DriverSettlementDetailDocument,
     operationName: "DriverSettlementDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.driverSettlement;
 }
 
-export async function fetchEscrowAccountDetail(id: string) {
+export async function fetchEscrowAccountDetail(id: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: EscrowAccountDetailDocument,
     operationName: "EscrowAccountDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.escrowAccount;
 }
 
-export async function fetchWorkerEarningsSummary(workerId: string) {
+export async function fetchWorkerEarningsSummary(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: WorkerEarningsSummaryDocument,
     operationName: "WorkerEarningsSummary",
     variables: { workerId },
+    signal: options?.signal,
   });
   return data.workerEarningsSummary;
 }
@@ -321,27 +305,31 @@ export async function fetchWorkerEarningsSummary(workerId: string) {
 export async function fetchWorkerYtdPaySummaries(
   year: number,
   classification?: PayeeClassification,
+  options?: { signal?: AbortSignal },
 ) {
   const data = await requestGraphQL({
     document: WorkerYtdPaySummariesDocument,
     operationName: "WorkerYtdPaySummaries",
     variables: { year, classification },
+    signal: options?.signal,
   });
   return data.workerYtdPaySummaries;
 }
 
-export async function fetchSettlementControl() {
+export async function fetchSettlementControl(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: SettlementControlDocument,
     operationName: "SettlementControl",
+    signal: options?.signal,
   });
   return data.settlementControl;
 }
 
-export async function fetchCurrentSettlementPeriod() {
+export async function fetchCurrentSettlementPeriod(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: CurrentSettlementPeriodDocument,
     operationName: "CurrentSettlementPeriod",
+    signal: options?.signal,
   });
   return data.currentSettlementPeriod;
 }
@@ -350,20 +338,26 @@ export async function fetchPreviewDriverSettlement(
   workerId: string,
   periodStart?: number,
   periodEnd?: number,
+  options?: { signal?: AbortSignal },
 ) {
   const data = await requestGraphQL({
     document: PreviewDriverSettlementDocument,
     operationName: "PreviewDriverSettlement",
     variables: { workerId, periodStart, periodEnd },
+    signal: options?.signal,
   });
   return data.previewDriverSettlement;
 }
 
-export async function exportSettlementBatchCsv(batchId: string) {
+export async function exportSettlementBatchCsv(
+  batchId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: ExportSettlementBatchCsvDocument,
     operationName: "ExportSettlementBatchCsv",
     variables: { batchId },
+    signal: options?.signal,
   });
   return data.exportSettlementBatchCsv;
 }
@@ -422,11 +416,15 @@ export async function updateRecurringDeduction(input: UpdateRecurringDeductionIn
   return data.updateRecurringDeduction;
 }
 
-export async function fetchPayCodeOptions(direction?: "Earning" | "Deduction") {
+export async function fetchPayCodeOptions(
+  direction?: "Earning" | "Deduction",
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: PayCodeOptionsDocument,
     operationName: "PayCodeOptions",
     variables: { direction },
+    signal: options?.signal,
   });
   return data.payCodeOptions;
 }
@@ -611,16 +609,25 @@ export async function removeDriverSettlementAdjustment(input: RemoveSettlementAd
   return data.removeDriverSettlementAdjustment;
 }
 
-export async function fetchSettlementWorkspaceSummary(periodStart?: number, periodEnd?: number) {
+export async function fetchSettlementWorkspaceSummary(
+  periodStart?: number,
+  periodEnd?: number,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: SettlementWorkspaceSummaryDocument,
     operationName: "SettlementWorkspaceSummary",
     variables: { periodStart, periodEnd },
+    signal: options?.signal,
   });
   return data.settlementWorkspaceSummary;
 }
 
-export async function fetchWorkspaceSettlements(periodStart: number, periodEnd: number) {
+export async function fetchWorkspaceSettlements(
+  periodStart: number,
+  periodEnd: number,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: DriverSettlementTableDocument,
     operationName: "DriverSettlementTable",
@@ -634,11 +641,15 @@ export async function fetchWorkspaceSettlements(periodStart: number, periodEnd: 
         sort: [{ field: "createdAt", direction: "asc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.driverSettlements.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchWorkerUnsettledPayEvents(workerId: string) {
+export async function fetchWorkerUnsettledPayEvents(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: DriverPayEventTableDocument,
     operationName: "DriverPayEventTable",
@@ -652,11 +663,15 @@ export async function fetchWorkerUnsettledPayEvents(workerId: string) {
         sort: [{ field: "eventDate", direction: "desc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.driverPayEvents.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchWorkerRecurringDeductions(workerId: string) {
+export async function fetchWorkerRecurringDeductions(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: RecurringDeductionTableDocument,
     operationName: "RecurringDeductionTable",
@@ -667,20 +682,29 @@ export async function fetchWorkerRecurringDeductions(workerId: string) {
         sort: [{ field: "createdAt", direction: "desc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.recurringDeductions.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchUnsettledWorkerSummaries(periodStart?: number, periodEnd?: number) {
+export async function fetchUnsettledWorkerSummaries(
+  periodStart?: number,
+  periodEnd?: number,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: UnsettledWorkerSummariesDocument,
     operationName: "UnsettledWorkerSummaries",
     variables: { periodStart, periodEnd },
+    signal: options?.signal,
   });
   return data.unsettledWorkerSummaries;
 }
 
-export async function fetchWorkerRecurringEarnings(workerId: string) {
+export async function fetchWorkerRecurringEarnings(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: RecurringEarningTableDocument,
     operationName: "RecurringEarningTable",
@@ -691,11 +715,12 @@ export async function fetchWorkerRecurringEarnings(workerId: string) {
         sort: [{ field: "createdAt", direction: "desc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.recurringEarnings.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchWorkerPayAdvances(workerId: string) {
+export async function fetchWorkerPayAdvances(workerId: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: PayAdvanceTableDocument,
     operationName: "PayAdvanceTable",
@@ -706,6 +731,7 @@ export async function fetchWorkerPayAdvances(workerId: string) {
         sort: [{ field: "issuedDate", direction: "desc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.payAdvances.edges ?? []).map((edge) => edge.node);
 }
@@ -766,11 +792,15 @@ export async function updateSettlementControl(input: UpdateSettlementControlInpu
 
 export type UnsettledPayEvent = UnsettledPayEventsQuery["unsettledPayEvents"][number];
 
-export async function fetchUnsettledPayEvents(workerId: string) {
+export async function fetchUnsettledPayEvents(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: UnsettledPayEventsDocument,
     operationName: "UnsettledPayEvents",
     variables: { workerId },
+    signal: options?.signal,
   });
   return data.unsettledPayEvents;
 }

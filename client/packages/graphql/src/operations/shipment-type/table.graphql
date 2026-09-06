@@ -11,14 +11,14 @@ fragment ShipmentTypeTableRowFields on ShipmentType {
   updatedAt
 }
 
-query ShipmentTypeTable($input: DataTableConnectionInput!) {
+query ShipmentTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   shipmentTypes(input: $input) {
     edges {
       node {
         ...ShipmentTypeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

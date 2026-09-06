@@ -23,7 +23,7 @@ func (r *userResolver) currentOrganization(
 		return nil, errortypes.NewDatabaseError("Organization loader is not configured")
 	}
 
-	return loadersForRequest.OrganizationByID.Load(ctx, obj.CurrentOrganizationID.String())()
+	return loadersForRequest.OrganizationByID.Load(ctx, obj.CurrentOrganizationID.String())
 }
 
 func (r *mutationResolver) applyOrganizationCapabilities(

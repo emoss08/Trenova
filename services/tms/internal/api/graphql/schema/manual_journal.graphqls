@@ -15,26 +15,26 @@ type ManualJournal {
   status: ManualJournalStatus!
   description: String!
   reason: String
-  accountingDate: Int!
+  accountingDate: Timestamp!
   requestedFiscalYearId: ID!
   requestedFiscalPeriodId: ID!
   currencyCode: String!
   totalDebit: Int!
   totalCredit: Int!
-  approvedAt: Int
+  approvedAt: Timestamp
   approvedById: ID
-  rejectedAt: Int
+  rejectedAt: Timestamp
   rejectedById: ID
   rejectionReason: String
-  cancelledAt: Int
+  cancelledAt: Timestamp
   cancelledById: ID
   cancelReason: String
   postedBatchId: ID
   createdById: ID
   updatedById: ID
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ManualJournalEdge {

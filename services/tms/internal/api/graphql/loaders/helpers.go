@@ -2,10 +2,19 @@ package loaders
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/graph-gophers/dataloader/v7"
+	"github.com/vikstrous/dataloadgen"
+	"go.opentelemetry.io/otel"
+)
+
+const (
+	tracerName    = "trenova.graphql.loaders"
+	batchWait     = time.Millisecond
+	batchCapacity = pagination.MaxLimit
 )
 
 type entityWithID interface {
@@ -14,38 +23,53 @@ type entityWithID interface {
 
 type fetchByIDsFunc[T entityWithID] func(context.Context, []pulid.ID) ([]T, error)
 
+type batchFetchFunc[T any] func(context.Context, []string) ([]T, []error)
+
+func loaderOptions() []dataloadgen.Option {
+	return []dataloadgen.Option{
+		dataloadgen.WithWait(batchWait),
+		dataloadgen.WithBatchCapacity(batchCapacity),
+		dataloadgen.WithTracer(otel.Tracer(tracerName)),
+	}
+}
+
+func newLoader[T any](fetch batchFetchFunc[T]) *dataloadgen.Loader[string, T] {
+	return dataloadgen.NewLoader(fetch, loaderOptions()...)
+}
+
 func batchByIDFunc[T entityWithID](
 	fetch fetchByIDsFunc[T],
 	notFoundMessage string,
-) dataloader.BatchFunc[string, T] {
-	return func(ctx context.Context, keys []string) []*dataloader.Result[T] {
-		results, ids, indexesByID := parseBatchKeys[T](keys)
+) batchFetchFunc[T] {
+	return func(ctx context.Context, keys []string) ([]T, []error) {
+		values := make([]T, len(keys))
+		errs := make([]error, len(keys))
+
+		ids, indexesByID := parseBatchKeys(keys, errs)
 		if len(ids) == 0 {
-			return results
+			return values, errs
 		}
 
 		entities, err := fetch(ctx, ids)
 		if err != nil {
-			fillMissingResults(results, err)
-			return results
+			fillMissingErrors(errs, err)
+			return values, errs
 		}
 
-		fillEntityResults(results, ids, indexesByID, entities, notFoundMessage)
-		return results
+		fillEntityResults(values, errs, ids, indexesByID, entities, notFoundMessage)
+
+		return values, errs
 	}
 }
 
-func parseBatchKeys[T any](
-	keys []string,
-) ([]*dataloader.Result[T], []pulid.ID, map[pulid.ID][]int) {
-	results := make([]*dataloader.Result[T], len(keys))
+func parseBatchKeys(keys []string, errs []error) ([]pulid.ID, map[pulid.ID][]int) {
 	ids := make([]pulid.ID, 0, len(keys))
 	indexesByID := make(map[pulid.ID][]int, len(keys))
 
 	for idx, key := range keys {
 		id, err := parseLoaderID(key)
 		if err != nil {
-			results[idx] = &dataloader.Result[T]{Error: err}
+			errs[idx] = err
 			continue
 		}
 
@@ -55,11 +79,12 @@ func parseBatchKeys[T any](
 		indexesByID[id] = append(indexesByID[id], idx)
 	}
 
-	return results, ids, indexesByID
+	return ids, indexesByID
 }
 
 func fillEntityResults[T entityWithID](
-	results []*dataloader.Result[T],
+	values []T,
+	errs []error,
 	ids []pulid.ID,
 	indexesByID map[pulid.ID][]int,
 	entities []T,
@@ -71,28 +96,85 @@ func fillEntityResults[T entityWithID](
 	}
 
 	for _, id := range ids {
-		entity, ok := entitiesByID[id]
-		resultErr := error(nil)
-		if !ok {
-			resultErr = errortypes.NewNotFoundError(notFoundMessage)
-		}
+		entity, found := entitiesByID[id]
 		for _, idx := range indexesByID[id] {
-			results[idx] = &dataloader.Result[T]{
-				Data:  entity,
-				Error: resultErr,
+			if !found {
+				errs[idx] = errortypes.NewNotFoundError(notFoundMessage)
+				continue
 			}
+			values[idx] = entity
 		}
 	}
 }
 
-func fillMissingResults[T any](results []*dataloader.Result[T], err error) {
-	for idx := range results {
-		if results[idx] == nil {
-			results[idx] = &dataloader.Result[T]{Error: err}
+func fillMissingErrors(errs []error, err error) {
+	for idx := range errs {
+		if errs[idx] == nil {
+			errs[idx] = err
 		}
 	}
 }
 
 func parseLoaderID(value string) (pulid.ID, error) {
 	return pulid.MustParse(value)
+}
+
+type fetchCountsByIDFunc func(context.Context, []pulid.ID) (map[pulid.ID]int, error)
+
+type fetchGroupsByIDFunc[T any] func(context.Context, []pulid.ID) (map[pulid.ID][]T, error)
+
+func batchCountFunc(fetch fetchCountsByIDFunc) batchFetchFunc[int] {
+	return func(ctx context.Context, keys []string) ([]int, []error) {
+		values := make([]int, len(keys))
+		errs := make([]error, len(keys))
+
+		ids, indexesByID := parseBatchKeys(keys, errs)
+		if len(ids) == 0 {
+			return values, errs
+		}
+
+		counts, err := fetch(ctx, ids)
+		if err != nil {
+			fillMissingErrors(errs, err)
+			return values, errs
+		}
+
+		for _, id := range ids {
+			for _, idx := range indexesByID[id] {
+				values[idx] = counts[id]
+			}
+		}
+
+		return values, errs
+	}
+}
+
+func batchGroupFunc[T any](fetch fetchGroupsByIDFunc[T]) batchFetchFunc[[]T] {
+	return func(ctx context.Context, keys []string) ([][]T, []error) {
+		values := make([][]T, len(keys))
+		errs := make([]error, len(keys))
+
+		ids, indexesByID := parseBatchKeys(keys, errs)
+		if len(ids) == 0 {
+			return values, errs
+		}
+
+		groups, err := fetch(ctx, ids)
+		if err != nil {
+			fillMissingErrors(errs, err)
+			return values, errs
+		}
+
+		for _, id := range ids {
+			group := groups[id]
+			if group == nil {
+				group = []T{}
+			}
+			for _, idx := range indexesByID[id] {
+				values[idx] = group
+			}
+		}
+
+		return values, errs
+	}
 }

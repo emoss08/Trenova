@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { queries } from "@/lib/queries";
+import type { ApiKeyRow } from "@/lib/graphql/api-key-table";
 import { apiService } from "@/services/api";
 import type { ApiKey, ApiKeyPermissionInput, CreateApiKeyRequest } from "@/types/api-key";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -63,7 +64,7 @@ const apiKeyPanelSchema = z.object({
 
 export type ApiKeyPanelFormValues = z.infer<typeof apiKeyPanelSchema>;
 
-export function APIKeyPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<ApiKey>) {
+export function APIKeyPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<ApiKeyRow>) {
   if (mode === "edit" && row) {
     return <APIKeyEditPanel open={open} onOpenChange={onOpenChange} row={row} />;
   }
@@ -71,7 +72,7 @@ export function APIKeyPanel({ open, onOpenChange, mode, row }: DataTablePanelPro
   return <APIKeyCreatePanel open={open} onOpenChange={onOpenChange} />;
 }
 
-type CreatePanelProps = Pick<DataTablePanelProps<ApiKey>, "open" | "onOpenChange">;
+type CreatePanelProps = Pick<DataTablePanelProps<ApiKeyRow>, "open" | "onOpenChange">;
 
 function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
   const queryClient = useQueryClient();
@@ -172,8 +173,8 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
   );
 }
 
-type EditPanelProps = Pick<DataTablePanelProps<ApiKey>, "open" | "onOpenChange" | "row"> & {
-  row: ApiKey;
+type EditPanelProps = Pick<DataTablePanelProps<ApiKeyRow>, "open" | "onOpenChange" | "row"> & {
+  row: ApiKeyRow;
 };
 
 function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {

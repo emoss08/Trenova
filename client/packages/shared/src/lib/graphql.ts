@@ -1,5 +1,6 @@
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { isRecord } from "@trenova/shared/lib/utils";
 import type {
   GraphQLExecutableDocument,
   TypedGraphQLDocument,
@@ -34,21 +35,67 @@ type GraphQLRequestBody<TVariables> = {
     };
   };
   operationName?: string;
-  query: string;
+  query?: string;
   variables?: TVariables;
 };
 
 type GraphQLRequestParams<TVariables = Record<string, unknown>> = {
   document: GraphQLExecutableDocument;
   operationName?: string;
+  signal?: AbortSignal;
   variables?: TVariables;
 };
 
 type TypedGraphQLRequestParams<TDocument extends TypedGraphQLDocument<unknown, never>> = {
   document: TDocument;
   operationName?: string;
+  signal?: AbortSignal;
   variables?: VariablesOf<TDocument>;
 };
+
+type PreparedGraphQLRequest<TVariables> = {
+  body: GraphQLRequestBody<TVariables>;
+  isMutation: boolean;
+  operationLabel: string | undefined;
+};
+
+// prepareGraphQLRequest turns a document into the wire body. A persisted document
+// (codegen output carrying __meta__.hash) is sent as its hash only: the server swaps
+// the safelisted text back in, so shipping the SDL on every call was pure overhead.
+// The operation name and kind come from the same metadata, so no document text has
+// to be scanned on the hot path; a raw string document still takes the scanning path.
+export function prepareGraphQLRequest<TVariables>(
+  document: GraphQLExecutableDocument,
+  operationName: string | undefined,
+  variables: TVariables | undefined,
+): PreparedGraphQLRequest<TVariables> {
+  const meta = typeof document === "string" ? undefined : document.__meta__;
+  const persistedHash = meta?.hash;
+  const query = persistedHash ? undefined : document.toString();
+  const operationLabel =
+    operationName ?? meta?.name ?? (query === undefined ? undefined : extractOperationName(query));
+  const isMutation =
+    meta?.kind === undefined
+      ? documentContainsMutation(query ?? document.toString())
+      : meta.kind === "mutation";
+
+  const body: GraphQLRequestBody<TVariables> = {
+    operationName: operationLabel,
+    variables,
+  };
+  if (persistedHash) {
+    body.extensions = {
+      persistedQuery: {
+        version: 1,
+        sha256Hash: persistedHash,
+      },
+    };
+  } else {
+    body.query = query;
+  }
+
+  return { body, isMutation, operationLabel };
+}
 
 export type GraphQLErrorExtensions = Record<string, unknown> & {
   code?: string;
@@ -289,10 +336,6 @@ export function documentContainsMutation(query: string): boolean {
   return false;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function stringExtension(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
@@ -407,30 +450,21 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
 export async function requestGraphQLResult<TData, TVariables = Record<string, unknown>>({
   document,
   operationName,
+  signal,
   variables,
 }: GraphQLRequestParams<TVariables>): Promise<GraphQLResult<TData>> {
-  const query = document.toString();
-  const body: GraphQLRequestBody<TVariables> = {
-    query,
+  const { body, isMutation, operationLabel } = prepareGraphQLRequest(
+    document,
     operationName,
     variables,
-  };
-  const persistedHash = typeof document === "string" ? undefined : document.__meta__?.hash;
-  if (persistedHash) {
-    body.extensions = {
-      persistedQuery: {
-        version: 1,
-        sha256Hash: persistedHash,
-      },
-    };
-  }
+  );
 
-  const operationLabel = operationName ?? extractOperationName(query);
   const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
     body: JSON.stringify(body),
     credentials: "include",
     headers: await withCsrfHeader("POST", { "Content-Type": "application/json" }, "/graphql"),
     method: "POST",
+    signal,
   });
 
   const payload = (await response.json().catch(() => ({}))) as GraphQLResponse<TData>;
@@ -468,7 +502,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
       return { data: payload.data, errors: graphQLErrors };
     }
 
-    if (!documentContainsMutation(query)) {
+    if (!isMutation) {
       partialErrorReporter?.(graphQLErrors, { operationName: operationLabel });
       return { data: payload.data, errors: graphQLErrors };
     }

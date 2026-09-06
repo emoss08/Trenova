@@ -1,4 +1,4 @@
-query ArAgingSummary($asOfDate: Int) {
+query ArAgingSummary($asOfDate: Timestamp) {
   arAgingSummary(asOfDate: $asOfDate) {
     asOfDate
     totals {
@@ -24,7 +24,7 @@ query ArAgingSummary($asOfDate: Int) {
   }
 }
 
-query ArOpenItems($customerId: ID, $asOfDate: Int) {
+query ArOpenItems($customerId: ID, $asOfDate: Timestamp) {
   arOpenItems(customerId: $customerId, asOfDate: $asOfDate) {
     invoiceId
     customerId
@@ -59,7 +59,7 @@ query ArCustomerLedger($customerId: ID!) {
   }
 }
 
-query ArCustomerStatement($customerId: ID!, $startDate: Int, $asOfDate: Int) {
+query ArCustomerStatement($customerId: ID!, $startDate: Timestamp, $asOfDate: Timestamp) {
   arCustomerStatement(customerId: $customerId, startDate: $startDate, asOfDate: $asOfDate) {
     customerId
     customerName

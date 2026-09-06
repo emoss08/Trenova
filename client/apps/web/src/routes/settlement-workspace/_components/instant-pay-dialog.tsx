@@ -72,7 +72,7 @@ export function InstantPayDialog({
 
   const events = useQuery({
     queryKey: ["unsettled-pay-events", workerId],
-    queryFn: () => fetchUnsettledPayEvents(workerId),
+    queryFn: ({ signal }) => fetchUnsettledPayEvents(workerId, { signal }),
     enabled: open && workerId.length > 0,
   });
 

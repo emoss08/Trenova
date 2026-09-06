@@ -10,9 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -30,6 +34,8 @@ type Params struct {
 	AuditService              services.AuditService
 	Realtime                  services.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
+	PTOPolicyService          *ptopolicyservice.Service        `optional:"true"`
+	CredentialService         *workercredentialservice.Service `optional:"true"`
 }
 
 type Service struct {
@@ -42,6 +48,9 @@ type Service struct {
 	realtime                  services.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 	validator                 *Validator
+	ptoPolicyService          *ptopolicyservice.Service
+	credentialService         *workercredentialservice.Service
+	employmentRecorder        services.EmploymentEventRecorder
 }
 
 //nolint:gocritic // dependency injection
@@ -55,8 +64,18 @@ func New(p Params) *Service {
 		auditService:              p.AuditService,
 		realtime:                  p.Realtime,
 		customFieldsValuesService: p.CustomFieldsValuesService,
+		ptoPolicyService:          p.PTOPolicyService,
+		credentialService:         p.CredentialService,
 		validator:                 p.Validator,
 	}
+}
+
+// SetEmploymentRecorder breaks the construction cycle between the worker
+// service (which opens a timeline when a worker is hired) and the employment
+// service (which applies event effects through the worker service): the
+// recorder arrives after both are built.
+func (s *Service) SetEmploymentRecorder(recorder services.EmploymentEventRecorder) {
+	s.employmentRecorder = recorder
 }
 
 func (s *Service) SelectOptions(
@@ -223,6 +242,10 @@ func (s *Service) Create(
 		return nil, err
 	}
 
+	s.assignDefaultPTOPolicy(ctx, createdEntity, auditActor.UserID, log)
+	s.syncCredentials(ctx, createdEntity, auditActor.UserID, log)
+	s.recordHired(ctx, createdEntity, auditActor.UserID, log)
+
 	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: createdEntity.GetOrganizationID(),
 		BusinessUnitID: createdEntity.GetBusinessUnitID(),
@@ -245,6 +268,26 @@ func (s *Service) Update(
 	ctx context.Context,
 	entity *worker.Worker,
 	actor *services.RequestActor,
+) (*worker.Worker, error) {
+	return s.update(ctx, entity, actor, true)
+}
+
+// UpdateFromEmployment is the write path the employment timeline uses: the
+// same persistence, audit and mirroring as Update, without the guard that
+// keeps status and termination changes out of the plain edit form.
+func (s *Service) UpdateFromEmployment(
+	ctx context.Context,
+	entity *worker.Worker,
+	actor *services.RequestActor,
+) (*worker.Worker, error) {
+	return s.update(ctx, entity, actor, false)
+}
+
+func (s *Service) update(
+	ctx context.Context,
+	entity *worker.Worker,
+	actor *services.RequestActor,
+	guardEmployment bool,
 ) (*worker.Worker, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -269,6 +312,13 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to get original worker", zap.Error(err))
 		return nil, err
+	}
+
+	if guardEmployment {
+		if guardErr := employmentGuard(original, entity); guardErr != nil {
+			return nil, guardErr
+		}
+		entity.LeaveType = original.LeaveType
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
@@ -315,6 +365,8 @@ func (s *Service) Update(
 		return nil, err
 	}
 
+	s.syncCredentials(ctx, updatedEntity, auditActor.UserID, log)
+
 	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: updatedEntity.GetOrganizationID(),
 		BusinessUnitID: updatedEntity.GetBusinessUnitID(),
@@ -331,4 +383,89 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+// employmentGuard keeps the plain edit form from flipping employment state:
+// status and termination date only move through a recorded timeline event so
+// the cascade (PTO, pay, dispatch) and the history stay consistent.
+func employmentGuard(original, next *worker.Worker) error {
+	if original == nil || next == nil {
+		return nil
+	}
+	multiErr := errortypes.NewMultiError()
+	if original.Status != next.Status {
+		multiErr.Add(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Change employment status by recording a Terminated, Rehired or similar event on the Timeline tab",
+		)
+	}
+	if original.Profile != nil && next.Profile != nil &&
+		!equalInt64Ptr(original.Profile.TerminationDate, next.Profile.TerminationDate) {
+		multiErr.Add(
+			"profile.terminationDate",
+			errortypes.ErrInvalidOperation,
+			"The termination date is set by a Terminated event on the Timeline tab",
+		)
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+func equalInt64Ptr(a, b *int64) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
+}
+
+func (s *Service) recordHired(
+	ctx context.Context,
+	entity *worker.Worker,
+	userID pulid.ID,
+	log *zap.Logger,
+) {
+	if s.employmentRecorder == nil || entity == nil {
+		return
+	}
+	if err := s.employmentRecorder.RecordHired(ctx, entity, userID); err != nil {
+		log.Warn("failed to record hire event", zap.Error(err))
+	}
+}
+
+func (s *Service) syncCredentials(
+	ctx context.Context,
+	entity *worker.Worker,
+	userID pulid.ID,
+	log *zap.Logger,
+) {
+	if s.credentialService == nil || entity == nil || entity.Profile == nil {
+		return
+	}
+	if err := s.credentialService.SyncFromProfile(ctx, entity, userID); err != nil {
+		log.Warn("failed to sync credentials from worker profile", zap.Error(err))
+	}
+}
+
+func (s *Service) assignDefaultPTOPolicy(
+	ctx context.Context,
+	entity *worker.Worker,
+	userID pulid.ID,
+	log *zap.Logger,
+) {
+	if s.ptoPolicyService == nil {
+		return
+	}
+	effectiveFrom := int64(0)
+	if entity.Profile != nil {
+		effectiveFrom = entity.Profile.HireDate
+	}
+	if err := s.ptoPolicyService.AssignDefaultPolicy(ctx, pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}, entity.ID, effectiveFrom, userID); err != nil {
+		log.Warn("failed to assign default PTO policy", zap.Error(err))
+	}
 }

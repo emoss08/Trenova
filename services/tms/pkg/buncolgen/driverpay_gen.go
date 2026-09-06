@@ -24,6 +24,263 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// BenefitPlan — table "benefit_plans", alias "bplan"
+// ---------------------------------------------------------------------------
+
+// BenefitPlanTable holds the table name, alias, and primary key columns
+// for the "benefit_plans" table. The alias "bplan" is used in all generated
+// SQL fragments (e.g. "bplan.id = ?").
+var BenefitPlanTable = TableInfo{
+	Name:       "benefit_plans",
+	Alias:      "bplan",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// BenefitPlanColumns provides type-safe column references for the "benefit_plans" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(BenefitPlanColumns.ID.String())
+//	// SELECT bplan.id FROM benefit_plans AS bplan
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(BenefitPlanColumns.ID.Eq(), id)           // WHERE bplan.id = ?
+//	q.Order(BenefitPlanColumns.CreatedAt.OrderDesc())  // ORDER BY bplan.created_at DESC
+var BenefitPlanColumns = struct {
+	ID                Column // "id" → qualified: "bplan.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "bplan.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "bplan.organization_id"
+	Status            Column // "status" → qualified: "bplan.status"
+	Code              Column // "code" → qualified: "bplan.code"
+	Name              Column // "name" → qualified: "bplan.name"
+	Description       Column // "description" → qualified: "bplan.description"
+	PlanType          Column // "plan_type" → qualified: "bplan.plan_type"
+	Carrier           Column // "carrier" → qualified: "bplan.carrier"
+	PolicyNumber      Column // "policy_number" → qualified: "bplan.policy_number"
+	PayCodeID         Column // "pay_code_id" → qualified: "bplan.pay_code_id"
+	PlanYear          Column // "plan_year" → qualified: "bplan.plan_year"
+	EmployeeCostMinor Column // "employee_cost_minor" → qualified: "bplan.employee_cost_minor"
+	EmployerCostMinor Column // "employer_cost_minor" → qualified: "bplan.employer_cost_minor"
+	CurrencyCode      Column // "currency_code" → qualified: "bplan.currency_code"
+	WaitingPeriodDays Column // "waiting_period_days" → qualified: "bplan.waiting_period_days"
+	Version           Column // "version" → qualified: "bplan.version"
+	CreatedAt         Column // "created_at" → qualified: "bplan.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "bplan.updated_at"
+}{
+	ID:                NewColumn("id", "bplan"),
+	BusinessUnitID:    NewColumn("business_unit_id", "bplan"),
+	OrganizationID:    NewColumn("organization_id", "bplan"),
+	Status:            NewColumn("status", "bplan"),
+	Code:              NewColumn("code", "bplan"),
+	Name:              NewColumn("name", "bplan"),
+	Description:       NewColumn("description", "bplan"),
+	PlanType:          NewColumn("plan_type", "bplan"),
+	Carrier:           NewColumn("carrier", "bplan"),
+	PolicyNumber:      NewColumn("policy_number", "bplan"),
+	PayCodeID:         NewColumn("pay_code_id", "bplan"),
+	PlanYear:          NewColumn("plan_year", "bplan"),
+	EmployeeCostMinor: NewColumn("employee_cost_minor", "bplan"),
+	EmployerCostMinor: NewColumn("employer_cost_minor", "bplan"),
+	CurrencyCode:      NewColumn("currency_code", "bplan"),
+	WaitingPeriodDays: NewColumn("waiting_period_days", "bplan"),
+	Version:           NewColumn("version", "bplan"),
+	CreatedAt:         NewColumn("created_at", "bplan"),
+	UpdatedAt:         NewColumn("updated_at", "bplan"),
+}
+
+// BenefitPlanFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by BenefitPlan.GetStaticFieldMap().
+var BenefitPlanFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"status":            "status",
+	"code":              "code",
+	"name":              "name",
+	"description":       "description",
+	"planType":          "plan_type",
+	"carrier":           "carrier",
+	"policyNumber":      "policy_number",
+	"payCodeId":         "pay_code_id",
+	"planYear":          "plan_year",
+	"employeeCostMinor": "employee_cost_minor",
+	"employerCostMinor": "employer_cost_minor",
+	"currencyCode":      "currency_code",
+	"waitingPeriodDays": "waiting_period_days",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// BenefitPlanInsertableColumns lists column names suitable for INSERT statements on the "benefit_plans" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var BenefitPlanInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"status",
+	"code",
+	"name",
+	"description",
+	"plan_type",
+	"carrier",
+	"policy_number",
+	"pay_code_id",
+	"plan_year",
+	"employee_cost_minor",
+	"employer_cost_minor",
+	"currency_code",
+	"waiting_period_days",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// BenefitPlanRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(BenefitPlanRelations.PayCode)
+//	// Bun eager-loads the PayCode association via a separate query
+var BenefitPlanRelations = struct {
+	PayCode string
+}{
+	PayCode: "PayCode",
+}
+
+// BenefitPlanScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE bplan.organization_id = ? AND bplan.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.BenefitPlanScopeTenant(sq, ti).
+//		Where(buncolgen.BenefitPlanColumns.ID.Eq(), id)
+func BenefitPlanScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, BenefitPlanColumns.OrganizationID, BenefitPlanColumns.BusinessUnitID, ti)
+}
+
+// BenefitPlanScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.BenefitPlanScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.BenefitPlanColumns.ID.In(), bun.List(ids))
+//	})
+func BenefitPlanScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, BenefitPlanColumns.OrganizationID, BenefitPlanColumns.BusinessUnitID, ti)
+}
+
+// BenefitPlanScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.BenefitPlanScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.BenefitPlanColumns.ID.Eq(), id)
+//	})
+func BenefitPlanScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, BenefitPlanColumns.OrganizationID, BenefitPlanColumns.BusinessUnitID, ti)
+}
+
+// BenefitPlanApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.BenefitPlanApplyTenant(tenantInfo))
+func BenefitPlanApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(BenefitPlanColumns.OrganizationID, BenefitPlanColumns.BusinessUnitID, ti)
+}
+
+// BenefitPlanFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "benefit_plans" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	BenefitPlanFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var BenefitPlanFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Code              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	PlanType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planType" → DB: "plan_type"
+	Carrier           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrier" → DB: "carrier"
+	PolicyNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "policyNumber" → DB: "policy_number"
+	PayCodeID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payCodeId" → DB: "pay_code_id"
+	PlanYear          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planYear" → DB: "plan_year"
+	EmployeeCostMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "employeeCostMinor" → DB: "employee_cost_minor"
+	EmployerCostMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "employerCostMinor" → DB: "employer_cost_minor"
+	CurrencyCode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	WaitingPeriodDays func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "waitingPeriodDays" → DB: "waiting_period_days"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("code", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	PlanType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("planType", op, value)
+	},
+	Carrier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("carrier", op, value)
+	},
+	PolicyNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("policyNumber", op, value)
+	},
+	PayCodeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payCodeId", op, value)
+	},
+	PlanYear: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("planYear", op, value)
+	},
+	EmployeeCostMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("employeeCostMinor", op, value)
+	},
+	EmployerCostMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("employerCostMinor", op, value)
+	},
+	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("currencyCode", op, value)
+	},
+	WaitingPeriodDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("waitingPeriodDays", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // EscrowAccount — table "escrow_accounts", alias "escr"
 // ---------------------------------------------------------------------------
 
@@ -1691,6 +1948,11 @@ var RecurringDeductionColumns = struct {
 	PayCodeID           Column // "pay_code_id" → qualified: "rded.pay_code_id"
 	EscrowAccountID     Column // "escrow_account_id" → qualified: "rded.escrow_account_id"
 	Status              Column // "status" → qualified: "rded.status"
+	Kind                Column // "kind" → qualified: "rded.kind"
+	CourtOrderNumber    Column // "court_order_number" → qualified: "rded.court_order_number"
+	CaseNumber          Column // "case_number" → qualified: "rded.case_number"
+	IssuingAgency       Column // "issuing_agency" → qualified: "rded.issuing_agency"
+	Priority            Column // "priority" → qualified: "rded.priority"
 	Frequency           Column // "frequency" → qualified: "rded.frequency"
 	Description         Column // "description" → qualified: "rded.description"
 	AmountMinor         Column // "amount_minor" → qualified: "rded.amount_minor"
@@ -1711,6 +1973,11 @@ var RecurringDeductionColumns = struct {
 	PayCodeID:           NewColumn("pay_code_id", "rded"),
 	EscrowAccountID:     NewColumn("escrow_account_id", "rded"),
 	Status:              NewColumn("status", "rded"),
+	Kind:                NewColumn("kind", "rded"),
+	CourtOrderNumber:    NewColumn("court_order_number", "rded"),
+	CaseNumber:          NewColumn("case_number", "rded"),
+	IssuingAgency:       NewColumn("issuing_agency", "rded"),
+	Priority:            NewColumn("priority", "rded"),
 	Frequency:           NewColumn("frequency", "rded"),
 	Description:         NewColumn("description", "rded"),
 	AmountMinor:         NewColumn("amount_minor", "rded"),
@@ -1737,6 +2004,11 @@ var RecurringDeductionFieldMap = map[string]string{
 	"payCodeId":           "pay_code_id",
 	"escrowAccountId":     "escrow_account_id",
 	"status":              "status",
+	"kind":                "kind",
+	"courtOrderNumber":    "court_order_number",
+	"caseNumber":          "case_number",
+	"issuingAgency":       "issuing_agency",
+	"priority":            "priority",
 	"frequency":           "frequency",
 	"description":         "description",
 	"amountMinor":         "amount_minor",
@@ -1761,6 +2033,11 @@ var RecurringDeductionInsertableColumns = []string{
 	"pay_code_id",
 	"escrow_account_id",
 	"status",
+	"kind",
+	"court_order_number",
+	"case_number",
+	"issuing_agency",
+	"priority",
 	"frequency",
 	"description",
 	"amount_minor",
@@ -1847,6 +2124,11 @@ var RecurringDeductionFilter = struct {
 	PayCodeID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payCodeId" → DB: "pay_code_id"
 	EscrowAccountID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escrowAccountId" → DB: "escrow_account_id"
 	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Kind                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	CourtOrderNumber    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "courtOrderNumber" → DB: "court_order_number"
+	CaseNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseNumber" → DB: "case_number"
+	IssuingAgency       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "issuingAgency" → DB: "issuing_agency"
+	Priority            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
 	Frequency           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "frequency" → DB: "frequency"
 	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	AmountMinor         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
@@ -1880,6 +2162,21 @@ var RecurringDeductionFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
+	CourtOrderNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("courtOrderNumber", op, value)
+	},
+	CaseNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("caseNumber", op, value)
+	},
+	IssuingAgency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("issuingAgency", op, value)
+	},
+	Priority: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("priority", op, value)
 	},
 	Frequency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("frequency", op, value)
@@ -1951,6 +2248,7 @@ var RecurringEarningColumns = struct {
 	WorkerID        Column // "worker_id" → qualified: "rern.worker_id"
 	PayCodeID       Column // "pay_code_id" → qualified: "rern.pay_code_id"
 	Status          Column // "status" → qualified: "rern.status"
+	Kind            Column // "kind" → qualified: "rern.kind"
 	Frequency       Column // "frequency" → qualified: "rern.frequency"
 	Description     Column // "description" → qualified: "rern.description"
 	AmountMinor     Column // "amount_minor" → qualified: "rern.amount_minor"
@@ -1970,6 +2268,7 @@ var RecurringEarningColumns = struct {
 	WorkerID:        NewColumn("worker_id", "rern"),
 	PayCodeID:       NewColumn("pay_code_id", "rern"),
 	Status:          NewColumn("status", "rern"),
+	Kind:            NewColumn("kind", "rern"),
 	Frequency:       NewColumn("frequency", "rern"),
 	Description:     NewColumn("description", "rern"),
 	AmountMinor:     NewColumn("amount_minor", "rern"),
@@ -1995,6 +2294,7 @@ var RecurringEarningFieldMap = map[string]string{
 	"workerId":        "worker_id",
 	"payCodeId":       "pay_code_id",
 	"status":          "status",
+	"kind":            "kind",
 	"frequency":       "frequency",
 	"description":     "description",
 	"amountMinor":     "amount_minor",
@@ -2018,6 +2318,7 @@ var RecurringEarningInsertableColumns = []string{
 	"worker_id",
 	"pay_code_id",
 	"status",
+	"kind",
 	"frequency",
 	"description",
 	"amount_minor",
@@ -2101,6 +2402,7 @@ var RecurringEarningFilter = struct {
 	WorkerID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
 	PayCodeID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payCodeId" → DB: "pay_code_id"
 	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Kind            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
 	Frequency       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "frequency" → DB: "frequency"
 	Description     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	AmountMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
@@ -2132,6 +2434,9 @@ var RecurringEarningFilter = struct {
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
 	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
 	Frequency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("frequency", op, value)
 	},
@@ -2158,6 +2463,259 @@ var RecurringEarningFilter = struct {
 	},
 	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// WorkerBenefitEnrollment — table "worker_benefit_enrollments", alias "wben"
+// ---------------------------------------------------------------------------
+
+// WorkerBenefitEnrollmentTable holds the table name, alias, and primary key columns
+// for the "worker_benefit_enrollments" table. The alias "wben" is used in all generated
+// SQL fragments (e.g. "wben.id = ?").
+var WorkerBenefitEnrollmentTable = TableInfo{
+	Name:       "worker_benefit_enrollments",
+	Alias:      "wben",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// WorkerBenefitEnrollmentColumns provides type-safe column references for the "worker_benefit_enrollments" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(WorkerBenefitEnrollmentColumns.ID.String())
+//	// SELECT wben.id FROM worker_benefit_enrollments AS wben
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(WorkerBenefitEnrollmentColumns.ID.Eq(), id)           // WHERE wben.id = ?
+//	q.Order(WorkerBenefitEnrollmentColumns.CreatedAt.OrderDesc())  // ORDER BY wben.created_at DESC
+var WorkerBenefitEnrollmentColumns = struct {
+	ID                   Column // "id" → qualified: "wben.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "wben.business_unit_id"
+	OrganizationID       Column // "organization_id" → qualified: "wben.organization_id"
+	WorkerID             Column // "worker_id" → qualified: "wben.worker_id"
+	BenefitPlanID        Column // "benefit_plan_id" → qualified: "wben.benefit_plan_id"
+	Status               Column // "status" → qualified: "wben.status"
+	CoverageTier         Column // "coverage_tier" → qualified: "wben.coverage_tier"
+	EffectiveFrom        Column // "effective_from" → qualified: "wben.effective_from"
+	EffectiveTo          Column // "effective_to" → qualified: "wben.effective_to"
+	EmployeeCostMinor    Column // "employee_cost_minor" → qualified: "wben.employee_cost_minor"
+	EmployerCostMinor    Column // "employer_cost_minor" → qualified: "wben.employer_cost_minor"
+	RecurringDeductionID Column // "recurring_deduction_id" → qualified: "wben.recurring_deduction_id"
+	WaivedReason         Column // "waived_reason" → qualified: "wben.waived_reason"
+	Notes                Column // "notes" → qualified: "wben.notes"
+	EnrolledByID         Column // "enrolled_by_id" → qualified: "wben.enrolled_by_id"
+	Version              Column // "version" → qualified: "wben.version"
+	CreatedAt            Column // "created_at" → qualified: "wben.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "wben.updated_at"
+}{
+	ID:                   NewColumn("id", "wben"),
+	BusinessUnitID:       NewColumn("business_unit_id", "wben"),
+	OrganizationID:       NewColumn("organization_id", "wben"),
+	WorkerID:             NewColumn("worker_id", "wben"),
+	BenefitPlanID:        NewColumn("benefit_plan_id", "wben"),
+	Status:               NewColumn("status", "wben"),
+	CoverageTier:         NewColumn("coverage_tier", "wben"),
+	EffectiveFrom:        NewColumn("effective_from", "wben"),
+	EffectiveTo:          NewColumn("effective_to", "wben"),
+	EmployeeCostMinor:    NewColumn("employee_cost_minor", "wben"),
+	EmployerCostMinor:    NewColumn("employer_cost_minor", "wben"),
+	RecurringDeductionID: NewColumn("recurring_deduction_id", "wben"),
+	WaivedReason:         NewColumn("waived_reason", "wben"),
+	Notes:                NewColumn("notes", "wben"),
+	EnrolledByID:         NewColumn("enrolled_by_id", "wben"),
+	Version:              NewColumn("version", "wben"),
+	CreatedAt:            NewColumn("created_at", "wben"),
+	UpdatedAt:            NewColumn("updated_at", "wben"),
+}
+
+// WorkerBenefitEnrollmentFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by WorkerBenefitEnrollment.GetStaticFieldMap().
+var WorkerBenefitEnrollmentFieldMap = map[string]string{
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"organizationId":       "organization_id",
+	"workerId":             "worker_id",
+	"benefitPlanId":        "benefit_plan_id",
+	"status":               "status",
+	"coverageTier":         "coverage_tier",
+	"effectiveFrom":        "effective_from",
+	"effectiveTo":          "effective_to",
+	"employeeCostMinor":    "employee_cost_minor",
+	"employerCostMinor":    "employer_cost_minor",
+	"recurringDeductionId": "recurring_deduction_id",
+	"waivedReason":         "waived_reason",
+	"notes":                "notes",
+	"enrolledById":         "enrolled_by_id",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// WorkerBenefitEnrollmentInsertableColumns lists column names suitable for INSERT statements on the "worker_benefit_enrollments" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var WorkerBenefitEnrollmentInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"worker_id",
+	"benefit_plan_id",
+	"status",
+	"coverage_tier",
+	"effective_from",
+	"effective_to",
+	"employee_cost_minor",
+	"employer_cost_minor",
+	"recurring_deduction_id",
+	"waived_reason",
+	"notes",
+	"enrolled_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// WorkerBenefitEnrollmentRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(WorkerBenefitEnrollmentRelations.Worker)
+//	// Bun eager-loads the Worker association via a separate query
+var WorkerBenefitEnrollmentRelations = struct {
+	Worker      string
+	BenefitPlan string
+	Deduction   string
+}{
+	Worker:      "Worker",
+	BenefitPlan: "BenefitPlan",
+	Deduction:   "Deduction",
+}
+
+// WorkerBenefitEnrollmentScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE wben.organization_id = ? AND wben.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.WorkerBenefitEnrollmentScopeTenant(sq, ti).
+//		Where(buncolgen.WorkerBenefitEnrollmentColumns.ID.Eq(), id)
+func WorkerBenefitEnrollmentScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, WorkerBenefitEnrollmentColumns.OrganizationID, WorkerBenefitEnrollmentColumns.BusinessUnitID, ti)
+}
+
+// WorkerBenefitEnrollmentScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.WorkerBenefitEnrollmentScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.WorkerBenefitEnrollmentColumns.ID.In(), bun.List(ids))
+//	})
+func WorkerBenefitEnrollmentScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, WorkerBenefitEnrollmentColumns.OrganizationID, WorkerBenefitEnrollmentColumns.BusinessUnitID, ti)
+}
+
+// WorkerBenefitEnrollmentScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.WorkerBenefitEnrollmentScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.WorkerBenefitEnrollmentColumns.ID.Eq(), id)
+//	})
+func WorkerBenefitEnrollmentScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, WorkerBenefitEnrollmentColumns.OrganizationID, WorkerBenefitEnrollmentColumns.BusinessUnitID, ti)
+}
+
+// WorkerBenefitEnrollmentApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.WorkerBenefitEnrollmentApplyTenant(tenantInfo))
+func WorkerBenefitEnrollmentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(WorkerBenefitEnrollmentColumns.OrganizationID, WorkerBenefitEnrollmentColumns.BusinessUnitID, ti)
+}
+
+// WorkerBenefitEnrollmentFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "worker_benefit_enrollments" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	WorkerBenefitEnrollmentFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var WorkerBenefitEnrollmentFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	WorkerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
+	BenefitPlanID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "benefitPlanId" → DB: "benefit_plan_id"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CoverageTier         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coverageTier" → DB: "coverage_tier"
+	EffectiveFrom        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	EffectiveTo          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
+	EmployeeCostMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "employeeCostMinor" → DB: "employee_cost_minor"
+	EmployerCostMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "employerCostMinor" → DB: "employer_cost_minor"
+	RecurringDeductionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recurringDeductionId" → DB: "recurring_deduction_id"
+	WaivedReason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "waivedReason" → DB: "waived_reason"
+	Notes                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	EnrolledByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enrolledById" → DB: "enrolled_by_id"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	WorkerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workerId", op, value)
+	},
+	BenefitPlanID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("benefitPlanId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	CoverageTier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("coverageTier", op, value)
+	},
+	EffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("effectiveFrom", op, value)
+	},
+	EffectiveTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("effectiveTo", op, value)
+	},
+	EmployeeCostMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("employeeCostMinor", op, value)
+	},
+	EmployerCostMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("employerCostMinor", op, value)
+	},
+	RecurringDeductionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("recurringDeductionId", op, value)
+	},
+	WaivedReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("waivedReason", op, value)
+	},
+	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("notes", op, value)
+	},
+	EnrolledByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enrolledById", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

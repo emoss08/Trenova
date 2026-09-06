@@ -20,9 +20,18 @@ import { canWithdrawDispute, escrowProgressPercent } from "../lib/settlement";
 
 export function DashMoneyPage() {
   const features = useDashFeatures();
-  const escrow = useQuery({ queryKey: ["dash-escrow"], queryFn: fetchMyEscrow });
-  const advances = useQuery({ queryKey: ["dash-advances"], queryFn: fetchMyAdvances });
-  const disputes = useQuery({ queryKey: ["dash-disputes"], queryFn: fetchMyDisputes });
+  const escrow = useQuery({
+    queryKey: ["dash-escrow"],
+    queryFn: ({ signal }) => fetchMyEscrow({ signal }),
+  });
+  const advances = useQuery({
+    queryKey: ["dash-advances"],
+    queryFn: ({ signal }) => fetchMyAdvances({ signal }),
+  });
+  const disputes = useQuery({
+    queryKey: ["dash-disputes"],
+    queryFn: ({ signal }) => fetchMyDisputes({ signal }),
+  });
 
   return (
     <div className="flex flex-col gap-6">

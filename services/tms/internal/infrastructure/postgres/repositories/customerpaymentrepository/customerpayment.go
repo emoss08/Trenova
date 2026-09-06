@@ -111,22 +111,26 @@ func (r *repository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*customerpayment.Payment)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count customer payments", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*customerpayment.Payment)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count customer payments", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*customerpayment.Payment]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*customerpayment.Payment) *bun.SelectQuery {
 			return dba.NewSelect().
 				Model(entities).

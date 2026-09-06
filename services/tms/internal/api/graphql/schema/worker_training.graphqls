@@ -1,0 +1,332 @@
+enum TrainingCategory {
+  Safety
+  Compliance
+  Equipment
+  Orientation
+  HazardousMaterials
+  Other
+}
+
+"""
+How a course is taken. Online and Document courses can be finished from the
+driver portal by acknowledging them; Classroom and OnTheJob need the office to
+record the result.
+"""
+enum TrainingDelivery {
+  Online
+  Classroom
+  OnTheJob
+  Document
+}
+
+enum WorkerTrainingStatus {
+  Assigned
+  InProgress
+  Completed
+  Failed
+  Expired
+  Waived
+  Cancelled
+}
+
+"""
+Evaluated state of one course slot. Missing only appears on a summary item for
+a required course the worker has no usable record for.
+"""
+enum WorkerTrainingHealth {
+  Current
+  Scheduled
+  DueSoon
+  Overdue
+  ExpiringSoon
+  Expired
+  Failed
+  Missing
+}
+
+type TrainingCourse {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String
+  category: TrainingCategory!
+  status: EntityStatus!
+  delivery: TrainingDelivery!
+  contentUrl: String
+  durationMinutes: Int!
+  """
+  Percentage a completion must reach; null for pass/fail-free courses.
+  """
+  passingScore: Decimal
+  """
+  Months a completion stays valid; null for one-time courses.
+  """
+  validityMonths: Int
+  renewalWindowDays: Int!
+  isRequired: Boolean!
+  """
+  Driver types this course is required for. Empty means every worker when
+  isRequired is set.
+  """
+  requiredForDriverTypes: [DriverType!]!
+  dueDaysAfterAssignment: Int!
+  requiresAcknowledgement: Boolean!
+  sortOrder: Int!
+  openRecordCount: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type TrainingCourseEdge {
+  node: TrainingCourse!
+  cursor: String!
+}
+
+type TrainingCourseConnection {
+  edges: [TrainingCourseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type WorkerTrainingRecord {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  courseId: ID!
+  course: TrainingCourse
+  status: WorkerTrainingStatus!
+  assignedAt: Timestamp!
+  dueAt: Timestamp
+  startedAt: Timestamp
+  completedAt: Timestamp
+  expiresAt: Timestamp
+  score: Decimal
+  passed: Boolean
+  acknowledgedAt: Timestamp
+  documentId: ID
+  document: WorkerCredentialDocument
+  assignedById: ID
+  assignedBy: User
+  recordedById: ID
+  recordedBy: User
+  notes: String
+  waivedReason: String
+  health: WorkerTrainingHealth!
+  daysUntilDue: Int
+  daysUntilExpiry: Int
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+}
+
+type WorkerTrainingSummaryItem {
+  course: TrainingCourse!
+  record: WorkerTrainingRecord
+  health: WorkerTrainingHealth!
+  daysUntilDue: Int
+  daysUntilExpiry: Int
+  required: Boolean!
+}
+
+type WorkerTrainingSummary {
+  workerId: ID!
+  compliant: Boolean!
+  requiredCount: Int!
+  currentCount: Int!
+  dueCount: Int!
+  overdueCount: Int!
+  expiringCount: Int!
+  expiredCount: Int!
+  missingCount: Int!
+  items: [WorkerTrainingSummaryItem!]!
+}
+
+"""
+The signed-in driver's view of one course.
+"""
+type PortalTraining {
+  """
+  Null when the course is required but nothing has been assigned yet.
+  """
+  id: ID
+  courseId: ID!
+  name: String!
+  description: String
+  category: TrainingCategory!
+  delivery: TrainingDelivery!
+  contentUrl: String
+  durationMinutes: Int!
+  status: WorkerTrainingStatus
+  health: WorkerTrainingHealth!
+  required: Boolean!
+  requiresAcknowledgement: Boolean!
+  """
+  Scored courses stay open after acknowledgement until the office enters the
+  result.
+  """
+  scored: Boolean!
+  dueAt: Timestamp
+  daysUntilDue: Int
+  startedAt: Timestamp
+  completedAt: Timestamp
+  expiresAt: Timestamp
+  daysUntilExpiry: Int
+  acknowledgedAt: Timestamp
+  score: Decimal
+}
+
+input TrainingCourseInput {
+  code: String!
+  name: String!
+  description: String
+  category: TrainingCategory!
+  status: EntityStatus!
+  delivery: TrainingDelivery!
+  contentUrl: String
+  durationMinutes: Int!
+  passingScore: Decimal
+  validityMonths: Int
+  renewalWindowDays: Int!
+  isRequired: Boolean!
+  requiredForDriverTypes: [DriverType!]
+  dueDaysAfterAssignment: Int!
+  requiresAcknowledgement: Boolean!
+  sortOrder: Int
+  version: Int
+}
+
+input TrainingCoursesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  status: EntityStatus
+  category: TrainingCategory
+}
+
+input AssignWorkerTrainingInput {
+  workerId: ID!
+  courseId: ID!
+  """
+  Defaults to the course's due days after today.
+  """
+  dueAt: Timestamp
+  notes: String
+}
+
+input CompleteWorkerTrainingInput {
+  """
+  The open record to close. Leave empty to file a completion straight against
+  workerId + courseId (a classroom session recorded after the fact).
+  """
+  id: ID
+  workerId: ID
+  courseId: ID
+  completedAt: Timestamp
+  score: Decimal
+  documentId: ID
+  notes: String
+  version: Int
+}
+
+input WaiveWorkerTrainingInput {
+  id: ID!
+  reason: String!
+  version: Int
+}
+
+input CancelWorkerTrainingInput {
+  id: ID!
+  reason: String
+  version: Int
+}
+
+input AttachWorkerTrainingDocumentInput {
+  id: ID!
+  documentId: ID!
+}
+
+extend type Query {
+  trainingCourses(input: TrainingCoursesInput!): TrainingCourseConnection!
+  trainingCourse(id: ID!): TrainingCourse!
+  activeTrainingCourses: [TrainingCourse!]!
+  workerTrainingRecords(workerId: ID!, includeClosed: Boolean = true): [WorkerTrainingRecord!]!
+  workerTrainingRecord(id: ID!): WorkerTrainingRecord!
+  workerTrainingSummary(workerId: ID!): WorkerTrainingSummary!
+  """
+  The signed-in driver's courses: open assignments first, then certifications.
+  """
+  myTraining: [PortalTraining!]!
+}
+
+extend type Mutation {
+  createTrainingCourse(input: TrainingCourseInput!): TrainingCourse!
+  updateTrainingCourse(id: ID!, input: TrainingCourseInput!): TrainingCourse!
+  archiveTrainingCourse(id: ID!, version: Int): TrainingCourse!
+  restoreTrainingCourse(id: ID!, version: Int): TrainingCourse!
+  assignWorkerTraining(input: AssignWorkerTrainingInput!): WorkerTrainingRecord!
+  """
+  Opens every required course the worker is missing, has failed or has let
+  lapse. Returns what was assigned.
+  """
+  assignRequiredWorkerTraining(workerId: ID!): [WorkerTrainingRecord!]!
+  completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
+  waiveWorkerTraining(input: WaiveWorkerTrainingInput!): WorkerTrainingRecord!
+  cancelWorkerTraining(input: CancelWorkerTrainingInput!): WorkerTrainingRecord!
+  attachWorkerTrainingDocument(input: AttachWorkerTrainingDocumentInput!): WorkerTrainingRecord!
+  """
+  Marks one of the signed-in driver's courses in progress and returns the link.
+  """
+  startMyTraining(id: ID!): PortalTraining!
+  """
+  The signed-in driver confirms they took the course. Unscored self-serve
+  courses complete on the spot.
+  """
+  acknowledgeMyTraining(id: ID!): PortalTraining!
+}
+
+"""
+What happened to one worker-and-course pair in a bulk assignment. `skipped`
+means the worker already had that course open, which is what clicking the same
+rollout twice looks like and is not a failure; `recordId` then points at the
+record they already have.
+"""
+type BulkAssignTrainingOutcome {
+  workerId: ID!
+  courseId: ID!
+  recordId: ID
+  skipped: Boolean!
+  error: String!
+}
+
+"""
+Counts are kept apart so the result can say "24 assigned, 3 already open"
+rather than implying three things went wrong.
+"""
+type BulkAssignTrainingPayload {
+  outcomes: [BulkAssignTrainingOutcome!]!
+  assignedCount: Int!
+  skippedCount: Int!
+  failedCount: Int!
+}
+
+input BulkAssignTrainingInput {
+  workerIds: [ID!]!
+  courseIds: [ID!]!
+  """
+  Overrides each course's own due-days default for this rollout.
+  """
+  dueAt: Timestamp
+  notes: String
+}
+
+extend type Mutation {
+  bulkAssignTraining(input: BulkAssignTrainingInput!): BulkAssignTrainingPayload!
+}

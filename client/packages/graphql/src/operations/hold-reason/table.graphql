@@ -18,14 +18,14 @@ fragment HoldReasonTableRowFields on HoldReason {
   updatedAt
 }
 
-query HoldReasonTable($input: DataTableConnectionInput!) {
+query HoldReasonTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   holdReasons(input: $input) {
     edges {
       node {
         ...HoldReasonTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

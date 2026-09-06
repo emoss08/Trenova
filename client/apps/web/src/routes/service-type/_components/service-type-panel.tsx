@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { ServiceTypeRow } from "@/lib/graphql/service-type-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { serviceTypeSchema, type ServiceType } from "@/types/service-type";
+import { serviceTypeSchema } from "@/types/service-type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ServiceTypeForm } from "./service-type-form";
@@ -11,7 +12,7 @@ export function ServiceTypePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<ServiceType>) {
+}: DataTablePanelProps<ServiceTypeRow>) {
   const form = useForm({
     resolver: zodResolver(serviceTypeSchema),
     defaultValues: {

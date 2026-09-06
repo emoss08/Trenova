@@ -7,13 +7,14 @@ import { equipmentStatusChoices } from "@/lib/choices";
 import { generateDateOnlyString, toDateFromUnixSeconds } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
 import type { Location } from "@trenova/shared/types/location";
+import type { TrailerRow } from "@/lib/graphql/equipment-table";
 import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-function StatusCell({ row }: { row: Trailer }) {
+function StatusCell({ row }: { row: TrailerRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -41,7 +42,7 @@ function StatusCell({ row }: { row: Trailer }) {
   );
 }
 
-function LastInspectionDateCell({ row }: { row: Trailer }) {
+function LastInspectionDateCell({ row }: { row: TrailerRow }) {
   const queryClient = useQueryClient();
 
   const handleDateChange = useCallback(
@@ -65,7 +66,7 @@ function LastInspectionDateCell({ row }: { row: Trailer }) {
   return <EditableDateField date={row.lastInspectionDate} onDateChange={handleDateChange} />;
 }
 
-export function getColumns(): ColumnDef<Trailer>[] {
+export function getColumns(): ColumnDef<TrailerRow>[] {
   return [
     {
       accessorKey: "code",
@@ -108,7 +109,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Trailer["equipmentType"]>, Trailer>
+          <EntityRefCell<NonNullable<TrailerRow["equipmentType"]>, TrailerRow>
             entity={equipmentType}
             config={{
               basePath: "/equipment/configuration-files/equipment-types",
@@ -142,7 +143,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Trailer["equipmentManufacturer"]>, Trailer>
+          <EntityRefCell<NonNullable<TrailerRow["equipmentManufacturer"]>, TrailerRow>
             entity={equipmentManufacturer}
             config={{
               basePath: "/equipment/configuration-files/equipment-manufacturers",
@@ -165,7 +166,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Trailer["fleetCode"]>, Trailer>
+          <EntityRefCell<NonNullable<TrailerRow["fleetCode"]>, TrailerRow>
             entity={fleetCode}
             config={{
               basePath: "/dispatch/configuration-files/fleet-codes",
@@ -196,7 +197,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
         } as Pick<Location, "id" | "name">;
 
         return (
-          <EntityRefCell<Pick<Location, "id" | "name">, Trailer>
+          <EntityRefCell<Pick<Location, "id" | "name">, TrailerRow>
             entity={locationRef}
             config={{
               basePath: "/dispatch/locations",

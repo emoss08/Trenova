@@ -62,8 +62,8 @@ type FuelIndex {
   currency: String!
   isActive: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type FuelIndexEdge {
@@ -83,7 +83,7 @@ type FuelIndexPrice {
   organizationId: ID!
   fuelIndexId: ID!
   priceDate: String!
-  price: String!
+  price: Decimal!
   currency: String!
   isManual: Boolean!
   enteredById: ID
@@ -96,12 +96,12 @@ type FuelSurchargeTableRow {
   businessUnitId: ID!
   organizationId: ID!
   fuelSurchargeProgramId: ID!
-  priceMin: String
-  priceMax: String
-  value: String!
+  priceMin: Decimal
+  priceMax: Decimal
+  value: Decimal!
   sortOrder: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type FuelSurchargeProgram {
@@ -115,28 +115,28 @@ type FuelSurchargeProgram {
   fuelIndexId: ID!
   accessorialChargeId: ID!
   method: FuelSurchargeProgramMethod!
-  pegPrice: String
-  increment: String
-  incrementRate: String
-  milesPerGallon: String
+  pegPrice: Decimal
+  increment: Decimal
+  incrementRate: Decimal
+  milesPerGallon: Decimal
   percentBasis: FuelSurchargePercentBasis!
   stepRounding: FuelSurchargeStepRounding!
   rateRounding: FuelSurchargeRateRounding!
   ratePrecision: Int!
-  minAmount: String
-  maxAmount: String
+  minAmount: Decimal
+  maxAmount: Decimal
   dateBasis: FuelSurchargeDateBasis!
   priceEffectiveDay: Int!
   missingPriceFallback: FuelSurchargeMissingPriceFallback!
-  effectiveStartDate: Int
-  effectiveEndDate: Int
+  effectiveStartDate: Timestamp
+  effectiveEndDate: Timestamp
   shipmentTypeIds: [ID!]
   serviceTypeIds: [ID!]
   tractorTypeIds: [ID!]
   trailerTypeIds: [ID!]
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   fuelIndex: FuelIndex
   accessorialCharge: ShipmentAccessorialCharge
   tableRows: [FuelSurchargeTableRow!]
@@ -157,23 +157,24 @@ type FuelIndexLatestPrice {
   index: FuelIndex!
   latest: FuelIndexPrice
   previous: FuelIndexPrice
-  delta: String
+  "Latest price minus the previously published price."
+  delta: Decimal
 }
 
 type FuelProgramCurrentRate {
   program: FuelSurchargeProgram!
   price: FuelIndexPrice
-  ratePerMile: String
-  percent: String
-  flatAmount: String
+  ratePerMile: Decimal
+  percent: Decimal
+  flatAmount: Decimal
   usedFallback: Boolean!
   matchedRow: FuelSurchargeTableRow
 }
 
 type GeneratedFuelTableRow {
-  priceMin: String
-  priceMax: String
-  value: String!
+  priceMin: Decimal
+  priceMax: Decimal
+  value: Decimal!
 }
 
 type EIASeriesOption {
@@ -199,19 +200,19 @@ input FuelIndexInput {
 input FuelIndexPriceInput {
   fuelIndexId: ID!
   priceDate: String!
-  price: String!
+  price: Decimal!
 }
 
 input UpdateFuelIndexPriceInput {
   id: ID!
   priceDate: String!
-  price: String!
+  price: Decimal!
 }
 
 input FuelSurchargeTableRowInput {
-  priceMin: String
-  priceMax: String
-  value: String!
+  priceMin: Decimal
+  priceMax: Decimal
+  value: Decimal!
   sortOrder: Int
 }
 
@@ -223,21 +224,21 @@ input FuelSurchargeProgramInput {
   fuelIndexId: ID!
   accessorialChargeId: ID!
   method: FuelSurchargeProgramMethod!
-  pegPrice: String
-  increment: String
-  incrementRate: String
-  milesPerGallon: String
+  pegPrice: Decimal
+  increment: Decimal
+  incrementRate: Decimal
+  milesPerGallon: Decimal
   percentBasis: FuelSurchargePercentBasis
   stepRounding: FuelSurchargeStepRounding
   rateRounding: FuelSurchargeRateRounding
   ratePrecision: Int
-  minAmount: String
-  maxAmount: String
+  minAmount: Decimal
+  maxAmount: Decimal
   dateBasis: FuelSurchargeDateBasis
   priceEffectiveDay: Int
   missingPriceFallback: FuelSurchargeMissingPriceFallback
-  effectiveStartDate: Int
-  effectiveEndDate: Int
+  effectiveStartDate: Timestamp
+  effectiveEndDate: Timestamp
   shipmentTypeIds: [ID!]
   serviceTypeIds: [ID!]
   tractorTypeIds: [ID!]
@@ -246,11 +247,11 @@ input FuelSurchargeProgramInput {
 }
 
 input GenerateFuelTableInput {
-  minPrice: String!
-  maxPrice: String!
-  increment: String!
-  startValue: String!
-  valueStep: String!
+  minPrice: Decimal!
+  maxPrice: Decimal!
+  increment: Decimal!
+  startValue: Decimal!
+  valueStep: Decimal!
   openEnded: Boolean
 }
 

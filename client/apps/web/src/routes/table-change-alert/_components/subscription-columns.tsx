@@ -1,5 +1,6 @@
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
-import type { NotificationPriority, TCASubscription } from "@/types/table-change-alert";
+import type { TCASubscriptionRow } from "@/lib/graphql/table-change-alert-table";
+import type { NotificationPriority } from "@/types/table-change-alert";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const PRIORITY_BADGE_VARIANT: Record<NotificationPriority, BadgeVariant> = {
@@ -9,7 +10,7 @@ const PRIORITY_BADGE_VARIANT: Record<NotificationPriority, BadgeVariant> = {
   low: "teal",
 };
 
-export function getColumns(): ColumnDef<TCASubscription>[] {
+export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
   return [
     {
       accessorKey: "name",

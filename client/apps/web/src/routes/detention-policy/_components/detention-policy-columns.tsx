@@ -3,11 +3,11 @@ import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { detentionPolicyStatusChoices, detentionRateSourceChoices } from "@/lib/choices";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
-import type { DetentionPolicy } from "@trenova/shared/types/detention";
+import type { DetentionPolicyRow } from "@/lib/graphql/detention-policy-table";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<DetentionPolicy>[] {
+export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
   return [
     {
       accessorKey: "status",

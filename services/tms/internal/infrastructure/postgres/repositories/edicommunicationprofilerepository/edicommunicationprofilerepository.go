@@ -343,26 +343,30 @@ func (r *repository) ListProfilesCursor(
 	req *repositories.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDICommunicationProfile)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"ecp",
-				req.Filter,
-				(*edi.EDICommunicationProfile)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDICommunicationProfile)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"ecp",
+					req.Filter,
+					(*edi.EDICommunicationProfile)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDICommunicationProfile]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDICommunicationProfile) *bun.SelectQuery {
 			return dba.
 				NewSelect().

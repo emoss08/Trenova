@@ -30,7 +30,6 @@ import {
   VoidCarrierSettlementDocument,
   type AddCarrierSettlementAdjustmentInput,
   type CarrierCostEventTableQuery,
-  type CarrierCostEventTableQueryVariables,
   type CarrierInvoiceMatchActionInput,
   type CarrierInvoiceMatchesQuery,
   type CarrierInvoiceMatchStatus,
@@ -38,11 +37,9 @@ import {
   type CarrierSettlementActionInput,
   type CarrierSettlementBatchDetailQuery,
   type CarrierSettlementBatchTableQuery,
-  type CarrierSettlementBatchTableQueryVariables,
   type CarrierSettlementControlQuery,
   type CarrierSettlementDetailQuery,
   type CarrierSettlementTableQuery,
-  type CarrierSettlementTableQueryVariables,
   type CarrierSettlementWorkspaceSummaryQuery,
   type CreateCarrierInvoiceMatchInput,
   type EdiCarrierInvoicesQuery,
@@ -105,63 +102,61 @@ export type SuggestedCarrier = NonNullable<
   SuggestCarrierForEdiInvoiceQuery["suggestCarrierForEdiInvoice"]
 >;
 
-export const carrierSettlementTableGraphQLConfig = defineDataTableGraphQLConfig<
-  CarrierSettlementRow,
-  CarrierSettlementTableQueryVariables
->({
+export const carrierSettlementTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CarrierSettlementTableDocument,
   operationName: "CarrierSettlementTable",
   connectionKey: "carrierSettlements",
 });
 
-export const carrierSettlementBatchTableGraphQLConfig = defineDataTableGraphQLConfig<
-  CarrierSettlementBatchRow,
-  CarrierSettlementBatchTableQueryVariables
->({
+export const carrierSettlementBatchTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CarrierSettlementBatchTableDocument,
   operationName: "CarrierSettlementBatchTable",
   connectionKey: "carrierSettlementBatches",
 });
 
-export const carrierCostEventTableGraphQLConfig = defineDataTableGraphQLConfig<
-  CarrierCostEventRow,
-  CarrierCostEventTableQueryVariables
->({
+export const carrierCostEventTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CarrierCostEventTableDocument,
   operationName: "CarrierCostEventTable",
   connectionKey: "carrierCostEvents",
 });
 
-export async function fetchCarrierSettlementDetail(id: string) {
+export async function fetchCarrierSettlementDetail(id: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: CarrierSettlementDetailDocument,
     operationName: "CarrierSettlementDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.carrierSettlement;
 }
 
-export async function fetchCarrierSettlementBatchDetail(id: string) {
+export async function fetchCarrierSettlementBatchDetail(
+  id: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: CarrierSettlementBatchDetailDocument,
     operationName: "CarrierSettlementBatchDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.carrierSettlementBatch;
 }
 
-export async function fetchCarrierSettlementControl() {
+export async function fetchCarrierSettlementControl(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: CarrierSettlementControlDocument,
     operationName: "CarrierSettlementControl",
+    signal: options?.signal,
   });
   return data.carrierSettlementControl;
 }
 
-export async function fetchCurrentCarrierSettlementPeriod() {
+export async function fetchCurrentCarrierSettlementPeriod(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: CurrentCarrierSettlementPeriodDocument,
     operationName: "CurrentCarrierSettlementPeriod",
+    signal: options?.signal,
   });
   return data.currentCarrierSettlementPeriod;
 }
@@ -169,16 +164,22 @@ export async function fetchCurrentCarrierSettlementPeriod() {
 export async function fetchCarrierSettlementWorkspaceSummary(
   periodStart?: number,
   periodEnd?: number,
+  options?: { signal?: AbortSignal },
 ) {
   const data = await requestGraphQL({
     document: CarrierSettlementWorkspaceSummaryDocument,
     operationName: "CarrierSettlementWorkspaceSummary",
     variables: { periodStart, periodEnd },
+    signal: options?.signal,
   });
   return data.carrierSettlementWorkspaceSummary;
 }
 
-export async function fetchWorkspaceCarrierSettlements(periodStart: number, periodEnd: number) {
+export async function fetchWorkspaceCarrierSettlements(
+  periodStart: number,
+  periodEnd: number,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: CarrierSettlementTableDocument,
     operationName: "CarrierSettlementTable",
@@ -192,11 +193,16 @@ export async function fetchWorkspaceCarrierSettlements(periodStart: number, peri
         sort: [{ field: "createdAt", direction: "asc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.carrierSettlements.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchCarrierRecentSettlements(carrierId: string, limit = 5) {
+export async function fetchCarrierRecentSettlements(
+  carrierId: string,
+  limit = 5,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: CarrierSettlementTableDocument,
     operationName: "CarrierSettlementTable",
@@ -207,11 +213,15 @@ export async function fetchCarrierRecentSettlements(carrierId: string, limit = 5
         sort: [{ field: "createdAt", direction: "desc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.carrierSettlements.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchCarrierPendingCostEvents(carrierId: string) {
+export async function fetchCarrierPendingCostEvents(
+  carrierId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: CarrierCostEventTableDocument,
     operationName: "CarrierCostEventTable",
@@ -225,25 +235,34 @@ export async function fetchCarrierPendingCostEvents(carrierId: string) {
         sort: [{ field: "eventDate", direction: "desc" }],
       },
     },
+    signal: options?.signal,
   });
   return (data.carrierCostEvents.edges ?? []).map((edge) => edge.node);
 }
 
-export async function fetchCarrierLedgerEntries(carrierId: string, limit = 100) {
+export async function fetchCarrierLedgerEntries(
+  carrierId: string,
+  limit = 100,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: CarrierLedgerEntriesDocument,
     operationName: "CarrierLedgerEntries",
     variables: { carrierId, limit },
+    signal: options?.signal,
   });
   return data.carrierLedgerEntries;
 }
 
-export async function fetchCarrierInvoiceMatches(params?: {
-  status?: CarrierInvoiceMatchStatus;
-  carrierId?: string;
-  limit?: number;
-  offset?: number;
-}) {
+export async function fetchCarrierInvoiceMatches(
+  params?: {
+    status?: CarrierInvoiceMatchStatus;
+    carrierId?: string;
+    limit?: number;
+    offset?: number;
+  },
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: CarrierInvoiceMatchesDocument,
     operationName: "CarrierInvoiceMatches",
@@ -253,15 +272,19 @@ export async function fetchCarrierInvoiceMatches(params?: {
       limit: params?.limit ?? 100,
       offset: params?.offset,
     },
+    signal: options?.signal,
   });
   return data.carrierInvoiceMatches;
 }
 
-export async function fetchEdiCarrierInvoices(params?: {
-  reconciliationStatus?: string;
-  limit?: number;
-  offset?: number;
-}) {
+export async function fetchEdiCarrierInvoices(
+  params?: {
+    reconciliationStatus?: string;
+    limit?: number;
+    offset?: number;
+  },
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: EdiCarrierInvoicesDocument,
     operationName: "EdiCarrierInvoices",
@@ -270,24 +293,33 @@ export async function fetchEdiCarrierInvoices(params?: {
       limit: params?.limit ?? 100,
       offset: params?.offset,
     },
+    signal: options?.signal,
   });
   return data.ediCarrierInvoices;
 }
 
-export async function suggestCarrierForEdiInvoice(invoiceId: string) {
+export async function suggestCarrierForEdiInvoice(
+  invoiceId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: SuggestCarrierForEdiInvoiceDocument,
     operationName: "SuggestCarrierForEdiInvoice",
     variables: { invoiceId },
+    signal: options?.signal,
   });
   return data.suggestCarrierForEdiInvoice;
 }
 
-export async function exportCarrierSettlementBatchCsv(batchId: string) {
+export async function exportCarrierSettlementBatchCsv(
+  batchId: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: ExportCarrierSettlementBatchCsvDocument,
     operationName: "ExportCarrierSettlementBatchCsv",
     variables: { batchId },
+    signal: options?.signal,
   });
   return data.exportCarrierSettlementBatchCsv;
 }

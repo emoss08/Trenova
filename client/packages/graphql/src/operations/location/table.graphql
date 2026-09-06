@@ -12,6 +12,10 @@ fragment LocationTableRowFields on Location {
   addressLine2
   city
   postalCode
+  isGeocoded
+  latitude
+  longitude
+  placeId
   version
   createdAt
   updatedAt
@@ -27,14 +31,14 @@ fragment LocationTableRowFields on Location {
   }
 }
 
-query LocationTable($input: DataTableConnectionInput!) {
+query LocationTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   locations(input: $input) {
     edges {
       node {
         ...LocationTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

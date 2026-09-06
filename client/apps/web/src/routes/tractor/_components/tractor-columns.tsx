@@ -4,13 +4,14 @@ import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-st
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { TractorRow } from "@/lib/graphql/equipment-table";
 import type { Tractor } from "@/types/tractor";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-function StatusCell({ row }: { row: Tractor }) {
+function StatusCell({ row }: { row: TractorRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -38,7 +39,7 @@ function StatusCell({ row }: { row: Tractor }) {
   );
 }
 
-export function getColumns(): ColumnDef<Tractor>[] {
+export function getColumns(): ColumnDef<TractorRow>[] {
   return [
     {
       accessorKey: "code",
@@ -81,7 +82,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Tractor["primaryWorker"]>, Tractor>
+          <EntityRefCell<NonNullable<TractorRow["primaryWorker"]>, TractorRow>
             entity={primaryWorker}
             config={{
               basePath: "/workers",
@@ -114,7 +115,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Tractor["equipmentType"]>, Tractor>
+          <EntityRefCell<NonNullable<TractorRow["equipmentType"]>, TractorRow>
             entity={equipmentType}
             config={{
               basePath: "/equipment/configuration-files/equipment-types",
@@ -148,7 +149,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Tractor["equipmentManufacturer"]>, Tractor>
+          <EntityRefCell<NonNullable<TractorRow["equipmentManufacturer"]>, TractorRow>
             entity={equipmentManufacturer}
             config={{
               basePath: "/equipment/configuration-files/equipment-manufacturers",
@@ -171,7 +172,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<NonNullable<Tractor["fleetCode"]>, Tractor>
+          <EntityRefCell<NonNullable<TractorRow["fleetCode"]>, TractorRow>
             entity={fleetCode}
             config={{
               basePath: "/dispatch/configuration-files/fleet-codes",

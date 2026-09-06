@@ -1,0 +1,154 @@
+"""
+Who a policy binds. A handbook for employees is not a contract term for an
+owner-operator, and asking a contractor to sign one blurs a line the carrier's
+lawyer would rather keep sharp.
+"""
+enum PolicyAudience {
+  All
+  Employees
+  Contractors
+}
+
+enum ProfileChangeStatus {
+  Pending
+  Approved
+  Rejected
+  Withdrawn
+}
+
+"""
+A handbook, a policy, or a notice the carrier needs people to have read. Either
+a short text or an attached document — never neither.
+
+The version label is the load-bearing field: an acknowledgement records the
+version it was given for, so changing the text under a signed policy without
+changing the version is refused.
+"""
+type WorkerPolicy {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: EntityStatus!
+  code: String!
+  title: String!
+  summary: String
+  body: String
+  documentId: ID
+  versionLabel: String!
+  requiresSignature: Boolean!
+  appliesTo: PolicyAudience!
+  effectiveFrom: Timestamp!
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input WorkerPolicyInput {
+  code: String!
+  title: String!
+  summary: String
+  body: String
+  documentId: ID
+  versionLabel: String!
+  requiresSignature: Boolean!
+  appliesTo: PolicyAudience!
+  effectiveFrom: Timestamp
+  status: EntityStatus
+}
+
+"""
+One worker's signature on one version of a policy. It copies what was signed —
+the version and the document checksum — because the policy row will move on
+and the signature must not.
+"""
+type WorkerPolicyAcknowledgement {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  policyId: ID!
+  workerId: ID!
+  versionLabel: String!
+  acknowledgedAt: Timestamp!
+  signatureName: String
+  signatureIp: String
+  signatureUserAgent: String
+  documentChecksum: String
+  version: Int!
+  worker: Worker
+  policy: WorkerPolicy
+}
+
+"Who a policy binds and whether they have signed the version in force. Derived on read."
+type PolicyComplianceRow {
+  workerId: ID!
+  workerName: String!
+  workerType: String!
+  acknowledgedAt: Timestamp
+  signatureName: String
+}
+
+type PolicyCompliance {
+  policy: WorkerPolicy!
+  signed: Int!
+  outstanding: Int!
+  rows: [PolicyComplianceRow!]!
+}
+
+"One field's before and after."
+type ProfileFieldChange {
+  field: String!
+  label: String!
+  from: String!
+  to: String!
+}
+
+"""
+A driver asking to change their own record, waiting on somebody in the office.
+The changes are before-and-after pairs, so a manager sees exactly what is asked
+and an approval applies exactly that.
+"""
+type WorkerProfileChangeRequest {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  status: ProfileChangeStatus!
+  changes: [ProfileFieldChange!]!
+  note: String
+  submittedAt: Timestamp!
+  decidedAt: Timestamp
+  decidedById: ID
+  decisionNote: String
+  version: Int!
+  worker: Worker
+}
+
+input DecideProfileChangeInput {
+  id: ID!
+  approve: Boolean!
+  "Required when turning a request down: a driver whose record did not change deserves to know why."
+  note: String
+}
+
+input ProfileChangeFilterInput {
+  workerId: ID
+  statuses: [ProfileChangeStatus!]
+  "Narrows the queue to the people a manager answers for."
+  teamOnly: Boolean
+  limit: Int
+}
+
+extend type Query {
+  workerPolicies(activeOnly: Boolean, limit: Int): [WorkerPolicy!]!
+  workerPolicy(id: ID!): WorkerPolicy!
+  workerPolicyCompliance(id: ID!): PolicyCompliance!
+  workerPolicyAcknowledgements(workerId: ID!): [WorkerPolicyAcknowledgement!]!
+  profileChangeRequests(filter: ProfileChangeFilterInput): [WorkerProfileChangeRequest!]!
+}
+
+extend type Mutation {
+  createWorkerPolicy(input: WorkerPolicyInput!): WorkerPolicy!
+  updateWorkerPolicy(id: ID!, input: WorkerPolicyInput!): WorkerPolicy!
+  decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
+}

@@ -2,7 +2,8 @@ import { getEndOfMonth, getStartOfMonth } from "@trenova/shared/lib/date";
 import { ptoFilterSchema } from "@trenova/shared/types/worker";
 import { parseAsJson, parseAsStringLiteral } from "nuqs";
 
-export const viewTypeChoices = ["chart", "list"] as const;
+export const viewTypeChoices = ["chart", "calendar"] as const;
+export type PTOViewType = (typeof viewTypeChoices)[number];
 
 export const ptoSearchParamsParser = {
   viewType: parseAsStringLiteral(viewTypeChoices)

@@ -10,10 +10,11 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AgentControl = AgentControlFieldsFragment;
 
-export async function fetchAgentControl(): Promise<AgentControl> {
+export async function fetchAgentControl(options?: { signal?: AbortSignal }): Promise<AgentControl> {
   const data = await requestGraphQL({
     document: AgentControlSettingsDocument,
     operationName: "AgentControlSettings",
+    signal: options?.signal,
   });
 
   return getFragmentData(AgentControlFieldsFragmentDoc, data.agentControl);

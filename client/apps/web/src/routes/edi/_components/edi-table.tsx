@@ -1,18 +1,18 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { ediTableGraphQLConfigs } from "@/lib/graphql/edi-table";
+import {
+  ediTableGraphQLConfigs,
+  type EDICommunicationProfileRow,
+  type EDIInboundFileRow,
+  type EDIMappingProfileRow,
+  type EDIMessageRow,
+  type EDITestCaseTableRow,
+  type EDITransferRow,
+} from "@/lib/graphql/edi-table";
 import { apiService } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps, DockAction } from "@trenova/shared/types/data-table";
-import type {
-  EDICommunicationProfile,
-  EDIInboundFile,
-  EDIMappingProfile,
-  EDIMessage,
-  EDIPartner,
-  EDITestCaseRow,
-  EDITransfer,
-} from "@trenova/shared/types/edi";
+import type { EDIPartner } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CircleCheckIcon, CircleXIcon, RefreshCwIcon, RotateCcwIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -87,7 +87,7 @@ function MappingProfilesWorkspace() {
 
   return (
     <Outer>
-      <DataTable<EDIMappingProfile>
+      <DataTable<EDIMappingProfileRow>
         name="EDI Mapping Profile"
         queryKey="edi-mapping-profile-list"
         resource={Resource.EDI}
@@ -105,7 +105,7 @@ function CommunicationProfilesWorkspace() {
 
   return (
     <Outer>
-      <DataTable<EDICommunicationProfile>
+      <DataTable<EDICommunicationProfileRow>
         name="EDI Communication Profile"
         queryKey="edi-communication-profile-list"
         resource={Resource.EDI}
@@ -123,18 +123,18 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
   );
-  const [rejectRows, setRejectRows] = useState<EDITransfer[]>([]);
+  const [rejectRows, setRejectRows] = useState<EDITransferRow[]>([]);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectPending, setRejectPending] = useState(false);
   const TransferPanel = useCallback(
-    (props: DataTablePanelProps<EDITransfer>) => (
+    (props: DataTablePanelProps<EDITransferRow>) => (
       <EDITransferReviewPanel {...props} direction={direction} />
     ),
     [direction],
   );
 
   const handleBulkApprove = useCallback(
-    async (rows: EDITransfer[]) => {
+    async (rows: EDITransferRow[]) => {
       const eligible = rows.filter((row) => ACTIONABLE_TRANSFER_STATUSES.has(row.status));
       if (eligible.length === 0) {
         toast.info("None of the selected transfers are awaiting review");
@@ -153,7 +153,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     [queryClient],
   );
 
-  const handleBulkRejectRequest = useCallback((rows: EDITransfer[]) => {
+  const handleBulkRejectRequest = useCallback((rows: EDITransferRow[]) => {
     const eligible = rows.filter((row) => ACTIONABLE_TRANSFER_STATUSES.has(row.status));
     if (eligible.length === 0) {
       toast.info("None of the selected transfers are awaiting review");
@@ -185,7 +185,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     [queryClient, rejectRows],
   );
 
-  const dockActions = useMemo<DockAction<EDITransfer>[]>(() => {
+  const dockActions = useMemo<DockAction<EDITransferRow>[]>(() => {
     if (!canUpdate || direction !== "inbound") return [];
     return [
       {
@@ -209,7 +209,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
 
   return (
     <Outer>
-      <DataTable<EDITransfer>
+      <DataTable<EDITransferRow>
         name="EDI Transfer"
         queryKey={
           direction === "inbound" ? "edi-inbound-transfer-list" : "edi-outbound-transfer-list"
@@ -250,7 +250,7 @@ function MessagesWorkspace() {
   );
 
   const handleBulkRetry = useCallback(
-    async (rows: EDIMessage[]) => {
+    async (rows: EDIMessageRow[]) => {
       const eligible = rows.filter(
         (row) =>
           row.direction === "Outbound" &&
@@ -274,7 +274,7 @@ function MessagesWorkspace() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<EDIMessage>[]>(() => {
+  const dockActions = useMemo<DockAction<EDIMessageRow>[]>(() => {
     if (!canUpdate) return [];
     return [
       {
@@ -290,7 +290,7 @@ function MessagesWorkspace() {
 
   return (
     <Outer>
-      <DataTable<EDIMessage>
+      <DataTable<EDIMessageRow>
         name="EDI Message"
         queryKey="edi-message-list"
         resource={Resource.EDI}
@@ -315,7 +315,7 @@ function InboundFilesWorkspace() {
   );
 
   const handleBulkReprocess = useCallback(
-    async (rows: EDIInboundFile[]) => {
+    async (rows: EDIInboundFileRow[]) => {
       const eligible = rows.filter((row) => REPROCESSABLE_STATUSES.has(row.status));
       if (eligible.length === 0) {
         toast.info("None of the selected files can be reprocessed");
@@ -334,7 +334,7 @@ function InboundFilesWorkspace() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<EDIInboundFile>[]>(() => {
+  const dockActions = useMemo<DockAction<EDIInboundFileRow>[]>(() => {
     if (!canUpdate) return [];
     return [
       {
@@ -350,7 +350,7 @@ function InboundFilesWorkspace() {
 
   return (
     <Outer>
-      <DataTable<EDIInboundFile>
+      <DataTable<EDIInboundFileRow>
         name="EDI Inbound File"
         queryKey="edi-inbound-file-list"
         resource={Resource.EDI}
@@ -373,7 +373,7 @@ function TestCasesWorkspace() {
   return (
     <Outer>
       <div className="flex flex-col p-1">
-        <DataTable<EDITestCaseRow>
+        <DataTable<EDITestCaseTableRow>
           name="EDI Test Case"
           queryKey="edi-test-case-list"
           resource={Resource.EDI}

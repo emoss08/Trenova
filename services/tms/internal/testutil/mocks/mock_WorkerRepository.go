@@ -579,55 +579,44 @@ func (_c *MockWorkerRepository_Update_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// ListWorkersWithExpiringCredentials provides a mock function for the type MockWorkerRepository
-func (_mock *MockWorkerRepository) ListWorkersWithExpiringCredentials(ctx context.Context, req repositories.ListExpiringCredentialsRequest) ([]*worker.Worker, error) {
+// PatchProfileCredentialField provides a mock function for the type MockWorkerRepository
+func (_mock *MockWorkerRepository) PatchProfileCredentialField(ctx context.Context, req *repositories.PatchProfileCredentialFieldRequest) error {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListWorkersWithExpiringCredentials")
+		panic("no return value specified for PatchProfileCredentialField")
 	}
 
-	var r0 []*worker.Worker
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListExpiringCredentialsRequest) ([]*worker.Worker, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListExpiringCredentialsRequest) []*worker.Worker); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.PatchProfileCredentialFieldRequest) error); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*worker.Worker)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListExpiringCredentialsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
-// MockWorkerRepository_ListWorkersWithExpiringCredentials_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWorkersWithExpiringCredentials'
-type MockWorkerRepository_ListWorkersWithExpiringCredentials_Call struct {
+// MockWorkerRepository_PatchProfileCredentialField_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PatchProfileCredentialField'
+type MockWorkerRepository_PatchProfileCredentialField_Call struct {
 	*mock.Call
 }
 
-// ListWorkersWithExpiringCredentials is a helper method to define mock.On call
+// PatchProfileCredentialField is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ListExpiringCredentialsRequest
-func (_e *MockWorkerRepository_Expecter) ListWorkersWithExpiringCredentials(ctx any, req any) *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call {
-	return &MockWorkerRepository_ListWorkersWithExpiringCredentials_Call{Call: _e.mock.On("ListWorkersWithExpiringCredentials", ctx, req)}
+//   - req *repositories.PatchProfileCredentialFieldRequest
+func (_e *MockWorkerRepository_Expecter) PatchProfileCredentialField(ctx any, req any) *MockWorkerRepository_PatchProfileCredentialField_Call {
+	return &MockWorkerRepository_PatchProfileCredentialField_Call{Call: _e.mock.On("PatchProfileCredentialField", ctx, req)}
 }
 
-func (_c *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call) Run(run func(ctx context.Context, req repositories.ListExpiringCredentialsRequest)) *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call {
+func (_c *MockWorkerRepository_PatchProfileCredentialField_Call) Run(run func(ctx context.Context, req *repositories.PatchProfileCredentialFieldRequest)) *MockWorkerRepository_PatchProfileCredentialField_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repositories.ListExpiringCredentialsRequest
+		var arg1 *repositories.PatchProfileCredentialFieldRequest
 		if args[1] != nil {
-			arg1 = args[1].(repositories.ListExpiringCredentialsRequest)
+			arg1 = args[1].(*repositories.PatchProfileCredentialFieldRequest)
 		}
 		run(
 			arg0,
@@ -637,12 +626,305 @@ func (_c *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call) Run(run 
 	return _c
 }
 
-func (_c *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call) Return(workers []*worker.Worker, err error) *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call {
-	_c.Call.Return(workers, err)
+func (_c *MockWorkerRepository_PatchProfileCredentialField_Call) Return(err error) *MockWorkerRepository_PatchProfileCredentialField_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListExpiringCredentialsRequest) ([]*worker.Worker, error)) *MockWorkerRepository_ListWorkersWithExpiringCredentials_Call {
+func (_c *MockWorkerRepository_PatchProfileCredentialField_Call) RunAndReturn(run func(ctx context.Context, req *repositories.PatchProfileCredentialFieldRequest) error) *MockWorkerRepository_PatchProfileCredentialField_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateProfileComplianceStatus provides a mock function for the type MockWorkerRepository
+func (_mock *MockWorkerRepository) UpdateProfileComplianceStatus(ctx context.Context, req *repositories.UpdateProfileComplianceStatusRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProfileComplianceStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateProfileComplianceStatusRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkerRepository_UpdateProfileComplianceStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfileComplianceStatus'
+type MockWorkerRepository_UpdateProfileComplianceStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateProfileComplianceStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateProfileComplianceStatusRequest
+func (_e *MockWorkerRepository_Expecter) UpdateProfileComplianceStatus(ctx any, req any) *MockWorkerRepository_UpdateProfileComplianceStatus_Call {
+	return &MockWorkerRepository_UpdateProfileComplianceStatus_Call{Call: _e.mock.On("UpdateProfileComplianceStatus", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_UpdateProfileComplianceStatus_Call) Run(run func(ctx context.Context, req *repositories.UpdateProfileComplianceStatusRequest)) *MockWorkerRepository_UpdateProfileComplianceStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateProfileComplianceStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateProfileComplianceStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileComplianceStatus_Call) Return(err error) *MockWorkerRepository_UpdateProfileComplianceStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileComplianceStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateProfileComplianceStatusRequest) error) *MockWorkerRepository_UpdateProfileComplianceStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateProfileQualification provides a mock function for the type MockWorkerRepository
+func (_mock *MockWorkerRepository) UpdateProfileQualification(ctx context.Context, req *repositories.UpdateProfileQualificationRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProfileQualification")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateProfileQualificationRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkerRepository_UpdateProfileQualification_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfileQualification'
+type MockWorkerRepository_UpdateProfileQualification_Call struct {
+	*mock.Call
+}
+
+// UpdateProfileQualification is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateProfileQualificationRequest
+func (_e *MockWorkerRepository_Expecter) UpdateProfileQualification(ctx any, req any) *MockWorkerRepository_UpdateProfileQualification_Call {
+	return &MockWorkerRepository_UpdateProfileQualification_Call{Call: _e.mock.On("UpdateProfileQualification", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_UpdateProfileQualification_Call) Run(run func(ctx context.Context, req *repositories.UpdateProfileQualificationRequest)) *MockWorkerRepository_UpdateProfileQualification_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateProfileQualificationRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateProfileQualificationRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileQualification_Call) Return(err error) *MockWorkerRepository_UpdateProfileQualification_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileQualification_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateProfileQualificationRequest) error) *MockWorkerRepository_UpdateProfileQualification_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+func (_mock *MockWorkerRepository) UpdateProfileTrainingRollup(ctx context.Context, req *repositories.UpdateProfileTrainingRollupRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProfileTrainingRollup")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateProfileTrainingRollupRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkerRepository_UpdateProfileTrainingRollup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfileTrainingRollup'
+type MockWorkerRepository_UpdateProfileTrainingRollup_Call struct {
+	*mock.Call
+}
+
+// UpdateProfileTrainingRollup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateProfileTrainingRollupRequest
+func (_e *MockWorkerRepository_Expecter) UpdateProfileTrainingRollup(ctx any, req any) *MockWorkerRepository_UpdateProfileTrainingRollup_Call {
+	return &MockWorkerRepository_UpdateProfileTrainingRollup_Call{Call: _e.mock.On("UpdateProfileTrainingRollup", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_UpdateProfileTrainingRollup_Call) Run(run func(ctx context.Context, req *repositories.UpdateProfileTrainingRollupRequest)) *MockWorkerRepository_UpdateProfileTrainingRollup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateProfileTrainingRollupRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateProfileTrainingRollupRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileTrainingRollup_Call) Return(err error) *MockWorkerRepository_UpdateProfileTrainingRollup_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileTrainingRollup_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateProfileTrainingRollupRequest) error) *MockWorkerRepository_UpdateProfileTrainingRollup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+func (_mock *MockWorkerRepository) UpdateProfileSafetyRollup(ctx context.Context, req *repositories.UpdateProfileSafetyRollupRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProfileSafetyRollup")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateProfileSafetyRollupRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkerRepository_UpdateProfileSafetyRollup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfileSafetyRollup'
+type MockWorkerRepository_UpdateProfileSafetyRollup_Call struct {
+	*mock.Call
+}
+
+// UpdateProfileSafetyRollup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateProfileSafetyRollupRequest
+func (_e *MockWorkerRepository_Expecter) UpdateProfileSafetyRollup(ctx any, req any) *MockWorkerRepository_UpdateProfileSafetyRollup_Call {
+	return &MockWorkerRepository_UpdateProfileSafetyRollup_Call{Call: _e.mock.On("UpdateProfileSafetyRollup", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_UpdateProfileSafetyRollup_Call) Run(run func(ctx context.Context, req *repositories.UpdateProfileSafetyRollupRequest)) *MockWorkerRepository_UpdateProfileSafetyRollup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateProfileSafetyRollupRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateProfileSafetyRollupRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileSafetyRollup_Call) Return(err error) *MockWorkerRepository_UpdateProfileSafetyRollup_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdateProfileSafetyRollup_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateProfileSafetyRollupRequest) error) *MockWorkerRepository_UpdateProfileSafetyRollup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+func (_mock *MockWorkerRepository) CountRosterAttention(ctx context.Context, req *repositories.CountRosterAttentionRequest) (*repositories.RosterAttention, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountRosterAttention")
+	}
+
+	var r0 *repositories.RosterAttention
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CountRosterAttentionRequest) (*repositories.RosterAttention, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CountRosterAttentionRequest) *repositories.RosterAttention); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.RosterAttention)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CountRosterAttentionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWorkerRepository_CountRosterAttention_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountRosterAttention'
+type MockWorkerRepository_CountRosterAttention_Call struct {
+	*mock.Call
+}
+
+// CountRosterAttention is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.CountRosterAttentionRequest
+func (_e *MockWorkerRepository_Expecter) CountRosterAttention(ctx any, req any) *MockWorkerRepository_CountRosterAttention_Call {
+	return &MockWorkerRepository_CountRosterAttention_Call{Call: _e.mock.On("CountRosterAttention", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_CountRosterAttention_Call) Run(run func(ctx context.Context, req *repositories.CountRosterAttentionRequest)) *MockWorkerRepository_CountRosterAttention_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.CountRosterAttentionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.CountRosterAttentionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_CountRosterAttention_Call) Return(rosterAttention *repositories.RosterAttention, err error) *MockWorkerRepository_CountRosterAttention_Call {
+	_c.Call.Return(rosterAttention, err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_CountRosterAttention_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CountRosterAttentionRequest) (*repositories.RosterAttention, error)) *MockWorkerRepository_CountRosterAttention_Call {
 	_c.Call.Return(run)
 	return _c
 }

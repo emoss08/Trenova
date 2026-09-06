@@ -1,15 +1,11 @@
-import {
-  RecurringShipmentTableDocument,
-  type RecurringShipmentTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { RecurringShipmentTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { RecurringShipment } from "@/types/recurring-shipment";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const recurringShipmentTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RecurringShipment,
-  RecurringShipmentTableQueryVariables
->({
+export const recurringShipmentTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RecurringShipmentTableDocument,
   operationName: "RecurringShipmentTable",
   connectionKey: "recurringShipments",
 });
+
+export type RecurringShipmentRow = DataTableConfigRow<typeof recurringShipmentTableGraphQLConfig>;

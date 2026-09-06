@@ -14,14 +14,17 @@ fragment DocumentPacketRuleTableRowFields on DocumentPacketRule {
   updatedAt
 }
 
-query DocumentPacketRuleTable($input: DataTableConnectionInput!) {
+query DocumentPacketRuleTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   documentPacketRules(input: $input) {
     edges {
       node {
         ...DocumentPacketRuleTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

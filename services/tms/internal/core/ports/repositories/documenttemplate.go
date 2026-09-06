@@ -32,6 +32,11 @@ type GetDocumentTemplateByIDRequest struct {
 	IncludeAssignments   bool
 }
 
+type GetDocumentTemplatesByIDsRequest struct {
+	TenantInfo          pagination.TenantInfo
+	DocumentTemplateIDs []pulid.ID
+}
+
 type GetDocumentTemplateVersionByIDRequest struct {
 	VersionID  pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -129,6 +134,11 @@ type DocumentTemplateRepository interface {
 		ctx context.Context,
 		req *GetDocumentTemplateByIDRequest,
 	) (*documenttemplate.DocumentTemplate, error)
+
+	GetByIDs(
+		ctx context.Context,
+		req *GetDocumentTemplatesByIDsRequest,
+	) ([]*documenttemplate.DocumentTemplate, error)
 
 	// Resolve returns the template governing a render, or nil when the organization
 	// has customized nothing for this kind and the built-in should be used.

@@ -2,6 +2,7 @@ package documenttemplaterepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -93,21 +94,25 @@ func (r *templateRepository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				buncolgen.DocumentTemplateTable.Alias,
-				req.Filter,
-				(*documenttemplate.DocumentTemplate)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count document templates", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*documenttemplate.DocumentTemplate)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.DocumentTemplateTable.Alias,
+					req.Filter,
+					(*documenttemplate.DocumentTemplate)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count document templates", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -115,7 +120,7 @@ func (r *templateRepository) ListConnection(
 		dbhelper.CursorListParams[*documenttemplate.DocumentTemplate]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*documenttemplate.DocumentTemplate) *bun.SelectQuery {
 				q := dba.NewSelect().Model(entities)
 				if len(req.DocumentTemplateColumns) == 0 {
@@ -187,6 +192,27 @@ func (r *templateRepository) GetByID(
 	}
 
 	return entity, nil
+}
+
+func (r *templateRepository) GetByIDs(
+	ctx context.Context,
+	req *repositories.GetDocumentTemplatesByIDsRequest,
+) ([]*documenttemplate.DocumentTemplate, error) {
+	entities := make([]*documenttemplate.DocumentTemplate, 0, len(req.DocumentTemplateIDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentTemplateScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.DocumentTemplateColumns.ID.In(), bun.List(req.DocumentTemplateIDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to get document templates by ids", zap.Error(err))
+		return nil, fmt.Errorf("get document templates by ids: %w", err)
+	}
+
+	return entities, nil
 }
 
 func (r *templateRepository) Create(

@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { SCIMGroupRoleMappingRow } from "@/lib/graphql/scim-group-role-mapping-table";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps, TableSheetProps } from "@trenova/shared/types/data-table";
 import {
@@ -22,12 +23,12 @@ type SCIMGroupMappingPanelContextProps = {
 type SCIMGroupMappingCreatePanelProps = TableSheetProps & SCIMGroupMappingPanelContextProps;
 
 type SCIMGroupMappingEditPanelProps = Pick<
-  DataTablePanelProps<SCIMGroupRoleMapping>,
+  DataTablePanelProps<SCIMGroupRoleMappingRow>,
   "open" | "onOpenChange" | "row"
 > &
   SCIMGroupMappingPanelContextProps;
 
-type SCIMGroupMappingPanelProps = DataTablePanelProps<SCIMGroupRoleMapping> &
+type SCIMGroupMappingPanelProps = DataTablePanelProps<SCIMGroupRoleMappingRow> &
   SCIMGroupMappingPanelContextProps;
 
 function toSCIMGroupMappingFormValues(
@@ -35,6 +36,19 @@ function toSCIMGroupMappingFormValues(
 ): SCIMGroupRoleMappingFormValues {
   return {
     ...mapping,
+  };
+}
+
+function toSCIMGroupMappingFormValuesFromRow(
+  row: SCIMGroupRoleMappingRow,
+): SCIMGroupRoleMappingFormValues {
+  return {
+    ...emptyMapping,
+    id: row.id,
+    directoryId: row.directoryId,
+    externalGroupId: row.externalGroupId,
+    displayName: row.displayName,
+    roleId: row.roleId,
   };
 }
 
@@ -136,7 +150,7 @@ function SCIMGroupMappingEditPanel({
     <FormEditPanel<SCIMGroupRoleMappingFormValues, SCIMGroupMappingRecord>
       open={open}
       onOpenChange={onOpenChange}
-      row={row ? (toSCIMGroupMappingFormValues(row) as SCIMGroupMappingRecord) : null}
+      row={row ? (toSCIMGroupMappingFormValuesFromRow(row) as SCIMGroupMappingRecord) : null}
       form={form}
       queryKey={queryKey}
       title="Group Mapping"

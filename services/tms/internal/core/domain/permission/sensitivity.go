@@ -44,7 +44,12 @@ func (s FieldSensitivity) IsValid() bool {
 type DataScope string
 
 const (
-	DataScopeOwn          DataScope = "own"
+	DataScopeOwn DataScope = "own"
+	// DataScopeTeam narrows a grant to the people the holder manages — their
+	// own reports, the terminals they run, and anybody delegated to them. It
+	// sits above "own" because a manager can act on more than themselves, and
+	// below "organization" because they cannot act on everybody.
+	DataScopeTeam         DataScope = "team"
 	DataScopeOrganization DataScope = "organization"
 	DataScopeBusinessUnit DataScope = "business_unit"
 	DataScopeAll          DataScope = "all"
@@ -54,12 +59,14 @@ func (s DataScope) Level() int {
 	switch s {
 	case DataScopeOwn:
 		return 0
-	case DataScopeOrganization:
+	case DataScopeTeam:
 		return 1
-	case DataScopeBusinessUnit:
+	case DataScopeOrganization:
 		return 2
-	case DataScopeAll:
+	case DataScopeBusinessUnit:
 		return 3
+	case DataScopeAll:
+		return 4
 	default:
 		return 0
 	}
@@ -75,7 +82,7 @@ func (s DataScope) String() string {
 
 func (s DataScope) IsValid() bool {
 	switch s {
-	case DataScopeOwn, DataScopeOrganization, DataScopeBusinessUnit, DataScopeAll:
+	case DataScopeOwn, DataScopeTeam, DataScopeOrganization, DataScopeBusinessUnit, DataScopeAll:
 		return true
 	default:
 		return false

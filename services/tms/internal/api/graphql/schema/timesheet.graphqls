@@ -1,0 +1,199 @@
+"""
+Where a punch came from. It is kept because a manual entry and a clock punch
+are different kinds of evidence at a wage-and-hour audit, and a screen that
+cannot tell them apart cannot say which is which.
+"""
+enum TimeEntrySource {
+  Clock
+  Portal
+  Manual
+  Import
+}
+
+"How far a week has got."
+enum TimesheetStatus {
+  Open
+  Submitted
+  Approved
+  Rejected
+  Locked
+}
+
+enum PayrollExportStatus {
+  Draft
+  Generated
+  Voided
+}
+
+"One period of work. A null clock-out means the worker is still on the clock."
+type TimeClockEntry {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  timesheetId: ID
+  source: TimeEntrySource!
+  clockedInAt: Timestamp!
+  clockedOutAt: Timestamp
+  "Unpaid break taken inside the entry, subtracted from its length."
+  breakMinutes: Int!
+  payCodeId: ID
+  note: String
+  editedById: ID
+  "Why the record was changed. A wage record altered with no reason recorded is not one anybody can defend."
+  editReason: String
+  version: Int!
+  "What the entry is worth once the unpaid break is off. An open entry is worth nothing yet."
+  paidMinutes: Int!
+  worker: Worker
+}
+
+"""
+One worker's week of paid hours.
+
+The totals are frozen at submit rather than recomputed on read. Everywhere else
+a roll-up is derived, because a stored one goes stale; here the roll-up is the
+decision — what a manager approved and what payroll paid from — and recomputing
+it later would change a signed-off wage record.
+"""
+type Timesheet {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  status: TimesheetStatus!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  regularMinutes: Int!
+  overtimeMinutes: Int!
+  "Approved time off falling inside the week. It sits outside the overtime split: time nobody worked does not earn a premium."
+  paidLeaveMinutes: Int!
+  entryCount: Int!
+  """
+  Overtime is everything past this many minutes in the week. It is copied onto
+  the sheet rather than read from a setting, so changing the rule next quarter
+  cannot restate a week that was already approved.
+  """
+  overtimeThresholdMinutes: Int!
+  submittedAt: Timestamp
+  submittedById: ID
+  approvedAt: Timestamp
+  approvedById: ID
+  decisionNote: String
+  payrollExportId: ID
+  version: Int!
+  totalMinutes: Int!
+  worker: Worker
+  entries: [TimeClockEntry!]
+}
+
+"""
+One run of approved timesheets handed to payroll. A sheet carries the export it
+went out on, so a period cannot be sent twice without somebody voiding the
+first run.
+"""
+type PayrollExport {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: PayrollExportStatus!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  timesheetCount: Int!
+  regularMinutes: Int!
+  overtimeMinutes: Int!
+  paidLeaveMinutes: Int!
+  generatedAt: Timestamp
+  generatedById: ID
+  voidedAt: Timestamp
+  voidReason: String
+  note: String
+  version: Int!
+}
+
+"One line of the file payroll is run from."
+type PayrollExportRow {
+  workerId: ID!
+  workerName: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  regularMinutes: Int!
+  overtimeMinutes: Int!
+  paidLeaveMinutes: Int!
+}
+
+input ClockInput {
+  workerId: ID!
+  "Any instant; defaults to now. A punch cannot be dated in the future."
+  at: Timestamp
+  breakMinutes: Int
+  payCodeId: ID
+  note: String
+}
+
+input RecordTimeEntryInput {
+  "Set to correct an existing entry; omit to add one."
+  id: ID
+  workerId: ID!
+  clockedInAt: Timestamp!
+  clockedOutAt: Timestamp!
+  breakMinutes: Int
+  payCodeId: ID
+  note: String
+  "Required. A wage record changed with no reason recorded is not one anybody can defend."
+  reason: String!
+}
+
+input DeleteTimeEntryInput {
+  id: ID!
+  reason: String!
+}
+
+input TransitionTimesheetInput {
+  id: ID!
+  status: TimesheetStatus!
+  note: String
+}
+
+input GeneratePayrollExportInput {
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  note: String
+}
+
+input VoidPayrollExportInput {
+  id: ID!
+  reason: String!
+}
+
+input TimesheetFilterInput {
+  workerId: ID
+  statuses: [TimesheetStatus!]
+  from: Timestamp
+  to: Timestamp
+  "Narrows the queue to the people a manager answers for."
+  teamOnly: Boolean
+  unexportedOnly: Boolean
+  limit: Int
+}
+
+extend type Query {
+  timesheets(filter: TimesheetFilterInput): [Timesheet!]!
+  timesheet(id: ID!): Timesheet!
+  timeClockEntries(workerId: ID!, from: Timestamp, to: Timestamp, limit: Int): [TimeClockEntry!]!
+  "The punch a worker is currently on, or nothing. It is what the clock button reads."
+  openTimeClockEntry(workerId: ID!): TimeClockEntry
+  payrollExports(limit: Int): [PayrollExport!]!
+  payrollExport(id: ID!): PayrollExport!
+  payrollExportRows(id: ID!): [PayrollExportRow!]!
+}
+
+extend type Mutation {
+  clockIn(input: ClockInput!): TimeClockEntry!
+  clockOut(input: ClockInput!): TimeClockEntry!
+  recordTimeEntry(input: RecordTimeEntryInput!): TimeClockEntry!
+  deleteTimeEntry(input: DeleteTimeEntryInput!): Boolean!
+  transitionTimesheet(input: TransitionTimesheetInput!): Timesheet!
+  generatePayrollExport(input: GeneratePayrollExportInput!): PayrollExport!
+  voidPayrollExport(input: VoidPayrollExportInput!): PayrollExport!
+}

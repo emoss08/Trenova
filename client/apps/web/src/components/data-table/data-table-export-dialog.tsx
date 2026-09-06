@@ -20,7 +20,7 @@ import {
   type ExportScope,
 } from "@/lib/data-table-export";
 import type {
-  DataTableGraphQLConfig,
+  DataTableGraphQLSource,
   DataTableQueryOptions,
   Table,
 } from "@trenova/shared/types/data-table";
@@ -59,7 +59,7 @@ type DataTableExportDialogProps<TData extends Record<string, any>> = {
   onOpenChange: (open: boolean) => void;
   resource: string;
   table: Table<TData>;
-  graphql: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLSource<TData>;
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
   currentPageRows: TData[];
   totalCount: number | null;

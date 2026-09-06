@@ -32,12 +32,12 @@ export function DashSettlementPage() {
 
   const settlement = useQuery({
     queryKey: ["dash-settlement", settlementId],
-    queryFn: () => fetchMySettlement(settlementId),
+    queryFn: ({ signal }) => fetchMySettlement(settlementId, { signal }),
     enabled: settlementId.length > 0,
   });
   const disputes = useQuery({
     queryKey: ["dash-disputes"],
-    queryFn: fetchMyDisputes,
+    queryFn: ({ signal }) => fetchMyDisputes({ signal }),
   });
 
   const settlementDisputes = useMemo(

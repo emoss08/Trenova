@@ -538,13 +538,17 @@ func (r *jurisdictionRepository) ListConnection(
 ) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error) {
 	dba := r.db.DBForContext(ctx)
 
-	total, err := dba.
-		NewSelect().
-		Model((*jurisdictionrule.JurisdictionRule)(nil)).
-		Count(ctx)
-	if err != nil {
-		r.l.Error("failed to count jurisdiction rules", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*jurisdictionrule.JurisdictionRule)(nil)).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count jurisdiction rules", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -552,7 +556,7 @@ func (r *jurisdictionRepository) ListConnection(
 		dbhelper.CursorListParams[*jurisdictionrule.JurisdictionRule]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*jurisdictionrule.JurisdictionRule) *bun.SelectQuery {
 				return dba.
 					NewSelect().
@@ -578,16 +582,20 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 ) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
 	dba := r.db.DBForContext(ctx)
 
-	total, err := dba.
-		NewSelect().
-		Model((*jurisdictionrule.Override)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.OverrideScopeTenant(sq, tenantInfo)
-		}).
-		Count(ctx)
-	if err != nil {
-		r.l.Error("failed to count jurisdiction overrides", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*jurisdictionrule.Override)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.OverrideScopeTenant(sq, tenantInfo)
+			}).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count jurisdiction overrides", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -595,7 +603,7 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 		dbhelper.CursorListParams[*jurisdictionrule.Override]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*jurisdictionrule.Override) *bun.SelectQuery {
 				return dba.
 					NewSelect().

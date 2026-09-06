@@ -1,0 +1,47 @@
+enum OrgHolidayKind {
+  Holiday
+  Blackout
+}
+
+"""
+One calendar date the organisation treats specially. Holidays are skipped by
+PTO policies that do not count weekends; Blackout dates cannot be requested off.
+"""
+type OrgHoliday {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  """
+  Midnight UTC of the calendar day.
+  """
+  holidayDate: Timestamp!
+  kind: OrgHolidayKind!
+  recursAnnually: Boolean!
+  description: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input OrgHolidayInput {
+  name: String!
+  holidayDate: Timestamp!
+  kind: OrgHolidayKind!
+  recursAnnually: Boolean!
+  description: String
+  version: Int
+}
+
+extend type Query {
+  """
+  The calendar for one year: recurring entries plus one-offs dated in it.
+  """
+  orgHolidays(year: Int): [OrgHoliday!]!
+}
+
+extend type Mutation {
+  createOrgHoliday(input: OrgHolidayInput!): OrgHoliday!
+  updateOrgHoliday(id: ID!, input: OrgHolidayInput!): OrgHoliday!
+  deleteOrgHoliday(id: ID!): Boolean!
+}

@@ -8,6 +8,7 @@ import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
+import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
@@ -44,9 +45,9 @@ const defaultValues: ServiceFailureUpdate = {
   version: 0,
 };
 
-function toUpdate(row: ServiceFailure): ServiceFailureUpdate {
+function toUpdate(row: ServiceFailureRow): ServiceFailureUpdate {
   return {
-    id: row.id ?? "",
+    id: row.id,
     shipmentId: row.shipmentId,
     reasonCodeId: row.reasonCodeId ?? "",
     clearReasonCode: false,
@@ -55,7 +56,7 @@ function toUpdate(row: ServiceFailure): ServiceFailureUpdate {
     x12StatusCodeOverride: row.x12StatusCodeOverride,
     x12ReasonCodeOverride: row.x12ReasonCodeOverride,
     x12ExceptionCode: row.x12ExceptionCode,
-    version: row.version ?? 0,
+    version: row.version,
   };
 }
 
@@ -63,7 +64,7 @@ export function ServiceFailurePanel({
   open,
   onOpenChange,
   row,
-}: DataTablePanelProps<ServiceFailure>) {
+}: DataTablePanelProps<ServiceFailureRow>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const form = useForm<ServiceFailureUpdate>({

@@ -361,7 +361,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			EntityType: entityType,
 			Title:      title,
 			Subtitle:   subtitle,
-			Href:       fmt.Sprintf("/dispatch/workers?panelEntityId=%s&panelType=edit", id),
+			Href:       fmt.Sprintf("/hr/workers?panelEntityId=%s&panelType=edit", id),
 			Metadata: map[string]string{
 				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
 			},
@@ -409,7 +409,7 @@ func documentHref(document map[string]any) string {
 			resourceID,
 		)
 	case "worker":
-		return fmt.Sprintf("/dispatch/workers?panelEntityId=%s&panelType=edit", resourceID)
+		return fmt.Sprintf("/hr/workers?panelEntityId=%s&panelType=edit", resourceID)
 	case "customer":
 		return fmt.Sprintf(
 			"/billing/configuration-files/customers?panelEntityId=%s&panelType=edit",

@@ -15,11 +15,14 @@ import { checkSectionErrors } from "@/lib/form";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { TimeFormat } from "@trenova/shared/types/user";
+import type { WorkerRow } from "@/lib/graphql/worker-table";
 import type { Worker } from "@trenova/shared/types/worker";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BriefcaseIcon,
+  CalendarClockIcon,
+  CalendarRangeIcon,
   Clock4Icon,
   FileTextIcon,
   SmartphoneIcon,
@@ -27,6 +30,16 @@ import {
   ShieldCheckIcon,
   UserIcon,
   XIcon,
+  IdCardIcon,
+  HistoryIcon,
+  ClipboardListIcon,
+  GraduationCapIcon,
+  FlaskConicalIcon,
+  FolderCheckIcon,
+  ShieldAlertIcon,
+  ClipboardCheckIcon,
+  GaugeIcon,
+  HeartPulseIcon,
 } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { Suspense, lazy, useCallback, useEffect, useRef } from "react";
@@ -87,6 +100,18 @@ const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const WorkerPayTab = lazy(() => import("./worker-pay-tab"));
 const WorkerPortalTab = lazy(() => import("./worker-portal-tab"));
 const WorkerHosTab = lazy(() => import("./worker-hos-tab"));
+const WorkerPTOTab = lazy(() => import("./worker-pto-tab"));
+const WorkerScheduleTab = lazy(() => import("./worker-schedule-tab"));
+const WorkerCredentialsTab = lazy(() => import("./worker-credentials-tab"));
+const WorkerTimelineTab = lazy(() => import("./worker-timeline-tab"));
+const WorkerChecklistTab = lazy(() => import("./worker-checklist-tab"));
+const WorkerTrainingTab = lazy(() => import("./worker-training-tab"));
+const WorkerSafetyTab = lazy(() => import("./worker-safety-tab"));
+const WorkerTestingTab = lazy(() => import("./testing/worker-testing-tab"));
+const WorkerDQFTab = lazy(() => import("./dqf/worker-dqf-tab"));
+const WorkerLeaveTab = lazy(() => import("./leave/worker-leave-tab"));
+const WorkerOverviewTab = lazy(() => import("./worker-overview-tab"));
+const WorkerReviewsTab = lazy(() => import("./worker-reviews-tab"));
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -96,7 +121,7 @@ const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
 interface WorkerEditPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  row: Worker | null;
+  row: WorkerRow | null;
   form: UseFormReturn<Worker>;
 }
 
@@ -105,7 +130,9 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
 
-  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
+  // The panel opens on the overview because most visits are to read a worker,
+  // not to edit one. Deep links that name a tab are unaffected.
+  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("overview"));
 
   const {
     formState: { isSubmitting, errors },
@@ -256,6 +283,11 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                     <OverflowTabsList
                       items={[
                         {
+                          value: "overview",
+                          label: "Overview",
+                          icon: GaugeIcon,
+                        },
+                        {
                           value: "general",
                           label: "General Information",
                           icon: UserIcon,
@@ -273,8 +305,19 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           icon: ShieldCheckIcon,
                           className: cn(hasComplianceErrors && "text-destructive"),
                         },
+                        { value: "credentials", label: "Credentials", icon: IdCardIcon },
+                        { value: "timeline", label: "Timeline", icon: HistoryIcon },
+                        { value: "checklist", label: "Checklist", icon: ClipboardListIcon },
+                        { value: "training", label: "Training", icon: GraduationCapIcon },
+                        { value: "safety", label: "Safety", icon: ShieldAlertIcon },
+                        { value: "testing", label: "Testing", icon: FlaskConicalIcon },
+                        { value: "dqf", label: "DQ File", icon: FolderCheckIcon },
+                        { value: "reviews", label: "Reviews", icon: ClipboardCheckIcon },
                         { value: "hos", label: "HOS", icon: Clock4Icon },
                         { value: "pay", label: "Pay", icon: WalletIcon },
+                        { value: "pto", label: "Time Off", icon: CalendarRangeIcon },
+                        { value: "schedule", label: "Schedule", icon: CalendarClockIcon },
+                        { value: "leave", label: "Leave", icon: HeartPulseIcon },
                         { value: "documents", label: "Documents", icon: FileTextIcon },
                         { value: "portal", label: "Portal", icon: SmartphoneIcon },
                       ]}
@@ -283,6 +326,20 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                     />
                   </div>
                   <ScrollArea className="flex-1">
+                    <TabsContent value="overview" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerOverviewTab
+                          workerId={row?.id as string}
+                          onOpenTab={(tab) => void setActiveTab(tab)}
+                        />
+                      </Suspense>
+                    </TabsContent>
                     <TabsContent value="general" className="p-4">
                       <GeneralTab />
                     </TabsContent>
@@ -291,6 +348,102 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                     </TabsContent>
                     <TabsContent value="compliance" className="p-4">
                       <ComplianceTab />
+                    </TabsContent>
+                    <TabsContent value="credentials" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerCredentialsTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="timeline" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerTimelineTab
+                          workerId={row?.id as string}
+                          worker={{
+                            fleetCodeId: row?.fleetCodeId ?? null,
+                            driverType: row?.driverType ?? "",
+                            type: row?.type ?? "",
+                            status: row?.status ?? "",
+                          }}
+                        />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="checklist" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerChecklistTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="training" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerTrainingTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="safety" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerSafetyTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="testing" className="p-0">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerTestingTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="dqf" className="p-0">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerDQFTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="reviews" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerReviewsTab workerId={row?.id as string} />
+                      </Suspense>
                     </TabsContent>
                     <TabsContent value="hos" className="p-4">
                       <Suspense
@@ -312,6 +465,39 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         }
                       >
                         <WorkerPayTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="pto" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerPTOTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="schedule" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerScheduleTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="leave" className="p-0">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerLeaveTab workerId={row?.id as string} />
                       </Suspense>
                     </TabsContent>
                     <TabsContent value="documents" className="p-4">

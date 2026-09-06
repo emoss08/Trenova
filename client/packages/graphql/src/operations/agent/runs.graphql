@@ -17,14 +17,14 @@ fragment AgentRunTableRowFields on AgentRun {
   updatedAt
 }
 
-query AgentRunTable($input: DataTableConnectionInput!) {
+query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   agentRuns(input: $input) {
     edges {
       node {
         ...AgentRunTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

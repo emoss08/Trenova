@@ -282,6 +282,10 @@ func validateMVRCompliance(
 	}
 }
 
+// validateDrugTestCompliance reads the standing the testing programme caches on
+// the profile. A prohibition is always an error, whatever the enforcement level
+// is set to: using a prohibited driver is not something an organisation can
+// configure its way out of.
 func validateDrugTestCompliance(
 	dc *dispatchcontrol.DispatchControl,
 	w *worker.Worker,
@@ -291,10 +295,26 @@ func validateDrugTestCompliance(
 		return
 	}
 
-	if w.Profile.LastDrugTest > 0 && w.Profile.LastDrugTest <= w.Profile.HireDate {
-		errCode := getComplianceErrorCode(dc.ComplianceEnforcementLevel)
-		multiErr.Add("profile.lastDrugTest", errCode,
-			"Pre-employment drug test is required before hire date (49 CFR 382.301(a))")
+	status := w.Profile.DrugAlcoholStatus.Normalized()
+
+	if status == worker.DrugAlcoholProhibited {
+		multiErr.Add("profile.drugAlcoholStatus", errortypes.ErrInvalid,
+			"Worker is prohibited from safety-sensitive duty until the return-to-duty "+
+				"process is complete (49 CFR 382.501)")
+		return
+	}
+
+	errCode := getComplianceErrorCode(dc.ComplianceEnforcementLevel)
+
+	if status == worker.DrugAlcoholUnknown {
+		multiErr.Add("profile.drugAlcoholStatus", errCode,
+			"No pre-employment drug test is on file (49 CFR 382.301(a))")
+	}
+
+	if w.Profile.NextClearinghouseQueryDue != nil &&
+		timeutils.IsOverdue(*w.Profile.NextClearinghouseQueryDue) {
+		multiErr.Add("profile.nextClearinghouseQueryDue", errCode,
+			"Annual Clearinghouse query is overdue (49 CFR 382.701(b))")
 	}
 }
 

@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
-import { customerTableGraphQLConfig } from "@/lib/graphql/customer-table";
+import { customerTableGraphQLConfig, type CustomerRow } from "@/lib/graphql/customer-table";
 import { apiService } from "@/services/api";
 import type { Customer } from "@trenova/shared/types/customer";
 import type { DockAction } from "@trenova/shared/types/data-table";
@@ -17,11 +17,11 @@ export default function CustomerTable() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Customer[], status: string) => {
+    async (rows: CustomerRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.customerService.bulkUpdateStatus({
-          customerIds: ids as string[],
+          customerIds: ids,
           status: status as Customer["status"],
         }),
         {
@@ -40,7 +40,7 @@ export default function CustomerTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Customer>[]>(
+  const dockActions = useMemo<DockAction<CustomerRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +57,7 @@ export default function CustomerTable() {
   );
 
   return (
-    <DataTable<Customer>
+    <DataTable<CustomerRow>
       name="Customer"
       queryKey="customer-list"
       resource={Resource.Customer}

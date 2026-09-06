@@ -63,7 +63,7 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 		MoveID:                move.MoveID.String(),
 		ShipmentID:            move.ShipmentID.String(),
 		ProNumber:             move.ProNumber,
-		Bol:                   move.BOL,
+		BOL:                   move.BOL,
 		MoveStatus:            string(move.MoveStatus),
 		ShipmentStatus:        string(move.ShipmentStatus),
 		Sequence:              int(move.Sequence),

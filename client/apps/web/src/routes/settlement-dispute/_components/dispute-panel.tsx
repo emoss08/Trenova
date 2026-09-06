@@ -59,7 +59,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
   const queryClient = useQueryClient();
   const detail = useQuery({
     queryKey: ["settlement-dispute-detail", disputeId],
-    queryFn: () => fetchSettlementDisputeDetail(disputeId),
+    queryFn: ({ signal }) => fetchSettlementDisputeDetail(disputeId, { signal }),
   });
 
   const invalidate = async () => {

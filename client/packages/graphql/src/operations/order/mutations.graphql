@@ -43,7 +43,7 @@ mutation UpdateOrder($id: ID!, $input: OrderInput!) {
   }
 }
 
-mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: String!) {
+mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: Decimal!) {
   addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {
     ...OrderMutationResult
   }

@@ -36,14 +36,14 @@ fragment FiscalYearTableRowFields on FiscalYear {
   }
 }
 
-query FiscalYearTable($input: DataTableConnectionInput!) {
+query FiscalYearTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   fiscalYears(input: $input) {
     edges {
       node {
         ...FiscalYearTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -65,7 +65,7 @@ function GenerateBatchPanel({
   const { control } = form;
   const { data: period } = useQuery({
     queryKey: ["current-carrier-settlement-period"],
-    queryFn: fetchCurrentCarrierSettlementPeriod,
+    queryFn: ({ signal }) => fetchCurrentCarrierSettlementPeriod({ signal }),
     enabled: open,
   });
 
@@ -136,7 +136,7 @@ function GenerateBatchPanel({
 function BatchDetail({ batchId }: { batchId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["carrier-settlement-batch-detail", batchId],
-    queryFn: () => fetchCarrierSettlementBatchDetail(batchId),
+    queryFn: ({ signal }) => fetchCarrierSettlementBatchDetail(batchId, { signal }),
   });
 
   const exportMutation = useMutation({

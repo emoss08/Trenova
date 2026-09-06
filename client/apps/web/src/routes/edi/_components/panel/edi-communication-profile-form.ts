@@ -1,7 +1,6 @@
-import type {
-  EDICommunicationProfile,
-  UpsertEDICommunicationProfileRequest,
-} from "@trenova/shared/types/edi";
+import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
+import { isRecord } from "@trenova/shared/lib/utils";
+import type { UpsertEDICommunicationProfileRequest } from "@trenova/shared/types/edi";
 import {
   emptyToUndefined,
   type CommunicationProfileFormValues,
@@ -73,9 +72,9 @@ const configKeysByMethod: Record<CommunicationProfileMethod, ProfileConfigKey[]>
 };
 
 export function getProfileFormDefaults(
-  profile: EDICommunicationProfile | null,
+  profile: EDICommunicationProfileRow | null,
 ): CommunicationProfileFormValues {
-  const config = profile?.config ?? {};
+  const config = profile && isRecord(profile.config) ? profile.config : {};
   return {
     ediConnectionId: profile?.ediConnectionId ?? "",
     ediPartnerId: profile?.ediPartnerId ?? "",
@@ -142,7 +141,7 @@ export function getProfileFormDefaults(
 
 export function toCommunicationProfileRequest(
   values: CommunicationProfileFormValues,
-  profile: EDICommunicationProfile | null,
+  profile: EDICommunicationProfileRow | null,
 ): UpsertEDICommunicationProfileRequest {
   return {
     ediConnectionId: emptyToUndefined(values.ediConnectionId),

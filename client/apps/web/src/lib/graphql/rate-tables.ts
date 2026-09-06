@@ -3,45 +3,35 @@ import {
   RateMatrixTableDocument,
   RateQuoteTableDocument,
   RateZoneTableDocument,
-  type RateAgreementTableQueryVariables,
-  type RateMatrixTableQueryVariables,
-  type RateQuoteTableQueryVariables,
-  type RateZoneTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { RateAgreement, RateMatrix, RateQuote, RateZone } from "@trenova/shared/types/rate";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const rateAgreementTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RateAgreement,
-  RateAgreementTableQueryVariables
->({
+export const rateAgreementTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RateAgreementTableDocument,
   operationName: "RateAgreementTable",
   connectionKey: "rateAgreements",
 });
 
-export const rateZoneTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RateZone,
-  RateZoneTableQueryVariables
->({
+export type RateAgreementRow = DataTableConfigRow<typeof rateAgreementTableGraphQLConfig>;
+
+export const rateZoneTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RateZoneTableDocument,
   operationName: "RateZoneTable",
   connectionKey: "rateZones",
 });
 
-export const rateMatrixTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RateMatrix,
-  RateMatrixTableQueryVariables
->({
+export type RateZoneRow = DataTableConfigRow<typeof rateZoneTableGraphQLConfig>;
+
+export const rateMatrixTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RateMatrixTableDocument,
   operationName: "RateMatrixTable",
   connectionKey: "rateMatrices",
 });
 
-export const rateQuoteTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RateQuote,
-  RateQuoteTableQueryVariables
->({
+export type RateMatrixRow = DataTableConfigRow<typeof rateMatrixTableGraphQLConfig>;
+
+export const rateQuoteTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RateQuoteTableDocument,
   operationName: "RateQuoteTable",
   connectionKey: "rateQuotes",

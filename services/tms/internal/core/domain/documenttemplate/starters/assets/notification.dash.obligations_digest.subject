@@ -1,0 +1,1 @@
+{{ if .Digest }}{{ len .Digest }} thing{{ if ne (len .Digest) 1 }}s{{ end }} to sort out{{ if .DigestPeriod }} {{ .DigestPeriod }}{{ end }}{{ else }}Nothing outstanding{{ end }}

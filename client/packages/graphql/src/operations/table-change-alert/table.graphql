@@ -20,14 +20,14 @@ fragment TCASubscriptionTableRowFields on TCASubscription {
   updatedAt
 }
 
-query TCASubscriptionTable($input: DataTableConnectionInput!) {
+query TCASubscriptionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   tcaSubscriptions(input: $input) {
     edges {
       node {
         ...TCASubscriptionTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

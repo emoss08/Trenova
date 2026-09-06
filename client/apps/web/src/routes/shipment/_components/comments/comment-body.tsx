@@ -8,7 +8,7 @@ import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
 
 const ENTITY_REF_BASE_PATHS: Record<string, string> = {
   shipment: "/shipment-management/shipments",
-  worker: "/dispatch/workers",
+  worker: "/hr/workers",
   customer: "/billing/configuration-files/customers",
 };
 

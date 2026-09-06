@@ -2,6 +2,7 @@ import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
 import { usePermission } from "@/hooks/use-permission";
+import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 import { apiService } from "@/services/api";
 import type { RateAgreementReviewAction } from "@/services/rate";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,7 +69,7 @@ const DEFAULT_AGREEMENT: Partial<RateAgreement> = {
 };
 
 type ReviewHeaderActionsProps = {
-  readonly agreement: RateAgreement;
+  readonly agreement: RateAgreementRow;
   readonly onReviewAction: (action: RateAgreementReviewAction) => void;
 };
 
@@ -178,7 +179,7 @@ export function RateAgreementPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<RateAgreement>) {
+}: DataTablePanelProps<RateAgreementRow>) {
   const [reviewAction, setReviewAction] = useState<RateAgreementReviewAction | null>(null);
 
   const form = useForm<RateAgreement>({
@@ -245,7 +246,7 @@ export function RateAgreementPanel({
   if (mode === "edit") {
     return (
       <>
-        <TabbedFormEditPanel<RateAgreement, RateAgreement>
+        <TabbedFormEditPanel<RateAgreement, RateAgreementRow>
           open={open}
           onOpenChange={onOpenChange}
           row={row}

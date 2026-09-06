@@ -4,6 +4,13 @@ package driverpay
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BenefitPlan].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.BenefitPlanFieldMap] instead of parsing struct tags via reflection.
+func (e *BenefitPlan) GetStaticFieldMap() map[string]string {
+	return buncolgen.BenefitPlanFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EscrowAccount].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EscrowAccountFieldMap] instead of parsing struct tags via reflection.
@@ -65,6 +72,13 @@ func (e *RecurringDeduction) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.RecurringEarningFieldMap] instead of parsing struct tags via reflection.
 func (e *RecurringEarning) GetStaticFieldMap() map[string]string {
 	return buncolgen.RecurringEarningFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerBenefitEnrollment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerBenefitEnrollmentFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerBenefitEnrollment) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerBenefitEnrollmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPayAssignment].

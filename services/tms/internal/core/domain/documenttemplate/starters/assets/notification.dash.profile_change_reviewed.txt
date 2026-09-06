@@ -1,0 +1,1 @@
+{{ if .Approved }}The change you asked for on your record has been made. Check your profile in Dash to see it.{{ else }}The change you asked for on your record was not approved.{{ if .Reason }} {{ .Reason }}{{ else }} Talk to your manager if you think it should be.{{ end }}{{ end }}

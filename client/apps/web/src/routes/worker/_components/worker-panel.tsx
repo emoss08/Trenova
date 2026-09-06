@@ -1,11 +1,12 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { WorkerRow } from "@/lib/graphql/worker-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { workerSchema, type Worker } from "@trenova/shared/types/worker";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { WorkerCreatePanel } from "./worker-create-panel";
 import { WorkerEditPanel } from "./worker-edit-panel";
 
-export function WorkerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Worker>) {
+export function WorkerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<WorkerRow>) {
   const form = useForm({
     resolver: zodResolver(workerSchema),
     defaultValues: {

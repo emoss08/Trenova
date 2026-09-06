@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/graph-gophers/dataloader/v7"
+	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
 )
 
@@ -31,13 +31,13 @@ func NewOrganizationByIDLoaderFactory(
 
 func (f *OrganizationByIDLoaderFactory) NewForTenant(
 	tenantInfo pagination.TenantInfo,
-) *dataloader.Loader[string, *tenant.Organization] {
-	return dataloader.NewBatchedLoader(f.batchFunc(tenantInfo))
+) *dataloadgen.Loader[string, *tenant.Organization] {
+	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *OrganizationByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) dataloader.BatchFunc[string, *tenant.Organization] {
+) batchFetchFunc[*tenant.Organization] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*tenant.Organization, error) {
 		return f.organizationService.GetByIDs(ctx, services.GetOrganizationsByIDsRequest{
 			TenantInfo:      tenantInfo,

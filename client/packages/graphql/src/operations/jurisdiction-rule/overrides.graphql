@@ -21,14 +21,17 @@ fragment JurisdictionRuleOverrideTableRowFields on JurisdictionRuleOverride {
   }
 }
 
-query JurisdictionRuleOverrideTable($input: DataTableConnectionInput!) {
+query JurisdictionRuleOverrideTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   jurisdictionRuleOverrides(input: $input) {
     edges {
       node {
         ...JurisdictionRuleOverrideTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

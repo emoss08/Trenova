@@ -2,15 +2,12 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type {
-  EDIMappingProfileItem,
-  EDITransfer,
-  EDITransferStatus,
-} from "@trenova/shared/types/edi";
+import type { EDIMappingProfileItem, EDITransferStatus } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightIcon, CheckIcon, PackageIcon, RouteIcon, XIcon } from "lucide-react";
@@ -38,7 +35,7 @@ export function EDITransferReviewPanel({
   open,
   onOpenChange,
   row: transfer,
-}: DataTablePanelProps<EDITransfer> & {
+}: DataTablePanelProps<EDITransferRow> & {
   direction: "inbound" | "outbound";
 }) {
   const queryClient = useQueryClient();

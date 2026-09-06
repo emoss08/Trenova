@@ -17811,6 +17811,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/portal/credentials/{credentialID}/document": {
+            "post": {
+                "description": "Files a photo or scan against the credential so the office can verify and renew it.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DriverPortal"
+                ],
+                "summary": "Upload a renewal document for one of the driver's credentials",
+                "operationId": "uploadPortalCredentialDocument",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Credential ID",
+                        "name": "credentialID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Document file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_driverportalservice.PortalDocument"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/portal/document-types": {
             "get": {
                 "description": "Returns the carrier's shipment-category document types (POD, BOL, ...) for tagging uploads.",
@@ -31093,517 +31151,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permission.UserRoleAssignment"
                             }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/worker-pto/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Worker PTO"
-                ],
-                "summary": "List worker PTO entries",
-                "operationId": "listWorkerPTO",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Opaque cursor",
-                        "name": "after",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by PTO status",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by PTO type",
-                        "name": "type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Start date from",
-                        "name": "startDateFrom",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Start date to",
-                        "name": "startDateTo",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Worker ID",
-                        "name": "workerId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Include worker details",
-                        "name": "includeWorker",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.CursorResponse-array_github_com_emoss08_trenova_internal_core_domain_worker_WorkerPTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/worker-pto/chart/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Worker PTO"
-                ],
-                "summary": "Get worker PTO chart data",
-                "operationId": "getWorkerPTOChartData",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "minimum": 0,
-                        "type": "integer",
-                        "description": "Page offset",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Start date from",
-                        "name": "startDateFrom",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Start date to",
-                        "name": "startDateTo",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "PTO type",
-                        "name": "type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Worker ID",
-                        "name": "workerId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Timezone",
-                        "name": "timezone",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartDataPoint"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/worker-pto/upcoming/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Worker PTO"
-                ],
-                "summary": "List upcoming worker PTO entries",
-                "operationId": "listUpcomingWorkerPTO",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Opaque cursor",
-                        "name": "after",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by PTO status",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by PTO type",
-                        "name": "type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Start date",
-                        "name": "startDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "End date",
-                        "name": "endDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Worker ID",
-                        "name": "workerId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Fleet code ID",
-                        "name": "fleetCodeId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Timezone",
-                        "name": "timezone",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.CursorResponse-array_github_com_emoss08_trenova_internal_core_domain_worker_WorkerPTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/worker-pto/{ptoID}/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Worker PTO"
-                ],
-                "summary": "Get a worker PTO entry",
-                "operationId": "getWorkerPTO",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Worker PTO ID",
-                        "name": "ptoID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Include worker details",
-                        "name": "includeWorker",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/worker-pto/{ptoID}/approve/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Worker PTO"
-                ],
-                "summary": "Approve a worker PTO entry",
-                "operationId": "approveWorkerPTO",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Worker PTO ID",
-                        "name": "ptoID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/worker-pto/{ptoID}/reject/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Worker PTO"
-                ],
-                "summary": "Reject a worker PTO entry",
-                "operationId": "rejectWorkerPTO",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Worker PTO ID",
-                        "name": "ptoID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
                     },
                     "401": {
@@ -45808,11 +45355,29 @@ const docTemplate = `{
                 "approverId": {
                     "type": "string"
                 },
+                "autoApproved": {
+                    "type": "boolean"
+                },
+                "balanceAfterDays": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
                 "businessUnitId": {
+                    "type": "string"
+                },
+                "cancellationReason": {
+                    "type": "string"
+                },
+                "cancelledBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                },
+                "cancelledById": {
                     "type": "string"
                 },
                 "createdAt": {
                     "type": "integer"
+                },
+                "days": {
+                    "type": "number"
                 },
                 "endDate": {
                     "type": "integer"
@@ -45824,6 +45389,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "reason": {
+                    "type": "string"
+                },
+                "rejectionReason": {
                     "type": "string"
                 },
                 "rejector": {
@@ -46449,61 +46017,6 @@ const docTemplate = `{
                 },
                 "pattern": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_repositories.LanePatternSummary"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartDataPoint": {
-            "type": "object",
-            "properties": {
-                "bereavement": {
-                    "type": "integer"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "holiday": {
-                    "type": "integer"
-                },
-                "maternity": {
-                    "type": "integer"
-                },
-                "paternity": {
-                    "type": "integer"
-                },
-                "personal": {
-                    "type": "integer"
-                },
-                "sick": {
-                    "type": "integer"
-                },
-                "vacation": {
-                    "type": "integer"
-                },
-                "workers": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartWorker"
-                        }
-                    }
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartWorker": {
-            "type": "object",
-            "properties": {
-                "firstName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "lastName": {
-                    "type": "string"
-                },
-                "ptoType": {
-                    "type": "string"
                 }
             }
         },
@@ -49446,35 +48959,6 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.Worker"
-                    }
-                },
-                "totalCount": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_pkg_pagination.CursorResponse-array_github_com_emoss08_trenova_internal_core_domain_worker_WorkerPTO": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "endCursor": {
-                    "type": "string"
-                },
-                "hasNextPage": {
-                    "type": "boolean"
-                },
-                "next": {
-                    "type": "string"
-                },
-                "previous": {
-                    "type": "string"
-                },
-                "results": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO"
                     }
                 },
                 "totalCount": {

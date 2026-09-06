@@ -122,27 +122,31 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*worker.Worker)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				buncolgen.WorkerTable.Alias,
-				req.Filter,
-				(*worker.Worker)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count workers", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.Worker)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.WorkerTable.Alias,
+					req.Filter,
+					(*worker.Worker)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count workers", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.Worker]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(items *[]*worker.Worker) *bun.SelectQuery {
 			return r.db.DBForContext(ctx).
 				NewSelect().
@@ -418,44 +422,249 @@ func (r *repository) ListWorkerSyncDrifts(
 	return records, nil
 }
 
-func (r *repository) ListWorkersWithExpiringCredentials(
+func (r *repository) PatchProfileCredentialField(
 	ctx context.Context,
-	req repositories.ListExpiringCredentialsRequest,
-) ([]*worker.Worker, error) {
-	now := timeutils.NowUnix()
-	horizon := now + int64(req.HorizonDays)*86400
-	grace := now - int64(req.GraceDays)*86400
-
-	wcols := buncolgen.WorkerColumns
-	profileAlias := "profile"
-	expiryColumns := []buncolgen.Column{
-		buncolgen.WorkerProfileColumns.LicenseExpiry.WithAlias(profileAlias),
-		buncolgen.WorkerProfileColumns.HazmatExpiry.WithAlias(profileAlias),
-		buncolgen.WorkerProfileColumns.MedicalCardExpiry.WithAlias(profileAlias),
-		buncolgen.WorkerProfileColumns.PhysicalDueDate.WithAlias(profileAlias),
-		buncolgen.WorkerProfileColumns.MVRDueDate.WithAlias(profileAlias),
-		buncolgen.WorkerProfileColumns.TWICExpiry.WithAlias(profileAlias),
+	req *repositories.PatchProfileCredentialFieldRequest,
+) error {
+	cols := buncolgen.WorkerProfileColumns
+	var column buncolgen.Column
+	switch req.Field {
+	case worker.CredentialProfileFieldLicenseExpiry:
+		column = cols.LicenseExpiry
+	case worker.CredentialProfileFieldHazmatExpiry:
+		column = cols.HazmatExpiry
+	case worker.CredentialProfileFieldMedicalCardExpiry:
+		column = cols.MedicalCardExpiry
+	case worker.CredentialProfileFieldTWICExpiry:
+		column = cols.TWICExpiry
+	case worker.CredentialProfileFieldPhysicalDueDate:
+		column = cols.PhysicalDueDate
+	case worker.CredentialProfileFieldMVRDueDate:
+		column = cols.MVRDueDate
+	case worker.CredentialProfileFieldNone:
+		return nil
+	default:
+		return fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, req.Field)
 	}
 
-	items := make([]*worker.Worker, 0, 32)
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&items).
-		Relation(buncolgen.WorkerRelations.Profile).
-		Where(wcols.Status.Eq(), domaintypes.StatusActive).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			for i := range expiryColumns {
-				predicate := expiryColumns[i].Between()
-				if i == 0 {
-					sq = sq.Where(predicate, grace, horizon)
-				} else {
-					sq = sq.WhereOr(predicate, grace, horizon)
-				}
-			}
-			return sq
+	q := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*worker.WorkerProfile)(nil)).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID)
 		})
-	if err := query.Scan(ctx); err != nil {
-		return nil, fmt.Errorf("list workers with expiring credentials: %w", err)
+
+	if req.Field == worker.CredentialProfileFieldLicenseExpiry {
+		if req.ExpiresAt != nil && *req.ExpiresAt > 0 {
+			q = q.Set(column.Set(), *req.ExpiresAt)
+		}
+		if req.Number != "" {
+			q = q.Set(cols.LicenseNumber.Set(), req.Number)
+		}
+	} else if req.ExpiresAt != nil && *req.ExpiresAt > 0 {
+		q = q.Set(column.Set(), *req.ExpiresAt)
+	} else {
+		q = q.Set(column.Set(), nil)
 	}
-	return items, nil
+
+	if _, err := q.Exec(ctx); err != nil {
+		r.l.Error("failed to patch worker profile credential field",
+			zap.String("workerId", req.WorkerID.String()),
+			zap.String("field", req.Field.String()),
+			zap.Error(err))
+		return fmt.Errorf("patch worker profile credential field: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) UpdateProfileComplianceStatus(
+	ctx context.Context,
+	req *repositories.UpdateProfileComplianceStatusRequest,
+) error {
+	cols := buncolgen.WorkerProfileColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*worker.WorkerProfile)(nil)).
+		Set(cols.ComplianceStatus.Set(), req.Status).
+		Set(cols.NextCredentialExpiry.Set(), req.NextExpiry).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID).
+				WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
+					return iq.
+						Where(cols.ComplianceStatus.Ne(), req.Status).
+						WhereOr(
+							"? IS DISTINCT FROM ?",
+							bun.Ident(cols.NextCredentialExpiry.String()),
+							req.NextExpiry,
+						)
+				})
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update worker compliance status",
+			zap.String("workerId", req.WorkerID.String()),
+			zap.Error(err))
+		return fmt.Errorf("update worker compliance status: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateProfileTrainingRollup caches the worker's training standing on the
+// profile so the roster can filter and sort on it. The guard skips the write
+// when nothing moved, keeping updated_at meaningful.
+func (r *repository) UpdateProfileTrainingRollup(
+	ctx context.Context,
+	req *repositories.UpdateProfileTrainingRollupRequest,
+) error {
+	cols := buncolgen.WorkerProfileColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*worker.WorkerProfile)(nil)).
+		Set(cols.TrainingHealth.Set(), req.Health).
+		Set(cols.NextTrainingDue.Set(), req.NextDue).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID).
+				WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
+					return iq.
+						Where(cols.TrainingHealth.Ne(), req.Health).
+						WhereOr(
+							"? IS DISTINCT FROM ?",
+							bun.Ident(cols.NextTrainingDue.String()),
+							req.NextDue,
+						)
+				})
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update worker training rollup",
+			zap.String("workerId", req.WorkerID.String()),
+			zap.Error(err))
+		return fmt.Errorf("update worker training rollup: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateProfileSafetyRollup caches the worker's safety standing on the profile
+// for the same reason.
+func (r *repository) UpdateProfileSafetyRollup(
+	ctx context.Context,
+	req *repositories.UpdateProfileSafetyRollupRequest,
+) error {
+	cols := buncolgen.WorkerProfileColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*worker.WorkerProfile)(nil)).
+		Set(cols.SafetyRating.Set(), req.Rating).
+		Set(cols.SafetyScore.Set(), req.Score).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID).
+				WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
+					return iq.
+						Where(cols.SafetyRating.Ne(), req.Rating).
+						WhereOr(cols.SafetyScore.Ne(), req.Score)
+				})
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update worker safety rollup",
+			zap.String("workerId", req.WorkerID.String()),
+			zap.Error(err))
+		return fmt.Errorf("update worker safety rollup: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) UpdateProfileQualification(
+	ctx context.Context,
+	req *repositories.UpdateProfileQualificationRequest,
+) error {
+	cols := buncolgen.WorkerProfileColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*worker.WorkerProfile)(nil)).
+		Set(cols.IsQualified.Set(), req.Qualified).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID).
+				Where(cols.IsQualified.Ne(), req.Qualified)
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update worker qualification",
+			zap.String("workerId", req.WorkerID.String()),
+			zap.Error(err))
+		return fmt.Errorf("update worker qualification: %w", err)
+	}
+
+	return nil
+}
+
+// CountRosterAttention answers the home screen's HR tile in one pass over the
+// roll-up columns. Counting these by replaying credentials, training records
+// and safety events per worker is what those columns were denormalised to
+// avoid.
+func (r *repository) CountRosterAttention(
+	ctx context.Context,
+	req *repositories.CountRosterAttentionRequest,
+) (*repositories.RosterAttention, error) {
+	wcols := buncolgen.WorkerColumns
+	pcols := buncolgen.WorkerProfileColumns
+
+	counts := new(repositories.RosterAttention)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*worker.Worker)(nil)).
+		ColumnExpr("COUNT(*) AS active_workers").
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE ? = ?) AS non_compliant",
+			bun.Ident(pcols.ComplianceStatus.String()),
+			worker.ComplianceStatusNonCompliant,
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE ? IN (?)) AS training_overdue",
+			bun.Ident(pcols.TrainingHealth.String()),
+			bun.In([]worker.TrainingHealth{
+				worker.TrainingHealthOverdue,
+				worker.TrainingHealthExpired,
+				worker.TrainingHealthFailed,
+				worker.TrainingHealthMissing,
+			}),
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE ? = ?) AS at_risk",
+			bun.Ident(pcols.SafetyRating.String()),
+			worker.SafetyRatingAtRisk,
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE ? IS NOT NULL AND ? <= ?) AS expiring_soon",
+			bun.Ident(pcols.NextCredentialExpiry.String()),
+			bun.Ident(pcols.NextCredentialExpiry.String()),
+			req.ExpiryHorizon,
+		).
+		Join(
+			"JOIN worker_profiles AS wrkp ON wrkp.worker_id = wrk.id AND wrkp.organization_id = wrk.organization_id AND wrkp.business_unit_id = wrk.business_unit_id",
+		).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.WorkerScopeTenant(sq, req.TenantInfo).
+				Where(wcols.Status.Eq(), domaintypes.StatusActive)
+		}).
+		Scan(ctx, counts)
+	if err != nil {
+		r.l.Error("failed to count roster attention", zap.Error(err))
+		return nil, fmt.Errorf("count roster attention: %w", err)
+	}
+	return counts, nil
 }

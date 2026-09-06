@@ -10,11 +10,13 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { storedMileageTableGraphQLConfig } from "@/lib/graphql/stored-mileage-table";
+import {
+  storedMileageTableGraphQLConfig,
+  type StoredMileageRow,
+} from "@/lib/graphql/stored-mileage-table";
 import { StoredMileageService } from "@/services/stored-mileage";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import type { StoredMileage } from "@/types/stored-mileage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon, TrashIcon } from "lucide-react";
 import { useRef, useState } from "react";
@@ -27,7 +29,7 @@ const columns = getColumns();
 export default function StoredMileageTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const selectedMileageRef = useRef<StoredMileage | null>(null);
+  const selectedMileageRef = useRef<StoredMileageRow | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -46,12 +48,12 @@ export default function StoredMileageTable() {
     },
   });
 
-  const handleDelete = (row: Row<StoredMileage>) => {
+  const handleDelete = (row: Row<StoredMileageRow>) => {
     selectedMileageRef.current = row.original;
     setDeleteDialogOpen(true);
   };
 
-  const contextMenuActions: RowAction<StoredMileage>[] = [
+  const contextMenuActions: RowAction<StoredMileageRow>[] = [
     {
       id: "deactivate",
       label: "Deactivate",
@@ -64,7 +66,7 @@ export default function StoredMileageTable() {
 
   return (
     <>
-      <DataTable<StoredMileage>
+      <DataTable<StoredMileageRow>
         name="Stored Mileage"
         queryKey="stored-mileage-list"
         graphql={storedMileageTableGraphQLConfig}

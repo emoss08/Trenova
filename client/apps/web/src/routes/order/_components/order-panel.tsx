@@ -4,7 +4,8 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { createOrder, updateOrder } from "@/lib/graphql/order";
-import { orderSchema, type Order } from "@trenova/shared/types/order";
+import type { OrderRow } from "@/lib/graphql/order-table";
+import { orderSchema } from "@trenova/shared/types/order";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { HistoryIcon } from "lucide-react";
@@ -36,7 +37,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   return <span className="text-2xs text-foreground">No owner assigned</span>;
 }
 
-export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Order>) {
+export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<OrderRow>) {
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(orderSchema),
@@ -66,7 +67,7 @@ export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         fieldKey="orderNumber"
         formComponent={<OrderForm mode="edit" />}
         mutationFn={async (values, currentRow) => {
-          const updated = await updateOrder(currentRow.id!, values);
+          const updated = await updateOrder(currentRow.id, values);
           void queryClient.invalidateQueries({ queryKey: ["order-detail"] });
           return updated;
         }}

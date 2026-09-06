@@ -1,0 +1,227 @@
+import { EmptyState } from "@/components/empty-state";
+import { KpiStat } from "@/components/kpi/kpi-stat";
+import { usePermission } from "@/hooks/use-permission";
+import {
+  fetchWorkerPolicies,
+  WORKER_POLICIES_KEY,
+  type WorkerPolicyRow,
+} from "@/lib/graphql/self-service";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatShiftDate } from "@trenova/shared/lib/scheduling";
+import { policyAudienceLabel } from "@trenova/shared/lib/self-service";
+import { cn } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import {
+  ArchiveIcon,
+  BookOpenTextIcon,
+  FileSignatureIcon,
+  FileTextIcon,
+  PenLineIcon,
+  PlusIcon,
+  ScrollTextIcon,
+  UsersIcon,
+} from "lucide-react";
+import { useState } from "react";
+import { PolicyComplianceDialog } from "./policy-compliance-dialog";
+import { PolicyDialog } from "./policy-dialog";
+
+type Scope = "active" | "all";
+
+const SCOPE_ITEMS = [
+  { value: "active", label: "In force" },
+  { value: "all", label: "Everything" },
+] satisfies { value: Scope; label: string }[];
+
+const AUDIENCE_ACCENT: Record<string, string> = {
+  All: "var(--color-blue-500)",
+  Employees: "var(--color-emerald-500)",
+  Contractors: "var(--color-amber-500)",
+};
+
+export default function PoliciesConsole() {
+  const { allowed: canRead } = usePermission(Resource.WorkerPolicy, Operation.Read);
+  const { allowed: canCreate } = usePermission(Resource.WorkerPolicy, Operation.Create);
+  const { allowed: canUpdate } = usePermission(Resource.WorkerPolicy, Operation.Update);
+  const [scope, setScope] = useState<Scope>("active");
+  const [dialog, setDialog] = useState<{ policy: WorkerPolicyRow | null } | null>(null);
+  const [compliance, setCompliance] = useState<WorkerPolicyRow | null>(null);
+
+  const policies = useQuery({
+    queryKey: [WORKER_POLICIES_KEY],
+    queryFn: ({ signal }) => fetchWorkerPolicies(undefined, { signal }),
+    enabled: canRead,
+  });
+
+  if (!canRead) return null;
+
+  const rows = policies.data ?? [];
+  const active = rows.filter((row) => row.status === "Active");
+  const shown = scope === "active" ? active : rows;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-6 gap-3">
+        <KpiStat
+          label="In force"
+          value={String(active.length)}
+          icon={<ScrollTextIcon className="size-[11px]" />}
+          sub="Policies drivers are bound by today"
+        />
+        <KpiStat
+          label="Need a signature"
+          value={String(active.filter((row) => row.requiresSignature).length)}
+          tone="warning"
+          icon={<FileSignatureIcon className="size-[11px]" />}
+          sub="The rest only need reading"
+        />
+        <KpiStat
+          label="Retired"
+          value={String(rows.length - active.length)}
+          tone="muted"
+          icon={<ArchiveIcon className="size-[11px]" />}
+          sub="Kept so old signatures still point at something"
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SegmentedControl<Scope>
+          items={SCOPE_ITEMS}
+          value={scope}
+          onValueChange={setScope}
+          aria-label="Which policies to show"
+        />
+        {canCreate ? (
+          <Button size="sm" onClick={() => setDialog({ policy: null })}>
+            <PlusIcon className="size-3.5" />
+            Publish a policy
+          </Button>
+        ) : null}
+      </div>
+
+      {policies.isLoading ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-40 rounded-xl" />
+        </div>
+      ) : shown.length === 0 ? (
+        <EmptyState
+          className="max-w-none"
+          title={scope === "active" ? "Nothing in force" : "No policies yet"}
+          description="Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash."
+          icons={[BookOpenTextIcon, FileSignatureIcon, UsersIcon]}
+          action={
+            canCreate
+              ? {
+                  label: "Publish a policy",
+                  icon: PlusIcon,
+                  onClick: () => setDialog({ policy: null }),
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {shown.map((policy) => (
+            <PolicyCard
+              key={policy.id}
+              policy={policy}
+              onCompliance={() => setCompliance(policy)}
+              onEdit={canUpdate ? () => setDialog({ policy }) : undefined}
+            />
+          ))}
+        </div>
+      )}
+
+      <PolicyDialog
+        open={dialog !== null}
+        onOpenChange={(open) => !open && setDialog(null)}
+        policy={dialog?.policy ?? null}
+      />
+      <PolicyComplianceDialog
+        policy={compliance}
+        onOpenChange={(open) => !open && setCompliance(null)}
+      />
+    </div>
+  );
+}
+
+function PolicyCard({
+  policy,
+  onCompliance,
+  onEdit,
+}: {
+  policy: WorkerPolicyRow;
+  onCompliance: () => void;
+  onEdit?: () => void;
+}) {
+  const retired = policy.status !== "Active";
+  const accent = AUDIENCE_ACCENT[policy.appliesTo] ?? "var(--primary)";
+
+  return (
+    <div
+      className={cn(
+        "border-border/80 bg-card hover:border-border group relative flex flex-col gap-3 overflow-hidden rounded-xl border p-4 transition-colors",
+        retired && "opacity-70",
+      )}
+    >
+      <span
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ backgroundColor: accent }}
+        aria-hidden
+      />
+      <div className="flex items-start gap-3">
+        <span
+          className="grid size-9 shrink-0 place-items-center rounded-lg"
+          style={{
+            backgroundColor: `color-mix(in oklch, ${accent} 14%, transparent)`,
+            color: accent,
+          }}
+        >
+          {policy.documentId ? (
+            <FileTextIcon className="size-4" />
+          ) : (
+            <PenLineIcon className="size-4" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{policy.title}</p>
+          <p className="text-muted-foreground truncate text-xs">
+            {policy.summary || `${policy.code} · from ${formatShiftDate(policy.effectiveFrom)}`}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant="outline">v{policy.versionLabel}</Badge>
+        <Badge variant="secondary">{policyAudienceLabel(policy.appliesTo)}</Badge>
+        <Badge variant={policy.requiresSignature ? "warning" : "secondary"}>
+          {policy.requiresSignature ? "Signature" : "Read only"}
+        </Badge>
+        {retired ? <Badge variant="inactive">Retired</Badge> : null}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
+        <Button size="xs" variant="outline" onClick={onCompliance}>
+          <UsersIcon className="size-3.5" />
+          Who has signed
+        </Button>
+        {onEdit ? (
+          <Button
+            size="xs"
+            variant="ghost"
+            className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            onClick={onEdit}
+            aria-label={`Edit ${policy.title}`}
+          >
+            Edit
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}

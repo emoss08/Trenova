@@ -1,4 +1,17 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
+import type { DocumentNode } from "graphql";
+
+function operationMeta(documentNode: DocumentNode): Record<string, string> | undefined {
+  for (const definition of documentNode.definitions) {
+    if (definition.kind === "OperationDefinition") {
+      return {
+        kind: definition.operation,
+        ...(definition.name ? { name: definition.name.value } : {}),
+      };
+    }
+  }
+  return undefined;
+}
 
 const config: CodegenConfig = {
   schema: "../../../services/tms/internal/api/graphql/schema/*.graphqls",
@@ -15,7 +28,8 @@ const config: CodegenConfig = {
     "src/generated/": {
       preset: "client",
       presetConfig: {
-        persistedDocuments: true,
+        persistedDocuments: { mode: "replaceDocumentWithHash" },
+        onExecutableDocumentNode: operationMeta,
         fragmentMasking: { unmaskFunctionName: "getFragmentData" },
       },
       config: {
@@ -25,6 +39,8 @@ const config: CodegenConfig = {
         scalars: {
           Any: "unknown",
           JSON: "unknown",
+          Timestamp: { input: "number", output: "number" },
+          Decimal: { input: "string", output: "string" },
         },
       },
     },

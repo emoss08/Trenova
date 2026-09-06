@@ -24,11 +24,13 @@ type manifest struct {
 }
 
 type typeOverride struct {
-	Skip     bool              `yaml:"skip"`
-	Exclude  []string          `yaml:"exclude"`
-	Aliases  map[string]string `yaml:"aliases"`
-	Imports  map[string]string `yaml:"imports"`
-	Defaults map[string]string `yaml:"defaults"`
+	Skip      bool              `yaml:"skip"`
+	Exclude   []string          `yaml:"exclude"`
+	Aliases   map[string]string `yaml:"aliases"`
+	Imports   map[string]string `yaml:"imports"`
+	Defaults  map[string]string `yaml:"defaults"`
+	Required  []string          `yaml:"required"`
+	Clearable []string          `yaml:"clearable"`
 }
 
 type gqlgenConfig struct {
@@ -56,6 +58,13 @@ type goField struct {
 	GoName   string
 	JSONName string
 	Type     typeRef
+	Bun      bunTag
+}
+
+type bunTag struct {
+	Present  bool
+	Ignored  bool
+	Nullzero bool
 }
 
 type typeRef struct {
@@ -86,8 +95,9 @@ type generatedCreate struct {
 }
 
 type generatedPatch struct {
-	InputName string
-	Fields    []patchAssignment
+	InputName       string
+	Fields          []patchAssignment
+	NeedsErrortypes bool
 }
 
 type parseAssignment struct {
@@ -111,6 +121,7 @@ type patchAssignment struct {
 	FieldName string
 	Guard     string
 	ValueName string
+	Required  bool
 	Body      []string
 }
 

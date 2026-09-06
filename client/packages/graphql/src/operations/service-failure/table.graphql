@@ -1,6 +1,7 @@
 fragment ServiceFailureTableRowFields on ServiceFailure {
   id
   shipmentId
+  shipmentMoveId
   number
   type
   source
@@ -13,6 +14,10 @@ fragment ServiceFailureTableRowFields on ServiceFailure {
   lateMinutes
   reasonCodeId
   notes
+  internalNotes
+  x12StatusCodeOverride
+  x12ReasonCodeOverride
+  x12ExceptionCode
   detectedAt
   version
   shipment {
@@ -42,14 +47,18 @@ fragment ServiceFailureTableRowFields on ServiceFailure {
   }
 }
 
-query ServiceFailureTable($input: DataTableConnectionInput!, $shipmentId: ID) {
+query ServiceFailureTable(
+  $input: DataTableConnectionInput!
+  $shipmentId: ID
+  $includeTotalCount: Boolean = true
+) {
   serviceFailures(input: $input, shipmentId: $shipmentId) {
     edges {
       node {
         ...ServiceFailureTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -77,10 +77,10 @@ type ReportDefinition {
   definition: JSON!
   defaultFormat: String!
   currentRevision: Int!
-  lastRunAt: Int
+  lastRunAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ReportDefinitionEdge {
@@ -101,7 +101,7 @@ type ReportDefinitionRevision {
   catalogVersion: String!
   definition: JSON!
   createdById: ID!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 # --- Report runs -------------------------------------------------------------
@@ -128,13 +128,13 @@ type ReportRun {
   durationMs: Int!
   truncated: Boolean!
   error: ReportRunError
-  artifactExpiresAt: Int
+  artifactExpiresAt: Timestamp
   cacheHit: Boolean!
-  queuedAt: Int
-  startedAt: Int
-  completedAt: Int
+  queuedAt: Timestamp
+  startedAt: Timestamp
+  completedAt: Timestamp
   version: Int!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 type ReportRunEdge {
@@ -177,11 +177,11 @@ type ReportSchedule {
   enabled: Boolean!
   runAsId: ID!
   lastRunId: ID
-  nextRunAt: Int
+  nextRunAt: Timestamp
   consecutiveFailures: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 # A saved view is a named set of parameter values for one report — the same
@@ -196,11 +196,11 @@ type ReportView {
   shared: Boolean!
   pinned: Boolean!
   format: String
-  lastRunAt: Int
+  lastRunAt: Timestamp
   runCount: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 # --- Preview -----------------------------------------------------------------
@@ -521,8 +521,8 @@ type ReportDashboard {
   visibility: String!
   layout: JSON!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 input ReportDashboardTileInput {

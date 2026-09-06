@@ -16,8 +16,17 @@ import { z } from "zod";
 import type { CellEditCommitFn } from "../lib/cell-editing-feature";
 import type { DataTableFeatures } from "../lib/table-features";
 import type { SelectOption } from "./fields";
-import type { GraphQLExecutableDocument } from "./graphql";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import type { GraphQLExecutableDocument, TypedGraphQLDocument } from "./graphql";
+import type { ConnectionKeys, DataTableRow } from "./graphql-connection";
 import type { API_ENDPOINTS } from "./server";
+
+export type {
+  ConnectionKeys,
+  ConnectionNode,
+  DataTableRow,
+  UnmaskFragments,
+} from "./graphql-connection";
 
 export type ColumnDef<
   TData extends RowData,
@@ -132,7 +141,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
   queryKey: string;
-  graphql: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLSource<TData>;
   resource?: string;
   TableModal?: React.ComponentType<TableSheetProps>;
   TablePanel?: React.ComponentType<DataTablePanelProps<TData>>;
@@ -159,21 +168,55 @@ export type DataTableGraphQLExtraVariableParams = {
   options?: DataTableQueryOptions;
 };
 
+export type DataTableGraphQLVariableSource<TVariables> =
+  | TVariables
+  | ((params: DataTableGraphQLExtraVariableParams) => TVariables);
+
+export type DataTableReservedInputKeys =
+  | "first"
+  | "after"
+  | "query"
+  | "fieldFilters"
+  | "filterGroups"
+  | "sort";
+
+export type DataTableExtraVariables<TVariables> = Partial<Omit<TVariables, "input">>;
+
+export type DataTableInputExtraVariables<TVariables> = TVariables extends { input?: infer TInput }
+  ? [keyof Omit<NonNullable<TInput>, DataTableReservedInputKeys>] extends [never]
+    ? never
+    : Partial<Omit<NonNullable<TInput>, DataTableReservedInputKeys>>
+  : never;
+
+type DataTableRowMapping<TNode, TData> = [TNode] extends [TData]
+  ? { mapNode?: (node: TNode) => TData }
+  : { mapNode: (node: TNode) => TData };
+
 export type DataTableGraphQLConfig<
-  TData extends Record<string, any>,
-  TVariables extends Record<string, unknown> = Record<string, unknown>,
+  TDocument extends TypedGraphQLDocument<unknown, never>,
+  K extends ConnectionKeys<ResultOf<TDocument>>,
+  TData = DataTableRow<TDocument, K>,
 > = {
+  document: TDocument;
+  operationName: string;
+  connectionKey: K;
+  extraVariables?: DataTableGraphQLVariableSource<DataTableExtraVariables<VariablesOf<TDocument>>>;
+  inputExtraVariables?: [DataTableInputExtraVariables<VariablesOf<TDocument>>] extends [never]
+    ? never
+    : DataTableGraphQLVariableSource<DataTableInputExtraVariables<VariablesOf<TDocument>>>;
+} & DataTableRowMapping<DataTableRow<TDocument, K>, TData>;
+
+export type DataTableGraphQLSource<TData> = {
   document: GraphQLExecutableDocument;
   operationName: string;
   connectionKey: string;
-  extraVariables?:
-    | Partial<Omit<TVariables, "input">>
-    | ((params: DataTableGraphQLExtraVariableParams) => Partial<Omit<TVariables, "input">>);
-  inputExtraVariables?:
-    | Record<string, unknown>
-    | ((params: DataTableGraphQLExtraVariableParams) => Record<string, unknown>);
-  mapNode?: (node: unknown) => TData;
+  extraVariables?: DataTableGraphQLVariableSource<Record<string, unknown>>;
+  inputExtraVariables?: DataTableGraphQLVariableSource<Record<string, unknown>>;
+  mapNode?(node: unknown): TData;
 };
+
+export type DataTableConfigRow<TConfig> =
+  TConfig extends DataTableGraphQLSource<infer TData> ? TData : never;
 
 export type DataTableQueryOptions = {
   query?: string;

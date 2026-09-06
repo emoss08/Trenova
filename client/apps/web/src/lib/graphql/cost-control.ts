@@ -15,21 +15,26 @@ export type CostCategory = CostingControl["categories"][number];
 export type CostCategoryGLAccountLink = CostCategory["glAccounts"][number];
 export type ResolvedCostProfile = ResolvedCostProfilePageQuery["resolvedCostProfile"];
 
-export async function getCostingControlGraphQL(): Promise<CostingControl> {
+export async function getCostingControlGraphQL(options?: {
+  signal?: AbortSignal;
+}): Promise<CostingControl> {
   const data = await requestGraphQL({
     document: CostingControlPageDocument,
     operationName: "CostingControlPage",
+    signal: options?.signal,
   });
   return data.costingControl;
 }
 
 export async function getResolvedCostProfileGraphQL(
   asOfDate?: string,
+  options?: { signal?: AbortSignal },
 ): Promise<ResolvedCostProfile> {
   const data = await requestGraphQL({
     document: ResolvedCostProfilePageDocument,
     operationName: "ResolvedCostProfilePage",
     variables: { asOfDate },
+    signal: options?.signal,
   });
   return data.resolvedCostProfile;
 }

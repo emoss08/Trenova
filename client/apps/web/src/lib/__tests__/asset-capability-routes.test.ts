@@ -116,7 +116,13 @@ async function capabilityRefusal(path: string): Promise<Response | null> {
 
 /** Routes that only make sense for an organization that owns trucks and employs drivers. */
 const ASSET_ONLY_ROUTES = [
-  "/dispatch/workers",
+  "/hr/workers",
+  "/hr/credential-types",
+  "/hr/training-courses",
+  "/hr/checklist-templates",
+  "/hr/review-templates",
+  "/hr/pto-policies",
+  "/hr/holidays",
   "/equipment/tractors",
   "/equipment/trailers",
   "/dispatch/configuration-files/fleet-codes",

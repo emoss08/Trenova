@@ -4,12 +4,13 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { UserRow } from "@/lib/graphql/user-table";
 import type { User } from "@trenova/shared/types/user";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function UserStatusCell({ row }: { row: User }) {
+function UserStatusCell({ row }: { row: UserRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -35,7 +36,7 @@ function UserStatusCell({ row }: { row: User }) {
   );
 }
 
-function UserNameCell({ user, isOnline }: { user: User; isOnline: boolean }) {
+function UserNameCell({ user, isOnline }: { user: UserRow; isOnline: boolean }) {
   return (
     <div className="flex items-center gap-3">
       <ResolvedUserAvatar
@@ -63,7 +64,7 @@ function UserNameCell({ user, isOnline }: { user: User; isOnline: boolean }) {
   );
 }
 
-export function getColumns(onlineUserIDs: Set<string>): ColumnDef<User>[] {
+export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: "name",

@@ -10,8 +10,8 @@ type DocumentPacketRule {
   expirationRequired: Boolean!
   expirationWarningDays: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type DocumentPacketRuleEdge {

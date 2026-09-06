@@ -45,6 +45,8 @@ describe("organization query keys", () => {
 
     expect(query.queryKey).toEqual(["organization", "detail", "detail", "org_1"]);
     expect(response).toEqual({ id: "org_1" });
-    expect(getOrganizationSettingsGraphQLMock).toHaveBeenCalledWith("org_1");
+    expect(getOrganizationSettingsGraphQLMock).toHaveBeenCalledWith("org_1", {
+      signal: expect.any(AbortSignal),
+    });
   });
 });

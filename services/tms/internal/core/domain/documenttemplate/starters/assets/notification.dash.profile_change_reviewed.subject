@@ -1,0 +1,1 @@
+Profile change {{ if .Approved }}approved{{ else }}not approved{{ end }}

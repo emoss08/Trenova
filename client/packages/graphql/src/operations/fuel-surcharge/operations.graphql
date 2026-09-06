@@ -51,28 +51,31 @@ fragment FuelSurchargeProgramFields on FuelSurchargeProgram {
   updatedAt
 }
 
-query FuelIndexTable($input: DataTableConnectionInput!) {
+query FuelIndexTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   fuelIndexes(input: $input) {
     edges {
       node {
         ...FuelIndexFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query FuelSurchargeProgramTable($input: DataTableConnectionInput!) {
+query FuelSurchargeProgramTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   fuelSurchargePrograms(input: $input) {
     edges {
       node {
         ...FuelSurchargeProgramFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

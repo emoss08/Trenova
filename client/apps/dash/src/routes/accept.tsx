@@ -30,8 +30,10 @@ export function DashAcceptPage() {
     queryFn: () =>
       api.get<InvitationPreview>(`/portal/invitations/preview?token=${encodeURIComponent(token)}`),
     enabled: token.length > 0,
-    retry: false,
+    retry: (failureCount, error) => !isRejectedInvitation(error) && failureCount < 2,
   });
+
+  const rejected = !token || (preview.isError && isRejectedInvitation(preview.error));
 
   return (
     <div className="flex min-h-dvh flex-col justify-center bg-background px-6 text-foreground">
@@ -41,8 +43,13 @@ export function DashAcceptPage() {
         transition={{ duration: 0.25, ease: "easeOut" }}
         className="mx-auto w-full max-w-sm"
       >
-        {!token || preview.isError ? (
+        {rejected ? (
           <InvalidInvitation />
+        ) : preview.isError ? (
+          <UnreachableInvitation
+            onRetry={() => void preview.refetch()}
+            retrying={preview.isFetching}
+          />
         ) : preview.isPending ? (
           <div className="flex justify-center py-16">
             <Spinner className="size-6" />
@@ -51,6 +58,33 @@ export function DashAcceptPage() {
           <AcceptForm token={token} preview={preview.data} />
         )}
       </m.div>
+    </div>
+  );
+}
+
+// The server answers a bad, revoked, or expired token with a 4xx problem
+// document. Anything else - the API being down, a network drop, a blocked
+// cross-origin request - is a transport failure, and telling the driver their
+// invitation is dead would be wrong.
+const REJECTED_INVITATION_STATUSES = new Set([400, 404, 410, 422]);
+
+function isRejectedInvitation(error: unknown): boolean {
+  return error instanceof ApiRequestError && REJECTED_INVITATION_STATUSES.has(error.status);
+}
+
+function UnreachableInvitation({ onRetry, retrying }: { onRetry: () => void; retrying: boolean }) {
+  return (
+    <div className="text-center">
+      <h1 className="text-2xl font-semibold tracking-tight">
+        We couldn&apos;t load your invitation
+      </h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Your invitation link looks fine, but we couldn&apos;t reach Dash just now. Check your
+        connection and try again.
+      </p>
+      <Button className="mt-6 h-11 w-full" onClick={onRetry} disabled={retrying}>
+        {retrying ? "Retrying..." : "Try again"}
+      </Button>
     </div>
   );
 }

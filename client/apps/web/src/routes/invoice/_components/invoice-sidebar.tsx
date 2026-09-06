@@ -56,7 +56,7 @@ export function InvoiceSidebar({
 
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey,
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam, signal }) => {
       const fieldFilters: Array<{ field: string; operator: string; value: string }> = [];
 
       if (status) {
@@ -77,6 +77,7 @@ export function InvoiceSidebar({
             fieldFilters,
           },
         },
+        signal,
       });
     },
     initialPageParam: null as string | null,

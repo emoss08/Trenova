@@ -14,7 +14,7 @@ type ARCustomerAgingRow {
 }
 
 type ARAgingSummary {
-  asOfDate: Int!
+  asOfDate: Timestamp!
   totals: ARAgingBucketTotals!
   rows: [ARCustomerAgingRow!]!
 }
@@ -25,8 +25,8 @@ type AROpenItem {
   customerName: String!
   invoiceNumber: String!
   billType: String!
-  invoiceDate: Int!
-  dueDate: Int!
+  invoiceDate: Timestamp!
+  dueDate: Timestamp!
   currencyCode: String!
   shipmentProNumber: String!
   shipmentBol: String!
@@ -41,7 +41,7 @@ type AROpenItem {
 
 type ARLedgerEntry {
   customerId: ID!
-  transactionDate: Int!
+  transactionDate: Timestamp!
   eventType: String!
   documentNumber: String!
   sourceObjectType: String!
@@ -51,7 +51,7 @@ type ARLedgerEntry {
 }
 
 type ARStatementTransaction {
-  transactionDate: Int!
+  transactionDate: Timestamp!
   eventType: String!
   documentNumber: String!
   sourceObjectId: String!
@@ -64,8 +64,8 @@ type ARStatementTransaction {
 type ARCustomerStatement {
   customerId: ID!
   customerName: String!
-  statementDate: Int!
-  startDate: Int!
+  statementDate: Timestamp!
+  startDate: Timestamp!
   openingBalanceMinor: Int!
   totalChargesMinor: Int!
   totalPaymentsMinor: Int!
@@ -88,7 +88,7 @@ type ARBalanceOverview {
 }
 
 type ARDashboardKPIs {
-  asOfDate: Int!
+  asOfDate: Timestamp!
   overview: ARBalanceOverview!
   currentDsoDays: Float!
   dsoDeltaDays: Float!
@@ -101,19 +101,19 @@ type ARDashboardKPIs {
 }
 
 type ARDSOTrendPoint {
-  periodEnd: Int!
+  periodEnd: Timestamp!
   dsoDays: Float!
   arBalanceMinor: Int!
   billedMinor: Int!
 }
 
 type ARAgingTrendPoint {
-  periodEnd: Int!
+  periodEnd: Timestamp!
   buckets: ARAgingBucketTotals!
 }
 
 type ARCashFlowPoint {
-  weekStart: Int!
+  weekStart: Timestamp!
   expectedMinor: Int!
   openDueMinor: Int!
   actualMinor: Int!
@@ -121,8 +121,8 @@ type ARCashFlowPoint {
 }
 
 type ARCollectionTotals {
-  periodStart: Int!
-  periodEnd: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
   beginningOpenMinor: Int!
   endingOpenMinor: Int!
   endingCurrentMinor: Int!
@@ -158,7 +158,7 @@ type ARCollectionsWorklistItem {
   customerId: ID!
   customerName: String!
   invoiceNumber: String!
-  dueDate: Int!
+  dueDate: Timestamp!
   openAmountMinor: Int!
   daysPastDue: Int!
   isDisputed: Boolean!
@@ -167,7 +167,7 @@ type ARCollectionsWorklistItem {
 }
 
 type ARMonthlyCollectionPoint {
-  monthStart: Int!
+  monthStart: Timestamp!
   amountMinor: Int!
 }
 
@@ -180,9 +180,9 @@ type ARCustomerSnapshot {
   creditLimitMinor: Int!
   hasCreditLimit: Boolean!
   openInvoiceCount: Int!
-  oldestOpenInvoiceDate: Int!
+  oldestOpenInvoiceDate: Timestamp!
   oldestDaysPastDue: Int!
-  lastPaymentDate: Int!
+  lastPaymentDate: Timestamp!
   lastPaymentMinor: Int!
   avgDaysToPay: Float!
   billedTrailing91Minor: Int!
@@ -207,10 +207,10 @@ type ARCustomerProfile {
 }
 
 extend type Query {
-  arAgingSummary(asOfDate: Int): ARAgingSummary!
-  arOpenItems(customerId: ID, asOfDate: Int): [AROpenItem!]!
+  arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
+  arOpenItems(customerId: ID, asOfDate: Timestamp): [AROpenItem!]!
   arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
-  arCustomerStatement(customerId: ID!, startDate: Int, asOfDate: Int): ARCustomerStatement!
+  arCustomerStatement(customerId: ID!, startDate: Timestamp, asOfDate: Timestamp): ARCustomerStatement!
   arDashboardKpis: ARDashboardKPIs!
   arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!
   arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!

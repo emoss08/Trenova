@@ -187,6 +187,10 @@ type InvoiceService interface {
 		ctx context.Context,
 		req repositories.GetInvoiceByIDRequest,
 	) (*invoice.Invoice, error)
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetInvoicesByIDsRequest,
+	) ([]*invoice.Invoice, error)
 	CreateFromApprovedBillingQueueItem(
 		ctx context.Context,
 		req *CreateInvoiceFromBillingQueueRequest,

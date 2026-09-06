@@ -5,7 +5,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const organization = createQueryKeys("organization", {
   detail: (organizationId: string) => ({
     queryKey: ["detail", organizationId],
-    queryFn: async () => getOrganizationSettingsGraphQL(organizationId),
+    queryFn: async ({ signal }) => getOrganizationSettingsGraphQL(organizationId, { signal }),
   }),
   logo: (organizationId: string) => ({
     queryKey: ["logo", organizationId],

@@ -114,7 +114,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/versionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/workerptohandler"
 	"go.uber.org/fx"
 )
 
@@ -223,7 +222,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,
 	documentparsingrulehandler.New,
-	workerptohandler.New,
 	distancecontrolhandler.New,
 	distanceoverridehandler.New,
 	distanceprofilehandler.New,

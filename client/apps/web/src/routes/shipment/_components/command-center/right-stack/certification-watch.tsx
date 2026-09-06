@@ -34,7 +34,7 @@ function CertificationRow({
       <div className="flex min-w-0 items-center gap-1">
         <AlertTriangleIcon className="text-warning size-3 shrink-0" />
         <Link
-          to={`/dispatch/workers?panelType=edit&panelEntityId=${summary.workerId}&tab=hos`}
+          to={`/hr/workers?panelType=edit&panelEntityId=${summary.workerId}&tab=hos`}
           className="truncate text-[11px] font-semibold hover:underline"
         >
           {summary.workerName}

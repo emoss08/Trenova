@@ -139,6 +139,7 @@ query TractorTable(
   $includeEquipmentDetails: Boolean = true
   $includeFleetDetails: Boolean = true
   $includeWorkerDetails: Boolean = true
+  $includeTotalCount: Boolean = true
 ) {
   tractors(
     input: $input
@@ -151,7 +152,7 @@ query TractorTable(
         ...TractorTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -162,6 +163,7 @@ query TrailerTable(
   $input: DataTableConnectionInput!
   $includeEquipmentDetails: Boolean = true
   $includeFleetDetails: Boolean = true
+  $includeTotalCount: Boolean = true
 ) {
   trailers(
     input: $input
@@ -173,21 +175,25 @@ query TrailerTable(
         ...TrailerTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {
+query EquipmentTypeTable(
+  $input: DataTableConnectionInput!
+  $classes: [EquipmentClass!]
+  $includeTotalCount: Boolean = true
+) {
   equipmentTypes(input: $input, classes: $classes) {
     edges {
       node {
         ...EquipmentTypeConfigurationRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -24,3 +24,7 @@ func RequireFromBun(db bun.IDB, capability Capability) error {
 func NowEpochFromBun(db bun.IDB) string {
 	return FromBun(db).NowEpoch()
 }
+
+func MonthStartEpochFromBun(db bun.IDB, column string) string {
+	return FromBun(db).MonthStartEpoch(column)
+}

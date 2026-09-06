@@ -8,18 +8,20 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const sidebarPreferences = createQueryKeys("sidebarPreferences", {
   effective: () => ({
     queryKey: ["effective"],
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       requestGraphQL({
         document: SidebarPreferencesDocument,
         operationName: "SidebarPreferences",
+        signal,
       }),
   }),
   options: () => ({
     queryKey: ["options"],
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       requestGraphQL({
         document: SidebarCustomizationOptionsDocument,
         operationName: "SidebarCustomizationOptions",
+        signal,
       }),
   }),
 });

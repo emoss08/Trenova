@@ -8,76 +8,99 @@ import {
   CommandList,
 } from "@trenova/shared/components/ui/command";
 import { Input } from "@trenova/shared/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@trenova/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon } from "lucide-react";
 import * as React from "react";
 import * as RPNInput from "react-phone-number-input";
-import flags from "react-phone-number-input/flags";
 
-export type PhoneInputProps = Omit<
-  React.ComponentProps<"input">,
-  "onChange" | "value" | "ref"
-> &
+type FlagMap = Partial<Record<string, React.ComponentType<{ title?: string }>>>;
+
+// The flag set is ~230 kB of inline SVG for every country on earth, and only
+// one of them is on screen until the country picker is opened. Fetch it after
+// the input has painted instead of shipping it inside every form chunk.
+let flagsPromise: Promise<FlagMap> | null = null;
+let loadedFlags: FlagMap | null = null;
+
+function loadFlags(): Promise<FlagMap> {
+  flagsPromise ??= import("react-phone-number-input/flags").then((module) => {
+    loadedFlags = module.default as FlagMap;
+    return loadedFlags;
+  });
+  return flagsPromise;
+}
+
+function useFlags(): FlagMap | null {
+  const [flags, setFlags] = React.useState<FlagMap | null>(loadedFlags);
+
+  React.useEffect(() => {
+    if (flags) return;
+    let cancelled = false;
+    void loadFlags().then((map) => {
+      if (!cancelled) setFlags(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [flags]);
+
+  return flags;
+}
+
+export type PhoneInputProps = Omit<React.ComponentProps<"input">, "onChange" | "value" | "ref"> &
   Omit<RPNInput.Props<typeof RPNInput.default>, "onChange"> & {
     onChange?: (value: RPNInput.Value) => void;
   };
 
-const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
-  React.forwardRef<React.ElementRef<typeof RPNInput.default>, PhoneInputProps>(
-    ({ className, onChange, value, ...props }, ref) => {
-      return (
-        <RPNInput.default
-          ref={ref}
-          className={cn("flex", className)}
-          flagComponent={FlagComponent}
-          countrySelectComponent={CountrySelect}
-          inputComponent={InputComponent}
-          containerComponent={ContainerComponent}
-          autoComplete="tel"
-          smartCaret={false}
-          value={value || undefined}
-          /**
-           * Handles the onChange event.
-           *
-           * react-phone-number-input might trigger the onChange event as undefined
-           * when a valid phone number is not entered. To prevent this,
-           * the value is coerced to an empty string.
-           *
-           * @param {E164Number | undefined} value - The entered value
-           */
-          onChange={(value) => onChange?.(value || ("" as RPNInput.Value))}
-          {...props}
-        />
-      );
-    },
+const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwardRef<
+  React.ElementRef<typeof RPNInput.default>,
+  PhoneInputProps
+>(({ className, onChange, value, ...props }, ref) => {
+  return (
+    <RPNInput.default
+      ref={ref}
+      className={cn("flex", className)}
+      flagComponent={FlagComponent}
+      countrySelectComponent={CountrySelect}
+      inputComponent={InputComponent}
+      containerComponent={ContainerComponent}
+      autoComplete="tel"
+      smartCaret={false}
+      value={value || undefined}
+      /**
+       * Handles the onChange event.
+       *
+       * react-phone-number-input might trigger the onChange event as undefined
+       * when a valid phone number is not entered. To prevent this,
+       * the value is coerced to an empty string.
+       *
+       * @param {E164Number | undefined} value - The entered value
+       */
+      onChange={(value) => onChange?.(value || ("" as RPNInput.Value))}
+      {...props}
+    />
   );
+});
 PhoneInput.displayName = "PhoneInput";
 
-const ContainerComponent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("w-full", className)} {...props} />
-));
+const ContainerComponent = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("w-full", className)} {...props} />
+  ),
+);
 ContainerComponent.displayName = "ContainerComponent";
 
-const InputComponent = React.forwardRef<
-  HTMLInputElement,
-  React.ComponentProps<"input">
->(({ className, ...props }, ref) => (
-  <Input
-    className={cn("w-full rounded-s-none rounded-e-lg", className)}
-    inputContainerClassName="w-full"
-    {...props}
-    ref={ref}
-  />
-));
+const InputComponent = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, ...props }, ref) => (
+    <Input
+      className={cn("w-full rounded-s-none rounded-e-lg", className)}
+      inputContainerClassName="w-full"
+      {...props}
+      ref={ref}
+    />
+  ),
+);
 InputComponent.displayName = "InputComponent";
 
 type CountryEntry = { label: string; value: RPNInput.Country | undefined };
@@ -119,10 +142,7 @@ const CountrySelect = ({
             size="sm"
             disabled={disabled}
           >
-            <FlagComponent
-              country={selectedCountry}
-              countryName={selectedCountry}
-            />
+            <FlagComponent country={selectedCountry} countryName={selectedCountry} />
           </Button>
         }
       />
@@ -201,7 +221,8 @@ const CountrySelectOption = ({
 };
 
 const FlagComponent = ({ country, countryName }: RPNInput.FlagProps) => {
-  const Flag = flags[country];
+  const flags = useFlags();
+  const Flag = flags?.[country];
 
   return (
     <span className="flex h-4 w-6 overflow-hidden rounded-sm bg-foreground/20 [&_svg:not([class*='size-'])]:size-full">

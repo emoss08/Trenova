@@ -1,6 +1,8 @@
 package resolver
 
 import (
+	"context"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -83,6 +85,18 @@ func boolValue(value *bool) bool {
 	return *value
 }
 
+func requiredPatchValue[T any](field, label string, value *T) (T, error) {
+	if value == nil {
+		var zero T
+		return zero, errortypes.NewValidationError(
+			field,
+			errortypes.ErrRequired,
+			label+" cannot be cleared",
+		)
+	}
+	return *value, nil
+}
+
 func nonEmptyPtr(value string) *string {
 	if value == "" {
 		return nil
@@ -159,6 +173,7 @@ type gqlDataTableConnection struct {
 }
 
 func dataTableConnectionFromGraphQL(
+	ctx context.Context,
 	input *gqlmodel.DataTableConnectionInput,
 	tenantInfo pagination.TenantInfo,
 ) (gqlDataTableConnection, error) {
@@ -166,7 +181,7 @@ func dataTableConnectionFromGraphQL(
 		input = &gqlmodel.DataTableConnectionInput{}
 	}
 
-	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+	page, err := entityCursorPageFromGraphQL(ctx, gqlCursorPageInput{
 		First: input.First,
 		After: input.After,
 	})
@@ -194,7 +209,10 @@ func dataTableConnectionFromGraphQL(
 	}, nil
 }
 
-func entityCursorPageFromGraphQL(input gqlCursorPageInput) (gqlEntityCursorPage, error) {
+func entityCursorPageFromGraphQL(
+	ctx context.Context,
+	input gqlCursorPageInput,
+) (gqlEntityCursorPage, error) {
 	limit := pagination.DefaultLimit
 	if input.First != nil {
 		limit = pagination.ClampLimit(*input.First)
@@ -212,8 +230,28 @@ func entityCursorPageFromGraphQL(input gqlCursorPageInput) (gqlEntityCursorPage,
 			"Cursor is invalid",
 		)
 	}
+	cursor.IncludeTotalCount = connectionFieldRequested(ctx, connectionTotalCountField)
 
 	return gqlEntityCursorPage{Cursor: cursor}, nil
+}
+
+const connectionTotalCountField = "totalCount"
+
+func connectionFieldRequested(ctx context.Context, name string) bool {
+	if ctx == nil {
+		return true
+	}
+	if fc := graphql.GetFieldContext(ctx); fc == nil || fc.Field.Field == nil {
+		return true
+	}
+
+	for _, field := range graphql.CollectFieldsCtx(ctx, nil) {
+		if field.Name == name {
+			return true
+		}
+	}
+
+	return false
 }
 
 func fieldFiltersFromGraphQL(inputs []*gqlmodel.FieldFilterInput) []domaintypes.FieldFilter {

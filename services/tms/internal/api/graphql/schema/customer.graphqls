@@ -67,8 +67,8 @@ type CustomerBillingProfile {
   billingCycleDayOfWeek: Int
   paymentTerm: CustomerPaymentTerm!
   hasBillingControlOverrides: Boolean!
-  creditLimit: String
-  creditBalance: String!
+  creditLimit: Decimal
+  creditBalance: Decimal!
   creditStatus: CustomerCreditStatus!
   enforceCreditLimit: Boolean!
   autoCreditHold: Boolean!
@@ -84,7 +84,7 @@ type CustomerBillingProfile {
   revenueAccountId: ID
   arAccountId: ID
   applyLateCharges: Boolean!
-  lateChargeRate: String
+  lateChargeRate: Decimal
   gracePeriodDays: Int!
   taxExempt: Boolean!
   taxExemptNumber: String!
@@ -106,8 +106,8 @@ type CustomerBillingProfile {
   fuelSurchargeProgramId: ID
   documentTypes: [DocumentType!]
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type CustomerEmailProfile {
@@ -125,8 +125,8 @@ type CustomerEmailProfile {
   readReceipt: Boolean!
   includeShipmentDetail: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type Customer {
@@ -150,8 +150,8 @@ type Customer {
   exclusiveConsolidation: Boolean!
   consolidationPriority: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
   state: UsState

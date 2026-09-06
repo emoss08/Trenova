@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -73,28 +74,49 @@ func ApplyTractorPatch(
 	entity *tractor.Tractor,
 	input gqlmodel.TractorPatchInput,
 ) error {
-	if input.Code != nil {
-		entity.Code = *input.Code
+	if codeValue, ok := input.Code.ValueOK(); ok {
+		if codeValue == nil {
+			return errortypes.NewValidationError(
+				"code",
+				errortypes.ErrRequired,
+				"Code cannot be cleared",
+			)
+		}
+		entity.Code = *codeValue
 	}
-	if input.CustomFields != nil {
-		entity.CustomFields = input.CustomFields
+	if customFieldsValue, ok := input.CustomFields.ValueOK(); ok {
+		entity.CustomFields = mapValue(customFieldsValue)
 	}
-	if input.EquipmentManufacturerID != nil {
-		equipmentManufacturerID, err := pulid.MustParse(*input.EquipmentManufacturerID)
+	if equipmentManufacturerIDValue, ok := input.EquipmentManufacturerID.ValueOK(); ok {
+		if equipmentManufacturerIDValue == nil {
+			return errortypes.NewValidationError(
+				"equipmentManufacturerId",
+				errortypes.ErrRequired,
+				"Equipment Manufacturer cannot be cleared",
+			)
+		}
+		equipmentManufacturerID, err := pulid.MustParse(*equipmentManufacturerIDValue)
 		if err != nil {
 			return err
 		}
 		entity.EquipmentManufacturerID = equipmentManufacturerID
 	}
-	if input.EquipmentTypeID != nil {
-		equipmentTypeID, err := pulid.MustParse(*input.EquipmentTypeID)
+	if equipmentTypeIDValue, ok := input.EquipmentTypeID.ValueOK(); ok {
+		if equipmentTypeIDValue == nil {
+			return errortypes.NewValidationError(
+				"equipmentTypeId",
+				errortypes.ErrRequired,
+				"Equipment Type cannot be cleared",
+			)
+		}
+		equipmentTypeID, err := pulid.MustParse(*equipmentTypeIDValue)
 		if err != nil {
 			return err
 		}
 		entity.EquipmentTypeID = equipmentTypeID
 	}
-	if input.ExternalID != nil {
-		entity.ExternalID = *input.ExternalID
+	if externalIDValue, ok := input.ExternalID.ValueOK(); ok {
+		entity.ExternalID = StringValue(externalIDValue)
 	}
 	if fleetCodeIDValue, ok := input.FleetCodeID.ValueOK(); ok {
 		fleetCodeID, err := optionalID(fleetCodeIDValue)
@@ -103,27 +125,34 @@ func ApplyTractorPatch(
 		}
 		entity.FleetCodeID = fleetCodeID
 	}
-	if input.LicensePlateNumber != nil {
-		entity.LicensePlateNumber = *input.LicensePlateNumber
+	if licensePlateNumberValue, ok := input.LicensePlateNumber.ValueOK(); ok {
+		entity.LicensePlateNumber = StringValue(licensePlateNumberValue)
 	}
-	if input.Make != nil {
-		entity.Make = *input.Make
+	if makeValue, ok := input.Make.ValueOK(); ok {
+		entity.Make = StringValue(makeValue)
 	}
-	if input.Model != nil {
-		entity.Model = *input.Model
+	if modelValue, ok := input.Model.ValueOK(); ok {
+		entity.Model = StringValue(modelValue)
 	}
-	if input.PrimaryWorkerID != nil {
-		primaryWorkerID, err := pulid.MustParse(*input.PrimaryWorkerID)
+	if primaryWorkerIDValue, ok := input.PrimaryWorkerID.ValueOK(); ok {
+		if primaryWorkerIDValue == nil {
+			return errortypes.NewValidationError(
+				"primaryWorkerId",
+				errortypes.ErrRequired,
+				"Primary Worker cannot be cleared",
+			)
+		}
+		primaryWorkerID, err := pulid.MustParse(*primaryWorkerIDValue)
 		if err != nil {
 			return err
 		}
 		entity.PrimaryWorkerID = primaryWorkerID
 	}
-	if input.RegistrationExpiry != nil {
-		entity.RegistrationExpiry = int64Ptr(input.RegistrationExpiry)
+	if registrationExpiryValue, ok := input.RegistrationExpiry.ValueOK(); ok {
+		entity.RegistrationExpiry = int64Ptr(registrationExpiryValue)
 	}
-	if input.RegistrationNumber != nil {
-		entity.RegistrationNumber = *input.RegistrationNumber
+	if registrationNumberValue, ok := input.RegistrationNumber.ValueOK(); ok {
+		entity.RegistrationNumber = StringValue(registrationNumberValue)
 	}
 	if secondaryWorkerIDValue, ok := input.SecondaryWorkerID.ValueOK(); ok {
 		secondaryWorkerID, err := optionalID(secondaryWorkerIDValue)
@@ -139,17 +168,31 @@ func ApplyTractorPatch(
 		}
 		entity.StateID = stateID
 	}
-	if input.Status != nil {
-		entity.Status = *input.Status
+	if statusValue, ok := input.Status.ValueOK(); ok {
+		if statusValue == nil {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrRequired,
+				"Status cannot be cleared",
+			)
+		}
+		entity.Status = *statusValue
 	}
-	if input.Version != nil {
-		entity.Version = int64(*input.Version)
+	if versionValue, ok := input.Version.ValueOK(); ok {
+		if versionValue == nil {
+			return errortypes.NewValidationError(
+				"version",
+				errortypes.ErrRequired,
+				"Version cannot be cleared",
+			)
+		}
+		entity.Version = int64(*versionValue)
 	}
-	if input.Vin != nil {
-		entity.Vin = *input.Vin
+	if vinValue, ok := input.Vin.ValueOK(); ok {
+		entity.Vin = StringValue(vinValue)
 	}
-	if input.Year != nil {
-		entity.Year = input.Year
+	if yearValue, ok := input.Year.ValueOK(); ok {
+		entity.Year = yearValue
 	}
 	return nil
 }

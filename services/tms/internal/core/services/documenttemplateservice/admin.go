@@ -420,6 +420,27 @@ func (s *Service) KindOf(
 	return s.kindOf(ctx, version, tenantInfo)
 }
 
+func (s *Service) KindsByTemplateIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	templateIDs []pulid.ID,
+) (map[pulid.ID]documenttemplate.Kind, error) {
+	templates, err := s.repo.GetByIDs(ctx, &repositories.GetDocumentTemplatesByIDsRequest{
+		TenantInfo:          tenantInfo,
+		DocumentTemplateIDs: templateIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	kinds := make(map[pulid.ID]documenttemplate.Kind, len(templates))
+	for _, template := range templates {
+		kinds[template.ID] = template.Kind
+	}
+
+	return kinds, nil
+}
+
 func (s *Service) GetCustomerAssignments(
 	ctx context.Context,
 	req *repositories.GetCustomerAssignmentsRequest,

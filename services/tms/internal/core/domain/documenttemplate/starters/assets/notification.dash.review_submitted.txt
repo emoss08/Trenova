@@ -1,0 +1,1 @@
+{{ if .ReviewerName }}{{ .ReviewerName }} has{{ else }}Your manager has{{ end }} finished {{ if .ReviewTitle }}"{{ .ReviewTitle }}"{{ else }}your performance review{{ end }}. Read it in Dash under Profile → Reviews and sign off when you are done; you can leave a comment for them there.

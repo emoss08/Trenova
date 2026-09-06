@@ -70,21 +70,25 @@ func (r *payCodeRepository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*driverpay.PayCode)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"payc",
-				req.Filter,
-				(*driverpay.PayCode)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count pay codes", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*driverpay.PayCode)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"payc",
+					req.Filter,
+					(*driverpay.PayCode)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count pay codes", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -92,7 +96,7 @@ func (r *payCodeRepository) ListConnection(
 		dbhelper.CursorListParams[*driverpay.PayCode]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*driverpay.PayCode) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).

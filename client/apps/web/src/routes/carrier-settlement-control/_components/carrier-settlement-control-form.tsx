@@ -35,7 +35,7 @@ export default function CarrierSettlementControlForm() {
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["carrier-settlement-control"],
-    queryFn: fetchCarrierSettlementControl,
+    queryFn: ({ signal }) => fetchCarrierSettlementControl({ signal }),
   });
 
   const form = useForm<CarrierSettlementControlFormValues>({

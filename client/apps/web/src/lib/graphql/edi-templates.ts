@@ -36,6 +36,7 @@ type EdiTemplateListResponse = {
 
 export async function listEdiTemplatesGraphQL(
   params: ListEdiTemplatesParams,
+  options?: { signal?: AbortSignal },
 ): Promise<EdiTemplateListPage> {
   const data = await requestGraphQL<EdiTemplateListResponse>({
     document: EdiTemplateListDocument,
@@ -50,6 +51,7 @@ export async function listEdiTemplatesGraphQL(
       transactionSet: params.transactionSet || null,
       direction: (params.direction || null) as EdiDocumentDirection | null,
     },
+    signal: options?.signal,
   });
 
   const connection = data.ediTemplates;

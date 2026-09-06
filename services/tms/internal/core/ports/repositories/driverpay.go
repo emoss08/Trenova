@@ -24,6 +24,11 @@ type ListPayProfileConnectionRequest struct {
 	Cursor pagination.CursorInfo    `json:"cursor"`
 }
 
+type CountActivePayAssignmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ProfileIDs []pulid.ID            `json:"profileIds"`
+}
+
 type PayProfileRepository interface {
 	List(
 		ctx context.Context,
@@ -41,6 +46,10 @@ type PayProfileRepository interface {
 		tenantInfo pagination.TenantInfo,
 		profileID pulid.ID,
 	) (int, error)
+	CountActiveAssignmentsByIDs(
+		ctx context.Context,
+		req CountActivePayAssignmentsRequest,
+	) (map[pulid.ID]int, error)
 }
 
 type GetWorkerPayAssignmentRequest struct {

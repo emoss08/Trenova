@@ -9,6 +9,7 @@ require (
 	github.com/gen2brain/webp v0.6.4
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
+	github.com/vikstrous/dataloadgen v0.0.10
 	github.com/xuri/excelize/v2 v2.11.0
 	go.uber.org/goleak v1.3.0
 	modernc.org/sqlite v1.58.0
@@ -35,7 +36,6 @@ require (
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.24.0
-	github.com/graph-gophers/dataloader/v7 v7.2.0
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
@@ -110,6 +110,7 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
+	github.com/urfave/cli/v3 v3.11.0 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
@@ -269,3 +270,5 @@ require (
 replace github.com/emoss08/trenova/shared => ../../shared
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20241118233622-e639e219e697
+
+tool github.com/99designs/gqlgen

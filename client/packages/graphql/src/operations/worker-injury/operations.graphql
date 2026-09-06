@@ -1,0 +1,155 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query WorkerInjuries($workerId: ID!) {
+  workerInjuries(workerId: $workerId) {
+    id
+    workerId
+    caseNumber
+    caseYear
+    classification
+    illnessType
+    treatment
+    status
+    recordable
+    occurredAt
+    reportedAt
+    returnedToWorkAt
+    location
+    description
+    bodyPart
+    harmfulAgent
+    daysAway
+    daysRestricted
+    privacyCase
+    logName
+    claimStatus
+    claimNumber
+    claimCarrier
+    claimFiledAt
+    claimClosedAt
+    safetyEventId
+    documentId
+    notes
+    version
+  }
+}
+
+query OshaLog($year: Int) {
+  oshaLog(year: $year) {
+    year
+    postFrom
+    postThrough
+    totalRecordableIncidentRate
+    daysAwayRestrictedRate
+    totals {
+      deaths
+      daysAwayCases
+      jobTransferCases
+      otherRecordableCases
+      totalRecordableCases
+      totalDaysAway
+      totalDaysRestricted
+      injuryCount
+      skinDisorderCount
+      respiratoryCount
+      poisoningCount
+      hearingLossCount
+      otherIllnessCount
+      openCases
+    }
+    summary {
+      id
+      year
+      status
+      naicsCode
+      averageEmployees
+      totalHoursWorked
+      executiveName
+      executiveTitle
+      executivePhone
+      certifiedAt
+      postedFrom
+      postedThrough
+      submittedAt
+      submissionReference
+      notes
+      version
+    }
+    cases {
+      id
+      workerId
+      caseNumber
+      caseYear
+      classification
+      illnessType
+      treatment
+      status
+      recordable
+      occurredAt
+      logName
+      location
+      description
+      bodyPart
+      daysAway
+      daysRestricted
+      privacyCase
+      claimStatus
+      version
+    }
+  }
+}
+
+mutation RecordWorkerInjury($input: RecordWorkerInjuryInput!) {
+  recordWorkerInjury(input: $input) {
+    id
+    caseNumber
+    caseYear
+    classification
+    recordable
+    version
+  }
+}
+
+mutation UpdateWorkerInjury($input: UpdateWorkerInjuryInput!) {
+  updateWorkerInjury(input: $input) {
+    id
+    caseNumber
+    caseYear
+    classification
+    status
+    recordable
+    version
+  }
+}
+
+mutation DeleteWorkerInjury($id: ID!) {
+  deleteWorkerInjury(id: $id)
+}
+
+mutation SaveOshaSummary($input: SaveOSHASummaryInput!) {
+  saveOshaSummary(input: $input) {
+    id
+    year
+    status
+    version
+  }
+}
+
+mutation CertifyOshaSummary($year: Int!) {
+  certifyOshaSummary(year: $year) {
+    id
+    year
+    status
+    certifiedAt
+    version
+  }
+}
+
+mutation UncertifyOshaSummary($year: Int!) {
+  uncertifyOshaSummary(year: $year) {
+    id
+    year
+    status
+    version
+  }
+}

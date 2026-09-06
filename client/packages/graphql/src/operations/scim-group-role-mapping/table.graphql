@@ -14,6 +14,7 @@ fragment SCIMGroupRoleMappingTableRowFields on SCIMGroupRoleMapping {
 query SCIMGroupRoleMappingsTable(
   $input: DataTableConnectionInput!
   $directoryId: ID!
+  $includeTotalCount: Boolean = true
 ) {
   scimGroupRoleMappings(input: $input, directoryId: $directoryId) {
     edges {
@@ -21,7 +22,7 @@ query SCIMGroupRoleMappingsTable(
         ...SCIMGroupRoleMappingTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

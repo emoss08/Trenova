@@ -1,15 +1,11 @@
-import {
-  DistanceOverrideTableDocument,
-  type DistanceOverrideTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { DistanceOverrideTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { DistanceOverride } from "@/types/distance-override";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const distanceOverrideTableGraphQLConfig = defineDataTableGraphQLConfig<
-  DistanceOverride,
-  DistanceOverrideTableQueryVariables
->({
+export const distanceOverrideTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: DistanceOverrideTableDocument,
   operationName: "DistanceOverrideTable",
   connectionKey: "distanceOverrides",
 });
+
+export type DistanceOverrideRow = DataTableConfigRow<typeof distanceOverrideTableGraphQLConfig>;

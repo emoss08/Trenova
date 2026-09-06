@@ -7,6 +7,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { accessorialChargeMethodChoices, statusChoices } from "@/lib/choices";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
+import type { AccessorialChargeRow } from "@/lib/graphql/accessorial-charge-table";
 import type { AccessorialCharge, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -19,7 +20,7 @@ const rateUnitAbbreviations: Record<RateUnit, string> = {
   Stop: "/stop",
 };
 
-function formatAmount(row: AccessorialCharge): string {
+function formatAmount(row: AccessorialChargeRow): string {
   const { method, amount, rateUnit } = row;
 
   if (method === "Percentage") {
@@ -35,8 +36,8 @@ function formatAmount(row: AccessorialCharge): string {
   return formatted;
 }
 
-function MethodBadge({ method }: { method: AccessorialCharge["method"] }) {
-  const methodAttributes: Record<AccessorialCharge["method"], BadgeAttrProps> = {
+function MethodBadge({ method }: { method: AccessorialChargeRow["method"] }) {
+  const methodAttributes: Record<AccessorialChargeRow["method"], BadgeAttrProps> = {
     Flat: {
       variant: "active",
       text: "Flat",
@@ -57,7 +58,7 @@ function MethodBadge({ method }: { method: AccessorialCharge["method"] }) {
   );
 }
 
-function AccessorialChargeStatusCell({ row }: { row: AccessorialCharge }) {
+function AccessorialChargeStatusCell({ row }: { row: AccessorialChargeRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -83,7 +84,7 @@ function AccessorialChargeStatusCell({ row }: { row: AccessorialCharge }) {
   );
 }
 
-export function getColumns(): ColumnDef<AccessorialCharge>[] {
+export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
   return [
     {
       accessorKey: "status",

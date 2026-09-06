@@ -1,7 +1,8 @@
+import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
-import type { EDIMappingResolution, EDITransfer } from "@trenova/shared/types/edi";
+import type { EDIMappingResolution } from "@trenova/shared/types/edi";
 import {
   ArrowRightIcon,
   CalendarClockIcon,
@@ -28,7 +29,7 @@ import {
 import { EDIEmptyState, InfoTile } from "./edi-panel-primitives";
 
 type TenderReviewProps = {
-  transfer: EDITransfer;
+  transfer: EDITransferRow;
   mappingRows: EDIMappingResolution[];
 };
 
@@ -170,7 +171,7 @@ function TenderStopCard({
   mapping,
   isLast,
 }: {
-  stop: EDITransfer["tenderPayload"]["moves"][number]["stops"][number];
+  stop: EDITransferRow["tenderPayload"]["moves"][number]["stops"][number];
   mapping?: EDIMappingResolution;
   isLast: boolean;
 }) {

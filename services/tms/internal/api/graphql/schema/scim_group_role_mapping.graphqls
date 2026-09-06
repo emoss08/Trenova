@@ -7,8 +7,8 @@ type SCIMGroupRoleMapping {
   displayName: String!
   roleId: ID!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   role: Role
 }
 

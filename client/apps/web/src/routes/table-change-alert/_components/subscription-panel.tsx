@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { TCASubscriptionRow } from "@/lib/graphql/table-change-alert-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   tcaSubscriptionFormSchema,
@@ -30,7 +31,7 @@ export function SubscriptionPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<TCASubscription>) {
+}: DataTablePanelProps<TCASubscriptionRow>) {
   const form = useForm<TCASubscriptionFormValues>({
     resolver: zodResolver(tcaSubscriptionFormSchema),
     defaultValues: DEFAULT_VALUES,
@@ -38,7 +39,7 @@ export function SubscriptionPanel({
 
   if (mode === "edit") {
     return (
-      <FormEditPanel<TCASubscriptionFormValues, TCASubscription>
+      <FormEditPanel<TCASubscriptionFormValues, TCASubscriptionRow>
         open={open}
         onOpenChange={onOpenChange}
         row={row}

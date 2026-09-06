@@ -1,0 +1,360 @@
+fragment WorkerDotTestFields on WorkerDOTTest {
+  id
+  workerId
+  testType
+  substance
+  status
+  result
+  isDot
+  reason
+  scheduledAt
+  collectedAt
+  resultAt
+  collectionSite
+  collectorName
+  specimenId
+  labName
+  mroName
+  mroVerifiedAt
+  alcoholConcentration
+  safetyEventId
+  drawEntryId
+  documentId
+  notes
+  version
+  createdAt
+  updatedAt
+}
+
+fragment WorkerDotViolationFields on WorkerDOTViolation {
+  id
+  workerId
+  violationType
+  status
+  occurredAt
+  sourceTestId
+  reportedToClearinghouseAt
+  sapName
+  sapReferredAt
+  sapEvaluationCompletedAt
+  rtdTestId
+  rtdCompletedAt
+  followUpTestCount
+  followUpTestsCompleted
+  followUpEndsAt
+  resolvedAt
+  documentId
+  notes
+  version
+  createdAt
+  updatedAt
+}
+
+fragment ClearinghouseQueryFields on WorkerClearinghouseQuery {
+  id
+  workerId
+  queryType
+  result
+  consentObtainedAt
+  consentExpiresAt
+  requestedAt
+  completedAt
+  violationCount
+  reference
+  documentId
+  notes
+  version
+  createdAt
+  updatedAt
+}
+
+fragment DotRandomPoolFields on DOTRandomPool {
+  id
+  code
+  name
+  description
+  status
+  period
+  drugRatePercent
+  alcoholRatePercent
+  includedDriverTypes
+  isDefault
+  meetsDotMinimums
+  version
+  createdAt
+  updatedAt
+}
+
+fragment DotRandomDrawEntryFields on DOTRandomDrawEntry {
+  id
+  drawId
+  workerId
+  substance
+  rank
+  status
+  notifiedAt
+  completedAt
+  testId
+  excuseReason
+  version
+  worker {
+    id
+    firstName
+    lastName
+  }
+}
+
+fragment DotRandomDrawFields on DOTRandomDraw {
+  id
+  poolId
+  periodKey
+  periodStart
+  periodEnd
+  status
+  poolSize
+  drugTarget
+  alcoholTarget
+  drugSelected
+  alcoholSelected
+  seed
+  method
+  notes
+  drawnAt
+  finalizedAt
+  version
+}
+
+query WorkerDrugAlcoholFile($workerId: ID!) {
+  workerDrugAlcoholStanding(workerId: $workerId) {
+    status
+    returnToDuty
+    lastClearinghouseQueryAt
+    nextClearinghouseQueryDue
+    hasPreEmploymentTest
+    hasPreEmploymentQuery
+    openTestCount
+  }
+  workerDotTests(workerId: $workerId) {
+    ...WorkerDotTestFields
+  }
+  workerDotViolations(workerId: $workerId) {
+    ...WorkerDotViolationFields
+  }
+  workerClearinghouseQueries(workerId: $workerId) {
+    ...ClearinghouseQueryFields
+  }
+  workerRandomSelections(workerId: $workerId) {
+    ...DotRandomDrawEntryFields
+  }
+}
+
+query DotRandomPools($input: DOTRandomPoolsInput!) {
+  dotRandomPools(input: $input) {
+    edges {
+      node {
+        ...DotRandomPoolFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# The draw queries inline their fields rather than spreading the fragments:
+# a spread beside other selections comes back masked, and these screens read the
+# values directly.
+query DotRandomDraws($poolId: ID) {
+  dotRandomDraws(poolId: $poolId) {
+    id
+    poolId
+    periodKey
+    periodStart
+    periodEnd
+    status
+    poolSize
+    drugTarget
+    alcoholTarget
+    drugSelected
+    alcoholSelected
+    seed
+    method
+    notes
+    drawnAt
+    finalizedAt
+    version
+    pool {
+      id
+      code
+      name
+      period
+    }
+  }
+}
+
+query DotRandomDraw($id: ID!) {
+  dotRandomDraw(id: $id) {
+    id
+    poolId
+    periodKey
+    periodStart
+    periodEnd
+    status
+    poolSize
+    drugTarget
+    alcoholTarget
+    drugSelected
+    alcoholSelected
+    seed
+    method
+    notes
+    drawnAt
+    finalizedAt
+    version
+    pool {
+      id
+      code
+      name
+      period
+      drugRatePercent
+      alcoholRatePercent
+    }
+    entries {
+      id
+      drawId
+      workerId
+      substance
+      rank
+      status
+      notifiedAt
+      completedAt
+      testId
+      excuseReason
+      version
+      worker {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}
+
+mutation RecordDotTest($input: RecordDOTTestInput!) {
+  recordDotTest(input: $input) {
+    ...WorkerDotTestFields
+  }
+}
+
+mutation RecordDotTestResult($input: RecordDOTTestResultInput!) {
+  recordDotTestResult(input: $input) {
+    ...WorkerDotTestFields
+  }
+}
+
+mutation CancelDotTest($id: ID!, $reason: String!) {
+  cancelDotTest(id: $id, reason: $reason) {
+    ...WorkerDotTestFields
+  }
+}
+
+mutation RecordDotViolation($input: RecordDOTViolationInput!) {
+  recordDotViolation(input: $input) {
+    ...WorkerDotViolationFields
+  }
+}
+
+mutation UpdateDotViolation($input: UpdateDOTViolationInput!) {
+  updateDotViolation(input: $input) {
+    ...WorkerDotViolationFields
+  }
+}
+
+mutation RecordClearinghouseQuery($input: RecordClearinghouseQueryInput!) {
+  recordClearinghouseQuery(input: $input) {
+    ...ClearinghouseQueryFields
+  }
+}
+
+mutation CompleteClearinghouseQuery($input: CompleteClearinghouseQueryInput!) {
+  completeClearinghouseQuery(input: $input) {
+    ...ClearinghouseQueryFields
+  }
+}
+
+mutation CreateDotRandomPool($input: DOTRandomPoolInput!) {
+  createDotRandomPool(input: $input) {
+    ...DotRandomPoolFields
+  }
+}
+
+mutation UpdateDotRandomPool(
+  $id: ID!
+  $version: Int!
+  $input: DOTRandomPoolInput!
+) {
+  updateDotRandomPool(id: $id, version: $version, input: $input) {
+    ...DotRandomPoolFields
+  }
+}
+
+mutation RunDotRandomDraw($input: RunDOTRandomDrawInput!) {
+  runDotRandomDraw(input: $input) {
+    id
+    poolId
+    periodKey
+    periodStart
+    periodEnd
+    status
+    poolSize
+    drugTarget
+    alcoholTarget
+    drugSelected
+    alcoholSelected
+    seed
+    method
+    notes
+    drawnAt
+    finalizedAt
+    version
+    entries {
+      id
+      drawId
+      workerId
+      substance
+      rank
+      status
+      notifiedAt
+      completedAt
+      testId
+      excuseReason
+      version
+      worker {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}
+
+mutation FinalizeDotRandomDraw($id: ID!) {
+  finalizeDotRandomDraw(id: $id) {
+    ...DotRandomDrawFields
+  }
+}
+
+mutation CancelDotRandomDraw($id: ID!, $reason: String!) {
+  cancelDotRandomDraw(id: $id, reason: $reason) {
+    ...DotRandomDrawFields
+  }
+}
+
+mutation UpdateDotRandomDrawEntry($input: UpdateDOTRandomDrawEntryInput!) {
+  updateDotRandomDrawEntry(input: $input) {
+    ...DotRandomDrawEntryFields
+  }
+}

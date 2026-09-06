@@ -17,8 +17,8 @@ type TableConfiguration {
   isDefault: Boolean!
   isOrgDefault: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   organization: Organization
   businessUnit: BusinessUnit
   user: User
@@ -45,11 +45,17 @@ input TableConfigurationInput {
 }
 
 input TableConfigurationPatchInput {
-  name: String
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
   description: String @goField(omittable: true)
-  resource: String
-  tableConfig: JSON
-  visibility: ConfigurationVisibility
+  "Omit to leave unchanged; null is rejected."
+  resource: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  tableConfig: JSON @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  visibility: ConfigurationVisibility @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
   isDefault: Boolean @goField(omittable: true)
 }
 

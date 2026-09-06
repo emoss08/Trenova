@@ -88,56 +88,56 @@ fragment RateQuoteRowFields on RateQuote {
   createdAt
 }
 
-query RateAgreementTable($input: DataTableConnectionInput!) {
+query RateAgreementTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   rateAgreements(input: $input) {
     edges {
       node {
         ...RateAgreementRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query RateZoneTable($input: DataTableConnectionInput!) {
+query RateZoneTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   rateZones(input: $input) {
     edges {
       node {
         ...RateZoneRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query RateMatrixTable($input: DataTableConnectionInput!) {
+query RateMatrixTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   rateMatrices(input: $input) {
     edges {
       node {
         ...RateMatrixRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query RateQuoteTable($input: DataTableConnectionInput!) {
+query RateQuoteTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   rateQuotes(input: $input) {
     edges {
       node {
         ...RateQuoteRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

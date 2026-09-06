@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,6 +88,31 @@ func (s *Service) RequestMyPTO(
 		map[string]any{"workerId": wrk.ID.String(), "ptoId": created.ID.String()},
 	)
 	return created, nil
+}
+
+func (s *Service) MyPTOBalances(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*ptoledgerservice.BalanceView, error) {
+	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if s.ptoLedger == nil {
+		return []*ptoledgerservice.BalanceView{}, nil
+	}
+
+	views, err := s.ptoLedger.GetBalances(ctx, tenantInfo, wrk.ID)
+	if err != nil {
+		return nil, err
+	}
+	tracked := make([]*ptoledgerservice.BalanceView, 0, len(views))
+	for _, view := range views {
+		if view.Tracked {
+			tracked = append(tracked, view)
+		}
+	}
+	return tracked, nil
 }
 
 func (s *Service) CancelMyPTO(

@@ -1,7 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { manualJournalTableGraphQLConfig } from "@/lib/graphql/manual-journal-table";
-import type { ManualJournal } from "@/types/manual-journal";
+import {
+  manualJournalTableGraphQLConfig,
+  type ManualJournalRow,
+} from "@/lib/graphql/manual-journal-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getManualJournalColumns } from "./_components/manual-journal-columns";
@@ -18,7 +20,7 @@ export function ManualJournalsPage() {
       }}
     >
       <div className="mx-4 mt-3 mb-4">
-        <DataTable<ManualJournal>
+        <DataTable<ManualJournalRow>
           name="ManualJournal"
           queryKey="manual-journal-list"
           columns={columns}

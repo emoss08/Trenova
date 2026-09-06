@@ -1,0 +1,104 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query WorkerPolicies($activeOnly: Boolean, $limit: Int) {
+  workerPolicies(activeOnly: $activeOnly, limit: $limit) {
+    id
+    status
+    code
+    title
+    summary
+    body
+    documentId
+    versionLabel
+    requiresSignature
+    appliesTo
+    effectiveFrom
+    version
+  }
+}
+
+query WorkerPolicyCompliance($id: ID!) {
+  workerPolicyCompliance(id: $id) {
+    signed
+    outstanding
+    policy {
+      id
+      title
+      versionLabel
+    }
+    rows {
+      workerId
+      workerName
+      workerType
+      acknowledgedAt
+      signatureName
+    }
+  }
+}
+
+query WorkerPolicyAcknowledgements($workerId: ID!) {
+  workerPolicyAcknowledgements(workerId: $workerId) {
+    id
+    policyId
+    versionLabel
+    acknowledgedAt
+    signatureName
+    documentChecksum
+    policy {
+      id
+      title
+      versionLabel
+    }
+  }
+}
+
+query ProfileChangeRequests($filter: ProfileChangeFilterInput) {
+  profileChangeRequests(filter: $filter) {
+    id
+    workerId
+    status
+    note
+    submittedAt
+    decidedAt
+    decisionNote
+    version
+    changes {
+      field
+      label
+      from
+      to
+    }
+    worker {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+
+mutation CreateWorkerPolicy($input: WorkerPolicyInput!) {
+  createWorkerPolicy(input: $input) {
+    id
+    code
+    title
+    versionLabel
+  }
+}
+
+mutation UpdateWorkerPolicy($id: ID!, $input: WorkerPolicyInput!) {
+  updateWorkerPolicy(id: $id, input: $input) {
+    id
+    code
+    title
+    versionLabel
+    status
+  }
+}
+
+mutation DecideProfileChange($input: DecideProfileChangeInput!) {
+  decideProfileChange(input: $input) {
+    id
+    status
+    decidedAt
+  }
+}

@@ -8,7 +8,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { statusChoices } from "@/lib/choices";
-import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
+import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   communicationProfileMethodOptions,
@@ -137,7 +137,7 @@ export function EnvelopeTab() {
   );
 }
 
-export function SecretsTab({ profile }: { profile: EDICommunicationProfile | null }) {
+export function SecretsTab({ profile }: { profile: EDICommunicationProfileRow | null }) {
   const { control } = useFormContext<CommunicationProfileFormValues>();
   const method = useWatch({ control, name: "method" });
   const authMode = useWatch({ control, name: "config.authMode" });

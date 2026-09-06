@@ -161,21 +161,21 @@ type Shipment {
   proNumber: String!
   bol: String
   cancelReason: String!
-  otherChargeAmount: String!
-  freightChargeAmount: String!
-  baseRate: String!
-  totalChargeAmount: String!
+  otherChargeAmount: Decimal!
+  freightChargeAmount: Decimal!
+  baseRate: Decimal!
+  totalChargeAmount: Decimal!
   pieces: Int
   weight: Int
   temperatureMin: Int
   temperatureMax: Int
-  actualDeliveryDate: Int
-  actualShipDate: Int
-  canceledAt: Int
+  actualDeliveryDate: Timestamp
+  actualShipDate: Timestamp
+  canceledAt: Timestamp
   billingTransferStatus: String
-  transferredToBillingAt: Int
-  markedReadyToBillAt: Int
-  billedAt: Int
+  transferredToBillingAt: Timestamp
+  markedReadyToBillAt: Timestamp
+  billedAt: Timestamp
   ratingUnit: Int!
   fuelSurchargeLocked: Boolean!
   ratingDetail: ShipmentRatingDetail
@@ -186,19 +186,19 @@ type Shipment {
   """
   autoRated: Boolean!
   "When the contract priced this shipment. Null if none ever did."
-  autoRatedAt: Int
+  autoRatedAt: Timestamp
   rateAgreementId: ID
   rateAgreementRuleId: ID
   rateQuoteId: ID
   "Set once a shipment has been priced at something other than its contract."
-  rateOverrideAmount: String
+  rateOverrideAmount: Decimal
   rateOverrideReason: String
-  rateOverrideAt: Int
+  rateOverrideAt: Timestamp
   "Freezes the numbers of a shipment that has already been invoiced."
   rateLocked: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   moves: [ShipmentMove!]!
   additionalCharges: [ShipmentAdditionalCharge!]!
   commodities: [ShipmentCommodity!]!
@@ -239,7 +239,7 @@ type ShipmentRatingDetail {
   "Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended."
   resolvedVariables: JSON!
   result: Float!
-  ratedAt: Int!
+  ratedAt: Timestamp!
   "Zero when the rate did not come from a versioned formula template."
   versionNumber: Int!
   breakdown: [ShipmentRatingBreakdownItem!]!
@@ -271,12 +271,12 @@ type ShipmentContractRate {
   formulaTemplateId: ID
   formulaTemplateName: String!
   "The rate that method prices with. Null when the rule defers to the shipment."
-  baseRate: String
-  linehaulAmount: String!
-  otherChargeAmount: String!
-  totalChargeAmount: String!
+  baseRate: Decimal
+  linehaulAmount: Decimal!
+  otherChargeAmount: Decimal!
+  totalChargeAmount: Decimal!
   "What the shipment charged before, so a dialog can state the change."
-  previousLinehaulAmount: String!
+  previousLinehaulAmount: Decimal!
   accessorials: [ShipmentContractRateAccessorial!]!
   explanation: String!
 }
@@ -286,7 +286,7 @@ type ShipmentContractRateAccessorial {
   accessorialChargeId: ID!
   description: String!
   method: AccessorialMethod!
-  amount: String!
+  amount: Decimal!
   unit: Int!
 }
 
@@ -317,8 +317,8 @@ type ShipmentCustomer {
   exclusiveConsolidation: Boolean!
   consolidationPriority: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   """
   Active internal EDI partner linked to this customer that is enabled for
   outbound load tenders, if any.
@@ -343,8 +343,8 @@ type ShipmentFormulaTemplate {
   sourceTemplateId: ID
   sourceVersionNumber: Int
   currentVersionNumber: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ShipmentFormulaVariableDefinition {
@@ -381,10 +381,10 @@ type CarrierAssignmentAccessorial {
   carrierAssignmentId: ID!
   accessorialChargeId: ID
   description: String!
-  amount: String!
+  amount: Decimal!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type CarrierAssignment {
@@ -395,11 +395,11 @@ type CarrierAssignment {
   carrierId: ID!
   status: CarrierAssignmentStatus!
   rateMethod: CarrierRateMethod!
-  baseRate: String!
-  baseAmount: String!
-  fuelSurcharge: String!
-  accessorialTotal: String!
-  totalCost: String!
+  baseRate: Decimal!
+  baseAmount: Decimal!
+  fuelSurcharge: Decimal!
+  accessorialTotal: Decimal!
+  totalCost: Decimal!
   currencyCode: String!
   proNumber: String
   externalDriverName: String
@@ -407,12 +407,12 @@ type CarrierAssignment {
   externalTractorNumber: String
   externalTrailerNumber: String
   assignedById: ID
-  confirmedAt: Int
-  canceledAt: Int
+  confirmedAt: Timestamp
+  canceledAt: Timestamp
   cancellationReason: String
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   carrier: Carrier
   accessorials: [CarrierAssignmentAccessorial!]
 }
@@ -429,7 +429,7 @@ type ShipmentMove {
   distance: Float
   distanceSource: String
   distanceProvider: String
-  distanceCalculatedAt: Int
+  distanceCalculatedAt: Timestamp
   distanceRouteSignature: String
   distanceDataVersion: String
   distanceRoutingType: String
@@ -437,8 +437,8 @@ type ShipmentMove {
   "Distance providers may return provider-specific route details, so this remains intentionally open-ended."
   distanceMetadata: JSON
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   stops: [ShipmentStop!]!
   assignment: ShipmentAssignment
   carrierAssignment: CarrierAssignment
@@ -456,16 +456,16 @@ type ShipmentStop {
   sequence: Int!
   pieces: Int
   weight: Int
-  scheduledWindowStart: Int!
-  scheduledWindowEnd: Int
-  actualArrival: Int
-  actualDeparture: Int
+  scheduledWindowStart: Timestamp!
+  scheduledWindowEnd: Timestamp
+  actualArrival: Timestamp
+  actualDeparture: Timestamp
   countLateOverride: Boolean
   countDetentionOverride: Boolean
   addressLine: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   location: Location
 }
 
@@ -479,10 +479,10 @@ type ShipmentAssignment {
   trailerId: ID
   secondaryWorkerId: ID
   status: AssignmentStatus!
-  archivedAt: Int
+  archivedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   tractor: Tractor
   trailer: Trailer
   primaryWorker: Worker
@@ -497,14 +497,14 @@ type ShipmentAdditionalCharge {
   accessorialChargeId: ID!
   isSystemGenerated: Boolean!
   method: String!
-  amount: String!
+  amount: Decimal!
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
   detentionOccurrenceId: ID
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   accessorialCharge: ShipmentAccessorialCharge
 }
 
@@ -517,10 +517,10 @@ type ShipmentAccessorialCharge {
   status: EntityStatus!
   method: String!
   rateUnit: String!
-  amount: String!
+  amount: Decimal!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ShipmentCommodity {
@@ -535,8 +535,8 @@ type ShipmentCommodity {
   widthFeet: Float
   heightFeet: Float
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   commodity: ShipmentCommodityDetail
 }
 
@@ -558,8 +558,8 @@ type ShipmentCommodityDetail {
   stackable: Boolean!
   fragile: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ShipmentUIPolicy {
@@ -642,9 +642,9 @@ type ShipmentBillingReadiness {
 }
 
 type ShipmentTotalsResponse {
-  freightChargeAmount: String!
-  otherChargeAmount: String!
-  totalChargeAmount: String!
+  freightChargeAmount: Decimal!
+  otherChargeAmount: Decimal!
+  totalChargeAmount: Decimal!
   fuelSurcharge: ShipmentAdditionalCharge
 }
 
@@ -660,7 +660,7 @@ type ShipmentDistanceMoveResult {
   distanceProfileId: String
   distanceProfileName: String
   warnings: [String!]
-  calculatedAt: Int!
+  calculatedAt: Timestamp!
 }
 
 type ShipmentDistanceResponse {
@@ -674,7 +674,7 @@ type ShipmentDuplicateResponse {
   runId: String!
   taskQueue: String!
   status: String!
-  submittedAt: Int!
+  submittedAt: Timestamp!
 }
 
 type ShipmentValidationResponse {
@@ -688,13 +688,13 @@ type ShipmentPreviousRateSummary {
   serviceTypeId: ID!
   shipmentTypeId: ID!
   formulaTemplateId: ID!
-  freightChargeAmount: String!
-  otherChargeAmount: String!
-  totalChargeAmount: String!
+  freightChargeAmount: Decimal!
+  otherChargeAmount: Decimal!
+  totalChargeAmount: Decimal!
   ratingUnit: Int!
   pieces: Int
   weight: Int
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 type ShipmentPreviousRatesResponse {
@@ -728,10 +728,10 @@ type BillingQueueItem {
   exceptionReasonCode: BillingQueueExceptionReasonCode
   reviewNotes: String!
   exceptionNotes: String!
-  reviewStartedAt: Int
-  reviewCompletedAt: Int
+  reviewStartedAt: Timestamp
+  reviewCompletedAt: Timestamp
   canceledById: ID
-  canceledAt: Int
+  canceledAt: Timestamp
   cancelReason: String!
   isAdjustmentOrigin: Boolean!
   sourceInvoiceId: ID
@@ -740,12 +740,12 @@ type BillingQueueItem {
   correctionGroupId: ID
   rebillStrategy: String
   requiresReplacementReview: Boolean!
-  rerateVariancePercent: String!
+  rerateVariancePercent: Decimal!
   "Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended."
   adjustmentContext: JSON!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   shipment: Shipment
   assignedBiller: User
   canceledBy: User
@@ -773,7 +773,7 @@ type ShipmentCommentMention {
   organizationId: ID
   businessUnitId: ID
   shipmentId: ID
-  createdAt: Int!
+  createdAt: Timestamp!
   mentionedUser: User
 }
 
@@ -785,14 +785,14 @@ type ShipmentCommentAttachment {
   mimeType: String!
   previewUrl: String
   downloadUrl: String!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 type ShipmentCommentAcknowledgment {
   id: ID!
   commentId: ID!
   userId: ID!
-  acknowledgedAt: Int!
+  acknowledgedAt: Timestamp!
   user: User
 }
 
@@ -813,16 +813,16 @@ type ShipmentComment {
   source: ShipmentCommentSource!
   "Comment metadata is written by users, integrations, and system workflows, so keys vary by source."
   metadata: JSON
-  editedAt: Int
-  pinnedAt: Int
+  editedAt: Timestamp
+  pinnedAt: Timestamp
   pinnedById: ID
-  resolvedAt: Int
+  resolvedAt: Timestamp
   resolvedById: ID
   requiresAcknowledgment: Boolean!
-  deletedAt: Int
+  deletedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   mentionedUserIds: [ID!]!
   user: User
   pinnedBy: User
@@ -962,7 +962,7 @@ type ShipmentTomorrowsPickups {
 type ShipmentTomorrowPickup {
   shipmentId: String!
   proNumber: String!
-  pickupWindowStart: Int!
+  pickupWindowStart: Timestamp!
   customer: String!
   origin: String!
   destination: String!
@@ -1035,47 +1035,298 @@ type ShipmentEventShipmentReference {
   proNumber: String
 }
 
-type ShipmentEvent {
+"""
+One entry on a shipment's activity timeline. Every entry exposes the shared
+envelope below; the concrete type carries the typed payload for its category.
+"""
+interface ShipmentEvent {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
   shipmentId: ID!
-  moveId: ID
-  stopId: ID
-  assignmentId: ID
-  commentId: ID
-  holdId: ID
   type: ShipmentEventType!
   severity: ShipmentEventSeverity!
   actorType: ShipmentEventActorType!
   actorId: ID
   actorLabel: String!
   summary: String!
-  proNumber: String
-  previousStatus: String
-  newStatus: String
-  reason: String
-  previousOwnerId: ID
-  newOwnerId: ID
-  primaryWorkerId: ID
-  secondaryWorkerId: ID
-  tractorId: ID
-  trailerId: ID
-  driverName: String
-  holdType: String
-  holdSeverity: String
-  holdSource: String
-  commentBody: String
-  commentType: String
-  commentVisibility: String
-  commentPriority: String
-  mentionedUserIds: [ID!]!
-  "Shipment events can also be recorded by integrations and observers with variant-specific metadata."
+  """
+  Raw producer metadata as recorded. The typed payload on each concrete type is
+  derived from it; integrations and observers may add keys that are not lifted.
+  """
   metadata: JSON!
-  occurredAt: Int!
+  occurredAt: Timestamp!
   correlationId: String
   actor: User
   shipment: ShipmentEventShipmentReference
+}
+
+"""
+Shipment lifecycle changes: ShipmentCreated, ShipmentUpdated, StatusChanged,
+ShipmentCanceled and ShipmentUncanceled.
+"""
+type ShipmentLifecycleEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "PRO number of the shipment at the time the event was recorded."
+  proNumber: String
+  "Shipment status before the change; absent when the producer did not record one."
+  previousStatus: String
+  "Shipment status after the change; absent when the producer did not record one."
+  newStatus: String
+  "Free-text reason supplied with a cancellation."
+  reason: String
+}
+
+"""
+Ownership handoffs between users: OwnershipTransferred.
+"""
+type ShipmentOwnershipEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "PRO number of the shipment at the time the event was recorded."
+  proNumber: String
+  "User who owned the shipment before the transfer."
+  previousOwnerId: ID
+  "User who owns the shipment after the transfer."
+  newOwnerId: ID
+}
+
+"""
+Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
+StopCompleted.
+"""
+type ShipmentMoveEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "Move the event refers to."
+  moveId: ID
+  "Stop the event refers to, when the event is stop-scoped."
+  stopId: ID
+  "Move status before the change."
+  previousStatus: String
+  "Move status after the change."
+  newStatus: String
+}
+
+"""
+Driver and equipment coverage on a move: DriverAssigned, DriverReassigned and
+DriverUnassigned.
+"""
+type ShipmentAssignmentEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "Move the assignment covers."
+  moveId: ID
+  "Assignment row that was created, changed or removed."
+  assignmentId: ID
+  "Primary worker on the assignment after the change."
+  primaryWorkerId: ID
+  "Secondary worker on the assignment after the change."
+  secondaryWorkerId: ID
+  "Tractor on the assignment after the change."
+  tractorId: ID
+  "Trailer on the assignment after the change."
+  trailerId: ID
+  "Display name of the primary driver at the time of the change."
+  driverName: String
+}
+
+"""
+External carrier coverage on a move: CarrierAssigned and CarrierUnassigned.
+"""
+type ShipmentCarrierEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "Move the carrier covers."
+  moveId: ID
+  "Carrier that was assigned."
+  carrierId: ID
+  "Carrier display name at the time of the change."
+  carrierName: String
+  "Agreed carrier cost for the move."
+  totalCost: Decimal
+  "Reason supplied when the carrier was unassigned."
+  reason: String
+  "Carrier-side PRO number, when one was captured on the assignment."
+  proNumber: String
+}
+
+"""
+Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
+TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
+TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
+TenderEntryWarned.
+"""
+type ShipmentTenderEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "Tender the activity belongs to."
+  tenderId: ID
+  "Offer the activity belongs to, when offer-scoped."
+  offerId: ID
+  "Move the tender covers."
+  moveId: ID
+  "Carrier display name for the offer or guide entry."
+  carrierName: String
+  "Routing guide rank of the carrier, when the activity is rank-scoped."
+  rank: Int
+  "Delivery channel used for the offer."
+  channel: String
+  "Where the carrier response came from."
+  source: String
+  "Reason attached to a decline, withdrawal or review flag."
+  reason: String
+  "Response action recorded after the offer had already closed."
+  action: String
+  "Tender mode that was exhausted."
+  mode: String
+  "Transport error that prevented offer delivery."
+  error: String
+  "Reasons a routing guide entry was skipped."
+  reasons: [String!]!
+  "Warnings attached to a routing guide entry that was still tendered."
+  warnings: [String!]!
+}
+
+"""
+Hold activity on a shipment: HoldPlaced, HoldUpdated and HoldReleased.
+"""
+type ShipmentHoldEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "Hold the event refers to."
+  holdId: ID
+  "Type of the hold."
+  holdType: HoldType
+  "Severity of the hold when it was placed."
+  holdSeverity: HoldSeverity
+  "Origin of the hold (User, Rule, API, ELD or EDI) when it was placed."
+  holdSource: String
+}
+
+"""
+Comment activity on a shipment: CommentPosted.
+"""
+type ShipmentCommentEvent implements ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  metadata: JSON!
+  occurredAt: Timestamp!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+  "Comment that was posted."
+  commentId: ID
+  "Comment text as posted."
+  commentBody: String
+  "Comment category."
+  commentType: ShipmentCommentType
+  "Audience the comment is visible to."
+  commentVisibility: ShipmentCommentVisibility
+  "Comment priority."
+  commentPriority: ShipmentCommentPriority
+  "Users mentioned in the comment."
+  mentionedUserIds: [ID!]!
 }
 
 type ShipmentLoadingCommodity {
@@ -1175,21 +1426,21 @@ input ShipmentInput {
   proNumber: String
   bol: String
   cancelReason: String
-  otherChargeAmount: String = "0"
-  freightChargeAmount: String = "0"
-  baseRate: String = "0"
-  totalChargeAmount: String = "0"
+  otherChargeAmount: Decimal = "0"
+  freightChargeAmount: Decimal = "0"
+  baseRate: Decimal = "0"
+  totalChargeAmount: Decimal = "0"
   pieces: Int
   weight: Int
   temperatureMin: Int
   temperatureMax: Int
-  actualDeliveryDate: Int
-  actualShipDate: Int
-  canceledAt: Int
+  actualDeliveryDate: Timestamp
+  actualShipDate: Timestamp
+  canceledAt: Timestamp
   billingTransferStatus: String
-  transferredToBillingAt: Int
-  markedReadyToBillAt: Int
-  billedAt: Int
+  transferredToBillingAt: Timestamp
+  markedReadyToBillAt: Timestamp
+  billedAt: Timestamp
   ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
   """
@@ -1213,7 +1464,7 @@ input ShipmentMoveInput {
   distance: Float
   distanceSource: String
   distanceProvider: String
-  distanceCalculatedAt: Int
+  distanceCalculatedAt: Timestamp
   distanceRouteSignature: String
   distanceDataVersion: String
   distanceRoutingType: String
@@ -1233,10 +1484,10 @@ input ShipmentStopInput {
   sequence: Int = 0
   pieces: Int
   weight: Int
-  scheduledWindowStart: Int = 0
-  scheduledWindowEnd: Int
-  actualArrival: Int
-  actualDeparture: Int
+  scheduledWindowStart: Timestamp = 0
+  scheduledWindowEnd: Timestamp
+  actualArrival: Timestamp
+  actualDeparture: Timestamp
   countLateOverride: Boolean
   countDetentionOverride: Boolean
   addressLine: String
@@ -1249,7 +1500,7 @@ input ShipmentAdditionalChargeInput {
   accessorialChargeId: ID!
   isSystemGenerated: Boolean = false
   method: String = "Flat"
-  amount: String = "0"
+  amount: Decimal = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
   detentionOccurrenceId: ID
@@ -1376,20 +1627,21 @@ input ShipmentsInput {
   sort: [SortFieldInput!]
   expandShipmentDetails: Boolean = false
   status: String
-  activityWindowStart: Int
-  activityWindowEnd: Int
+  activityWindowStart: Timestamp
+  activityWindowEnd: Timestamp
 }
 
 input ShipmentEventsInput {
   shipmentId: ID
   types: [ShipmentEventType!]
   limit: Int
-  before: Int
+  "Only events recorded before this instant; pass the oldest occurredAt seen to page backwards."
+  before: Timestamp
 }
 
 input ShipmentAnalyticsInput {
-  startDate: Int
-  endDate: Int
+  startDate: Timestamp
+  endDate: Timestamp
   limit: Int
   offset: Int
   timezone: String

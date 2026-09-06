@@ -2,6 +2,8 @@ package observability
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"time"
@@ -245,5 +247,21 @@ func generateInstanceID() string {
 		hostname = "unknown"
 	}
 
-	return fmt.Sprintf("%s-%d-%d", hostname, os.Getpid(), time.Now().UnixNano())
+	// The clock alone is not enough. Windows resolves time.Now to a coarse
+	// tick, so two ids made in the same tick come out identical — and an
+	// instance id that can collide is not an instance id. The timestamp stays
+	// because it is what makes the value readable in a trace; the entropy is
+	// what makes it unique.
+	var entropy [4]byte
+	if _, rErr := rand.Read(entropy[:]); rErr != nil {
+		return fmt.Sprintf("%s-%d-%d", hostname, os.Getpid(), time.Now().UnixNano())
+	}
+
+	return fmt.Sprintf(
+		"%s-%d-%d-%s",
+		hostname,
+		os.Getpid(),
+		time.Now().UnixNano(),
+		hex.EncodeToString(entropy[:]),
+	)
 }

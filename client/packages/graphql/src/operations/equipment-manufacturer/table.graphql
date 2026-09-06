@@ -10,14 +10,17 @@ fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer {
   updatedAt
 }
 
-query EquipmentManufacturerTable($input: DataTableConnectionInput!) {
+query EquipmentManufacturerTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   equipmentManufacturers(input: $input) {
     edges {
       node {
         ...EquipmentManufacturerTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

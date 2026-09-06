@@ -116,16 +116,20 @@ func (r *repository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*invoice.Invoice)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count invoices", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*invoice.Invoice)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count invoices", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -133,7 +137,7 @@ func (r *repository) ListConnection(
 		dbhelper.CursorListParams[*invoice.Invoice]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*invoice.Invoice) *bun.SelectQuery {
 				return dba.
 					NewSelect().
@@ -178,6 +182,36 @@ func (r *repository) GetByID(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req repositories.GetInvoicesByIDsRequest,
+) ([]*invoice.Invoice, error) {
+	rel := buncolgen.InvoiceRelations
+	entities := make([]*invoice.Invoice, 0, len(req.InvoiceIDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.InvoiceScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.InvoiceColumns.ID.In(), bun.List(req.InvoiceIDs))
+		}).
+		Relation(rel.Customer).
+		Relation(rel.Shipment).
+		Relation(rel.BillingQueueItem).
+		Relation(rel.PDFDocument).
+		Relation(buncolgen.Rel(rel.PDFDocument, buncolgen.DocumentRelations.DocumentType)).
+		Relation(rel.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order(buncolgen.InoviceLineColumns.LineNumber.OrderAsc())
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to get invoices by ids", zap.Error(err))
+		return nil, fmt.Errorf("get invoices by ids: %w", err)
+	}
+
+	return entities, nil
 }
 
 func (r *repository) GetByBillingQueueItemID(

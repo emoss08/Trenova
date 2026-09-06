@@ -1,0 +1,253 @@
+"""
+How the twelve-month period is measured. An employer picks one of the four in
+29 CFR 825.200(b) and must apply it to every employee alike.
+"""
+enum LeaveMeasurementMethod {
+  CalendarYear
+  HireAnniversary
+  ForwardFromFirstUse
+  RollingBackward
+}
+
+enum LeaveCaseStatus {
+  Pending
+  Approved
+  Denied
+  Closed
+}
+
+enum LeaveFrequency {
+  Continuous
+  Intermittent
+  ReducedSchedule
+}
+
+enum LeaveCertificationStatus {
+  NotRequired
+  Requested
+  Received
+  Insufficient
+  Overdue
+  Waived
+}
+
+"""
+The organisation's leave settings. There is one per organisation because the
+measurement method has to be applied consistently (29 CFR 825.200(e)).
+"""
+type LeaveControl {
+  id: ID!
+  measurementMethod: LeaveMeasurementMethod!
+  entitlementWeeks: Decimal!
+  militaryCaregiverWeeks: Decimal!
+  """
+  What a week of entitlement is worth. Intermittent leave is taken in hours, so
+  weeks only become a usable balance once there is a week's length to convert
+  them with.
+  """
+  workweekHours: Decimal!
+  eligibilityMonths: Int!
+  eligibilityHours: Int!
+  certificationDueDays: Int!
+  version: Int!
+}
+
+"""
+The twelve-month period a balance is measured over.
+"""
+type LeaveWindow {
+  from: Timestamp!
+  through: Timestamp!
+}
+
+"""
+A worker's FMLA standing: what they are entitled to, what they have used inside
+the measurement window, and what is left. Derived on read — the window moves,
+so a stored balance would be wrong by tomorrow.
+"""
+type LeaveEntitlement {
+  method: LeaveMeasurementMethod!
+  window: LeaveWindow!
+  totalHours: Decimal!
+  usedHours: Decimal!
+  remainingHours: Decimal!
+  totalWeeks: Decimal!
+  usedWeeks: Decimal!
+  remainingWeeks: Decimal!
+  exhausted: Boolean!
+  """
+  Whether the worker has been employed long enough. The hours-worked half of the
+  eligibility test cannot be answered from tenure, so it is reported separately
+  where the office has recorded it on the case.
+  """
+  eligibleOnTenure: Boolean!
+  monthsEmployed: Int!
+  openCaseCount: Int!
+  militaryCaregiver: Boolean!
+}
+
+type WorkerLeaveEntry {
+  id: ID!
+  workerId: ID!
+  leaveCaseId: ID!
+  "The day the leave was taken."
+  usedOn: Timestamp!
+  hours: Decimal!
+  """
+  Copied from the case when the day was recorded, so undesignating a case later
+  cannot silently rewrite what was already counted.
+  """
+  countsAgainstEntitlement: Boolean!
+  ptoId: ID
+  notes: String
+  version: Int!
+}
+
+"""
+One qualifying reason for leave. Entitlement is drawn down by the days recorded
+against a case, so a case open for months has used nothing until days are.
+"""
+type WorkerLeaveCase {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  leaveType: WorkerLeaveType!
+  status: LeaveCaseStatus!
+  frequency: LeaveFrequency!
+  reason: String
+  """
+  The employer's decision that this leave counts against the entitlement
+  (29 CFR 825.301). Leave can qualify and still not be designated.
+  """
+  fmlaDesignated: Boolean!
+  militaryCaregiver: Boolean!
+  requestedAt: Timestamp!
+  startsAt: Timestamp!
+  endsAt: Timestamp
+  decidedAt: Timestamp
+  closedAt: Timestamp
+  certificationStatus: LeaveCertificationStatus!
+  certificationRequestedAt: Timestamp
+  certificationDueAt: Timestamp
+  certificationReceivedAt: Timestamp
+  recertificationDueAt: Timestamp
+  """
+  Whether the employee has run past the certification deadline. Derived, so a
+  case does not need a sweep to become late.
+  """
+  certificationLate: Boolean!
+  eligibilityHoursWorked: Int
+  employmentEventId: ID
+  documentId: ID
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+  document: WorkerCredentialDocument
+  entries: [WorkerLeaveEntry!]!
+}
+
+input OpenLeaveCaseInput {
+  workerId: ID!
+  leaveType: WorkerLeaveType
+  frequency: LeaveFrequency
+  reason: String
+  militaryCaregiver: Boolean
+  requestedAt: Timestamp
+  startsAt: Timestamp!
+  endsAt: Timestamp
+  eligibilityHoursWorked: Int
+  documentId: ID
+  notes: String
+}
+
+input UpdateLeaveCaseInput {
+  caseId: ID!
+  leaveType: WorkerLeaveType
+  frequency: LeaveFrequency
+  reason: String
+  militaryCaregiver: Boolean
+  startsAt: Timestamp
+  endsAt: Timestamp
+  eligibilityHoursWorked: Int
+  documentId: ID
+  notes: String
+}
+
+input DecideLeaveCaseInput {
+  caseId: ID!
+  approve: Boolean!
+  """
+  Whether the leave counts against the FMLA entitlement. Ignored when the case
+  is denied: denied leave draws nothing down.
+  """
+  designate: Boolean!
+  notes: String
+}
+
+input RecordLeaveCertificationInput {
+  caseId: ID!
+  status: LeaveCertificationStatus!
+  receivedAt: Timestamp
+  recertificationDueAt: Timestamp
+  documentId: ID
+}
+
+input RecordLeaveDayInput {
+  caseId: ID!
+  "The day the leave was taken."
+  usedOn: Timestamp!
+  hours: Decimal!
+  ptoId: ID
+  notes: String
+}
+
+input UpdateLeaveDayInput {
+  entryId: ID!
+  hours: Decimal
+  countsAgainstEntitlement: Boolean
+  ptoId: ID
+  notes: String
+}
+
+input UpdateLeaveControlInput {
+  measurementMethod: LeaveMeasurementMethod
+  entitlementWeeks: Decimal
+  militaryCaregiverWeeks: Decimal
+  workweekHours: Decimal
+  eligibilityMonths: Int
+  eligibilityHours: Int
+  certificationDueDays: Int
+}
+
+extend type Query {
+  leaveControl: LeaveControl!
+  workerLeaveCases(workerId: ID!): [WorkerLeaveCase!]!
+  workerLeaveCase(id: ID!): WorkerLeaveCase!
+  """
+  A worker's FMLA balance. Leave asOf empty for today.
+  """
+  workerLeaveEntitlement(workerId: ID!, asOf: Timestamp): LeaveEntitlement!
+  """
+  Cases across the organisation still waiting on certification the employee
+  owes.
+  """
+  leaveCertificationsOutstanding: [WorkerLeaveCase!]!
+}
+
+extend type Mutation {
+  openLeaveCase(input: OpenLeaveCaseInput!): WorkerLeaveCase!
+  updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
+  decideLeaveCase(input: DecideLeaveCaseInput!): WorkerLeaveCase!
+  closeLeaveCase(id: ID!): WorkerLeaveCase!
+  requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
+  recordLeaveCertification(
+    input: RecordLeaveCertificationInput!
+  ): WorkerLeaveCase!
+  recordLeaveDay(input: RecordLeaveDayInput!): WorkerLeaveEntry!
+  updateLeaveDay(input: UpdateLeaveDayInput!): WorkerLeaveEntry!
+  deleteLeaveDay(id: ID!): Boolean!
+  updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
+}

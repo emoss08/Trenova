@@ -4,12 +4,13 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { BooleanBadge } from "@trenova/shared/components/status-badge";
 import { freightClassChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { CommodityRow } from "@/lib/graphql/commodity-table";
 import type { Commodity } from "@trenova/shared/types/commodity";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function CommodityStatusCell({ row }: { row: Commodity }) {
+function CommodityStatusCell({ row }: { row: CommodityRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -35,7 +36,7 @@ function CommodityStatusCell({ row }: { row: Commodity }) {
   );
 }
 
-export function getColumns(): ColumnDef<Commodity>[] {
+export function getColumns(): ColumnDef<CommodityRow>[] {
   return [
     {
       accessorKey: "status",

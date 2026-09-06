@@ -135,15 +135,17 @@ func ValidateCursorSort(cursor Cursor, sort []CursorSortField) error {
 }
 
 type CursorInfo struct {
-	Limit  int
-	After  string
-	Cursor Cursor
+	Limit             int
+	After             string
+	Cursor            Cursor
+	IncludeTotalCount bool
 }
 
 func NewCursorInfo(first int, after string) (CursorInfo, error) {
 	info := CursorInfo{
-		Limit: ClampLimit(first),
-		After: after,
+		Limit:             ClampLimit(first),
+		After:             after,
+		IncludeTotalCount: true,
 	}
 	if after == "" {
 		return info, nil

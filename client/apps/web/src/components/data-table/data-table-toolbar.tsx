@@ -9,7 +9,7 @@ import {
 import { useDataTable } from "@/contexts/data-table-context";
 import type {
   AddRecordAction,
-  DataTableGraphQLConfig,
+  DataTableGraphQLSource,
   DataTableQueryOptions,
   FilterItem,
   SortField,
@@ -62,7 +62,7 @@ function SearchSkeleton() {
 }
 
 type DataTableExportContext<TData extends Record<string, any>> = {
-  graphql: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLSource<TData>;
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
   currentPageRows: TData[];
   totalCount: number | null;

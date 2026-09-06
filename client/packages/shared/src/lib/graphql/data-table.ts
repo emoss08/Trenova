@@ -1,23 +1,17 @@
-import type { DataTableGraphQLConfig } from "@trenova/shared/types/data-table";
-
-export const DATA_TABLE_CONNECTION_VARIABLES = `
-  $input: DataTableConnectionInput!
-`;
-
-export const DATA_TABLE_CONNECTION_ARGUMENTS = `
-  input: $input
-`;
-
-export const DATA_TABLE_PAGE_INFO_FRAGMENT = `
-  fragment DataTablePageInfoFields on PageInfo {
-    hasNextPage
-    endCursor
-  }
-`;
+import type { ResultOf } from "@graphql-typed-document-node/core";
+import type {
+  ConnectionKeys,
+  DataTableGraphQLConfig,
+  DataTableRow,
+} from "@trenova/shared/types/data-table";
+import type { TypedGraphQLDocument } from "@trenova/shared/types/graphql";
 
 export function defineDataTableGraphQLConfig<
-  TData extends Record<string, unknown>,
-  TVariables extends Record<string, unknown> = Record<string, unknown>,
->(config: DataTableGraphQLConfig<TData, TVariables>): DataTableGraphQLConfig<TData, TVariables> {
+  TDocument extends TypedGraphQLDocument<unknown, never>,
+  const K extends ConnectionKeys<ResultOf<TDocument>>,
+  TData = DataTableRow<TDocument, K>,
+>(
+  config: DataTableGraphQLConfig<TDocument, K, TData>,
+): DataTableGraphQLConfig<TDocument, K, TData> {
   return config;
 }

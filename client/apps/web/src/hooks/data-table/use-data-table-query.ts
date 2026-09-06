@@ -1,6 +1,6 @@
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type {
-  DataTableGraphQLConfig,
+  DataTableGraphQLSource,
   DataTableQueryOptions,
 } from "@trenova/shared/types/data-table";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
@@ -19,6 +19,7 @@ type GraphQLConnection<TNode> = {
 };
 
 type DataTableGraphQLVariables = Record<string, unknown> & {
+  includeTotalCount: boolean;
   input: {
     first: number;
     after?: string;
@@ -32,11 +33,12 @@ type DataTableGraphQLVariables = Record<string, unknown> & {
 type FetchDataTablePageParams<TData extends Record<string, unknown>> = {
   pageSize: number;
   options?: DataTableQueryOptions;
-  graphql: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLSource<TData>;
+  signal?: AbortSignal;
 };
 
 function resolveExtraVariables<TData extends Record<string, unknown>>(
-  config: DataTableGraphQLConfig<TData>,
+  config: DataTableGraphQLSource<TData>,
   pageSize: number,
   options?: DataTableQueryOptions,
 ): Record<string, unknown> {
@@ -45,14 +47,14 @@ function resolveExtraVariables<TData extends Record<string, unknown>>(
   }
 
   if (typeof config.extraVariables === "function") {
-    return config.extraVariables({ pageSize, options }) as Record<string, unknown>;
+    return config.extraVariables({ pageSize, options });
   }
 
-  return config.extraVariables as Record<string, unknown>;
+  return config.extraVariables;
 }
 
 function resolveInputExtraVariables<TData extends Record<string, unknown>>(
-  config: DataTableGraphQLConfig<TData>,
+  config: DataTableGraphQLSource<TData>,
   pageSize: number,
   options?: DataTableQueryOptions,
 ): Record<string, unknown> {
@@ -69,10 +71,11 @@ function resolveInputExtraVariables<TData extends Record<string, unknown>>(
 
 function buildGraphQLVariables<TData extends Record<string, unknown>>(
   pageSize: number,
-  config: DataTableGraphQLConfig<TData>,
+  config: DataTableGraphQLSource<TData>,
   options?: DataTableQueryOptions,
 ): DataTableGraphQLVariables {
   return {
+    includeTotalCount: !options?.cursor,
     input: {
       first: pageSize,
       after: options?.cursor || undefined,
@@ -88,8 +91,9 @@ function buildGraphQLVariables<TData extends Record<string, unknown>>(
 
 export async function fetchGraphQLData<TData extends Record<string, unknown>>(
   pageSize: number,
-  config: DataTableGraphQLConfig<TData>,
+  config: DataTableGraphQLSource<TData>,
   options?: DataTableQueryOptions,
+  requestOptions?: { signal?: AbortSignal },
 ): Promise<GenericLimitOffsetResponse<TData>> {
   const data = await requestGraphQL<
     Record<string, GraphQLConnection<unknown>>,
@@ -98,6 +102,7 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
     document: config.document,
     operationName: config.operationName,
     variables: buildGraphQLVariables(pageSize, config, options),
+    signal: requestOptions?.signal,
   });
   const connection = data[config.connectionKey];
 
@@ -129,13 +134,14 @@ export async function fetchDataTablePage<TData extends Record<string, unknown>>(
   pageSize,
   options,
   graphql,
+  signal,
 }: FetchDataTablePageParams<TData>): Promise<GenericLimitOffsetResponse<TData>> {
-  return fetchGraphQLData(pageSize, graphql, options);
+  return fetchGraphQLData(pageSize, graphql, options, { signal });
 }
 
 export function buildDataTableQueryKey<TData extends Record<string, unknown>>(
   queryKey: string,
-  graphql: DataTableGraphQLConfig<TData>,
+  graphql: DataTableGraphQLSource<TData>,
   pagination: PaginationState,
   options?: DataTableQueryOptions,
 ) {
@@ -154,7 +160,7 @@ export function buildDataTableQueryKey<TData extends Record<string, unknown>>(
 
 export function useDataTableQuery<TData extends Record<string, unknown>>(
   queryKey: string,
-  graphql: DataTableGraphQLConfig<TData>,
+  graphql: DataTableGraphQLSource<TData>,
   pagination: PaginationState,
   options?: DataTableQueryOptions,
   enabled = true,
@@ -162,11 +168,12 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
   // oxlint-disable-next-line @tanstack/query/exhaustive-deps
   return useQuery<GenericLimitOffsetResponse<TData>, Error>({
     queryKey: buildDataTableQueryKey(queryKey, graphql, pagination, options),
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       fetchDataTablePage<TData>({
         pageSize: pagination.pageSize,
         options,
         graphql,
+        signal,
       }),
     enabled,
   });

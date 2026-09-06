@@ -30,6 +30,15 @@ enum EndorsementType {
   T
 }
 
+enum WorkerLeaveType {
+  FMLA
+  Medical
+  Military
+  Parental
+  Personal
+  Other
+}
+
 enum ComplianceStatus {
   Compliant
   NonCompliant
@@ -59,33 +68,55 @@ type WorkerProfile {
   businessUnitId: ID!
   organizationId: ID!
   licenseStateId: ID
-  dob: Int!
+  dob: Timestamp!
   licenseNumber: String!
   cdlClass: CDLClass!
   cdlRestrictions: String!
   endorsement: EndorsementType!
-  hazmatExpiry: Int
-  licenseExpiry: Int!
-  medicalCardExpiry: Int
+  hazmatExpiry: Timestamp
+  licenseExpiry: Timestamp!
+  medicalCardExpiry: Timestamp
   medicalExaminerName: String!
   medicalExaminerNpi: String!
   twicCardNumber: String!
-  twicExpiry: Int
-  hireDate: Int!
-  terminationDate: Int
-  physicalDueDate: Int
-  mvrDueDate: Int
+  twicExpiry: Timestamp
+  hireDate: Timestamp!
+  terminationDate: Timestamp
+  physicalDueDate: Timestamp
+  mvrDueDate: Timestamp
   complianceStatus: ComplianceStatus!
+  """
+  Roster roll-ups: the worker's training and safety standing denormalised onto
+  the profile so the workers list can filter and sort on them. They are a cache
+  of the training records and safety events, refreshed when those change and
+  re-checked by the nightly compliance sweep. Read the worker overview or the
+  per-area summaries for the live answer.
+  """
+  trainingHealth: WorkerTrainingHealth!
+  safetyRating: SafetyRating!
+  safetyScore: Int!
+  """
+  When the worker's soonest required credential expires, and when their soonest
+  required course falls due. Null when nothing does.
+  """
+  nextCredentialExpiry: Timestamp
+  nextTrainingDue: Timestamp
+  """
+  The worker's drug and alcohol testing standing, denormalised from the testing
+  ledgers so the roster can filter and sort on it. Only Prohibited blocks
+  dispatch; Unknown and Pending warn.
+  """
+  drugAlcoholStatus: DrugAlcoholStatus!
   isQualified: Boolean!
   disqualificationReason: String!
-  lastComplianceCheck: Int!
-  lastMvrCheck: Int!
-  lastDrugTest: Int!
+  lastComplianceCheck: Timestamp!
+  lastMvrCheck: Timestamp!
+  lastDrugTest: Timestamp!
   eldExempt: Boolean!
   shortHaulExempt: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   licenseState: UsState
 }
 
@@ -99,6 +130,10 @@ type Worker {
   status: EntityStatus!
   type: WorkerType!
   driverType: DriverType!
+  """
+  Set while a leave of absence is open on the timeline.
+  """
+  leaveType: WorkerLeaveType
   profilePicUrl: String!
   firstName: String!
   lastName: String!
@@ -117,8 +152,8 @@ type Worker {
   canBeAssigned: Boolean!
   availableForDispatch: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   customFields: JSON
   businessUnit: BusinessUnit
   organization: Organization
@@ -147,17 +182,42 @@ type WorkerPTO {
   businessUnitId: ID!
   approverId: ID
   rejectorId: ID
+  cancelledById: ID
   status: PTOStatus!
   type: PTOType!
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   reason: String!
+  rejectionReason: String
+  cancellationReason: String
+  days: Decimal!
+  balanceAfterDays: Decimal
+  autoApproved: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   approver: User
   rejector: User
+  cancelledBy: User
+}
+
+enum WorkerPTOBulkAction {
+  Approve
+  Reject
+  Cancel
+}
+
+type BulkWorkerPTOActionResult {
+  ptoId: ID!
+  success: Boolean!
+  error: String!
+}
+
+type BulkWorkerPTOActionPayload {
+  results: [BulkWorkerPTOActionResult!]!
+  successCount: Int!
+  failureCount: Int!
 }
 
 type WorkerPTOEdge {
@@ -184,9 +244,12 @@ type PTOChartDataPoint {
 }
 
 input WorkerPatchInput {
-  status: EntityStatus
-  type: WorkerType
-  driverType: DriverType
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  type: WorkerType @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  driverType: DriverType @goField(omittable: true)
 }
 
 input WorkerPTOEntriesInput {
@@ -198,8 +261,8 @@ input WorkerPTOEntriesInput {
   sort: [SortFieldInput!]
   status: PTOStatus
   type: PTOType
-  startDateFrom: Int
-  startDateTo: Int
+  startDateFrom: Timestamp
+  startDateTo: Timestamp
   workerId: ID
   includeWorker: Boolean = false
 }
@@ -209,8 +272,8 @@ input UpcomingWorkerPTOInput {
   after: String
   status: PTOStatus
   type: PTOType
-  startDate: Int
-  endDate: Int
+  startDate: Timestamp
+  endDate: Timestamp
   workerId: ID
   fleetCodeId: ID
   timezone: String
@@ -219,14 +282,29 @@ input UpcomingWorkerPTOInput {
 input CreateWorkerPTOInput {
   workerId: ID!
   type: PTOType!
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   reason: String!
 }
 
+input UpdateWorkerPTOInput {
+  id: ID!
+  version: Int!
+  type: PTOType!
+  startDate: Timestamp!
+  endDate: Timestamp!
+  reason: String!
+}
+
+input BulkWorkerPTOActionInput {
+  ptoIds: [ID!]!
+  action: WorkerPTOBulkAction!
+  reason: String
+}
+
 input WorkerPTOChartInput {
-  startDateFrom: Int!
-  startDateTo: Int!
+  startDateFrom: Timestamp!
+  startDateTo: Timestamp!
   type: PTOType
   workerId: ID
   timezone: String
@@ -242,6 +320,9 @@ extend type Query {
 extend type Mutation {
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
+  updateWorkerPTO(input: UpdateWorkerPTOInput!): WorkerPTO!
   approveWorkerPTO(id: ID!): WorkerPTO!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+  cancelWorkerPTO(id: ID!, reason: String): WorkerPTO!
+  bulkWorkerPTOAction(input: BulkWorkerPTOActionInput!): BulkWorkerPTOActionPayload!
 }

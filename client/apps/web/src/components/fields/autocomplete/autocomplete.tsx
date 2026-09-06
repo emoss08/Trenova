@@ -300,13 +300,14 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
       graphql?.resource,
       normalizedGraphQLFilters,
     ],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!value) return null;
       if (graphql) {
         return (await fetchGraphQLSelectedOption(
           graphql.resource,
           value,
           normalizedGraphQLFilters,
+          { signal },
         )) as TOption | null;
       }
 

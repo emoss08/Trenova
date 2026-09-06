@@ -1,5 +1,25 @@
+"""
+A structured JSON value (object or array). Serialized as-is in the response body.
+"""
 scalar JSON
+
+"""
+A scalar whose runtime type is decided by the field that carries it. Used for
+filter values, where the value may be a string, number, boolean, or null.
+"""
 scalar Any
+
+"""
+A point in time as a Unix timestamp: the number of whole seconds since the
+Unix epoch (1970-01-01T00:00:00Z), UTC. Serialized as a JSON number.
+"""
+scalar Timestamp
+
+"""
+An arbitrary-precision decimal number serialized as a JSON string, with a dot
+as the decimal point and no thousands separators (for example "123.4500").
+"""
+scalar Decimal
 
 directive @goField(
   forceResolver: Boolean

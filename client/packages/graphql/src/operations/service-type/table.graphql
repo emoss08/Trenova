@@ -11,14 +11,14 @@ fragment ServiceTypeTableRowFields on ServiceType {
   updatedAt
 }
 
-query ServiceTypeTable($input: DataTableConnectionInput!) {
+query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   serviceTypes(input: $input) {
     edges {
       node {
         ...ServiceTypeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

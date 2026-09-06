@@ -13,9 +13,9 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { api } from "@trenova/shared/lib/api";
+import type { JurisdictionRuleRow } from "@/lib/graphql/jurisdiction-rule-table";
 import {
   verifyJurisdictionRuleSchema,
-  type JurisdictionRule,
   type VerifyJurisdictionRuleInput,
 } from "@/types/jurisdiction-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,7 +36,7 @@ export function JurisdictionRuleVerifyDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  rule: JurisdictionRule | null;
+  rule: JurisdictionRuleRow | null;
 }) {
   const queryClient = useQueryClient();
 

@@ -491,6 +491,28 @@ export const inclusiveDays = (startUnix: number, endUnix: number, timezone?: str
   return Math.max(1, Math.floor((e.getTime() - s.getTime()) / MS_PER_DAY) + 1);
 };
 
+export const ptoDays = (
+  startUnix: number,
+  endUnix: number,
+  countWeekends: boolean,
+  timezone?: string,
+): number => {
+  if (!startUnix || !endUnix) return 0;
+  const resolved = resolveUserTimezone(timezone);
+  const first = toZonedTime(toDateFromUnixSeconds(startUnix), resolved);
+  const last = toZonedTime(toDateFromUnixSeconds(endUnix), resolved);
+  const cursor = new Date(first.getFullYear(), first.getMonth(), first.getDate());
+  const end = new Date(last.getFullYear(), last.getMonth(), last.getDate());
+  if (end < cursor) return 0;
+  let days = 0;
+  while (cursor <= end) {
+    const weekday = cursor.getDay();
+    if (countWeekends || (weekday !== 0 && weekday !== 6)) days += 1;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return days;
+};
+
 export const formatRange = (startUnix: number, endUnix: number, timezone?: string) => {
   const resolved = resolveUserTimezone(timezone);
   const s = toDateFromUnixSeconds(startUnix);

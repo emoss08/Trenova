@@ -46,9 +46,9 @@ import {
   type ShipmentCommentInput,
   type ShipmentCommentUpdateInput,
   type ShipmentCommentsFilterInput,
-  type ShipmentCommandCenterTableQueryVariables,
   type ShipmentCommodityInput,
   type ShipmentDuplicateInput,
+  type ShipmentEventFieldsFragment,
   type ShipmentInput,
   type ShipmentLoadingOptimizationInput,
   type ShipmentMoveInput,
@@ -56,6 +56,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";
 import type { LoadingOptimizationRequest } from "@/types/loading-optimization";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
@@ -68,7 +69,7 @@ import type {
   ShipmentUpdateInput,
 } from "@trenova/shared/types/shipment";
 import type { ShipmentComment } from "@/types/shipment-comment";
-import type { ShipmentEventList, ShipmentEventType } from "@/types/shipment-event";
+import type { ShipmentEventType } from "@/types/shipment-event";
 
 type ShipmentConnection = {
   edges?: Array<{ node: unknown }>;
@@ -92,6 +93,7 @@ type ShipmentPageRequest = {
 type ShipmentGraphQLParams<TVariables> = {
   document: GraphQLExecutableDocument;
   operationName: string;
+  signal?: AbortSignal;
   variables?: TVariables;
 };
 
@@ -101,18 +103,16 @@ function requestShipmentGraphQL<TVariables = Record<string, unknown>>(
   return requestGraphQL<Record<string, any>, TVariables>(params);
 }
 
-export const shipmentTableGraphQLConfig = defineDataTableGraphQLConfig<
-  Shipment,
-  ShipmentCommandCenterTableQueryVariables
->({
+export const shipmentTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: ShipmentCommandCenterTableDocument,
   operationName: "ShipmentCommandCenterTable",
   connectionKey: "shipments",
   inputExtraVariables: {
     expandShipmentDetails: true,
   },
-  mapNode: (node) => node as Shipment,
 });
+
+export type ShipmentTableRow = DataTableConfigRow<typeof shipmentTableGraphQLConfig>;
 
 export async function listShipmentsGraphQL(
   req: ShipmentPageRequest,
@@ -191,7 +191,10 @@ export async function listMapShipmentsGraphQL(req: {
   return connectionToLimitOffset(data.shipments as ShipmentConnection);
 }
 
-export async function getShipmentGraphQL(id: Shipment["id"]): Promise<Shipment> {
+export async function getShipmentGraphQL(
+  id: Shipment["id"],
+  options?: { signal?: AbortSignal },
+): Promise<Shipment> {
   const data = await requestShipmentGraphQL({
     document: ShipmentDetailDocument,
     operationName: "ShipmentDetail",
@@ -199,6 +202,7 @@ export async function getShipmentGraphQL(id: Shipment["id"]): Promise<Shipment> 
       id,
       expandShipmentDetails: true,
     },
+    signal: options?.signal,
   });
   if (!data.shipment) {
     throw new Error("Shipment not found");
@@ -265,7 +269,7 @@ export async function listShipmentEventsGraphQL(
     limit?: number;
     before?: number;
   } = {},
-): Promise<ShipmentEventList> {
+): Promise<ShipmentEventFieldsFragment[]> {
   const data = await requestShipmentGraphQL({
     document: ShipmentEventsDocument,
     operationName: "ShipmentEvents",
@@ -278,7 +282,10 @@ export async function listShipmentEventsGraphQL(
       },
     },
   });
-  return data.shipmentEvents as ShipmentEventList;
+  // ShipmentEventFields selects on an interface, so the client preset masks each
+  // element under its concrete type's own fragment key while FragmentType<> demands
+  // every key at once; getFragmentData cannot unmask the list, so widen it here.
+  return data.shipmentEvents as ShipmentEventFieldsFragment[];
 }
 
 export async function createShipmentGraphQL(payload: ShipmentCreateInput): Promise<Shipment> {

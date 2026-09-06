@@ -1,0 +1,122 @@
+# Fields are inlined rather than spread from the per-area fragments: a nested
+# fragment spread returns a masked $fragmentRefs type, and the overview needs
+# to read these values directly. It also keeps the payload to the headline
+# numbers the summary draws, not every item behind them.
+query WorkerOverview($workerId: ID!) {
+  workerOverview(workerId: $workerId) {
+    asOf
+    standing
+    concerns {
+      severity
+      code
+      headline
+      detail
+      tab
+    }
+    worker {
+      id
+      firstName
+      lastName
+      status
+      canBeAssigned
+      type
+      driverType
+      fleetCode {
+        id
+        code
+        color
+      }
+      profile {
+        hireDate
+        terminationDate
+        complianceStatus
+        isQualified
+      }
+    }
+    credentials {
+      complianceStatus
+      requiredCount
+      validCount
+      expiringCount
+      expiredCount
+      missingCount
+    }
+    training {
+      compliant
+      requiredCount
+      currentCount
+      dueCount
+      overdueCount
+      expiringCount
+      expiredCount
+      missingCount
+    }
+    safety {
+      score
+      rating
+      activePoints
+      pointsWatchThreshold
+      pointsAtRiskThreshold
+      accidents
+      preventableAccidents
+      citations
+      outOfServiceOrders
+      openEvents
+      activeDiscipline
+      highestDiscipline
+      recognitions
+      daysSinceLastEvent
+    }
+    checklist {
+      id
+      name
+      kind
+      status
+      dueAt
+      progress {
+        total
+        settled
+        requiredTotal
+        requiredDone
+        overdue
+        percent
+        complete
+      }
+    }
+    pto {
+      ptoType
+      tracked
+      balanceDays
+      pendingDays
+      availableDays
+    }
+    openReview {
+      id
+      title
+      status
+      periodEnd
+      overallScore
+    }
+    lastReview {
+      id
+      title
+      status
+      periodEnd
+      overallScore
+    }
+    nextReviewAt
+  }
+}
+
+query WorkerRosterAttention {
+  workerRosterAttention {
+    activeWorkers
+    nonCompliant
+    trainingOverdue
+    atRisk
+    expiringSoon
+    reviewsAwaitingSignOff
+    ptoLiabilityDays
+    leaveCertificationsOutstanding
+  }
+}

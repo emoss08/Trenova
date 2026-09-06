@@ -27,8 +27,10 @@ const (
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
 	SeedLookupMatrix SeedID = "LookupMatrix" // from 09_lookup_matrix.go
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
+	SeedOrgHoliday SeedID = "OrgHoliday" // from 21_org_holiday.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
+	SeedPTOPolicy SeedID = "PTOPolicy" // from 17_pto_policy.go
 	SeedRateAgreement SeedID = "RateAgreement" // from 16_rate_agreement.go
 	SeedRoutingGuide SeedID = "RoutingGuide" // from 15_routing_guide.go
 	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
@@ -39,6 +41,11 @@ const (
 	SeedTestOrganizations SeedID = "TestOrganizations" // from 00_test_organizations.go
 	SeedUSStates SeedID = "USStates" // from 00_us_states.go
 	SeedWorker SeedID = "Worker" // from 03_worker.go
+	SeedWorkerChecklist SeedID = "WorkerChecklist" // from 20_worker_checklist.go
+	SeedWorkerCredential SeedID = "WorkerCredential" // from 18_worker_credential.go
+	SeedWorkerEmploymentEvent SeedID = "WorkerEmploymentEvent" // from 19_worker_employment_event.go
+	SeedWorkerSafety SeedID = "WorkerSafety" // from 23_worker_safety.go
+	SeedWorkerTraining SeedID = "WorkerTraining" // from 22_worker_training.go
 )
 
 var AllSeedIDs = []SeedID{
@@ -59,8 +66,10 @@ var AllSeedIDs = []SeedID{
 	SeedLocationCategory,
 	SeedLookupMatrix,
 	SeedNormalAccount,
+	SeedOrgHoliday,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
+	SeedPTOPolicy,
 	SeedRateAgreement,
 	SeedRoutingGuide,
 	SeedServiceFailureReasonCode,
@@ -71,6 +80,11 @@ var AllSeedIDs = []SeedID{
 	SeedTestOrganizations,
 	SeedUSStates,
 	SeedWorker,
+	SeedWorkerChecklist,
+	SeedWorkerCredential,
+	SeedWorkerEmploymentEvent,
+	SeedWorkerSafety,
+	SeedWorkerTraining,
 }
 
 var BaseSeedIDs = []SeedID{
@@ -100,12 +114,19 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedLocationCategory,
 	SeedLookupMatrix,
 	SeedNormalAccount,
+	SeedOrgHoliday,
+	SeedPTOPolicy,
 	SeedRateAgreement,
 	SeedRoutingGuide,
 	SeedShipment,
 	SeedTestData,
 	SeedTestOrganizations,
 	SeedWorker,
+	SeedWorkerChecklist,
+	SeedWorkerCredential,
+	SeedWorkerEmploymentEvent,
+	SeedWorkerSafety,
+	SeedWorkerTraining,
 }
 
 var TestSeedIDs = []SeedID{

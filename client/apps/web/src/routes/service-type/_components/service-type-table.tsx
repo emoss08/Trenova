@@ -1,5 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { serviceTypeTableGraphQLConfig } from "@/lib/graphql/service-type-table";
+import {
+  serviceTypeTableGraphQLConfig,
+  type ServiceTypeRow,
+} from "@/lib/graphql/service-type-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
@@ -13,14 +16,14 @@ import { toast } from "sonner";
 import { getColumns } from "./service-type-columns";
 import { ServiceTypePanel } from "./service-type-panel";
 
-const INLINE_EDITABLE_FIELDS = new Set<keyof ServiceType>(["code", "description"]);
+const INLINE_EDITABLE_FIELDS = new Set<keyof ServiceTypeRow>(["code", "description"]);
 
 export default function EquipmentTypeTable() {
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: ServiceType[], status: string) => {
+    async (rows: ServiceTypeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.serviceTypeService.bulkUpdateStatus({
@@ -43,9 +46,9 @@ export default function EquipmentTypeTable() {
     [queryClient],
   );
 
-  const handleCellEditCommit = useCallback<CellEditCommitFn<ServiceType>>(
+  const handleCellEditCommit = useCallback<CellEditCommitFn<ServiceTypeRow>>(
     async ({ rowId, columnId, value }) => {
-      const field = columnId as keyof ServiceType;
+      const field = columnId as keyof ServiceTypeRow;
       if (!INLINE_EDITABLE_FIELDS.has(field)) return;
       if (field === "code" && (value === null || value === "")) {
         throw new Error("Code is required.");
@@ -61,7 +64,7 @@ export default function EquipmentTypeTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<ServiceType>[]>(
+  const dockActions = useMemo<DockAction<ServiceTypeRow>[]>(
     () => [
       {
         id: "status-update",
@@ -78,7 +81,7 @@ export default function EquipmentTypeTable() {
   );
 
   return (
-    <DataTable<ServiceType>
+    <DataTable<ServiceTypeRow>
       name="Service Type"
       queryKey="service-type-list"
       graphql={serviceTypeTableGraphQLConfig}

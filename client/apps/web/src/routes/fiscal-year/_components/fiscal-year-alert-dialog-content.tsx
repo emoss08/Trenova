@@ -9,18 +9,18 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
-import type { FiscalYear } from "@/types/fiscal-year";
+import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-export type FiscalYearAction = "activate" | "close" | "lock" | "unlock";
+export type FiscalYearAction = "activate" | "close";
 
-export function FiscalYearActivateAlertDialogContent({ record }: { record: FiscalYear }) {
+export function FiscalYearActivateAlertDialogContent({ record }: { record: FiscalYearRow }) {
   const queryClient = useQueryClient();
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.activate(id),
+    mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.activate(id),
     onSuccess: () => {
       toast.success("Activated successfully", {
         description: `Successfully set ${record?.year} as current`,
@@ -52,12 +52,12 @@ export function FiscalYearActivateAlertDialogContent({ record }: { record: Fisca
   );
 }
 
-export function FiscalYearCloseAlertDialogContent({ record }: { record: FiscalYear }) {
+export function FiscalYearCloseAlertDialogContent({ record }: { record: FiscalYearRow }) {
   const queryClient = useQueryClient();
   const today = getTodayDate();
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.close(id),
+    mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.close(id),
     onSuccess: () => {
       toast.success("Closed successfully", {
         description: `Successfully closed ${record?.year}`,
@@ -111,131 +111,6 @@ export function FiscalYearCloseAlertDialogContent({ record }: { record: FiscalYe
         <AlertDialogAction variant="destructive" onClick={handleFiscalYearClose}>
           Close Fiscal Year
         </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  );
-}
-
-export function FiscalYearLockAlertDialogContent({ record }: { record: FiscalYear }) {
-  const queryClient = useQueryClient();
-
-  const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.lock(id),
-    onSuccess: () => {
-      toast.success("Locked successfully", {
-        description: `Successfully locked ${record?.year}`,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-year-list"],
-      });
-    },
-  });
-
-  const handleFiscalYearLock = useCallback(() => {
-    void mutateAsync(record?.id);
-  }, [mutateAsync, record?.id]);
-
-  return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Lock Fiscal Year {record?.year}?</AlertDialogTitle>
-        <div className="text-muted-foreground flex flex-col space-y-2 text-sm">
-          <p>
-            Locking this fiscal year will make it completely read-only. No transactions or
-            adjustments will be allowed.
-          </p>
-          <p>This is typically done after:</p>
-          <ul className="list-inside list-disc">
-            <li>Audit completion</li>
-            <li>Final management review</li>
-            <li>All adjustments finalized</li>
-          </ul>
-          <p className="font-semibold text-yellow-500">
-            Warning: You will need administrator privileges to unlock.
-          </p>
-        </div>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleFiscalYearLock}>Lock Fiscal Year</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  );
-}
-
-export function FiscalYearUnlockAlertDialogContent({ record }: { record: FiscalYear }) {
-  const queryClient = useQueryClient();
-
-  const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.unlock(id),
-    onSuccess: () => {
-      toast.success("Unlocked successfully", {
-        description: `Successfully unlocked ${record?.year}`,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-year-list"],
-      });
-    },
-  });
-
-  const handleFiscalYearUnlock = useCallback(() => {
-    void mutateAsync(record?.id);
-  }, [mutateAsync, record?.id]);
-
-  return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Unlock Fiscal Year {record?.year}?</AlertDialogTitle>
-
-        <div className="flex w-full items-center justify-between rounded-md border border-red-600/50 bg-red-500/10 p-4">
-          <div className="flex w-full items-center gap-3 text-red-600">
-            <div className="flex flex-col">
-              <p className="text-sm font-semibold">Administrative Action Required!</p>
-              <p className="text-xs dark:text-red-100">
-                Unlocking a fiscal year is typically only done in exceptional circumstances with
-                proper authorization. This action will be logged for audit purposes.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col space-y-3 text-sm">
-          <p className="text-muted-foreground">
-            This will change the fiscal year status from <strong>Locked</strong> to{" "}
-            <strong>Closed</strong>, allowing limited modifications.
-          </p>
-
-          <div className="space-y-2">
-            <p className="text-foreground font-semibold">Typical reasons for unlocking:</p>
-            <ul className="text-muted-foreground ml-2 list-inside list-disc space-y-1">
-              <li>Audit adjustments required after lock</li>
-              <li>Correction of material accounting errors</li>
-              <li>Regulatory compliance requirements</li>
-              <li>Court order or legal mandate</li>
-            </ul>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            <p className="text-foreground font-semibold">After unlocking:</p>
-            <ul className="text-muted-foreground ml-2 list-inside list-disc space-y-1">
-              <li>Adjusting entries can be posted (if enabled)</li>
-              <li>Financial reports may need regeneration</li>
-              <li>The year should be re-locked after corrections</li>
-              <li>External auditors may need notification</li>
-            </ul>
-          </div>
-
-          <div className="bg-muted mt-4 rounded-md p-3">
-            <p className="text-muted-foreground text-xs">
-              <strong>Note:</strong> This action requires administrator privileges and will be
-              recorded in the audit log with your user ID and timestamp.
-            </p>
-          </div>
-        </div>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleFiscalYearUnlock}>Unlock Fiscal Year</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   );

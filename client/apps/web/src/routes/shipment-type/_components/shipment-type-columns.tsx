@@ -6,12 +6,13 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { ShipmentTypeRow } from "@/lib/graphql/shipment-type-table";
 import type { ShipmentType } from "@/types/shipment-type";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function ShipmentTypeStatusCell({ row }: { row: ShipmentType }) {
+function ShipmentTypeStatusCell({ row }: { row: ShipmentTypeRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -37,7 +38,7 @@ function ShipmentTypeStatusCell({ row }: { row: ShipmentType }) {
   );
 }
 
-export function getColumns(): ColumnDef<ShipmentType>[] {
+export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
   return [
     {
       accessorKey: "status",
@@ -61,7 +62,7 @@ export function getColumns(): ColumnDef<ShipmentType>[] {
       header: "Code",
       cell: ({ row }) => {
         const { code, color } = row.original;
-        return <DataTableColorColumn text={code} color={color} />;
+        return <DataTableColorColumn text={code} color={color ?? undefined} />;
       },
       enableCellEditing: true,
       meta: {

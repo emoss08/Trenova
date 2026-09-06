@@ -8,13 +8,10 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import type { RecurringShipmentRow } from "@/lib/graphql/recurring-shipment-table";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
-import type {
-  RecurringShipment,
-  RecurringShipmentRun,
-  RecurringShipmentRunStatus,
-} from "@/types/recurring-shipment";
+import type { RecurringShipmentRun, RecurringShipmentRunStatus } from "@/types/recurring-shipment";
 import { useQuery } from "@tanstack/react-query";
 
 const runStatusStyles: Record<RecurringShipmentRunStatus, string> = {
@@ -55,7 +52,7 @@ export function RecurringShipmentRunsDialog({
   open,
   onOpenChange,
 }: {
-  series: RecurringShipment | null;
+  series: RecurringShipmentRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {

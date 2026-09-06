@@ -3,10 +3,10 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDIInboundFileStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediConnectionMethodChoices, ediInboundFileStatusChoices } from "@/lib/choices";
-import type { EDIInboundFile } from "@trenova/shared/types/edi";
+import type { EDIInboundFileRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getInboundFileColumns(): ColumnDef<EDIInboundFile>[] {
+export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
   return [
     {
       accessorKey: "status",

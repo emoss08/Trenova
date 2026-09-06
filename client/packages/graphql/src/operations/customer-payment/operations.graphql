@@ -1,4 +1,4 @@
-query CustomerPaymentTable($input: DataTableConnectionInput!) {
+query CustomerPaymentTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   customerPayments(input: $input) {
     edges {
       node {
@@ -43,7 +43,7 @@ query CustomerPaymentTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

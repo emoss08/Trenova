@@ -1,6 +1,7 @@
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { apiService } from "@/services/api";
+import type { DetentionPolicyRow } from "@/lib/graphql/detention-policy-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { detentionPolicySchema, type DetentionPolicy } from "@trenova/shared/types/detention";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,7 +67,7 @@ export function DetentionPolicyPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<DetentionPolicy>) {
+}: DataTablePanelProps<DetentionPolicyRow>) {
   const form = useForm<DetentionPolicy>({
     resolver: zodResolver(detentionPolicySchema) as Resolver<DetentionPolicy>,
     defaultValues: DEFAULT_POLICY as DetentionPolicy,
@@ -99,7 +100,7 @@ export function DetentionPolicyPanel({
 
   if (mode === "edit") {
     return (
-      <TabbedFormEditPanel<DetentionPolicy, DetentionPolicy>
+      <TabbedFormEditPanel<DetentionPolicy, DetentionPolicyRow>
         open={open}
         onOpenChange={onOpenChange}
         row={row}
@@ -109,10 +110,6 @@ export function DetentionPolicyPanel({
         fieldKey="name"
         formTabs={formTabs}
         mutationFn={(values, currentRow) => {
-          if (!currentRow.id) {
-            throw new Error("No Detention Policy ID selected");
-          }
-
           return apiService.detentionPolicyService.update(currentRow.id, values);
         }}
       />

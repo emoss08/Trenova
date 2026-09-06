@@ -133,31 +133,40 @@ export function toDetentionPolicyInput(data: DetentionPolicy): DetentionPolicyIn
 }
 
 export class DetentionService {
-  public async desk(): Promise<DeskEntry[]> {
+  public async desk(options?: { signal?: AbortSignal }): Promise<DeskEntry[]> {
     const response = (await requestGraphQL({
       document: DetentionDeskDocument,
       operationName: "DetentionDesk",
       variables: {},
+      signal: options?.signal,
     })) as DetentionDeskQuery;
 
     return safeParse(deskEntryListSchema, response.detentionDesk, "Detention Desk");
   }
 
-  public async getOccurrence(id: string): Promise<OccurrenceDetail> {
+  public async getOccurrence(
+    id: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<OccurrenceDetail> {
     const response = (await requestGraphQL({
       document: DetentionOccurrenceDetailDocument,
       operationName: "DetentionOccurrenceDetail",
       variables: { id },
+      signal: options?.signal,
     })) as DetentionOccurrenceDetailQuery;
 
     return safeParse(occurrenceDetailSchema, response.detentionOccurrence, "Detention Occurrence");
   }
 
-  public async byShipment(shipmentId: string): Promise<DetentionOccurrence[]> {
+  public async byShipment(
+    shipmentId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<DetentionOccurrence[]> {
     const response = (await requestGraphQL({
       document: ShipmentDetentionDocument,
       operationName: "ShipmentDetention",
       variables: { shipmentId },
+      signal: options?.signal,
     })) as ShipmentDetentionQuery;
 
     return safeParse(
@@ -167,11 +176,15 @@ export class DetentionService {
     );
   }
 
-  public async disputePacket(id: string): Promise<DisputePacket> {
+  public async disputePacket(
+    id: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<DisputePacket> {
     const response = (await requestGraphQL({
       document: DetentionDisputePacketDocument,
       operationName: "DetentionDisputePacket",
       variables: { occurrenceId: id },
+      signal: options?.signal,
     })) as DetentionDisputePacketQuery;
 
     return safeParse(disputePacketSchema, response.detentionDisputePacket, "Dispute Packet");
@@ -266,17 +279,21 @@ export class DetentionAnalyticsService {
     return safeParse(backtestResultSchema, response.detentionBacktest, "Detention Backtest");
   }
 
-  public async facilities(params: {
-    from: number;
-    to: number;
-    limit?: number;
-  }): Promise<FacilityDetentionStat[]> {
+  public async facilities(
+    params: {
+      from: number;
+      to: number;
+      limit?: number;
+    },
+    options?: { signal?: AbortSignal },
+  ): Promise<FacilityDetentionStat[]> {
     const response = (await requestGraphQL({
       document: DetentionFacilityStatsDocument,
       operationName: "DetentionFacilityStats",
       variables: {
         input: { from: params.from, to: params.to, limit: params.limit ?? null },
       },
+      signal: options?.signal,
     })) as DetentionFacilityStatsQuery;
 
     return safeParse(
@@ -286,17 +303,21 @@ export class DetentionAnalyticsService {
     );
   }
 
-  public async customers(params: {
-    from: number;
-    to: number;
-    limit?: number;
-  }): Promise<CustomerDetentionStat[]> {
+  public async customers(
+    params: {
+      from: number;
+      to: number;
+      limit?: number;
+    },
+    options?: { signal?: AbortSignal },
+  ): Promise<CustomerDetentionStat[]> {
     const response = (await requestGraphQL({
       document: DetentionCustomerStatsDocument,
       operationName: "DetentionCustomerStats",
       variables: {
         input: { from: params.from, to: params.to, limit: params.limit ?? null },
       },
+      signal: options?.signal,
     })) as DetentionCustomerStatsQuery;
 
     return safeParse(
@@ -306,11 +327,15 @@ export class DetentionAnalyticsService {
     );
   }
 
-  public async waivers(params: { from: number; to: number }): Promise<WaiverLeakageStat[]> {
+  public async waivers(
+    params: { from: number; to: number },
+    options?: { signal?: AbortSignal },
+  ): Promise<WaiverLeakageStat[]> {
     const response = (await requestGraphQL({
       document: DetentionWaiverStatsDocument,
       operationName: "DetentionWaiverStats",
       variables: { input: { from: params.from, to: params.to } },
+      signal: options?.signal,
     })) as DetentionWaiverStatsQuery;
 
     return safeParse(
@@ -322,11 +347,12 @@ export class DetentionAnalyticsService {
 }
 
 export class DetentionPolicyService {
-  public async getById(id: string): Promise<DetentionPolicy> {
+  public async getById(id: string, options?: { signal?: AbortSignal }): Promise<DetentionPolicy> {
     const response = (await requestGraphQL({
       document: DetentionPolicyDocument,
       operationName: "DetentionPolicy",
       variables: { id },
+      signal: options?.signal,
     })) as DetentionPolicyQuery;
 
     return safeParse(detentionPolicySchema, response.detentionPolicy, "Detention Policy");
@@ -367,7 +393,11 @@ export class DetentionPolicyService {
    * builder shows what the configured terms would actually charge. The math is
    * never re-derived on the client.
    */
-  public async preview(policy: DetentionPolicy, scenario: PreviewScenario): Promise<PreviewResult> {
+  public async preview(
+    policy: DetentionPolicy,
+    scenario: PreviewScenario,
+    options?: { signal?: AbortSignal },
+  ): Promise<PreviewResult> {
     const response = (await requestGraphQL({
       document: DetentionPolicyPreviewDocument,
       operationName: "DetentionPolicyPreview",
@@ -384,6 +414,7 @@ export class DetentionPolicyService {
           driverPayRate: scenario.driverPayRate ?? null,
         },
       },
+      signal: options?.signal,
     })) as DetentionPolicyPreviewQuery;
 
     return safeParse(previewResultSchema, response.detentionPolicyPreview, "Detention Preview");

@@ -1,0 +1,202 @@
+enum BenefitPlanType {
+  Medical
+  Dental
+  Vision
+  Life
+  Disability
+  Retirement
+  Other
+}
+
+enum BenefitEnrollmentStatus {
+  Pending
+  Active
+  Waived
+  Ended
+}
+
+"""
+Who the cover extends to. It is on the enrollment rather than the plan because
+the same plan costs different amounts depending on how many people it covers.
+"""
+enum CoverageTier {
+  Employee
+  EmployeeSpouse
+  EmployeeChildren
+  Family
+}
+
+"""
+The three reasons money comes off a settlement. They travel down the same path
+— the settlement builder does not care why — but a garnishment carries a court
+order and a benefit carries an enrollment.
+"""
+enum DeductionKind {
+  Standard
+  Garnishment
+  Benefit
+}
+
+"What a carrier offers, for one plan year."
+type BenefitPlan {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String
+  planType: BenefitPlanType!
+  carrier: String
+  policyNumber: String
+  """
+  What a contribution shows up as on a settlement. Required rather than
+  optional: a deduction nobody can categorise is a deduction nobody can explain.
+  """
+  payCodeId: ID!
+  planYear: Int!
+  employeeCostMinor: Int!
+  """
+  What the employer pays. Never deducted — it is carried so a
+  total-compensation statement can show what the job is actually worth.
+  """
+  employerCostMinor: Int!
+  currencyCode: String!
+  waitingPeriodDays: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  payCode: PayCode
+}
+
+input BenefitPlanInput {
+  code: String!
+  name: String!
+  description: String
+  planType: BenefitPlanType!
+  carrier: String
+  policyNumber: String
+  payCodeId: ID!
+  planYear: Int!
+  employeeCostMinor: Int!
+  employerCostMinor: Int!
+  waitingPeriodDays: Int
+  status: EntityStatus
+}
+
+input UpdateBenefitPlanInput {
+  id: ID!
+  code: String!
+  name: String!
+  description: String
+  planType: BenefitPlanType!
+  carrier: String
+  policyNumber: String
+  payCodeId: ID!
+  planYear: Int!
+  employeeCostMinor: Int!
+  employerCostMinor: Int!
+  waitingPeriodDays: Int
+  status: EntityStatus
+  version: Int
+}
+
+"""
+Who is on which plan. The employee contribution is taken through an ordinary
+recurring deduction, so it inherits the cap, the pause and the reversal on a
+voided settlement that the deduction path already has.
+"""
+type WorkerBenefitEnrollment {
+  id: ID!
+  workerId: ID!
+  benefitPlanId: ID!
+  status: BenefitEnrollmentStatus!
+  coverageTier: CoverageTier!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  """
+  Copied from the plan and the tier when the enrollment is made. A plan repriced
+  next year must not silently restate what somebody was charged this year.
+  """
+  employeeCostMinor: Int!
+  employerCostMinor: Int!
+  recurringDeductionId: ID
+  waivedReason: String
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  benefitPlan: BenefitPlan
+  worker: Worker
+}
+
+input EnrollBenefitInput {
+  workerId: ID!
+  benefitPlanId: ID!
+  coverageTier: CoverageTier
+  """
+  Records a decision not to take the cover. A waiver still produces an
+  enrollment, because "declined" and "nobody asked" are different facts and only
+  one of them is a problem at audit.
+  """
+  waive: Boolean
+  waivedReason: String
+  "Overrides the tier-scaled price for a carrier that prices each tier separately."
+  employeeCostMinor: Int
+  effectiveFrom: Timestamp
+  notes: String
+}
+
+input EndBenefitEnrollmentInput {
+  id: ID!
+  effectiveTo: Timestamp
+  notes: String
+  version: Int
+}
+
+"One plan's cost across the organisation."
+type BenefitCostRow {
+  planId: ID!
+  planName: String!
+  planType: String!
+  enrolled: Int!
+  waived: Int!
+  employeeCostMinor: Int!
+  employerCostMinor: Int!
+}
+
+"""
+What a job is actually worth: what was paid, what the employer put in on top,
+and what the worker paid for cover. The employee's own contributions are
+reported but never added — money the worker paid is not money the job gave them.
+"""
+type TotalCompensation {
+  asOf: Timestamp!
+  planYear: Int!
+  grossPayMinor: Int!
+  employerBenefitMinor: Int!
+  employeeBenefitMinor: Int!
+  accruedTimeOffDays: String!
+  totalCompensationMinor: Int!
+  enrollments: [WorkerBenefitEnrollment!]!
+}
+
+extend type Query {
+  benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
+  benefitPlan(id: ID!): BenefitPlan!
+  workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]!
+  benefitCosts(planYear: Int): [BenefitCostRow!]!
+  """
+  A worker's total compensation. The signed-in driver reads their own through
+  myTotalCompensation instead.
+  """
+  workerTotalCompensation(workerId: ID!, planYear: Int): TotalCompensation!
+  "The signed-in driver's own total compensation statement."
+  myTotalCompensation(planYear: Int): TotalCompensation!
+}
+
+extend type Mutation {
+  createBenefitPlan(input: BenefitPlanInput!): BenefitPlan!
+  updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
+  enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
+  endBenefitEnrollment(input: EndBenefitEnrollmentInput!): WorkerBenefitEnrollment!
+}

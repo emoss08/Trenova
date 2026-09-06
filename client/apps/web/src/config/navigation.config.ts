@@ -10,6 +10,7 @@ import {
   HomeIcon,
   Package,
   ReceiptTextIcon,
+  RouteIcon,
   SettingsIcon,
   TimerIcon,
   TruckIcon,
@@ -113,8 +114,8 @@ const shipmentManagementModule: NavModule = {
 const dispatchModule: NavModule = {
   id: "dispatch",
   label: "Dispatch Management",
-  icon: UsersIcon,
-  description: "Workers, drivers, and dispatch operations",
+  icon: RouteIcon,
+  description: "The board, the lanes, and the carriers that run them",
   basePath: "/dispatch",
   navigation: [
     {
@@ -128,13 +129,6 @@ const dispatchModule: NavModule = {
       label: "Locations",
       path: "/dispatch/locations",
       resource: Resource.Location,
-    },
-    {
-      id: "workers",
-      label: "Workers",
-      path: "/dispatch/workers",
-      resource: Resource.Worker,
-      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "carriers",
@@ -166,6 +160,148 @@ const dispatchModule: NavModule = {
           label: "Fleet Codes",
           path: "/dispatch/configuration-files/fleet-codes",
           resource: Resource.FleetCode,
+          capability: OrganizationCapability.AssetOperations,
+        },
+      ],
+    },
+  ],
+};
+
+/**
+ * Everything about the people who work here: the employee record and the
+ * catalogs the record is measured against. Dispatch keeps the board; this
+ * keeps the file.
+ */
+const humanResourcesModule: NavModule = {
+  id: "hr",
+  label: "Human Resource Management",
+  icon: UsersIcon,
+  description: "Employee records, qualifications, time off, and performance",
+  basePath: "/hr",
+  capability: OrganizationCapability.AssetOperations,
+  navigation: [
+    {
+      id: "workers",
+      label: "Workers",
+      path: "/hr/workers",
+      resource: Resource.Worker,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "my-team",
+      label: "My Team",
+      path: "/hr/my-team",
+      resource: Resource.Worker,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "hr-config-group",
+      label: "Configuration Files",
+      defaultOpen: false,
+      items: [
+        {
+          id: "credential-types",
+          label: "Credential Types",
+          path: "/hr/credential-types",
+          resource: Resource.WorkerCredentialType,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "training-courses",
+          label: "Training Courses",
+          path: "/hr/training-courses",
+          resource: Resource.TrainingCourse,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "checklist-templates",
+          label: "Checklist Templates",
+          path: "/hr/checklist-templates",
+          resource: Resource.WorkerChecklistTemplate,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "review-templates",
+          label: "Review Templates",
+          path: "/hr/review-templates",
+          resource: Resource.PerformanceReviewTemplate,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "leave-settings",
+          label: "Leave Settings",
+          path: "/hr/leave-settings",
+          resource: Resource.WorkerLeave,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "policies",
+          label: "Policies",
+          path: "/hr/policies",
+          resource: Resource.WorkerPolicy,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "time-attendance",
+          label: "Time & Attendance",
+          path: "/hr/time-attendance",
+          resource: Resource.Timesheet,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "scheduling",
+          label: "Scheduling",
+          path: "/hr/scheduling",
+          resource: Resource.WorkerSchedule,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "benefits",
+          label: "Benefits",
+          path: "/hr/benefits",
+          resource: Resource.BenefitPlan,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "org-structure",
+          label: "Org Structure",
+          path: "/hr/org-structure",
+          resource: Resource.JobPosition,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "fleet-safety",
+          label: "Fleet Safety",
+          path: "/hr/fleet-safety",
+          resource: Resource.WorkerSafetyEvent,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "osha-log",
+          label: "OSHA 300 Log",
+          path: "/hr/osha-log",
+          resource: Resource.WorkerInjury,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "random-testing",
+          label: "Random Testing",
+          path: "/hr/random-testing",
+          resource: Resource.DOTRandomPool,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "pto-policies",
+          label: "PTO Policies",
+          path: "/hr/pto-policies",
+          resource: Resource.PTOPolicy,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "holidays",
+          label: "Holiday Calendar",
+          path: "/hr/holidays",
+          resource: Resource.OrgHoliday,
           capability: OrganizationCapability.AssetOperations,
         },
       ],
@@ -720,6 +856,7 @@ export const navigationConfig: NavigationConfig = {
     homeModule,
     shipmentManagementModule,
     dispatchModule,
+    humanResourcesModule,
     equipmentModule,
     billingModule,
     detentionModule,
@@ -947,11 +1084,22 @@ export const navigationConfig: NavigationConfig = {
       id: "create-worker",
       label: "Create Worker",
       description: "Add a new worker",
-      path: "/dispatch/workers",
+      path: "/hr/workers",
       resource: Resource.Worker,
       requiredOperation: Operation.Create,
       query: { pageTab: "workers", panelType: "create" },
       keywords: ["worker", "driver", "employee"],
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "request-worker-pto",
+      label: "Request Worker PTO",
+      description: "Request time off on behalf of a worker",
+      path: "/hr/workers",
+      resource: Resource.WorkerPTO,
+      requiredOperation: Operation.Create,
+      query: { pageTab: "pto", panelType: "create" },
+      keywords: ["pto", "time off", "vacation", "leave", "worker"],
       capability: OrganizationCapability.AssetOperations,
     },
     {
@@ -1095,7 +1243,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "operations",
     label: "Operations",
-    moduleIds: ["shipment", "dispatch", "fleet", "edi"],
+    moduleIds: ["shipment", "dispatch", "hr", "fleet", "edi"],
   },
   {
     id: "financial",

@@ -155,7 +155,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
 
   const { data: account, isLoading } = useQuery({
     queryKey: ["escrow-account-detail", accountId],
-    queryFn: () => fetchEscrowAccountDetail(accountId),
+    queryFn: ({ signal }) => fetchEscrowAccountDetail(accountId, { signal }),
   });
 
   const invalidate = () => {

@@ -190,12 +190,12 @@ function WaterfallTab({
 
   const { data: matchedGuide, isLoading: isMatching } = useQuery({
     queryKey: ["dispatch-tender-guide-match", matchInput] as const,
-    queryFn: () => matchRoutingGuideGraphQL(matchInput),
+    queryFn: ({ signal }) => matchRoutingGuideGraphQL(matchInput, { signal }),
   });
 
   const { data: guideOptions } = useQuery({
     queryKey: ["dispatch-tender-guide-options"] as const,
-    queryFn: () => getRoutingGuideOptionsGraphQL(""),
+    queryFn: ({ signal }) => getRoutingGuideOptionsGraphQL("", { signal }),
   });
 
   const overrideGuide = overrideGuideId

@@ -117,7 +117,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/versionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/workerptohandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -247,7 +246,6 @@ type RouterParams struct {
 	DispatchControlHandler          *dispatchcontrolhandler.Handler
 	DocumentControlHandler          *documentcontrolhandler.Handler
 	DocumentParsingRuleHandler      *documentparsingrulehandler.Handler
-	WorkerPTOHandler                *workerptohandler.Handler
 	ExchangeRateHandler             *exchangeratehandler.Handler
 	DistanceControlHandler          *distancecontrolhandler.Handler
 	DistanceOverrideHandler         *distanceoverridehandler.Handler
@@ -372,7 +370,6 @@ type Router struct {
 	dispatchControlHandler          *dispatchcontrolhandler.Handler
 	documentControlHandler          *documentcontrolhandler.Handler
 	documentParsingRuleHandler      *documentparsingrulehandler.Handler
-	workerPTOHandler                *workerptohandler.Handler
 	exchangeRateHandler             *exchangeratehandler.Handler
 	distanceControlHandler          *distancecontrolhandler.Handler
 	distanceOverrideHandler         *distanceoverridehandler.Handler
@@ -499,7 +496,6 @@ func NewRouter(p RouterParams) *Router {
 		dispatchControlHandler:          p.DispatchControlHandler,
 		documentControlHandler:          p.DocumentControlHandler,
 		documentParsingRuleHandler:      p.DocumentParsingRuleHandler,
-		workerPTOHandler:                p.WorkerPTOHandler,
 		exchangeRateHandler:             p.ExchangeRateHandler,
 		distanceControlHandler:          p.DistanceControlHandler,
 		distanceOverrideHandler:         p.DistanceOverrideHandler,
@@ -698,7 +694,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.distanceProfileHandler.RegisterRoutes(protected)
 	r.storedMileageHandler.RegisterRoutes(protected)
 	r.exchangeRateHandler.RegisterRoutes(protected)
-	r.workerPTOHandler.RegisterRoutes(protected)
 	r.analyticsHandler.RegisterRoutes(protected)
 	r.apiKeyHandler.RegisterRoutes(protected)
 	r.tableChangeAlertHandler.RegisterRoutes(protected)

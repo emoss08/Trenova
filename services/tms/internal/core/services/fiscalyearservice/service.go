@@ -290,6 +290,13 @@ func (s *Service) ListPeriods(
 	})
 }
 
+func (s *Service) ListPeriodsByFiscalYearIDs(
+	ctx context.Context,
+	req repositories.ListByFiscalYearIDsRequest,
+) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
+	return s.fiscalPeriodRepo.ListByFiscalYearIDs(ctx, req)
+}
+
 func (s *Service) GetPeriodForDate(
 	ctx context.Context,
 	orgID, buID pulid.ID,

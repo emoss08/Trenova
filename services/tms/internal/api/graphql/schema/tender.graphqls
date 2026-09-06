@@ -43,24 +43,24 @@ type TenderOffer {
   carrierId: ID!
   rank: Int!
   rateMethod: CarrierRateMethod!
-  rate: String!
+  rate: Decimal!
   offerTtlSeconds: Int!
   channel: TenderChannel!
   status: TenderOfferStatus!
   recipientEmail: String!
-  sentAt: Int
-  expiresAt: Int
-  respondedAt: Int
+  sentAt: Timestamp
+  expiresAt: Timestamp
+  respondedAt: Timestamp
   responseSource: TenderResponseSource
   declineReason: String!
   deliveryError: String!
   ediPartnerId: ID
   ediMessageId: ID
   lateResponseAction: String!
-  lateResponseAt: Int
+  lateResponseAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   carrier: Carrier
 }
 
@@ -78,12 +78,12 @@ type Tender {
   canceledById: ID
   cancellationReason: String!
   acceptedOfferId: ID
-  acceptedAt: Int
-  exhaustedAt: Int
-  canceledAt: Int
+  acceptedAt: Timestamp
+  exhaustedAt: Timestamp
+  canceledAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   routingGuide: RoutingGuide
   offers: [TenderOffer!]
 }

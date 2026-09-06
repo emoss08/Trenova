@@ -7,6 +7,37 @@ enum FieldType {
   multiSelect
 }
 
+"""
+One choice offered by a select or multi-select custom field.
+"""
+type CustomFieldSelectOption {
+  value: String!
+  label: String!
+  color: String!
+  description: String!
+}
+
+"""
+Optional bounds applied when a value is written to the field. Null bounds are
+not enforced.
+"""
+type CustomFieldValidationRules {
+  minLength: Int
+  maxLength: Int
+  min: Int
+  max: Int
+  pattern: String
+}
+
+"""
+Presentation hints for the field's input control.
+"""
+type CustomFieldUIAttributes {
+  placeholder: String!
+  helpText: String!
+  width: String!
+}
+
 type CustomFieldDefinition {
   id: ID!
   businessUnitId: ID!
@@ -20,9 +51,19 @@ type CustomFieldDefinition {
   isActive: Boolean!
   displayOrder: Int!
   color: String
+  """
+  Choices for select and multi-select fields; empty for every other type.
+  """
+  options: [CustomFieldSelectOption!]!
+  validationRules: CustomFieldValidationRules
+  """
+  Value pre-filled when a record is created; its shape follows fieldType.
+  """
+  defaultValue: Any
+  uiAttributes: CustomFieldUIAttributes
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type CustomFieldDefinitionEdge {

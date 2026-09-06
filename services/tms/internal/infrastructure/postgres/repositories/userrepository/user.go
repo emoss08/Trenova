@@ -174,16 +174,20 @@ func (ur *repository) ListConnection(
 
 	dba := ur.db.DBForContext(ctx)
 
-	countQuery := dba.NewSelect().Model((*tenant.User)(nil))
-	countQuery, err := ur.applyTotalCountFilters(countQuery, req)
-	if err != nil {
-		log.Error("failed to build user count query", zap.Error(err))
-		return nil, err
-	}
-	total, err := countQuery.Count(ctx)
-	if err != nil {
-		log.Error("failed to count users", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		countQuery := dba.NewSelect().Model((*tenant.User)(nil))
+		countQuery, err := ur.applyTotalCountFilters(countQuery, req)
+		if err != nil {
+			log.Error("failed to build user count query", zap.Error(err))
+			return nil, err
+		}
+		total, err := countQuery.Count(ctx)
+		if err != nil {
+			log.Error("failed to count users", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -191,7 +195,7 @@ func (ur *repository) ListConnection(
 		dbhelper.CursorListParams[*tenant.User]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*tenant.User) *bun.SelectQuery {
 				return dba.
 					NewSelect().

@@ -35,17 +35,20 @@ export function RequestedPTOOverview() {
         timezone: user?.timezone,
       },
     ],
-    queryFn: async ({ pageParam }) => {
-      return await fetchUpcomingWorkerPTO({
-        filter: { limit: 20, after: pageParam },
-        type: searchParams?.requestPTOFilters?.type as PTOType | undefined,
-        status: "Requested",
-        startDate: searchParams?.requestPTOFilters?.startDate,
-        endDate: searchParams?.requestPTOFilters?.endDate,
-        workerId: searchParams?.requestPTOFilters?.workerId,
-        fleetCodeId: searchParams?.requestPTOFilters?.fleetCodeId,
-        timezone: user?.timezone,
-      });
+    queryFn: async ({ pageParam, signal }) => {
+      return await fetchUpcomingWorkerPTO(
+        {
+          filter: { limit: 20, after: pageParam },
+          type: searchParams?.requestPTOFilters?.type as PTOType | undefined,
+          status: "Requested",
+          startDate: searchParams?.requestPTOFilters?.startDate,
+          endDate: searchParams?.requestPTOFilters?.endDate,
+          workerId: searchParams?.requestPTOFilters?.workerId,
+          fleetCodeId: searchParams?.requestPTOFilters?.fleetCodeId,
+          timezone: user?.timezone,
+        },
+        { signal },
+      );
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.next ?? undefined,

@@ -77,7 +77,8 @@ function useScopeIdLabels(idsByResource: string[][]): LaneScopeLabelResolver {
 
       return {
         queryKey: ["select-option-labels", resource, ids],
-        queryFn: () => fetchGraphQLSelectOptions({ resource, ids, initialLimit: ids.length }),
+        queryFn: ({ signal }) =>
+          fetchGraphQLSelectOptions({ resource, ids, initialLimit: ids.length }, { signal }),
         enabled: ids.length > 0,
         staleTime: LABELS_STALE_TIME,
       };

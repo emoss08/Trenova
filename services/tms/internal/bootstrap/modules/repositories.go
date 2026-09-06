@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptbatchrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptworkitemrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/benefitrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
@@ -117,8 +118,13 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orgholidayrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orgstructurerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/performancereviewrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/permitrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ptoledgerrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ptopolicyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateagreementrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateconfirmationrepository"
@@ -133,6 +139,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/routingguiderepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/schedulingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/selfservicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sequenceconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurerepository"
@@ -158,13 +166,23 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantprovisioningrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenderrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/timesheetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tractorrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/usstaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/weatheralertrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerchecklistrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workercredentialrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerdqfrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerdrugalcoholrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workeremploymenteventrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerinjuryrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerleaverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerptorepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workersafetyrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workertrainingrepository"
 	"github.com/emoss08/trenova/pkg/seqgen"
 )
 
@@ -200,6 +218,24 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	workerrepository.New,
 	weatheralertrepository.New,
 	workerptorepository.New,
+	workercredentialrepository.New,
+	workertrainingrepository.New,
+	workerdqfrepository.New,
+	workerdrugalcoholrepository.New,
+	workerinjuryrepository.New,
+	workerleaverepository.New,
+	orgstructurerepository.New,
+	benefitrepository.New,
+	schedulingrepository.New,
+	selfservicerepository.New,
+	timesheetrepository.New,
+	workersafetyrepository.New,
+	performancereviewrepository.New,
+	workerchecklistrepository.New,
+	orgholidayrepository.New,
+	workeremploymenteventrepository.New,
+	ptopolicyrepository.New,
+	ptoledgerrepository.New,
 	auditdlqrepository.New,
 	auditrepository.New,
 	dataentrycontrolrepository.New,

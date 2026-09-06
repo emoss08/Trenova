@@ -10,10 +10,12 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { distanceProfileTableGraphQLConfig } from "@/lib/graphql/distance-profile-table";
+import {
+  distanceProfileTableGraphQLConfig,
+  type DistanceProfileRow,
+} from "@/lib/graphql/distance-profile-table";
 import { DistanceProfileService } from "@/services/distance-profile";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import type { DistanceProfile } from "@/types/distance-profile";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, Loader2Icon, TrashIcon } from "lucide-react";
@@ -28,7 +30,7 @@ const columns = getColumns();
 export default function DistanceProfileTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const selectedProfileRef = useRef<DistanceProfile | null>(null);
+  const selectedProfileRef = useRef<DistanceProfileRow | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -60,18 +62,18 @@ export default function DistanceProfileTable() {
     },
   });
 
-  const handleDelete = (row: Row<DistanceProfile>) => {
+  const handleDelete = (row: Row<DistanceProfileRow>) => {
     selectedProfileRef.current = row.original;
     setDeleteDialogOpen(true);
   };
 
-  const handleSetDefault = (row: Row<DistanceProfile>) => {
+  const handleSetDefault = (row: Row<DistanceProfileRow>) => {
     if (row.original.id) {
       setDefaultMutation.mutate(row.original.id);
     }
   };
 
-  const contextMenuActions: RowAction<DistanceProfile>[] = [
+  const contextMenuActions: RowAction<DistanceProfileRow>[] = [
     {
       id: "set-default",
       label: "Set Default",
@@ -91,7 +93,7 @@ export default function DistanceProfileTable() {
 
   return (
     <>
-      <DataTable<DistanceProfile>
+      <DataTable<DistanceProfileRow>
         name="Distance Profile"
         queryKey="distance-profile-list"
         graphql={distanceProfileTableGraphQLConfig}

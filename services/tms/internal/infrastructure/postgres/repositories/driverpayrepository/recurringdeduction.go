@@ -72,21 +72,25 @@ func (r *recurringDeductionRepository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*driverpay.RecurringDeduction)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"rded",
-				req.Filter,
-				(*driverpay.RecurringDeduction)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count recurring deductions", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*driverpay.RecurringDeduction)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"rded",
+					req.Filter,
+					(*driverpay.RecurringDeduction)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count recurring deductions", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -94,7 +98,7 @@ func (r *recurringDeductionRepository) ListConnection(
 		dbhelper.CursorListParams[*driverpay.RecurringDeduction]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*driverpay.RecurringDeduction) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).
@@ -155,6 +159,10 @@ func (r *recurringDeductionRepository) ListActiveForWorker(
 		Where("rded.status = ?", driverpay.DeductionStatusActive).
 		Where("rded.start_date <= ?", req.AsOf).
 		Where("rded.end_date IS NULL OR rded.end_date > ?", req.AsOf).
+		// Priority first: when pay will not cover every deduction, a court
+		// order has to be taken before a voluntary one. Creation order is the
+		// tie-break, which is what this used to sort by alone.
+		Order("rded.priority ASC").
 		Order("rded.created_at ASC").
 		Scan(ctx)
 	if err != nil {

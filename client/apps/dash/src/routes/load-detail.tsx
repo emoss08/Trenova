@@ -62,9 +62,9 @@ function DetailStat({ label, value }: { label: string; value: string | null }) {
 function PayEstimateCard({ shipmentId, moveId }: { shipmentId: string; moveId: string }) {
   const estimate = useQuery({
     queryKey: ["dash-pay-estimate", shipmentId, moveId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       try {
-        return await fetchMyLoadPayEstimate(shipmentId, moveId);
+        return await fetchMyLoadPayEstimate(shipmentId, moveId, { signal });
       } catch {
         return null;
       }

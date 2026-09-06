@@ -1,12 +1,18 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { fleetCodeSchema, type FleetCode } from "@trenova/shared/types/fleet-code";
+import type { FleetCodeRow } from "@/lib/graphql/fleet-code-table";
+import { fleetCodeSchema } from "@trenova/shared/types/fleet-code";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-form";
 
-export function FleetCodePanel({ open, onOpenChange, mode, row }: DataTablePanelProps<FleetCode>) {
+export function FleetCodePanel({
+  open,
+  onOpenChange,
+  mode,
+  row,
+}: DataTablePanelProps<FleetCodeRow>) {
   const form = useForm({
     resolver: zodResolver(fleetCodeSchema),
     defaultValues: {

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -27,25 +28,32 @@ type WorkerPTO struct {
 	bun.BaseModel             `bun:"table:worker_pto,alias:wpto" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                      json:"-"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	WorkerID       pulid.ID  `json:"workerId"       bun:"worker_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	ApproverID     pulid.ID  `json:"approverId"     bun:"approver_id,type:VARCHAR(100),nullzero"`
-	RejectorID     pulid.ID  `json:"rejectorId"     bun:"rejector_id,type:VARCHAR(100),nullzero"`
-	Status         PTOStatus `json:"status"         bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
-	Type           PTOType   `json:"type"           bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
-	StartDate      int64     `json:"startDate"      bun:"start_date,type:BIGINT,notnull"`
-	EndDate        int64     `json:"endDate"        bun:"end_date,type:BIGINT,notnull"`
-	Reason         string    `json:"reason"         bun:"reason,type:VARCHAR(255),notnull"`
-	SearchVector   string    `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Version        int64     `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID            `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
+	WorkerID           pulid.ID            `json:"workerId"           bun:"worker_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	ApproverID         pulid.ID            `json:"approverId"         bun:"approver_id,type:VARCHAR(100),nullzero"`
+	RejectorID         pulid.ID            `json:"rejectorId"         bun:"rejector_id,type:VARCHAR(100),nullzero"`
+	CancelledByID      pulid.ID            `json:"cancelledById"      bun:"cancelled_by_id,type:VARCHAR(100),nullzero"`
+	Status             PTOStatus           `json:"status"             bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
+	Type               PTOType             `json:"type"               bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
+	StartDate          int64               `json:"startDate"          bun:"start_date,type:BIGINT,notnull"`
+	EndDate            int64               `json:"endDate"            bun:"end_date,type:BIGINT,notnull"`
+	Reason             string              `json:"reason"             bun:"reason,type:VARCHAR(255),notnull"`
+	RejectionReason    string              `json:"rejectionReason"    bun:"rejection_reason,type:VARCHAR(255),nullzero"`
+	CancellationReason string              `json:"cancellationReason" bun:"cancellation_reason,type:VARCHAR(255),nullzero"`
+	Days               decimal.Decimal     `json:"days"               bun:"days,type:NUMERIC(6,2),notnull,default:0"`
+	BalanceAfterDays   decimal.NullDecimal `json:"balanceAfterDays"   bun:"balance_after_days,type:NUMERIC(8,2),nullzero"`
+	AutoApproved       bool                `json:"autoApproved"       bun:"auto_approved,type:BOOLEAN,notnull"`
+	SearchVector       string              `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
+	Version            int64               `json:"version"            bun:"version,type:BIGINT"`
+	CreatedAt          int64               `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt          int64               `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	Worker   *Worker      `json:"worker,omitempty"   bun:"rel:belongs-to,join:worker_id=id"`
-	Approver *tenant.User `json:"approver,omitempty" bun:"rel:belongs-to,join:approver_id=id"`
-	Rejector *tenant.User `json:"rejector,omitempty" bun:"rel:belongs-to,join:rejector_id=id"`
+	Worker      *Worker      `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id"`
+	Approver    *tenant.User `json:"approver,omitempty"    bun:"rel:belongs-to,join:approver_id=id"`
+	Rejector    *tenant.User `json:"rejector,omitempty"    bun:"rel:belongs-to,join:rejector_id=id"`
+	CancelledBy *tenant.User `json:"cancelledBy,omitempty" bun:"rel:belongs-to,join:cancelled_by_id=id"`
 }
 
 func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
@@ -94,6 +102,10 @@ func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
 	if wpto.EndDate <= wpto.StartDate {
 		multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")
 	}
+}
+
+func (wpto *WorkerPTO) IsOpen() bool {
+	return wpto.Status == PTOStatusRequested || wpto.Status == PTOStatusApproved
 }
 
 func (wpto *WorkerPTO) GetTableName() string {

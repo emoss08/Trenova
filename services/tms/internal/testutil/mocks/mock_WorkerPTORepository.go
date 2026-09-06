@@ -176,6 +176,140 @@ func (_c *MockWorkerPTORepository_GetByID_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockWorkerPTORepository
+func (_mock *MockWorkerPTORepository) GetByIDs(ctx context.Context, req *repositories.GetPTOsByIDsRequest) ([]*worker.WorkerPTO, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*worker.WorkerPTO
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetPTOsByIDsRequest) ([]*worker.WorkerPTO, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetPTOsByIDsRequest) []*worker.WorkerPTO); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*worker.WorkerPTO)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetPTOsByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWorkerPTORepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockWorkerPTORepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetPTOsByIDsRequest
+func (_e *MockWorkerPTORepository_Expecter) GetByIDs(ctx any, req any) *MockWorkerPTORepository_GetByIDs_Call {
+	return &MockWorkerPTORepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockWorkerPTORepository_GetByIDs_Call) Run(run func(ctx context.Context, req *repositories.GetPTOsByIDsRequest)) *MockWorkerPTORepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetPTOsByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetPTOsByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_GetByIDs_Call) Return(workerPTOs []*worker.WorkerPTO, err error) *MockWorkerPTORepository_GetByIDs_Call {
+	_c.Call.Return(workerPTOs, err)
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetPTOsByIDsRequest) ([]*worker.WorkerPTO, error)) *MockWorkerPTORepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HasOverlap provides a mock function for the type MockWorkerPTORepository
+func (_mock *MockWorkerPTORepository) HasOverlap(ctx context.Context, req *repositories.PTOOverlapRequest) (bool, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasOverlap")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.PTOOverlapRequest) (bool, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.PTOOverlapRequest) bool); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.PTOOverlapRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWorkerPTORepository_HasOverlap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasOverlap'
+type MockWorkerPTORepository_HasOverlap_Call struct {
+	*mock.Call
+}
+
+// HasOverlap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.PTOOverlapRequest
+func (_e *MockWorkerPTORepository_Expecter) HasOverlap(ctx any, req any) *MockWorkerPTORepository_HasOverlap_Call {
+	return &MockWorkerPTORepository_HasOverlap_Call{Call: _e.mock.On("HasOverlap", ctx, req)}
+}
+
+func (_c *MockWorkerPTORepository_HasOverlap_Call) Run(run func(ctx context.Context, req *repositories.PTOOverlapRequest)) *MockWorkerPTORepository_HasOverlap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.PTOOverlapRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.PTOOverlapRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_HasOverlap_Call) Return(b bool, err error) *MockWorkerPTORepository_HasOverlap_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_HasOverlap_Call) RunAndReturn(run func(ctx context.Context, req *repositories.PTOOverlapRequest) (bool, error)) *MockWorkerPTORepository_HasOverlap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetChartData provides a mock function for the type MockWorkerPTORepository
 func (_mock *MockWorkerPTORepository) GetChartData(ctx context.Context, req *repositories.PTOChartRequest) ([]*repositories.PTOChartDataPoint, error) {
 	ret := _mock.Called(ctx, req)
@@ -376,6 +510,131 @@ func (_c *MockWorkerPTORepository_ListUpcoming_Call) Return(cursorListResult *pa
 }
 
 func (_c *MockWorkerPTORepository_ListUpcoming_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUpcomingPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error)) *MockWorkerPTORepository_ListUpcoming_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetBalanceAfter provides a mock function for the type MockWorkerPTORepository
+func (_mock *MockWorkerPTORepository) SetBalanceAfter(ctx context.Context, req *repositories.SetPTOBalanceAfterRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetBalanceAfter")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SetPTOBalanceAfterRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkerPTORepository_SetBalanceAfter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetBalanceAfter'
+type MockWorkerPTORepository_SetBalanceAfter_Call struct {
+	*mock.Call
+}
+
+// SetBalanceAfter is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SetPTOBalanceAfterRequest
+func (_e *MockWorkerPTORepository_Expecter) SetBalanceAfter(ctx any, req any) *MockWorkerPTORepository_SetBalanceAfter_Call {
+	return &MockWorkerPTORepository_SetBalanceAfter_Call{Call: _e.mock.On("SetBalanceAfter", ctx, req)}
+}
+
+func (_c *MockWorkerPTORepository_SetBalanceAfter_Call) Run(run func(ctx context.Context, req *repositories.SetPTOBalanceAfterRequest)) *MockWorkerPTORepository_SetBalanceAfter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SetPTOBalanceAfterRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SetPTOBalanceAfterRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_SetBalanceAfter_Call) Return(err error) *MockWorkerPTORepository_SetBalanceAfter_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_SetBalanceAfter_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SetPTOBalanceAfterRequest) error) *MockWorkerPTORepository_SetBalanceAfter_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Update provides a mock function for the type MockWorkerPTORepository
+func (_mock *MockWorkerPTORepository) Update(ctx context.Context, entity *worker.WorkerPTO) (*worker.WorkerPTO, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *worker.WorkerPTO
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *worker.WorkerPTO) (*worker.WorkerPTO, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *worker.WorkerPTO) *worker.WorkerPTO); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*worker.WorkerPTO)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *worker.WorkerPTO) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWorkerPTORepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type MockWorkerPTORepository_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *worker.WorkerPTO
+func (_e *MockWorkerPTORepository_Expecter) Update(ctx any, entity any) *MockWorkerPTORepository_Update_Call {
+	return &MockWorkerPTORepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
+}
+
+func (_c *MockWorkerPTORepository_Update_Call) Run(run func(ctx context.Context, entity *worker.WorkerPTO)) *MockWorkerPTORepository_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *worker.WorkerPTO
+		if args[1] != nil {
+			arg1 = args[1].(*worker.WorkerPTO)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_Update_Call) Return(workerPTO *worker.WorkerPTO, err error) *MockWorkerPTORepository_Update_Call {
+	_c.Call.Return(workerPTO, err)
+	return _c
+}
+
+func (_c *MockWorkerPTORepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *worker.WorkerPTO) (*worker.WorkerPTO, error)) *MockWorkerPTORepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

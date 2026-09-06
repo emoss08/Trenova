@@ -1,3 +1,4 @@
+import { preloadCommandPalette } from "@/components/command-palette/command-palette-mount";
 import { ActivitySection } from "@/components/navigation/activity-section";
 import { AttentionSection } from "@/components/navigation/attention-section";
 import { BrowseSection } from "@/components/navigation/browse-section";
@@ -31,6 +32,8 @@ function SearchTrigger() {
     <button
       type="button"
       onClick={() => setOpen(true)}
+      onPointerEnter={() => void preloadCommandPalette()}
+      onFocus={() => void preloadCommandPalette()}
       className="border-border bg-background text-muted-foreground hover:border-ring/40 hover:text-foreground flex h-7 w-full items-center gap-2 rounded-md border px-2 text-xs transition-colors"
     >
       <Search className="size-3.5 shrink-0" strokeWidth={1.75} />

@@ -48,44 +48,54 @@ export type DispatchPlan = DispatchPlanAutoAssignMutation["dispatchPlanAutoAssig
 export type DispatchPlannedAssignment = DispatchPlan["assignments"][number];
 export type DispatchUncoveredMove = DispatchPlan["uncovered"][number];
 
-export async function getDispatchBoardGraphQL(input: DispatchBoardInput): Promise<DispatchBoard> {
+export async function getDispatchBoardGraphQL(
+  input: DispatchBoardInput,
+  options?: { signal?: AbortSignal },
+): Promise<DispatchBoard> {
   const data = await requestGraphQL({
     document: DispatchBoardDocument,
     operationName: "DispatchBoard",
     variables: { input },
+    signal: options?.signal,
   });
   return data.dispatchBoard;
 }
 
 export async function getDispatchMoveCandidatesGraphQL(
   input: DispatchMoveCandidatesInput,
+  options?: { signal?: AbortSignal },
 ): Promise<DispatchCandidate[]> {
   const data = await requestGraphQL({
     document: DispatchMoveCandidatesDocument,
     operationName: "DispatchMoveCandidates",
     variables: { input },
+    signal: options?.signal,
   });
   return data.dispatchMoveCandidates;
 }
 
 export async function getDispatchDriverMovesGraphQL(
   input: DispatchDriverMovesInput,
+  options?: { signal?: AbortSignal },
 ): Promise<DispatchDriverMoveMatch[]> {
   const data = await requestGraphQL({
     document: DispatchDriverMovesDocument,
     operationName: "DispatchDriverMoves",
     variables: { input },
+    signal: options?.signal,
   });
   return data.dispatchDriverMoves;
 }
 
 export async function getDispatchAssignmentPreviewGraphQL(
   input: DispatchAssignmentPreviewInput,
+  options?: { signal?: AbortSignal },
 ): Promise<DispatchAssignmentPreview> {
   const data = await requestGraphQL({
     document: DispatchAssignmentPreviewDocument,
     operationName: "DispatchAssignmentPreview",
     variables: { input },
+    signal: options?.signal,
   });
   return data.dispatchAssignmentPreview;
 }
@@ -114,11 +124,13 @@ export async function unassignDispatchMovesGraphQL(
 
 export async function getDispatchCarrierAssignmentPreviewGraphQL(
   input: DispatchCarrierAssignmentPreviewInput,
+  options?: { signal?: AbortSignal },
 ): Promise<DispatchCarrierEligibility> {
   const data = await requestGraphQL({
     document: DispatchCarrierAssignmentPreviewDocument,
     operationName: "DispatchCarrierAssignmentPreview",
     variables: { input },
+    signal: options?.signal,
   });
   return data.dispatchCarrierAssignmentPreview;
 }

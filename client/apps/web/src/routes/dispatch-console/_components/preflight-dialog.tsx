@@ -1,6 +1,7 @@
 import type { DispatchAssignmentPreview } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import type { PreflightTarget } from "@/stores/dispatch-console-store";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -17,7 +18,6 @@ import {
   formatUnixTime,
 } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import {
   CircleCheckIcon,
   CircleHelpIcon,
@@ -176,7 +176,7 @@ export function PreflightDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="max-w-lg gap-0 p-0">
+      <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
         <DialogHeader className="border-border gap-3 border-b px-5 pt-5 pb-4">
           <div className="flex items-center gap-3">
             <span
@@ -321,13 +321,11 @@ export function PreflightDialog({
             </div>
           </ScrollArea>
         )}
-
-        <DialogFooter className="border-border border-t px-5 py-3.5">
-          <Button variant="outline" size="sm" onClick={onCancel}>
+        <DialogFooter className="pb-7 px-8">
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button
-            size="sm"
             variant={data?.requiresOverride ? "destructive" : "default"}
             disabled={!canAssign || isAssigning || Boolean(data?.requiresOverride)}
             isLoading={isAssigning}

@@ -32,3 +32,10 @@ func Int64Value(value *int) int64 {
 	}
 	return int64(*value)
 }
+
+func mapValue[K comparable, V any](value map[K]V) map[K]V {
+	if value == nil {
+		return map[K]V{}
+	}
+	return value
+}

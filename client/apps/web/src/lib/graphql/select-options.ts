@@ -90,14 +90,10 @@ export function selectOptionFiltersFromSearchParams(
   return Object.keys(filters).length > 0 ? filters : undefined;
 }
 
-export async function fetchGraphQLSelectOptions({
-  resource,
-  query,
-  page = 1,
-  initialLimit = 20,
-  filters,
-  ids,
-}: FetchGraphQLSelectOptionsParams): Promise<GenericLimitOffsetResponse<SelectOption>> {
+export async function fetchGraphQLSelectOptions(
+  { resource, query, page = 1, initialLimit = 20, filters, ids }: FetchGraphQLSelectOptionsParams,
+  options?: { signal?: AbortSignal },
+): Promise<GenericLimitOffsetResponse<SelectOption>> {
   const limit = initialLimit;
   const offset = ids?.length ? 0 : (page - 1) * limit;
   const input: SelectOptionsInput = {
@@ -120,6 +116,7 @@ export async function fetchGraphQLSelectOptions({
     document: SelectOptionsDocument,
     operationName: "SelectOptions",
     variables: { input },
+    signal: options?.signal,
   });
 
   return normalizeSelectOptionConnection(data, offset, limit);
@@ -129,13 +126,17 @@ export async function fetchGraphQLSelectedOption(
   resource: SelectOptionResource,
   id: string,
   filters?: Record<string, unknown>,
+  options?: { signal?: AbortSignal },
 ): Promise<SelectOption | null> {
-  const response = await fetchGraphQLSelectOptions({
-    resource,
-    ids: [id],
-    initialLimit: 1,
-    filters,
-  });
+  const response = await fetchGraphQLSelectOptions(
+    {
+      resource,
+      ids: [id],
+      initialLimit: 1,
+      filters,
+    },
+    { signal: options?.signal },
+  );
 
   return response.results[0] ?? null;
 }

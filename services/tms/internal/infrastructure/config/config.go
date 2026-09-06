@@ -26,10 +26,36 @@ type ServerConfig struct {
 }
 
 type MonitoringConfig struct {
-	Metrics MetricsConfig `mapstructure:"metrics,omitempty"`
-	Tracing TracingConfig `mapstructure:"tracing,omitempty"`
-	Health  HealthConfig  `mapstructure:"health"`
-	Pprof   PprofConfig   `mapstructure:"pprof"`
+	Metrics MetricsConfig       `mapstructure:"metrics,omitempty"`
+	Tracing TracingConfig       `mapstructure:"tracing,omitempty"`
+	Health  HealthConfig        `mapstructure:"health"`
+	Pprof   PprofConfig         `mapstructure:"pprof"`
+	GraphQL GraphQLObservConfig `mapstructure:"graphql,omitempty"`
+}
+
+const (
+	defaultGraphQLSlowOperationAfter   = time.Second
+	defaultGraphQLMaxTrackedOperations = 2000
+)
+
+type GraphQLObservConfig struct {
+	ResolverMetrics      bool          `mapstructure:"resolverMetrics"`
+	SlowOperationAfter   time.Duration `mapstructure:"slowOperationAfter"`
+	MaxTrackedOperations int           `mapstructure:"maxTrackedOperations" validate:"omitempty,min=1"`
+}
+
+func (c *GraphQLObservConfig) GetSlowOperationAfter() time.Duration {
+	if c.SlowOperationAfter <= 0 {
+		return defaultGraphQLSlowOperationAfter
+	}
+	return c.SlowOperationAfter
+}
+
+func (c *GraphQLObservConfig) GetMaxTrackedOperations() int {
+	if c.MaxTrackedOperations <= 0 {
+		return defaultGraphQLMaxTrackedOperations
+	}
+	return c.MaxTrackedOperations
 }
 
 type TwilioConfig struct {
@@ -111,11 +137,60 @@ type LogFileConfig struct {
 }
 
 type SecurityConfig struct {
-	Session    SessionConfig    `mapstructure:"session"    validate:"required"`
-	APIToken   APITokenConfig   `mapstructure:"apiToken"`
-	RateLimit  RateLimitConfig  `mapstructure:"rateLimit"`
-	CSRF       CSRFConfig       `mapstructure:"csrf"`
-	Encryption EncryptionConfig `mapstructure:"encryption"`
+	Session    SessionConfig         `mapstructure:"session"    validate:"required"`
+	APIToken   APITokenConfig        `mapstructure:"apiToken"`
+	RateLimit  RateLimitConfig       `mapstructure:"rateLimit"`
+	CSRF       CSRFConfig            `mapstructure:"csrf"`
+	Encryption EncryptionConfig      `mapstructure:"encryption"`
+	GraphQL    GraphQLSecurityConfig `mapstructure:"graphql"`
+}
+
+const (
+	defaultGraphQLMaxRequestBodyBytes       int64 = 1 << 20
+	defaultGraphQLCostBudgetPointsPerMin          = 6_000_000
+	defaultGraphQLCostBudgetBurst                 = 3_000_000
+	defaultGraphQLCostBudgetCleanupInterval       = 5 * time.Minute
+)
+
+type GraphQLSecurityConfig struct {
+	MaxRequestBodyBytes    int64                   `mapstructure:"maxRequestBodyBytes"    validate:"omitempty,min=1024"`
+	PersistedDocumentsPath string                  `mapstructure:"persistedDocumentsPath"`
+	CostBudget             GraphQLCostBudgetConfig `mapstructure:"costBudget"`
+}
+
+func (c *GraphQLSecurityConfig) GetMaxRequestBodyBytes() int64 {
+	if c.MaxRequestBodyBytes <= 0 {
+		return defaultGraphQLMaxRequestBodyBytes
+	}
+	return c.MaxRequestBodyBytes
+}
+
+type GraphQLCostBudgetConfig struct {
+	Enabled         bool          `mapstructure:"enabled"`
+	PointsPerMinute int           `mapstructure:"pointsPerMinute" validate:"omitempty,min=1"`
+	Burst           int           `mapstructure:"burst"           validate:"omitempty,min=1"`
+	CleanupInterval time.Duration `mapstructure:"cleanupInterval"`
+}
+
+func (c *GraphQLCostBudgetConfig) GetPointsPerMinute() int {
+	if c.PointsPerMinute <= 0 {
+		return defaultGraphQLCostBudgetPointsPerMin
+	}
+	return c.PointsPerMinute
+}
+
+func (c *GraphQLCostBudgetConfig) GetBurst() int {
+	if c.Burst <= 0 {
+		return defaultGraphQLCostBudgetBurst
+	}
+	return c.Burst
+}
+
+func (c *GraphQLCostBudgetConfig) GetCleanupInterval() time.Duration {
+	if c.CleanupInterval <= 0 {
+		return defaultGraphQLCostBudgetCleanupInterval
+	}
+	return c.CleanupInterval
 }
 
 const (
@@ -1264,6 +1339,8 @@ func (c *Config) GetDocumentIntelligenceConfig() *DocumentIntelligenceConfig {
 func (c *Config) GetTemporalConfig() *TemporalConfig { return &c.Temporal }
 
 func (c *Config) GetMetricsConfig() *MetricsConfig { return &c.Monitoring.Metrics }
+
+func (c *Config) GetGraphQLObservConfig() *GraphQLObservConfig { return &c.Monitoring.GraphQL }
 
 func (c *Config) GetStorageConfig() *StorageConfig { return &c.Storage }
 

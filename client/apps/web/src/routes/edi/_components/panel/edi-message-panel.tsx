@@ -7,11 +7,12 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import type { EDIMessageRow } from "@/lib/graphql/edi-table";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type { EDIMessage, EDIMessageDeliveryStatus } from "@trenova/shared/types/edi";
+import type { EDIMessageDeliveryStatus } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ export const RETRYABLE_DELIVERY_STATUSES = new Set<EDIMessageDeliveryStatus>([
   "DeadLettered",
 ]);
 
-export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<EDIMessage>) {
+export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<EDIMessageRow>) {
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -64,7 +65,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
     canUpdate &&
     detail.direction === "Outbound" &&
     detail.deliveryStatus === "Sent" &&
-    !detail.rawPurgedAt;
+    !message?.rawPurgedAt;
 
   return (
     <DataTablePanelContainer
@@ -162,9 +163,9 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
             </DetailField>
           )}
         </DetailSection>
-        {detail.rawX12 && (
+        {message?.rawX12 && (
           <DetailSection title="Raw X12" fullWidth>
-            <EDIRawContent content={detail.rawX12} />
+            <EDIRawContent content={message.rawX12} />
           </DetailSection>
         )}
       </div>

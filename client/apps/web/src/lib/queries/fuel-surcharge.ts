@@ -12,26 +12,26 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const fuelSurcharge = createQueryKeys("fuelSurcharge", {
   dashboard: () => ({
     queryKey: ["dashboard"],
-    queryFn: fetchFuelDashboard,
+    queryFn: ({ signal }) => fetchFuelDashboard({ signal }),
   }),
   priceHistory: (indexId: string, limit?: number) => ({
     queryKey: ["priceHistory", indexId, limit ?? 0],
-    queryFn: async () => fetchFuelPriceHistory(indexId, { limit }),
+    queryFn: async ({ signal }) => fetchFuelPriceHistory(indexId, { limit }, { signal }),
   }),
   currentRates: () => ({
     queryKey: ["currentRates"],
-    queryFn: fetchFuelProgramCurrentRates,
+    queryFn: ({ signal }) => fetchFuelProgramCurrentRates({ signal }),
   }),
   programDetail: (id: string) => ({
     queryKey: ["programDetail", id],
-    queryFn: async () => fetchFuelSurchargeProgramDetail(id),
+    queryFn: async ({ signal }) => fetchFuelSurchargeProgramDetail(id, { signal }),
   }),
   eiaSeriesOptions: () => ({
     queryKey: ["eiaSeriesOptions"],
-    queryFn: fetchEIASeriesOptions,
+    queryFn: ({ signal }) => fetchEIASeriesOptions({ signal }),
   }),
   generateTable: (input: GenerateFuelTableInput) => ({
     queryKey: ["generateTable", input],
-    queryFn: async () => generateFuelSurchargeTable(input),
+    queryFn: async ({ signal }) => generateFuelSurchargeTable(input, { signal }),
   }),
 });

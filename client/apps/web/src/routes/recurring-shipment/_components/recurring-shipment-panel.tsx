@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { RecurringShipmentRow } from "@/lib/graphql/recurring-shipment-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { recurringShipmentSchema, type RecurringShipment } from "@/types/recurring-shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +29,7 @@ export function RecurringShipmentPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<RecurringShipment>) {
+}: DataTablePanelProps<RecurringShipmentRow>) {
   const form = useForm<RecurringShipment>({
     resolver: zodResolver(recurringShipmentSchema) as Resolver<RecurringShipment>,
     defaultValues: defaultValues as DefaultValues<RecurringShipment>,

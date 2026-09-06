@@ -63,6 +63,20 @@ describe("organization GraphQL helpers", () => {
     expect(response).toEqual(organization);
   });
 
+  it("forwards the abort signal to the GraphQL transport", async () => {
+    requestGraphQLMock.mockResolvedValueOnce({ organization });
+    const controller = new AbortController();
+
+    await getOrganizationSettingsGraphQL("org_1", { signal: controller.signal });
+
+    expect(requestGraphQLMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        document: OrganizationSettingsDocument,
+        signal: controller.signal,
+      }),
+    );
+  });
+
   it("maps organization settings updates to GraphQL input", async () => {
     requestGraphQLMock.mockResolvedValueOnce({ updateOrganization: organization });
 

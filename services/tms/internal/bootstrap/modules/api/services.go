@@ -5,6 +5,7 @@ import (
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptbatchservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
@@ -101,10 +103,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
+	"github.com/emoss08/trenova/internal/core/services/orgholidayservice"
+	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
+	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
+	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/core/services/rateimportservice"
@@ -119,6 +126,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
+	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
@@ -140,6 +149,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
@@ -148,8 +158,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
 	"github.com/emoss08/trenova/internal/core/services/weatheralertservice"
 	"github.com/emoss08/trenova/internal/core/services/webpushservice"
+	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/core/services/workerdqfservice"
+	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
+	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	"github.com/emoss08/trenova/internal/core/services/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
+	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -421,7 +441,50 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.ResultTags(services.ContextBuilderGroup),
 	),
 	func(s *documenttemplateservice.Service) services.DocumentTemplateResolver { return s },
-	workerptoservice.New,
+	ptoledgerservice.New,
+	ptopolicyservice.New,
+	workercredentialservice.New,
+	workertrainingservice.New,
+	workerdqfservice.New,
+	workerdrugalcoholservice.New,
+	workerinjuryservice.New,
+	workerleaveservice.New,
+	orgstructureservice.New,
+	benefitsservice.New,
+	schedulingservice.New,
+	selfserviceservice.New,
+	selfserviceservice.NewDocumentChecksums,
+	func(ws *workerservice.Service) selfserviceservice.WorkerUpdater { return ws },
+	timesheetservice.New,
+	workersafetyservice.New,
+	performancereviewservice.New,
+	func(s *workertrainingservice.Service) services.TrainingAssigner { return s },
+	workerchecklistservice.New,
+	workeroverviewservice.New,
+	// The overview composes the roll-ups each HR area already builds, so it
+	// takes them as narrow read-only ports rather than the concrete services.
+	func(s *workercredentialservice.Service) workeroverviewservice.CredentialSummarizer { return s },
+	func(s *workertrainingservice.Service) workeroverviewservice.TrainingSummarizer { return s },
+	func(s *workersafetyservice.Service) workeroverviewservice.SafetyScorer { return s },
+	func(s *workercredentialservice.Service) workerdqfservice.CredentialSummarizer { return s },
+	func(s *documentservice.Service) workerdqfservice.PacketSummarizer { return s },
+	func(s *workerdrugalcoholservice.Service) workerdqfservice.DrugAlcoholStander { return s },
+	func(s *workerchecklistservice.Service) workeroverviewservice.ChecklistLister { return s },
+	func(s *ptoledgerservice.Service) workeroverviewservice.BalanceReader { return s },
+	func(r repositories.PerformanceReviewRepository) workeroverviewservice.ReviewCounter {
+		return r
+	},
+	func(s *performancereviewservice.Service) workeroverviewservice.ReviewLister { return s },
+	func(s *workerleaveservice.Service) workeroverviewservice.LeaveCounter { return s },
+	func(s *workerleaveservice.Service) driverportalservice.LeaveReader { return s },
+	orgholidayservice.New,
+	func(s *workerchecklistservice.Service) services.ChecklistSpawner { return s },
+	workeremploymentservice.New,
+	func(s *workeremploymentservice.Service) services.EmploymentEventRecorder { return s },
+	fx.Annotate(
+		workerptoservice.New,
+		fx.As(new(services.WorkerPTOService)),
+	),
 	distancecalculationservice.New,
 	distancecontrolservice.New,
 	distanceoverrideservice.New,
@@ -451,6 +514,18 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	},
 	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
 		s.SetCarrierMoveAssigner(assigner)
+	},
+	// Injecting the recorder through FX would close the constructor cycle
+	// workerservice -> EmploymentEventRecorder -> workeremploymentservice ->
+	// workerservice, so it arrives after both services are built.
+	func(s *workerservice.Service, recorder services.EmploymentEventRecorder) {
+		s.SetEmploymentRecorder(recorder)
+	},
+	// The portal service reaches back into the employment service through the
+	// safety service to record a termination, so injecting the revoker through
+	// FX would close that cycle; it arrives after both are built.
+	func(s *workeremploymentservice.Service, portal *driverportalservice.Service) {
+		s.SetPortalRevoker(portal)
 	},
 	// Providing services.EDITenderChannel would close the constructor cycle
 	// ediservice -> ShipmentService -> TenderGuard -> tenderservice ->

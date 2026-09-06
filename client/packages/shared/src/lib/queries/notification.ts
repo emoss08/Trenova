@@ -8,10 +8,10 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const notification = createQueryKeys("notification", {
   feed: (params?: NotificationFeedParams) => ({
     queryKey: [params],
-    queryFn: async () => notificationService.listNotifications(params),
+    queryFn: async ({ signal }) => notificationService.listNotifications(params, { signal }),
   }),
   unreadCount: (scope: NotificationScope = "all") => ({
     queryKey: ["unread-count", scope],
-    queryFn: async () => notificationService.getUnreadCount(scope),
+    queryFn: async ({ signal }) => notificationService.getUnreadCount(scope, { signal }),
   }),
 });

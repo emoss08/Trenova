@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { DocumentPacketRuleRow } from "@/lib/graphql/document-packet-rule-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { documentPacketRuleSchema, type DocumentPacketRule } from "@/types/document-packet-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +12,7 @@ export function DocumentPacketRulePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<DocumentPacketRule>) {
+}: DataTablePanelProps<DocumentPacketRuleRow>) {
   const form = useForm<DocumentPacketRule>({
     resolver: zodResolver(documentPacketRuleSchema),
     defaultValues: {

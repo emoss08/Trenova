@@ -101,7 +101,7 @@ export function SettlementDetail({
   const queryClient = useQueryClient();
   const { data: settlement, isLoading } = useQuery({
     queryKey: ["driver-settlement-detail", settlementId],
-    queryFn: () => fetchDriverSettlementDetail(settlementId),
+    queryFn: ({ signal }) => fetchDriverSettlementDetail(settlementId, { signal }),
   });
 
   const invalidate = () => {

@@ -10,13 +10,27 @@ import (
 
 var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewFactory,
-	loaders.NewTrailerByIDLoaderFactory,
 	loaders.NewOrganizationByIDLoaderFactory,
 	loaders.NewLocationByIDLoaderFactory,
 	loaders.NewOrderByIDLoaderFactory,
 	loaders.NewShipmentProfitabilityLoaderFactory,
 	loaders.NewEDIPartnerByCustomerIDLoaderFactory,
 	loaders.NewFormulaTemplateStatsLoaderFactory,
+	loaders.NewPayProfileActiveAssignmentCountLoaderFactory,
+	loaders.NewPTOPolicyOpenAssignmentCountLoaderFactory,
+	loaders.NewShiftTemplateActiveAssignmentCountLoaderFactory,
+	loaders.NewWorkerChecklistTemplateOpenChecklistCountLoaderFactory,
+	loaders.NewWorkerCredentialTypeActiveCredentialCountLoaderFactory,
+	loaders.NewTrainingCourseOpenRecordCountLoaderFactory,
+	loaders.NewPerformanceReviewTemplateOpenReviewCountLoaderFactory,
+	loaders.NewCustomerByIDLoaderFactory,
+	loaders.NewInvoiceByIDLoaderFactory,
+	loaders.NewGLAccountByIDLoaderFactory,
+	loaders.NewRoutingGuideWithEntriesByIDLoaderFactory,
+	loaders.NewWorkerDQFVerificationsByWorkerIDLoaderFactory,
+	loaders.NewWorkerLeaveEntriesByCaseIDLoaderFactory,
+	loaders.NewFiscalPeriodsByFiscalYearIDLoaderFactory,
+	loaders.NewDocumentTemplateKindByTemplateIDLoaderFactory,
 ))
 
 var graphQLResolverModule = fx.Module("api-graphql-resolvers", fx.Provide(
@@ -25,6 +39,8 @@ var graphQLResolverModule = fx.Module("api-graphql-resolvers", fx.Provide(
 
 var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
 	graphqlapi.NewPersistedOperationManifest,
+	graphqlapi.NewObservabilityExtension,
+	graphqlapi.NewCostBudgetExtension,
 	graphqlapi.NewServer,
 ))
 

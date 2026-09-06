@@ -2,8 +2,11 @@ schema:
   - internal/api/graphql/schema/*.graphqls
 
 exec:
-  filename: internal/api/graphql/generated/generated.go
+  layout: follow-schema
+  dir: internal/api/graphql/generated
   package: generated
+  filename_template: "{name}.generated.go"
+  worker_limit: 32
 
 model:
   filename: internal/api/graphql/gqlmodel/models_gen.go
@@ -14,8 +17,28 @@ resolver:
   dir: internal/api/graphql/resolver
   package: resolver
   filename_template: "{name}.resolvers.go"
+  omit_template_comment: true
 
 autobind: []
+
+go_initialisms:
+  replace_defaults: false
+  initialisms:
+    - BCC
+    - BOL
+    - DOT
+    - EDI
+    - ELD
+    - MVR
+    - NPI
+    - PTO
+    - SCAC
+    - TTL
+    - TWIC
+
+omit_gqlgen_version_in_file_notice: true
+skip_mod_tidy: true
+use_buffer_pooling: true
 
 models:
   ID:
@@ -28,6 +51,15 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int16
+  Timestamp:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int32
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int16
+  Decimal:
+    model:
+      - github.com/99designs/gqlgen/graphql.String
   Shipment:
     fields:
       orderNumber:
@@ -147,16 +179,6 @@ models:
     fields:
       licenseStateId:
         resolver: true
-      medicalExaminerNpi:
-        fieldName: MedicalExaminerNPI
-      twicCardNumber:
-        fieldName: TWICCardNumber
-      twicExpiry:
-        fieldName: TWICExpiry
-      lastMvrCheck:
-        fieldName: LastMVRCheck
-      eldExempt:
-        fieldName: ELDExempt
   WorkerPTO:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPTO
@@ -165,6 +187,1044 @@ models:
         resolver: true
       rejectorId:
         resolver: true
+      cancelledById:
+        resolver: true
+      rejectionReason:
+        resolver: true
+      cancellationReason:
+        resolver: true
+      days:
+        resolver: true
+      balanceAfterDays:
+        resolver: true
+  PTOPolicyStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOPolicyStatus
+  PTOYearBasis:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOYearBasis
+  PTOAccrualMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOAccrualMethod
+  PTOLedgerEntryType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOLedgerEntryType
+  PTOLedgerActorType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOLedgerActorType
+  PTOPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOPolicy
+    fields:
+      negativeFloorDays:
+        resolver: true
+      openAssignmentCount:
+        resolver: true
+  PTOPolicyRule:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOPolicyRule
+    fields:
+      accrualAmountDays:
+        resolver: true
+      maxBalanceDays:
+        resolver: true
+      carryoverCapDays:
+        resolver: true
+  WorkerCredentialCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CredentialCategory
+  WorkerCredentialStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CredentialStatus
+  WorkerCredentialHealth:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CredentialHealth
+  WorkerCredentialType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerCredentialType
+    fields:
+      profileField:
+        resolver: true
+      activeCredentialCount:
+        resolver: true
+  WorkerCredentialDocument:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/document.Document
+  WorkerCredential:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerCredential
+    fields:
+      documentId:
+        resolver: true
+      verifiedById:
+        resolver: true
+      archivedById:
+        resolver: true
+      health:
+        resolver: true
+      daysUntilExpiry:
+        resolver: true
+  WorkerCredentialSummaryItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CredentialSummaryItem
+  WorkerCredentialSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerCredentialSummary
+  CredentialExpiryForecastItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workercredentialservice.ExpiryForecastItem
+  CredentialExpiryForecast:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workercredentialservice.ExpiryForecast
+  PortalCredential:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalCredential
+    fields:
+      id:
+        resolver: true
+      documentId:
+        resolver: true
+  WorkerEmploymentEventKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.EmploymentEventKind
+  WorkerEmploymentEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerEmploymentEvent
+    fields:
+      fromValues:
+        resolver: true
+      toValues:
+        resolver: true
+      documentId:
+        resolver: true
+      recordedById:
+        resolver: true
+      amendedById:
+        resolver: true
+  WorkerEmploymentCascade:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workeremploymentservice.CascadeSummary
+    fields:
+      ptoPaidOutDays:
+        resolver: true
+      ptoForfeitedDays:
+        resolver: true
+  RecordWorkerEmploymentEventPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workeremploymentservice.RecordResult
+  WorkerChecklistKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistKind
+  WorkerChecklistTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistTrigger
+  WorkerChecklistItemKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistItemKind
+  WorkerChecklistOwner:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistOwner
+  WorkerChecklistStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistStatus
+  WorkerChecklistItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistItemStatus
+  WorkerChecklistTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerChecklistTemplate
+    fields:
+      openChecklistCount:
+        resolver: true
+  WorkerChecklistTemplateItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerChecklistTemplateItem
+    fields:
+      credentialTypeId:
+        resolver: true
+      documentTypeId:
+        resolver: true
+      documentTypeName:
+        resolver: true
+  WorkerChecklist:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerChecklist
+    fields:
+      templateId:
+        resolver: true
+      sourceEventId:
+        resolver: true
+      startedById:
+        resolver: true
+      progress:
+        resolver: true
+  WorkerChecklistProgress:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ChecklistProgress
+    fields:
+      complete:
+        resolver: true
+  WorkerChecklistItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerChecklistItem
+    fields:
+      overdue:
+        resolver: true
+      credentialTypeId:
+        resolver: true
+      documentTypeId:
+        resolver: true
+      completedById:
+        resolver: true
+      evidenceDocumentId:
+        resolver: true
+      evidenceCredentialId:
+        resolver: true
+  PTOTerminationAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOTerminationAction
+  PTOAccrualTier:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOAccrualTier
+    fields:
+      accrualAmountDays:
+        resolver: true
+      maxBalanceDays:
+        resolver: true
+  PTOLiabilityRow:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptoledgerservice.LiabilityRow
+    fields:
+      balanceDays:
+        resolver: true
+      accruedYtdDays:
+        resolver: true
+      usedYtdDays:
+        resolver: true
+      liabilityDays:
+        resolver: true
+  PTOLiabilityReport:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptoledgerservice.LiabilityReport
+    fields:
+      totalBalanceDays:
+        resolver: true
+      liabilityDays:
+        resolver: true
+      forfeitableDays:
+        resolver: true
+  WorkerLeaveType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveType
+  OrgHolidayKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.HolidayKind
+  OrgHoliday:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.OrgHoliday
+  TrainingCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TrainingCategory
+  TrainingDelivery:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TrainingDelivery
+  WorkerTrainingStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TrainingStatus
+  WorkerTrainingHealth:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TrainingHealth
+  TrainingCourse:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TrainingCourse
+    fields:
+      passingScore:
+        resolver: true
+      openRecordCount:
+        resolver: true
+  WorkerTrainingRecord:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerTrainingRecord
+    fields:
+      documentId:
+        resolver: true
+      assignedById:
+        resolver: true
+      recordedById:
+        resolver: true
+      score:
+        resolver: true
+      health:
+        resolver: true
+      daysUntilDue:
+        resolver: true
+      daysUntilExpiry:
+        resolver: true
+  WorkerTrainingSummaryItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TrainingSummaryItem
+  WorkerTrainingSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerTrainingSummary
+  BulkAssignTrainingPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workertrainingservice.BulkAssignResult
+  BulkAssignTrainingOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workertrainingservice.BulkAssignOutcome
+  PortalTraining:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalTraining
+    fields:
+      id:
+        resolver: true
+      status:
+        resolver: true
+      score:
+        resolver: true
+  LeaveMeasurementMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveMeasurementMethod
+  LeaveCaseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveCaseStatus
+  LeaveFrequency:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveFrequency
+  LeaveCertificationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveCertificationStatus
+  LeaveWindow:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveWindow
+  LeaveControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveControl
+    fields:
+      entitlementWeeks:
+        resolver: true
+      militaryCaregiverWeeks:
+        resolver: true
+      workweekHours:
+        resolver: true
+  LeaveEntitlement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.LeaveEntitlement
+    fields:
+      totalHours:
+        resolver: true
+      usedHours:
+        resolver: true
+      remainingHours:
+        resolver: true
+      totalWeeks:
+        resolver: true
+      usedWeeks:
+        resolver: true
+      remainingWeeks:
+        resolver: true
+  WorkerLeaveCase:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerLeaveCase
+    fields:
+      endsAt:
+        resolver: true
+      decidedAt:
+        resolver: true
+      closedAt:
+        resolver: true
+      certificationRequestedAt:
+        resolver: true
+      certificationDueAt:
+        resolver: true
+      certificationReceivedAt:
+        resolver: true
+      recertificationDueAt:
+        resolver: true
+      certificationLate:
+        resolver: true
+      eligibilityHoursWorked:
+        resolver: true
+      employmentEventId:
+        resolver: true
+      documentId:
+        resolver: true
+      entries:
+        resolver: true
+  WorkerLeaveEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerLeaveEntry
+    fields:
+      hours:
+        resolver: true
+      ptoId:
+        resolver: true
+  OSHACaseClassification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.OSHACaseClassification
+  OSHAIllnessType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.OSHAIllnessType
+  InjuryTreatment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.InjuryTreatment
+  InjuryCaseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.InjuryCaseStatus
+  WorkersCompClaimStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkersCompClaimStatus
+  OSHASummaryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.OSHASummaryStatus
+  OSHASummaryTotals:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.OSHASummaryTotals
+  OSHALog:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workerinjuryservice.OSHALog
+  OSHAAnnualSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.OSHAAnnualSummary
+    fields:
+      certifiedAt:
+        resolver: true
+      certifiedById:
+        resolver: true
+      postedFrom:
+        resolver: true
+      postedThrough:
+        resolver: true
+      submittedAt:
+        resolver: true
+      totalHoursWorked:
+        resolver: true
+  WorkerInjury:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerInjury
+    fields:
+      recordable:
+        resolver: true
+      logName:
+        resolver: true
+      reportedAt:
+        resolver: true
+      returnedToWorkAt:
+        resolver: true
+      claimFiledAt:
+        resolver: true
+      claimClosedAt:
+        resolver: true
+      safetyEventId:
+        resolver: true
+      documentId:
+        resolver: true
+  EmploymentVerificationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.EmploymentVerificationStatus
+  EmploymentVerificationMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.EmploymentVerificationMethod
+  DQFSection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DQFSection
+  DQFItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DQFItemStatus
+  DQFItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DQFItem
+    fields:
+      regulation:
+        resolver: true
+      expiresAt:
+        resolver: true
+  DQFFile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DQFFile
+    fields:
+      terminationDate:
+        resolver: true
+      retentionExpiresAt:
+        resolver: true
+      verifications:
+        resolver: true
+  DQFRetentionCandidate:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.DQFRetentionCandidate
+  WorkerEmploymentVerification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerEmploymentVerification
+    fields:
+      employedFrom:
+        resolver: true
+      employedTo:
+        resolver: true
+      requestedAt:
+        resolver: true
+      responseReceivedAt:
+        resolver: true
+      lastFollowUpAt:
+        resolver: true
+      drugAlcoholResponseReceivedAt:
+        resolver: true
+      documentId:
+        resolver: true
+  DOTTestType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTTestType
+  DOTTestSubstance:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTTestSubstance
+  DOTTestStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTTestStatus
+  DOTTestResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTTestResult
+  DOTViolationType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTViolationType
+  DOTViolationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTViolationStatus
+  ReturnToDutyStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ReturnToDutyStatus
+  DrugAlcoholStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DrugAlcoholStatus
+  ClearinghouseQueryType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ClearinghouseQueryType
+  ClearinghouseResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ClearinghouseResult
+  RandomPeriod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.RandomPeriod
+  RandomDrawStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.RandomDrawStatus
+  RandomEntryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.RandomEntryStatus
+  WorkerDOTTest:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerDOTTest
+    fields:
+      scheduledAt:
+        resolver: true
+      collectedAt:
+        resolver: true
+      resultAt:
+        resolver: true
+      mroVerifiedAt:
+        resolver: true
+      alcoholConcentration:
+        resolver: true
+      safetyEventId:
+        resolver: true
+      drawEntryId:
+        resolver: true
+      documentId:
+        resolver: true
+      orderedById:
+        resolver: true
+      recordedById:
+        resolver: true
+  WorkerDOTViolation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerDOTViolation
+    fields:
+      sourceTestId:
+        resolver: true
+      reportedToClearinghouseAt:
+        resolver: true
+      sapReferredAt:
+        resolver: true
+      sapEvaluationCompletedAt:
+        resolver: true
+      rtdTestId:
+        resolver: true
+      rtdCompletedAt:
+        resolver: true
+      followUpEndsAt:
+        resolver: true
+      resolvedAt:
+        resolver: true
+      documentId:
+        resolver: true
+      recordedById:
+        resolver: true
+  WorkerClearinghouseQuery:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerClearinghouseQuery
+    fields:
+      consentObtainedAt:
+        resolver: true
+      consentExpiresAt:
+        resolver: true
+      completedAt:
+        resolver: true
+      documentId:
+        resolver: true
+      performedById:
+        resolver: true
+  DOTRandomPool:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTRandomPool
+    fields:
+      meetsDotMinimums:
+        resolver: true
+  DOTRandomDraw:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTRandomDraw
+    fields:
+      drawnById:
+        resolver: true
+      finalizedAt:
+        resolver: true
+      entries:
+        resolver: true
+  DOTRandomDrawEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DOTRandomDrawEntry
+    fields:
+      notifiedAt:
+        resolver: true
+      completedAt:
+        resolver: true
+      testId:
+        resolver: true
+  DrugAlcoholStanding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DrugAlcoholStanding
+    fields:
+      lastClearinghouseQueryAt:
+        resolver: true
+      nextClearinghouseQueryDue:
+        resolver: true
+  SafetyEventKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.SafetyEventKind
+  SafetySeverity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.SafetySeverity
+  SafetyEventStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.SafetyEventStatus
+  InspectionResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.InspectionResult
+  SafetyRating:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.SafetyRating
+  CSABasic:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CSABasic
+  JobDepartment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.JobDepartment
+  BenefitPlanType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.BenefitPlanType
+  BenefitEnrollmentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.BenefitEnrollmentStatus
+  CoverageTier:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.CoverageTier
+  DeductionKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.DeductionKind
+  AvailabilityPreference:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.AvailabilityPreference
+  ShiftSwapStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ShiftSwapStatus
+  ShiftTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ShiftTemplate
+    fields:
+      activeAssignmentCount:
+        resolver: true
+  WorkerShiftAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerShiftAssignment
+  WorkerAvailabilityPreference:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerAvailabilityPreference
+  ShiftSwapRequest:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ShiftSwapRequest
+  TimeEntrySource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TimeEntrySource
+  TimesheetStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TimesheetStatus
+  PayrollExportStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PayrollExportStatus
+  TimeClockEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.TimeClockEntry
+  Timesheet:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Timesheet
+  PayrollExport:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PayrollExport
+  PayrollExportRow:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/timesheetservice.PayrollExportRow
+  PolicyAudience:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PolicyAudience
+  ProfileChangeStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ProfileChangeStatus
+  WorkerPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPolicy
+  WorkerPolicyAcknowledgement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPolicyAcknowledgement
+  WorkerProfileChangeRequest:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerProfileChangeRequest
+    fields:
+      changes:
+        resolver: true
+  PortalPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalPolicy
+  PortalSchedule:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalSchedule
+  PortalShiftDay:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalShiftDay
+  RotaDayState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.RotaDayState
+  PortalShiftSwap:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalShiftSwap
+  BenefitPlan:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.BenefitPlan
+  WorkerBenefitEnrollment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.WorkerBenefitEnrollment
+    fields:
+      effectiveTo:
+        resolver: true
+      recurringDeductionId:
+        resolver: true
+  BenefitCostRow:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.BenefitCostRow
+  TotalCompensation:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/benefitsservice.TotalCompensation
+  ApprovalScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ApprovalScope
+  JobPosition:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.JobPosition
+    fields:
+      reportsToPositionId:
+        resolver: true
+  ApprovalDelegation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ApprovalDelegation
+    fields:
+      endsAt:
+        resolver: true
+      revokedAt:
+        resolver: true
+      revokedById:
+        resolver: true
+      createdById:
+        resolver: true
+  HeadcountRow:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.HeadcountRow
+  Headcount:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/orgstructureservice.Headcount
+  DriverDigestCadence:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.DriverDigestCadence
+  WorkerSafetyViolation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerSafetyViolation
+  FleetSafety:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafety
+  FleetSafetyBasic:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafetyBasic
+  FleetSafetyKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafetyKind
+  FleetSafetyTerminal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafetyTerminal
+    fields:
+      fleetCodeId:
+        resolver: true
+  FleetSafetyTrendPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafetyTrendPoint
+  FleetSafetyRank:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafetyRank
+    fields:
+      fleetCodeId:
+        resolver: true
+  FleetSafetyRatingCount:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.FleetSafetyRatingCount
+  WorkerStanding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Standing
+  WorkerConcernSeverity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ConcernSeverity
+  WorkerConcern:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Concern
+  WorkerOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workeroverviewservice.Overview
+  WorkerRosterAttention:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workeroverviewservice.RosterAttention
+    fields:
+      ptoLiabilityDays:
+        resolver: true
+  DisciplinaryLevel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DisciplinaryLevel
+  DisciplinaryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DisciplinaryStatus
+  RecognitionKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.RecognitionKind
+  WorkerSafetyEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerSafetyEvent
+    fields:
+      activePoints:
+        resolver: true
+      shipmentId:
+        resolver: true
+      inspectionLevel:
+        resolver: true
+      inspectionResult:
+        resolver: true
+      fineAmount:
+        resolver: true
+      costAmount:
+        resolver: true
+      documentId:
+        resolver: true
+      recordedById:
+        resolver: true
+      closedById:
+        resolver: true
+  SafetyScorecard:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.SafetyScorecard
+    fields:
+      highestDiscipline:
+        resolver: true
+      daysSinceLastEvent:
+        resolver: true
+  WorkerDisciplinaryAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerDisciplinaryAction
+    fields:
+      suspensionDays:
+        resolver: true
+      safetyEventId:
+        resolver: true
+      documentId:
+        resolver: true
+      issuedById:
+        resolver: true
+      rescindedById:
+        resolver: true
+      active:
+        resolver: true
+  DisciplinaryLadder:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DisciplinaryLadder
+    fields:
+      highestLevel:
+        resolver: true
+  WorkerRecognition:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerRecognition
+    fields:
+      awardedById:
+        resolver: true
+  IssueDisciplinaryActionPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/workersafetyservice.IssueActionResult
+  PerformanceReviewStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ReviewStatus
+  ReviewGoalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ReviewGoalStatus
+  ReviewItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ReviewItem
+  ReviewRating:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ReviewRating
+    fields:
+      score:
+        resolver: true
+  ReviewGoal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ReviewGoal
+  PerformanceReviewTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PerformanceReviewTemplate
+    fields:
+      cadenceMonths:
+        resolver: true
+      openReviewCount:
+        resolver: true
+  PerformanceReview:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PerformanceReview
+    fields:
+      reviewerId:
+        resolver: true
+      overallScore:
+        resolver: true
+      closedById:
+        resolver: true
+  WorkerPTOPolicyAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPTOPolicyAssignment
+    fields:
+      ptoPolicy:
+        resolver: true
+      assignedById:
+        resolver: true
+  WorkerPTOLedgerEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPTOLedgerEntry
+    fields:
+      amountDays:
+        resolver: true
+      balanceAfterDays:
+        resolver: true
+      periodKey:
+        resolver: true
+      sourcePtoId:
+        resolver: true
+      assignmentId:
+        resolver: true
+      ptoPolicyId:
+        resolver: true
+      createdById:
+        resolver: true
+      note:
+        resolver: true
+  PlannedPTOAccrual:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptoledgerservice.PlannedEntry
+    fields:
+      nominalDays:
+        resolver: true
+  WorkerPTOBalance:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptoledgerservice.BalanceView
+    fields:
+      balanceDays:
+        resolver: true
+      pendingDays:
+        resolver: true
+      availableDays:
+        resolver: true
+      accruedYtdDays:
+        resolver: true
+      usedYtdDays:
+        resolver: true
+      carriedDays:
+        resolver: true
+      maxBalanceDays:
+        resolver: true
+  MyPTOBalance:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptoledgerservice.BalanceView
+    fields:
+      balanceDays:
+        resolver: true
+      pendingDays:
+        resolver: true
+      availableDays:
+        resolver: true
+      accruedYtdDays:
+        resolver: true
+      usedYtdDays:
+        resolver: true
+  PTOAvailability:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptoledgerservice.AvailabilityResult
+    fields:
+      days:
+        resolver: true
+      balanceDays:
+        resolver: true
+      pendingDays:
+        resolver: true
+      projectedAccrualDays:
+        resolver: true
+      projectedAvailableDays:
+        resolver: true
+      floorDays:
+        resolver: true
+      message:
+        resolver: true
+  PTOBalanceSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.PTOBalanceSummary
+    fields:
+      totalBalanceDays:
+        resolver: true
+      totalPendingDays:
+        resolver: true
+      accruedYtdDays:
+        resolver: true
+      usedYtdDays:
+        resolver: true
+  AssignWorkerPTOPolicyFailure:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptopolicyservice.AssignWorkerFailure
+  AssignWorkerPTOPolicyPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/ptopolicyservice.AssignWorkersResult
+  WorkerPTOBulkAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.PTOBulkActionType
+  BulkWorkerPTOActionResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.PTOBulkActionResult
+  BulkWorkerPTOActionPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.PTOBulkActionPayload
   WorkerType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.WorkerType
@@ -220,8 +1280,6 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.Invoice
     fields:
-      shipmentBol:
-        fieldName: ShipmentBOL
       subtotalAmount:
         resolver: true
       otherAmount:
@@ -234,8 +1292,6 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.InoviceLine
     fields:
-      shipmentBol:
-        fieldName: ShipmentBOL
       quantity:
         resolver: true
       unitPrice:
@@ -628,8 +1684,6 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tenant.Organization
     fields:
-      dotNumber:
-        fieldName: DOTNumber
       logoUrl:
         fieldName: LogoURL
   User:
@@ -726,8 +1780,6 @@ models:
     fields:
       rate:
         resolver: true
-      offerTtlSeconds:
-        fieldName: OfferTTLSeconds
   Tender:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tender.Tender
@@ -742,22 +1794,12 @@ models:
         resolver: true
       responseSource:
         resolver: true
-      offerTtlSeconds:
-        fieldName: OfferTTLSeconds
-      ediPartnerId:
-        fieldName: EDIPartnerID
-      ediMessageId:
-        fieldName: EDIMessageID
   Carrier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/carrier.Carrier
     fields:
-      dotNumber:
-        fieldName: DOTNumber
       mcNumber:
         fieldName: MCNumber
-      scac:
-        fieldName: SCAC
       taxIdType:
         fieldName: TaxIDType
   CarrierStatus:
@@ -825,8 +1867,6 @@ models:
         fieldName: ARAccountID
       requirePONumber:
         fieldName: RequirePONumber
-      requireBOLNumber:
-        fieldName: RequireBOLNumber
       creditLimit:
         resolver: true
       creditBalance:
@@ -841,8 +1881,6 @@ models:
     fields:
       ccRecipients:
         fieldName: CCRecipients
-      bccRecipients:
-        fieldName: BCCRecipients
   DistanceOverride:
     model:
       - github.com/emoss08/trenova/internal/core/domain/distanceoverride.DistanceOverride
@@ -903,6 +1941,15 @@ models:
   CustomFieldDefinition:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customfield.CustomFieldDefinition
+  CustomFieldSelectOption:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customfield.SelectOption
+  CustomFieldValidationRules:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customfield.ValidationRules
+  CustomFieldUIAttributes:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customfield.UIAttributes
   ManualJournalStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/manualjournal.Status
@@ -1064,6 +2111,12 @@ models:
   PortalFeatures:
     model:
       - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalFeatures
+  PortalLeave:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalLeave
+  PortalLeaveCase:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalLeaveCase
   PortalPeriodSummary:
     model:
       - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalPeriodSummary
@@ -1244,9 +2297,6 @@ models:
   AROpenItem:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AROpenItem
-    fields:
-      shipmentBol:
-        fieldName: ShipmentBOL
   ARLedgerEntry:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ARLedgerEntry

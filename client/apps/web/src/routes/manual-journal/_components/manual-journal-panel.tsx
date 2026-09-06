@@ -4,6 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import type { ManualJournalRow } from "@/lib/graphql/manual-journal-table";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -38,7 +39,7 @@ function makeEmptyLine(lineNumber: number): ManualJournalLine {
 function CreatePanel({
   open,
   onOpenChange,
-}: Pick<DataTablePanelProps<ManualJournal>, "open" | "onOpenChange">) {
+}: Pick<DataTablePanelProps<ManualJournalRow>, "open" | "onOpenChange">) {
   const queryClient = useQueryClient();
 
   const form = useForm<JournalFormValues>({
@@ -110,7 +111,7 @@ function EditPanel({
   open,
   onOpenChange,
   row,
-}: Pick<DataTablePanelProps<ManualJournal>, "open" | "onOpenChange" | "row">) {
+}: Pick<DataTablePanelProps<ManualJournalRow>, "open" | "onOpenChange" | "row">) {
   const queryClient = useQueryClient();
   const [rejectReason, setRejectReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -394,7 +395,7 @@ export function ManualJournalPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<ManualJournal>) {
+}: DataTablePanelProps<ManualJournalRow>) {
   if (mode === "edit") {
     return <EditPanel open={open} onOpenChange={onOpenChange} row={row} />;
   }

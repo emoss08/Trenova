@@ -102,7 +102,7 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceCustomer: {
 			resolve: r.resolveCustomerSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiConnection: {
+		gqlmodel.SelectOptionResourceEDIConnection: {
 			resolve: r.resolveEDIConnectionSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceEquipmentType: {
@@ -129,7 +129,7 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceOrder: {
 			resolve: r.resolveOrderSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiTransfer: {
+		gqlmodel.SelectOptionResourceEDITransfer: {
 			resolve: r.resolveEDITransferSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceFuelIndex: {
@@ -198,6 +198,12 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceDetentionPolicy: {
 			resolve: r.resolveDetentionPolicySelectOptions,
 		},
+		gqlmodel.SelectOptionResourceShiftTemplate: {
+			resolve: r.resolveShiftTemplateSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceWorkerPolicy: {
+			resolve: r.resolveWorkerPolicySelectOptions,
+		},
 		gqlmodel.SelectOptionResourceFormulaTemplate: {
 			resolve: r.resolveFormulaTemplateSelectOptions,
 		},
@@ -207,22 +213,22 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceServiceFailureReasonCode: {
 			resolve: r.resolveServiceFailureReasonCodeSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiCommunicationProfile: {
+		gqlmodel.SelectOptionResourceEDICommunicationProfile: {
 			resolve: r.resolveEDICommunicationProfileSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiDocumentType: {
+		gqlmodel.SelectOptionResourceEDIDocumentType: {
 			resolve: r.resolveEDIDocumentTypeSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiMappingProfile: {
+		gqlmodel.SelectOptionResourceEDIMappingProfile: {
 			resolve: r.resolveEDIMappingProfileSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiPartner: {
+		gqlmodel.SelectOptionResourceEDIPartner: {
 			resolve: r.resolveEDIPartnerSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiPartnerDocumentProfile: {
+		gqlmodel.SelectOptionResourceEDIPartnerDocumentProfile: {
 			resolve: r.resolveEDIPartnerDocumentProfileSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEdiTemplate: {
+		gqlmodel.SelectOptionResourceEDITemplate: {
 			resolve: r.resolveEDITemplateSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceEmailProfile: {

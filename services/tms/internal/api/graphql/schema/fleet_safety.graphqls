@@ -1,0 +1,195 @@
+"""
+One of the seven Behavior Analysis and Safety Improvement Categories the FMCSA
+sorts roadside violations into. A safety director reads their fleet in these
+terms, so the roll-up speaks them rather than inventing its own grouping.
+"""
+enum CSABasic {
+  UnsafeDriving
+  HOSCompliance
+  DriverFitness
+  ControlledSubstances
+  VehicleMaintenance
+  HazmatCompliance
+  CrashIndicator
+}
+
+"""
+One violation cited on a safety event. A roadside inspection routinely produces
+several, in different BASICs, so they are rows rather than a column on the
+event.
+"""
+type WorkerSafetyViolation {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  safetyEventId: ID!
+  workerId: ID!
+  basic: CSABasic!
+  code: String
+  description: String!
+  """
+  The FMCSA severity weight, 1 to 10. Out of service adds two more when the
+  BASIC is scored, which is why the flag is kept beside it rather than folded
+  in.
+  """
+  severityWeight: Int!
+  outOfService: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input RecordSafetyViolationInput {
+  safetyEventId: ID!
+  """
+  Left empty, the BASIC falls back to what the event itself implies, so a clerk
+  keying an inspection does not have to classify every line to record one.
+  """
+  basic: CSABasic
+  code: String
+  description: String!
+  severityWeight: Int
+  outOfService: Boolean
+}
+
+input UpdateSafetyViolationInput {
+  id: ID!
+  basic: CSABasic
+  code: String
+  description: String!
+  severityWeight: Int
+  outOfService: Boolean
+  version: Int
+}
+
+"""
+One BASIC's standing across the fleet. The weighted score is the FMCSA's own
+arithmetic — severity, plus two for an out-of-service order, times a recency
+multiplier — so a number here means what it means on a Safety Measurement
+System report.
+"""
+type FleetSafetyBasic {
+  basic: CSABasic!
+  violations: Int!
+  events: Int!
+  weightedScore: Int!
+  outOfService: Int!
+  """
+  Whether this figure was reached from the kind of event rather than from
+  violations somebody keyed in. Surfaced rather than hidden: a scorecard nobody
+  keyed violations into is an estimate, and saying so is the difference between
+  a useful number and a false one.
+  """
+  inferred: Boolean!
+}
+
+type FleetSafetyKind {
+  kind: SafetyEventKind!
+  events: Int!
+  points: Int!
+  preventable: Int!
+  outOfService: Int!
+  open: Int!
+}
+
+"""
+One terminal's standing, read from the roster cache so the fleet view and the
+roster list behind it cannot disagree.
+"""
+type FleetSafetyTerminal {
+  fleetCodeId: ID
+  code: String!
+  description: String!
+  color: String!
+  workers: Int!
+  atRisk: Int!
+  watch: Int!
+  averageScore: Int!
+}
+
+"One month of the trend line."
+type FleetSafetyTrendPoint {
+  periodStart: Timestamp!
+  events: Int!
+  accidents: Int!
+  preventable: Int!
+  citations: Int!
+  inspections: Int!
+  outOfService: Int!
+  points: Int!
+}
+
+"One driver's line in the ranking."
+type FleetSafetyRank {
+  workerId: ID!
+  name: String!
+  fleetCodeId: ID
+  fleetCode: String!
+  fleetColor: String!
+  rating: SafetyRating!
+  score: Int!
+  activePoints: Int!
+  events: Int!
+  lastEventAt: Timestamp
+}
+
+type FleetSafetyRatingCount {
+  rating: SafetyRating!
+  workers: Int!
+}
+
+"""
+The whole fleet's safety picture: who is where, what has been happening, and
+which BASICs are carrying the weight.
+"""
+type FleetSafety {
+  asOf: Timestamp!
+  windowMonths: Int!
+  workers: Int!
+  averageScore: Int!
+  atRisk: Int!
+  watch: Int!
+  totalEvents: Int!
+  totalPoints: Int!
+  openEvents: Int!
+  outOfServiceOrders: Int!
+  ratings: [FleetSafetyRatingCount!]!
+  basics: [FleetSafetyBasic!]!
+  kinds: [FleetSafetyKind!]!
+  terminals: [FleetSafetyTerminal!]!
+  trend: [FleetSafetyTrendPoint!]!
+  worst: [FleetSafetyRank!]!
+  best: [FleetSafetyRank!]!
+  """
+  True when any BASIC figure was reached from the kind of event rather than
+  from recorded violations.
+  """
+  basicsInferred: Boolean!
+}
+
+input FleetSafetyInput {
+  """
+  The counting window in months, 1 to 36. The BASIC scores always use the
+  FMCSA's own twenty-four month look-back regardless, because a BASIC measured
+  over anything else is not a BASIC.
+  """
+  windowMonths: Int
+  "Narrows every section to one terminal."
+  fleetCodeId: ID
+  "How many drivers each of the best and worst lists carries."
+  rankLimit: Int
+}
+
+extend type Query {
+  fleetSafety(input: FleetSafetyInput): FleetSafety!
+  workerSafetyViolations(
+    safetyEventId: ID
+    workerId: ID
+  ): [WorkerSafetyViolation!]!
+}
+
+extend type Mutation {
+  recordSafetyViolation(input: RecordSafetyViolationInput!): WorkerSafetyViolation!
+  updateSafetyViolation(input: UpdateSafetyViolationInput!): WorkerSafetyViolation!
+  deleteSafetyViolation(id: ID!): Boolean!
+}

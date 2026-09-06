@@ -69,7 +69,7 @@ func TestQueryResolver_ShipmentEvents_MapsRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, events, 1)
-	assert.Equal(t, eventID.String(), events[0].ID)
+	assert.Equal(t, eventID.String(), events[0].GetID())
 	require.NotNil(t, permissionEngine.request)
 	assert.Equal(t, permission.ResourceShipment.String(), permissionEngine.request.Resource)
 	assert.Equal(t, permission.OpRead, permissionEngine.request.Operation)

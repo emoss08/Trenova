@@ -1,0 +1,169 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query ShiftTemplates($activeOnly: Boolean, $limit: Int) {
+  shiftTemplates(activeOnly: $activeOnly, limit: $limit) {
+    id
+    status
+    code
+    name
+    description
+    color
+    daysOfWeek
+    startMinute
+    durationMinutes
+    cycleWeeks
+    version
+    activeAssignmentCount
+  }
+}
+
+query Rota($filter: RotaFilterInput) {
+  rota(filter: $filter) {
+    weekStart
+    weekEnd
+    weeks
+    scheduledDays
+    conflicts
+    rows {
+      workerId
+      name
+      fleetCode
+      fleetColor
+      shiftCode
+      shiftName
+      shiftColor
+      scheduledDays
+      conflicts
+      days {
+        date
+        state
+        scheduled
+        startMinute
+        durationMinutes
+        preference
+        assignmentCount
+        isConflict
+      }
+    }
+  }
+}
+
+query WorkerShiftAssignments($workerId: ID!, $activeOnly: Boolean) {
+  workerShiftAssignments(workerId: $workerId, activeOnly: $activeOnly) {
+    id
+    workerId
+    shiftTemplateId
+    effectiveFrom
+    effectiveTo
+    cycleOffsetWeeks
+    notes
+    version
+    shiftTemplate {
+      id
+      code
+      name
+      color
+      daysOfWeek
+      startMinute
+      durationMinutes
+      cycleWeeks
+    }
+  }
+}
+
+query WorkerAvailabilityPreferences($workerId: ID!) {
+  workerAvailabilityPreferences(workerId: $workerId) {
+    id
+    workerId
+    dayOfWeek
+    preference
+    note
+    version
+  }
+}
+
+query ShiftSwapRequests($workerId: ID, $openOnly: Boolean, $since: Timestamp, $limit: Int) {
+  shiftSwapRequests(workerId: $workerId, openOnly: $openOnly, since: $since, limit: $limit) {
+    id
+    requestingWorkerId
+    counterpartyWorkerId
+    status
+    shiftDate
+    counterpartyShiftDate
+    reason
+    responseNote
+    respondedAt
+    decidedAt
+    version
+    requestingWorker {
+      id
+      firstName
+      lastName
+    }
+    counterpartyWorker {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+
+mutation CreateShiftTemplate($input: ShiftTemplateInput!) {
+  createShiftTemplate(input: $input) {
+    id
+    code
+    name
+  }
+}
+
+mutation UpdateShiftTemplate($id: ID!, $input: ShiftTemplateInput!) {
+  updateShiftTemplate(id: $id, input: $input) {
+    id
+    code
+    name
+    status
+  }
+}
+
+mutation AssignWorkerShift($input: AssignShiftInput!) {
+  assignWorkerShift(input: $input) {
+    id
+    workerId
+    shiftTemplateId
+    effectiveFrom
+  }
+}
+
+mutation EndWorkerShiftAssignment($id: ID!, $effectiveTo: Timestamp!) {
+  endWorkerShiftAssignment(id: $id, effectiveTo: $effectiveTo) {
+    id
+    effectiveTo
+  }
+}
+
+mutation SetWorkerAvailabilityPreference($input: SetAvailabilityPreferenceInput!) {
+  setWorkerAvailabilityPreference(input: $input) {
+    id
+    workerId
+    dayOfWeek
+    preference
+    note
+  }
+}
+
+mutation ProposeShiftSwap($input: ProposeShiftSwapInput!) {
+  proposeShiftSwap(input: $input) {
+    id
+    status
+    shiftDate
+  }
+}
+
+mutation TransitionShiftSwap($input: TransitionShiftSwapInput!) {
+  transitionShiftSwap(input: $input) {
+    id
+    status
+    respondedAt
+    decidedAt
+  }
+}

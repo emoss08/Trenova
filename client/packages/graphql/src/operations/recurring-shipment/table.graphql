@@ -44,14 +44,17 @@ fragment RecurringShipmentTableRowFields on RecurringShipment {
   }
 }
 
-query RecurringShipmentTable($input: DataTableConnectionInput!) {
+query RecurringShipmentTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   recurringShipments(input: $input) {
     edges {
       node {
         ...RecurringShipmentTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

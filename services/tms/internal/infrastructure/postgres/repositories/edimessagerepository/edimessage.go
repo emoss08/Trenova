@@ -666,27 +666,31 @@ func (r *repository) ListMessagesCursor(
 	req *repositories.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDIMessage)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"emsg",
-				req.Filter,
-				(*edi.EDIMessage)(nil),
-			)
-			return applyMessageListFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDIMessage)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"emsg",
+					req.Filter,
+					(*edi.EDIMessage)(nil),
+				)
+				return applyMessageListFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMessage]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDIMessage) *bun.SelectQuery {
 			return dba.
 				NewSelect().

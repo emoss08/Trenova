@@ -1,3 +1,4 @@
+import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
 import type {
   SelectOption as GraphQLSelectOption,
   GraphQLSelectOptionsConfig,
@@ -264,6 +265,14 @@ const documentTypeSelectOptionsGraphQL = {
 
 const detentionPolicySelectOptionsGraphQL = {
   resource: "DETENTION_POLICY",
+} satisfies GraphQLSelectOptionsConfig;
+
+const shiftTemplateSelectOptionsGraphQL = {
+  resource: "SHIFT_TEMPLATE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const workerPolicySelectOptionsGraphQL = {
+  resource: "WORKER_POLICY",
 } satisfies GraphQLSelectOptionsConfig;
 
 const formulaTemplateSelectOptionsGraphQL = {
@@ -1950,6 +1959,65 @@ export function RateAgreementAutocompleteField<T extends FieldValues>({
           <span>{option.label}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
             {option.description || selectOptionMetaString(option, "code")}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * A shift pattern. The option carries the pattern's mask and cycle in its
+ * meta so a picker can say what it is putting somebody on.
+ */
+export function ShiftTemplateAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/shift-templates/select-options/"
+      graphql={shiftTemplateSelectOptionsGraphQL}
+      popoutLink="/hr/scheduling"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => (
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
+      )}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "code")}
+            {selectOptionMetaString(option, "daysOfWeek")
+              ? ` · ${describeShiftPattern(
+                  selectOptionMetaString(option, "daysOfWeek") ?? "",
+                  Number(selectOptionMetaString(option, "cycleWeeks") ?? 1),
+                )}`
+              : ""}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function WorkerPolicyAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/worker-policies/select-options/"
+      graphql={workerPolicySelectOptionsGraphQL}
+      popoutLink="/hr/policies"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "code")} · v
+            {selectOptionMetaString(option, "versionLabel")}
           </span>
         </div>
       )}

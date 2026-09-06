@@ -22,14 +22,14 @@ fragment OrderTableRowFields on Order {
   }
 }
 
-query OrderTable($input: DataTableConnectionInput!) {
+query OrderTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   orders(input: $input) {
     edges {
       node {
         ...OrderTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

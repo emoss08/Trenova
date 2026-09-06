@@ -27,14 +27,14 @@ fragment AgentProposalDetailFields on AgentProposal {
   }
 }
 
-query AgentProposalTable($input: DataTableConnectionInput!) {
+query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   agentProposals(input: $input) {
     edges {
       node {
         ...AgentProposalTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

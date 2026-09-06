@@ -1,15 +1,11 @@
-import {
-  FleetCodeTableDocument,
-  type FleetCodeTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { FleetCodeTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { FleetCode } from "@trenova/shared/types/fleet-code";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const fleetCodeTableGraphQLConfig = defineDataTableGraphQLConfig<
-  FleetCode,
-  FleetCodeTableQueryVariables
->({
+export const fleetCodeTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: FleetCodeTableDocument,
   operationName: "FleetCodeTable",
   connectionKey: "fleetCodes",
 });
+
+export type FleetCodeRow = DataTableConfigRow<typeof fleetCodeTableGraphQLConfig>;

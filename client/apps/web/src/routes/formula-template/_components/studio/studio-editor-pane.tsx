@@ -17,11 +17,11 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import {
   MAX_ROUNDING_PRECISION,
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import {
   ChevronDownIcon,
   CodeIcon,
@@ -46,12 +46,12 @@ function SectionHeader({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 text-left">
       <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
         <Icon className="size-4" />
       </div>
-      <div>
-        <h3 className="text-sm leading-none font-semibold tracking-tight">{title}</h3>
+      <div className="leading-2">
+        <h3 className="text-sm leading-none font-semibold">{title}</h3>
         <p className="text-muted-foreground mt-1 text-xs">{description}</p>
       </div>
     </div>

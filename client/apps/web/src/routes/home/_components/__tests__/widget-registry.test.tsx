@@ -20,6 +20,7 @@ const CATALOG_KEYS = [
   "billing-queue",
   "service-failures",
   "edi-attention",
+  "worker-attention",
   "expiring-credentials",
   // Pulse
   "kpi",

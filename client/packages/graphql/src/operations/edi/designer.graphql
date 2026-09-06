@@ -44,6 +44,7 @@ query EdiTemplateList(
   $status: EdiTemplateStatus
   $transactionSet: String
   $direction: EdiDocumentDirection
+  $includeTotalCount: Boolean = true
 ) {
   ediTemplates(
     input: $input
@@ -56,7 +57,7 @@ query EdiTemplateList(
         ...EdiTemplateListFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

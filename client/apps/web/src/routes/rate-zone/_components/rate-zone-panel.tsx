@@ -1,12 +1,13 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { RateZoneRow } from "@/lib/graphql/rate-tables";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { rateZoneSchema, type RateZone } from "@trenova/shared/types/rate";
 import { useForm, type Resolver } from "react-hook-form";
 import { RateZoneForm } from "./rate-zone-form";
 
-export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelProps<RateZone>) {
+export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelProps<RateZoneRow>) {
   const form = useForm<RateZone>({
     resolver: zodResolver(rateZoneSchema) as Resolver<RateZone>,
     defaultValues: {

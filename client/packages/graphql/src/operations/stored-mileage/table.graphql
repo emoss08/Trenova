@@ -39,14 +39,14 @@ fragment StoredMileageTableRowFields on StoredMileage {
   updatedAt
 }
 
-query StoredMileageTable($input: DataTableConnectionInput!) {
+query StoredMileageTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   storedMileages(input: $input) {
     edges {
       node {
         ...StoredMileageTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

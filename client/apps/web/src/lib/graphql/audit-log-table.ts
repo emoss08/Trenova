@@ -1,15 +1,11 @@
-import {
-  AuditLogTableDocument,
-  type AuditLogTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { AuditLogTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { AuditEntry } from "@/types/audit-entry";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const auditLogTableGraphQLConfig = defineDataTableGraphQLConfig<
-  AuditEntry,
-  AuditLogTableQueryVariables
->({
+export const auditLogTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: AuditLogTableDocument,
   operationName: "AuditLogTable",
   connectionKey: "auditEntries",
 });
+
+export type AuditEntryRow = DataTableConfigRow<typeof auditLogTableGraphQLConfig>;

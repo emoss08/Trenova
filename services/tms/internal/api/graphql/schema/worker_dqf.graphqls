@@ -1,0 +1,199 @@
+enum EmploymentVerificationStatus {
+  Pending
+  Requested
+  Received
+  NoResponse
+  NotApplicable
+}
+
+enum EmploymentVerificationMethod {
+  Email
+  Fax
+  Mail
+  Phone
+  Portal
+  Other
+}
+
+"""
+Where a driver qualification requirement's evidence lives.
+"""
+enum DQFSection {
+  Credentials
+  Documents
+  SafetyHistory
+  DrugAlcohol
+}
+
+enum DQFItemStatus {
+  Satisfied
+  ExpiringSoon
+  Expired
+  Missing
+  Outstanding
+  NotApplicable
+}
+
+"""
+One previous employer's safety performance history investigation
+(49 CFR 391.23). The drug and alcohol half is tracked separately because
+49 CFR 382.413 asks for it specifically and employers often answer without it.
+"""
+type WorkerEmploymentVerification {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  employerName: String!
+  employerDotNumber: String
+  employerMcNumber: String
+  contactName: String
+  contactPhone: String
+  contactEmail: String
+  employedFrom: Timestamp
+  employedTo: Timestamp
+  wasDotRegulated: Boolean!
+  status: EmploymentVerificationStatus!
+  method: EmploymentVerificationMethod!
+  requestedAt: Timestamp
+  responseReceivedAt: Timestamp
+  lastFollowUpAt: Timestamp
+  """
+  How many times the employer has been chased. The count is the record of
+  good-faith effort when nobody answers.
+  """
+  followUpCount: Int!
+  drugAlcoholResponseReceivedAt: Timestamp
+  hadAccidents: Boolean!
+  accidentCount: Int!
+  hadDrugAlcoholViolations: Boolean!
+  findings: String
+  notes: String
+  documentId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  document: WorkerCredentialDocument
+}
+
+"""
+One line of the driver qualification file.
+"""
+type DQFItem {
+  section: DQFSection!
+  """
+  Stable and safe to key on: a credential type code, a document type code, or
+  one of the fixed codes for the requirements that are neither.
+  """
+  code: String!
+  name: String!
+  status: DQFItemStatus!
+  detail: String!
+  regulation: String
+  expiresAt: Timestamp
+}
+
+"""
+A driver qualification file (49 CFR 391.51), assembled on read from the areas
+that already own each piece. Nothing here is stored, so it cannot drift from
+the credentials, documents and investigations underneath it.
+"""
+type DQFFile {
+  workerId: ID!
+  complete: Boolean!
+  items: [DQFItem!]!
+  missingRequired: Int!
+  expiringSoon: Int!
+  expired: Int!
+  outstanding: Int!
+  hireDate: Timestamp!
+  terminationDate: Timestamp
+  """
+  Thirty days after hire, when the previous-employer investigation had to be
+  complete (49 CFR 391.23(c)(1)). Zero when the hire date is unknown.
+  """
+  safetyHistoryDueAt: Timestamp!
+  safetyHistoryLate: Boolean!
+  """
+  When the file may be purged. Null while the driver is employed: the clock
+  runs from termination.
+  """
+  retentionExpiresAt: Timestamp
+  purgeEligible: Boolean!
+  verifications: [WorkerEmploymentVerification!]!
+}
+
+"""
+A terminated driver whose file has passed its hold period. Files are flagged
+only — purging one is a deliberate act.
+"""
+type DQFRetentionCandidate {
+  workerId: ID!
+  firstName: String!
+  lastName: String!
+  terminationDate: Timestamp!
+}
+
+input RecordEmploymentVerificationInput {
+  workerId: ID!
+  employerName: String!
+  employerDotNumber: String
+  employerMcNumber: String
+  contactName: String
+  contactPhone: String
+  contactEmail: String
+  employedFrom: Timestamp
+  employedTo: Timestamp
+  wasDotRegulated: Boolean
+  status: EmploymentVerificationStatus
+  method: EmploymentVerificationMethod
+  requestedAt: Timestamp
+  notes: String
+}
+
+input UpdateEmploymentVerificationInput {
+  verificationId: ID!
+  employerName: String
+  employerDotNumber: String
+  employerMcNumber: String
+  contactName: String
+  contactPhone: String
+  contactEmail: String
+  employedFrom: Timestamp
+  employedTo: Timestamp
+  wasDotRegulated: Boolean
+  status: EmploymentVerificationStatus
+  method: EmploymentVerificationMethod
+  requestedAt: Timestamp
+  responseReceivedAt: Timestamp
+  drugAlcoholResponseReceivedAt: Timestamp
+  hadAccidents: Boolean
+  accidentCount: Int
+  hadDrugAlcoholViolations: Boolean
+  findings: String
+  notes: String
+  documentId: ID
+}
+
+extend type Query {
+  driverQualificationFile(workerId: ID!): DQFFile!
+  workerEmploymentVerifications(workerId: ID!): [WorkerEmploymentVerification!]!
+  """
+  Investigations across the organisation that are still owed a request or a
+  chase.
+  """
+  outstandingEmploymentVerifications: [WorkerEmploymentVerification!]!
+  dqfRetentionCandidates: [DQFRetentionCandidate!]!
+}
+
+extend type Mutation {
+  recordEmploymentVerification(
+    input: RecordEmploymentVerificationInput!
+  ): WorkerEmploymentVerification!
+  updateEmploymentVerification(
+    input: UpdateEmploymentVerificationInput!
+  ): WorkerEmploymentVerification!
+  markEmploymentVerificationRequested(id: ID!): WorkerEmploymentVerification!
+  recordEmploymentVerificationFollowUp(id: ID!): WorkerEmploymentVerification!
+  deleteEmploymentVerification(id: ID!): Boolean!
+}

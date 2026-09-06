@@ -5,20 +5,42 @@ package mappers
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func ApplyWorkerPatch(
 	entity *worker.Worker,
 	input gqlmodel.WorkerPatchInput,
 ) error {
-	if input.DriverType != nil {
-		entity.DriverType = *input.DriverType
+	if driverTypeValue, ok := input.DriverType.ValueOK(); ok {
+		if driverTypeValue == nil {
+			return errortypes.NewValidationError(
+				"driverType",
+				errortypes.ErrRequired,
+				"Driver Type cannot be cleared",
+			)
+		}
+		entity.DriverType = *driverTypeValue
 	}
-	if input.Status != nil {
-		entity.Status = *input.Status
+	if statusValue, ok := input.Status.ValueOK(); ok {
+		if statusValue == nil {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrRequired,
+				"Status cannot be cleared",
+			)
+		}
+		entity.Status = *statusValue
 	}
-	if input.Type != nil {
-		entity.Type = *input.Type
+	if typeValue, ok := input.Type.ValueOK(); ok {
+		if typeValue == nil {
+			return errortypes.NewValidationError(
+				"type",
+				errortypes.ErrRequired,
+				"Type cannot be cleared",
+			)
+		}
+		entity.Type = *typeValue
 	}
 	return nil
 }

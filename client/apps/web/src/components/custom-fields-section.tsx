@@ -48,7 +48,7 @@ function CustomFieldRenderer<T extends FieldValues>({
           description={definition.description}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
-          maxLength={definition.validationRules?.maxLength}
+          maxLength={definition.validationRules?.maxLength ?? undefined}
         />
       );
 

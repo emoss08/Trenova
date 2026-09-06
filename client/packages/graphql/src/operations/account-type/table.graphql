@@ -14,14 +14,14 @@ fragment AccountTypeTableRowFields on AccountType {
   updatedAt
 }
 
-query AccountTypeTable($input: DataTableConnectionInput!) {
+query AccountTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   accountTypes(input: $input) {
     edges {
       node {
         ...AccountTypeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

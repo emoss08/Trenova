@@ -14,14 +14,14 @@ fragment DocumentTypeTableRowFields on DocumentType {
   updatedAt
 }
 
-query DocumentTypeTable($input: DataTableConnectionInput!) {
+query DocumentTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   documentTypes(input: $input) {
     edges {
       node {
         ...DocumentTypeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

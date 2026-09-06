@@ -10,12 +10,12 @@ type Order {
   poNumber: String
   bol: String
   currencyCode: String!
-  quotedAmount: String
-  baseAmount: String
-  totalAmount: String
+  quotedAmount: Decimal
+  baseAmount: Decimal
+  totalAmount: Decimal
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
   customer: Customer
@@ -27,17 +27,17 @@ type OrderCharge {
   id: ID!
   orderId: ID!
   description: String!
-  amount: String!
+  amount: Decimal!
   invoiceId: ID
   version: Int!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 input UpdateOrderChargeInput {
   orderId: ID!
   chargeId: ID!
   description: String!
-  amount: String!
+  amount: Decimal!
   version: Int!
 }
 
@@ -46,8 +46,8 @@ type OrderLeg {
   proNumber: String!
   status: ShipmentStatus!
   bol: String
-  freightChargeAmount: String!
-  totalChargeAmount: String!
+  freightChargeAmount: Decimal!
+  totalChargeAmount: Decimal!
 }
 
 enum OrderStatus {
@@ -82,8 +82,8 @@ input OrderInput {
   poNumber: String
   bol: String
   currencyCode: String
-  quotedAmount: String
-  baseAmount: String
+  quotedAmount: Decimal
+  baseAmount: Decimal
   version: Int
 }
 
@@ -97,7 +97,7 @@ extend type Mutation {
   updateOrder(id: ID!, input: OrderInput!): Order!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
-  addOrderCharge(orderId: ID!, description: String!, amount: String!): Order!
+  addOrderCharge(orderId: ID!, description: String!, amount: Decimal!): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   closeOrder(id: ID!): Order!

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -894,6 +895,74 @@ func (_c *MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call) Return(fi
 }
 
 func (_c *MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListByFiscalYearIDRequest) ([]*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListByFiscalYearIDs provides a mock function for the type MockFiscalPeriodRepository
+func (_mock *MockFiscalPeriodRepository) ListByFiscalYearIDs(ctx context.Context, req repositories.ListByFiscalYearIDsRequest) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListByFiscalYearIDs")
+	}
+
+	var r0 map[pulid.ID][]*fiscalperiod.FiscalPeriod
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListByFiscalYearIDsRequest) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListByFiscalYearIDsRequest) map[pulid.ID][]*fiscalperiod.FiscalPeriod); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID][]*fiscalperiod.FiscalPeriod)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListByFiscalYearIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalPeriodRepository_ListByFiscalYearIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListByFiscalYearIDs'
+type MockFiscalPeriodRepository_ListByFiscalYearIDs_Call struct {
+	*mock.Call
+}
+
+// ListByFiscalYearIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListByFiscalYearIDsRequest
+func (_e *MockFiscalPeriodRepository_Expecter) ListByFiscalYearIDs(ctx any, req any) *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call {
+	return &MockFiscalPeriodRepository_ListByFiscalYearIDs_Call{Call: _e.mock.On("ListByFiscalYearIDs", ctx, req)}
+}
+
+func (_c *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call) Run(run func(ctx context.Context, req repositories.ListByFiscalYearIDsRequest)) *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListByFiscalYearIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListByFiscalYearIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call) Return(fiscalPeriods map[pulid.ID][]*fiscalperiod.FiscalPeriod, err error) *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call {
+	_c.Call.Return(fiscalPeriods, err)
+	return _c
+}
+
+func (_c *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListByFiscalYearIDsRequest) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_ListByFiscalYearIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

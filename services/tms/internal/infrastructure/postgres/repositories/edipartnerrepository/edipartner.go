@@ -367,22 +367,31 @@ func (r *repository) ListCursor(
 	req *repositories.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDIPartner)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFiltersWithoutSort(sq, "ep", req.Filter, (*edi.EDIPartner)(nil))
-			return applyPartnerListFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDIPartner)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"ep",
+					req.Filter,
+					(*edi.EDIPartner)(nil),
+				)
+				return applyPartnerListFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIPartner]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDIPartner) *bun.SelectQuery {
 			rel := buncolgen.EDIPartnerRelations
 			return dba.

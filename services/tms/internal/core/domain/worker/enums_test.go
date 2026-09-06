@@ -659,3 +659,64 @@ func TestDriverTypeFromString(t *testing.T) {
 		})
 	}
 }
+
+func TestPTOStatusCanTransitionTo(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		from    PTOStatus
+		to      PTOStatus
+		allowed bool
+	}{
+		{PTOStatusRequested, PTOStatusApproved, true},
+		{PTOStatusRequested, PTOStatusRejected, true},
+		{PTOStatusRequested, PTOStatusCancelled, true},
+		{PTOStatusRequested, PTOStatusRequested, false},
+		{PTOStatusApproved, PTOStatusCancelled, true},
+		{PTOStatusApproved, PTOStatusApproved, false},
+		{PTOStatusApproved, PTOStatusRejected, false},
+		{PTOStatusApproved, PTOStatusRequested, false},
+		{PTOStatusRejected, PTOStatusApproved, false},
+		{PTOStatusRejected, PTOStatusCancelled, false},
+		{PTOStatusCancelled, PTOStatusApproved, false},
+		{PTOStatusCancelled, PTOStatusRequested, false},
+		{PTOStatus("Pending"), PTOStatusApproved, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.from)+"->"+string(tt.to), func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.allowed, tt.from.CanTransitionTo(tt.to))
+		})
+	}
+}
+
+func TestPTOStatusIsTerminal(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, PTOStatusRequested.IsTerminal())
+	assert.False(t, PTOStatusApproved.IsTerminal())
+	assert.True(t, PTOStatusRejected.IsTerminal())
+	assert.True(t, PTOStatusCancelled.IsTerminal())
+}
+
+func TestPTOStatusSourcesFor(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []PTOStatus{PTOStatusRequested}, PTOStatusSourcesFor(PTOStatusApproved))
+	assert.Equal(t, []PTOStatus{PTOStatusRequested}, PTOStatusSourcesFor(PTOStatusRejected))
+	assert.Equal(
+		t,
+		[]PTOStatus{PTOStatusRequested, PTOStatusApproved},
+		PTOStatusSourcesFor(PTOStatusCancelled),
+	)
+	assert.Nil(t, PTOStatusSourcesFor(PTOStatusRequested))
+	assert.Nil(t, PTOStatusSourcesFor(PTOStatus("Pending")))
+
+	for _, target := range []PTOStatus{PTOStatusApproved, PTOStatusRejected, PTOStatusCancelled} {
+		for _, source := range PTOStatusSourcesFor(target) {
+			assert.True(t, source.CanTransitionTo(target),
+				"%s must be allowed to reach %s", source, target)
+		}
+	}
+}

@@ -1,0 +1,205 @@
+enum PerformanceReviewStatus {
+  Draft
+  Submitted
+  Acknowledged
+  Closed
+}
+
+enum ReviewGoalStatus {
+  Open
+  Done
+  Dropped
+}
+
+type ReviewItem {
+  key: String!
+  label: String!
+  description: String
+  weight: Int!
+}
+
+type PerformanceReviewTemplate {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String
+  status: EntityStatus!
+  isDefault: Boolean!
+  """
+  Months between reviews; closing a review schedules the next one from it.
+  """
+  cadenceMonths: Int
+  items: [ReviewItem!]!
+  openReviewCount: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type PerformanceReviewTemplateEdge {
+  node: PerformanceReviewTemplate!
+  cursor: String!
+}
+
+type PerformanceReviewTemplateConnection {
+  edges: [PerformanceReviewTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ReviewRating {
+  key: String!
+  label: String!
+  weight: Int!
+  """
+  1 to 5; null while unrated.
+  """
+  score: Int
+  comment: String
+}
+
+type ReviewGoal {
+  id: String!
+  title: String!
+  dueAt: Timestamp
+  status: ReviewGoalStatus!
+}
+
+type PerformanceReview {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  templateId: ID!
+  template: PerformanceReviewTemplate
+  reviewerId: ID
+  reviewer: User
+  status: PerformanceReviewStatus!
+  title: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  ratings: [ReviewRating!]!
+  """
+  Weighted mean of the rated items on the 1–5 scale.
+  """
+  overallScore: Decimal
+  summary: String
+  strengths: String
+  improvements: String
+  goals: [ReviewGoal!]!
+  submittedAt: Timestamp
+  acknowledgedAt: Timestamp
+  workerComment: String
+  closedAt: Timestamp
+  closedById: ID
+  nextReviewAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+}
+
+input ReviewItemInput {
+  key: String!
+  label: String!
+  description: String
+  weight: Int!
+}
+
+input PerformanceReviewTemplateInput {
+  code: String!
+  name: String!
+  description: String
+  status: EntityStatus!
+  isDefault: Boolean!
+  cadenceMonths: Int
+  items: [ReviewItemInput!]!
+  version: Int
+}
+
+input PerformanceReviewTemplatesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  status: EntityStatus
+}
+
+input CreatePerformanceReviewInput {
+  workerId: ID!
+  templateId: ID!
+  title: String
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+}
+
+input ReviewRatingInput {
+  key: String!
+  score: Int
+  comment: String
+}
+
+input ReviewGoalInput {
+  id: String
+  title: String!
+  dueAt: Timestamp
+  status: ReviewGoalStatus
+}
+
+input UpdatePerformanceReviewInput {
+  id: ID!
+  title: String
+  periodStart: Timestamp
+  periodEnd: Timestamp
+  ratings: [ReviewRatingInput!]!
+  summary: String
+  strengths: String
+  improvements: String
+  goals: [ReviewGoalInput!]
+  version: Int!
+}
+
+input PerformanceReviewStatusInput {
+  id: ID!
+  version: Int
+}
+
+extend type Query {
+  performanceReviewTemplates(
+    input: PerformanceReviewTemplatesInput!
+  ): PerformanceReviewTemplateConnection!
+  performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
+  activePerformanceReviewTemplates: [PerformanceReviewTemplate!]!
+  workerPerformanceReviews(workerId: ID!): [PerformanceReview!]!
+  performanceReview(id: ID!): PerformanceReview!
+  """
+  The signed-in driver's reviews: waiting for sign-off, signed, and closed.
+  """
+  myReviews: [PerformanceReview!]!
+}
+
+extend type Mutation {
+  createPerformanceReviewTemplate(
+    input: PerformanceReviewTemplateInput!
+  ): PerformanceReviewTemplate!
+  updatePerformanceReviewTemplate(
+    id: ID!
+    input: PerformanceReviewTemplateInput!
+  ): PerformanceReviewTemplate!
+  archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
+  restorePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
+  createPerformanceReview(input: CreatePerformanceReviewInput!): PerformanceReview!
+  updatePerformanceReview(input: UpdatePerformanceReviewInput!): PerformanceReview!
+  submitPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
+  reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
+  closePerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
+  deletePerformanceReview(id: ID!): Boolean!
+  """
+  The signed-in driver signs off on a submitted review.
+  """
+  acknowledgeMyReview(id: ID!, comment: String): PerformanceReview!
+}

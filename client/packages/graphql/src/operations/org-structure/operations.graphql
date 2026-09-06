@@ -1,0 +1,135 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query JobPositions($activeOnly: Boolean, $drivingOnly: Boolean) {
+  jobPositions(activeOnly: $activeOnly, drivingOnly: $drivingOnly) {
+    id
+    status
+    code
+    title
+    description
+    department
+    flsaExempt
+    isDrivingPosition
+    reportsToPositionId
+    version
+    reportsTo {
+      id
+      code
+      title
+    }
+  }
+}
+
+query Headcount {
+  headcount {
+    activeTotal
+    driverTotal
+    terminated
+    byFleet {
+      key
+      label
+      code
+      color
+      workers
+      drivers
+      terminated
+    }
+    byPosition {
+      key
+      label
+      code
+      color
+      workers
+      drivers
+      terminated
+    }
+    byDepartment {
+      key
+      label
+      code
+      color
+      workers
+      drivers
+      terminated
+    }
+  }
+}
+
+query MyTeam($includeInactive: Boolean) {
+  myTeam(includeInactive: $includeInactive) {
+    workerId
+    name
+    status
+    fleetCodeId
+    fleetCode
+    fleetColor
+    positionId
+    positionTitle
+    direct
+    complianceStatus
+    trainingHealth
+    safetyRating
+    hireDate
+    terminationDate
+  }
+}
+
+query ApprovalDelegations($delegatorId: ID, $delegateId: ID, $activeOnly: Boolean) {
+  approvalDelegations(
+    delegatorId: $delegatorId
+    delegateId: $delegateId
+    activeOnly: $activeOnly
+  ) {
+    id
+    delegatorId
+    delegateId
+    scope
+    startsAt
+    endsAt
+    reason
+    revokedAt
+    version
+    delegator {
+      id
+      name
+    }
+    delegate {
+      id
+      name
+    }
+  }
+}
+
+mutation CreateJobPosition($input: JobPositionInput!) {
+  createJobPosition(input: $input) {
+    id
+    title
+    version
+  }
+}
+
+mutation UpdateJobPosition($input: UpdateJobPositionInput!) {
+  updateJobPosition(input: $input) {
+    id
+    title
+    version
+  }
+}
+
+mutation DelegateApproval($input: DelegateApprovalInput!) {
+  delegateApproval(input: $input) {
+    id
+    scope
+    startsAt
+    endsAt
+    version
+  }
+}
+
+mutation RevokeApprovalDelegation($id: ID!) {
+  revokeApprovalDelegation(id: $id) {
+    id
+    revokedAt
+    version
+  }
+}

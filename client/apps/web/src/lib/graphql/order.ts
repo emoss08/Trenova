@@ -75,11 +75,15 @@ export type OrderDetail = NonNullable<OrderDetailQuery["order"]>;
 export type OrderLeg = OrderDetail["legs"][number];
 export type OrderCharge = OrderDetail["charges"][number];
 
-export async function fetchOrderDetail(id: string): Promise<OrderDetail> {
+export async function fetchOrderDetail(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<OrderDetail> {
   const data = await requestGraphQL({
     document: OrderDetailDocument,
     operationName: "OrderDetail",
     variables: { id },
+    signal: options?.signal,
   });
 
   if (!data.order) {

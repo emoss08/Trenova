@@ -51,14 +51,15 @@ export default function Workspace() {
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ["settlement-workspace-summary"],
-    queryFn: () => fetchSettlementWorkspaceSummary(),
+    queryFn: ({ signal }) => fetchSettlementWorkspaceSummary(undefined, undefined, { signal }),
   });
 
   const periodStart = summary?.periodStart;
   const periodEnd = summary?.periodEnd;
   const { data: settlements, isLoading: settlementsLoading } = useQuery({
     queryKey: ["settlement-workspace-settlements", periodStart, periodEnd],
-    queryFn: () => fetchWorkspaceSettlements(periodStart as number, periodEnd as number),
+    queryFn: ({ signal }) =>
+      fetchWorkspaceSettlements(periodStart as number, periodEnd as number, { signal }),
     enabled: periodStart != null && periodEnd != null,
   });
 

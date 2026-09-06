@@ -1,6 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { detentionPolicyTableGraphQLConfig } from "@/lib/graphql/detention-policy-table";
-import type { DetentionPolicy } from "@trenova/shared/types/detention";
+import {
+  detentionPolicyTableGraphQLConfig,
+  type DetentionPolicyRow,
+} from "@/lib/graphql/detention-policy-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./detention-policy-columns";
@@ -10,7 +12,7 @@ export default function DetentionPolicyTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<DetentionPolicy>
+    <DataTable<DetentionPolicyRow>
       name="Detention Policy"
       queryKey="detention-policy-list"
       graphql={detentionPolicyTableGraphQLConfig}

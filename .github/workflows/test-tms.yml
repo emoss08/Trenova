@@ -195,12 +195,43 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go run github.com/99designs/gqlgen generate
-          if ! git diff --quiet -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver; then
+          # gqlgen's model plugin can miss the models_gen.go it just wrote when
+          # the schema adds a model, so the first pass fails and the second
+          # succeeds. This mirrors the retry in services/tms/Taskfile.yml.
+          go tool gqlgen generate || go tool gqlgen generate
+          # follow-schema layout writes one file per schema, so a new schema file
+          # produces a new *untracked* generated file that git diff cannot see.
+          PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver"
+          if [ -n "$(git status --porcelain -- $PATHS)" ]; then
             echo "::error::GraphQL server code is stale - run 'task gqlgen' and commit"
-            git diff --stat -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver
+            git status --porcelain -- $PATHS
             exit 1
           fi
+
+      - name: GraphQL schema breaking changes
+        if: github.event_name == 'pull_request'
+        working-directory: ./services/tms
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          # A PR labelled graphql-breaking-approved still reports every change as an
+          # annotation but no longer fails on breaking ones; use it for deliberate
+          # redesigns that ship with the regenerated client in the same PR.
+          BREAKING_APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'graphql-breaking-approved') }}
+        run: |
+          set -euo pipefail
+          # The checkout is shallow, so fetch just the tip of the base branch
+          # for git archive to read the base schema from.
+          git fetch --no-tags --depth=1 origin "refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          BASE_DIR="$(mktemp -d)"
+          git archive "origin/$BASE_REF" internal/api/graphql/schema | tar -x -C "$BASE_DIR"
+          if go run ./internal/api/graphql/schemadiff/cmd -github-annotations -base "$BASE_DIR/internal/api/graphql/schema" -head internal/api/graphql/schema; then
+            exit 0
+          fi
+          if [ "$BREAKING_APPROVED" = "true" ]; then
+            echo "::notice::Breaking GraphQL schema changes accepted via the graphql-breaking-approved label"
+            exit 0
+          fi
+          exit 1
 
       - name: Seed IDs
         working-directory: ./services/tms

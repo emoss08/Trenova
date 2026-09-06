@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,10 +42,12 @@ type Worker struct {
 	StateID               pulid.ID           `json:"stateId"                     bun:"state_id,type:VARCHAR(100),notnull"`
 	FleetCodeID           pulid.ID           `json:"fleetCodeId"                 bun:"fleet_code_id,type:VARCHAR(100),nullzero"`
 	ManagerID             pulid.ID           `json:"managerId"                   bun:"manager_id,type:VARCHAR(100),nullzero"`
+	PositionID            pulid.ID           `json:"positionId"                  bun:"position_id,type:VARCHAR(100),nullzero"`
 	UserID                pulid.ID           `json:"userId"                      bun:"user_id,type:VARCHAR(100),nullzero"`
 	Status                domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"`
 	Type                  WorkerType         `json:"type"                        bun:"type,type:worker_type_enum,notnull,default:'Employee'"`
 	DriverType            DriverType         `json:"driverType"                  bun:"driver_type,type:driver_type_enum,notnull,default:'OTR'"`
+	LeaveType             LeaveType          `json:"leaveType"                   bun:"leave_type,type:worker_leave_type_enum,nullzero"`
 	ProfilePicURL         string             `json:"profilePicUrl"               bun:"profile_pic_url,type:VARCHAR(255),nullzero"`
 	FirstName             string             `json:"firstName"                   bun:"first_name,type:VARCHAR(100),notnull"`
 	LastName              string             `json:"lastName"                    bun:"last_name,type:VARCHAR(100),notnull"`
@@ -74,6 +77,7 @@ type Worker struct {
 	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"`
 	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id"`
 	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"`
+	Position     *JobPosition         `json:"position,omitempty"     bun:"rel:belongs-to,join:position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id"`
 	Profile      *WorkerProfile       `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
@@ -181,6 +185,28 @@ func (w *Worker) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Name:   "type",
 				Type:   domaintypes.FieldTypeEnum,
 				Weight: domaintypes.SearchWeightB,
+			},
+		},
+		// Declaring the profile queryable is what lets the roster filter and
+		// sort on the HR roll-ups — compliance status, training health, safety
+		// rating, what expires next — through the same generic field/operator
+		// machinery every other list uses. Without it those columns can be
+		// displayed but never filtered, because the field map only ever
+		// carries the root table's own columns.
+		//
+		// The alias is deliberately not the model's own "wrkp": bun already
+		// joins worker_profiles when it eager-loads the relation, and giving
+		// the filter join its own name keeps the two from colliding.
+		Relationships: []*domaintypes.RelationshipDefintion{
+			{
+				Field:        "Profile",
+				Type:         dbtype.RelationshipTypeHasOne,
+				TargetEntity: (*WorkerProfile)(nil),
+				TargetTable:  "worker_profiles",
+				ForeignKey:   "worker_id",
+				ReferenceKey: "id",
+				Alias:        "wprof",
+				Queryable:    true,
 			},
 		},
 	}

@@ -40,7 +40,7 @@ func TestOrganizationBatchFunc_DelegatesToOrganizationService(t *testing.T) {
 		Once()
 	factory := &OrganizationByIDLoaderFactory{organizationService: organizationService}
 
-	results := factory.batchFunc(tenantInfo)(t.Context(), []string{
+	values, errs := factory.batchFunc(tenantInfo)(t.Context(), []string{
 		secondID.String(),
 		"bad",
 		firstID.String(),
@@ -48,15 +48,15 @@ func TestOrganizationBatchFunc_DelegatesToOrganizationService(t *testing.T) {
 		secondID.String(),
 	})
 
-	require.Len(t, results, 5)
-	require.NoError(t, results[0].Error)
-	assert.Equal(t, "Second", results[0].Data.Name)
-	require.Error(t, results[1].Error)
-	require.NoError(t, results[2].Error)
-	assert.Equal(t, "First", results[2].Data.Name)
-	require.Error(t, results[3].Error)
-	require.NoError(t, results[4].Error)
-	assert.Equal(t, "Second", results[4].Data.Name)
+	require.Len(t, values, 5)
+	require.NoError(t, errs[0])
+	assert.Equal(t, "Second", values[0].Name)
+	require.Error(t, errs[1])
+	require.NoError(t, errs[2])
+	assert.Equal(t, "First", values[2].Name)
+	require.Error(t, errs[3])
+	require.NoError(t, errs[4])
+	assert.Equal(t, "Second", values[4].Name)
 }
 
 func TestOrganizationBatchFunc_ServiceErrorFillsValidResults(t *testing.T) {
@@ -75,12 +75,12 @@ func TestOrganizationBatchFunc_ServiceErrorFillsValidResults(t *testing.T) {
 		Once()
 	factory := &OrganizationByIDLoaderFactory{organizationService: organizationService}
 
-	results := factory.batchFunc(pagination.TenantInfo{})(context.Background(), []string{
+	values, errs := factory.batchFunc(pagination.TenantInfo{})(context.Background(), []string{
 		"bad",
 		organizationID.String(),
 	})
 
-	require.Len(t, results, 2)
-	require.Error(t, results[0].Error)
-	require.ErrorIs(t, results[1].Error, serviceErr)
+	require.Len(t, values, 2)
+	require.Error(t, errs[0])
+	require.ErrorIs(t, errs[1], serviceErr)
 }

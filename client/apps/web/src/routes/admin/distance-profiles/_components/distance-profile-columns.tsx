@@ -1,9 +1,9 @@
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import type { DistanceProfile } from "@/types/distance-profile";
+import type { DistanceProfileRow } from "@/lib/graphql/distance-profile-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<DistanceProfile>[] {
+export function getColumns(): ColumnDef<DistanceProfileRow>[] {
   return [
     {
       accessorKey: "name",

@@ -1,10 +1,10 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import type { EDITestCaseRow } from "@trenova/shared/types/edi";
+import type { EDITestCaseTableRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getTestCaseColumns(): ColumnDef<EDITestCaseRow>[] {
+export function getTestCaseColumns(): ColumnDef<EDITestCaseTableRow>[] {
   return [
     {
       accessorKey: "name",

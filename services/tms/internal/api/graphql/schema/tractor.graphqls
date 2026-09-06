@@ -27,14 +27,14 @@ type Tractor {
   year: Int
   licensePlateNumber: String!
   registrationNumber: String!
-  registrationExpiry: Int
+  registrationExpiry: Timestamp
   vin: String!
   externalId: String!
   lastKnownLocationId: ID
   lastKnownLocationName: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   customFields: JSON
   businessUnit: BusinessUnit
   organization: Organization
@@ -61,7 +61,7 @@ input TractorInput {
   year: Int
   licensePlateNumber: String
   registrationNumber: String
-  registrationExpiry: Int
+  registrationExpiry: Timestamp
   vin: String
   externalId: String
   version: Int
@@ -69,24 +69,42 @@ input TractorInput {
 }
 
 input TractorPatchInput {
-  primaryWorkerId: ID
-  equipmentTypeId: ID
-  equipmentManufacturerId: ID
+  "Omit to leave unchanged; null is rejected."
+  primaryWorkerId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  equipmentTypeId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  equipmentManufacturerId: ID @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
   stateId: ID @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
   fleetCodeId: ID @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
   secondaryWorkerId: ID @goField(omittable: true)
-  status: EquipmentStatus
-  code: String
-  model: String
-  make: String
-  year: Int
-  licensePlateNumber: String
-  registrationNumber: String
-  registrationExpiry: Int
-  vin: String
-  externalId: String
-  version: Int
-  customFields: JSON
+  "Omit to leave unchanged; null is rejected."
+  status: EquipmentStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  model: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  make: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  year: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  licensePlateNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  registrationNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  registrationExpiry: Timestamp @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  vin: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  externalId: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  customFields: JSON @goField(omittable: true)
 }
 
 input BulkUpdateTractorStatusInput {

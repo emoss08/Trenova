@@ -21,7 +21,10 @@ fragment ReportDefinitionFields on ReportDefinition {
   updatedAt
 }
 
-query ReportDefinitionsTable($input: DataTableConnectionInput!) {
+query ReportDefinitionsTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   reportDefinitions(input: $input) {
     edges {
       node {
@@ -29,7 +32,7 @@ query ReportDefinitionsTable($input: DataTableConnectionInput!) {
       }
       cursor
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

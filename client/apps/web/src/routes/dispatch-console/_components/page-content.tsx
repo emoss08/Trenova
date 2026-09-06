@@ -25,6 +25,7 @@ import { SummaryStrip } from "./summary-strip";
 import { useDispatchActions } from "./use-dispatch-actions";
 import { useDispatchHotkeys } from "./use-dispatch-hotkeys";
 import {
+  toDispatchBoardInput,
   useDispatchRail,
   useDispatchSelection,
   useDispatchView,
@@ -69,7 +70,7 @@ export function DispatchConsoleContent() {
   useEffect(() => resetConsole, [resetConsole]);
 
   const boardInput = useMemo(
-    () => ({ includeCovered, windowStart: range.start, windowEnd: range.end }),
+    () => toDispatchBoardInput(range, includeCovered),
     [includeCovered, range],
   );
 

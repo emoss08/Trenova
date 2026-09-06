@@ -150,7 +150,7 @@ bands to pay a higher per-mile rate on short hauls.
 type PayMileageBand {
   minMiles: Int!
   maxMiles: Int!
-  rate: String!
+  rate: Decimal!
 }
 
 """
@@ -168,7 +168,7 @@ type PayProfileComponent {
   kind: PayComponentKind!
   method: PayCalcMethod!
   description: String!
-  rate: String!
+  rate: Decimal!
   revenueBasis: PayRevenueBasis
   bands: [PayMileageBand!]
   freeTimeMinutes: Int!
@@ -195,11 +195,11 @@ type PayProfile {
   classification: PayeeClassification!
   currencyCode: String!
   guaranteedPeriodMinimumMinor: Int!
-  perDiemRatePerMile: String!
+  perDiemRatePerMile: Decimal!
   perDiemDailyCapMinor: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   components: [PayProfileComponent!]
   activeAssignmentCount: Int!
 }
@@ -225,7 +225,7 @@ type PayRateOverride {
   "The pay profile component being overridden."
   componentId: ID!
   "The driver-specific rate that replaces the component's base rate (and bands)."
-  rate: String!
+  rate: Decimal!
 }
 
 """
@@ -241,18 +241,18 @@ type WorkerPayAssignment {
   workerId: ID!
   payProfileId: ID!
   "Unix date the assignment starts applying (inclusive)."
-  effectiveFrom: Int!
+  effectiveFrom: Timestamp!
   "Unix date the assignment stops applying (exclusive). Null while current."
-  effectiveTo: Int
+  effectiveTo: Timestamp
   "Share of computed pay this worker receives (100 = full pay; 50/50 for teams)."
-  splitPercent: String!
+  splitPercent: Decimal!
   "Driver-specific rate overrides applied on top of the shared profile."
   rateOverrides: [PayRateOverride!]
   notes: String!
   createdById: ID
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   payProfile: PayProfile
 }
@@ -288,8 +288,8 @@ type PayCode {
   "Seeded codes: direction and code are fixed, everything else is editable."
   isSystem: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   glAccount: PayCodeGLAccount
 }
 
@@ -331,12 +331,12 @@ type RecurringDeduction {
   amountMinor: Int!
   totalCapMinor: Int
   deductedToDateMinor: Int!
-  startDate: Int!
-  endDate: Int
+  startDate: Timestamp!
+  endDate: Timestamp
   currencyCode: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   payCode: PayCode
 }
@@ -373,12 +373,12 @@ type RecurringEarning {
   amountMinor: Int!
   totalCapMinor: Int
   paidToDateMinor: Int!
-  startDate: Int!
-  endDate: Int
+  startDate: Timestamp!
+  endDate: Timestamp
   currencyCode: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   payCode: PayCode
 }
@@ -408,7 +408,7 @@ type PayAdvance {
   status: PayAdvanceStatus!
   source: PayAdvanceSource!
   reference: String!
-  issuedDate: Int!
+  issuedDate: Timestamp!
   amountMinor: Int!
   recoveredMinor: Int!
   writtenOffMinor: Int!
@@ -417,8 +417,8 @@ type PayAdvance {
   notes: String!
   currencyCode: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
 }
 
@@ -445,11 +445,11 @@ type EscrowTransaction {
   type: EscrowTransactionType!
   amountMinor: Int!
   balanceAfterMinor: Int!
-  occurredDate: Int!
+  occurredDate: Timestamp!
   description: String!
   settlementId: ID
   createdById: ID
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 """
@@ -466,14 +466,14 @@ type EscrowAccount {
   status: EscrowAccountStatus!
   targetAmountMinor: Int!
   balanceMinor: Int!
-  annualInterestRate: String!
-  lastInterestAccrualDate: Int
-  openedDate: Int!
-  closedDate: Int
+  annualInterestRate: Decimal!
+  lastInterestAccrualDate: Timestamp
+  openedDate: Timestamp!
+  closedDate: Timestamp
   currencyCode: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   transactions: [EscrowTransaction!]
 }
@@ -516,8 +516,8 @@ type DriverSettlementLine {
   componentKind: PayComponentKind
   method: PayCalcMethod
   description: String!
-  quantity: String!
-  rate: String!
+  quantity: Decimal!
+  rate: Decimal!
   amountMinor: Int!
   shipmentId: ID
   moveId: ID
@@ -548,37 +548,37 @@ type DriverSettlement {
   status: DriverSettlementStatus!
   classification: PayeeClassification!
   payProfileName: String!
-  periodStart: Int!
-  periodEnd: Int!
-  payDate: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  payDate: Timestamp!
   grossEarningsMinor: Int!
   reimbursementsMinor: Int!
   deductionsMinor: Int!
   carryForwardInMinor: Int!
   carryForwardOutMinor: Int!
   netPayMinor: Int!
-  totalMiles: String!
+  totalMiles: Decimal!
   shipmentCount: Int!
   currencyCode: String!
   hasExceptions: Boolean!
   exceptions: [SettlementException!]
   notes: String!
   submittedById: ID
-  submittedAt: Int
+  submittedAt: Timestamp
   approvedById: ID
-  approvedAt: Int
+  approvedAt: Timestamp
   postedById: ID
-  postedAt: Int
-  paidAt: Int
+  postedAt: Timestamp
+  paidAt: Timestamp
   paidById: ID
   paymentMethod: String!
   paymentReference: String!
   voidedById: ID
-  voidedAt: Int
+  voidedAt: Timestamp
   voidReason: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   lines: [DriverSettlementLine!]
 }
@@ -605,9 +605,9 @@ type SettlementBatch {
   businessUnitId: ID!
   status: SettlementBatchStatus!
   name: String!
-  periodStart: Int!
-  periodEnd: Int!
-  payDate: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  payDate: Timestamp!
   settlementCount: Int!
   exceptionCount: Int!
   totalGrossMinor: Int!
@@ -615,13 +615,13 @@ type SettlementBatch {
   currencyCode: String!
   notes: String!
   generatedById: ID
-  generatedAt: Int
-  completedAt: Int
+  generatedAt: Timestamp
+  completedAt: Timestamp
   canceledById: ID
-  canceledAt: Int
+  canceledAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   settlements: [DriverSettlement!]
 }
 
@@ -641,8 +641,8 @@ type DriverPayEventComponent {
   kind: PayComponentKind!
   method: PayCalcMethod!
   description: String!
-  quantity: String!
-  rate: String!
+  quantity: Decimal!
+  rate: Decimal!
   amountMinor: Int!
 }
 
@@ -663,20 +663,20 @@ type DriverPayEvent {
   payProfileId: ID
   settlementId: ID
   status: DriverPayEventStatus!
-  eventDate: Int!
+  eventDate: Timestamp!
   grossAmountMinor: Int!
-  totalMiles: String!
+  totalMiles: Decimal!
   currencyCode: String!
   components: [DriverPayEventComponent!]
   proNumber: String!
   "Held events are skipped by settlement generation until released or manually attached."
   onHold: Boolean!
   holdReason: String!
-  voidedAt: Int
+  voidedAt: Timestamp
   voidReason: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
 }
 
@@ -711,13 +711,13 @@ type SettlementControl {
   "When on, approving a settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
-  varianceThresholdPct: String!
+  varianceThresholdPct: Decimal!
   varianceLookbackWeeks: Int!
-  defaultEscrowInterestRate: String!
+  defaultEscrowInterestRate: Decimal!
   escrowInterestFrequencyMonths: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 """
@@ -726,9 +726,9 @@ status for the pay period, exception totals, and the org-wide pool of
 unsettled pay events waiting to be transferred into settlements.
 """
 type SettlementWorkspaceSummary {
-  periodStart: Int!
-  periodEnd: Int!
-  payDate: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  payDate: Timestamp!
   draftCount: Int!
   pendingApprovalCount: Int!
   approvedCount: Int!
@@ -806,22 +806,22 @@ type WorkerYTDPaySummary {
 }
 
 type SettlementPeriodBounds {
-  periodStart: Int!
-  periodEnd: Int!
-  payDate: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  payDate: Timestamp!
 }
 
 input PayMileageBandInput {
   minMiles: Int!
   maxMiles: Int!
-  rate: String!
+  rate: Decimal!
 }
 
 input PayProfileComponentInput {
   kind: PayComponentKind!
   method: PayCalcMethod!
   description: String
-  rate: String!
+  rate: Decimal!
   revenueBasis: PayRevenueBasis
   bands: [PayMileageBandInput!]
   freeTimeMinutes: Int
@@ -837,7 +837,7 @@ input CreatePayProfileInput {
   classification: PayeeClassification!
   currencyCode: String
   guaranteedPeriodMinimumMinor: Int
-  perDiemRatePerMile: String
+  perDiemRatePerMile: Decimal
   perDiemDailyCapMinor: Int
   components: [PayProfileComponentInput!]!
 }
@@ -851,14 +851,14 @@ input UpdatePayProfileInput {
   classification: PayeeClassification!
   currencyCode: String
   guaranteedPeriodMinimumMinor: Int
-  perDiemRatePerMile: String
+  perDiemRatePerMile: Decimal
   perDiemDailyCapMinor: Int
   components: [PayProfileComponentInput!]!
 }
 
 input PayRateOverrideInput {
   componentId: ID!
-  rate: String!
+  rate: Decimal!
 }
 
 """
@@ -868,10 +868,10 @@ is automatically ended on the new effective date — no manual cleanup needed.
 input AssignPayProfileInput {
   workerId: ID!
   payProfileId: ID!
-  effectiveFrom: Int!
-  effectiveTo: Int
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
   "Defaults to 100. Use 50 for an even team split."
-  splitPercent: String
+  splitPercent: Decimal
   "Optional per-component rate overrides for this driver."
   rateOverrides: [PayRateOverrideInput!]
   notes: String
@@ -879,7 +879,7 @@ input AssignPayProfileInput {
 
 input EndWorkerPayAssignmentInput {
   assignmentId: ID!
-  endDate: Int!
+  endDate: Timestamp!
 }
 
 input CreateRecurringDeductionInput {
@@ -895,8 +895,8 @@ input CreateRecurringDeductionInput {
   description: String!
   amountMinor: Int!
   totalCapMinor: Int
-  startDate: Int!
-  endDate: Int
+  startDate: Timestamp!
+  endDate: Timestamp
   currencyCode: String
 }
 
@@ -911,8 +911,8 @@ input UpdateRecurringDeductionInput {
   description: String!
   amountMinor: Int!
   totalCapMinor: Int
-  startDate: Int!
-  endDate: Int
+  startDate: Timestamp!
+  endDate: Timestamp
   currencyCode: String
 }
 
@@ -947,8 +947,8 @@ input CreateRecurringEarningInput {
   description: String!
   amountMinor: Int!
   totalCapMinor: Int
-  startDate: Int!
-  endDate: Int
+  startDate: Timestamp!
+  endDate: Timestamp
   currencyCode: String
 }
 
@@ -962,8 +962,8 @@ input UpdateRecurringEarningInput {
   description: String!
   amountMinor: Int!
   totalCapMinor: Int
-  startDate: Int!
-  endDate: Int
+  startDate: Timestamp!
+  endDate: Timestamp
   currencyCode: String
 }
 
@@ -971,7 +971,7 @@ input IssuePayAdvanceInput {
   workerId: ID!
   source: PayAdvanceSource!
   reference: String
-  issuedDate: Int!
+  issuedDate: Timestamp!
   amountMinor: Int!
   notes: String
   currencyCode: String
@@ -985,8 +985,8 @@ input WriteOffPayAdvanceInput {
 input OpenEscrowAccountInput {
   workerId: ID!
   targetAmountMinor: Int!
-  annualInterestRate: String
-  openedDate: Int
+  annualInterestRate: Decimal
+  openedDate: Timestamp
   currencyCode: String
 }
 
@@ -995,19 +995,19 @@ input UpdateEscrowAccountInput {
   version: Int!
   workerId: ID!
   targetAmountMinor: Int!
-  annualInterestRate: String!
+  annualInterestRate: Decimal!
 }
 
 input AdjustEscrowAccountInput {
   accountId: ID!
   amountMinor: Int!
   description: String!
-  occurredDate: Int
+  occurredDate: Timestamp
 }
 
 input GenerateSettlementBatchInput {
-  periodStart: Int
-  periodEnd: Int
+  periodStart: Timestamp
+  periodEnd: Timestamp
   name: String
   notes: String
 }
@@ -1028,9 +1028,9 @@ input PayWorkerNowInput {
 
 input GenerateDriverSettlementInput {
   workerId: ID!
-  periodStart: Int!
-  periodEnd: Int!
-  payDate: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  payDate: Timestamp!
   batchId: ID
 }
 
@@ -1049,8 +1049,8 @@ input AddSettlementAdjustmentInput {
   settlementId: ID!
   description: String!
   amountMinor: Int!
-  quantity: String
-  rate: String
+  quantity: Decimal
+  rate: Decimal
   "Optional pay code — the adjustment posts to the code's GL account when mapped."
   payCodeId: ID
 }
@@ -1095,9 +1095,9 @@ input UpdateSettlementControlInput {
   autoAttachAccruals: Boolean!
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
-  varianceThresholdPct: String!
+  varianceThresholdPct: Decimal!
   varianceLookbackWeeks: Int!
-  defaultEscrowInterestRate: String!
+  defaultEscrowInterestRate: Decimal!
   escrowInterestFrequencyMonths: Int!
 }
 
@@ -1140,13 +1140,13 @@ extend type Query {
   settlementControl: SettlementControl!
   currentSettlementPeriod: SettlementPeriodBounds!
   "Workspace snapshot for a pay period; omit bounds to use the current period."
-  settlementWorkspaceSummary(periodStart: Int, periodEnd: Int): SettlementWorkspaceSummary!
+  settlementWorkspaceSummary(periodStart: Timestamp, periodEnd: Timestamp): SettlementWorkspaceSummary!
   """
   Per-driver breakdown of the unsettled pay pool for a period (defaults to the
   current period). Drives off-cycle "settle now" workflows and exception review.
   """
-  unsettledWorkerSummaries(periodStart: Int, periodEnd: Int): [UnsettledWorkerSummary!]!
-  previewDriverSettlement(workerId: ID!, periodStart: Int, periodEnd: Int): DriverSettlement!
+  unsettledWorkerSummaries(periodStart: Timestamp, periodEnd: Timestamp): [UnsettledWorkerSummary!]!
+  previewDriverSettlement(workerId: ID!, periodStart: Timestamp, periodEnd: Timestamp): DriverSettlement!
   exportSettlementBatchCsv(batchId: ID!): String!
 }
 

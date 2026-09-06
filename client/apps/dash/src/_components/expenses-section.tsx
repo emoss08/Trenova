@@ -13,7 +13,11 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { dateToUnixTimestamp, formatRange, generateDateOnly } from "@trenova/shared/lib/date";
-import { cancelMyExpense, fetchMyExpenses, submitMyExpense } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  cancelMyExpense,
+  fetchMyExpenses,
+  submitMyExpense,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { uploadMyExpenseReceipt } from "@trenova/shared/lib/portal";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +31,10 @@ import { stopPlace, originStop, destinationStop, useMyLoads } from "./use-loads"
 export function ExpensesSection() {
   const queryClient = useQueryClient();
   const [submitOpen, setSubmitOpen] = useState(false);
-  const expenses = useQuery({ queryKey: ["dash-expenses"], queryFn: fetchMyExpenses });
+  const expenses = useQuery({
+    queryKey: ["dash-expenses"],
+    queryFn: ({ signal }) => fetchMyExpenses({ signal }),
+  });
 
   const cancel = useMutation({
     mutationFn: (id: string) => cancelMyExpense(id),

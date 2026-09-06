@@ -79,14 +79,14 @@ fragment CarrierTableRowFields on Carrier {
   }
 }
 
-query CarrierTable($input: DataTableConnectionInput!) {
+query CarrierTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   carriers(input: $input) {
     edges {
       node {
         ...CarrierTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

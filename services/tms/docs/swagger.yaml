@@ -9771,10 +9771,22 @@ definitions:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
             approverId:
                 type: string
+            autoApproved:
+                type: boolean
+            balanceAfterDays:
+                $ref: '#/definitions/decimal.NullDecimal'
             businessUnitId:
+                type: string
+            cancellationReason:
+                type: string
+            cancelledBy:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            cancelledById:
                 type: string
             createdAt:
                 type: integer
+            days:
+                type: number
             endDate:
                 type: integer
             id:
@@ -9782,6 +9794,8 @@ definitions:
             organizationId:
                 type: string
             reason:
+                type: string
+            rejectionReason:
                 type: string
             rejector:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
@@ -10197,42 +10211,6 @@ definitions:
                 type: array
             pattern:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_repositories.LanePatternSummary'
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartDataPoint:
-        properties:
-            bereavement:
-                type: integer
-            date:
-                type: string
-            holiday:
-                type: integer
-            maternity:
-                type: integer
-            paternity:
-                type: integer
-            personal:
-                type: integer
-            sick:
-                type: integer
-            vacation:
-                type: integer
-            workers:
-                additionalProperties:
-                    items:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartWorker'
-                    type: array
-                type: object
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartWorker:
-        properties:
-            firstName:
-                type: string
-            id:
-                type: string
-            lastName:
-                type: string
-            ptoType:
-                type: string
         type: object
     github_com_emoss08_trenova_internal_core_ports_repositories.ShipmentDuplicateWorkflowResponse:
         properties:
@@ -12219,25 +12197,6 @@ definitions:
             results:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.Worker'
-                type: array
-            totalCount:
-                type: integer
-        type: object
-    github_com_emoss08_trenova_pkg_pagination.CursorResponse-array_github_com_emoss08_trenova_internal_core_domain_worker_WorkerPTO:
-        properties:
-            count:
-                type: integer
-            endCursor:
-                type: string
-            hasNextPage:
-                type: boolean
-            next:
-                type: string
-            previous:
-                type: string
-            results:
-                items:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO'
                 type: array
             totalCount:
                 type: integer
@@ -25512,6 +25471,45 @@ paths:
             summary: List available permission resources
             tags:
                 - Permissions
+    /portal/credentials/{credentialID}/document:
+        post:
+            consumes:
+                - multipart/form-data
+            description: Files a photo or scan against the credential so the office can verify and renew it.
+            operationId: uploadPortalCredentialDocument
+            parameters:
+                - description: Credential ID
+                  in: path
+                  name: credentialID
+                  required: true
+                  type: string
+                - description: Document file
+                  in: formData
+                  name: file
+                  required: true
+                  type: file
+            produces:
+                - application/json
+            responses:
+                "201":
+                    description: Created
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_driverportalservice.PortalDocument'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            summary: Upload a renewal document for one of the driver's credentials
+            tags:
+                - DriverPortal
     /portal/document-types:
         get:
             description: Returns the carrier's shipment-category document types (POD, BOL, ...) for tagging uploads.
@@ -34103,338 +34101,6 @@ paths:
             summary: Get a user option
             tags:
                 - Users
-    /worker-pto/:
-        get:
-            consumes:
-                - application/json
-            operationId: listWorkerPTO
-            parameters:
-                - description: Search query
-                  in: query
-                  name: query
-                  type: string
-                - description: Page size
-                  in: query
-                  maximum: 100
-                  minimum: 1
-                  name: limit
-                  type: integer
-                - description: Opaque cursor
-                  in: query
-                  name: after
-                  type: string
-                - description: Filter by PTO status
-                  in: query
-                  name: status
-                  type: string
-                - description: Filter by PTO type
-                  in: query
-                  name: type
-                  type: string
-                - description: Start date from
-                  in: query
-                  name: startDateFrom
-                  type: integer
-                - description: Start date to
-                  in: query
-                  name: startDateTo
-                  type: integer
-                - description: Worker ID
-                  in: query
-                  name: workerId
-                  type: string
-                - description: Include worker details
-                  in: query
-                  name: includeWorker
-                  type: boolean
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.CursorResponse-array_github_com_emoss08_trenova_internal_core_domain_worker_WorkerPTO'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: List worker PTO entries
-            tags:
-                - Worker PTO
-    /worker-pto/{ptoID}/:
-        get:
-            operationId: getWorkerPTO
-            parameters:
-                - description: Worker PTO ID
-                  in: path
-                  name: ptoID
-                  required: true
-                  type: string
-                - description: Include worker details
-                  in: query
-                  name: includeWorker
-                  type: boolean
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get a worker PTO entry
-            tags:
-                - Worker PTO
-    /worker-pto/{ptoID}/approve/:
-        post:
-            operationId: approveWorkerPTO
-            parameters:
-                - description: Worker PTO ID
-                  in: path
-                  name: ptoID
-                  required: true
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Approve a worker PTO entry
-            tags:
-                - Worker PTO
-    /worker-pto/{ptoID}/reject/:
-        post:
-            operationId: rejectWorkerPTO
-            parameters:
-                - description: Worker PTO ID
-                  in: path
-                  name: ptoID
-                  required: true
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.WorkerPTO'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Reject a worker PTO entry
-            tags:
-                - Worker PTO
-    /worker-pto/chart/:
-        get:
-            operationId: getWorkerPTOChartData
-            parameters:
-                - description: Search query
-                  in: query
-                  name: query
-                  type: string
-                - description: Page size
-                  in: query
-                  maximum: 100
-                  minimum: 1
-                  name: limit
-                  type: integer
-                - description: Page offset
-                  in: query
-                  minimum: 0
-                  name: offset
-                  type: integer
-                - description: Start date from
-                  in: query
-                  name: startDateFrom
-                  type: integer
-                - description: Start date to
-                  in: query
-                  name: startDateTo
-                  type: integer
-                - description: PTO type
-                  in: query
-                  name: type
-                  type: string
-                - description: Worker ID
-                  in: query
-                  name: workerId
-                  type: string
-                - description: Timezone
-                  in: query
-                  name: timezone
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        items:
-                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_repositories.PTOChartDataPoint'
-                        type: array
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get worker PTO chart data
-            tags:
-                - Worker PTO
-    /worker-pto/upcoming/:
-        get:
-            consumes:
-                - application/json
-            operationId: listUpcomingWorkerPTO
-            parameters:
-                - description: Search query
-                  in: query
-                  name: query
-                  type: string
-                - description: Page size
-                  in: query
-                  maximum: 100
-                  minimum: 1
-                  name: limit
-                  type: integer
-                - description: Opaque cursor
-                  in: query
-                  name: after
-                  type: string
-                - description: Filter by PTO status
-                  in: query
-                  name: status
-                  type: string
-                - description: Filter by PTO type
-                  in: query
-                  name: type
-                  type: string
-                - description: Start date
-                  in: query
-                  name: startDate
-                  type: integer
-                - description: End date
-                  in: query
-                  name: endDate
-                  type: integer
-                - description: Worker ID
-                  in: query
-                  name: workerId
-                  type: string
-                - description: Fleet code ID
-                  in: query
-                  name: fleetCodeId
-                  type: string
-                - description: Timezone
-                  in: query
-                  name: timezone
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.CursorResponse-array_github_com_emoss08_trenova_internal_core_domain_worker_WorkerPTO'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: List upcoming worker PTO entries
-            tags:
-                - Worker PTO
     /workers/:
         get:
             consumes:
@@ -34808,8 +34474,6 @@ tags:
       x-displayName: Tractors
     - name: Trailers
       x-displayName: Trailers
-    - name: Worker PTO
-      x-displayName: Worker Time Off
     - name: Workers
       x-displayName: Workers
     - name: Accessorial Charges
@@ -34928,7 +34592,6 @@ x-tagGroups:
         - Tenders
         - Tractors
         - Trailers
-        - Worker PTO
         - Workers
     - name: Master Data
       tags:

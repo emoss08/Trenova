@@ -7,20 +7,50 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 //go:embed persisted-documents.json
 var persistedDocumentsFS embed.FS
 
-const persistedDocumentsPath = "persisted-documents.json"
+const (
+	persistedDocumentsPath           = "persisted-documents.json"
+	developmentManifestReloadMinGap  = time.Second
+	defaultDevelopmentManifestSource = "internal/api/graphql/persisted-documents.json"
+)
+
+type PersistedOperationManifestParams struct {
+	fx.In
+
+	Config *config.Config
+	Logger *zap.Logger
+}
 
 type PersistedOperationManifest struct {
-	queries map[string]string
+	mu       sync.RWMutex
+	queries  map[string]string
+	reloader *manifestReloader
+}
+
+type manifestReloader struct {
+	path        string
+	minInterval time.Duration
+	now         func() time.Time
+	l           *zap.Logger
+
+	mu          sync.Mutex
+	lastAttempt time.Time
+	lastModTime time.Time
 }
 
 type persistedGraphQLRequest struct {
@@ -40,7 +70,9 @@ type persistedGraphQLPersistedQuery struct {
 	Version    int    `json:"version,omitempty"`
 }
 
-func NewPersistedOperationManifest() (*PersistedOperationManifest, error) {
+func NewPersistedOperationManifest(
+	p PersistedOperationManifestParams,
+) (*PersistedOperationManifest, error) {
 	data, err := persistedDocumentsFS.ReadFile(persistedDocumentsPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading GraphQL persisted operation manifest: %w", err)
@@ -51,10 +83,27 @@ func NewPersistedOperationManifest() (*PersistedOperationManifest, error) {
 		return nil, fmt.Errorf("loading GraphQL persisted operation manifest: %w", err)
 	}
 
+	if path := developmentManifestSource(p.Config); path != "" {
+		logger := p.Logger
+		if logger == nil {
+			logger = zap.NewNop()
+		}
+		manifest.enableReload(path, logger.Named("api.graphql.persisted"))
+	}
+
 	return manifest, nil
 }
 
 func LoadPersistedOperationManifest(data []byte) (*PersistedOperationManifest, error) {
+	queries, err := parsePersistedOperations(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PersistedOperationManifest{queries: queries}, nil
+}
+
+func parsePersistedOperations(data []byte) (map[string]string, error) {
 	rawQueries := map[string]string{}
 	if err := sonic.Unmarshal(data, &rawQueries); err != nil {
 		return nil, fmt.Errorf("parsing persisted operations: %w", err)
@@ -78,9 +127,7 @@ func LoadPersistedOperationManifest(data []byte) (*PersistedOperationManifest, e
 		queries[normalizedHash] = query
 	}
 
-	return &PersistedOperationManifest{
-		queries: queries,
-	}, nil
+	return queries, nil
 }
 
 func (m *PersistedOperationManifest) Query(hash string) (string, bool) {
@@ -88,8 +135,15 @@ func (m *PersistedOperationManifest) Query(hash string) (string, bool) {
 		return "", false
 	}
 
-	query, ok := m.queries[normalizePersistedHash(hash)]
-	return query, ok
+	normalizedHash := normalizePersistedHash(hash)
+	if query, ok := m.lookup(normalizedHash); ok {
+		return query, true
+	}
+	if m.reloader == nil || !m.reloadIfChanged() {
+		return "", false
+	}
+
+	return m.lookup(normalizedHash)
 }
 
 func (m *PersistedOperationManifest) KnownHashes() []string {
@@ -97,11 +151,108 @@ func (m *PersistedOperationManifest) KnownHashes() []string {
 		return []string{}
 	}
 
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	hashes := make([]string, 0, len(m.queries))
 	for hash := range m.queries {
 		hashes = append(hashes, hash)
 	}
 	return hashes
+}
+
+func (m *PersistedOperationManifest) Len() int {
+	if m == nil {
+		return 0
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return len(m.queries)
+}
+
+func (m *PersistedOperationManifest) lookup(normalizedHash string) (string, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	query, ok := m.queries[normalizedHash]
+	return query, ok
+}
+
+func (m *PersistedOperationManifest) enableReload(path string, logger *zap.Logger) {
+	m.reloader = &manifestReloader{
+		path:        path,
+		minInterval: developmentManifestReloadMinGap,
+		now:         time.Now,
+		l:           logger,
+	}
+	if info, err := os.Stat(path); err == nil {
+		m.reloader.lastModTime = info.ModTime()
+	}
+}
+
+func (m *PersistedOperationManifest) reloadIfChanged() bool {
+	r := m.reloader
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := r.now()
+	if !r.lastAttempt.IsZero() && now.Sub(r.lastAttempt) < r.minInterval {
+		return false
+	}
+	r.lastAttempt = now
+
+	info, err := os.Stat(r.path)
+	if err != nil {
+		r.l.Debug("persisted operation manifest is not readable", zap.String("path", r.path),
+			zap.Error(err))
+		return false
+	}
+	if !info.ModTime().After(r.lastModTime) {
+		return false
+	}
+
+	data, err := os.ReadFile(r.path)
+	if err != nil {
+		r.l.Warn("failed to read persisted operation manifest", zap.String("path", r.path),
+			zap.Error(err))
+		return false
+	}
+	queries, err := parsePersistedOperations(data)
+	if err != nil {
+		r.l.Warn("failed to parse persisted operation manifest", zap.String("path", r.path),
+			zap.Error(err))
+		return false
+	}
+
+	m.mu.Lock()
+	m.queries = queries
+	m.mu.Unlock()
+	r.lastModTime = info.ModTime()
+
+	r.l.Info("reloaded persisted operation manifest",
+		zap.String("path", r.path),
+		zap.Int("operations", len(queries)),
+	)
+
+	return true
+}
+
+func developmentManifestSource(cfg *config.Config) string {
+	if cfg == nil || enforcePersistedOperations(cfg) {
+		return ""
+	}
+
+	path := cfg.Security.GraphQL.PersistedDocumentsPath
+	if path == "" {
+		path = filepath.FromSlash(defaultDevelopmentManifestSource)
+	}
+	if _, err := os.Stat(path); err != nil {
+		return ""
+	}
+
+	return path
 }
 
 func rewritePersistedOperationRequest(
@@ -159,6 +310,9 @@ func rewritePersistedOperationRequest(
 	if !ok {
 		req.Body = io.NopCloser(bytes.NewReader(body))
 		req.ContentLength = int64(len(body))
+		if !enforceSafelist && strings.TrimSpace(gqlReq.Query) != "" {
+			return nil
+		}
 		return persistedOperationError(
 			"extensions.persistedQuery.sha256Hash",
 			"GraphQL persisted operation is not safelisted",

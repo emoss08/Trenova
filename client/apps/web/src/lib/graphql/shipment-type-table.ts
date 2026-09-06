@@ -1,15 +1,11 @@
-import {
-  ShipmentTypeTableDocument,
-  type ShipmentTypeTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { ShipmentTypeTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { ShipmentType } from "@/types/shipment-type";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const shipmentTypeTableGraphQLConfig = defineDataTableGraphQLConfig<
-  ShipmentType,
-  ShipmentTypeTableQueryVariables
->({
+export const shipmentTypeTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: ShipmentTypeTableDocument,
   operationName: "ShipmentTypeTable",
   connectionKey: "shipmentTypes",
 });
+
+export type ShipmentTypeRow = DataTableConfigRow<typeof shipmentTypeTableGraphQLConfig>;

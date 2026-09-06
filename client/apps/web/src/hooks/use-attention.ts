@@ -30,11 +30,12 @@ export function useRecentActivityInfinite(pageSize = RECENT_ACTIVITY_DEFAULT_PAG
   return useInfiniteQuery({
     queryKey: [...queries.attention.recentActivity.queryKey, pageSize],
     initialPageParam: null as string | null,
-    queryFn: async ({ pageParam }) =>
+    queryFn: async ({ pageParam, signal }) =>
       requestGraphQL({
         document: RecentActivityDocument,
         operationName: "RecentActivity",
         variables: { first: pageSize, after: pageParam },
+        signal,
       }),
     getNextPageParam: (lastPage) => {
       const { hasNextPage, endCursor } = lastPage.auditEntries.pageInfo;

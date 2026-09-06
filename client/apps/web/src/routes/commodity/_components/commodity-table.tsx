@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { commodityTableGraphQLConfig } from "@/lib/graphql/commodity-table";
+import { commodityTableGraphQLConfig, type CommodityRow } from "@/lib/graphql/commodity-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { Commodity } from "@trenova/shared/types/commodity";
@@ -17,11 +17,11 @@ export default function CommodityTable() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Commodity[], status: string) => {
+    async (rows: CommodityRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.commodityService.bulkUpdateStatus({
-          commodityIds: ids as string[],
+          commodityIds: ids,
           status: status as Commodity["status"],
         }),
         {
@@ -40,7 +40,7 @@ export default function CommodityTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Commodity>[]>(
+  const dockActions = useMemo<DockAction<CommodityRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +57,7 @@ export default function CommodityTable() {
   );
 
   return (
-    <DataTable<Commodity>
+    <DataTable<CommodityRow>
       name="Commodity"
       queryKey="commodity-list"
       graphql={commodityTableGraphQLConfig}

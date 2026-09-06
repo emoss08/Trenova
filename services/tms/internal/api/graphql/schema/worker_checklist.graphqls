@@ -1,0 +1,221 @@
+enum WorkerChecklistKind {
+  Onboarding
+  Offboarding
+  Custom
+}
+
+enum WorkerChecklistTrigger {
+  Hired
+  Rehired
+  Terminated
+  Manual
+}
+
+enum WorkerChecklistItemKind {
+  Document
+  Credential
+  Task
+  Equipment
+  PortalAccess
+}
+
+enum WorkerChecklistOwner {
+  HR
+  Safety
+  Dispatch
+  Payroll
+  IT
+  Fleet
+}
+
+enum WorkerChecklistStatus {
+  Open
+  Completed
+  Cancelled
+}
+
+enum WorkerChecklistItemStatus {
+  Pending
+  Done
+  Skipped
+  NotApplicable
+}
+
+type WorkerChecklistTemplateItem {
+  id: ID!
+  templateId: ID!
+  label: String!
+  description: String
+  kind: WorkerChecklistItemKind!
+  required: Boolean!
+  dueOffsetDays: Int!
+  owner: WorkerChecklistOwner!
+  credentialTypeId: ID
+  credentialType: WorkerCredentialType
+  documentTypeId: ID
+  documentTypeName: String
+  sortOrder: Int!
+}
+
+type WorkerChecklistTemplate {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String
+  kind: WorkerChecklistKind!
+  trigger: WorkerChecklistTrigger!
+  status: EntityStatus!
+  isDefault: Boolean!
+  items: [WorkerChecklistTemplateItem!]!
+  openChecklistCount: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type WorkerChecklistTemplateEdge {
+  node: WorkerChecklistTemplate!
+  cursor: String!
+}
+
+type WorkerChecklistTemplateConnection {
+  edges: [WorkerChecklistTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type WorkerChecklistProgress {
+  total: Int!
+  settled: Int!
+  requiredTotal: Int!
+  requiredDone: Int!
+  overdue: Int!
+  percent: Int!
+  complete: Boolean!
+}
+
+type WorkerChecklistItem {
+  id: ID!
+  checklistId: ID!
+  label: String!
+  description: String
+  kind: WorkerChecklistItemKind!
+  required: Boolean!
+  owner: WorkerChecklistOwner!
+  dueAt: Timestamp
+  overdue: Boolean!
+  credentialTypeId: ID
+  credentialType: WorkerCredentialType
+  documentTypeId: ID
+  status: WorkerChecklistItemStatus!
+  completedById: ID
+  completedBy: User
+  completedAt: Timestamp
+  autoCompleted: Boolean!
+  note: String
+  evidenceDocumentId: ID
+  evidenceDocument: WorkerCredentialDocument
+  evidenceCredentialId: ID
+  evidenceCredential: WorkerCredential
+  sortOrder: Int!
+  version: Int!
+}
+
+type WorkerChecklist {
+  id: ID!
+  workerId: ID!
+  templateId: ID
+  name: String!
+  kind: WorkerChecklistKind!
+  status: WorkerChecklistStatus!
+  startedAt: Timestamp!
+  dueAt: Timestamp
+  completedAt: Timestamp
+  cancelledAt: Timestamp
+  cancelReason: String
+  sourceEventId: ID
+  startedById: ID
+  startedBy: User
+  progress: WorkerChecklistProgress!
+  items: [WorkerChecklistItem!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input WorkerChecklistTemplateItemInput {
+  label: String!
+  description: String
+  kind: WorkerChecklistItemKind!
+  required: Boolean!
+  dueOffsetDays: Int!
+  owner: WorkerChecklistOwner!
+  credentialTypeId: ID
+  documentTypeId: ID
+}
+
+input WorkerChecklistTemplateInput {
+  code: String!
+  name: String!
+  description: String
+  kind: WorkerChecklistKind!
+  trigger: WorkerChecklistTrigger!
+  status: EntityStatus!
+  isDefault: Boolean!
+  items: [WorkerChecklistTemplateItemInput!]!
+  version: Int
+}
+
+input WorkerChecklistTemplatesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  status: EntityStatus
+  kind: WorkerChecklistKind
+  trigger: WorkerChecklistTrigger
+}
+
+input StartWorkerChecklistInput {
+  workerId: ID!
+  templateId: ID!
+  startedAt: Timestamp
+}
+
+input WorkerChecklistItemActionInput {
+  id: ID!
+  note: String
+  evidenceDocumentId: ID
+  version: Int
+}
+
+input CancelWorkerChecklistInput {
+  id: ID!
+  reason: String
+  version: Int
+}
+
+extend type Query {
+  workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
+  workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
+  activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
+  workerChecklists(workerId: ID!, includeClosed: Boolean = true): [WorkerChecklist!]!
+  workerChecklist(id: ID!): WorkerChecklist!
+}
+
+extend type Mutation {
+  createWorkerChecklistTemplate(input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
+  updateWorkerChecklistTemplate(id: ID!, input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
+  archiveWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
+  restoreWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
+  startWorkerChecklist(input: StartWorkerChecklistInput!): WorkerChecklist!
+  completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
+  skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
+  markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
+  reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
+  cancelWorkerChecklist(input: CancelWorkerChecklistInput!): WorkerChecklist!
+}

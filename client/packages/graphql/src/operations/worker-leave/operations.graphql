@@ -1,0 +1,142 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query WorkerLeaveFile($workerId: ID!) {
+  workerLeaveEntitlement(workerId: $workerId) {
+    method
+    totalHours
+    usedHours
+    remainingHours
+    totalWeeks
+    usedWeeks
+    remainingWeeks
+    exhausted
+    eligibleOnTenure
+    monthsEmployed
+    openCaseCount
+    militaryCaregiver
+    window {
+      from
+      through
+    }
+  }
+  workerLeaveCases(workerId: $workerId) {
+    id
+    workerId
+    leaveType
+    status
+    frequency
+    reason
+    fmlaDesignated
+    militaryCaregiver
+    requestedAt
+    startsAt
+    endsAt
+    decidedAt
+    closedAt
+    certificationStatus
+    certificationRequestedAt
+    certificationDueAt
+    certificationReceivedAt
+    recertificationDueAt
+    certificationLate
+    eligibilityHoursWorked
+    notes
+    version
+    entries {
+      id
+      leaveCaseId
+      usedOn
+      hours
+      countsAgainstEntitlement
+      ptoId
+      notes
+      version
+    }
+  }
+}
+
+query LeaveControl {
+  leaveControl {
+    id
+    measurementMethod
+    entitlementWeeks
+    militaryCaregiverWeeks
+    workweekHours
+    eligibilityMonths
+    eligibilityHours
+    certificationDueDays
+    version
+  }
+}
+
+mutation OpenLeaveCase($input: OpenLeaveCaseInput!) {
+  openLeaveCase(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation UpdateLeaveCase($input: UpdateLeaveCaseInput!) {
+  updateLeaveCase(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation DecideLeaveCase($input: DecideLeaveCaseInput!) {
+  decideLeaveCase(input: $input) {
+    id
+    status
+    fmlaDesignated
+    version
+  }
+}
+
+mutation CloseLeaveCase($id: ID!) {
+  closeLeaveCase(id: $id) {
+    id
+    status
+    version
+  }
+}
+
+mutation RequestLeaveCertification($caseId: ID!, $dueAt: Timestamp) {
+  requestLeaveCertification(caseId: $caseId, dueAt: $dueAt) {
+    id
+    certificationStatus
+    certificationDueAt
+    version
+  }
+}
+
+mutation RecordLeaveCertification($input: RecordLeaveCertificationInput!) {
+  recordLeaveCertification(input: $input) {
+    id
+    certificationStatus
+    version
+  }
+}
+
+mutation RecordLeaveDay($input: RecordLeaveDayInput!) {
+  recordLeaveDay(input: $input) {
+    id
+    usedOn
+    hours
+    countsAgainstEntitlement
+    version
+  }
+}
+
+mutation DeleteLeaveDay($id: ID!) {
+  deleteLeaveDay(id: $id)
+}
+
+mutation UpdateLeaveControl($input: UpdateLeaveControlInput!) {
+  updateLeaveControl(input: $input) {
+    id
+    measurementMethod
+    version
+  }
+}

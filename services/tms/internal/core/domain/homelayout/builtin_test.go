@@ -143,6 +143,7 @@ func TestWidgetCatalogKeysAreStable(t *testing.T) {
 		homelayout.WidgetBillingQueue,
 		homelayout.WidgetServiceFailures,
 		homelayout.WidgetEDIAttention,
+		homelayout.WidgetWorkerAttention,
 		homelayout.WidgetExpiringCredentials,
 		homelayout.WidgetKPI,
 		homelayout.WidgetKPIRow,

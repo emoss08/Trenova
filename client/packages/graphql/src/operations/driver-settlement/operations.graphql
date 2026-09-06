@@ -1,4 +1,4 @@
-query PayProfileTable($input: DataTableConnectionInput!) {
+query PayProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   payProfiles(input: $input) {
     edges {
       node {
@@ -37,14 +37,14 @@ query PayProfileTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query PayProfileOptions($input: DataTableConnectionInput!) {
+query PayProfileOptions($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   payProfiles(input: $input) {
     edges {
       node {
@@ -54,7 +54,7 @@ query PayProfileOptions($input: DataTableConnectionInput!) {
         status
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -164,7 +164,10 @@ query PayProfileDetail($id: ID!) {
   }
 }
 
-query RecurringDeductionTable($input: DataTableConnectionInput!) {
+query RecurringDeductionTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   recurringDeductions(input: $input) {
     edges {
       node {
@@ -196,14 +199,14 @@ query RecurringDeductionTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query RecurringEarningTable($input: DataTableConnectionInput!) {
+query RecurringEarningTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   recurringEarnings(input: $input) {
     edges {
       node {
@@ -234,14 +237,14 @@ query RecurringEarningTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query PayCodeTable($input: DataTableConnectionInput!) {
+query PayCodeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   payCodes(input: $input) {
     edges {
       node {
@@ -266,7 +269,7 @@ query PayCodeTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -284,7 +287,7 @@ query PayCodeOptions($direction: PayCodeDirection) {
   }
 }
 
-query PayAdvanceTable($input: DataTableConnectionInput!) {
+query PayAdvanceTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   payAdvances(input: $input) {
     edges {
       node {
@@ -311,14 +314,14 @@ query PayAdvanceTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query EscrowAccountTable($input: DataTableConnectionInput!) {
+query EscrowAccountTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   escrowAccounts(input: $input) {
     edges {
       node {
@@ -342,7 +345,7 @@ query EscrowAccountTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -380,7 +383,7 @@ query EscrowAccountDetail($id: ID!) {
   }
 }
 
-query DriverSettlementTable($input: DataTableConnectionInput!) {
+query DriverSettlementTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   driverSettlements(input: $input) {
     edges {
       node {
@@ -414,7 +417,7 @@ query DriverSettlementTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -491,7 +494,7 @@ query DriverSettlementDetail($id: ID!) {
   }
 }
 
-query SettlementBatchTable($input: DataTableConnectionInput!) {
+query SettlementBatchTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   settlementBatches(input: $input) {
     edges {
       node {
@@ -516,14 +519,14 @@ query SettlementBatchTable($input: DataTableConnectionInput!) {
         updatedAt
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query DriverPayEventTable($input: DataTableConnectionInput!) {
+query DriverPayEventTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   driverPayEvents(input: $input) {
     edges {
       node {
@@ -560,7 +563,7 @@ query DriverPayEventTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -613,7 +616,7 @@ query SettlementControl {
   }
 }
 
-query SettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
+query SettlementWorkspaceSummary($periodStart: Timestamp, $periodEnd: Timestamp) {
   settlementWorkspaceSummary(periodStart: $periodStart, periodEnd: $periodEnd) {
     periodStart
     periodEnd
@@ -635,7 +638,7 @@ query SettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
   }
 }
 
-query UnsettledWorkerSummaries($periodStart: Int, $periodEnd: Int) {
+query UnsettledWorkerSummaries($periodStart: Timestamp, $periodEnd: Timestamp) {
   unsettledWorkerSummaries(periodStart: $periodStart, periodEnd: $periodEnd) {
     workerId
     workerName
@@ -655,7 +658,7 @@ query CurrentSettlementPeriod {
   }
 }
 
-query PreviewDriverSettlement($workerId: ID!, $periodStart: Int, $periodEnd: Int) {
+query PreviewDriverSettlement($workerId: ID!, $periodStart: Timestamp, $periodEnd: Timestamp) {
   previewDriverSettlement(workerId: $workerId, periodStart: $periodStart, periodEnd: $periodEnd) {
     id
     workerId

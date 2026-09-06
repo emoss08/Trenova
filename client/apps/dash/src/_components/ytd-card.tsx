@@ -7,9 +7,9 @@ export function YtdCard() {
   const year = new Date().getFullYear();
   const ytd = useQuery({
     queryKey: ["dash-ytd-pay", year],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       try {
-        return await fetchMyYtdPay(year);
+        return await fetchMyYtdPay(year, { signal });
       } catch {
         return null;
       }

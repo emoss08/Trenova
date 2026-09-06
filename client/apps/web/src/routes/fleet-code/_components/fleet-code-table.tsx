@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { fleetCodeTableGraphQLConfig } from "@/lib/graphql/fleet-code-table";
+import { fleetCodeTableGraphQLConfig, type FleetCodeRow } from "@/lib/graphql/fleet-code-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@trenova/shared/types/data-table";
@@ -17,11 +17,11 @@ export default function FleetCodeTable() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: FleetCode[], status: string) => {
+    async (rows: FleetCodeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.fleetCodeService.bulkUpdateStatus({
-          fleetCodeIds: ids as string[],
+          fleetCodeIds: ids,
           status: status as FleetCode["status"],
         }),
         {
@@ -40,7 +40,7 @@ export default function FleetCodeTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<FleetCode>[]>(
+  const dockActions = useMemo<DockAction<FleetCodeRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +57,7 @@ export default function FleetCodeTable() {
   );
 
   return (
-    <DataTable<FleetCode>
+    <DataTable<FleetCodeRow>
       name="Fleet Code"
       queryKey="fleet-code-list"
       graphql={fleetCodeTableGraphQLConfig}

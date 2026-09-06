@@ -1,15 +1,11 @@
-import {
-  CustomerTableDocument,
-  type CustomerTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+import { CustomerTableDocument } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { Customer } from "@trenova/shared/types/customer";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
-export const customerTableGraphQLConfig = defineDataTableGraphQLConfig<
-  Customer,
-  CustomerTableQueryVariables
->({
+export const customerTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CustomerTableDocument,
   operationName: "CustomerTable",
   connectionKey: "customers",
 });
+
+export type CustomerRow = DataTableConfigRow<typeof customerTableGraphQLConfig>;

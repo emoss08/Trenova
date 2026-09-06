@@ -45,6 +45,16 @@ export const auditTimestampSchema = z.number().int().min(0).optional();
 export const nullableStringSchema = z
   .union([z.string().transform((val) => (val === "" ? null : val)), z.null()])
   .nullish();
+/**
+ * Optional enum columns are empty strings on the wire, not nulls: Go zero-values
+ * the column and both transports serialize that zero value verbatim (gqlgen
+ * marshals a non-pointer enum straight through, so even a nullable GraphQL enum
+ * field arrives as ""). Normalize it to null ahead of the enum check so an unset
+ * value never reads as an invalid option.
+ */
+export const nullableEnumSchema = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((value) => (value === "" ? null : value), schema.nullish());
+
 export const stringArraySchema = z
   .array(z.string())
   .nullish()

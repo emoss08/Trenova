@@ -7,7 +7,6 @@ import {
   type ApplyCustomerPaymentInput,
   type CustomerPaymentDetailQuery,
   type CustomerPaymentTableQuery,
-  type CustomerPaymentTableQueryVariables,
   type PostCustomerPaymentInput,
   type ReverseCustomerPaymentInput,
 } from "@trenova/graphql/generated/graphql";
@@ -22,20 +21,18 @@ export type CustomerPaymentDetailApplication = NonNullable<
   CustomerPaymentDetail["applications"]
 >[number];
 
-export const customerPaymentTableGraphQLConfig = defineDataTableGraphQLConfig<
-  CustomerPaymentRow,
-  CustomerPaymentTableQueryVariables
->({
+export const customerPaymentTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: CustomerPaymentTableDocument,
   operationName: "CustomerPaymentTable",
   connectionKey: "customerPayments",
 });
 
-export async function fetchCustomerPaymentDetail(id: string) {
+export async function fetchCustomerPaymentDetail(id: string, options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: CustomerPaymentDetailDocument,
     operationName: "CustomerPaymentDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.customerPayment;
 }

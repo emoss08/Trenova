@@ -36,14 +36,14 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   updatedAt
 }
 
-query FormulaTemplateTable($input: DataTableConnectionInput!) {
+query FormulaTemplateTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   formulaTemplates(input: $input) {
     edges {
       node {
         ...FormulaTemplateTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -11,6 +11,7 @@ import (
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -679,7 +680,35 @@ func TestUpdate(t *testing.T) {
 		deps.repo.AssertExpectations(t)
 	})
 
-	t.Run("updates worker status to inactive", func(t *testing.T) {
+	t.Run("refuses a bare status change on the edit path", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTest(t)
+		userID := pulid.MustNew("usr_")
+		entity := newTestWorker()
+		entity.Status = domaintypes.StatusInactive
+
+		original := newTestWorker()
+		original.ID = entity.ID
+		original.OrganizationID = entity.OrganizationID
+		original.BusinessUnitID = entity.BusinessUnitID
+
+		deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+
+		result, err := deps.svc.Update(
+			t.Context(),
+			entity,
+			internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+		)
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		var multiErr *errortypes.MultiError
+		require.ErrorAs(t, err, &multiErr)
+		assert.Equal(t, "status", multiErr.Errors[0].Field)
+		deps.repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	})
+
+	t.Run("updates worker status to inactive through the employment path", func(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 		userID := pulid.MustNew("usr_")
@@ -699,7 +728,7 @@ func TestUpdate(t *testing.T) {
 		deps.repo.On("Update", mock.Anything, entity).Return(updated, nil)
 		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		result, err := deps.svc.Update(
+		result, err := deps.svc.UpdateFromEmployment(
 			t.Context(),
 			entity,
 			internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),

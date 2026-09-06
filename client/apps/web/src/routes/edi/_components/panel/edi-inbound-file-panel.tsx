@@ -8,11 +8,12 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import type { EDIInboundFileRow } from "@/lib/graphql/edi-table";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type { EDIInboundFile, EDIInboundFileStatus } from "@trenova/shared/types/edi";
+import type { EDIInboundFileStatus } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -24,7 +25,11 @@ export const REPROCESSABLE_STATUSES = new Set<EDIInboundFileStatus>([
   "PartiallyProcessed",
 ]);
 
-export function InboundFilePanel({ open, onOpenChange, row }: DataTablePanelProps<EDIInboundFile>) {
+export function InboundFilePanel({
+  open,
+  onOpenChange,
+  row,
+}: DataTablePanelProps<EDIInboundFileRow>) {
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -117,10 +122,10 @@ export function InboundFilePanel({ open, onOpenChange, row }: DataTablePanelProp
             <span className="font-mono text-xs break-all">{detail.checksum}</span>
           </DetailField>
         </DetailSection>
-        {detail.messages && detail.messages.length > 0 && (
-          <DetailSection title={`Transactions (${detail.messages.length})`} fullWidth>
+        {file?.messages && file.messages.length > 0 && (
+          <DetailSection title={`Transactions (${file.messages.length})`} fullWidth>
             <div className="flex flex-col gap-2">
-              {detail.messages.map((message) => (
+              {file.messages.map((message) => (
                 <div
                   key={message.id}
                   className="bg-background flex items-center justify-between rounded-md border px-3 py-2"
@@ -137,9 +142,9 @@ export function InboundFilePanel({ open, onOpenChange, row }: DataTablePanelProp
             </div>
           </DetailSection>
         )}
-        {detail.rawContent && (
+        {file?.rawContent && (
           <DetailSection title="Raw Content" fullWidth>
-            <EDIRawContent content={detail.rawContent} />
+            <EDIRawContent content={file.rawContent} />
           </DetailSection>
         )}
       </div>

@@ -156,6 +156,10 @@ func TestStartLaunchesWorkflowWhenBillingAgentEnabled(t *testing.T) {
 	audit := &fakeAuditService{}
 	svc := &Service{
 		l: zap.NewNop(),
+		// Reaching the validator is the point of this test: the disabled case
+		// returns before it, so a Service without one passes there and panics
+		// here.
+		validator: NewValidator(ValidatorParams{}),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
 				entity.ID = runID

@@ -1,0 +1,249 @@
+fragment WorkerSafetyEventFields on WorkerSafetyEvent {
+  id
+  businessUnitId
+  organizationId
+  workerId
+  kind
+  severity
+  status
+  occurredAt
+  location
+  description
+  preventable
+  points
+  pointsExpireAt
+  activePoints
+  referenceNumber
+  shipmentId
+  inspectionLevel
+  inspectionResult
+  outOfService
+  fineAmount
+  costAmount
+  documentId
+  document {
+    id
+    fileName
+    originalName
+    fileType
+    fileSize
+    createdAt
+  }
+  recordedById
+  recordedBy {
+    id
+    name
+  }
+  closedById
+  closedBy {
+    id
+    name
+  }
+  closedAt
+  resolution
+  version
+  createdAt
+  updatedAt
+}
+
+fragment WorkerDisciplinaryActionFields on WorkerDisciplinaryAction {
+  id
+  businessUnitId
+  organizationId
+  workerId
+  level
+  status
+  reason
+  details
+  occurredAt
+  issuedAt
+  expiresAt
+  suspensionDays
+  safetyEventId
+  safetyEvent {
+    id
+    kind
+    severity
+    occurredAt
+    description
+  }
+  documentId
+  issuedById
+  issuedBy {
+    id
+    name
+  }
+  acknowledgedAt
+  workerComment
+  rescindedAt
+  rescindedById
+  rescindReason
+  active
+  version
+  createdAt
+  updatedAt
+}
+
+fragment WorkerRecognitionFields on WorkerRecognition {
+  id
+  businessUnitId
+  organizationId
+  workerId
+  kind
+  title
+  message
+  occurredAt
+  awardedById
+  awardedBy {
+    id
+    name
+  }
+  visibleToWorker
+  version
+  createdAt
+  updatedAt
+}
+
+fragment SafetyScorecardFields on SafetyScorecard {
+  workerId
+  asOf
+  score
+  rating
+  activePoints
+  pointsWatchThreshold
+  pointsAtRiskThreshold
+  accidents
+  preventableAccidents
+  incidents
+  nearMisses
+  citations
+  inspections
+  inspectionsPassed
+  inspectionsFailed
+  outOfServiceOrders
+  cleanInspectionRate
+  openEvents
+  activeDiscipline
+  highestDiscipline
+  daysSinceLastEvent
+  lastEventAt
+  recognitions
+}
+
+query WorkerSafetyEvents($workerId: ID!) {
+  workerSafetyEvents(workerId: $workerId) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+query WorkerSafetyScorecard($workerId: ID!) {
+  workerSafetyScorecard(workerId: $workerId) {
+    ...SafetyScorecardFields
+  }
+}
+
+query WorkerDisciplinaryActions($workerId: ID!) {
+  workerDisciplinaryActions(workerId: $workerId) {
+    ...WorkerDisciplinaryActionFields
+  }
+}
+
+query WorkerDisciplinaryLadder($workerId: ID!) {
+  workerDisciplinaryLadder(workerId: $workerId) {
+    highestLevel
+    suggestedLevel
+    atFinalStep
+    activeActions {
+      id
+      level
+      status
+      reason
+      issuedAt
+      expiresAt
+      active
+    }
+  }
+}
+
+query WorkerRecognitions($workerId: ID!) {
+  workerRecognitions(workerId: $workerId) {
+    ...WorkerRecognitionFields
+  }
+}
+
+query DefaultSafetyPoints(
+  $kind: SafetyEventKind!
+  $severity: SafetySeverity!
+  $preventable: Boolean
+  $inspectionResult: InspectionResult
+) {
+  defaultSafetyPoints(
+    kind: $kind
+    severity: $severity
+    preventable: $preventable
+    inspectionResult: $inspectionResult
+  )
+}
+
+mutation CreateWorkerSafetyEvent($input: WorkerSafetyEventInput!) {
+  createWorkerSafetyEvent(input: $input) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+mutation UpdateWorkerSafetyEvent($input: UpdateWorkerSafetyEventInput!) {
+  updateWorkerSafetyEvent(input: $input) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+mutation CloseWorkerSafetyEvent($input: SafetyEventStatusInput!) {
+  closeWorkerSafetyEvent(input: $input) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+mutation ReviewWorkerSafetyEvent($input: SafetyEventStatusInput!) {
+  reviewWorkerSafetyEvent(input: $input) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+mutation ReopenWorkerSafetyEvent($input: SafetyEventStatusInput!) {
+  reopenWorkerSafetyEvent(input: $input) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+mutation DeleteWorkerSafetyEvent($id: ID!) {
+  deleteWorkerSafetyEvent(id: $id)
+}
+
+mutation IssueDisciplinaryAction($input: IssueDisciplinaryActionInput!) {
+  issueDisciplinaryAction(input: $input) {
+    action {
+      ...WorkerDisciplinaryActionFields
+    }
+    employmentEvent {
+      id
+      kind
+      effectiveAt
+    }
+  }
+}
+
+mutation RescindDisciplinaryAction($input: RescindDisciplinaryActionInput!) {
+  rescindDisciplinaryAction(input: $input) {
+    ...WorkerDisciplinaryActionFields
+  }
+}
+
+mutation GiveWorkerRecognition($input: WorkerRecognitionInput!) {
+  giveWorkerRecognition(input: $input) {
+    ...WorkerRecognitionFields
+  }
+}
+
+mutation DeleteWorkerRecognition($id: ID!) {
+  deleteWorkerRecognition(id: $id)
+}

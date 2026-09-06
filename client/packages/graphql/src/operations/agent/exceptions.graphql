@@ -23,14 +23,14 @@ fragment AgentExceptionDetailFields on AgentException {
   }
 }
 
-query AgentExceptionTable($input: DataTableConnectionInput!) {
+query AgentExceptionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   agentExceptions(input: $input) {
     edges {
       node {
         ...AgentExceptionTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

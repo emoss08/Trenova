@@ -142,24 +142,28 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	total, err := r.db.DB().
-		NewSelect().
-		Model((*worker.WorkerPTO)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyListFiltersWithoutSort(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count PTO records", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerPTO)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyListFiltersWithoutSort(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count PTO records", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
-			return r.db.DB().
+			return r.db.DBForContext(ctx).
 				NewSelect().
 				Model(items).
 				ColumnExpr(buncolgen.WorkerPTOTable.All())
@@ -186,7 +190,7 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(worker.WorkerPTO)
-	q := r.db.DB().
+	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -217,12 +221,144 @@ func (r *repository) Create(
 		zap.String("workerId", entity.WorkerID.String()),
 	)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		log.Error("failed to create PTO record", zap.Error(err))
 		return nil, err
 	}
 
 	return entity, nil
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *worker.WorkerPTO,
+) (*worker.WorkerPTO, error) {
+	log := r.l.With(
+		zap.String("operation", "Update"),
+		zap.String("id", entity.ID.String()),
+	)
+
+	cols := buncolgen.WorkerPTOColumns
+	expectedVersion := entity.Version
+	entity.Version++
+	entity.UpdatedAt = timeutils.NowUnix()
+
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		Column(
+			cols.Type.Name,
+			cols.StartDate.Name,
+			cols.EndDate.Name,
+			cols.Reason.Name,
+			cols.UpdatedAt.Name,
+			cols.Version.Name,
+		).
+		WherePK().
+		Where(cols.Version.Eq(), expectedVersion).
+		Where(cols.Status.Eq(), worker.PTOStatusRequested).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to update PTO record", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(res, "WorkerPTO", entity.ID.String()); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req *repositories.GetPTOsByIDsRequest,
+) ([]*worker.WorkerPTO, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByIDs"),
+		zap.Int("count", len(req.IDs)),
+	)
+
+	entities := make([]*worker.WorkerPTO, 0, len(req.IDs))
+	if len(req.IDs) == 0 {
+		return entities, nil
+	}
+
+	cols := buncolgen.WorkerPTOColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ColumnExpr(buncolgen.WorkerPTOTable.All()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.WorkerPTOScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to get PTO records", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *repository) HasOverlap(
+	ctx context.Context,
+	req *repositories.PTOOverlapRequest,
+) (bool, error) {
+	log := r.l.With(
+		zap.String("operation", "HasOverlap"),
+		zap.String("workerId", req.WorkerID.String()),
+	)
+
+	cols := buncolgen.WorkerPTOColumns
+	q := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*worker.WorkerPTO)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.WorkerPTOScopeTenant(sq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID).
+				Where(cols.Status.In(), bun.In([]worker.PTOStatus{
+					worker.PTOStatusRequested,
+					worker.PTOStatusApproved,
+				})).
+				Where(cols.StartDate.Lte(), req.EndDate).
+				Where(cols.EndDate.Gte(), req.StartDate)
+		})
+
+	if !req.ExcludeID.IsNil() {
+		q = q.Where(cols.ID.Ne(), req.ExcludeID)
+	}
+
+	exists, err := q.Exists(ctx)
+	if err != nil {
+		log.Error("failed to check PTO overlap", zap.Error(err))
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (r *repository) SetBalanceAfter(
+	ctx context.Context,
+	req *repositories.SetPTOBalanceAfterRequest,
+) error {
+	cols := buncolgen.WorkerPTOColumns
+	if _, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*worker.WorkerPTO)(nil)).
+		Set(cols.BalanceAfterDays.Set(), req.BalanceAfterDays).
+		WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Exec(ctx); err != nil {
+		r.l.Error("failed to set PTO balance after", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (r *repository) UpdateStatus(
@@ -235,31 +371,95 @@ func (r *repository) UpdateStatus(
 		zap.String("status", string(req.Status)),
 	)
 
+	sources := worker.PTOStatusSourcesFor(req.Status)
+	if len(sources) == 0 {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			fmt.Sprintf("PTO cannot be moved to %s", req.Status),
+		)
+	}
+
 	cols := buncolgen.WorkerPTOColumns
+	now := timeutils.NowUnix()
 
 	entity := new(worker.WorkerPTO)
-	q := r.db.DB().
+	q := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		Set(cols.Status.Set(), req.Status).
+		Set(cols.UpdatedAt.Set(), now).
+		Set("version = version + 1").
 		WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
+			sq = buncolgen.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID).
+				Where(cols.Status.In(), bun.In(sources))
+			if req.ExpectedVersion > 0 {
+				sq = sq.Where(cols.Version.Eq(), req.ExpectedVersion)
+			}
+			return sq
 		})
 
-	switch req.Status { //nolint:exhaustive // only two cases are needed
+	switch req.Status { //nolint:exhaustive // Requested is never a transition target
 	case worker.PTOStatusApproved:
 		q = q.Set(cols.ApproverID.Set(), req.UserID)
 	case worker.PTOStatusRejected:
-		q = q.Set(cols.RejectorID.Set(), req.UserID)
+		q = q.Set(cols.RejectorID.Set(), req.UserID).
+			Set(cols.RejectionReason.Set(), req.Reason)
+	case worker.PTOStatusCancelled:
+		q = q.Set(cols.CancelledByID.Set(), req.UserID).
+			Set(cols.CancellationReason.Set(), req.Reason)
 	}
 
-	if _, err := q.Returning("*").Exec(ctx); err != nil {
+	res, err := q.Returning("*").Exec(ctx)
+	if err != nil {
 		log.Error("failed to update PTO status", zap.Error(err))
 		return nil, err
 	}
 
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return nil, r.explainStatusConflict(ctx, req, sources)
+	}
+
 	return entity, nil
+}
+
+func (r *repository) explainStatusConflict(
+	ctx context.Context,
+	req *repositories.UpdatePTOStatusRequest,
+	sources []worker.PTOStatus,
+) error {
+	current, err := r.GetByID(ctx, &repositories.GetPTOByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	if req.ExpectedVersion > 0 && current.Version != req.ExpectedVersion {
+		return dberror.CreateVersionMismatchError("WorkerPTO", req.ID.String())
+	}
+
+	labels := make([]string, 0, len(sources))
+	for _, src := range sources {
+		labels = append(labels, string(src))
+	}
+
+	return errortypes.NewValidationError(
+		"status",
+		errortypes.ErrInvalidOperation,
+		fmt.Sprintf(
+			"PTO is %s and can only be %s from %s",
+			strings.ToLower(string(current.Status)),
+			strings.ToLower(string(req.Status)),
+			strings.Join(labels, " or "),
+		),
+	)
 }
 
 func (r *repository) upcomingPTODateBoundaries(
@@ -467,24 +667,28 @@ func (r *repository) ListUpcoming(
 		zap.Any("request", req),
 	)
 
-	total, err := r.db.DB().
-		NewSelect().
-		Model((*worker.WorkerPTO)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterUpcomingPTOQuery(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count upcoming PTOs", zap.Error(err), zap.Any("request", req))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerPTO)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterUpcomingPTOQuery(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count upcoming PTOs", zap.Error(err), zap.Any("request", req))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
-			return r.db.DB().
+			return r.db.DBForContext(ctx).
 				NewSelect().
 				Model(items).
 				ColumnExpr(buncolgen.WorkerPTOTable.All())
@@ -553,7 +757,7 @@ func (r *repository) GetChartData(
 		zap.Any("req", req),
 	)
 
-	db := r.db.DB()
+	db := r.db.DBForContext(ctx)
 
 	timezone := timeutils.NormalizeTimezone(req.Timezone)
 	fromDayStartUnix, toDayEndUnix, err := r.calculateChartDateBoundaries(req, timezone)

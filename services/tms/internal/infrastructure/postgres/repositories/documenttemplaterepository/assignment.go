@@ -99,21 +99,25 @@ func (r *assignmentRepository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*documenttemplate.DocumentTemplateAssignment)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				buncolgen.DocumentTemplateAssignmentTable.Alias,
-				req.Filter,
-				(*documenttemplate.DocumentTemplateAssignment)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count document template assignments", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*documenttemplate.DocumentTemplateAssignment)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.DocumentTemplateAssignmentTable.Alias,
+					req.Filter,
+					(*documenttemplate.DocumentTemplateAssignment)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count document template assignments", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -121,7 +125,7 @@ func (r *assignmentRepository) ListConnection(
 		dbhelper.CursorListParams[*documenttemplate.DocumentTemplateAssignment]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(
 				entities *[]*documenttemplate.DocumentTemplateAssignment,
 			) *bun.SelectQuery {

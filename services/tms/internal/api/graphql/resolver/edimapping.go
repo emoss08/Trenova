@@ -14,19 +14,19 @@ import (
 
 func ediPartnerConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIPartner],
-) (*gqlmodel.EdiPartnerConnection, error) {
+) (*gqlmodel.EDIPartnerConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDIPartner, cursor string) *gqlmodel.EdiPartnerEdge {
-			return &gqlmodel.EdiPartnerEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDIPartner, cursor string) *gqlmodel.EDIPartnerEdge {
+			return &gqlmodel.EDIPartnerEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiPartnerEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDIPartnerEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiPartnerConnection{
+	return &gqlmodel.EDIPartnerConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -35,19 +35,19 @@ func ediPartnerConnectionToModel(
 
 func ediCommunicationProfileConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDICommunicationProfile],
-) (*gqlmodel.EdiCommunicationProfileConnection, error) {
+) (*gqlmodel.EDICommunicationProfileConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDICommunicationProfile, cursor string) *gqlmodel.EdiCommunicationProfileEdge {
-			return &gqlmodel.EdiCommunicationProfileEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDICommunicationProfile, cursor string) *gqlmodel.EDICommunicationProfileEdge {
+			return &gqlmodel.EDICommunicationProfileEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiCommunicationProfileEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDICommunicationProfileEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiCommunicationProfileConnection{
+	return &gqlmodel.EDICommunicationProfileConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -56,19 +56,19 @@ func ediCommunicationProfileConnectionToModel(
 
 func ediTransferConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDITransfer],
-) (*gqlmodel.EdiTransferConnection, error) {
+) (*gqlmodel.EDITransferConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDITransfer, cursor string) *gqlmodel.EdiTransferEdge {
-			return &gqlmodel.EdiTransferEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDITransfer, cursor string) *gqlmodel.EDITransferEdge {
+			return &gqlmodel.EDITransferEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiTransferEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDITransferEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiTransferConnection{
+	return &gqlmodel.EDITransferConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -77,19 +77,19 @@ func ediTransferConnectionToModel(
 
 func ediMessageConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIMessage],
-) (*gqlmodel.EdiMessageConnection, error) {
+) (*gqlmodel.EDIMessageConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDIMessage, cursor string) *gqlmodel.EdiMessageEdge {
-			return &gqlmodel.EdiMessageEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDIMessage, cursor string) *gqlmodel.EDIMessageEdge {
+			return &gqlmodel.EDIMessageEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiMessageEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDIMessageEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiMessageConnection{
+	return &gqlmodel.EDIMessageConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -98,11 +98,11 @@ func ediMessageConnectionToModel(
 
 func ediPartnerScorecardsToModel(
 	rows []*repositories.EDIPartnerScorecardRow,
-) []*gqlmodel.EdiPartnerScorecard {
+) []*gqlmodel.EDIPartnerScorecard {
 	now := timeutils.NowUnix()
-	cards := make([]*gqlmodel.EdiPartnerScorecard, 0, len(rows))
+	cards := make([]*gqlmodel.EDIPartnerScorecard, 0, len(rows))
 	for _, row := range rows {
-		card := &gqlmodel.EdiPartnerScorecard{
+		card := &gqlmodel.EDIPartnerScorecard{
 			PartnerID:           row.PartnerID.String(),
 			PartnerName:         row.PartnerName,
 			PartnerCode:         row.PartnerCode,
@@ -130,10 +130,10 @@ func ediPartnerScorecardsToModel(
 	return cards
 }
 
-func ediVolumeSeriesToModel(series *ediservice.EDIVolumeSeries) []*gqlmodel.EdiVolumePoint {
-	points := make([]*gqlmodel.EdiVolumePoint, 0, len(series.Points))
+func ediVolumeSeriesToModel(series *ediservice.EDIVolumeSeries) []*gqlmodel.EDIVolumePoint {
+	points := make([]*gqlmodel.EDIVolumePoint, 0, len(series.Points))
 	for _, point := range series.Points {
-		points = append(points, &gqlmodel.EdiVolumePoint{
+		points = append(points, &gqlmodel.EDIVolumePoint{
 			BucketStart:   int(point.BucketStart),
 			BucketSeconds: int(series.BucketSeconds),
 			OutboundCount: int(point.OutboundCount),
@@ -145,15 +145,15 @@ func ediVolumeSeriesToModel(series *ediservice.EDIVolumeSeries) []*gqlmodel.EdiV
 	return points
 }
 
-func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EdiSummary {
+func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EDISummary {
 	attention := make(
-		[]*gqlmodel.EdiSummaryAttentionItem,
+		[]*gqlmodel.EDISummaryAttentionItem,
 		0,
 		len(summary.RecentDeadLettered)+len(summary.RecentQuarantined),
 	)
 	for _, message := range summary.RecentDeadLettered {
-		item := &gqlmodel.EdiSummaryAttentionItem{
-			Kind: gqlmodel.EdiSummaryAttentionKindMessage,
+		item := &gqlmodel.EDISummaryAttentionItem{
+			Kind: gqlmodel.EDISummaryAttentionKindMessage,
 			ID:   message.ID.String(),
 			Reference: strPtr(
 				string(message.TransactionSet) + " " + message.TransactionControlNumber,
@@ -172,8 +172,8 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EdiSummary {
 		attention = append(attention, item)
 	}
 	for _, file := range summary.RecentQuarantined {
-		item := &gqlmodel.EdiSummaryAttentionItem{
-			Kind:       gqlmodel.EdiSummaryAttentionKindInboundFile,
+		item := &gqlmodel.EDISummaryAttentionItem{
+			Kind:       gqlmodel.EDISummaryAttentionKindInboundFile,
 			ID:         file.ID.String(),
 			Reference:  strPtr(file.FileName),
 			Error:      strPtr(file.FailureReason),
@@ -189,11 +189,11 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EdiSummary {
 		}
 		attention = append(attention, item)
 	}
-	slices.SortFunc(attention, func(a, b *gqlmodel.EdiSummaryAttentionItem) int {
+	slices.SortFunc(attention, func(a, b *gqlmodel.EDISummaryAttentionItem) int {
 		return b.OccurredAt - a.OccurredAt
 	})
 
-	return &gqlmodel.EdiSummary{
+	return &gqlmodel.EDISummary{
 		DeliveryStatusCounts:        summaryStatusCounts(summary.DeliveryStatusCounts),
 		AckStatusCounts:             summaryStatusCounts(summary.AckStatusCounts),
 		InboundFileStatusCounts:     summaryStatusCounts(summary.InboundFileStatusCounts),
@@ -203,15 +203,15 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EdiSummary {
 	}
 }
 
-func summaryStatusCounts[T ~string](counts map[T]int) []*gqlmodel.EdiSummaryStatusCount {
-	result := make([]*gqlmodel.EdiSummaryStatusCount, 0, len(counts))
+func summaryStatusCounts[T ~string](counts map[T]int) []*gqlmodel.EDISummaryStatusCount {
+	result := make([]*gqlmodel.EDISummaryStatusCount, 0, len(counts))
 	for status, count := range counts {
-		result = append(result, &gqlmodel.EdiSummaryStatusCount{
+		result = append(result, &gqlmodel.EDISummaryStatusCount{
 			Status: string(status),
 			Count:  count,
 		})
 	}
-	slices.SortFunc(result, func(a, b *gqlmodel.EdiSummaryStatusCount) int {
+	slices.SortFunc(result, func(a, b *gqlmodel.EDISummaryStatusCount) int {
 		return strings.Compare(a.Status, b.Status)
 	})
 	return result
@@ -226,19 +226,19 @@ func strPtr(value string) *string {
 
 func ediTestCaseConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDITestCase],
-) (*gqlmodel.EdiTestCaseConnection, error) {
+) (*gqlmodel.EDITestCaseConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDITestCase, cursor string) *gqlmodel.EdiTestCaseEdge {
-			return &gqlmodel.EdiTestCaseEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDITestCase, cursor string) *gqlmodel.EDITestCaseEdge {
+			return &gqlmodel.EDITestCaseEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiTestCaseEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDITestCaseEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiTestCaseConnection{
+	return &gqlmodel.EDITestCaseConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -247,19 +247,19 @@ func ediTestCaseConnectionToModel(
 
 func ediTemplateConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDITemplate],
-) (*gqlmodel.EdiTemplateConnection, error) {
+) (*gqlmodel.EDITemplateConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDITemplate, cursor string) *gqlmodel.EdiTemplateEdge {
-			return &gqlmodel.EdiTemplateEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDITemplate, cursor string) *gqlmodel.EDITemplateEdge {
+			return &gqlmodel.EDITemplateEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiTemplateEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDITemplateEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiTemplateConnection{
+	return &gqlmodel.EDITemplateConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -268,19 +268,19 @@ func ediTemplateConnectionToModel(
 
 func ediMappingProfileConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIMappingProfile],
-) (*gqlmodel.EdiMappingProfileConnection, error) {
+) (*gqlmodel.EDIMappingProfileConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDIMappingProfile, cursor string) *gqlmodel.EdiMappingProfileEdge {
-			return &gqlmodel.EdiMappingProfileEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDIMappingProfile, cursor string) *gqlmodel.EDIMappingProfileEdge {
+			return &gqlmodel.EDIMappingProfileEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiMappingProfileEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDIMappingProfileEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiMappingProfileConnection{
+	return &gqlmodel.EDIMappingProfileConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -289,19 +289,19 @@ func ediMappingProfileConnectionToModel(
 
 func ediInboundFileConnectionToModel(
 	result *pagination.CursorListResult[*edi.EDIInboundFile],
-) (*gqlmodel.EdiInboundFileConnection, error) {
+) (*gqlmodel.EDIInboundFileConnection, error) {
 	page, err := entityCursorConnection(
 		result,
-		func(node *edi.EDIInboundFile, cursor string) *gqlmodel.EdiInboundFileEdge {
-			return &gqlmodel.EdiInboundFileEdge{Node: node, Cursor: cursor}
+		func(node *edi.EDIInboundFile, cursor string) *gqlmodel.EDIInboundFileEdge {
+			return &gqlmodel.EDIInboundFileEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EdiInboundFileEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDIInboundFileEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EdiInboundFileConnection{
+	return &gqlmodel.EDIInboundFileConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,

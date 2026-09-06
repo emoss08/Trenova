@@ -20,11 +20,11 @@ export const selectOptionSchema = z.object({
 export type SelectOption = z.infer<typeof selectOptionSchema>;
 
 export const validationRulesSchema = z.object({
-  minLength: z.number().int().optional(),
-  maxLength: z.number().int().optional(),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  pattern: optionalStringSchema,
+  minLength: z.number().int().nullable().optional(),
+  maxLength: z.number().int().nullable().optional(),
+  min: z.number().nullable().optional(),
+  max: z.number().nullable().optional(),
+  pattern: optionalStringSchema.nullable(),
 });
 export type ValidationRules = z.infer<typeof validationRulesSchema>;
 
@@ -55,7 +55,7 @@ export const customFieldDefinitionSchema = z.object({
   color: optionalStringSchema,
   options: z.array(selectOptionSchema).default([]),
   validationRules: validationRulesSchema.optional().nullable(),
-  defaultValue: z.any().optional(),
+  defaultValue: z.unknown().nullable().optional(),
   uiAttributes: uiAttributesSchema.optional().nullable(),
 });
 

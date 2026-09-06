@@ -16,7 +16,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowRight, ArrowUp, CornerDownLeft, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -40,7 +39,6 @@ export function RouteCommandPalette() {
   const filteredModules = useFilteredNavigation();
   const open = useCommandPaletteStore((state) => state.open);
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
-  const toggleOpen = useCommandPaletteStore((state) => state.toggleOpen);
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const capabilities = useOrgCapabilities();
   const [searchValue, setSearchValue] = useState("");
@@ -146,17 +144,6 @@ export function RouteCommandPalette() {
     setMentionIndex(0);
     setPreviewId(undefined);
   }, [location.pathname, location.search, location.hash]);
-
-  useHotkey(
-    "Mod+K",
-    () => {
-      toggleOpen();
-    },
-    {
-      ignoreInputs: true,
-      preventDefault: true,
-    },
-  );
 
   const handleShipmentPreview = useCallback((id: string) => {
     setPreviewId(id);

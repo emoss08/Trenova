@@ -292,10 +292,13 @@ func TestWorkerHandler_Update_Success(t *testing.T) {
 	wkrID := pulid.MustNew("wrk_")
 	stateID := pulid.MustNew("uss_")
 	repo := mocks.NewMockWorkerRepository(t)
+	// A persisted worker always carries a status, and the edit form refuses to
+	// move it — employment state only changes through a timeline event.
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
 		ID:             wkrID,
 		OrganizationID: testutil.TestOrgID,
 		BusinessUnitID: testutil.TestBuID,
+		Status:         domaintypes.StatusActive,
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *worker.Worker) *worker.Worker {
@@ -489,10 +492,13 @@ func TestWorkerHandler_Update_ServiceError(t *testing.T) {
 	wkrID := pulid.MustNew("wrk_")
 	stateID := pulid.MustNew("uss_")
 	repo := mocks.NewMockWorkerRepository(t)
+	// A persisted worker always carries a status, and the edit form refuses to
+	// move it — employment state only changes through a timeline event.
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
 		ID:             wkrID,
 		OrganizationID: testutil.TestOrgID,
 		BusinessUnitID: testutil.TestBuID,
+		Status:         domaintypes.StatusActive,
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 

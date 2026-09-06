@@ -1215,7 +1215,7 @@ func (s *Service) collectToolOutputsFromResponse(
 
 				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
 					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-						CallID: fc.CallID,
+						CallID: openai.String(fc.CallID),
 						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 							OfString: openai.String(`{"ok":true}`),
 						},
@@ -1237,7 +1237,7 @@ func (s *Service) collectToolOutputsFromResponse(
 
 			toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					CallID: fc.CallID,
+					CallID: openai.String(fc.CallID),
 					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 						OfString: openai.String(result),
 					},
@@ -2080,7 +2080,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 				}
 				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
 					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-						CallID: pc.callID,
+						CallID: openai.String(pc.callID),
 						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 							OfString: openai.String(`{"ok":true}`),
 						},
@@ -2129,7 +2129,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 
 			toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					CallID: pc.callID,
+					CallID: openai.String(pc.callID),
 					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 						OfString: openai.String(result),
 					},

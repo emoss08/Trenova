@@ -1,16 +1,13 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { fiscalYearTableGraphQLConfig } from "@/lib/graphql/fiscal-year-table";
+import { fiscalYearTableGraphQLConfig, type FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import { AlertDialog } from "@trenova/shared/components/ui/alert-dialog";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import type { FiscalYear } from "@/types/fiscal-year";
 import { Resource } from "@trenova/shared/types/permission";
-import { LockIcon, PlayIcon, UnlockIcon, XCircleIcon } from "lucide-react";
+import { PlayIcon, XCircleIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import {
   FiscalYearActivateAlertDialogContent,
   FiscalYearCloseAlertDialogContent,
-  FiscalYearLockAlertDialogContent,
-  FiscalYearUnlockAlertDialogContent,
 } from "./fiscal-year-alert-dialog-content";
 import { getColumns } from "./fiscal-year-columns";
 import { FiscalYearPanel } from "./fiscal-year-panel";
@@ -18,47 +15,32 @@ import { FiscalYearPanel } from "./fiscal-year-panel";
 export type FiscalYearAction = "activate" | "close" | "lock" | "unlock";
 
 export default function FiscalYearTable() {
-  const [selectedFiscalYear, setSelectedFiscalYear] = useState<FiscalYear | null>(null);
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<FiscalYearRow | null>(null);
   const [yearAction, setYearAction] = useState<FiscalYearAction>("close");
 
-  const handleYearAction = useCallback((fiscalYear: FiscalYear, action: FiscalYearAction) => {
+  const handleYearAction = useCallback((fiscalYear: FiscalYearRow, action: FiscalYearAction) => {
     setSelectedFiscalYear(fiscalYear);
     setYearAction(action);
   }, []);
 
   const columns = useMemo(() => getColumns(), []);
 
-  const contextMenuActions = useMemo<RowAction<FiscalYear>[]>(
+  const contextMenuActions = useMemo<RowAction<FiscalYearRow>[]>(
     () => [
       {
         id: "activate",
         label: "Set as Current",
         icon: PlayIcon,
-        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "activate"),
-        hidden: (row: Row<FiscalYear>) =>
-          row.original.isCurrent || row.original.status === "Locked",
+        onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "activate"),
+        hidden: (row: Row<FiscalYearRow>) => row.original.isCurrent,
       },
       {
         id: "close",
         label: "Close Year",
         icon: XCircleIcon,
         variant: "destructive",
-        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "close"),
-        hidden: (row: Row<FiscalYear>) => row.original.status !== "Open",
-      },
-      {
-        id: "lock",
-        label: "Lock Year",
-        icon: LockIcon,
-        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "lock"),
-        hidden: (row: Row<FiscalYear>) => row.original.status !== "Closed",
-      },
-      {
-        id: "unlock",
-        label: "Unlock Year",
-        icon: UnlockIcon,
-        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "unlock"),
-        hidden: (row: Row<FiscalYear>) => row.original.status !== "Locked",
+        onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "close"),
+        hidden: (row: Row<FiscalYearRow>) => row.original.status !== "Open",
       },
     ],
     [handleYearAction],
@@ -66,7 +48,7 @@ export default function FiscalYearTable() {
 
   return (
     <>
-      <DataTable<FiscalYear>
+      <DataTable<FiscalYearRow>
         name="Fiscal Year"
         queryKey="fiscal-year-list"
         graphql={fiscalYearTableGraphQLConfig}
@@ -97,7 +79,7 @@ function CloseAlertDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  record: FiscalYear;
+  record: FiscalYearRow;
   action: FiscalYearAction;
 }) {
   return (
@@ -112,7 +94,7 @@ function FiscalYearDialogContent({
   record,
 }: {
   action: FiscalYearAction;
-  record?: FiscalYear;
+  record?: FiscalYearRow;
 }) {
   if (!record) return null;
 
@@ -121,10 +103,6 @@ function FiscalYearDialogContent({
       return <FiscalYearActivateAlertDialogContent record={record} />;
     case "close":
       return <FiscalYearCloseAlertDialogContent record={record} />;
-    case "lock":
-      return <FiscalYearLockAlertDialogContent record={record} />;
-    case "unlock":
-      return <FiscalYearUnlockAlertDialogContent record={record} />;
     default:
       return null;
   }

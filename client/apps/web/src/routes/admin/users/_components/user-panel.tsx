@@ -1,13 +1,14 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { userSchema, type User } from "@trenova/shared/types/user";
+import type { UserRow } from "@/lib/graphql/user-table";
+import { userSchema } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseAsString, useQueryState } from "nuqs";
 import { useForm } from "react-hook-form";
 import { UserForm } from "./user-form";
 
-export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<User>) {
+export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<UserRow>) {
   const [panelEntityId] = useQueryState("panelEntityId", parseAsString);
   const editUserId = row?.id ?? panelEntityId ?? undefined;
 

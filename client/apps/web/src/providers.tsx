@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import type React from "react";
@@ -7,19 +7,7 @@ import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { retryDelay, shouldRetry } from "@/lib/query-retry";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: shouldRetry,
-      retryDelay,
-      refetchOnWindowFocus: false,
-      staleTime: 0,
-      gcTime: 10 * 60 * 1000, // 10 minutes
-    },
-  },
-});
+import { queryClient } from "@/lib/query-client";
 
 // The transport cannot reach the router or the auth store, so the expiry path is wired
 // here instead. clearAuth performs the same teardown protectedLoader's 401 branch does;

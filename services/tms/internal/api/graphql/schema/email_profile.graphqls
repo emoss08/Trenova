@@ -20,8 +20,8 @@ type EmailProfile {
   provider: EmailProvider!
   status: EmailProfileStatus!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
 }

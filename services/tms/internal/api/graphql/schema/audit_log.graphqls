@@ -11,7 +11,7 @@ type AuditEntry {
   apiKeyId: ID
   businessUnitId: ID!
   organizationId: ID!
-  timestamp: Int!
+  timestamp: Timestamp!
   changes: JSON
   previousState: JSON
   currentState: JSON

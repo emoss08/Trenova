@@ -1405,6 +1405,8 @@ var DashControlColumns = struct {
 	AllowContactInfoEdit           Column // "allow_contact_info_edit" → qualified: "dashc.allow_contact_info_edit"
 	AllowPtoRequests               Column // "allow_pto_requests" → qualified: "dashc.allow_pto_requests"
 	SendCredentialReminders        Column // "send_credential_reminders" → qualified: "dashc.send_credential_reminders"
+	DriverDigestCadence            Column // "driver_digest_cadence" → qualified: "dashc.driver_digest_cadence"
+	DriverDigestWeekday            Column // "driver_digest_weekday" → qualified: "dashc.driver_digest_weekday"
 	EnableDetentionAlerts          Column // "enable_detention_alerts" → qualified: "dashc.enable_detention_alerts"
 	DetentionAlertThresholdMinutes Column // "detention_alert_threshold_minutes" → qualified: "dashc.detention_alert_threshold_minutes"
 	Version                        Column // "version" → qualified: "dashc.version"
@@ -1428,6 +1430,8 @@ var DashControlColumns = struct {
 	AllowContactInfoEdit:           NewColumn("allow_contact_info_edit", "dashc"),
 	AllowPtoRequests:               NewColumn("allow_pto_requests", "dashc"),
 	SendCredentialReminders:        NewColumn("send_credential_reminders", "dashc"),
+	DriverDigestCadence:            NewColumn("driver_digest_cadence", "dashc"),
+	DriverDigestWeekday:            NewColumn("driver_digest_weekday", "dashc"),
 	EnableDetentionAlerts:          NewColumn("enable_detention_alerts", "dashc"),
 	DetentionAlertThresholdMinutes: NewColumn("detention_alert_threshold_minutes", "dashc"),
 	Version:                        NewColumn("version", "dashc"),
@@ -1457,6 +1461,8 @@ var DashControlFieldMap = map[string]string{
 	"allowContactInfoEdit":           "allow_contact_info_edit",
 	"allowPtoRequests":               "allow_pto_requests",
 	"sendCredentialReminders":        "send_credential_reminders",
+	"driverDigestCadence":            "driver_digest_cadence",
+	"driverDigestWeekday":            "driver_digest_weekday",
 	"enableDetentionAlerts":          "enable_detention_alerts",
 	"detentionAlertThresholdMinutes": "detention_alert_threshold_minutes",
 	"version":                        "version",
@@ -1484,6 +1490,8 @@ var DashControlInsertableColumns = []string{
 	"allow_contact_info_edit",
 	"allow_pto_requests",
 	"send_credential_reminders",
+	"driver_digest_cadence",
+	"driver_digest_weekday",
 	"enable_detention_alerts",
 	"detention_alert_threshold_minutes",
 	"version",
@@ -1571,6 +1579,8 @@ var DashControlFilter = struct {
 	AllowContactInfoEdit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowContactInfoEdit" → DB: "allow_contact_info_edit"
 	AllowPtoRequests               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPtoRequests" → DB: "allow_pto_requests"
 	SendCredentialReminders        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendCredentialReminders" → DB: "send_credential_reminders"
+	DriverDigestCadence            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverDigestCadence" → DB: "driver_digest_cadence"
+	DriverDigestWeekday            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverDigestWeekday" → DB: "driver_digest_weekday"
 	EnableDetentionAlerts          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableDetentionAlerts" → DB: "enable_detention_alerts"
 	DetentionAlertThresholdMinutes func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionAlertThresholdMinutes" → DB: "detention_alert_threshold_minutes"
 	Version                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -1628,6 +1638,12 @@ var DashControlFilter = struct {
 	SendCredentialReminders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sendCredentialReminders", op, value)
 	},
+	DriverDigestCadence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driverDigestCadence", op, value)
+	},
+	DriverDigestWeekday: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driverDigestWeekday", op, value)
+	},
 	EnableDetentionAlerts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enableDetentionAlerts", op, value)
 	},
@@ -1671,25 +1687,27 @@ var DataRetentionTable = TableInfo{
 //	q.Where(DataRetentionColumns.ID.Eq(), id)           // WHERE dr.id = ?
 //	q.Order(DataRetentionColumns.CreatedAt.OrderDesc())  // ORDER BY dr.created_at DESC
 var DataRetentionColumns = struct {
-	ID                            Column // "id" → qualified: "dr.id"
-	BusinessUnitID                Column // "business_unit_id" → qualified: "dr.business_unit_id"
-	OrganizationID                Column // "organization_id" → qualified: "dr.organization_id"
-	AuditRetentionPeriod          Column // "audit_retention_period" → qualified: "dr.audit_retention_period"
-	EDIInboundFileRetentionPeriod Column // "edi_inbound_file_retention_period" → qualified: "dr.edi_inbound_file_retention_period"
-	EDIMessageRetentionPeriod     Column // "edi_message_retention_period" → qualified: "dr.edi_message_retention_period"
-	Version                       Column // "version" → qualified: "dr.version"
-	CreatedAt                     Column // "created_at" → qualified: "dr.created_at"
-	UpdatedAt                     Column // "updated_at" → qualified: "dr.updated_at"
+	ID                                 Column // "id" → qualified: "dr.id"
+	BusinessUnitID                     Column // "business_unit_id" → qualified: "dr.business_unit_id"
+	OrganizationID                     Column // "organization_id" → qualified: "dr.organization_id"
+	AuditRetentionPeriod               Column // "audit_retention_period" → qualified: "dr.audit_retention_period"
+	EDIInboundFileRetentionPeriod      Column // "edi_inbound_file_retention_period" → qualified: "dr.edi_inbound_file_retention_period"
+	EDIMessageRetentionPeriod          Column // "edi_message_retention_period" → qualified: "dr.edi_message_retention_period"
+	DriverQualificationRetentionPeriod Column // "driver_qualification_retention_period" → qualified: "dr.driver_qualification_retention_period"
+	Version                            Column // "version" → qualified: "dr.version"
+	CreatedAt                          Column // "created_at" → qualified: "dr.created_at"
+	UpdatedAt                          Column // "updated_at" → qualified: "dr.updated_at"
 }{
-	ID:                            NewColumn("id", "dr"),
-	BusinessUnitID:                NewColumn("business_unit_id", "dr"),
-	OrganizationID:                NewColumn("organization_id", "dr"),
-	AuditRetentionPeriod:          NewColumn("audit_retention_period", "dr"),
-	EDIInboundFileRetentionPeriod: NewColumn("edi_inbound_file_retention_period", "dr"),
-	EDIMessageRetentionPeriod:     NewColumn("edi_message_retention_period", "dr"),
-	Version:                       NewColumn("version", "dr"),
-	CreatedAt:                     NewColumn("created_at", "dr"),
-	UpdatedAt:                     NewColumn("updated_at", "dr"),
+	ID:                                 NewColumn("id", "dr"),
+	BusinessUnitID:                     NewColumn("business_unit_id", "dr"),
+	OrganizationID:                     NewColumn("organization_id", "dr"),
+	AuditRetentionPeriod:               NewColumn("audit_retention_period", "dr"),
+	EDIInboundFileRetentionPeriod:      NewColumn("edi_inbound_file_retention_period", "dr"),
+	EDIMessageRetentionPeriod:          NewColumn("edi_message_retention_period", "dr"),
+	DriverQualificationRetentionPeriod: NewColumn("driver_qualification_retention_period", "dr"),
+	Version:                            NewColumn("version", "dr"),
+	CreatedAt:                          NewColumn("created_at", "dr"),
+	UpdatedAt:                          NewColumn("updated_at", "dr"),
 }
 
 // DataRetentionFieldMap maps JSON API field names to database column names.
@@ -1697,15 +1715,16 @@ var DataRetentionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by DataRetention.GetStaticFieldMap().
 var DataRetentionFieldMap = map[string]string{
-	"id":                            "id",
-	"businessUnitId":                "business_unit_id",
-	"organizationId":                "organization_id",
-	"auditRetentionPeriod":          "audit_retention_period",
-	"ediInboundFileRetentionPeriod": "edi_inbound_file_retention_period",
-	"ediMessageRetentionPeriod":     "edi_message_retention_period",
-	"version":                       "version",
-	"createdAt":                     "created_at",
-	"updatedAt":                     "updated_at",
+	"id":                                 "id",
+	"businessUnitId":                     "business_unit_id",
+	"organizationId":                     "organization_id",
+	"auditRetentionPeriod":               "audit_retention_period",
+	"ediInboundFileRetentionPeriod":      "edi_inbound_file_retention_period",
+	"ediMessageRetentionPeriod":          "edi_message_retention_period",
+	"driverQualificationRetentionPeriod": "driver_qualification_retention_period",
+	"version":                            "version",
+	"createdAt":                          "created_at",
+	"updatedAt":                          "updated_at",
 }
 
 // DataRetentionInsertableColumns lists column names suitable for INSERT statements on the "data_retention" table.
@@ -1717,6 +1736,7 @@ var DataRetentionInsertableColumns = []string{
 	"audit_retention_period",
 	"edi_inbound_file_retention_period",
 	"edi_message_retention_period",
+	"driver_qualification_retention_period",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1785,15 +1805,16 @@ func DataRetentionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	DataRetentionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var DataRetentionFilter = struct {
-	ID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	AuditRetentionPeriod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "auditRetentionPeriod" → DB: "audit_retention_period"
-	EDIInboundFileRetentionPeriod func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInboundFileRetentionPeriod" → DB: "edi_inbound_file_retention_period"
-	EDIMessageRetentionPeriod     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediMessageRetentionPeriod" → DB: "edi_message_retention_period"
-	Version                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AuditRetentionPeriod               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "auditRetentionPeriod" → DB: "audit_retention_period"
+	EDIInboundFileRetentionPeriod      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInboundFileRetentionPeriod" → DB: "edi_inbound_file_retention_period"
+	EDIMessageRetentionPeriod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediMessageRetentionPeriod" → DB: "edi_message_retention_period"
+	DriverQualificationRetentionPeriod func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverQualificationRetentionPeriod" → DB: "driver_qualification_retention_period"
+	Version                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1812,6 +1833,9 @@ var DataRetentionFilter = struct {
 	},
 	EDIMessageRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("ediMessageRetentionPeriod", op, value)
+	},
+	DriverQualificationRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driverQualificationRetentionPeriod", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

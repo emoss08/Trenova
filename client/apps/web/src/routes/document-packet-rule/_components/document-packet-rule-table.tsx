@@ -1,5 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { documentPacketRuleTableGraphQLConfig } from "@/lib/graphql/document-packet-rule-table";
+import {
+  documentPacketRuleTableGraphQLConfig,
+  type DocumentPacketRuleRow,
+} from "@/lib/graphql/document-packet-rule-table";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import {
   AlertDialog,
@@ -14,7 +17,6 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { DocumentPacketRuleService } from "@/services/document-packet-rule";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import type { DocumentPacketRule } from "@/types/document-packet-rule";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +31,7 @@ const service = new DocumentPacketRuleService();
 export default function DocumentPacketRuleTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedRule, setSelectedRule] = useState<DocumentPacketRule | null>(null);
+  const [selectedRule, setSelectedRule] = useState<DocumentPacketRuleRow | null>(null);
 
   const { data: documentTypesData } = useQuery({
     queryKey: ["document-types-select-options"],
@@ -64,14 +66,14 @@ export default function DocumentPacketRuleTable() {
     },
   });
 
-  const handleDelete = useCallback((row: Row<DocumentPacketRule>) => {
+  const handleDelete = useCallback((row: Row<DocumentPacketRuleRow>) => {
     setSelectedRule(row.original);
     setDeleteDialogOpen(true);
   }, []);
 
   const columns = useMemo(() => getColumns(documentTypeMap), [documentTypeMap]);
 
-  const contextMenuActions = useMemo<RowAction<DocumentPacketRule>[]>(
+  const contextMenuActions = useMemo<RowAction<DocumentPacketRuleRow>[]>(
     () => [
       {
         id: "delete",
@@ -86,7 +88,7 @@ export default function DocumentPacketRuleTable() {
 
   return (
     <>
-      <DataTable<DocumentPacketRule>
+      <DataTable<DocumentPacketRuleRow>
         name="Document Packet Rule"
         queryKey="document-packet-rule-list"
         graphql={documentPacketRuleTableGraphQLConfig}

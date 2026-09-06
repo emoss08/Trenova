@@ -1,6 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { accessorialChargeTableGraphQLConfig } from "@/lib/graphql/accessorial-charge-table";
-import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import {
+  accessorialChargeTableGraphQLConfig,
+  type AccessorialChargeRow,
+} from "@/lib/graphql/accessorial-charge-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./accessorial-charge-columns";
@@ -51,7 +53,7 @@ export default function AccessorialChargeTable() {
   //   );
 
   return (
-    <DataTable<AccessorialCharge>
+    <DataTable<AccessorialChargeRow>
       name="Accessorial Charge"
       queryKey="accessorial-charge-list"
       graphql={accessorialChargeTableGraphQLConfig}

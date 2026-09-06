@@ -35,7 +35,8 @@ server:
   cors:
     enabled: true # Enable CORS
     allowedOrigins: # Allowed origins for CORS
-      - http://localhost:5173
+      - http://localhost:5173 # @trenova/web dev server
+      - http://localhost:5174 # @trenova/dash dev server
       - http://localhost:3000
     allowedMethods: # Allowed HTTP methods
       - GET
@@ -59,6 +60,10 @@ monitoring:
     enabled: false
     host: 127.0.0.1
     port: 6060
+  graphql:
+    resolverMetrics: true # Per-resolver metrics/spans for N+1 hunting; keep off in production
+    slowOperationAfter: 1s # Operations at or above this are logged by name
+    maxTrackedOperations: 2000 # Distinct operation-name labels before collapsing to "other"
 
 # PostgreSQL database configuration
 database:
@@ -148,6 +153,14 @@ security:
   rateLimit:
     enabled: true # Enable rate limiting
     requestsPerMinute: 60 # Requests per minute per IP
+  graphql:
+    maxRequestBodyBytes: 1048576 # Max /graphql request body (bytes); bounds the variables payload
+    persistedDocumentsPath: internal/api/graphql/persisted-documents.json # Dev/test only: safelist file re-read on unknown hash
+    costBudget:
+      enabled: true # Per-user budget of GraphQL operation cost points
+      pointsPerMinute: 6000000 # Sustained refill rate; a large table page costs ~20k, the worst ~200k
+      burst: 3000000 # Must be at least the single-operation complexity limit (750000)
+      cleanupInterval: 5m # Idle users are dropped from the budget table after this
   csrf:
     tokenName: csrf_token # Name for CSRF token in session
     headerName: X-CSRF-Token # Header name for CSRF token
@@ -204,8 +217,10 @@ renderer:
 
 # Driver portal (Dash) settings
 portal:
-    # Absolute base URL of the client app; used to build portal invitation links in emails
-    baseUrl: http://localhost:5173
+    # Absolute base URL of the app that serves Dash; used to build portal invitation
+    # links in emails. In production Dash is served under /dash on the web origin;
+    # in local development it is its own Vite server on port 5174.
+    baseUrl: http://localhost:5174
 
 # Web push (VAPID) for driver portal notifications. Generate keys with
 # github.com/SherClockHolmes/webpush-go GenerateVAPIDKeys; empty keys disable push.

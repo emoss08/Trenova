@@ -101,5 +101,5 @@ func formulaTemplateStats(
 		)
 	}
 
-	return loadersForRequest.FormulaTemplateStatsByID.Load(ctx, obj.ID.String())()
+	return loadersForRequest.FormulaTemplateStatsByID.Load(ctx, obj.ID.String())
 }

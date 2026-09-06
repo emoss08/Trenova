@@ -28,14 +28,14 @@ fragment AuditLogTableRowFields on AuditEntry {
   }
 }
 
-query AuditLogTable($input: DataTableConnectionInput!) {
+query AuditLogTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   auditEntries(input: $input) {
     edges {
       node {
         ...AuditLogTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

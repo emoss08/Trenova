@@ -7,6 +7,7 @@ var (
 	ErrInvalidEndorsementType  = errors.New("invalid endorsement type")
 	ErrInvalidComplianceStatus = errors.New("invalid compliance status")
 	ErrInvalidPTOStatus        = errors.New("invalid PTO status")
+	ErrInvalidPTOTransition    = errors.New("invalid PTO status transition")
 	ErrInvalidPTOType          = errors.New("invalid PTO type")
 	ErrInvalidGender           = errors.New("invalid gender")
 	ErrInvalidCDLClass         = errors.New("invalid CDL class")
@@ -145,6 +146,36 @@ func (p PTOStatus) IsValid() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func (p PTOStatus) IsTerminal() bool {
+	return p == PTOStatusRejected || p == PTOStatusCancelled
+}
+
+func (p PTOStatus) CanTransitionTo(next PTOStatus) bool {
+	switch p {
+	case PTOStatusRequested:
+		return next == PTOStatusApproved || next == PTOStatusRejected || next == PTOStatusCancelled
+	case PTOStatusApproved:
+		return next == PTOStatusCancelled
+	case PTOStatusRejected, PTOStatusCancelled:
+		return false
+	default:
+		return false
+	}
+}
+
+func PTOStatusSourcesFor(target PTOStatus) []PTOStatus {
+	switch target {
+	case PTOStatusApproved, PTOStatusRejected:
+		return []PTOStatus{PTOStatusRequested}
+	case PTOStatusCancelled:
+		return []PTOStatus{PTOStatusRequested, PTOStatusApproved}
+	case PTOStatusRequested:
+		return nil
+	default:
+		return nil
 	}
 }
 

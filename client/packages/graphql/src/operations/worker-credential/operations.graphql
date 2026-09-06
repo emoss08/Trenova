@@ -1,0 +1,276 @@
+fragment WorkerCredentialTypeFields on WorkerCredentialType {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  category
+  status
+  isRequired
+  requiredForDriverTypes
+  renewalWindowDays
+  validityMonths
+  requiresNumber
+  requiresDocument
+  profileField
+  isSystem
+  sortOrder
+  activeCredentialCount
+  version
+  createdAt
+  updatedAt
+}
+
+fragment WorkerCredentialFields on WorkerCredential {
+  id
+  workerId
+  credentialTypeId
+  status
+  number
+  issuingAuthority
+  issuedAt
+  expiresAt
+  documentId
+  notes
+  verifiedById
+  verifiedAt
+  archivedById
+  archivedAt
+  archiveReason
+  health
+  daysUntilExpiry
+  version
+  createdAt
+  updatedAt
+  credentialType {
+    id
+    code
+    name
+    category
+    isRequired
+    renewalWindowDays
+    validityMonths
+    requiresNumber
+    requiresDocument
+    profileField
+    isSystem
+    sortOrder
+  }
+  document {
+    id
+    fileName
+    originalName
+    fileType
+    fileSize
+    createdAt
+  }
+  verifiedBy {
+    id
+    name
+  }
+}
+
+query WorkerCredentialTypeTable(
+  $input: WorkerCredentialTypesInput!
+  $includeTotalCount: Boolean = true
+) {
+  workerCredentialTypes(input: $input) {
+    edges {
+      node {
+        ...WorkerCredentialTypeFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}
+
+query ActiveWorkerCredentialTypes {
+  activeWorkerCredentialTypes {
+    ...WorkerCredentialTypeFields
+  }
+}
+
+query WorkerCredentials($workerId: ID!, $includeArchived: Boolean) {
+  workerCredentials(workerId: $workerId, includeArchived: $includeArchived) {
+    ...WorkerCredentialFields
+  }
+}
+
+query WorkerCredentialSummary($workerId: ID!) {
+  workerCredentialSummary(workerId: $workerId) {
+    workerId
+    complianceStatus
+    requiredCount
+    validCount
+    expiringCount
+    expiredCount
+    missingCount
+    items {
+      health
+      daysUntilExpiry
+      required
+      credentialType {
+        id
+        businessUnitId
+        organizationId
+        code
+        name
+        description
+        category
+        status
+        isRequired
+        requiredForDriverTypes
+        renewalWindowDays
+        validityMonths
+        requiresNumber
+        requiresDocument
+        profileField
+        isSystem
+        sortOrder
+        activeCredentialCount
+        version
+        createdAt
+        updatedAt
+      }
+      credential {
+        id
+        workerId
+        credentialTypeId
+        status
+        number
+        issuingAuthority
+        issuedAt
+        expiresAt
+        documentId
+        notes
+        verifiedById
+        verifiedAt
+        archivedById
+        archivedAt
+        archiveReason
+        health
+        daysUntilExpiry
+        version
+        createdAt
+        updatedAt
+        credentialType {
+          id
+          code
+          name
+          category
+          isRequired
+          renewalWindowDays
+          validityMonths
+          requiresNumber
+          requiresDocument
+          profileField
+          isSystem
+          sortOrder
+        }
+        document {
+          id
+          fileName
+          originalName
+          fileType
+          fileSize
+          createdAt
+        }
+        verifiedBy {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+query CredentialExpiryForecast($days: Int, $limit: Int) {
+  credentialExpiryForecast(days: $days, limit: $limit) {
+    horizonDays
+    expiringCount
+    expiredCount
+    items {
+      health
+      daysUntilExpiry
+      credential {
+        id
+        workerId
+        expiresAt
+        number
+        credentialType {
+          id
+          code
+          name
+          category
+          isRequired
+        }
+        worker {
+          id
+          firstName
+          lastName
+          fleetCodeId
+        }
+      }
+    }
+  }
+}
+
+mutation CreateWorkerCredentialType($input: WorkerCredentialTypeInput!) {
+  createWorkerCredentialType(input: $input) {
+    ...WorkerCredentialTypeFields
+  }
+}
+
+mutation UpdateWorkerCredentialType($id: ID!, $input: WorkerCredentialTypeInput!) {
+  updateWorkerCredentialType(id: $id, input: $input) {
+    ...WorkerCredentialTypeFields
+  }
+}
+
+mutation ArchiveWorkerCredentialType($id: ID!, $version: Int) {
+  archiveWorkerCredentialType(id: $id, version: $version) {
+    ...WorkerCredentialTypeFields
+  }
+}
+
+mutation RestoreWorkerCredentialType($id: ID!, $version: Int) {
+  restoreWorkerCredentialType(id: $id, version: $version) {
+    ...WorkerCredentialTypeFields
+  }
+}
+
+mutation CreateWorkerCredential($input: WorkerCredentialInput!) {
+  createWorkerCredential(input: $input) {
+    ...WorkerCredentialFields
+  }
+}
+
+mutation UpdateWorkerCredential($input: UpdateWorkerCredentialInput!) {
+  updateWorkerCredential(input: $input) {
+    ...WorkerCredentialFields
+  }
+}
+
+mutation VerifyWorkerCredential($id: ID!, $version: Int) {
+  verifyWorkerCredential(id: $id, version: $version) {
+    ...WorkerCredentialFields
+  }
+}
+
+mutation ArchiveWorkerCredential($input: ArchiveWorkerCredentialInput!) {
+  archiveWorkerCredential(input: $input) {
+    ...WorkerCredentialFields
+  }
+}
+
+mutation AttachWorkerCredentialDocument($input: AttachWorkerCredentialDocumentInput!) {
+  attachWorkerCredentialDocument(input: $input) {
+    ...WorkerCredentialFields
+  }
+}

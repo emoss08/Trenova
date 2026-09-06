@@ -147,7 +147,7 @@ func shipmentFromInput(
 		Status:               status,
 		EntryMethod:          entryMethod,
 		ProNumber:            stringValue(input.ProNumber),
-		BOL:                  stringValue(input.Bol),
+		BOL:                  stringValue(input.BOL),
 		CancelReason:         stringValue(input.CancelReason),
 		OtherChargeAmount:    otherChargeAmount,
 		FreightChargeAmount:  freightChargeAmount,
@@ -526,7 +526,7 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		TenderStatus:           tenderStatusToModel(entity.TenderStatus),
 		EntryMethod:            entryMethodToModel(entity.EntryMethod),
 		ProNumber:              entity.ProNumber,
-		Bol:                    stringPtrFromValue(entity.BOL),
+		BOL:                    stringPtrFromValue(entity.BOL),
 		CancelReason:           entity.CancelReason,
 		OtherChargeAmount:      nullDecimalString(entity.OtherChargeAmount),
 		FreightChargeAmount:    nullDecimalString(entity.FreightChargeAmount),
@@ -1317,7 +1317,7 @@ func (r *shipmentResolver) loadShipmentOrder(
 		return nil, errortypes.NewDatabaseError("Order loader is not configured")
 	}
 
-	parent, err := loadersForRequest.OrderByID.Load(ctx, *obj.OrderID)()
+	parent, err := loadersForRequest.OrderByID.Load(ctx, *obj.OrderID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

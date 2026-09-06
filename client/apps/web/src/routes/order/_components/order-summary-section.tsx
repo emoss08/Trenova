@@ -43,7 +43,7 @@ export function OrderSummarySection() {
 
   const { data: order } = useQuery({
     queryKey: ["order-detail", orderId],
-    queryFn: () => fetchOrderDetail(orderId!),
+    queryFn: ({ signal }) => fetchOrderDetail(orderId!, { signal }),
     enabled: !!orderId,
   });
 

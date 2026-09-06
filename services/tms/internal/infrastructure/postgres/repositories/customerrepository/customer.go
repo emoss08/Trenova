@@ -150,16 +150,20 @@ func (r *repository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*customer.Customer)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count customers", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*customer.Customer)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count customers", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -167,7 +171,7 @@ func (r *repository) ListConnection(
 		dbhelper.CursorListParams[*customer.Customer]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*customer.Customer) *bun.SelectQuery {
 				return dba.
 					NewSelect().
@@ -261,9 +265,11 @@ func (r *repository) GetByIDs(
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("cus.organization_id = ?", req.TenantInfo.OrgID).
-				Where("cus.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("cus.id IN (?)", bun.List(req.CustomerIDs))
+			return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.CustomerColumns.ID.In(), bun.List(req.CustomerIDs))
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.addOptions(sq, req.CustomerFilterOptions)
 		}).
 		Scan(ctx)
 	if err != nil {

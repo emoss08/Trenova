@@ -107,6 +107,7 @@ describe("shipment GraphQL helpers", () => {
   it("requests shipment events with cursor pagination variables", async () => {
     const events = [
       {
+        __typename: "ShipmentLifecycleEvent",
         id: "se_1",
         organizationId: "org_1",
         businessUnitId: "bu_1",
@@ -114,10 +115,18 @@ describe("shipment GraphQL helpers", () => {
         type: "StatusChanged",
         severity: "brand",
         actorType: "system",
+        actorId: null,
         actorLabel: "System",
         summary: "Status changed",
         metadata: {},
         occurredAt: 1_800_000_000,
+        correlationId: null,
+        actor: null,
+        shipment: null,
+        proNumber: "SHP-100",
+        previousStatus: "New",
+        newStatus: "InTransit",
+        reason: null,
       },
     ];
     requestGraphQLMock.mockResolvedValueOnce({ shipmentEvents: events });

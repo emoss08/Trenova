@@ -38,14 +38,14 @@ fragment DistanceOverrideTableRowFields on DistanceOverride {
   }
 }
 
-query DistanceOverrideTable($input: DataTableConnectionInput!) {
+query DistanceOverrideTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   distanceOverrides(input: $input) {
     edges {
       node {
         ...DistanceOverrideTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

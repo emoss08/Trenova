@@ -89,12 +89,12 @@ type AgentRun {
   modelIdentifier: String!
   promptVersion: String!
   inputContextHash: String!
-  startedAt: Int
-  completedAt: Int
+  startedAt: Timestamp
+  completedAt: Timestamp
   errorMessage: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type AgentProposal {
@@ -111,8 +111,8 @@ type AgentProposal {
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type AgentException {
@@ -130,8 +130,8 @@ type AgentException {
   resolutionState: AgentResolutionState!
   resolutionNotes: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type AgentDecision {
@@ -146,8 +146,8 @@ type AgentDecision {
   modifications: JSON
   reasonCode: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type AgentControl {
@@ -158,8 +158,8 @@ type AgentControl {
   billingAgentEnabled: Boolean!
   decisionTimeoutSeconds: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type AgentRunEdge {

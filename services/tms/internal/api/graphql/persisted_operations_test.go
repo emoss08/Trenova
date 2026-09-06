@@ -3,12 +3,17 @@ package graphql
 import (
 	"io"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestLoadPersistedOperationManifest(t *testing.T) {
@@ -27,11 +32,15 @@ func TestLoadPersistedOperationManifest_NormalizesBareSHA256Hashes(t *testing.T)
 	t.Parallel()
 
 	manifest, err := LoadPersistedOperationManifest(
-		[]byte(`{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":"query Test { ok }"}`),
+		[]byte(
+			`{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":"query Test { ok }"}`,
+		),
 	)
 	require.NoError(t, err)
 
-	query, ok := manifest.Query("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	query, ok := manifest.Query(
+		"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	)
 	require.True(t, ok)
 	assert.Equal(t, "query Test { ok }", query)
 	assert.ElementsMatch(
@@ -44,8 +53,12 @@ func TestLoadPersistedOperationManifest_NormalizesBareSHA256Hashes(t *testing.T)
 func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := NewPersistedOperationManifest()
+	manifest, err := NewPersistedOperationManifest(PersistedOperationManifestParams{
+		Config: &config.Config{App: config.AppConfig{Env: config.EnvProduction}},
+		Logger: zap.NewNop(),
+	})
 	require.NoError(t, err)
+	assert.Nil(t, manifest.reloader)
 
 	for _, operation := range []string{
 		"ShipmentCommandCenterTable",
@@ -125,7 +138,9 @@ func TestRewritePersistedOperationRequest_AcceptsKnownHash(t *testing.T) {
 	t.Parallel()
 
 	manifest, err := LoadPersistedOperationManifest(
-		[]byte(`{"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":"query Safelisted($first: Int!) { tractors(first: $first) { totalCount } }"}`),
+		[]byte(
+			`{"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":"query Safelisted($first: Int!) { tractors(first: $first) { totalCount } }"}`,
+		),
 	)
 	require.NoError(t, err)
 
@@ -167,7 +182,9 @@ func TestRewritePersistedOperationRequest_RejectsUnknownHash(t *testing.T) {
 	req := httptest.NewRequest(
 		"POST",
 		"/graphql",
-		strings.NewReader(`{"extensions":{"persistedQuery":{"version":1,"sha256Hash":"sha256:missing"}}}`),
+		strings.NewReader(
+			`{"extensions":{"persistedQuery":{"version":1,"sha256Hash":"sha256:missing"}}}`,
+		),
 	)
 
 	err = rewritePersistedOperationRequest(req, manifest, true)
@@ -182,7 +199,11 @@ func TestRewritePersistedOperationRequest_RejectsRawQueryWhenEnforced(t *testing
 	manifest, err := LoadPersistedOperationManifest([]byte(`{"sha256:abc":"query Test { ok }"}`))
 	require.NoError(t, err)
 
-	req := httptest.NewRequest("POST", "/graphql", strings.NewReader(`{"query":"query Raw { ok }"}`))
+	req := httptest.NewRequest(
+		"POST",
+		"/graphql",
+		strings.NewReader(`{"query":"query Raw { ok }"}`),
+	)
 
 	err = rewritePersistedOperationRequest(req, manifest, true)
 
@@ -204,4 +225,100 @@ func TestRewritePersistedOperationRequest_AllowsRawQueryWhenNotEnforced(t *testi
 	rewritten, err := io.ReadAll(req.Body)
 	require.NoError(t, err)
 	assert.JSONEq(t, body, string(rewritten))
+}
+
+func TestRewritePersistedOperationRequest_UnknownHashFallsBackToRawQueryWhenNotEnforced(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	manifest, err := LoadPersistedOperationManifest([]byte(`{"sha256:abc":"query Test { ok }"}`))
+	require.NoError(t, err)
+
+	const body = `{"query":"query Fresh { ok }","extensions":{"persistedQuery":{"version":1,"sha256Hash":"sha256:missing"}}}`
+	req := httptest.NewRequest("POST", "/graphql", strings.NewReader(body))
+
+	require.NoError(t, rewritePersistedOperationRequest(req, manifest, false))
+
+	rewritten, err := io.ReadAll(req.Body)
+	require.NoError(t, err)
+	assert.JSONEq(t, body, string(rewritten))
+
+	hashOnly := httptest.NewRequest(
+		"POST",
+		"/graphql",
+		strings.NewReader(
+			`{"extensions":{"persistedQuery":{"version":1,"sha256Hash":"sha256:missing"}}}`,
+		),
+	)
+	err = rewritePersistedOperationRequest(hashOnly, manifest, false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "GraphQL persisted operation is not safelisted")
+}
+
+func TestPersistedOperationManifest_ReloadsFromDiskOnUnknownHash(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "persisted-documents.json")
+	require.NoError(t, os.WriteFile(path, []byte(`{"sha256:one":"query One { ok }"}`), 0o600))
+
+	manifest, err := LoadPersistedOperationManifest([]byte(`{"sha256:one":"query One { ok }"}`))
+	require.NoError(t, err)
+	manifest.enableReload(path, zap.NewNop())
+
+	base := time.Now()
+	manifest.reloader.now = func() time.Time { return base }
+
+	_, ok := manifest.Query("sha256:two")
+	assert.False(t, ok)
+	assert.Equal(t, 1, manifest.Len())
+
+	require.NoError(t, os.WriteFile(
+		path,
+		[]byte(`{"sha256:one":"query One { ok }","sha256:two":"query Two { ok }"}`),
+		0o600,
+	))
+	future := base.Add(time.Hour)
+	require.NoError(t, os.Chtimes(path, future, future))
+
+	_, ok = manifest.Query("sha256:two")
+	assert.False(t, ok, "reload attempts are throttled")
+
+	manifest.reloader.now = func() time.Time { return base.Add(2 * time.Second) }
+	query, ok := manifest.Query("sha256:two")
+	require.True(t, ok)
+	assert.Equal(t, "query Two { ok }", query)
+	assert.Equal(t, 2, manifest.Len())
+
+	query, ok = manifest.Query("one")
+	assert.False(t, ok)
+	assert.Empty(t, query)
+}
+
+func TestDevelopmentManifestSource(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "manifest.json")
+	require.NoError(t, os.WriteFile(path, []byte(`{}`), 0o600))
+
+	assert.Empty(t, developmentManifestSource(nil))
+	assert.Empty(t, developmentManifestSource(&config.Config{
+		App: config.AppConfig{Env: config.EnvProduction},
+		Security: config.SecurityConfig{
+			GraphQL: config.GraphQLSecurityConfig{PersistedDocumentsPath: path},
+		},
+	}))
+	assert.Empty(t, developmentManifestSource(&config.Config{
+		App: config.AppConfig{Env: config.EnvDevelopment},
+		Security: config.SecurityConfig{GraphQL: config.GraphQLSecurityConfig{
+			PersistedDocumentsPath: filepath.Join(dir, "missing.json"),
+		}},
+	}))
+	assert.Equal(t, path, developmentManifestSource(&config.Config{
+		App: config.AppConfig{Env: config.EnvDevelopment},
+		Security: config.SecurityConfig{
+			GraphQL: config.GraphQLSecurityConfig{PersistedDocumentsPath: path},
+		},
+	}))
 }

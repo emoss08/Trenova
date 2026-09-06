@@ -27,14 +27,17 @@ export const edi = createQueryKeys("edi", {
   }),
   templates: (filters: EDITemplateListFilters = {}) => ({
     queryKey: ["templates", filters],
-    queryFn: async () =>
-      listEdiTemplatesGraphQL({
-        first: filters.limit ?? 100,
-        query: filters.query,
-        status: filters.status,
-        transactionSet: filters.transactionSet,
-        direction: filters.direction,
-      }),
+    queryFn: async ({ signal }) =>
+      listEdiTemplatesGraphQL(
+        {
+          first: filters.limit ?? 100,
+          query: filters.query,
+          status: filters.status,
+          transactionSet: filters.transactionSet,
+          direction: filters.direction,
+        },
+        { signal },
+      ),
   }),
   template: (templateId: string) => ({
     queryKey: ["template", templateId],
@@ -78,29 +81,32 @@ export const edi = createQueryKeys("edi", {
   }),
   summary: (sinceHours?: number) => ({
     queryKey: ["summary", sinceHours],
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       requestGraphQL({
         document: EdiSummaryDocument,
         operationName: "EdiSummary",
         variables: { sinceHours },
+        signal,
       }),
   }),
   partnerScorecards: (sinceHours?: number) => ({
     queryKey: ["partner-scorecards", sinceHours],
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       requestGraphQL({
         document: EdiPartnerScorecardsDocument,
         operationName: "EdiPartnerScorecards",
         variables: { sinceHours },
+        signal,
       }),
   }),
   volumeSeries: (sinceHours?: number) => ({
     queryKey: ["volume-series", sinceHours],
-    queryFn: async () =>
+    queryFn: async ({ signal }) =>
       requestGraphQL({
         document: EdiVolumeSeriesDocument,
         operationName: "EdiVolumeSeries",
         variables: { sinceHours },
+        signal,
       }),
   }),
 });

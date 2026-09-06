@@ -81,15 +81,18 @@ export function useTemplateDesignerTemplateListInfiniteQuery() {
         limit: templateDesignerTemplatePageSize,
       },
     ],
-    queryFn: async ({ pageParam }) =>
-      listEdiTemplatesGraphQL({
-        first: templateDesignerTemplatePageSize,
-        after: pageParam,
-        query: templateSearch,
-        status: templateStatus,
-        transactionSet: templateTransactionSet,
-        direction: templateDirection,
-      }),
+    queryFn: async ({ pageParam, signal }) =>
+      listEdiTemplatesGraphQL(
+        {
+          first: templateDesignerTemplatePageSize,
+          after: pageParam,
+          query: templateSearch,
+          status: templateStatus,
+          transactionSet: templateTransactionSet,
+          direction: templateDirection,
+        },
+        { signal },
+      ),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage && lastPage.endCursor ? lastPage.endCursor : undefined,

@@ -61,6 +61,11 @@ type ListByFiscalYearIDRequest struct {
 	BuID         pulid.ID `json:"buId"`
 }
 
+type ListByFiscalYearIDsRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"-"`
+	FiscalYearIDs []pulid.ID            `json:"fiscalYearIds"`
+}
+
 type GetPeriodByDateRequest struct {
 	OrgID pulid.ID `json:"orgId"`
 	BuID  pulid.ID `json:"buId"`
@@ -147,6 +152,10 @@ type FiscalPeriodRepository interface {
 		ctx context.Context,
 		req ListByFiscalYearIDRequest,
 	) ([]*fiscalperiod.FiscalPeriod, error)
+	ListByFiscalYearIDs(
+		ctx context.Context,
+		req ListByFiscalYearIDsRequest,
+	) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error)
 	GetPeriodByDate(
 		ctx context.Context,
 		req GetPeriodByDateRequest,

@@ -35,6 +35,7 @@ import type {
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
 import type { TenderOfferStatus, TenderStatus } from "@trenova/shared/types/tender";
+import { ptoTypeMeta } from "../lib/pto";
 import type { PTOStatus, PTOType } from "@trenova/shared/types/worker";
 import type { VariantProps } from "class-variance-authority";
 import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
@@ -174,40 +175,11 @@ export function PermissionScopeBadge({ scope }: { scope?: string }) {
 }
 
 export function PTOTypeBadge({ type }: { type: PTOType }) {
-  const ptoTypeAttributes: Record<PTOType, BadgeAttrProps> = {
-    ["Personal"]: {
-      variant: "secondary",
-      text: "Personal",
-    },
-    ["Vacation"]: {
-      variant: "purple",
-      text: "Vacation",
-    },
-    ["Sick"]: {
-      variant: "active",
-      text: "Sick",
-    },
-    ["Holiday"]: {
-      variant: "inactive",
-      text: "Holiday",
-    },
-    ["Bereavement"]: {
-      variant: "warning",
-      text: "Bereavement",
-    },
-    ["Maternity"]: {
-      variant: "warning",
-      text: "Maternity",
-    },
-    ["Paternity"]: {
-      variant: "warning",
-      text: "Paternity",
-    },
-  };
+  const meta = ptoTypeMeta(type);
 
   return (
-    <Badge variant={ptoTypeAttributes[type].variant} className="max-h-5">
-      {ptoTypeAttributes[type].text}
+    <Badge variant={meta.badgeVariant} className="max-h-5">
+      {meta.label}
     </Badge>
   );
 }

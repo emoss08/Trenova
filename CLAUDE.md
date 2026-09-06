@@ -29,6 +29,8 @@ task run-watch          # Run API server with hot reload (air)
 task test               # Run unit tests
 task test-integration   # Run integration tests (requires Docker)
 task lint               # Run golangci-lint
+task gqlgen             # Regenerate GraphQL server code from internal/api/graphql/schema/*.graphqls
+task gqlschema-diff     # Report GraphQL schema changes vs origin/master; fails on breaking changes
 task db-migrate         # Run database migrations
 task db-seed            # Seed database (auto-regenerates seed IDs)
 task db-reset           # Drop, create, migrate, and seed database
@@ -202,6 +204,19 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Lint with OxLint (`client/.oxlintrc.json`): strict React hooks, TanStack Query exhaustive deps, no console.log
 - Prefer named exports over default exports
 - Extract repeated logic into custom hooks or shared utilities
+
+## GraphQL (gqlgen)
+
+- Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen` (it retries once, because gqlgen can miss the `models_gen.go` it just wrote when a schema adds a model).
+- When a domain struct field uses an initialism (`ShipmentBOL`, `DOTNumber`, `PTOType`), add the initialism to `go_initialisms` in `gqlgen.yml` rather than a per-field `fieldName:` override. Keep initialisms to 3+ letters: 2-letter ones (`AR`, `PO`, `MC`, `CC`) prefix-match SCREAMING enum values and mangle their Go constants (`DETENTION_POLICY` became `DetentionPOLicy`), so those few fields keep explicit overrides.
+- Bind GraphQL enums to their domain type in `gqlgen.yml` (`RotaDayState: model: ...worker.RotaDayState`) when the string values match; that removes the need for a conversion resolver.
+- Every root resolver must reach a permission check or be listed, with a reason, in `internal/api/graphql/authzlint`; self-scoped operations are named `My<Thing>`. `task gqlschema-diff` fails on breaking schema changes; swapping a field between wire-compatible scalars (`Int`↔`Timestamp`, `String`↔`Decimal`) is reported as dangerous, not breaking.
+- Use the semantic scalars from `shared.graphqls`: `Timestamp` for Unix-second instants (never bare `Int` for a `*At`/`*Date` field) and `Decimal` for money and other exact quantities (never `String` or `Float`). Both bind to the same Go types as `Int`/`String`, so no mapper changes are needed.
+- A field resolver that fetches per parent row must go through a per-request dataloader in `internal/api/graphql/loaders` (`batchByIDFunc` for entities, `batchCountFunc` for counts, `batchGroupFunc` for child lists) backed by a `...ByIDs` repository method; never call a single-ID getter from an object-type resolver. Register the factory in `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`.
+- Connection repositories only run their `COUNT` when `req.Cursor.IncludeTotalCount` is set; the GraphQL layer clears it when `totalCount` is not selected. New `ListConnection` methods must follow that gate.
+- Patch inputs (`*PatchInput`) mark fields `@goField(omittable: true)`: absent leaves the value alone, explicit `null` clears it (or fails validation for fields the entity requires). Generated mappers come from `resolver/mappergen`.
+- Clients send persisted operations by hash only; outside production the server re-reads `persisted-documents.json` on an unknown hash (`security.graphql.persistedDocumentsPath`), so run `pnpm --filter @trenova/graphql codegen` (or `pnpm dev`, which watches) after editing an operation. `/graphql` enforces a body-size limit and a per-user operation-cost budget (`security.graphql.*`).
+- Run GraphQL package tests with `go test -tags nofitz ./internal/api/graphql/...` on machines without `libmupdf`.
 
 ## Bun ORM
 

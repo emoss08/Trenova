@@ -46,7 +46,7 @@ function toTableConfigurationInput(data: TableConfigurationFormValues): TableCon
 }
 
 export class TableConfigurationService {
-  public async list(params: ListTableConfigurationsParams) {
+  public async list(params: ListTableConfigurationsParams, options?: { signal?: AbortSignal }) {
     const response = (await requestGraphQL({
       document: TableConfigurationTableDocument,
       operationName: "TableConfigurationTable",
@@ -58,6 +58,7 @@ export class TableConfigurationService {
         resource: params.resource,
         visibility: params.visibility ?? null,
       },
+      signal: options?.signal,
     })) as TableConfigurationTableQuery;
 
     const results = response.tableConfigurations.edges.map((edge) => edge.node);
@@ -75,21 +76,26 @@ export class TableConfigurationService {
     );
   }
 
-  public async get(id: TableConfiguration["id"]) {
+  public async get(id: TableConfiguration["id"], options?: { signal?: AbortSignal }) {
     const response = (await requestGraphQL({
       document: TableConfigurationDetailDocument,
       operationName: "TableConfigurationDetail",
       variables: { id },
+      signal: options?.signal,
     })) as TableConfigurationDetailQuery;
 
     return safeParse(tableConfigurationSchema, response.tableConfiguration, "Table Configuration");
   }
 
-  public async getDefault(resource: TableConfiguration["resource"]) {
+  public async getDefault(
+    resource: TableConfiguration["resource"],
+    options?: { signal?: AbortSignal },
+  ) {
     const response = (await requestGraphQL({
       document: DefaultTableConfigurationDocument,
       operationName: "DefaultTableConfiguration",
       variables: { resource },
+      signal: options?.signal,
     })) as DefaultTableConfigurationQuery;
 
     if (!response.defaultTableConfiguration) return null;

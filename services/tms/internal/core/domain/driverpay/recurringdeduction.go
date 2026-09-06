@@ -2,6 +2,7 @@ package driverpay
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -24,13 +25,23 @@ type RecurringDeduction struct {
 	bun.BaseModel             `bun:"table:recurring_deductions,alias:rded" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                                json:"-"`
 
-	ID                  pulid.ID           `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID           `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID           `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID            pulid.ID           `json:"workerId"            bun:"worker_id,type:VARCHAR(100),notnull"`
-	PayCodeID           pulid.ID           `json:"payCodeId"           bun:"pay_code_id,type:VARCHAR(100),notnull"`
-	EscrowAccountID     *pulid.ID          `json:"escrowAccountId"     bun:"escrow_account_id,type:VARCHAR(100),nullzero"`
-	Status              DeductionStatus    `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
+	ID              pulid.ID        `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID  pulid.ID        `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	WorkerID        pulid.ID        `json:"workerId"            bun:"worker_id,type:VARCHAR(100),notnull"`
+	PayCodeID       pulid.ID        `json:"payCodeId"           bun:"pay_code_id,type:VARCHAR(100),notnull"`
+	EscrowAccountID *pulid.ID       `json:"escrowAccountId"     bun:"escrow_account_id,type:VARCHAR(100),nullzero"`
+	Status          DeductionStatus `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
+	Kind            DeductionKind   `json:"kind"                bun:"kind,type:VARCHAR(50),notnull,default:'Standard'"`
+	// CourtOrderNumber, CaseNumber and IssuingAgency are the paperwork behind a
+	// garnishment. Money taken from somebody's pay without a reference to the
+	// order authorising it cannot be defended.
+	CourtOrderNumber string `json:"courtOrderNumber" bun:"court_order_number,type:VARCHAR(100),nullzero"`
+	CaseNumber       string `json:"caseNumber"       bun:"case_number,type:VARCHAR(100),nullzero"`
+	IssuingAgency    string `json:"issuingAgency"    bun:"issuing_agency,type:VARCHAR(150),nullzero"`
+	// Priority is the order deductions are taken in when pay will not cover
+	// them all. Lower goes first.
+	Priority            int16              `json:"priority" bun:"priority,type:SMALLINT,notnull,default:100"`
 	Frequency           DeductionFrequency `json:"frequency"           bun:"frequency,type:VARCHAR(50),notnull,default:'EverySettlement'"`
 	Description         string             `json:"description"         bun:"description,type:VARCHAR(255),notnull"`
 	AmountMinor         int64              `json:"amountMinor"         bun:"amount_minor,type:BIGINT,notnull"`
@@ -95,6 +106,24 @@ func (r *RecurringDeduction) Validate(multiErr *errortypes.MultiError) {
 			"End date must be after the start date",
 		)
 	}
+	// An empty kind is an ordinary deduction. The column defaults to Standard
+	// and every deduction created before benefits existed has no kind on it, so
+	// requiring one here would refuse rows the system itself writes.
+	if r.Kind != "" && !r.Kind.IsValid() {
+		multiErr.Add("kind", errortypes.ErrInvalid, "Deduction kind is invalid")
+	}
+	// Money taken from somebody's pay without a reference to the order
+	// authorising it cannot be defended, so a garnishment is refused without one.
+	if r.Kind == DeductionKindGarnishment && strings.TrimSpace(r.CourtOrderNumber) == "" {
+		multiErr.Add(
+			"courtOrderNumber",
+			errortypes.ErrRequired,
+			"A garnishment needs the order it is taken under",
+		)
+	}
+	if r.Priority < 0 || r.Priority > 999 {
+		multiErr.Add("priority", errortypes.ErrInvalid, "Priority is 0 to 999")
+	}
 }
 
 func (r *RecurringDeduction) RemainingCapMinor() *int64 {
@@ -145,6 +174,12 @@ func (r *RecurringDeduction) BeforeAppendModel(_ context.Context, query bun.Quer
 	case *bun.InsertQuery:
 		if r.ID.IsNil() {
 			r.ID = pulid.MustNew("rded_")
+		}
+		if r.Kind == "" {
+			r.Kind = DeductionKindStandard
+		}
+		if r.Priority <= 0 {
+			r.Priority = r.Kind.DefaultPriority()
 		}
 		r.CreatedAt = now
 	case *bun.UpdateQuery:

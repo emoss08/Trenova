@@ -11,6 +11,8 @@ import {
 } from "@/hooks/use-panel-action-preference";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { isRecord } from "@trenova/shared/lib/utils";
+import type { ServiceFailureReasonCodeRow } from "@/lib/graphql/service-failure-reason-code-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   serviceFailureReasonCodeSchema,
@@ -43,12 +45,20 @@ const defaultValues: ServiceFailureReasonCode = {
   sortOrder: 100,
 };
 
+function toFormValues(row: ServiceFailureReasonCodeRow): ServiceFailureReasonCode {
+  const { externalMap, ...rest } = row;
+  return {
+    ...rest,
+    externalMap: isRecord(externalMap) ? externalMap : null,
+  };
+}
+
 export function ServiceFailureReasonCodePanel({
   open,
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<ServiceFailureReasonCode>) {
+}: DataTablePanelProps<ServiceFailureReasonCodeRow>) {
   const form = useForm<ServiceFailureReasonCode>({
     resolver: zodResolver(serviceFailureReasonCodeSchema) as Resolver<ServiceFailureReasonCode>,
     defaultValues,
@@ -79,7 +89,7 @@ export function ServiceFailureReasonCodePanel({
 }
 
 type ServiceFailureReasonCodeEditPanelProps = Pick<
-  DataTablePanelProps<ServiceFailureReasonCode>,
+  DataTablePanelProps<ServiceFailureReasonCodeRow>,
   "open" | "onOpenChange" | "row"
 > & {
   form: ReturnType<typeof useForm<ServiceFailureReasonCode>>;
@@ -107,7 +117,7 @@ function ServiceFailureReasonCodeEditPanel({
 
   useEffect(() => {
     if (open && row) {
-      reset(row, { keepDefaultValues: true });
+      reset(toFormValues(row), { keepDefaultValues: true });
     }
   }, [open, row, reset]);
 

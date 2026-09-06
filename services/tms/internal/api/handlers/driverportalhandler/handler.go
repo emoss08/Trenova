@@ -52,6 +52,7 @@ func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
 	api.GET("profile/document-types/", h.listWorkerDocumentTypes)
 	api.GET("profile/documents/", h.listProfileDocuments)
 	api.POST("profile/documents/", h.uploadProfileDocument)
+	api.POST("credentials/:credentialID/document/", h.uploadCredentialDocument)
 	api.POST("expenses/:expenseID/receipt/", h.uploadExpenseReceipt)
 }
 
@@ -320,4 +321,44 @@ func (h *Handler) acceptInvitation(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+// @Summary Upload a renewal document for one of the driver's credentials
+// @Description Files a photo or scan against the credential so the office can verify and renew it.
+// @ID uploadPortalCredentialDocument
+// @Tags DriverPortal
+// @Accept multipart/form-data
+// @Produce json
+// @Param credentialID path string true "Credential ID"
+// @Param file formData file true "Document file"
+// @Success 201 {object} driverportalservice.PortalDocument
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Router /portal/credentials/{credentialID}/document [post]
+func (h *Handler) uploadCredentialDocument(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	credentialID, err := pulid.MustParse(c.Param("credentialID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	file, err := c.FormFile("file")
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	uploaded, err := h.service.UploadMyCredentialDocument(
+		c.Request.Context(),
+		tenantInfoFrom(authCtx),
+		credentialID,
+		file,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, uploaded)
 }

@@ -9,7 +9,8 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { FileCodeIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo } from "react";
-import { catalog, referencedTypeNames } from "./catalog";
+import { referencedTypeNames } from "./catalog";
+import { useCatalog } from "./use-catalog";
 import { RunPanel } from "./run-panel";
 
 type BadgeKind = "query" | "mutation" | "subscription" | "fragment";
@@ -163,13 +164,14 @@ function OperationDetail({
   operation: CatalogOperation;
   onSelect: (selection: CatalogSelection) => void;
 }) {
+  const { catalog } = useCatalog();
   const inputTypeSdl = useMemo(() => {
-    const names = referencedTypeNames(operation.variables);
+    const names = referencedTypeNames(catalog, operation.variables);
     return names
       .map((name) => catalog.types[name]?.sdl)
       .filter(Boolean)
       .join("\n\n");
-  }, [operation.variables]);
+  }, [catalog, operation.variables]);
 
   return (
     <Tabs defaultValue="definition" className="flex min-h-0 flex-1 flex-col gap-3">

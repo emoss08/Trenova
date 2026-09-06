@@ -24,6 +24,7 @@ query TableConfigurationTable(
   $input: DataTableConnectionInput!
   $resource: String
   $visibility: ConfigurationVisibility
+  $includeTotalCount: Boolean = true
 ) {
   tableConfigurations(input: $input, resource: $resource, visibility: $visibility) {
     edges {
@@ -31,7 +32,7 @@ query TableConfigurationTable(
         ...TableConfigurationFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

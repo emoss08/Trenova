@@ -11,15 +11,15 @@ import {
   serviceFailureTypeChoices,
   stopTypeChoices,
 } from "@/lib/choices";
-import type { ServiceFailure } from "@/types/service-failure";
+import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-function statusBadge(value: ServiceFailure["status"]) {
+function statusBadge(value: ServiceFailureRow["status"]) {
   const choice = findChoice(serviceFailureStatusChoices, value);
   return choice ? <ColorOptionValue color={choice.color} value={choice.label} /> : value;
 }
 
-export function getColumns(): ColumnDef<ServiceFailure>[] {
+export function getColumns(): ColumnDef<ServiceFailureRow>[] {
   return [
     {
       accessorKey: "number",

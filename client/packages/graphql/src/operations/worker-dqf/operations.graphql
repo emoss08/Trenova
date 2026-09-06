@@ -1,0 +1,117 @@
+# Fields are inlined rather than spread: a fragment beside other selections
+# comes back masked, and these screens read the values directly.
+query DriverQualificationFile($workerId: ID!) {
+  driverQualificationFile(workerId: $workerId) {
+    workerId
+    complete
+    missingRequired
+    expiringSoon
+    expired
+    outstanding
+    hireDate
+    terminationDate
+    safetyHistoryDueAt
+    safetyHistoryLate
+    retentionExpiresAt
+    purgeEligible
+    items {
+      section
+      code
+      name
+      status
+      detail
+      regulation
+      expiresAt
+    }
+    verifications {
+      id
+      workerId
+      employerName
+      employerDotNumber
+      employerMcNumber
+      contactName
+      contactPhone
+      contactEmail
+      employedFrom
+      employedTo
+      wasDotRegulated
+      status
+      method
+      requestedAt
+      responseReceivedAt
+      lastFollowUpAt
+      followUpCount
+      drugAlcoholResponseReceivedAt
+      hadAccidents
+      accidentCount
+      hadDrugAlcoholViolations
+      findings
+      notes
+      documentId
+      version
+    }
+  }
+}
+
+query OutstandingEmploymentVerifications {
+  outstandingEmploymentVerifications {
+    id
+    workerId
+    employerName
+    status
+    method
+    requestedAt
+    lastFollowUpAt
+    followUpCount
+    version
+  }
+}
+
+query DqfRetentionCandidates {
+  dqfRetentionCandidates {
+    workerId
+    firstName
+    lastName
+    terminationDate
+  }
+}
+
+mutation RecordEmploymentVerification($input: RecordEmploymentVerificationInput!) {
+  recordEmploymentVerification(input: $input) {
+    id
+    employerName
+    status
+    version
+  }
+}
+
+mutation UpdateEmploymentVerification($input: UpdateEmploymentVerificationInput!) {
+  updateEmploymentVerification(input: $input) {
+    id
+    employerName
+    status
+    version
+  }
+}
+
+mutation MarkEmploymentVerificationRequested($id: ID!) {
+  markEmploymentVerificationRequested(id: $id) {
+    id
+    status
+    requestedAt
+    version
+  }
+}
+
+mutation RecordEmploymentVerificationFollowUp($id: ID!) {
+  recordEmploymentVerificationFollowUp(id: $id) {
+    id
+    followUpCount
+    lastFollowUpAt
+    version
+  }
+}
+
+mutation DeleteEmploymentVerification($id: ID!) {
+  deleteEmploymentVerification(id: $id)
+}

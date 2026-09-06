@@ -37,32 +37,38 @@ export const DISPATCH_SHIPMENT_TENDERS_KEY = "dispatch-shipment-tenders";
 export const dispatchConsoleQueries = {
   board: (input: DispatchBoardInput) => ({
     queryKey: [DISPATCH_BOARD_KEY, input] as const,
-    queryFn: () => getDispatchBoardGraphQL(input),
+    queryFn: ({ signal }: { signal?: AbortSignal }) => getDispatchBoardGraphQL(input, { signal }),
   }),
   moveCandidates: (input: DispatchMoveCandidatesInput) => ({
     queryKey: [DISPATCH_MOVE_CANDIDATES_KEY, input] as const,
-    queryFn: () => getDispatchMoveCandidatesGraphQL(input),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getDispatchMoveCandidatesGraphQL(input, { signal }),
   }),
   driverMoves: (input: DispatchDriverMovesInput) => ({
     queryKey: [DISPATCH_DRIVER_MOVES_KEY, input] as const,
-    queryFn: () => getDispatchDriverMovesGraphQL(input),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getDispatchDriverMovesGraphQL(input, { signal }),
   }),
   assignmentPreview: (input: DispatchAssignmentPreviewInput) => ({
     queryKey: [DISPATCH_ASSIGNMENT_PREVIEW_KEY, input] as const,
-    queryFn: () => getDispatchAssignmentPreviewGraphQL(input),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getDispatchAssignmentPreviewGraphQL(input, { signal }),
   }),
   carrierAssignmentPreview: (input: DispatchCarrierAssignmentPreviewInput) => ({
     queryKey: [DISPATCH_CARRIER_PREVIEW_KEY, input] as const,
-    queryFn: () => getDispatchCarrierAssignmentPreviewGraphQL(input),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getDispatchCarrierAssignmentPreviewGraphQL(input, { signal }),
   }),
   liveTender: (moveId: string) => ({
     queryKey: [DISPATCH_LIVE_TENDER_KEY, moveId] as const,
-    queryFn: () => getLiveTenderByMoveGraphQL(moveId),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getLiveTenderByMoveGraphQL(moveId, { signal }),
     refetchInterval: LIVE_TENDER_REFETCH_MS,
   }),
   shipmentTenders: (shipmentId: string) => ({
     queryKey: [DISPATCH_SHIPMENT_TENDERS_KEY, shipmentId] as const,
-    queryFn: () => getTendersByShipmentGraphQL(shipmentId),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getTendersByShipmentGraphQL(shipmentId, { signal }),
     refetchInterval: SHIPMENT_TENDERS_REFETCH_MS,
   }),
 };

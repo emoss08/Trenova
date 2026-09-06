@@ -5,7 +5,7 @@ import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-f
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
+import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
 import type { Control } from "react-hook-form";
 import {
   acknowledgmentOptions,
@@ -497,7 +497,7 @@ export function SecretProfileFields({
   authMode,
 }: ProfileFieldsProps & {
   method: CommunicationProfileMethod;
-  profile: EDICommunicationProfile | null;
+  profile: EDICommunicationProfileRow | null;
   authMode: string;
 }) {
   if (method === "Internal") {

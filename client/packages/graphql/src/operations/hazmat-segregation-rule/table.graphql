@@ -21,14 +21,17 @@ fragment HazmatSegregationRuleTableRowFields on HazmatSegregationRule {
   updatedAt
 }
 
-query HazmatSegregationRuleTable($input: DataTableConnectionInput!) {
+query HazmatSegregationRuleTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   hazmatSegregationRules(input: $input) {
     edges {
       node {
         ...HazmatSegregationRuleTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -7,7 +7,8 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type { JournalReversal, JournalReversalStatus } from "@/types/journal-reversal";
+import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
+import type { JournalReversalStatus } from "@/types/journal-reversal";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, SendIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -27,7 +28,7 @@ const CANCELLABLE_STATUSES: JournalReversalStatus[] = ["Requested", "PendingAppr
 function CreateReversalPanel({
   open,
   onOpenChange,
-}: Pick<DataTablePanelProps<JournalReversal>, "open" | "onOpenChange">) {
+}: Pick<DataTablePanelProps<JournalReversalRow>, "open" | "onOpenChange">) {
   const queryClient = useQueryClient();
 
   const form = useForm<CreateReversalForm>({
@@ -110,7 +111,7 @@ function ReversalDetailPanel({
   open,
   onOpenChange,
   row,
-}: Pick<DataTablePanelProps<JournalReversal>, "open" | "onOpenChange" | "row">) {
+}: Pick<DataTablePanelProps<JournalReversalRow>, "open" | "onOpenChange" | "row">) {
   const queryClient = useQueryClient();
   const [rejectionReason, setRejectionReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -331,7 +332,7 @@ export function JournalReversalPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<JournalReversal>) {
+}: DataTablePanelProps<JournalReversalRow>) {
   if (mode === "edit") {
     return <ReversalDetailPanel open={open} onOpenChange={onOpenChange} row={row} />;
   }

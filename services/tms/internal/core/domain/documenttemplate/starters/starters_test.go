@@ -442,6 +442,7 @@ func TestDecisionNotificationsSayWhichWayItWent(t *testing.T) {
 		{documenttemplate.KindNotificationPTOReviewed, "approved", "not approved"},
 		{documenttemplate.KindNotificationExpenseReviewed, "approved", "rejected"},
 		{documenttemplate.KindNotificationDisputeResolved, "in your favor", "stands"},
+		{documenttemplate.KindNotificationProfileChangeReviewed, "has been made", "not approved"},
 	}
 
 	for _, tc := range cases {
@@ -529,13 +530,20 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 		"dash.load_assigned",
 		"dash.load_unassigned",
 		"dash.pto_reviewed",
+		"dash.pto_cancelled",
 		"dash.credential_expiring",
+		"dash.training_due",
+		"dash.review_submitted",
+		"dash.recognition",
+		"dash.disciplinary_issued",
 		"dash.hos_alert",
 		"dash.settlement_posted",
 		"dash.settlement_paid",
 		"dash.pay_held",
 		"dash.expense_reviewed",
 		"dash.dispute_resolved",
+		"dash.profile_change_reviewed",
+		"dash.policy_published",
 	}
 
 	for _, eventType := range emitted {

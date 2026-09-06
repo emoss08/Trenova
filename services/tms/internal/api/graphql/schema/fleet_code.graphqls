@@ -11,8 +11,8 @@ type FleetCode {
   mileageGoal: Float
   color: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
   manager: User

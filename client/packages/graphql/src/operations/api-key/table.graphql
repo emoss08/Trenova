@@ -13,14 +13,14 @@ fragment ApiKeyTableRowFields on ApiKey {
   updatedAt
 }
 
-query ApiKeyTable($input: DataTableConnectionInput!) {
+query ApiKeyTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   apiKeys(input: $input) {
     edges {
       node {
         ...ApiKeyTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

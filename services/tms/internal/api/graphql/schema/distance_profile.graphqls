@@ -13,9 +13,16 @@ type DistanceProfile {
   distanceUnits: String!
   locationGranularity: String!
   profileName: String!
+  """
+  Routing preferences passed through to the mileage provider.
+  """
+  highwayOnly: Boolean!
+  tollRoads: Boolean!
+  bordersOpen: Boolean!
+  includeTollData: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
 }

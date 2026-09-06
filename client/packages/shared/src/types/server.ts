@@ -64,6 +64,8 @@ export type BaseEndpoint =
   | "/users/"
   | "/workers/"
   | "/worker-pto/"
+  | "/shift-templates/"
+  | "/worker-policies/"
   | "/tractors/"
   | "/trailers/"
   | "/service-types/"

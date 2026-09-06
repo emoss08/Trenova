@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { RateAgreement, RateIncreasePlan } from "@trenova/shared/types/rate";
+import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
+import type { RateIncreasePlan } from "@trenova/shared/types/rate";
 import { useController, type Control } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RateIncreaseDialog } from "../rate-increase-dialog";
@@ -38,7 +39,7 @@ vi.mock("@/components/fields/date-field/date-field", () => ({
 const selected = [
   { id: "ragr_1", code: "ACME-2026", name: "Acme" },
   { id: "ragr_2", code: "BETA-2026", name: "Beta" },
-] as unknown as RateAgreement[];
+] as unknown as RateAgreementRow[];
 
 const plan: RateIncreasePlan = {
   effectiveFrom: 1_700_000_000,
@@ -60,7 +61,7 @@ const plan: RateIncreasePlan = {
   ],
 };
 
-function renderDialog(agreements: RateAgreement[] = selected) {
+function renderDialog(agreements: RateAgreementRow[] = selected) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });

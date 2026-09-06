@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { userTableGraphQLConfig } from "@/lib/graphql/user-table";
+import { userTableGraphQLConfig, type UserRow } from "@/lib/graphql/user-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
@@ -22,7 +22,7 @@ export default function UserTable() {
   const [, setPanelSearchParams] = useQueryStates(panelSearchParamsParser);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: User[], status: string) => {
+    async (rows: UserRow[], status: string) => {
       const ids = rows.map((r) => r.id);
 
       toast.promise(
@@ -46,7 +46,7 @@ export default function UserTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<User>[]>(
+  const dockActions = useMemo<DockAction<UserRow>[]>(
     () => [
       {
         id: "status-update",
@@ -63,7 +63,7 @@ export default function UserTable() {
   );
 
   const handleManageMemberships = useCallback(
-    (row: Row<User>) => {
+    (row: Row<UserRow>) => {
       const userId = row.original.id;
       if (!userId) return;
 
@@ -75,7 +75,7 @@ export default function UserTable() {
     [setPanelSearchParams],
   );
 
-  const contextMenuActions = useMemo<RowAction<User>[]>(
+  const contextMenuActions = useMemo<RowAction<UserRow>[]>(
     () => [
       {
         id: "manage-memberships",
@@ -89,7 +89,7 @@ export default function UserTable() {
   );
 
   return (
-    <DataTable<User>
+    <DataTable<UserRow>
       name="User"
       queryKey="user-list"
       graphql={userTableGraphQLConfig}

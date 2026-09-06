@@ -17,14 +17,14 @@ fragment UserTableRowFields on User {
   updatedAt
 }
 
-query UserTable($input: DataTableConnectionInput!) {
+query UserTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   users(input: $input) {
     edges {
       node {
         ...UserTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

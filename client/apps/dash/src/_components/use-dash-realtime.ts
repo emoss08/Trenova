@@ -1,4 +1,7 @@
-import { parseInvalidationEvent, RESOURCE_EVENT_NAME } from "@trenova/shared/hooks/realtime-patching";
+import {
+  parseInvalidationEvent,
+  RESOURCE_EVENT_NAME,
+} from "@trenova/shared/hooks/realtime-patching";
 import { notification } from "@trenova/shared/lib/queries/notification";
 import { realtimeService } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -19,7 +22,8 @@ const DASH_RESOURCE_QUERY_KEYS: Record<string, string[]> = {
   settlement_dispute: ["dash-disputes"],
   document: ["dash-load-documents", "dash-profile-documents"],
   driver_expense: ["dash-expenses"],
-  worker_pto: ["dash-pto"],
+  worker_pto: ["dash-pto", "dash-pto-balances"],
+  worker_pto_balance: ["dash-pto-balances", "dash-features"],
   dash_control: ["dash-features"],
 };
 

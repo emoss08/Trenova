@@ -5,13 +5,61 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { buildApprovedPTOMetrics, type ApprovedPTOMetrics } from "./approved-pto-metrics";
 
-type Params = {
+export type ApprovedPTOAnalyticsParams = {
   startDate: number;
   endDate: number;
   type?: string;
   workerId?: Worker["id"];
   fleetCodeId?: string;
 };
+
+const ANALYTICS_STALE_TIME_MS = 5 * 60 * 1000;
+const ANALYTICS_GC_TIME_MS = 10 * 60 * 1000;
+
+/** The month's approved days, bucketed for the chart and the KPI cards. */
+export function approvedPtoChartQuery(
+  { startDate, endDate, type, workerId }: ApprovedPTOAnalyticsParams,
+  timezone: string | undefined,
+) {
+  return {
+    ...queries.worker.ptoChartData({
+      startDateFrom: startDate,
+      startDateTo: endDate,
+      type: type as PTOType,
+      workerId,
+      timezone,
+    }),
+    staleTime: ANALYTICS_STALE_TIME_MS,
+    gcTime: ANALYTICS_GC_TIME_MS,
+  };
+}
+
+/**
+ * Only the count of open requests is needed here, so the page size is one; the
+ * requested overview beside it pages through the same filter on its own key.
+ */
+export function requestedPtoCountQuery(
+  { startDate, endDate, type, workerId, fleetCodeId }: ApprovedPTOAnalyticsParams,
+  timezone: string | undefined,
+) {
+  return {
+    ...queries.worker.listUpcomingPTO({
+      filter: {
+        limit: 1,
+        after: null,
+      },
+      type: type as PTOType,
+      status: "Requested",
+      startDate,
+      endDate,
+      workerId,
+      fleetCodeId,
+      timezone,
+    }),
+    staleTime: ANALYTICS_STALE_TIME_MS,
+    gcTime: ANALYTICS_GC_TIME_MS,
+  };
+}
 
 export type ApprovedPTOAnalyticsState = {
   chartData: PTOChartDataPoint[];
@@ -24,44 +72,14 @@ export type ApprovedPTOAnalyticsState = {
   metrics: ApprovedPTOMetrics;
 };
 
-export function useApprovedPTOAnalytics({
-  startDate,
-  endDate,
-  type,
-  workerId,
-  fleetCodeId,
-}: Params): ApprovedPTOAnalyticsState {
-  const user = useAuthStore((state) => state.user);
+export function useApprovedPTOAnalytics(
+  params: ApprovedPTOAnalyticsParams,
+): ApprovedPTOAnalyticsState {
+  const timezone = useAuthStore((state) => state.user?.timezone);
 
-  const chartQuery = useQuery({
-    ...queries.worker.ptoChartData({
-      startDateFrom: startDate,
-      startDateTo: endDate,
-      type: type as PTOType,
-      workerId,
-      timezone: user?.timezone,
-    }),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+  const chartQuery = useQuery(approvedPtoChartQuery(params, timezone));
 
-  const requestedQuery = useQuery({
-    ...queries.worker.listUpcomingPTO({
-      filter: {
-        limit: 1,
-        after: null,
-      },
-      type: type as PTOType,
-      status: "Requested",
-      startDate,
-      endDate,
-      workerId,
-      fleetCodeId,
-      timezone: user?.timezone,
-    }),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+  const requestedQuery = useQuery(requestedPtoCountQuery(params, timezone));
 
   const chartData = useMemo(() => chartQuery.data ?? [], [chartQuery.data]);
 

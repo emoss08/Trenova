@@ -4,21 +4,48 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { analytics } from "@/lib/queries/analytics";
 import { queries } from "@/lib/queries";
+import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, RefreshCwIcon } from "lucide-react";
-import { useQueryStates } from "nuqs";
+import { createLoader, useQueryStates } from "nuqs";
 import { lazy, useCallback, useMemo, useState } from "react";
 import type { CommandCenterTableSummary } from "./_components/command-center/command-center-table";
 import { ShipmentMapPanelBoundary } from "./_components/map/map-boundary";
 import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
+import {
+  SHIPMENT_LIST_KEY,
+  SHIPMENT_TABLE_RESOURCE_NAME,
+  shipmentPanelDetailQuery,
+} from "./_components/shipment-queries";
 
 const Table = lazy(() => import("./_components/shipment-table"));
 const ShipmentAnalytics = lazy(() => import("./_components/analytics/kpi-rail"));
 const ShipmentMapPanel = lazy(() => import("./_components/map/shipment-map-panel"));
 const RightStack = lazy(() => import("./_components/command-center/right-stack"));
 const BottomModules = lazy(() => import("./_components/command-center/bottom-modules"));
+
+const loadPanelSearch = createLoader(panelSearchParamsParser);
+
+// What the first paint asks for unconditionally: the header's organization badge, the
+// KPI rail, the table's saved default view, and the map's key. The rows, the map pins
+// and the right stack wait on the table (backgroundQueriesEnabled) and are left to it.
+export const prefetch: RoutePrefetch = ({ request }) => {
+  const list: RoutePrefetchQuery[] = [
+    queries.userOrganization.all(),
+    analytics.get("shipment-management"),
+    { ...queries.tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME), staleTime: Infinity },
+    queries.integration.runtimeConfig("GoogleMaps"),
+  ];
+
+  const { panelType, panelEntityId } = loadPanelSearch(request);
+  if (panelType === "edit" && panelEntityId) {
+    list.push(shipmentPanelDetailQuery(panelEntityId));
+  }
+
+  return list;
+};
 
 export function ShipmentsPage() {
   const queryClient = useQueryClient();
@@ -45,7 +72,7 @@ export function ShipmentsPage() {
     setIsRefreshing(true);
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
+        queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] }),
         queryClient.invalidateQueries({
           queryKey: analytics.get("shipment-management").queryKey,
         }),

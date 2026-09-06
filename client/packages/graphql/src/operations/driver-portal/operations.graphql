@@ -47,7 +47,10 @@ mutation RevokeWorkerPortalAccess($workerId: ID!) {
   revokeWorkerPortalAccess(workerId: $workerId)
 }
 
-query SettlementDisputeTable($input: DataTableConnectionInput!) {
+query SettlementDisputeTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   settlementDisputes(input: $input) {
     edges {
       node {
@@ -81,7 +84,7 @@ query SettlementDisputeTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -530,7 +533,7 @@ query MyYtdPay($year: Int!) {
   }
 }
 
-query DriverExpenseTable($input: DataTableConnectionInput!) {
+query DriverExpenseTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   driverExpenses(input: $input) {
     edges {
       node {
@@ -564,7 +567,7 @@ query DriverExpenseTable($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -641,6 +644,9 @@ query DashControl {
     allowContactInfoEdit
     allowPtoRequests
     sendCredentialReminders
+    requireContactChangeApproval
+    driverDigestCadence
+    driverDigestWeekday
     enableDetentionAlerts
     detentionAlertThresholdMinutes
     version
@@ -664,6 +670,9 @@ mutation UpdateDashControl($input: UpdateDashControlInput!) {
     allowContactInfoEdit
     allowPtoRequests
     sendCredentialReminders
+    requireContactChangeApproval
+    driverDigestCadence
+    driverDigestWeekday
     enableDetentionAlerts
     detentionAlertThresholdMinutes
     version
@@ -685,6 +694,135 @@ query MyPortalFeatures {
     allowProfileDocumentUpload
     allowContactInfoEdit
     allowPtoRequests
+    ptoBalances
+    leaveBalance
+    schedule
+    shiftSwaps
+    requireContactChangeApproval
+    policiesOutstanding
+  }
+}
+
+query MyPolicies {
+  myPolicies {
+    id
+    code
+    title
+    summary
+    body
+    hasDocument
+    versionLabel
+    requiresSignature
+    effectiveFrom
+    acknowledgedAt
+    signatureName
+  }
+}
+
+query MyPolicyDocumentUrl($policyId: ID!) {
+  myPolicyDocumentUrl(policyId: $policyId)
+}
+
+query MyProfileChangeRequests {
+  myProfileChangeRequests {
+    id
+    status
+    note
+    submittedAt
+    decidedAt
+    decisionNote
+    changes {
+      field
+      label
+      from
+      to
+    }
+  }
+}
+
+mutation AcknowledgeMyPolicy($input: AcknowledgeMyPolicyInput!) {
+  acknowledgeMyPolicy(input: $input) {
+    id
+    policyId
+    versionLabel
+    acknowledgedAt
+    signatureName
+  }
+}
+
+mutation WithdrawMyProfileChange($id: ID!) {
+  withdrawMyProfileChange(id: $id) {
+    id
+    status
+  }
+}
+
+query MySchedule($at: Timestamp, $weeks: Int) {
+  mySchedule(at: $at, weeks: $weeks) {
+    weekStart
+    weekEnd
+    shiftName
+    shiftCode
+    shiftColor
+    scheduledDays
+    days {
+      date
+      state
+      scheduled
+      startMinute
+      durationMinutes
+      preference
+      assignmentCount
+    }
+  }
+}
+
+query MyAvailability {
+  myAvailability {
+    id
+    dayOfWeek
+    preference
+    note
+  }
+}
+
+query MyShiftSwaps {
+  myShiftSwaps {
+    id
+    status
+    outgoing
+    counterpartyName
+    shiftDate
+    counterpartyShiftDate
+    reason
+    responseNote
+    respondedAt
+    decidedAt
+  }
+}
+
+mutation SetMyAvailability($input: SetMyAvailabilityInput!) {
+  setMyAvailability(input: $input) {
+    id
+    dayOfWeek
+    preference
+    note
+  }
+}
+
+mutation ProposeMyShiftSwap($input: ProposeMyShiftSwapInput!) {
+  proposeMyShiftSwap(input: $input) {
+    id
+    status
+    shiftDate
+  }
+}
+
+mutation RespondToMyShiftSwap($input: RespondToMyShiftSwapInput!) {
+  respondToMyShiftSwap(input: $input) {
+    id
+    status
+    respondedAt
   }
 }
 
@@ -729,7 +867,7 @@ query MyHosDailyLogs($startDate: String!, $endDate: String!) {
   }
 }
 
-query MyHosViolations($since: Int) {
+query MyHosViolations($since: Timestamp) {
   myHosViolations(since: $since) {
     workerId
     violationType
@@ -737,5 +875,239 @@ query MyHosViolations($since: Int) {
     durationMs
     violationStartAt
     detectedAt
+  }
+}
+
+query MyCredentials {
+  myCredentials {
+    id
+    credentialTypeId
+    name
+    category
+    health
+    daysUntilExpiry
+    expiresAt
+    numberMasked
+    required
+    verified
+    requiresDocument
+    documentId
+  }
+}
+
+query MyPtoBalances {
+  myPtoBalances {
+    ptoType
+    enforced
+    balanceDays
+    pendingDays
+    availableDays
+    accruedYtdDays
+    usedYtdDays
+    nextAccrual {
+      entryType
+      periodKey
+      effectiveAt
+      nominalDays
+      deferred
+    }
+  }
+}
+
+fragment PortalTrainingFields on PortalTraining {
+  id
+  courseId
+  name
+  description
+  category
+  delivery
+  contentUrl
+  durationMinutes
+  status
+  health
+  required
+  requiresAcknowledgement
+  scored
+  dueAt
+  daysUntilDue
+  startedAt
+  completedAt
+  expiresAt
+  daysUntilExpiry
+  acknowledgedAt
+  score
+}
+
+query MyTraining {
+  myTraining {
+    ...PortalTrainingFields
+  }
+}
+
+mutation StartMyTraining($id: ID!) {
+  startMyTraining(id: $id) {
+    ...PortalTrainingFields
+  }
+}
+
+mutation AcknowledgeMyTraining($id: ID!) {
+  acknowledgeMyTraining(id: $id) {
+    ...PortalTrainingFields
+  }
+}
+
+query MySafetyScorecard {
+  mySafetyScorecard {
+    workerId
+    asOf
+    score
+    rating
+    activePoints
+    pointsWatchThreshold
+    pointsAtRiskThreshold
+    accidents
+    preventableAccidents
+    incidents
+    nearMisses
+    citations
+    inspections
+    inspectionsPassed
+    inspectionsFailed
+    outOfServiceOrders
+    cleanInspectionRate
+    openEvents
+    activeDiscipline
+    highestDiscipline
+    daysSinceLastEvent
+    lastEventAt
+    recognitions
+  }
+}
+
+query MyRecognitions {
+  myRecognitions {
+    id
+    kind
+    title
+    message
+    occurredAt
+    awardedBy {
+      id
+      name
+    }
+  }
+}
+
+query MyDisciplinaryActions {
+  myDisciplinaryActions {
+    id
+    level
+    status
+    reason
+    details
+    issuedAt
+    expiresAt
+    suspensionDays
+    acknowledgedAt
+    workerComment
+    active
+    issuedBy {
+      id
+      name
+    }
+  }
+}
+
+mutation AcknowledgeMyDisciplinaryAction($id: ID!, $comment: String) {
+  acknowledgeMyDisciplinaryAction(id: $id, comment: $comment) {
+    id
+    level
+    status
+    acknowledgedAt
+    workerComment
+    active
+  }
+}
+
+query MyReviews {
+  myReviews {
+    id
+    title
+    status
+    periodStart
+    periodEnd
+    overallScore
+    summary
+    strengths
+    improvements
+    ratings {
+      key
+      label
+      weight
+      score
+      comment
+    }
+    goals {
+      id
+      title
+      dueAt
+      status
+    }
+    submittedAt
+    acknowledgedAt
+    workerComment
+    closedAt
+    reviewer {
+      id
+      name
+    }
+  }
+}
+
+mutation AcknowledgeMyReview($id: ID!, $comment: String) {
+  acknowledgeMyReview(id: $id, comment: $comment) {
+    id
+    status
+    acknowledgedAt
+    workerComment
+  }
+}
+
+query MyLeave {
+  myLeave {
+    entitlement {
+      method
+      totalHours
+      usedHours
+      remainingHours
+      totalWeeks
+      usedWeeks
+      remainingWeeks
+      exhausted
+      eligibleOnTenure
+      monthsEmployed
+      openCaseCount
+      militaryCaregiver
+      window {
+        from
+        through
+      }
+    }
+    cases {
+      id
+      leaveType
+      status
+      frequency
+      fmlaDesignated
+      reason
+      startsAt
+      endsAt
+      decidedAt
+      certificationStatus
+      certificationDueAt
+      certificationLate
+      hoursUsed
+      hoursCharged
+    }
   }
 }

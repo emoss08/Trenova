@@ -124,6 +124,7 @@ func (r *repository) Update(
 		Set("allow_contact_info_edit = ?", entity.AllowContactInfoEdit).
 		Set("allow_pto_requests = ?", entity.AllowPtoRequests).
 		Set("send_credential_reminders = ?", entity.SendCredentialReminders).
+		Set("require_contact_change_approval = ?", entity.RequireContactChangeApproval).
 		Set("enable_detention_alerts = ?", entity.EnableDetentionAlerts).
 		Set("detention_alert_threshold_minutes = ?", entity.DetentionAlertThresholdMinutes).
 		Set("version = version + 1").

@@ -25,7 +25,7 @@ export default function AgentControlForm() {
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: AGENT_CONTROL_QUERY_KEY,
-    queryFn: fetchAgentControl,
+    queryFn: ({ signal }) => fetchAgentControl({ signal }),
   });
 
   const defaultValues: AgentControlFormValues = {

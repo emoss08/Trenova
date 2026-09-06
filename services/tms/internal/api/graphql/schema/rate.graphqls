@@ -55,24 +55,24 @@ type RateAgreement {
   status: RateAgreementStatus!
   contractRef: String!
   priority: Int!
-  effectiveFrom: Int!
-  effectiveTo: Int
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
   autoRenew: Boolean!
   renewalNoticeDays: Int!
   currency: String!
-  defaultMinCharge: String
-  defaultMaxCharge: String
-  marginFloorPercent: String
-  maxPayPercentOfSell: String
+  defaultMinCharge: Decimal
+  defaultMaxCharge: Decimal
+  marginFloorPercent: Decimal
+  maxPayPercentOfSell: Decimal
   submittedById: ID
-  submittedAt: Int
+  submittedAt: Timestamp
   approvedById: ID
-  approvedAt: Int
+  approvedAt: Timestamp
   reviewComment: String!
   currentVersionNumber: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type RateAgreementEdge {
@@ -100,8 +100,8 @@ type RateZone {
   description: String!
   status: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type RateZoneEdge {
@@ -136,8 +136,8 @@ type RateMatrix {
   formulaTemplateName: String!
   currency: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type RateMatrixEdge {
@@ -171,16 +171,16 @@ type RateQuote {
   specificityScore: Int!
   currency: String!
   billingCurrency: String!
-  linehaulAmount: String!
-  totalAmount: String!
-  billingAmount: String!
-  foregoneAmount: String
+  linehaulAmount: Decimal!
+  totalAmount: Decimal!
+  billingAmount: Decimal!
+  foregoneAmount: Decimal
   overrideReason: String!
-  asOf: Int!
-  ratedAt: Int!
+  asOf: Timestamp!
+  ratedAt: Timestamp!
   ratedById: ID
   engineVersion: String!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 type RateQuoteEdge {

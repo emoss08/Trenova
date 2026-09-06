@@ -13,19 +13,23 @@ fragment DistanceProfileTableRowFields on DistanceProfile {
   distanceUnits
   locationGranularity
   profileName
+  highwayOnly
+  tollRoads
+  bordersOpen
+  includeTollData
   version
   createdAt
   updatedAt
 }
 
-query DistanceProfileTable($input: DataTableConnectionInput!) {
+query DistanceProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   distanceProfiles(input: $input) {
     edges {
       node {
         ...DistanceProfileTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

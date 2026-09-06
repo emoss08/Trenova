@@ -33,6 +33,12 @@ fragment WorkerProfileTableFields on WorkerProfile {
   physicalDueDate
   mvrDueDate
   complianceStatus
+  trainingHealth
+  safetyRating
+  safetyScore
+  nextCredentialExpiry
+  nextTrainingDue
+  drugAlcoholStatus
   isQualified
   disqualificationReason
   lastComplianceCheck
@@ -58,6 +64,7 @@ fragment WorkerTableRowFields on Worker {
   status
   type
   driverType
+  leaveType
   profilePicUrl
   firstName
   lastName
@@ -98,6 +105,11 @@ fragment WorkerPtoWorkerFields on Worker {
   profilePicUrl
 }
 
+fragment WorkerPtoActorFields on User {
+  id
+  name
+}
+
 fragment WorkerPtoRowFields on WorkerPTO {
   id
   workerId
@@ -105,16 +117,31 @@ fragment WorkerPtoRowFields on WorkerPTO {
   businessUnitId
   approverId
   rejectorId
+  cancelledById
   status
   type
   startDate
   endDate
   reason
+  rejectionReason
+  cancellationReason
+  days
+  balanceAfterDays
+  autoApproved
   version
   createdAt
   updatedAt
   worker {
     ...WorkerPtoWorkerFields
+  }
+  approver {
+    ...WorkerPtoActorFields
+  }
+  rejector {
+    ...WorkerPtoActorFields
+  }
+  cancelledBy {
+    ...WorkerPtoActorFields
   }
 }
 
@@ -123,28 +150,28 @@ fragment WorkerDataTablePageInfoFields on PageInfo {
   endCursor
 }
 
-query WorkerTable($input: DataTableConnectionInput!) {
+query WorkerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   workers(input: $input) {
     edges {
       node {
         ...WorkerTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...WorkerDataTablePageInfoFields
     }
   }
 }
 
-query WorkerPtoTable($input: WorkerPTOEntriesInput!) {
+query WorkerPtoTable($input: WorkerPTOEntriesInput!, $includeTotalCount: Boolean = true) {
   workerPTOEntries(input: $input) {
     edges {
       node {
         ...WorkerPtoRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...WorkerDataTablePageInfoFields
     }
@@ -194,6 +221,12 @@ mutation CreateWorkerPto($input: CreateWorkerPTOInput!) {
   }
 }
 
+mutation UpdateWorkerPto($input: UpdateWorkerPTOInput!) {
+  updateWorkerPTO(input: $input) {
+    ...WorkerPtoRowFields
+  }
+}
+
 mutation ApproveWorkerPto($id: ID!) {
   approveWorkerPTO(id: $id) {
     ...WorkerPtoRowFields
@@ -203,5 +236,23 @@ mutation ApproveWorkerPto($id: ID!) {
 mutation RejectWorkerPto($id: ID!, $reason: String!) {
   rejectWorkerPTO(id: $id, reason: $reason) {
     ...WorkerPtoRowFields
+  }
+}
+
+mutation CancelWorkerPto($id: ID!, $reason: String) {
+  cancelWorkerPTO(id: $id, reason: $reason) {
+    ...WorkerPtoRowFields
+  }
+}
+
+mutation BulkWorkerPtoAction($input: BulkWorkerPTOActionInput!) {
+  bulkWorkerPTOAction(input: $input) {
+    results {
+      ptoId
+      success
+      error
+    }
+    successCount
+    failureCount
   }
 }

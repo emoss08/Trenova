@@ -1,0 +1,355 @@
+enum PTOPolicyStatus {
+  Active
+  Inactive
+  Draft
+}
+
+enum PTOYearBasis {
+  CalendarYear
+  HireAnniversary
+}
+
+enum PTOAccrualMethod {
+  None
+  FixedAnnualGrant
+  Monthly
+  PerPayPeriod
+}
+
+enum PTOTerminationAction {
+  Forfeit
+  PayOut
+}
+
+enum PTOLedgerEntryType {
+  OpeningBalance
+  Accrual
+  Usage
+  Reversal
+  Adjustment
+  Carryover
+  Expiry
+}
+
+enum PTOLedgerActorType {
+  User
+  System
+}
+
+"""
+A tenure tier raises the accrual (and optionally the cap) once a worker has
+served minMonths.
+"""
+type PTOAccrualTier {
+  minMonths: Int!
+  accrualAmountDays: Decimal!
+  maxBalanceDays: Decimal
+}
+
+type PTOPolicyRule {
+  id: ID!
+  ptoPolicyId: ID!
+  ptoType: PTOType!
+  accrualMethod: PTOAccrualMethod!
+  accrualAmountDays: Decimal!
+  maxBalanceDays: Decimal
+  carryoverCapDays: Decimal
+  carryoverExpiryDays: Int!
+  tiers: [PTOAccrualTier!]!
+  onTermination: PTOTerminationAction!
+  sortOrder: Int!
+}
+
+type PTOPolicy {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  code: String!
+  description: String
+  status: PTOPolicyStatus!
+  isDefault: Boolean!
+  yearBasis: PTOYearBasis!
+  countWeekends: Boolean!
+  waitingPeriodDays: Int!
+  requiresApproval: Boolean!
+  enforceBalance: Boolean!
+  allowNegative: Boolean!
+  negativeFloorDays: Decimal!
+  rules: [PTOPolicyRule!]!
+  openAssignmentCount: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type PTOPolicyEdge {
+  node: PTOPolicy!
+  cursor: String!
+}
+
+type PTOPolicyConnection {
+  edges: [PTOPolicyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type WorkerPTOPolicyAssignment {
+  id: ID!
+  workerId: ID!
+  ptoPolicyId: ID!
+  ptoPolicy: PTOPolicy
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  assignedById: ID
+  note: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type PlannedPTOAccrual {
+  entryType: PTOLedgerEntryType!
+  periodKey: String!
+  effectiveAt: Timestamp!
+  nominalDays: Decimal!
+  deferred: Boolean!
+}
+
+type WorkerPTOBalance {
+  ptoType: PTOType!
+  tracked: Boolean!
+  enforced: Boolean!
+  balanceDays: Decimal!
+  pendingDays: Decimal!
+  availableDays: Decimal!
+  accruedYtdDays: Decimal!
+  usedYtdDays: Decimal!
+  "Days carried over from the previous period."
+  carriedDays: Decimal!
+  maxBalanceDays: Decimal
+  nextAccrual: PlannedPTOAccrual
+}
+
+type WorkerPTOLedgerEntry {
+  id: ID!
+  workerId: ID!
+  ptoType: PTOType!
+  entryType: PTOLedgerEntryType!
+  amountDays: Decimal!
+  balanceAfterDays: Decimal!
+  sequence: Int!
+  effectiveAt: Timestamp!
+  periodKey: String
+  sourcePtoId: ID
+  assignmentId: ID
+  ptoPolicyId: ID
+  actorType: PTOLedgerActorType!
+  createdById: ID
+  note: String
+  createdAt: Timestamp!
+  worker: Worker
+  sourcePto: WorkerPTO
+}
+
+type WorkerPTOLedgerEdge {
+  node: WorkerPTOLedgerEntry!
+  cursor: String!
+}
+
+type WorkerPTOLedgerConnection {
+  edges: [WorkerPTOLedgerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type PTOAvailability {
+  tracked: Boolean!
+  enforced: Boolean!
+  allowed: Boolean!
+  "The days the request asked for."
+  days: Decimal!
+  balanceDays: Decimal!
+  pendingDays: Decimal!
+  projectedAccrualDays: Decimal!
+  projectedAvailableDays: Decimal!
+  floorDays: Decimal!
+  message: String
+}
+
+type PTOBalanceSummary {
+  workersTracked: Int!
+  workersUnassigned: Int!
+  totalBalanceDays: Decimal!
+  totalPendingDays: Decimal!
+  accruedYtdDays: Decimal!
+  usedYtdDays: Decimal!
+}
+
+type PTOLiabilityRow {
+  workerId: ID!
+  worker: Worker
+  ptoType: PTOType!
+  balanceDays: Decimal!
+  accruedYtdDays: Decimal!
+  usedYtdDays: Decimal!
+  onTermination: PTOTerminationAction!
+  liabilityDays: Decimal!
+}
+
+"""
+Every tracked balance valued against its policy's termination treatment:
+liabilityDays is what the organisation would owe if everyone left today.
+"""
+type PTOLiabilityReport {
+  asOf: Timestamp!
+  workersTracked: Int!
+  totalBalanceDays: Decimal!
+  liabilityDays: Decimal!
+  forfeitableDays: Decimal!
+  rows: [PTOLiabilityRow!]!
+}
+
+type PTOAccrualRunPayload {
+  queued: Boolean!
+  workflowId: String
+  workersProcessed: Int!
+  workersSkipped: Int!
+  entriesPosted: Int!
+  entriesCapped: Int!
+  entriesSkipped: Int!
+}
+
+type AssignWorkerPTOPolicyFailure {
+  workerId: ID!
+  error: String!
+}
+
+type AssignWorkerPTOPolicyPayload {
+  assignments: [WorkerPTOPolicyAssignment!]!
+  failures: [AssignWorkerPTOPolicyFailure!]!
+}
+
+input PTOAccrualTierInput {
+  minMonths: Int!
+  accrualAmountDays: Decimal!
+  maxBalanceDays: Decimal
+}
+
+input PTOPolicyRuleInput {
+  ptoType: PTOType!
+  accrualMethod: PTOAccrualMethod!
+  accrualAmountDays: Decimal!
+  maxBalanceDays: Decimal
+  carryoverCapDays: Decimal
+  carryoverExpiryDays: Int
+  tiers: [PTOAccrualTierInput!]
+  onTermination: PTOTerminationAction
+}
+
+input PTOPolicyInput {
+  name: String!
+  code: String!
+  description: String
+  status: PTOPolicyStatus!
+  isDefault: Boolean!
+  yearBasis: PTOYearBasis!
+  countWeekends: Boolean!
+  waitingPeriodDays: Int!
+  requiresApproval: Boolean!
+  enforceBalance: Boolean!
+  allowNegative: Boolean!
+  negativeFloorDays: Decimal
+  rules: [PTOPolicyRuleInput!]!
+  version: Int
+}
+
+input PTOPoliciesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  status: PTOPolicyStatus
+}
+
+input OpeningPTOBalanceInput {
+  ptoType: PTOType!
+  "Opening balance, in days."
+  days: Decimal!
+}
+
+input AssignWorkerPTOPolicyInput {
+  ptoPolicyId: ID!
+  workerIds: [ID!]!
+  effectiveFrom: Timestamp!
+  openingBalances: [OpeningPTOBalanceInput!]
+  note: String
+}
+
+input EndWorkerPTOPolicyAssignmentInput {
+  assignmentId: ID!
+  effectiveTo: Timestamp
+  version: Int
+}
+
+input WorkerPTOLedgerInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  workerId: ID
+  ptoType: PTOType
+  entryType: PTOLedgerEntryType
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  includeWorker: Boolean = false
+}
+
+input AdjustWorkerPTOBalanceInput {
+  workerId: ID!
+  ptoType: PTOType!
+  amountDays: Decimal!
+  effectiveAt: Timestamp
+  note: String!
+}
+
+input RunPTOAccrualInput {
+  workerId: ID
+  rebuild: Boolean
+  asOf: Timestamp
+}
+
+input PTOAvailabilityInput {
+  workerId: ID!
+  ptoType: PTOType!
+  startDate: Timestamp!
+  endDate: Timestamp!
+  excludePtoId: ID
+}
+
+extend type Query {
+  ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
+  ptoPolicy(id: ID!): PTOPolicy!
+  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]!
+  workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
+  workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
+  workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!
+  previewWorkerPtoAccrual(workerId: ID!, asOf: Timestamp): [PlannedPTOAccrual!]!
+  ptoBalanceSummary: PTOBalanceSummary!
+  ptoLiabilityReport(asOf: Timestamp): PTOLiabilityReport!
+}
+
+extend type Mutation {
+  createPtoPolicy(input: PTOPolicyInput!): PTOPolicy!
+  updatePtoPolicy(id: ID!, input: PTOPolicyInput!): PTOPolicy!
+  archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
+  restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
+  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload!
+  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
+  adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
+  runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
+}

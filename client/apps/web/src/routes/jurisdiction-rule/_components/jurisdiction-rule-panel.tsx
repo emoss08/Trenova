@@ -7,6 +7,7 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import type { JurisdictionRuleRow } from "@/lib/graphql/jurisdiction-rule-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { jurisdictionRuleSchema, type JurisdictionRule } from "@/types/jurisdiction-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,12 +49,26 @@ function emptyRule(): Partial<JurisdictionRule> {
   };
 }
 
+function toDecimal(value: string | null): number | null {
+  return value === null ? null : Number(value);
+}
+
+function toFormValues(row: JurisdictionRuleRow): JurisdictionRule {
+  return {
+    ...row,
+    permitBaseFee: toDecimal(row.permitBaseFee),
+    permitPerMileFee: toDecimal(row.permitPerMileFee),
+    sourceNote: row.sourceNote ?? undefined,
+    sourceUrl: row.sourceUrl ?? undefined,
+  };
+}
+
 export function JurisdictionRulePanel({
   open,
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<JurisdictionRule>) {
+}: DataTablePanelProps<JurisdictionRuleRow>) {
   const form = useForm<JurisdictionRule>({
     resolver: zodResolver(jurisdictionRuleSchema) as Resolver<JurisdictionRule>,
     defaultValues: emptyRule() as JurisdictionRule,
@@ -83,7 +98,7 @@ function JurisdictionRuleEditPanel({
   onOpenChange,
   row,
   form,
-}: Pick<DataTablePanelProps<JurisdictionRule>, "open" | "onOpenChange" | "row"> & {
+}: Pick<DataTablePanelProps<JurisdictionRuleRow>, "open" | "onOpenChange" | "row"> & {
   form: ReturnType<typeof useForm<JurisdictionRule>>;
 }) {
   const queryClient = useQueryClient();
@@ -97,7 +112,7 @@ function JurisdictionRuleEditPanel({
 
   useEffect(() => {
     if (open && row) {
-      reset(row as JurisdictionRule, { keepDefaultValues: true });
+      reset(toFormValues(row), { keepDefaultValues: true });
     }
   }, [open, row, reset]);
 

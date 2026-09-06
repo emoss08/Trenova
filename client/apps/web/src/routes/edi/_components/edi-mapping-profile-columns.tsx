@@ -1,10 +1,10 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import type { EDIMappingProfile } from "@trenova/shared/types/edi";
+import type { EDIMappingProfileRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getMappingProfileColumns(): ColumnDef<EDIMappingProfile>[] {
+export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
   return [
     {
       accessorKey: "name",

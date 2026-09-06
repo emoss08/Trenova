@@ -99,11 +99,12 @@ function toProgramInput(values: FuelSurchargeProgramFormValues): FuelSurchargePr
   };
 }
 
-export async function fetchFuelDashboard() {
+export async function fetchFuelDashboard(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: FuelDashboardDocument,
     operationName: "FuelDashboard",
     variables: {},
+    signal: options?.signal,
   });
   return data.fuelDashboard;
 }
@@ -111,6 +112,7 @@ export async function fetchFuelDashboard() {
 export async function fetchFuelPriceHistory(
   indexId: string,
   options?: { from?: string; to?: string; limit?: number },
+  requestOptions?: { signal?: AbortSignal },
 ) {
   const data = await requestGraphQL({
     document: FuelIndexPriceHistoryDocument,
@@ -121,42 +123,53 @@ export async function fetchFuelPriceHistory(
       to: options?.to,
       limit: options?.limit,
     },
+    signal: requestOptions?.signal,
   });
   return data.fuelIndexPriceHistory;
 }
 
-export async function fetchFuelProgramCurrentRates() {
+export async function fetchFuelProgramCurrentRates(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: FuelProgramCurrentRatesDocument,
     operationName: "FuelProgramCurrentRates",
     variables: {},
+    signal: options?.signal,
   });
   return data.fuelProgramCurrentRates;
 }
 
-export async function fetchFuelSurchargeProgramDetail(id: string) {
+export async function fetchFuelSurchargeProgramDetail(
+  id: string,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: FuelSurchargeProgramDetailDocument,
     operationName: "FuelSurchargeProgramDetail",
     variables: { id },
+    signal: options?.signal,
   });
   return data.fuelSurchargeProgram;
 }
 
-export async function generateFuelSurchargeTable(input: GenerateFuelTableInput) {
+export async function generateFuelSurchargeTable(
+  input: GenerateFuelTableInput,
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestGraphQL({
     document: GenerateFuelSurchargeTableDocument,
     operationName: "GenerateFuelSurchargeTable",
     variables: { input },
+    signal: options?.signal,
   });
   return data.generateFuelSurchargeTable;
 }
 
-export async function fetchEIASeriesOptions() {
+export async function fetchEIASeriesOptions(options?: { signal?: AbortSignal }) {
   const data = await requestGraphQL({
     document: EiaSeriesOptionsDocument,
     operationName: "EIASeriesOptions",
     variables: {},
+    signal: options?.signal,
   });
   return data.eiaSeriesOptions;
 }

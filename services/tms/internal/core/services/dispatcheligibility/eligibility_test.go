@@ -48,10 +48,13 @@ func compliantWorker() *worker.Worker {
 		CanBeAssigned:        true,
 		AvailableForDispatch: true,
 		Profile: &worker.WorkerProfile{
-			DOB:               timeutils.YearsAgoUnix(35),
-			LicenseExpiry:     now + 365*day,
-			HireDate:          now - 365*day,
-			LastDrugTest:      now - 300*day,
+			DOB:           timeutils.YearsAgoUnix(35),
+			LicenseExpiry: now + 365*day,
+			HireDate:      now - 365*day,
+			LastDrugTest:  now - 300*day,
+			// A worker read from the database always carries a testing
+			// standing; Clear is the ordinary case for a compliant driver.
+			DrugAlcoholStatus: worker.DrugAlcoholClear,
 			LastMVRCheck:      now - 30*day,
 			MVRDueDate:        &mvr,
 			PhysicalDueDate:   &physical,
@@ -525,4 +528,67 @@ func TestComplianceErrorCode(t *testing.T) {
 		errortypes.ErrInvalid,
 		dispatcheligibility.ComplianceErrorCode(dispatchcontrol.ComplianceEnforcementLevelAudit),
 	)
+}
+
+func drugAlcoholFindings(w *worker.Worker) []dispatcheligibility.Finding {
+	return dispatcheligibility.EvaluateWorkerCompliance(
+		dispatcheligibility.WorkerComplianceInput{Worker: w, Control: blockingControl()},
+	).Findings
+}
+
+// A prohibition is the one drug and alcohol finding that stops a dispatch. It
+// blocks even where the organisation has set enforcement to warn, because using
+// a prohibited driver is not a setting.
+func TestEvaluateWorkerCompliance_ProhibitionAlwaysBlocks(t *testing.T) {
+	t.Parallel()
+
+	w := compliantWorker()
+	w.Profile.DrugAlcoholStatus = worker.DrugAlcoholProhibited
+	w.Profile.ReturnToDutyStatus = worker.ReturnToDutyRTDTestRequired
+
+	eval := dispatcheligibility.EvaluateWorkerCompliance(
+		dispatcheligibility.WorkerComplianceInput{Worker: w, Control: warningControl()},
+	)
+
+	require.Len(t, eval.Findings, 1)
+	assert.Equal(t, dispatcheligibility.CodeDrugAlcoholProhibited, eval.Findings[0].Code)
+	assert.Equal(t, dispatcheligibility.SeverityBlock, eval.Findings[0].Severity)
+	assert.Contains(t, eval.Findings[0].Message, "return-to-duty test")
+}
+
+// Missing paperwork is the office's problem, not the driver's: it warns so the
+// gap is visible without grounding a fleet.
+func TestEvaluateWorkerCompliance_MissingRecordWarnsOnly(t *testing.T) {
+	t.Parallel()
+
+	w := compliantWorker()
+	w.Profile.DrugAlcoholStatus = worker.DrugAlcoholUnknown
+
+	findings := drugAlcoholFindings(w)
+	require.Len(t, findings, 1)
+	assert.Equal(t, dispatcheligibility.CodeDrugAlcoholUnknown, findings[0].Code)
+	assert.Equal(t, dispatcheligibility.SeverityWarn, findings[0].Severity)
+
+	w.Profile.DrugAlcoholStatus = worker.DrugAlcoholPending
+	findings = drugAlcoholFindings(w)
+	require.Len(t, findings, 1)
+	assert.Equal(t, dispatcheligibility.CodeDrugAlcoholPending, findings[0].Code)
+	assert.Equal(t, dispatcheligibility.SeverityWarn, findings[0].Severity)
+}
+
+func TestEvaluateWorkerCompliance_ClearinghouseQueryOverdue(t *testing.T) {
+	t.Parallel()
+
+	overdue := timeutils.NowUnix() - day
+	w := compliantWorker()
+	w.Profile.NextClearinghouseQueryDue = &overdue
+
+	findings := drugAlcoholFindings(w)
+	require.Len(t, findings, 1)
+	assert.Equal(t, dispatcheligibility.CodeClearinghouseOverdue, findings[0].Code)
+	assert.Equal(t, dispatcheligibility.SeverityBlock, findings[0].Severity)
+
+	future := timeutils.NowUnix() + 30*day
+	w.Profile.NextClearinghouseQueryDue = &future
+	assert.Empty(t, drugAlcoholFindings(w))
 }

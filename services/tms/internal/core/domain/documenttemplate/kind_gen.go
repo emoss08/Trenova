@@ -71,10 +71,22 @@ const (
 	KindNotificationLoadUnassigned Kind = "notification.dash.load_unassigned"
 	// KindNotificationPTOReviewed answers a time-off request.
 	KindNotificationPTOReviewed Kind = "notification.dash.pto_reviewed"
+	// KindNotificationPTOCancelled tells a driver approved or pending time off was withdrawn.
+	KindNotificationPTOCancelled Kind = "notification.dash.pto_cancelled"
 	// KindNotificationCredentialExpiring warns about a lapsing credential.
 	KindNotificationCredentialExpiring Kind = "notification.dash.credential_expiring"
+	// KindNotificationTrainingDue nudges a driver about a course that is due or a certification that is lapsing.
+	KindNotificationTrainingDue Kind = "notification.dash.training_due"
+	// KindNotificationReviewSubmitted asks a driver to read and sign off on a performance review.
+	KindNotificationReviewSubmitted Kind = "notification.dash.review_submitted"
+	// KindNotificationRecognition shares praise the office recorded for a driver.
+	KindNotificationRecognition Kind = "notification.dash.recognition"
+	// KindNotificationDisciplinaryIssued tells a driver a disciplinary action was issued and needs acknowledging.
+	KindNotificationDisciplinaryIssued Kind = "notification.dash.disciplinary_issued"
 	// KindNotificationHOSAlert wraps an hours-of-service warning.
 	KindNotificationHOSAlert Kind = "notification.dash.hos_alert"
+	// KindNotificationObligationsDigest bundles everything a driver owes into one notice.
+	KindNotificationObligationsDigest Kind = "notification.dash.obligations_digest"
 
 	// KindNotificationSettlementPosted announces an issued settlement statement.
 	KindNotificationSettlementPosted Kind = "notification.dash.settlement_posted"
@@ -86,6 +98,11 @@ const (
 	KindNotificationExpenseReviewed Kind = "notification.dash.expense_reviewed"
 	// KindNotificationDisputeResolved reports the outcome of a pay dispute.
 	KindNotificationDisputeResolved Kind = "notification.dash.dispute_resolved"
+	// KindNotificationProfileChangeReviewed answers a request to change the
+	// driver's own record.
+	KindNotificationProfileChangeReviewed Kind = "notification.dash.profile_change_reviewed"
+	// KindNotificationPolicyPublished asks a driver to read and sign a policy.
+	KindNotificationPolicyPublished Kind = "notification.dash.policy_published"
 
 	// KindNotificationReportRunCompleted announces a finished report.
 	KindNotificationReportRunCompleted Kind = "notification.report_run_completed"
@@ -127,13 +144,21 @@ func AllKinds() []Kind {
 		KindNotificationLoadAssigned,
 		KindNotificationLoadUnassigned,
 		KindNotificationPTOReviewed,
+		KindNotificationPTOCancelled,
 		KindNotificationCredentialExpiring,
+		KindNotificationTrainingDue,
+		KindNotificationReviewSubmitted,
+		KindNotificationRecognition,
+		KindNotificationDisciplinaryIssued,
 		KindNotificationHOSAlert,
+		KindNotificationObligationsDigest,
 		KindNotificationSettlementPosted,
 		KindNotificationSettlementPaid,
 		KindNotificationPayHeld,
 		KindNotificationExpenseReviewed,
 		KindNotificationDisputeResolved,
+		KindNotificationProfileChangeReviewed,
+		KindNotificationPolicyPublished,
 		KindNotificationReportRunCompleted,
 		KindNotificationReportRunFailed,
 		KindNotificationReportRunCanceled,

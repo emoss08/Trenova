@@ -1,5 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { accountTypeTableGraphQLConfig } from "@/lib/graphql/account-type-table";
+import {
+  accountTypeTableGraphQLConfig,
+  type AccountTypeRow,
+} from "@/lib/graphql/account-type-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@trenova/shared/types/data-table";
@@ -17,7 +20,7 @@ export default function AccountTypeTable() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: AccountType[], status: string) => {
+    async (rows: AccountTypeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.accountTypeService.bulkUpdateStatus({
@@ -40,7 +43,7 @@ export default function AccountTypeTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<AccountType>[]>(
+  const dockActions = useMemo<DockAction<AccountTypeRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +60,7 @@ export default function AccountTypeTable() {
   );
 
   return (
-    <DataTable<AccountType>
+    <DataTable<AccountTypeRow>
       name="Account Type"
       queryKey="account-type-list"
       graphql={accountTypeTableGraphQLConfig}

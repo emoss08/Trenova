@@ -1,23 +1,27 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { driverTypeChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
 import { patchWorker } from "@/lib/graphql/worker-mutations";
-import { workerTableGraphQLConfigs } from "@/lib/graphql/worker-table";
+import { workerTableGraphQLConfigs, type WorkerRow } from "@/lib/graphql/worker-table";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Worker } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon, TruckIcon, UserIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { CircleCheckIcon, GraduationCapIcon, TruckIcon, UserIcon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { BulkAssignTrainingDialog } from "./bulk-assign-training-dialog";
 import { getColumns } from "./worker-columns";
 import { WorkerPanel } from "./worker-panel";
 
 export default function WorkerTable() {
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
+  // Held here rather than inside the dock so the dialog keeps the selection
+  // after the dock closes it.
+  const [trainingTargets, setTrainingTargets] = useState<WorkerRow[] | null>(null);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Worker[], status: string) => {
+    async (rows: WorkerRow[], status: string) => {
       const updatePromises = rows.map((r) =>
         patchWorker(r.id, {
           status: status as Worker["status"],
@@ -40,7 +44,7 @@ export default function WorkerTable() {
   );
 
   const handleBulkTypeUpdate = useCallback(
-    async (rows: Worker[], type: string) => {
+    async (rows: WorkerRow[], type: string) => {
       const updatePromises = rows.map((r) =>
         patchWorker(r.id, {
           type: type as Worker["type"],
@@ -63,7 +67,7 @@ export default function WorkerTable() {
   );
 
   const handleBulkDriverTypeUpdate = useCallback(
-    async (rows: Worker[], driverType: string) => {
+    async (rows: WorkerRow[], driverType: string) => {
       const updatePromises = rows.map((r) =>
         patchWorker(r.id, {
           driverType: driverType as Worker["driverType"],
@@ -85,7 +89,7 @@ export default function WorkerTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Worker>[]>(
+  const dockActions = useMemo<DockAction<WorkerRow>[]>(
     () => [
       {
         id: "status-update",
@@ -117,20 +121,35 @@ export default function WorkerTable() {
         onSelect: handleBulkDriverTypeUpdate,
         clearSelectionOnSuccess: true,
       },
+      {
+        id: "assign-training",
+        label: "Assign Training",
+        icon: GraduationCapIcon,
+        onClick: (rows) => setTrainingTargets(rows),
+      },
     ],
     [handleBulkStatusUpdate, handleBulkTypeUpdate, handleBulkDriverTypeUpdate],
   );
 
   return (
-    <DataTable<Worker>
-      name="Worker"
-      queryKey="worker-list"
-      resource={Resource.Worker}
-      columns={columns}
-      graphql={workerTableGraphQLConfigs.worker}
-      dockActions={dockActions}
-      enableRowSelection
-      TablePanel={WorkerPanel}
-    />
+    <>
+      <DataTable<WorkerRow>
+        name="Worker"
+        queryKey="worker-list"
+        resource={Resource.Worker}
+        columns={columns}
+        graphql={workerTableGraphQLConfigs.worker}
+        dockActions={dockActions}
+        enableRowSelection
+        TablePanel={WorkerPanel}
+      />
+      <BulkAssignTrainingDialog
+        open={trainingTargets !== null}
+        onOpenChange={(open) => {
+          if (!open) setTrainingTargets(null);
+        }}
+        workers={trainingTargets ?? []}
+      />
+    </>
   );
 }

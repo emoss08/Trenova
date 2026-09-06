@@ -1,5 +1,7 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { queries } from "@/lib/queries";
+import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import {
   Sheet,
   SheetContent,
@@ -9,11 +11,17 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
+import { createLoader, useQueryStates } from "nuqs";
 import { lazy, useCallback, useState } from "react";
 import { BillingQueueKPIStrip } from "./_components/billing-queue-kpi-strip";
 import { BillingQueueSidebar } from "./_components/billing-queue-sidebar";
 import {
+  BILLING_QUEUE_LIST_KEY,
+  billingQueueFilterPresetsQuery,
+  billingQueueListQuery,
+} from "./billing-queue-queries";
+import {
+  queueSearchParamsParser,
   queueSelectionSearchParamsParser,
   queueToolbarSearchParamsParser,
 } from "./use-billing-queue-state";
@@ -22,6 +30,24 @@ const BillingQueueDetailPane = lazy(() => import("./_components/billing-queue-de
 const BillingQueueDocumentPreview = lazy(
   () => import("./_components/billing-queue-document-preview"),
 );
+
+const loadQueueSearch = createLoader(queueSearchParamsParser);
+
+// The KPI strip, the sidebar's presets and its first page of items all fire on mount
+// with nothing but the URL to go on, so the loader can reproduce their keys exactly.
+// The sidebar's search box is deferred, which on first render is the URL value too.
+export const prefetch: RoutePrefetch = ({ request }) => {
+  const { item, status, query, billType, billers, includePosted } = loadQueueSearch(request);
+  const list: RoutePrefetchQuery[] = [
+    queries.billingQueue.stats(),
+    billingQueueFilterPresetsQuery(),
+    billingQueueListQuery({ status, billers, billType, search: query, includePosted }),
+  ];
+  if (item) {
+    list.push(queries.billingQueue.get(item));
+  }
+  return list;
+};
 
 export function BillingQueuePage() {
   const [selectionParams, setSelectionParams] = useQueryStates(queueSelectionSearchParamsParser);
@@ -59,7 +85,7 @@ export function BillingQueuePage() {
     const cached = queryClient.getQueriesData<{
       results?: { id: string; status: string }[];
     }>({
-      queryKey: ["billing-queue-list"],
+      queryKey: [BILLING_QUEUE_LIST_KEY],
     });
 
     for (const [, data] of cached) {

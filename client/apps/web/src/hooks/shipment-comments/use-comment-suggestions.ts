@@ -53,26 +53,35 @@ export const fetchMentionCandidates: SuggestionFetcher = async (query, page) => 
   };
 };
 
-export const fetchAllEntityRefCandidates: SuggestionFetcher = async (query, page) => {
+export const fetchAllEntityRefCandidates: SuggestionFetcher = async (query, page, options) => {
   const [shipments, workers, customers] = await Promise.all([
-    fetchGraphQLSelectOptions({
-      ...shipmentSelectOptionsGraphQL,
-      query,
-      page,
-      initialLimit: ENTITY_REF_GROUP_PAGE_SIZE,
-    }).catch(() => null),
-    fetchGraphQLSelectOptions({
-      ...workerSelectOptionsGraphQL,
-      query,
-      page,
-      initialLimit: ENTITY_REF_GROUP_PAGE_SIZE,
-    }).catch(() => null),
-    fetchGraphQLSelectOptions({
-      ...customerSelectOptionsGraphQL,
-      query,
-      page,
-      initialLimit: ENTITY_REF_GROUP_PAGE_SIZE,
-    }).catch(() => null),
+    fetchGraphQLSelectOptions(
+      {
+        ...shipmentSelectOptionsGraphQL,
+        query,
+        page,
+        initialLimit: ENTITY_REF_GROUP_PAGE_SIZE,
+      },
+      options,
+    ).catch(() => null),
+    fetchGraphQLSelectOptions(
+      {
+        ...workerSelectOptionsGraphQL,
+        query,
+        page,
+        initialLimit: ENTITY_REF_GROUP_PAGE_SIZE,
+      },
+      options,
+    ).catch(() => null),
+    fetchGraphQLSelectOptions(
+      {
+        ...customerSelectOptionsGraphQL,
+        query,
+        page,
+        initialLimit: ENTITY_REF_GROUP_PAGE_SIZE,
+      },
+      options,
+    ).catch(() => null),
   ]);
 
   const result: SuggestionPage = { items: [], hasMore: false };

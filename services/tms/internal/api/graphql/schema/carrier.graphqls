@@ -55,8 +55,8 @@ type CarrierContact {
   isPrimary: Boolean!
   receivesRateConfirmations: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type CarrierInsurancePolicy {
@@ -67,13 +67,13 @@ type CarrierInsurancePolicy {
   policyType: CarrierInsurancePolicyType!
   policyNumber: String!
   providerName: String!
-  coverageAmount: String!
-  effectiveDate: Int!
-  expirationDate: Int!
+  coverageAmount: Decimal!
+  effectiveDate: Timestamp!
+  expirationDate: Timestamp!
   isVerified: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type Carrier {
@@ -92,7 +92,7 @@ type Carrier {
   scac: String
   complianceStatus: CarrierComplianceStatus!
   safetyRating: CarrierSafetyRating!
-  qualifiedAt: Int
+  qualifiedAt: Timestamp
   disqualifiedReason: String
   taxId: String
   taxIdType: CarrierTaxIDType
@@ -114,8 +114,8 @@ type Carrier {
   externalId: String
   notes: String
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
   state: UsState

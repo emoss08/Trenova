@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -468,6 +470,31 @@ func (r *repository) listByFiscalYearID(
 	}
 
 	return entities, nil
+}
+
+func (r *repository) ListByFiscalYearIDs(
+	ctx context.Context,
+	req repositories.ListByFiscalYearIDsRequest,
+) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
+	cols := buncolgen.FiscalPeriodColumns
+	entities := make([]*fiscalperiod.FiscalPeriod, 0, len(req.FiscalYearIDs)*12)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.FiscalPeriodScopeTenant(sq, req.TenantInfo).
+				Where(cols.FiscalYearID.In(), bun.List(req.FiscalYearIDs))
+		}).
+		Order(cols.PeriodNumber.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list periods by fiscal years", zap.Error(err))
+		return nil, err
+	}
+
+	return sliceutils.GroupBy(entities, func(fp *fiscalperiod.FiscalPeriod) pulid.ID {
+		return fp.FiscalYearID
+	}), nil
 }
 
 func (r *repository) GetPeriodByDate(

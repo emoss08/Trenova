@@ -4,11 +4,137 @@ package worker
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ApprovalDelegation].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ApprovalDelegationFieldMap] instead of parsing struct tags via reflection.
+func (e *ApprovalDelegation) GetStaticFieldMap() map[string]string {
+	return buncolgen.ApprovalDelegationFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DOTRandomDraw].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DOTRandomDrawFieldMap] instead of parsing struct tags via reflection.
+func (e *DOTRandomDraw) GetStaticFieldMap() map[string]string {
+	return buncolgen.DOTRandomDrawFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DOTRandomDrawEntry].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DOTRandomDrawEntryFieldMap] instead of parsing struct tags via reflection.
+func (e *DOTRandomDrawEntry) GetStaticFieldMap() map[string]string {
+	return buncolgen.DOTRandomDrawEntryFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DOTRandomPool].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DOTRandomPoolFieldMap] instead of parsing struct tags via reflection.
+func (e *DOTRandomPool) GetStaticFieldMap() map[string]string {
+	return buncolgen.DOTRandomPoolFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [JobPosition].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.JobPositionFieldMap] instead of parsing struct tags via reflection.
+func (e *JobPosition) GetStaticFieldMap() map[string]string {
+	return buncolgen.JobPositionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [LeaveControl].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.LeaveControlFieldMap] instead of parsing struct tags via reflection.
+func (e *LeaveControl) GetStaticFieldMap() map[string]string {
+	return buncolgen.LeaveControlFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [OSHAAnnualSummary].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.OSHAAnnualSummaryFieldMap] instead of parsing struct tags via reflection.
+func (e *OSHAAnnualSummary) GetStaticFieldMap() map[string]string {
+	return buncolgen.OSHAAnnualSummaryFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [OrgHoliday].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.OrgHolidayFieldMap] instead of parsing struct tags via reflection.
+func (e *OrgHoliday) GetStaticFieldMap() map[string]string {
+	return buncolgen.OrgHolidayFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PTOPolicy].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PTOPolicyFieldMap] instead of parsing struct tags via reflection.
+func (e *PTOPolicy) GetStaticFieldMap() map[string]string {
+	return buncolgen.PTOPolicyFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PTOPolicyRule].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PTOPolicyRuleFieldMap] instead of parsing struct tags via reflection.
+func (e *PTOPolicyRule) GetStaticFieldMap() map[string]string {
+	return buncolgen.PTOPolicyRuleFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PayrollExport].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PayrollExportFieldMap] instead of parsing struct tags via reflection.
+func (e *PayrollExport) GetStaticFieldMap() map[string]string {
+	return buncolgen.PayrollExportFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PerformanceReview].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PerformanceReviewFieldMap] instead of parsing struct tags via reflection.
+func (e *PerformanceReview) GetStaticFieldMap() map[string]string {
+	return buncolgen.PerformanceReviewFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PerformanceReviewTemplate].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PerformanceReviewTemplateFieldMap] instead of parsing struct tags via reflection.
+func (e *PerformanceReviewTemplate) GetStaticFieldMap() map[string]string {
+	return buncolgen.PerformanceReviewTemplateFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PortalInvitation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.PortalInvitationFieldMap] instead of parsing struct tags via reflection.
 func (e *PortalInvitation) GetStaticFieldMap() map[string]string {
 	return buncolgen.PortalInvitationFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShiftSwapRequest].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ShiftSwapRequestFieldMap] instead of parsing struct tags via reflection.
+func (e *ShiftSwapRequest) GetStaticFieldMap() map[string]string {
+	return buncolgen.ShiftSwapRequestFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShiftTemplate].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ShiftTemplateFieldMap] instead of parsing struct tags via reflection.
+func (e *ShiftTemplate) GetStaticFieldMap() map[string]string {
+	return buncolgen.ShiftTemplateFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TimeClockEntry].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TimeClockEntryFieldMap] instead of parsing struct tags via reflection.
+func (e *TimeClockEntry) GetStaticFieldMap() map[string]string {
+	return buncolgen.TimeClockEntryFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Timesheet].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TimesheetFieldMap] instead of parsing struct tags via reflection.
+func (e *Timesheet) GetStaticFieldMap() map[string]string {
+	return buncolgen.TimesheetFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TrainingCourse].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TrainingCourseFieldMap] instead of parsing struct tags via reflection.
+func (e *TrainingCourse) GetStaticFieldMap() map[string]string {
+	return buncolgen.TrainingCourseFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Worker].
@@ -18,11 +144,158 @@ func (e *Worker) GetStaticFieldMap() map[string]string {
 	return buncolgen.WorkerFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerAvailabilityPreference].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerAvailabilityPreferenceFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerAvailabilityPreference) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerAvailabilityPreferenceFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerChecklist].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerChecklistFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerChecklist) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerChecklistFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerChecklistItem].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerChecklistItemFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerChecklistItem) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerChecklistItemFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerChecklistTemplate].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerChecklistTemplateFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerChecklistTemplate) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerChecklistTemplateFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerChecklistTemplateItem].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerChecklistTemplateItemFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerChecklistTemplateItem) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerChecklistTemplateItemFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerClearinghouseQuery].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerClearinghouseQueryFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerClearinghouseQuery) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerClearinghouseQueryFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerCredential].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerCredentialFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerCredential) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerCredentialFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerCredentialType].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerCredentialTypeFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerCredentialType) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerCredentialTypeFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerDOTTest].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerDOTTestFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerDOTTest) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerDOTTestFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerDOTViolation].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerDOTViolationFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerDOTViolation) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerDOTViolationFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerDisciplinaryAction].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerDisciplinaryActionFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerDisciplinaryAction) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerDisciplinaryActionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerEmploymentEvent].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerEmploymentEventFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerEmploymentEvent) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerEmploymentEventFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerEmploymentVerification].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerEmploymentVerificationFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerEmploymentVerification) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerEmploymentVerificationFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerInjury].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerInjuryFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerInjury) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerInjuryFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerLeaveCase].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerLeaveCaseFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerLeaveCase) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerLeaveCaseFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerLeaveEntry].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerLeaveEntryFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerLeaveEntry) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerLeaveEntryFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPTO].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.WorkerPTOFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerPTO) GetStaticFieldMap() map[string]string {
 	return buncolgen.WorkerPTOFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPTOBalance].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerPTOBalanceFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerPTOBalance) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerPTOBalanceFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPTOLedgerEntry].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerPTOLedgerEntryFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerPTOLedgerEntry) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerPTOLedgerEntryFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPTOPolicyAssignment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerPTOPolicyAssignmentFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerPTOPolicyAssignment) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerPTOPolicyAssignmentFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPolicy].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerPolicyFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerPolicy) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerPolicyFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPolicyAcknowledgement].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerPolicyAcknowledgementFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerPolicyAcknowledgement) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerPolicyAcknowledgementFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerProfile].
@@ -32,9 +305,51 @@ func (e *WorkerProfile) GetStaticFieldMap() map[string]string {
 	return buncolgen.WorkerProfileFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerProfileChangeRequest].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerProfileChangeRequestFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerProfileChangeRequest) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerProfileChangeRequestFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerRecognition].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerRecognitionFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerRecognition) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerRecognitionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerSafetyEvent].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerSafetyEventFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerSafetyEvent) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerSafetyEventFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerSafetyViolation].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerSafetyViolationFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerSafetyViolation) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerSafetyViolationFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerShiftAssignment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerShiftAssignmentFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerShiftAssignment) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerShiftAssignmentFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerSyncDrift].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.WorkerSyncDriftFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerSyncDrift) GetStaticFieldMap() map[string]string {
 	return buncolgen.WorkerSyncDriftFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerTrainingRecord].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerTrainingRecordFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerTrainingRecord) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerTrainingRecordFieldMap
 }

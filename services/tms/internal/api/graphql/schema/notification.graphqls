@@ -31,12 +31,12 @@ type Notification {
   data: JSON
   relatedEntities: JSON
   actions: JSON
-  expiresAt: Int
-  deliveredAt: Int
-  readAt: Int
-  dismissedAt: Int
-  createdAt: Int!
-  updatedAt: Int!
+  expiresAt: Timestamp
+  deliveredAt: Timestamp
+  readAt: Timestamp
+  dismissedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   deliveryStatus: NotificationDeliveryStatus!
   source: String!
   jobId: String

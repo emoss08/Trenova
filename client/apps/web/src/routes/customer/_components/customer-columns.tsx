@@ -2,12 +2,13 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { CustomerRow } from "@/lib/graphql/customer-table";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function CustomerStatusCell({ row }: { row: Customer }) {
+function CustomerStatusCell({ row }: { row: CustomerRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -33,7 +34,7 @@ function CustomerStatusCell({ row }: { row: Customer }) {
   );
 }
 
-export function getColumns(): ColumnDef<Customer>[] {
+export function getColumns(): ColumnDef<CustomerRow>[] {
   return [
     {
       accessorKey: "status",

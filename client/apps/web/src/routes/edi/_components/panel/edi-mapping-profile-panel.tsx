@@ -13,11 +13,12 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import type { EDIMappingProfileRow } from "@/lib/graphql/edi-table";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type { EDIMappingProfile, EDIMappingProfileItem } from "@trenova/shared/types/edi";
+import type { EDIMappingProfileItem } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -273,7 +274,7 @@ export function MappingProfileTablePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<EDIMappingProfile>) {
+}: DataTablePanelProps<EDIMappingProfileRow>) {
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
   );

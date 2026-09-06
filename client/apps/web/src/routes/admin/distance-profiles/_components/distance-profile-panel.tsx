@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import type { DistanceProfileRow } from "@/lib/graphql/distance-profile-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { distanceProfileSchema, type DistanceProfile } from "@/types/distance-profile";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,7 +33,7 @@ export function DistanceProfilePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<DistanceProfile>) {
+}: DataTablePanelProps<DistanceProfileRow>) {
   const form = useForm<DistanceProfile>({
     resolver: zodResolver(distanceProfileSchema),
     defaultValues,

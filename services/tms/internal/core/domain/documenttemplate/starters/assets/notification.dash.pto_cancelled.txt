@@ -1,0 +1,1 @@
+Your time-off request was cancelled by the office.{{ if .Reason }} {{ .Reason }}{{ else }} Check Dash or talk to your manager if you were not expecting this.{{ end }}

@@ -152,13 +152,14 @@ then fails on a shipment with no weight, blocking the shipment save.
       latest (`service.go` `resolveTemplateSnapshot`)
 - [x] `Rollback` and `CreateVersion` run `validateTemplate`; `CreateVersion` writes
       an audit entry
-- [x] `CountUsages` includes rate agreement rules and rate agreement accessorials
-      (the only other tables that reference templates; quotes are records, not
-      consumers) and the Studio/rollback dialog label them
+- [x] `CountUsages` includes rate matrices, rate agreement rules, and rate
+      agreement accessorials (the only other tables that reference templates;
+      quotes are records, not consumers) and the Studio/rollback dialog label them
       (`formulatemplaterepository/formulatemplate.go`)
 - [x] Unique index `(organization_id, business_unit_id, name)` and list index
-      `(organization_id, business_unit_id, created_at DESC)`; index on
-      `accessorial_charges.formula_template_id` (migration `20261002000000`);
+      `(organization_id, business_unit_id, created_at DESC)`; `formula_template_id`
+      indexes on `rate_matrices`, `rate_agreement_rules`, and
+      `rate_agreement_accessorials` (migration `20261002000000`);
       duplicates pick a free "(Copy N)" name and a name collision on create or
       update is a 409 on `name`
 - [x] Field caps: expression ≤ 10,000 chars, ≤ 50 custom variables (breakdowns
@@ -452,9 +453,7 @@ Every rating carries a trace that a non-programmer can read.
       Draft, the shipment schema, empty collections, cloned metadata, version one, and
       rounding normalisation; the repository's duplicate path builds from the seed too)
 - [x] Repositories use `buncolgen` column helpers and `DBForContext` everywhere
-      (`List`, `CountUsages`, `SelectOptions`; the version repository too. The accessorial
-      charge model does not map `formula_template_id`, so that one usage count builds its
-      column through `buncolgen.NewColumn` until the model catches up)
+      (`List`, `CountUsages`, `SelectOptions`; the version repository too)
 - [x] Approval engine records review rounds (reviewer, decision, comment, diff-base
       version) with "request changes" distinct from Reject, and expiry on stale
       submissions (`pkg/approvalworkflow`, migration) (`formula_template_reviews` history:

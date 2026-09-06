@@ -50,3 +50,24 @@ concurrent queries fire into it indistinguishably.
 - If partial errors must drive UI, the reporter is the wrong mechanism — that
   requires changing requestGraphQL's return type, which propagates to 337 call
   sites. Ask before going down that path.
+
+## GraphQL transport and data tables
+
+- Generated documents are hash-only (`{ __meta__: { hash, kind, name } }`); there is no
+  SDL at runtime. Tests that need the operation text read it back from
+  `@trenova/graphql/generated/persisted-documents.json` by hash (see
+  `hooks/data-table/__tests__/use-data-table-query.test.ts`).
+- Every GraphQL query wrapper takes a trailing `{ signal }` option and every `queryFn`
+  forwards TanStack's `signal`; a new wrapper or query must do the same.
+- Data-table configs are inferred from the document: `defineDataTableGraphQLConfig({
+  document, operationName, connectionKey })` derives the row type from the unmasked
+  connection node. Do not pass a hand-written REST row type unless the fragment
+  structurally satisfies it; add the field to the fragment instead.
+- Table queries request `totalCount` only on the first page (`includeTotalCount`); the
+  table remembers the total per cursor scope.
+- Routes warm the cache through `lib/route-prefetch.ts` (`lazyPrefetch` +
+  `createPrefetchLoader`); a page module exports `prefetch` returning the query
+  options it will read on mount, using the same key factories as the components.
+- After editing a `.graphql` operation run `pnpm --filter @trenova/graphql codegen`
+  (or keep `pnpm dev` running, which watches); the server reloads the safelist on an
+  unknown hash outside production.

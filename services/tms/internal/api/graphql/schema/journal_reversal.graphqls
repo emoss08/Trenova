@@ -15,25 +15,25 @@ type JournalReversal {
   reversalJournalEntryId: ID
   postedBatchId: ID
   status: JournalReversalStatus!
-  requestedAccountingDate: Int!
+  requestedAccountingDate: Timestamp!
   resolvedFiscalYearId: ID!
   resolvedFiscalPeriodId: ID!
   reasonCode: String!
   reasonText: String!
   requestedById: ID!
   approvedById: ID
-  approvedAt: Int
+  approvedAt: Timestamp
   rejectedById: ID
-  rejectedAt: Int
+  rejectedAt: Timestamp
   rejectionReason: String
   cancelledById: ID
-  cancelledAt: Int
+  cancelledAt: Timestamp
   cancelReason: String
   postedById: ID
-  postedAt: Int
+  postedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type JournalReversalEdge {

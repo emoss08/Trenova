@@ -8,8 +8,8 @@ type BusinessUnit {
   name: String!
   code: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type Organization {
@@ -31,8 +31,8 @@ type Organization {
   brokerageEnabled: Boolean!
   assetOperationsEnabled: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   state: UsState
   businessUnit: BusinessUnit
 }
@@ -71,9 +71,9 @@ type User {
   isLocked: Boolean!
   mustChangePassword: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
-  lastLoginAt: Int
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  lastLoginAt: Timestamp
   businessUnit: BusinessUnit
   currentOrganization: Organization
 }

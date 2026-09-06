@@ -41,7 +41,8 @@ export function GeneralTab() {
               name="status"
               label="Status"
               placeholder="Status"
-              description="Current employment status of the worker."
+              isReadOnly
+              description="Employment status moves through the Timeline tab — record a Terminated, Rehired or similar event."
             />
           </FormControl>
           <FormControl>
@@ -260,8 +261,9 @@ export function EmploymentTab() {
               control={control}
               name="profile.terminationDate"
               label="Termination Date"
-              description="Date employment ended (if applicable)."
-              placeholder="Termination Date"
+              description="Set by a Terminated event on the Timeline tab."
+              placeholder="Not terminated"
+              disabled
             />
           </FormControl>
         </FormGroup>

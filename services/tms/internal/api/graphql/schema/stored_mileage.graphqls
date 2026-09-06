@@ -29,10 +29,10 @@ type StoredMileage {
   distanceProfileId: ID!
   distanceProfileName: String!
   hitCount: Int!
-  lastCalculatedAt: Int!
+  lastCalculatedAt: Timestamp!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
 }

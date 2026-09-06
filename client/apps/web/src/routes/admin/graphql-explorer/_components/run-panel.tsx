@@ -33,7 +33,8 @@ import {
 } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { catalog, referencedTypeNames, scaffoldVariables } from "./catalog";
+import { referencedTypeNames, scaffoldVariables } from "./catalog";
+import { useCatalog } from "./use-catalog";
 import { useRunHistory, type RunHistoryEntry } from "./use-run-history";
 
 const LARGE_RESPONSE_THRESHOLD = 150_000;
@@ -182,6 +183,7 @@ function HistoryPopover({
 }
 
 function InputTypesReference({ typeNames }: { typeNames: string[] }) {
+  const { catalog } = useCatalog();
   const [open, setOpen] = useState(false);
   const sdl = useMemo(
     () =>
@@ -189,7 +191,7 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
         .map((name) => catalog.types[name]?.sdl)
         .filter(Boolean)
         .join("\n\n"),
-    [typeNames],
+    [catalog, typeNames],
   );
 
   if (typeNames.length === 0) {
@@ -224,8 +226,15 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
 
 export function RunPanel({ operation }: { operation: CatalogOperation }) {
   const { theme } = useTheme();
-  const scaffold = useMemo(() => scaffoldVariables(operation.variables), [operation.variables]);
-  const typeNames = useMemo(() => referencedTypeNames(operation.variables), [operation.variables]);
+  const { catalog } = useCatalog();
+  const scaffold = useMemo(
+    () => scaffoldVariables(catalog, operation.variables),
+    [catalog, operation.variables],
+  );
+  const typeNames = useMemo(
+    () => referencedTypeNames(catalog, operation.variables),
+    [catalog, operation.variables],
+  );
   const [variables, setVariables] = useState(scaffold);
   const [parseError, setParseError] = useState<string | null>(null);
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
@@ -289,7 +298,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
     setRunState({ status: "running" });
     const startedAt = performance.now();
     const document = {
-      __meta__: { hash: operation.hash },
+      __meta__: { hash: operation.hash, kind: operation.kind, name: operation.name },
       toString: () => operation.sdl,
     };
 
@@ -330,7 +339,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
       setRunState({ status: "error", message, elapsedMs });
       recordRun({ status: "error", variables, elapsedMs, message });
     }
-  }, [operation.hash, operation.name, operation.sdl, recordRun, variables]);
+  }, [operation.hash, operation.kind, operation.name, operation.sdl, recordRun, variables]);
 
   const runRef = useRef(run);
   useEffect(() => {

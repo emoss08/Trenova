@@ -7,7 +7,7 @@ import type { Control, FieldPath, FieldValues } from "react-hook-form";
 export function usePayCodeOptions(direction?: "Earning" | "Deduction") {
   return useQuery({
     queryKey: ["pay-code-options", direction ?? "all"],
-    queryFn: () => fetchPayCodeOptions(direction),
+    queryFn: ({ signal }) => fetchPayCodeOptions(direction, { signal }),
     staleTime: 60_000,
   });
 }

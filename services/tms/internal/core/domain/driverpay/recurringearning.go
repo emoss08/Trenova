@@ -30,6 +30,7 @@ type RecurringEarning struct {
 	WorkerID        pulid.ID         `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"`
 	PayCodeID       pulid.ID         `json:"payCodeId"       bun:"pay_code_id,type:VARCHAR(100),notnull"`
 	Status          EarningStatus    `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
+	Kind            EarningKind      `json:"kind"                bun:"kind,type:VARCHAR(50),notnull,default:'Standard'"`
 	Frequency       EarningFrequency `json:"frequency"       bun:"frequency,type:VARCHAR(50),notnull,default:'EverySettlement'"`
 	Description     string           `json:"description"     bun:"description,type:VARCHAR(255),notnull"`
 	AmountMinor     int64            `json:"amountMinor"     bun:"amount_minor,type:BIGINT,notnull"`

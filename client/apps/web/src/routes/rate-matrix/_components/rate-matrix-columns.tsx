@@ -3,9 +3,9 @@ import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import type { RateMatrix } from "@trenova/shared/types/rate";
+import type { RateMatrixRow } from "@/lib/graphql/rate-tables";
 
-export function getColumns(): ColumnDef<RateMatrix>[] {
+export function getColumns(): ColumnDef<RateMatrixRow>[] {
   return [
     {
       accessorKey: "status",

@@ -158,7 +158,7 @@ type DetentionPolicyTier {
   id: ID
   fromMinute: Int!
   toMinute: Int
-  rate: String!
+  rate: Decimal!
   rateUnit: DetentionTierRateUnit!
   label: String!
   sortOrder: Int!
@@ -182,8 +182,8 @@ type DetentionPolicy {
   commodityIds: [ID!]!
   stopTypes: [StopType!]!
   appointmentStopsOnly: Boolean!
-  effectiveStartDate: Int
-  effectiveEndDate: Int
+  effectiveStartDate: Timestamp
+  effectiveEndDate: Timestamp
   clockStartBasis: DetentionClockStartBasis!
   lateArrivalRule: DetentionLateArrivalRule!
   lateArrivalGraceMinutes: Int!
@@ -198,9 +198,9 @@ type DetentionPolicy {
   accessorialChargeId: ID!
   tiers: [DetentionPolicyTier!]!
   maxBillableMinutesPerStop: Int
-  maxChargePerStop: String
-  maxChargePerDay: String
-  maxChargePerShipment: String
+  maxChargePerStop: Decimal
+  maxChargePerDay: Decimal
+  maxChargePerShipment: Decimal
   dayBoundaryMode: DetentionCapScope!
   convertToLayoverAtMinutes: Int
   layoverAccessorialChargeId: ID
@@ -211,13 +211,13 @@ type DetentionPolicy {
   autoSendNotice: Boolean!
   attachNoticePdf: Boolean!
   sendDepartureSummary: Boolean!
-  requireApprovalOverAmount: String
-  autoApproveUnderAmount: String
+  requireApprovalOverAmount: Decimal
+  autoApproveUnderAmount: Decimal
   currency: String!
   comments: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type DetentionPolicyEdge {
@@ -234,7 +234,7 @@ type DetentionPolicyConnection {
 input DetentionTierInput {
   fromMinute: Int!
   toMinute: Int
-  rate: String!
+  rate: Decimal!
   rateUnit: DetentionTierRateUnit = Hour
   label: String
   sortOrder: Int
@@ -254,8 +254,8 @@ input DetentionPolicyInput {
   commodityIds: [ID!]
   stopTypes: [StopType!]
   appointmentStopsOnly: Boolean = false
-  effectiveStartDate: Int
-  effectiveEndDate: Int
+  effectiveStartDate: Timestamp
+  effectiveEndDate: Timestamp
   clockStartBasis: DetentionClockStartBasis = LaterOfArrivalOrAppointment
   lateArrivalRule: DetentionLateArrivalRule = NoEffect
   lateArrivalGraceMinutes: Int = 0
@@ -270,9 +270,9 @@ input DetentionPolicyInput {
   accessorialChargeId: ID!
   tiers: [DetentionTierInput!]
   maxBillableMinutesPerStop: Int
-  maxChargePerStop: String
-  maxChargePerDay: String
-  maxChargePerShipment: String
+  maxChargePerStop: Decimal
+  maxChargePerDay: Decimal
+  maxChargePerShipment: Decimal
   dayBoundaryMode: DetentionCapScope = PerStop
   convertToLayoverAtMinutes: Int
   layoverAccessorialChargeId: ID
@@ -283,8 +283,8 @@ input DetentionPolicyInput {
   autoSendNotice: Boolean = false
   attachNoticePdf: Boolean = false
   sendDepartureSummary: Boolean = false
-  requireApprovalOverAmount: String
-  autoApproveUnderAmount: String
+  requireApprovalOverAmount: Decimal
+  autoApproveUnderAmount: Decimal
   currency: String = "USD"
   comments: String
   version: Int
@@ -304,15 +304,15 @@ type DetentionOccurrence {
   calculationTrace: JSON
   stopType: String!
   scheduleType: String!
-  appointmentStart: Int
-  appointmentEnd: Int
-  arrivedAt: Int
-  departedAt: Int
-  clockStartAt: Int!
-  clockStopAt: Int
-  freeTimeExpiresAt: Int!
-  noticeDueAt: Int
-  noticeDeadlineAt: Int
+  appointmentStart: Timestamp
+  appointmentEnd: Timestamp
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  clockStartAt: Timestamp!
+  clockStopAt: Timestamp
+  freeTimeExpiresAt: Timestamp!
+  noticeDueAt: Timestamp
+  noticeDeadlineAt: Timestamp
   isOpen: Boolean!
   arrivedLate: Boolean!
   lateByMinutes: Int!
@@ -320,26 +320,26 @@ type DetentionOccurrence {
   rawDwellMinutes: Int!
   billableMinutes: Int!
   roundedMinutes: Int!
-  billableUnits: String!
-  grossAmount: String!
-  billableAmount: String!
+  billableUnits: Decimal!
+  grossAmount: Decimal!
+  billableAmount: Decimal!
   driverPayMinutes: Int!
-  driverPayAmount: String!
-  netMargin: String!
+  driverPayAmount: Decimal!
+  netMargin: Decimal!
   capApplied: DetentionCapKind!
   convertedToLayover: Boolean!
   currency: String!
   status: DetentionOccurrenceStatus!
   notificationStatus: DetentionNotificationStatus!
-  noticeSentAt: Int
+  noticeSentAt: Timestamp
   suppressedByGate: Boolean!
   requiresApproval: Boolean!
   waiverReason: DetentionWaiverReason
   waiverNote: String!
-  waivedAt: Int
-  waivedAmount: String!
+  waivedAt: Timestamp
+  waivedAmount: Decimal!
   disputeNote: String!
-  disputedAt: Int
+  disputedAt: Timestamp
   collectabilityScore: Int!
   evidenceHead: String!
   additionalChargeId: ID
@@ -347,8 +347,8 @@ type DetentionOccurrence {
   customerName: String!
   shipmentProNumber: String!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type DetentionEvidence {
@@ -358,14 +358,14 @@ type DetentionEvidence {
   kind: DetentionEvidenceKind!
   source: DetentionEvidenceSource!
   summary: String!
-  observedAt: Int!
-  recordedAt: Int!
+  observedAt: Timestamp!
+  recordedAt: Timestamp!
   recordedById: ID
   documentId: ID
   payload: JSON
   prevHash: String!
   hash: String!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 type DetentionNotice {
@@ -378,19 +378,19 @@ type DetentionNotice {
   recipients: [String!]
   subject: String!
   body: String!
-  scheduledFor: Int!
-  sentAt: Int
-  deliveredAt: Int
-  openedAt: Int
-  failedAt: Int
+  scheduledFor: Timestamp!
+  sentAt: Timestamp
+  deliveredAt: Timestamp
+  openedAt: Timestamp
+  failedAt: Timestamp
   failureReason: String!
   sentById: ID
   wasAutomatic: Boolean!
   satisfiesRequirement: Boolean!
   quotedFreeMinutes: Int!
-  quotedRate: String
-  quotedAmount: String
-  createdAt: Int!
+  quotedRate: Decimal
+  quotedAmount: Decimal
+  createdAt: Timestamp!
 }
 
 type DetentionScoreFactor {
@@ -423,7 +423,7 @@ type DetentionDeskEntry {
   minutesUntilFreeEnds: Int!
   minutesUntilNoticeDue: Int
   noticeWindowOpen: Boolean!
-  amountAtRisk: String!
+  amountAtRisk: Decimal!
   urgency: DetentionDeskUrgency!
 }
 
@@ -435,7 +435,7 @@ type DetentionDisputePacket {
   notices: [DetentionNotice!]
   collectability: DetentionCollectability!
   chainVerified: Boolean!
-  generatedAt: Int!
+  generatedAt: Timestamp!
 }
 
 type FacilityDetentionStat {
@@ -446,10 +446,10 @@ type FacilityDetentionStat {
   avgDwellMinutes: Int!
   medianDwellMinutes: Float!
   p90DwellMinutes: Float!
-  billedAmount: String!
-  driverPayAmount: String!
-  netMargin: String!
-  waivedAmount: String!
+  billedAmount: Decimal!
+  driverPayAmount: Decimal!
+  netMargin: Decimal!
+  waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
 }
@@ -459,10 +459,10 @@ type CustomerDetentionStat {
   customerName: String!
   stopCount: Int!
   breachCount: Int!
-  billedAmount: String!
-  driverPayAmount: String!
-  netMargin: String!
-  waivedAmount: String!
+  billedAmount: Decimal!
+  driverPayAmount: Decimal!
+  netMargin: Decimal!
+  waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
 }
@@ -471,18 +471,18 @@ type DetentionWaiverLeakageStat {
   reason: String!
   waiverCount: Int!
   approverCount: Int!
-  waivedAmount: String!
+  waivedAmount: Decimal!
 }
 
 input DetentionPreviewScenarioInput {
-  arrivedAt: Int!
-  departedAt: Int
-  appointmentStart: Int
-  appointmentEnd: Int
+  arrivedAt: Timestamp!
+  departedAt: Timestamp
+  appointmentStart: Timestamp
+  appointmentEnd: Timestamp
   stopType: StopType!
   scheduleType: StopScheduleType!
-  noticeSentAt: Int
-  driverPayRate: String
+  noticeSentAt: Timestamp
+  driverPayRate: Decimal
 }
 
 type DetentionPreviewResult {
@@ -491,10 +491,10 @@ type DetentionPreviewResult {
   freeMinutesGranted: Int!
   billableMinutes: Int!
   roundedMinutes: Int!
-  billableAmount: String!
-  grossAmount: String!
-  driverPayAmount: String!
-  netMargin: String!
+  billableAmount: Decimal!
+  grossAmount: Decimal!
+  driverPayAmount: Decimal!
+  netMargin: Decimal!
   arrivedLate: Boolean!
   capApplied: DetentionCapKind!
   status: DetentionOccurrenceStatus!
@@ -506,10 +506,10 @@ type DetentionPreviewResult {
 
 input DetentionBacktestInput {
   policy: DetentionPolicyInput!
-  from: Int!
-  to: Int!
+  from: Timestamp!
+  to: Timestamp!
   limit: Int
-  driverPayRate: String
+  driverPayRate: Decimal
   assumeNoticeCompliance: Boolean
 }
 
@@ -518,11 +518,12 @@ type DetentionBacktestBucket {
   label: String!
   stopCount: Int!
   billableCount: Int!
-  proposedAmount: String!
-  baselineAmount: String!
-  delta: String!
-  driverPayAmount: String!
-  netMargin: String!
+  proposedAmount: Decimal!
+  baselineAmount: Decimal!
+  "proposedAmount minus baselineAmount."
+  delta: Decimal!
+  driverPayAmount: Decimal!
+  netMargin: Decimal!
 }
 
 type DetentionBacktestResult {
@@ -531,16 +532,16 @@ type DetentionBacktestResult {
   stopsBillable: Int!
   stopsForfeited: Int!
   stopsSuppressed: Int!
-  proposedRevenue: String!
-  baselineRevenue: String!
-  revenueDelta: String!
-  proposedDriverPay: String!
-  proposedNetMargin: String!
+  proposedRevenue: Decimal!
+  baselineRevenue: Decimal!
+  revenueDelta: Decimal!
+  proposedDriverPay: Decimal!
+  proposedNetMargin: Decimal!
   negativeMarginStops: Int!
   byCustomer: [DetentionBacktestBucket!]!
   byFacility: [DetentionBacktestBucket!]!
-  from: Int!
-  to: Int!
+  from: Timestamp!
+  to: Timestamp!
   truncated: Boolean!
 }
 
@@ -556,8 +557,8 @@ input DetentionDisputeInput {
 }
 
 input DetentionStatsInput {
-  from: Int!
-  to: Int!
+  from: Timestamp!
+  to: Timestamp!
   limit: Int
 }
 

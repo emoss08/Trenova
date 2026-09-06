@@ -2,7 +2,6 @@ import { formatFileSize, type RejectedFile } from "@/components/documents/docume
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
-import { getShipmentGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -26,6 +25,7 @@ import { getColumns } from "./shipment-columns";
 import { ShipmentDuplicateDialog } from "./shipment-duplicate-dialog";
 import { ShipmentSendEDIDialog } from "./shipment-send-edi-dialog";
 import { ShipmentPanel } from "./shipment-panel";
+import { shipmentPanelDetailQuery } from "./shipment-queries";
 import { ShipmentTransferOwnershipDialog } from "./shipment-transfer-ownership-dialog";
 
 type ShipmentTableProps = {
@@ -69,8 +69,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
   const isPanelOpen = panelType === "edit" || panelType === "create";
 
   const { data: panelRow } = useQuery({
-    queryKey: ["shipment-list", "detail", panelEntityId],
-    queryFn: () => getShipmentGraphQL(panelEntityId ?? ""),
+    ...shipmentPanelDetailQuery(panelEntityId ?? ""),
     enabled: !!panelEntityId && panelType === "edit",
     staleTime: 0,
   });

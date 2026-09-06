@@ -1,0 +1,165 @@
+fragment PerformanceReviewTemplateFields on PerformanceReviewTemplate {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  isDefault
+  cadenceMonths
+  items {
+    key
+    label
+    description
+    weight
+  }
+  openReviewCount
+  version
+  createdAt
+  updatedAt
+}
+
+fragment PerformanceReviewFields on PerformanceReview {
+  id
+  businessUnitId
+  organizationId
+  workerId
+  templateId
+  template {
+    id
+    code
+    name
+    cadenceMonths
+    items {
+      key
+      label
+      description
+      weight
+    }
+  }
+  reviewerId
+  reviewer {
+    id
+    name
+  }
+  status
+  title
+  periodStart
+  periodEnd
+  ratings {
+    key
+    label
+    weight
+    score
+    comment
+  }
+  overallScore
+  summary
+  strengths
+  improvements
+  goals {
+    id
+    title
+    dueAt
+    status
+  }
+  submittedAt
+  acknowledgedAt
+  workerComment
+  closedAt
+  closedById
+  nextReviewAt
+  version
+  createdAt
+  updatedAt
+}
+
+query PerformanceReviewTemplateTable(
+  $input: PerformanceReviewTemplatesInput!
+  $includeTotalCount: Boolean = true
+) {
+  performanceReviewTemplates(input: $input) {
+    edges {
+      node {
+        ...PerformanceReviewTemplateFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}
+
+query ActivePerformanceReviewTemplates {
+  activePerformanceReviewTemplates {
+    ...PerformanceReviewTemplateFields
+  }
+}
+
+query WorkerPerformanceReviews($workerId: ID!) {
+  workerPerformanceReviews(workerId: $workerId) {
+    ...PerformanceReviewFields
+  }
+}
+
+mutation CreatePerformanceReviewTemplate($input: PerformanceReviewTemplateInput!) {
+  createPerformanceReviewTemplate(input: $input) {
+    ...PerformanceReviewTemplateFields
+  }
+}
+
+mutation UpdatePerformanceReviewTemplate($id: ID!, $input: PerformanceReviewTemplateInput!) {
+  updatePerformanceReviewTemplate(id: $id, input: $input) {
+    ...PerformanceReviewTemplateFields
+  }
+}
+
+mutation ArchivePerformanceReviewTemplate($id: ID!, $version: Int) {
+  archivePerformanceReviewTemplate(id: $id, version: $version) {
+    ...PerformanceReviewTemplateFields
+  }
+}
+
+mutation RestorePerformanceReviewTemplate($id: ID!, $version: Int) {
+  restorePerformanceReviewTemplate(id: $id, version: $version) {
+    ...PerformanceReviewTemplateFields
+  }
+}
+
+mutation CreatePerformanceReview($input: CreatePerformanceReviewInput!) {
+  createPerformanceReview(input: $input) {
+    ...PerformanceReviewFields
+  }
+}
+
+mutation UpdatePerformanceReview($input: UpdatePerformanceReviewInput!) {
+  updatePerformanceReview(input: $input) {
+    ...PerformanceReviewFields
+  }
+}
+
+mutation SubmitPerformanceReview($input: PerformanceReviewStatusInput!) {
+  submitPerformanceReview(input: $input) {
+    ...PerformanceReviewFields
+  }
+}
+
+mutation ReopenPerformanceReview($input: PerformanceReviewStatusInput!) {
+  reopenPerformanceReview(input: $input) {
+    ...PerformanceReviewFields
+  }
+}
+
+mutation ClosePerformanceReview($input: PerformanceReviewStatusInput!) {
+  closePerformanceReview(input: $input) {
+    ...PerformanceReviewFields
+  }
+}
+
+mutation DeletePerformanceReview($id: ID!) {
+  deletePerformanceReview(id: $id)
+}

@@ -11,10 +11,12 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { usePermission } from "@/hooks/use-permission";
+import { queries } from "@/lib/queries";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { HistoryIcon, PlusIcon, SearchIcon } from "lucide-react";
-import { useQueryStates } from "nuqs";
+import { createLoader, useQueryStates } from "nuqs";
 import { Link, useNavigate } from "react-router";
 import { CannedGallery } from "./_components/canned-gallery";
 import { DashboardGallery } from "./_components/dashboard-gallery";
@@ -32,6 +34,22 @@ import {
   type ReportStatusFilter,
   type ReportTab,
 } from "./reports-page-state";
+
+const loadReportsSearch = createLoader(reportsPageSearchParamsParser);
+
+// Only the active tab's grid mounts, so only its list is worth starting. The library's
+// search box is debounced, which on first render is simply the URL value.
+export const prefetch: RoutePrefetch = ({ request }) => {
+  const { tab, query } = loadReportsSearch(request);
+  switch (tab) {
+    case "gallery":
+      return [queries.reports.canned()];
+    case "dashboards":
+      return [queries.reports.dashboards()];
+    default:
+      return [queries.reports.definitionList(query)];
+  }
+};
 
 function TabButton({
   active,

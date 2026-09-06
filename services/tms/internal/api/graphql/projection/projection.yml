@@ -1,21 +1,49 @@
 aliases:
   EquipmentContinuity:
     currentLocationName: currentLocationId
-  ShipmentEvent:
+  ShipmentLifecycleEvent:
     proNumber: metadata
     previousStatus: metadata
     newStatus: metadata
     reason: metadata
+  ShipmentOwnershipEvent:
+    proNumber: metadata
     previousOwnerId: metadata
     newOwnerId: metadata
+  ShipmentMoveEvent:
+    previousStatus: metadata
+    newStatus: metadata
+  ShipmentAssignmentEvent:
     primaryWorkerId: metadata
     secondaryWorkerId: metadata
     tractorId: metadata
     trailerId: metadata
     driverName: metadata
+  ShipmentCarrierEvent:
+    carrierId: metadata
+    carrierName: metadata
+    totalCost: metadata
+    reason: metadata
+    proNumber: metadata
+  ShipmentTenderEvent:
+    tenderId: metadata
+    offerId: metadata
+    moveId: metadata
+    carrierName: metadata
+    rank: metadata
+    channel: metadata
+    source: metadata
+    reason: metadata
+    action: metadata
+    mode: metadata
+    error: metadata
+    reasons: metadata
+    warnings: metadata
+  ShipmentHoldEvent:
     holdType: metadata
     holdSeverity: metadata
     holdSource: metadata
+  ShipmentCommentEvent:
     commentBody: metadata
     commentType: metadata
     commentVisibility: metadata
@@ -27,6 +55,56 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  WorkerTrainingRecord:
+    - daysUntilExpiry
+    - daysUntilDue
+    - health
+  WorkerSafetyEvent:
+    - activePoints
+  WorkerPTOPolicyAssignment:
+    - ptoPolicy
+  WorkerPTOLedgerEntry:
+    - sourcePto
+  WorkerLeaveCase:
+    - certificationLate
+  WorkerInjury:
+    - logName
+    - recordable
+  WorkerDisciplinaryAction:
+    - active
+  WorkerDOTViolation:
+    - rtdTest
+  WorkerCredentialType:
+    - activeCredentialCount
+  WorkerCredential:
+    - daysUntilExpiry
+    - health
+  WorkerChecklistTemplateItem:
+    - documentTypeName
+  WorkerChecklistTemplate:
+    - openChecklistCount
+  WorkerChecklistItem:
+    - overdue
+  WorkerChecklist:
+    - progress
+  TrainingCourse:
+    - openRecordCount
+  Timesheet:
+    - entries
+    - totalMinutes
+  TimeClockEntry:
+    - paidMinutes
+  ShiftTemplate:
+    - activeAssignmentCount
+  PolicyComplianceRow:
+    - workerType
+    - workerName
+  PerformanceReviewTemplate:
+    - openReviewCount
+  PTOPolicy:
+    - openAssignmentCount
+  DOTRandomPool:
+    - meetsDotMinimums
   ApiKey:
     - permissionScope
   FormulaTemplate:
@@ -87,7 +165,21 @@ virtuals:
   HomeLayoutPreset:
     - widgets
     - assignedUserCount
-  ShipmentEvent:
+  ShipmentLifecycleEvent:
+    - shipment
+  ShipmentOwnershipEvent:
+    - shipment
+  ShipmentMoveEvent:
+    - shipment
+  ShipmentAssignmentEvent:
+    - shipment
+  ShipmentCarrierEvent:
+    - shipment
+  ShipmentTenderEvent:
+    - shipment
+  ShipmentHoldEvent:
+    - shipment
+  ShipmentCommentEvent:
     - shipment
   Tractor:
     - customFields
@@ -133,8 +225,29 @@ gates:
     fleetCode: fleetDetails
 
 modelOverrides:
-  ShipmentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentMoveEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentAssignmentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentCarrierEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentTenderEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentHoldEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  ShipmentCommentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
 
 always:
-  ShipmentEvent:
+  ShipmentLifecycleEvent:
+    - occurredAt
+  ShipmentOwnershipEvent:
+    - occurredAt
+  ShipmentMoveEvent:
+    - occurredAt
+  ShipmentAssignmentEvent:
+    - occurredAt
+  ShipmentCarrierEvent:
+    - occurredAt
+  ShipmentTenderEvent:
+    - occurredAt
+  ShipmentHoldEvent:
+    - occurredAt
+  ShipmentCommentEvent:
     - occurredAt

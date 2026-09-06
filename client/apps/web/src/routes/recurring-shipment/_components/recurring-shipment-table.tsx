@@ -1,9 +1,11 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { recurringShipmentTableGraphQLConfig } from "@/lib/graphql/recurring-shipment-table";
+import {
+  recurringShipmentTableGraphQLConfig,
+  type RecurringShipmentRow,
+} from "@/lib/graphql/recurring-shipment-table";
 import { apiService } from "@/services/api";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import type { RecurringShipment } from "@/types/recurring-shipment";
 import { useQueryClient } from "@tanstack/react-query";
 import { HistoryIcon, PauseIcon, ZapIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -15,7 +17,7 @@ import { RecurringShipmentRunsDialog } from "./recurring-shipment-runs-dialog";
 export default function RecurringShipmentTable() {
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
-  const [runsSeries, setRunsSeries] = useState<RecurringShipment | null>(null);
+  const [runsSeries, setRunsSeries] = useState<RecurringShipmentRow | null>(null);
   const [runsOpen, setRunsOpen] = useState(false);
 
   const invalidate = useCallback(async () => {
@@ -26,8 +28,8 @@ export default function RecurringShipmentTable() {
   }, [queryClient]);
 
   const handleGenerateNow = useCallback(
-    (series: RecurringShipment) => {
-      toast.promise(apiService.recurringShipmentService.generate(series.id as string), {
+    (series: RecurringShipmentRow) => {
+      toast.promise(apiService.recurringShipmentService.generate(series.id), {
         loading: "Generating shipment...",
         success: (result) =>
           result.shipment?.proNumber
@@ -41,14 +43,10 @@ export default function RecurringShipmentTable() {
   );
 
   const handleToggleStatus = useCallback(
-    (series: RecurringShipment) => {
+    (series: RecurringShipmentRow) => {
       const nextStatus = series.status === "Paused" ? "Active" : "Paused";
       toast.promise(
-        apiService.recurringShipmentService.updateStatus(
-          series.id as string,
-          nextStatus,
-          series.version ?? 0,
-        ),
+        apiService.recurringShipmentService.updateStatus(series.id, nextStatus, series.version),
         {
           loading: nextStatus === "Paused" ? "Pausing series..." : "Resuming series...",
           success:
@@ -63,7 +61,7 @@ export default function RecurringShipmentTable() {
     [invalidate],
   );
 
-  const rowActions = useMemo<RowAction<RecurringShipment>[]>(
+  const rowActions = useMemo<RowAction<RecurringShipmentRow>[]>(
     () => [
       {
         id: "generate-now",
@@ -94,7 +92,7 @@ export default function RecurringShipmentTable() {
 
   return (
     <>
-      <DataTable<RecurringShipment>
+      <DataTable<RecurringShipmentRow>
         name="Recurring Shipment"
         queryKey="recurring-shipment-list"
         graphql={recurringShipmentTableGraphQLConfig}

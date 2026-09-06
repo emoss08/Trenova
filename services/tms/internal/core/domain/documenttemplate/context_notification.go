@@ -53,6 +53,10 @@ type DriverNotificationContext struct {
 	// and approvals usually do not.
 	Reason string
 
+	// PolicyTitle and PolicyVersion name what a driver is being asked to sign.
+	PolicyTitle   string
+	PolicyVersion string
+
 	ShipmentProNumber string
 	StopCount         int
 
@@ -60,12 +64,60 @@ type DriverNotificationContext struct {
 	ExpiresInDays  int
 	ExpiresAt      string
 
+	// CourseName, DueInDays and DueAt describe a training assignment. Renewal is
+	// set when the reminder is about a lapsing certification rather than a course
+	// the driver has not taken yet.
+	CourseName string
+	DueInDays  int
+	DueAt      string
+	Renewal    bool
+
+	// ReviewTitle and ReviewerName describe a performance review waiting for the
+	// driver's sign-off.
+	ReviewTitle  string
+	ReviewerName string
+
+	// RecognitionTitle and RecognitionMessage carry praise the office recorded.
+	RecognitionTitle   string
+	RecognitionMessage string
+
+	// DisciplineLevel and DisciplineReason describe a disciplinary action the
+	// driver must acknowledge.
+	DisciplineLevel  string
+	DisciplineReason string
+
+	// Digest is everything a driver owes, bundled into one notice when the
+	// carrier has chosen a daily or weekly cadence. A template ranges over it;
+	// the individual reminders are suppressed while it is in use, so a driver
+	// is told once rather than twice.
+	Digest []DriverObligation
+	// DigestPeriod names the round-up — "today" or "this week" — so the
+	// wording can say which without the template having to guess.
+	DigestPeriod string
+
 	// AlertTitle and AlertMessage carry text composed elsewhere — an hours-of-
 	// service rule evaluated against a driver's logs, where the wording is the
 	// rule's, not the organization's. A template wraps them rather than replacing
 	// them, the same inversion the agent email uses.
 	AlertTitle   string
 	AlertMessage string
+}
+
+// DriverObligation is one line of an obligations digest: a credential to renew
+// or a course to finish, with when it falls due.
+type DriverObligation struct {
+	// What is the credential or course by name, as the driver knows it.
+	What string
+	// Kind is "credential" or "training", so a template can group or icon them
+	// without parsing the name.
+	Kind string
+	// DueAt is the calendar date, already formatted.
+	DueAt string
+	// DueInDays is negative once the date has passed.
+	DueInDays int
+	// Overdue is set rather than inferred from DueInDays, so a template that
+	// does not do arithmetic still gets the distinction right.
+	Overdue bool
 }
 
 // SettlementNotificationContext is what a driver is told about their pay.
@@ -95,13 +147,41 @@ func newDriverNotificationSampleContext() any {
 		NotificationRecipient: sampleRecipient(),
 		Approved:              true,
 		Reason:                "Covered by another driver.",
+		PolicyTitle:           "Driver Handbook",
+		PolicyVersion:         "2026.1",
 		ShipmentProNumber:     sampleProNumber,
 		StopCount:             4,
 		CredentialName:        "Commercial Driver's License",
 		ExpiresInDays:         21,
 		ExpiresAt:             "2026-08-19",
-		AlertTitle:            "Drive time almost up",
-		AlertMessage:          "You have 45 minutes of drive time left today.",
+		CourseName:            "Defensive Driving",
+		DueInDays:             5,
+		DueAt:                 "2026-08-03",
+		Renewal:               false,
+		ReviewTitle:           "H1 2026 review",
+		ReviewerName:          "Dana Ortiz",
+		Digest: []DriverObligation{
+			{
+				What:      "Commercial Driver's License",
+				Kind:      "credential",
+				DueAt:     "2026-08-19",
+				DueInDays: 21,
+			},
+			{
+				What:      "Defensive Driving",
+				Kind:      "training",
+				DueAt:     "2026-08-03",
+				DueInDays: -2,
+				Overdue:   true,
+			},
+		},
+		DigestPeriod:       "this week",
+		RecognitionTitle:   "Six months accident-free",
+		RecognitionMessage: "Clean inspections all spring. Thank you.",
+		DisciplineLevel:    "WrittenWarning",
+		DisciplineReason:   "Second late departure this month",
+		AlertTitle:         "Drive time almost up",
+		AlertMessage:       "You have 45 minutes of drive time left today.",
 	}
 }
 
@@ -173,6 +253,16 @@ func driverNotificationVariables() []VariableDefinition {
 			Description: "How many stops the load has, so a driver can size the day before opening it.",
 		},
 		VariableDefinition{
+			Path:        "PolicyTitle",
+			Type:        VariableString,
+			Description: "The policy or handbook a driver is being asked to read and sign.",
+		},
+		VariableDefinition{
+			Path:        "PolicyVersion",
+			Type:        VariableString,
+			Description: "Which version of it, so a driver who signed an earlier one knows this is new.",
+		},
+		VariableDefinition{
 			Path:        "CredentialName",
 			Type:        VariableString,
 			Description: "The licence or certificate this is about — a CDL, a medical card.",
@@ -188,6 +278,56 @@ func driverNotificationVariables() []VariableDefinition {
 			Description: "The expiry date, in the organization's timezone.",
 		},
 		VariableDefinition{
+			Path:        "CourseName",
+			Type:        VariableString,
+			Description: "The training course this is about.",
+		},
+		VariableDefinition{
+			Path:        "DueInDays",
+			Type:        VariableInt,
+			Description: "Days until the course is due, or until the certification lapses. Zero is today; negative is already past.",
+		},
+		VariableDefinition{
+			Path:        "DueAt",
+			Type:        VariableDate,
+			Description: "The due or expiry date.",
+		},
+		VariableDefinition{
+			Path:        "Renewal",
+			Type:        VariableBool,
+			Description: "True when a completed certification is lapsing and needs renewing, false for a course not yet taken.",
+		},
+		VariableDefinition{
+			Path:        "ReviewTitle",
+			Type:        VariableString,
+			Description: "The performance review waiting for the driver's sign-off.",
+		},
+		VariableDefinition{
+			Path:        "ReviewerName",
+			Type:        VariableString,
+			Description: "Who wrote the review.",
+		},
+		VariableDefinition{
+			Path:        "RecognitionTitle",
+			Type:        VariableString,
+			Description: "The headline of the praise being shared.",
+		},
+		VariableDefinition{
+			Path:        "RecognitionMessage",
+			Type:        VariableString,
+			Description: "The note that goes with it, when there is one.",
+		},
+		VariableDefinition{
+			Path:        "DisciplineLevel",
+			Type:        VariableString,
+			Description: "The rung of the ladder that was issued: Coaching, VerbalWarning, WrittenWarning, FinalWarning, Suspension, Termination.",
+		},
+		VariableDefinition{
+			Path:        "DisciplineReason",
+			Type:        VariableString,
+			Description: "Why the action was taken.",
+		},
+		VariableDefinition{
 			Path:        "AlertTitle",
 			Type:        VariableString,
 			Description: "The headline an hours-of-service rule produced. Wrap it rather than replacing it: the rule knows what it measured.",
@@ -196,6 +336,43 @@ func driverNotificationVariables() []VariableDefinition {
 			Path:        "AlertMessage",
 			Type:        VariableString,
 			Description: "The detail behind the alert, including the time remaining.",
+		},
+		VariableDefinition{
+			Path:        "Digest",
+			Type:        VariableCollection,
+			Description: "Everything the driver owes, bundled into one notice. Range over it; empty on every kind but the digest.",
+			Fields: []VariableDefinition{
+				{
+					Path:        "What",
+					Type:        VariableString,
+					Description: "The credential or course by name, as the driver knows it.",
+				},
+				{
+					Path:        "Kind",
+					Type:        VariableString,
+					Description: "Either \"credential\" or \"training\", for grouping or an icon.",
+				},
+				{
+					Path:        "DueAt",
+					Type:        VariableDate,
+					Description: "The date it falls due.",
+				},
+				{
+					Path:        "DueInDays",
+					Type:        VariableInt,
+					Description: "Days until it falls due; negative once the date has passed.",
+				},
+				{
+					Path:        "Overdue",
+					Type:        VariableBool,
+					Description: "True once the date has passed. Set rather than inferred, so a template that does no arithmetic still gets it right.",
+				},
+			},
+		},
+		VariableDefinition{
+			Path:        "DigestPeriod",
+			Type:        VariableString,
+			Description: "Which round-up this is — \"today\" or \"this week\" — so the wording can say so without guessing.",
 		},
 	)
 }
@@ -401,14 +578,54 @@ var driverNotificationKinds = []notificationKind{
 		description: "The answer to a time-off request. Branch on Approved: this kind carries both outcomes.",
 	},
 	{
+		kind:        KindNotificationPTOCancelled,
+		displayName: "Time Off Cancelled",
+		description: "Tells a driver that a pending or approved time-off request was cancelled by the office, with the reason when one was given.",
+	},
+	{
+		kind:        KindNotificationProfileChangeReviewed,
+		displayName: "Profile Change Reviewed",
+		description: "The answer to a driver's request to change their own record. Branch on Approved: this kind carries both outcomes.",
+	},
+	{
+		kind:        KindNotificationPolicyPublished,
+		displayName: "Policy Published",
+		description: "Asks a driver to read and sign a policy the carrier has published or revised.",
+	},
+	{
 		kind:        KindNotificationCredentialExpiring,
 		displayName: "Credential Expiring",
 		description: "Warns a driver that a licence or certificate is about to lapse, while there is still time to renew it.",
 	},
 	{
+		kind:        KindNotificationTrainingDue,
+		displayName: "Training Due",
+		description: "Nudges a driver about a course that is due, or a certification that is about to lapse. Branch on Renewal: this kind carries both.",
+	},
+	{
+		kind:        KindNotificationReviewSubmitted,
+		displayName: "Review Ready to Sign",
+		description: "Asks a driver to read a performance review and sign off on it in Dash.",
+	},
+	{
+		kind:        KindNotificationRecognition,
+		displayName: "Recognition",
+		description: "Shares praise the office recorded for the driver.",
+	},
+	{
+		kind:        KindNotificationDisciplinaryIssued,
+		displayName: "Disciplinary Action Issued",
+		description: "Tells a driver a disciplinary action was issued and asks them to acknowledge it.",
+	},
+	{
 		kind:        KindNotificationHOSAlert,
 		displayName: "Hours of Service Alert",
 		description: "Wraps an hours-of-service warning. The rule composes the text; this decides how it is presented.",
+	},
+	{
+		kind:        KindNotificationObligationsDigest,
+		displayName: "Obligations Digest",
+		description: "Everything a driver owes, in one notice. Range over Digest: each entry carries What, DueAt and DueInDays, and Overdue is set on the ones already past. DigestPeriod says whether this is the daily or the weekly round-up.",
 	},
 }
 

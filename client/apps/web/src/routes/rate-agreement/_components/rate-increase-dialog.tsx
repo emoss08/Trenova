@@ -35,7 +35,8 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import type { RateAgreement, RateIncreasePlan, RatePartyType } from "@trenova/shared/types/rate";
+import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
+import type { RateIncreasePlan, RatePartyType } from "@trenova/shared/types/rate";
 import { CircleAlertIcon, TrendingUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -68,7 +69,7 @@ type RateIncreaseDialogProps = {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   /** Agreements picked in the table, when the dialog was opened from a selection. */
-  readonly selectedAgreements?: RateAgreement[];
+  readonly selectedAgreements?: RateAgreementRow[];
 };
 
 /**

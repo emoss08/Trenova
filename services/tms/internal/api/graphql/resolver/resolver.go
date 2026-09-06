@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
@@ -51,6 +52,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/core/services/orgholidayservice"
+	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
+	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
@@ -59,6 +65,8 @@ import (
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
+	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
@@ -68,12 +76,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/core/services/usstateservice"
-	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
+	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/core/services/workerdqfservice"
+	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
+	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	"github.com/emoss08/trenova/internal/core/services/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -127,7 +145,27 @@ type Params struct {
 	TrailerService               *trailerservice.Service
 	USStateService               *usstateservice.Service
 	WorkerService                *workerservice.Service
-	WorkerPTOService             *workerptoservice.Service
+	WorkerPTOService             services.WorkerPTOService
+	PTOPolicyService             *ptopolicyservice.Service
+	PTOLedgerService             *ptoledgerservice.Service
+	WorkerCredentialService      *workercredentialservice.Service
+	WorkerTrainingService        *workertrainingservice.Service
+	WorkerSafetyService          *workersafetyservice.Service
+	WorkerDrugAlcoholService     *workerdrugalcoholservice.Service
+	WorkerDQFService             *workerdqfservice.Service
+	WorkerInjuryService          *workerinjuryservice.Service
+	WorkerLeaveService           *workerleaveservice.Service
+	OrgStructureService          *orgstructureservice.Service
+	BenefitsService              *benefitsservice.Service
+	SchedulingService            *schedulingservice.Service
+	SelfServiceService           *selfserviceservice.Service
+	TimesheetService             *timesheetservice.Service
+	WorkerOverviewService        *workeroverviewservice.Service
+	PerformanceReviewService     *performancereviewservice.Service
+	WorkerEmploymentService      *workeremploymentservice.Service
+	WorkerChecklistService       *workerchecklistservice.Service
+	OrgHolidayService            *orgholidayservice.Service
+	WorkflowStarter              services.WorkflowStarter
 	FiscalYearService            *fiscalyearservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
@@ -241,7 +279,27 @@ type Resolver struct {
 	trailerService               *trailerservice.Service
 	usStateService               *usstateservice.Service
 	workerService                *workerservice.Service
-	workerPTOService             *workerptoservice.Service
+	workerPTOService             services.WorkerPTOService
+	ptoPolicyService             *ptopolicyservice.Service
+	ptoLedgerService             *ptoledgerservice.Service
+	workerCredentialService      *workercredentialservice.Service
+	workerTrainingService        *workertrainingservice.Service
+	workerSafetyService          *workersafetyservice.Service
+	workerDrugAlcoholService     *workerdrugalcoholservice.Service
+	workerDQFService             *workerdqfservice.Service
+	workerInjuryService          *workerinjuryservice.Service
+	workerLeaveService           *workerleaveservice.Service
+	orgStructureService          *orgstructureservice.Service
+	benefitsService              *benefitsservice.Service
+	schedulingService            *schedulingservice.Service
+	selfServiceService           *selfserviceservice.Service
+	timesheetService             *timesheetservice.Service
+	workerOverviewService        *workeroverviewservice.Service
+	performanceReviewService     *performancereviewservice.Service
+	workerEmploymentService      *workeremploymentservice.Service
+	workerChecklistService       *workerchecklistservice.Service
+	orgHolidayService            *orgholidayservice.Service
+	workflowStarter              services.WorkflowStarter
 	fiscalYearService            *fiscalyearservice.Service
 	formulaTemplateService       *formulatemplateservice.Service
 	fuelSurchargeService         *fuelsurchargeservice.Service
@@ -357,6 +415,26 @@ func New(p Params) *Resolver {
 		usStateService:               p.USStateService,
 		workerService:                p.WorkerService,
 		workerPTOService:             p.WorkerPTOService,
+		ptoPolicyService:             p.PTOPolicyService,
+		ptoLedgerService:             p.PTOLedgerService,
+		workerCredentialService:      p.WorkerCredentialService,
+		workerTrainingService:        p.WorkerTrainingService,
+		workerSafetyService:          p.WorkerSafetyService,
+		workerDrugAlcoholService:     p.WorkerDrugAlcoholService,
+		workerDQFService:             p.WorkerDQFService,
+		workerInjuryService:          p.WorkerInjuryService,
+		workerLeaveService:           p.WorkerLeaveService,
+		orgStructureService:          p.OrgStructureService,
+		benefitsService:              p.BenefitsService,
+		schedulingService:            p.SchedulingService,
+		selfServiceService:           p.SelfServiceService,
+		timesheetService:             p.TimesheetService,
+		workerOverviewService:        p.WorkerOverviewService,
+		performanceReviewService:     p.PerformanceReviewService,
+		workerEmploymentService:      p.WorkerEmploymentService,
+		workerChecklistService:       p.WorkerChecklistService,
+		orgHolidayService:            p.OrgHolidayService,
+		workflowStarter:              p.WorkflowStarter,
 		fiscalYearService:            p.FiscalYearService,
 		formulaTemplateService:       p.FormulaTemplateService,
 		fuelSurchargeService:         p.FuelSurchargeService,
@@ -437,14 +515,11 @@ func (r *Resolver) requirePermission(
 		return nil, errortypes.NewAuthenticationError("Authentication required")
 	}
 
-	result, err := r.permissionEngine.Check(
-		ctx,
-		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
-	)
+	allowed, err := r.checkPermission(ctx, authCtx, resource, operation)
 	if err != nil {
 		return nil, err
 	}
-	if !result.Allowed {
+	if !allowed {
 		return nil, errortypes.NewAuthorizationError(
 			fmt.Sprintf(
 				"You don't have permission to perform this action: %s %s",
@@ -463,10 +538,7 @@ func (r *Resolver) hasPermission(
 	resource permission.Resource,
 	operation permission.Operation,
 ) bool {
-	result, err := r.permissionEngine.Check(
-		ctx,
-		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
-	)
+	allowed, err := r.checkPermission(ctx, authCtx, resource, operation)
 	if err != nil {
 		r.l.Warn("permission check failed",
 			zap.String("resource", resource.String()),
@@ -474,7 +546,35 @@ func (r *Resolver) hasPermission(
 		return false
 	}
 
-	return result.Allowed
+	return allowed
+}
+
+func (r *Resolver) checkPermission(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	resource permission.Resource,
+	operation permission.Operation,
+) (bool, error) {
+	memo, memoised := gqlctx.PermissionMemoFrom(ctx)
+	key := resource.String() + "|" + string(operation)
+	if memoised {
+		if allowed, found := memo.Lookup(key); found {
+			return allowed, nil
+		}
+	}
+
+	result, err := r.permissionEngine.Check(
+		ctx,
+		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
+	)
+	if err != nil {
+		return false, err
+	}
+	if memoised {
+		memo.Store(key, result.Allowed)
+	}
+
+	return result.Allowed, nil
 }
 
 func (r *Resolver) requireAuth(ctx context.Context) (*authctx.AuthContext, error) {

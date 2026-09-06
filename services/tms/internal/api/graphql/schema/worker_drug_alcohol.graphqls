@@ -1,0 +1,486 @@
+enum DOTTestType {
+  PreEmployment
+  Random
+  PostAccident
+  ReasonableSuspicion
+  ReturnToDuty
+  FollowUp
+  Other
+}
+
+enum DOTTestSubstance {
+  Drug
+  Alcohol
+}
+
+enum DOTTestStatus {
+  Scheduled
+  Collected
+  AwaitingResult
+  Completed
+  Cancelled
+}
+
+enum DOTTestResult {
+  Pending
+  Negative
+  NegativeDilute
+  Positive
+  Refusal
+  Adulterated
+  Substituted
+  Invalid
+  Cancelled
+}
+
+enum DOTViolationType {
+  PositiveTest
+  TestRefusal
+  AlcoholUse
+  DrugUse
+  ActualKnowledge
+  Other
+}
+
+"""
+Where the return-to-duty process has got to. Follow-up testing happens after the
+driver is back at work, so it is not a bar.
+"""
+enum DOTViolationStatus {
+  Open
+  SAPEvaluation
+  RTDPending
+  FollowUp
+  Resolved
+}
+
+enum ReturnToDutyStatus {
+  NotRequired
+  SAPEvaluation
+  RTDTestRequired
+  FollowUpTesting
+  Complete
+}
+
+"""
+The worker's testing record in one word. Unknown means nothing is on file, which
+is not the same as clear.
+"""
+enum DrugAlcoholStatus {
+  Unknown
+  Clear
+  Pending
+  Prohibited
+}
+
+enum ClearinghouseQueryType {
+  PreEmploymentFull
+  AnnualLimited
+  Full
+  Limited
+}
+
+enum ClearinghouseResult {
+  Pending
+  NoViolations
+  ViolationsFound
+  ConsentDenied
+}
+
+enum RandomPeriod {
+  Monthly
+  Quarterly
+  SemiAnnual
+  Annual
+}
+
+enum RandomDrawStatus {
+  Draft
+  Final
+  Cancelled
+}
+
+enum RandomEntryStatus {
+  Selected
+  Notified
+  Completed
+  Excused
+  Missed
+}
+
+"""
+One substance analysed. A collection covering both drug and alcohol is two
+records, because only the drug half has a medical review officer and only the
+alcohol half has a concentration.
+"""
+type WorkerDOTTest {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  testType: DOTTestType!
+  substance: DOTTestSubstance!
+  status: DOTTestStatus!
+  result: DOTTestResult!
+  isDot: Boolean!
+  reason: String
+  scheduledAt: Timestamp
+  collectedAt: Timestamp
+  resultAt: Timestamp
+  collectionSite: String
+  collectorName: String
+  specimenId: String
+  labName: String
+  mroName: String
+  mroVerifiedAt: Timestamp
+  """
+  Breath alcohol concentration, to three places. 0.04 and above is a violation;
+  0.02 to 0.039 takes the driver off duty for 24 hours without being one.
+  """
+  alcoholConcentration: Decimal
+  safetyEventId: ID
+  drawEntryId: ID
+  documentId: ID
+  notes: String
+  orderedById: ID
+  recordedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+  document: WorkerCredentialDocument
+  orderedBy: User
+  recordedBy: User
+}
+
+"""
+A standing prohibition and the return-to-duty process that clears it
+(49 CFR 382 Subpart O).
+"""
+type WorkerDOTViolation {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  violationType: DOTViolationType!
+  status: DOTViolationStatus!
+  occurredAt: Timestamp!
+  sourceTestId: ID
+  reportedToClearinghouseAt: Timestamp
+  sapName: String
+  sapReferredAt: Timestamp
+  sapEvaluationCompletedAt: Timestamp
+  rtdTestId: ID
+  rtdCompletedAt: Timestamp
+  followUpTestCount: Int!
+  followUpTestsCompleted: Int!
+  followUpEndsAt: Timestamp
+  resolvedAt: Timestamp
+  documentId: ID
+  notes: String
+  recordedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  sourceTest: WorkerDOTTest
+  rtdTest: WorkerDOTTest
+}
+
+type WorkerClearinghouseQuery {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  queryType: ClearinghouseQueryType!
+  result: ClearinghouseResult!
+  consentObtainedAt: Timestamp
+  consentExpiresAt: Timestamp
+  requestedAt: Timestamp!
+  completedAt: Timestamp
+  violationCount: Int!
+  reference: String
+  documentId: ID
+  notes: String
+  performedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+A random testing pool with the annual rates it must meet (49 CFR 382.305).
+An empty includedDriverTypes means every safety-sensitive driver.
+"""
+type DOTRandomPool {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String
+  status: EntityStatus!
+  period: RandomPeriod!
+  drugRatePercent: Int!
+  alcoholRatePercent: Int!
+  includedDriverTypes: [String!]!
+  isDefault: Boolean!
+  """
+  Whether the configured rates satisfy the FMCSA minimums. A pool below either
+  one is usable but is not evidence of DOT compliance.
+  """
+  meetsDotMinimums: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type DOTRandomPoolEdge {
+  node: DOTRandomPool!
+  cursor: String!
+}
+
+type DOTRandomPoolConnection {
+  edges: [DOTRandomPoolEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One selection round. The seed and method are the evidence of how the draw was
+made: the same seed over the same roster reproduces the same names.
+"""
+type DOTRandomDraw {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  poolId: ID!
+  periodKey: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  status: RandomDrawStatus!
+  poolSize: Int!
+  drugTarget: Int!
+  alcoholTarget: Int!
+  drugSelected: Int!
+  alcoholSelected: Int!
+  seed: String!
+  method: String!
+  notes: String
+  drawnAt: Timestamp!
+  drawnById: ID
+  finalizedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  pool: DOTRandomPool
+  drawnBy: User
+  entries: [DOTRandomDrawEntry!]!
+}
+
+type DOTRandomDrawEntry {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  drawId: ID!
+  workerId: ID!
+  substance: DOTTestSubstance!
+  rank: Int!
+  status: RandomEntryStatus!
+  notifiedAt: Timestamp
+  completedAt: Timestamp
+  testId: ID
+  excuseReason: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  worker: Worker
+}
+
+"""
+A worker's testing file reduced to the answer the roster and the dispatch check
+need.
+"""
+type DrugAlcoholStanding {
+  status: DrugAlcoholStatus!
+  returnToDuty: ReturnToDutyStatus!
+  lastClearinghouseQueryAt: Timestamp
+  nextClearinghouseQueryDue: Timestamp
+  hasPreEmploymentTest: Boolean!
+  hasPreEmploymentQuery: Boolean!
+  openTestCount: Int!
+}
+
+input RecordDOTTestInput {
+  workerId: ID!
+  testType: DOTTestType!
+  substance: DOTTestSubstance!
+  status: DOTTestStatus
+  result: DOTTestResult
+  isDot: Boolean
+  reason: String
+  scheduledAt: Timestamp
+  collectedAt: Timestamp
+  resultAt: Timestamp
+  collectionSite: String
+  collectorName: String
+  specimenId: String
+  labName: String
+  mroName: String
+  mroVerifiedAt: Timestamp
+  alcoholConcentration: Decimal
+  safetyEventId: ID
+  drawEntryId: ID
+  documentId: ID
+  notes: String
+}
+
+input RecordDOTTestResultInput {
+  testId: ID!
+  result: DOTTestResult!
+  resultAt: Timestamp
+  labName: String
+  mroName: String
+  mroVerifiedAt: Timestamp
+  """
+  Required for an alcohol test. The concentration decides the result, so a
+  reading at or above 0.04 is filed as positive whatever the caller sent.
+  """
+  alcoholConcentration: Decimal
+  documentId: ID
+  notes: String
+}
+
+input RecordDOTViolationInput {
+  workerId: ID!
+  violationType: DOTViolationType!
+  occurredAt: Timestamp!
+  sourceTestId: ID
+  reportedToClearinghouseAt: Timestamp
+  sapName: String
+  sapReferredAt: Timestamp
+  documentId: ID
+  notes: String
+}
+
+input UpdateDOTViolationInput {
+  violationId: ID!
+  sapName: String
+  sapReferredAt: Timestamp
+  sapEvaluationCompletedAt: Timestamp
+  followUpTestCount: Int
+  followUpEndsAt: Timestamp
+  reportedToClearinghouseAt: Timestamp
+  documentId: ID
+  notes: String
+}
+
+input RecordClearinghouseQueryInput {
+  workerId: ID!
+  queryType: ClearinghouseQueryType!
+  requestedAt: Timestamp
+  consentObtainedAt: Timestamp
+  consentExpiresAt: Timestamp
+  result: ClearinghouseResult
+  completedAt: Timestamp
+  violationCount: Int
+  reference: String
+  documentId: ID
+  notes: String
+}
+
+input CompleteClearinghouseQueryInput {
+  queryId: ID!
+  result: ClearinghouseResult!
+  completedAt: Timestamp
+  violationCount: Int
+  reference: String
+  documentId: ID
+  notes: String
+}
+
+input DOTRandomPoolsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  status: EntityStatus
+}
+
+input DOTRandomPoolInput {
+  code: String!
+  name: String!
+  description: String
+  status: EntityStatus
+  period: RandomPeriod!
+  drugRatePercent: Int!
+  alcoholRatePercent: Int!
+  includedDriverTypes: [String!]
+  isDefault: Boolean
+}
+
+input RunDOTRandomDrawInput {
+  """
+  Leave empty to draw from the organisation's default pool.
+  """
+  poolId: ID
+  """
+  The moment the round is drawn for; leave empty for now. Naming it lets an
+  office catch up a period they missed.
+  """
+  at: Timestamp
+  notes: String
+}
+
+input UpdateDOTRandomDrawEntryInput {
+  entryId: ID!
+  status: RandomEntryStatus!
+  excuseReason: String
+}
+
+extend type Query {
+  workerDotTests(workerId: ID!): [WorkerDOTTest!]!
+  workerDotTest(id: ID!): WorkerDOTTest!
+  """
+  Open collections across the organisation: what the office is waiting on.
+  """
+  openDotTests: [WorkerDOTTest!]!
+  workerDotViolations(workerId: ID!): [WorkerDOTViolation!]!
+  workerClearinghouseQueries(workerId: ID!): [WorkerClearinghouseQuery!]!
+  workerDrugAlcoholStanding(workerId: ID!): DrugAlcoholStanding!
+  dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
+  dotRandomPool(id: ID!): DOTRandomPool!
+  dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
+  dotRandomDraw(id: ID!): DOTRandomDraw!
+  """
+  Selections the worker still owes a collection for.
+  """
+  workerRandomSelections(workerId: ID!): [DOTRandomDrawEntry!]!
+}
+
+extend type Mutation {
+  recordDotTest(input: RecordDOTTestInput!): WorkerDOTTest!
+  recordDotTestResult(input: RecordDOTTestResultInput!): WorkerDOTTest!
+  cancelDotTest(id: ID!, reason: String!): WorkerDOTTest!
+  recordDotViolation(input: RecordDOTViolationInput!): WorkerDOTViolation!
+  updateDotViolation(input: UpdateDOTViolationInput!): WorkerDOTViolation!
+  recordClearinghouseQuery(
+    input: RecordClearinghouseQueryInput!
+  ): WorkerClearinghouseQuery!
+  completeClearinghouseQuery(
+    input: CompleteClearinghouseQueryInput!
+  ): WorkerClearinghouseQuery!
+  createDotRandomPool(input: DOTRandomPoolInput!): DOTRandomPool!
+  updateDotRandomPool(
+    id: ID!
+    version: Int!
+    input: DOTRandomPoolInput!
+  ): DOTRandomPool!
+  runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
+  finalizeDotRandomDraw(id: ID!): DOTRandomDraw!
+  cancelDotRandomDraw(id: ID!, reason: String!): DOTRandomDraw!
+  updateDotRandomDrawEntry(
+    input: UpdateDOTRandomDrawEntryInput!
+  ): DOTRandomDrawEntry!
+}

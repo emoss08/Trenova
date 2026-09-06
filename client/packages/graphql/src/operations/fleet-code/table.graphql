@@ -19,14 +19,14 @@ fragment FleetCodeTableRowFields on FleetCode {
   }
 }
 
-query FleetCodeTable($input: DataTableConnectionInput!) {
+query FleetCodeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   fleetCodes(input: $input) {
     edges {
       node {
         ...FleetCodeTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

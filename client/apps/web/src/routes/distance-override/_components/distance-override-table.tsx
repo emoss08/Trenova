@@ -10,10 +10,12 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { distanceOverrideTableGraphQLConfig } from "@/lib/graphql/distance-override-table";
+import {
+  distanceOverrideTableGraphQLConfig,
+  type DistanceOverrideRow,
+} from "@/lib/graphql/distance-override-table";
 import { DistanceOverrideService } from "@/services/distance-override";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import type { DistanceOverride } from "@/types/distance-override";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon, TrashIcon } from "lucide-react";
@@ -27,7 +29,7 @@ const distanceOverrideService = new DistanceOverrideService();
 export default function DistanceOverrideTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedOverride, setSelectedOverride] = useState<DistanceOverride | null>(null);
+  const [selectedOverride, setSelectedOverride] = useState<DistanceOverrideRow | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -48,14 +50,14 @@ export default function DistanceOverrideTable() {
     },
   });
 
-  const handleDelete = useCallback((row: Row<DistanceOverride>) => {
+  const handleDelete = useCallback((row: Row<DistanceOverrideRow>) => {
     setSelectedOverride(row.original);
     setDeleteDialogOpen(true);
   }, []);
 
   const columns = useMemo(() => getColumns(), []);
 
-  const contextMenuActions = useMemo<RowAction<DistanceOverride>[]>(
+  const contextMenuActions = useMemo<RowAction<DistanceOverrideRow>[]>(
     () => [
       {
         id: "delete",
@@ -70,7 +72,7 @@ export default function DistanceOverrideTable() {
 
   return (
     <>
-      <DataTable<DistanceOverride>
+      <DataTable<DistanceOverrideRow>
         name="Distance Override"
         queryKey="distance-override-list"
         graphql={distanceOverrideTableGraphQLConfig}

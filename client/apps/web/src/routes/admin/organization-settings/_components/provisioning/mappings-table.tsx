@@ -1,14 +1,15 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { DataTable } from "@/components/data-table/data-table";
-import { createSCIMGroupRoleMappingTableGraphQLConfig } from "@/lib/graphql/scim-group-role-mapping-table";
-import type { SCIMGroupRoleMapping } from "@trenova/shared/types/iam";
-import type { Role } from "@trenova/shared/types/role";
+import {
+  createSCIMGroupRoleMappingTableGraphQLConfig,
+  type SCIMGroupRoleMappingRow,
+} from "@/lib/graphql/scim-group-role-mapping-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useMemo } from "react";
 import { scimGroupMappingPanelQueryKey } from "./constants";
 import { SCIMGroupMappingPanel } from "./mapping-panel";
 
-function getColumns(): ColumnDef<SCIMGroupRoleMapping>[] {
+function getColumns(): ColumnDef<SCIMGroupRoleMappingRow>[] {
   return [
     {
       accessorKey: "externalGroupId",
@@ -45,7 +46,7 @@ function getColumns(): ColumnDef<SCIMGroupRoleMapping>[] {
         }
 
         return (
-          <EntityRefCell<Role, SCIMGroupRoleMapping>
+          <EntityRefCell<NonNullable<SCIMGroupRoleMappingRow["role"]>, SCIMGroupRoleMappingRow>
             entity={role}
             config={{
               basePath: "/roles",
@@ -84,7 +85,7 @@ export default function SCIMGroupRoleMappingsTable({
   );
 
   return (
-    <DataTable<SCIMGroupRoleMapping>
+    <DataTable<SCIMGroupRoleMappingRow>
       name="SCIM Group Role Mapping"
       queryKey={queryKey}
       graphql={graphql}

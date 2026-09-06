@@ -3,6 +3,7 @@ import {
   parseAnchorDate,
   serializeAnchorDate,
   shiftAnchorByDays,
+  type TimeRange,
 } from "@/lib/timeline/time-scale";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import {
@@ -10,8 +11,10 @@ import {
   OrganizationCapability,
   type OrganizationCapabilities,
 } from "@trenova/shared/types/organization-capability";
+import type { DispatchBoardInput } from "@trenova/graphql/generated/graphql";
 import { startOfDay } from "date-fns";
 import {
+  createLoader,
   debounce,
   parseAsBoolean,
   parseAsNumberLiteral,
@@ -88,6 +91,29 @@ export const dispatchRailParsers = {
 
 // Paging a board back and forth should not bury the browser's back button under history.
 const URL_OPTIONS = { history: "replace" } as const;
+
+const loadDispatchWindow = createLoader(dispatchWindowParsers);
+
+/**
+ * The board query's input, built the same way whether the window comes from the hook
+ * below or straight off a navigation request. Both must produce an identical object:
+ * the input is the query key, and a key that differs by one field is a second request.
+ */
+export function toDispatchBoardInput(
+  range: TimeRange,
+  includeCovered: boolean,
+): DispatchBoardInput {
+  return { includeCovered, windowStart: range.start, windowEnd: range.end };
+}
+
+/**
+ * Resolves the board input from a request URL so a route loader can start the board
+ * query before the console mounts. Reads the same parsers `useDispatchWindow` does.
+ */
+export function dispatchBoardInputFromRequest(request: Request): DispatchBoardInput {
+  const { at, zoom, covered } = loadDispatchWindow(request);
+  return toDispatchBoardInput(getRangeForDays(parseAnchorDate(at), zoom), covered);
+}
 
 export function useDispatchWindow() {
   const [{ at, zoom, covered }, setWindow] = useQueryStates(dispatchWindowParsers, URL_OPTIONS);

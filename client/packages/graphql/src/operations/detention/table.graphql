@@ -66,14 +66,14 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   updatedAt
 }
 
-query DetentionPolicyTable($input: DataTableConnectionInput!) {
+query DetentionPolicyTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   detentionPolicies(input: $input) {
     edges {
       node {
         ...DetentionPolicyRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -27,14 +27,14 @@ fragment JournalReversalTableRowFields on JournalReversal {
   updatedAt
 }
 
-query JournalReversalTable($input: DataTableConnectionInput!) {
+query JournalReversalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   journalReversals(input: $input) {
     edges {
       node {
         ...JournalReversalTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

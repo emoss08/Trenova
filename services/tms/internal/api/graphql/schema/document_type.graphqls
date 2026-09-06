@@ -28,8 +28,8 @@ type DocumentType {
   documentCategory: DocumentCategory!
   isSystem: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
 }

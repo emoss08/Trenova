@@ -12,12 +12,13 @@ import {
   findChoice,
 } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { CarrierRow } from "@/lib/graphql/carrier-table";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function CarrierStatusCell({ row }: { row: Carrier }) {
+function CarrierStatusCell({ row }: { row: CarrierRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -44,7 +45,7 @@ function CarrierStatusCell({ row }: { row: Carrier }) {
   );
 }
 
-export function getColumns(): ColumnDef<Carrier>[] {
+export function getColumns(): ColumnDef<CarrierRow>[] {
   return [
     {
       accessorKey: "status",

@@ -6,8 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
-	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
+	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
+	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -40,7 +46,15 @@ type Params struct {
 	MoveService         serviceports.ShipmentMoveService
 	WorkerService       *workerservice.Service
 	DocumentService     *documentservice.Service
-	PTOService          *workerptoservice.Service
+	PTOService          serviceports.WorkerPTOService
+	PTOLedger           *ptoledgerservice.Service
+	Credentials         *workercredentialservice.Service
+	Training            *workertrainingservice.Service
+	Safety              *workersafetyservice.Service
+	Reviews             *performancereviewservice.Service
+	Leave               LeaveReader
+	Scheduling          *schedulingservice.Service
+	SelfService         *selfserviceservice.Service
 	SettlementService   *driversettlementservice.Service
 	NotificationService *notificationservice.Service
 	AuditService        serviceports.AuditService
@@ -65,7 +79,15 @@ type Service struct {
 	moveService         serviceports.ShipmentMoveService
 	workerService       *workerservice.Service
 	documentService     *documentservice.Service
-	ptoService          *workerptoservice.Service
+	ptoService          serviceports.WorkerPTOService
+	ptoLedger           *ptoledgerservice.Service
+	credentials         *workercredentialservice.Service
+	training            *workertrainingservice.Service
+	safety              *workersafetyservice.Service
+	reviews             *performancereviewservice.Service
+	leave               LeaveReader
+	scheduling          *schedulingservice.Service
+	selfService         *selfserviceservice.Service
 	settlementService   *driversettlementservice.Service
 	notificationService *notificationservice.Service
 	auditService        serviceports.AuditService
@@ -92,6 +114,14 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		workerService:       p.WorkerService,
 		documentService:     p.DocumentService,
 		ptoService:          p.PTOService,
+		ptoLedger:           p.PTOLedger,
+		credentials:         p.Credentials,
+		training:            p.Training,
+		safety:              p.Safety,
+		reviews:             p.Reviews,
+		leave:               p.Leave,
+		scheduling:          p.Scheduling,
+		selfService:         p.SelfService,
 		settlementService:   p.SettlementService,
 		notificationService: p.NotificationService,
 		auditService:        p.AuditService,

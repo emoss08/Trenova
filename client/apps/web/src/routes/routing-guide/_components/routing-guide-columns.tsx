@@ -3,14 +3,14 @@ import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import type { RoutingGuideRow } from "@/lib/graphql/routing-guide-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import {
   ROUTING_GUIDE_TIER_LABEL,
   formatRoutingGuideLane,
-  type RoutingGuide,
 } from "@trenova/shared/types/routing-guide";
 
-export function getColumns(): ColumnDef<RoutingGuide>[] {
+export function getColumns(): ColumnDef<RoutingGuideRow>[] {
   return [
     {
       accessorKey: "status",

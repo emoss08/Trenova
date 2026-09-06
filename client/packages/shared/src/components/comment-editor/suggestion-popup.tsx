@@ -27,7 +27,11 @@ export interface SuggestionPage {
   hasMore: boolean;
 }
 
-export type SuggestionFetcher = (query: string, page: number) => Promise<SuggestionPage>;
+export type SuggestionFetcher = (
+  query: string,
+  page: number,
+  options?: { signal?: AbortSignal },
+) => Promise<SuggestionPage>;
 
 export interface SuggestionListHandle {
   onKeyDown: (event: KeyboardEvent) => boolean;
@@ -70,7 +74,7 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
     const { data, isLoading, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
       useInfiniteQuery({
         queryKey: ["comment-suggestions", prefix, debouncedQuery],
-        queryFn: ({ pageParam }) => fetchPage(debouncedQuery, pageParam),
+        queryFn: ({ pageParam, signal }) => fetchPage(debouncedQuery, pageParam, { signal }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, allPages) =>
           lastPage.hasMore ? allPages.length + 1 : undefined,

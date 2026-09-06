@@ -31,7 +31,7 @@ export default function SettlementControlForm() {
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["settlement-control"],
-    queryFn: fetchSettlementControl,
+    queryFn: ({ signal }) => fetchSettlementControl({ signal }),
   });
 
   const form = useForm<SettlementControlFormValues>({

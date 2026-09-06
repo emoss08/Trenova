@@ -1,0 +1,261 @@
+fragment WorkerChecklistTemplateItemFields on WorkerChecklistTemplateItem {
+  id
+  templateId
+  label
+  description
+  kind
+  required
+  dueOffsetDays
+  owner
+  credentialTypeId
+  documentTypeId
+  documentTypeName
+  sortOrder
+  credentialType {
+    id
+    code
+    name
+  }
+}
+
+fragment WorkerChecklistTemplateFields on WorkerChecklistTemplate {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  kind
+  trigger
+  status
+  isDefault
+  openChecklistCount
+  version
+  createdAt
+  updatedAt
+  items {
+    id
+    templateId
+    label
+    description
+    kind
+    required
+    dueOffsetDays
+    owner
+    credentialTypeId
+    documentTypeId
+    documentTypeName
+    sortOrder
+    credentialType {
+      id
+      code
+      name
+    }
+  }
+}
+
+fragment WorkerChecklistItemFields on WorkerChecklistItem {
+  id
+  checklistId
+  label
+  description
+  kind
+  required
+  owner
+  dueAt
+  overdue
+  credentialTypeId
+  documentTypeId
+  status
+  completedById
+  completedAt
+  autoCompleted
+  note
+  evidenceDocumentId
+  evidenceCredentialId
+  sortOrder
+  version
+  completedBy {
+    id
+    name
+  }
+  evidenceDocument {
+    id
+    originalName
+    fileType
+  }
+  evidenceCredential {
+    id
+    number
+    expiresAt
+  }
+  credentialType {
+    id
+    code
+    name
+  }
+}
+
+fragment WorkerChecklistFields on WorkerChecklist {
+  id
+  workerId
+  templateId
+  name
+  kind
+  status
+  startedAt
+  dueAt
+  completedAt
+  cancelledAt
+  cancelReason
+  sourceEventId
+  startedById
+  version
+  createdAt
+  updatedAt
+  startedBy {
+    id
+    name
+  }
+  progress {
+    total
+    settled
+    requiredTotal
+    requiredDone
+    overdue
+    percent
+    complete
+  }
+  items {
+    id
+    checklistId
+    label
+    description
+    kind
+    required
+    owner
+    dueAt
+    overdue
+    credentialTypeId
+    documentTypeId
+    status
+    completedById
+    completedAt
+    autoCompleted
+    note
+    evidenceDocumentId
+    evidenceCredentialId
+    sortOrder
+    version
+    completedBy {
+      id
+      name
+    }
+    evidenceDocument {
+      id
+      originalName
+      fileType
+    }
+    evidenceCredential {
+      id
+      number
+      expiresAt
+    }
+    credentialType {
+      id
+      code
+      name
+    }
+  }
+}
+
+query WorkerChecklistTemplateTable(
+  $input: WorkerChecklistTemplatesInput!
+  $includeTotalCount: Boolean = true
+) {
+  workerChecklistTemplates(input: $input) {
+    edges {
+      node {
+        ...WorkerChecklistTemplateFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}
+
+query ActiveWorkerChecklistTemplates {
+  activeWorkerChecklistTemplates {
+    ...WorkerChecklistTemplateFields
+  }
+}
+
+query WorkerChecklists($workerId: ID!, $includeClosed: Boolean) {
+  workerChecklists(workerId: $workerId, includeClosed: $includeClosed) {
+    ...WorkerChecklistFields
+  }
+}
+
+mutation CreateWorkerChecklistTemplate($input: WorkerChecklistTemplateInput!) {
+  createWorkerChecklistTemplate(input: $input) {
+    ...WorkerChecklistTemplateFields
+  }
+}
+
+mutation UpdateWorkerChecklistTemplate($id: ID!, $input: WorkerChecklistTemplateInput!) {
+  updateWorkerChecklistTemplate(id: $id, input: $input) {
+    ...WorkerChecklistTemplateFields
+  }
+}
+
+mutation ArchiveWorkerChecklistTemplate($id: ID!, $version: Int) {
+  archiveWorkerChecklistTemplate(id: $id, version: $version) {
+    ...WorkerChecklistTemplateFields
+  }
+}
+
+mutation RestoreWorkerChecklistTemplate($id: ID!, $version: Int) {
+  restoreWorkerChecklistTemplate(id: $id, version: $version) {
+    ...WorkerChecklistTemplateFields
+  }
+}
+
+mutation StartWorkerChecklist($input: StartWorkerChecklistInput!) {
+  startWorkerChecklist(input: $input) {
+    ...WorkerChecklistFields
+  }
+}
+
+mutation CompleteWorkerChecklistItem($input: WorkerChecklistItemActionInput!) {
+  completeWorkerChecklistItem(input: $input) {
+    ...WorkerChecklistFields
+  }
+}
+
+mutation SkipWorkerChecklistItem($input: WorkerChecklistItemActionInput!) {
+  skipWorkerChecklistItem(input: $input) {
+    ...WorkerChecklistFields
+  }
+}
+
+mutation MarkWorkerChecklistItemNotApplicable($input: WorkerChecklistItemActionInput!) {
+  markWorkerChecklistItemNotApplicable(input: $input) {
+    ...WorkerChecklistFields
+  }
+}
+
+mutation ReopenWorkerChecklistItem($id: ID!, $version: Int) {
+  reopenWorkerChecklistItem(id: $id, version: $version) {
+    ...WorkerChecklistFields
+  }
+}
+
+mutation CancelWorkerChecklist($input: CancelWorkerChecklistInput!) {
+  cancelWorkerChecklist(input: $input) {
+    ...WorkerChecklistFields
+  }
+}

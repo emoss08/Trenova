@@ -29,6 +29,15 @@ func Difference[T comparable](items, exclude []T) []T {
 	return result
 }
 
+func GroupBy[K comparable, T any](items []T, key func(T) K) map[K][]T {
+	groups := make(map[K][]T)
+	for _, item := range items {
+		k := key(item)
+		groups[k] = append(groups[k], item)
+	}
+	return groups
+}
+
 func Dedupe[T comparable](items []T) []T {
 	if len(items) == 0 {
 		return []T{}
@@ -73,4 +82,13 @@ func StringPtrValue(v any) *string {
 		return nil
 	}
 	return &value
+}
+
+func EnumPtrValue[T ~string](v any) *T {
+	value := StringValue(v)
+	if value == "" {
+		return nil
+	}
+	converted := T(value)
+	return &converted
 }

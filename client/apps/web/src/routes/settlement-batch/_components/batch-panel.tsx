@@ -70,7 +70,7 @@ function GenerateBatchPanel({
   const { control } = form;
   const { data: period } = useQuery({
     queryKey: ["current-settlement-period"],
-    queryFn: fetchCurrentSettlementPeriod,
+    queryFn: ({ signal }) => fetchCurrentSettlementPeriod({ signal }),
     enabled: open,
   });
 
@@ -140,11 +140,12 @@ function GenerateBatchPanel({
 function BatchDetail({ batchId }: { batchId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["settlement-batch-detail", batchId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const result = await requestGraphQL({
         document: SettlementBatchDetailDocument,
         operationName: "SettlementBatchDetail",
         variables: { id: batchId },
+        signal,
       });
       return result.settlementBatch;
     },

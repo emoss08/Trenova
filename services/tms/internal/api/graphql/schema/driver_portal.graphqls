@@ -41,12 +41,12 @@ type PortalInvitation {
   workerId: ID!
   email: String!
   status: PortalInvitationStatus!
-  expiresAt: Int!
+  expiresAt: Timestamp!
   invitedById: ID!
-  acceptedAt: Int
+  acceptedAt: Timestamp
   acceptedUserId: ID
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   invitedBy: User
   worker: Worker
 }
@@ -90,10 +90,10 @@ type SettlementDispute {
   resolutionNote: String!
   resolutionLineId: ID
   resolvedById: ID
-  resolvedAt: Int
+  resolvedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   settlement: DriverSettlement
   settlementLine: DriverSettlementLine
   worker: Worker
@@ -133,10 +133,10 @@ type PortalStop {
   sequence: Int!
   locationName: String!
   addressLine: String!
-  scheduledWindowStart: Int!
-  scheduledWindowEnd: Int
-  actualArrival: Int
-  actualDeparture: Int
+  scheduledWindowStart: Timestamp!
+  scheduledWindowEnd: Timestamp
+  actualArrival: Timestamp
+  actualDeparture: Timestamp
 }
 
 """
@@ -180,7 +180,7 @@ type PortalComment {
   priority: String!
   comment: String!
   authorName: String!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 """
@@ -194,15 +194,15 @@ type PortalComplianceProfile {
   licenseState: String!
   cdlClass: String!
   endorsement: String!
-  licenseExpiry: Int!
-  hazmatExpiry: Int
-  medicalCardExpiry: Int
-  physicalDueDate: Int
-  mvrDueDate: Int
-  twicExpiry: Int
+  licenseExpiry: Timestamp!
+  hazmatExpiry: Timestamp
+  medicalCardExpiry: Timestamp
+  physicalDueDate: Timestamp
+  mvrDueDate: Timestamp
+  twicExpiry: Timestamp
   complianceStatus: String!
   isQualified: Boolean!
-  hireDate: Int!
+  hireDate: Timestamp!
   addressLine1: String!
   addressLine2: String!
   city: String!
@@ -227,9 +227,9 @@ input UpdateMyContactInfoInput {
 Live pay accrued in the driver's current open pay period.
 """
 type PortalPeriodSummary {
-  periodStart: Int!
-  periodEnd: Int!
-  payDate: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  payDate: Timestamp!
   accruedGrossMinor: Int!
   eventCount: Int!
 }
@@ -313,16 +313,16 @@ type PortalPto {
   workerId: ID!
   status: PortalPtoStatus!
   type: PortalPtoType!
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   reason: String!
-  createdAt: Int!
+  createdAt: Timestamp!
 }
 
 input RequestMyPtoInput {
   type: PortalPtoType!
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   reason: String!
 }
 
@@ -349,15 +349,15 @@ type DriverExpense {
   amountMinor: Int!
   currencyCode: String!
   description: String!
-  incurredDate: Int!
+  incurredDate: Timestamp!
   receiptDocumentId: ID
   reviewNote: String!
   reviewedById: ID
-  reviewedAt: Int
+  reviewedAt: Timestamp
   settlementLineId: ID
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   worker: Worker
   payCode: PayCode
   reviewedBy: User
@@ -379,7 +379,7 @@ input SubmitMyExpenseInput {
   payCodeId: ID
   amountMinor: Int!
   description: String!
-  incurredDate: Int
+  incurredDate: Timestamp
 }
 
 input ReviewDriverExpenseInput {
@@ -439,12 +439,22 @@ type DashControl {
   allowPtoRequests: Boolean!
   "Send drivers push reminders as their credentials approach expiry."
   sendCredentialReminders: Boolean!
+  "Make a driver's own contact edits wait on the office instead of landing straight on the record."
+  requireContactChangeApproval: Boolean!
+  """
+  How a driver hears about what they owe. Immediate keeps one notice per
+  obligation; Daily and Weekly bundle a driver's obligations into a single
+  notice instead.
+  """
+  driverDigestCadence: DriverDigestCadence!
+  "Day the weekly digest goes out, 0 = Sunday. Ignored unless the cadence is Weekly."
+  driverDigestWeekday: Int!
   "Alert dispatch when a driver dwells at a stop beyond the threshold."
   enableDetentionAlerts: Boolean!
   detentionAlertThresholdMinutes: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 input UpdateDashControlInput {
@@ -463,8 +473,43 @@ input UpdateDashControlInput {
   allowContactInfoEdit: Boolean!
   allowPtoRequests: Boolean!
   sendCredentialReminders: Boolean!
+  requireContactChangeApproval: Boolean!
+  driverDigestCadence: DriverDigestCadence
+  driverDigestWeekday: Int
   enableDetentionAlerts: Boolean!
   detentionAlertThresholdMinutes: Int!
+}
+
+"""
+How a driver hears about what they owe. Immediate is the default so no carrier
+silently loses notices they already rely on.
+"""
+enum DriverDigestCadence {
+  Immediate
+  Daily
+  Weekly
+}
+
+"""
+One credential slot as the signed-in driver sees it: every required type and
+every optional credential they hold, graded against its renewal window.
+"""
+type PortalCredential {
+  """
+  Null when the slot is required but the driver holds nothing yet.
+  """
+  id: ID
+  credentialTypeId: ID!
+  name: String!
+  category: WorkerCredentialCategory!
+  health: WorkerCredentialHealth!
+  daysUntilExpiry: Int
+  expiresAt: Timestamp
+  numberMasked: String!
+  required: Boolean!
+  verified: Boolean!
+  requiresDocument: Boolean!
+  documentId: ID
 }
 
 """
@@ -485,6 +530,176 @@ type PortalFeatures {
   allowProfileDocumentUpload: Boolean!
   allowContactInfoEdit: Boolean!
   allowPtoRequests: Boolean!
+  ptoBalances: Boolean!
+  """
+  Whether to offer the driver their leave standing. On only once they have a
+  leave case: an empty FMLA card reads as an entitlement they are owed rather
+  than one they have not started drawing on.
+  """
+  leaveBalance: Boolean!
+  """
+  Whether to offer the driver their own rota. On once they are actually on a
+  shift: an empty week reads as a roster nobody filled in rather than as a job
+  with no fixed pattern, which is what an owner-operator has.
+  """
+  schedule: Boolean!
+  "Follows schedule — a day you are not rostered on is not a day you can offer."
+  shiftSwaps: Boolean!
+  "Whether a contact edit waits on the office. The app says so before the driver saves."
+  requireContactChangeApproval: Boolean!
+  "How many policies the driver still has to sign."
+  policiesOutstanding: Int!
+}
+
+"""
+One of the signed-in driver's own leave cases, trimmed to what they may see.
+The office's notes and the decision-maker are not part of it.
+"""
+type PortalLeaveCase {
+  id: ID!
+  leaveType: WorkerLeaveType!
+  status: LeaveCaseStatus!
+  frequency: LeaveFrequency!
+  fmlaDesignated: Boolean!
+  reason: String
+  startsAt: Timestamp!
+  endsAt: Timestamp
+  decidedAt: Timestamp
+  certificationStatus: LeaveCertificationStatus!
+  certificationDueAt: Timestamp
+  certificationLate: Boolean!
+  """
+  Hours recorded against the case, whether or not they were charged to the
+  entitlement — a driver counts the days they were away.
+  """
+  hoursUsed: Decimal!
+  """
+  The part of those hours that drew the FMLA entitlement down.
+  """
+  hoursCharged: Decimal!
+}
+
+"""
+The signed-in driver's leave standing: the balance and the cases it was drawn
+down by, which are only meaningful beside each other.
+"""
+type PortalLeave {
+  entitlement: LeaveEntitlement!
+  cases: [PortalLeaveCase!]!
+}
+
+"One day of the signed-in driver's own week."
+type PortalShiftDay {
+  "The day this row describes, as the Unix timestamp of its start."
+  date: Timestamp!
+  state: RotaDayState!
+  scheduled: Boolean!
+  startMinute: Int!
+  durationMinutes: Int!
+  preference: AvailabilityPreference
+  assignmentCount: Int!
+}
+
+"""
+The driver's own rota. It carries their week and nothing about anybody else:
+the office board shows the roster, and a driver seeing who else is off is a
+personnel matter rather than a scheduling one.
+"""
+type PortalSchedule {
+  weekStart: Timestamp!
+  weekEnd: Timestamp!
+  shiftName: String
+  shiftCode: String
+  shiftColor: String
+  scheduledDays: Int!
+  days: [PortalShiftDay!]!
+}
+
+"""
+A swap from the driver's own side of it. Outgoing is computed on the server:
+which side you are on decides whether the app offers "take it" or "withdraw",
+and a client that had to work that out would first have to be told its own
+worker id.
+"""
+type PortalShiftSwap {
+  id: ID!
+  status: ShiftSwapStatus!
+  outgoing: Boolean!
+  counterpartyName: String
+  "The day being given up."
+  shiftDate: Timestamp!
+  "The day offered back, when the swap is a trade rather than a hand-off."
+  counterpartyShiftDate: Timestamp
+  reason: String
+  responseNote: String
+  respondedAt: Timestamp
+  decidedAt: Timestamp
+}
+
+"""
+A policy from the driver's side: what it is, whether they have signed the
+version in force, and what signing it asks of them.
+"""
+type PortalPolicy {
+  id: ID!
+  code: String!
+  title: String!
+  summary: String
+  body: String
+  hasDocument: Boolean!
+  versionLabel: String!
+  requiresSignature: Boolean!
+  effectiveFrom: Timestamp!
+  acknowledgedAt: Timestamp
+  signatureName: String
+}
+
+input AcknowledgeMyPolicyInput {
+  policyId: ID!
+  "Typed full name. Required when the policy asks for a signature, and it has to be the name on the record."
+  signatureName: String
+}
+
+input SetMyAvailabilityInput {
+  dayOfWeek: Int!
+  preference: AvailabilityPreference!
+  note: String
+}
+
+input ProposeMyShiftSwapInput {
+  counterpartyWorkerId: ID
+  "The day being given up."
+  shiftDate: Timestamp!
+  "The day offered back, when the swap is a trade rather than a hand-off."
+  counterpartyShiftDate: Timestamp
+  reason: String
+}
+
+"""
+The driver's own answer to a swap. Approving and rejecting are deliberately
+absent: a swap is decided by the office.
+"""
+enum MyShiftSwapResponse {
+  Accepted
+  Declined
+  Withdrawn
+}
+
+input RespondToMyShiftSwapInput {
+  id: ID!
+  response: MyShiftSwapResponse!
+  note: String
+}
+
+type MyPTOBalance {
+  ptoType: PTOType!
+  enforced: Boolean!
+  balanceDays: Decimal!
+  pendingDays: Decimal!
+  availableDays: Decimal!
+  accruedYtdDays: Decimal!
+  usedYtdDays: Decimal!
+  nextAccrual: PlannedPTOAccrual
 }
 
 extend type Query {
@@ -513,6 +728,10 @@ extend type Query {
   """
   myComplianceProfile: PortalComplianceProfile!
   """
+  The signed-in driver's credentials, required slots first.
+  """
+  myCredentials: [PortalCredential!]!
+  """
   Driver-visible dispatch notes for one of the signed-in driver's loads.
   """
   myLoadComments(shipmentId: ID!): [PortalComment!]!
@@ -527,7 +746,24 @@ extend type Query {
   Feature toggles for the signed-in driver's carrier.
   """
   myPortalFeatures: PortalFeatures!
+  "Every policy in force that binds the signed-in driver, signed or not."
+  myPolicies: [PortalPolicy!]!
+  "A short-lived link to read a policy's attached document."
+  myPolicyDocumentUrl(policyId: ID!): String!
+  "What the signed-in driver has asked to change on their record."
+  myProfileChangeRequests: [WorkerProfileChangeRequest!]!
+  "The signed-in driver's own rota."
+  mySchedule(at: Timestamp, weeks: Int): PortalSchedule!
+  "What the signed-in driver has said they would rather work."
+  myAvailability: [WorkerAvailabilityPreference!]!
+  "Every swap the signed-in driver is on either side of."
+  myShiftSwaps: [PortalShiftSwap!]!
   myPto: [PortalPto!]!
+  myPtoBalances: [MyPTOBalance!]!
+  """
+  The signed-in driver's own leave standing.
+  """
+  myLeave: PortalLeave!
   myExpenses: [DriverExpense!]!
   """
   Estimated driver pay for one of the signed-in driver's own moves.
@@ -551,7 +787,7 @@ extend type Query {
   """
   The signed-in driver's recent hours-of-service violations.
   """
-  myHosViolations(since: Int): [WorkerHosViolation!]!
+  myHosViolations(since: Timestamp): [WorkerHosViolation!]!
 
   """
   The signed-in driver's notification feed. Scoped strictly to notifications
@@ -642,6 +878,16 @@ extend type Mutation {
   restoreMyNotifications(ids: [ID!]!): Boolean!
 
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
+  "The signed-in driver signing a policy."
+  acknowledgeMyPolicy(input: AcknowledgeMyPolicyInput!): WorkerPolicyAcknowledgement!
+  "The signed-in driver taking back a change they asked for."
+  withdrawMyProfileChange(id: ID!): WorkerProfileChangeRequest!
+  "The signed-in driver stating what they would rather work on one weekday."
+  setMyAvailability(input: SetMyAvailabilityInput!): WorkerAvailabilityPreference!
+  "The signed-in driver asking a colleague to take a day."
+  proposeMyShiftSwap(input: ProposeMyShiftSwapInput!): ShiftSwapRequest!
+  "The signed-in driver answering a swap, or withdrawing one they made."
+  respondToMyShiftSwap(input: RespondToMyShiftSwapInput!): ShiftSwapRequest!
   cancelMyPto(id: ID!): PortalPto!
 
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!

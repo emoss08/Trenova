@@ -45,7 +45,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
   const queryClient = useQueryClient();
   const detail = useQuery({
     queryKey: ["driver-expense-detail", expenseId],
-    queryFn: () => fetchDriverExpenseDetail(expenseId),
+    queryFn: ({ signal }) => fetchDriverExpenseDetail(expenseId, { signal }),
   });
 
   const invalidate = async () => {

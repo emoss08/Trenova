@@ -14,7 +14,7 @@ function getOperationLabel(operation: number): string {
   );
 }
 
-async function ensurePermissionManifest() {
+export async function ensurePermissionManifest(): Promise<boolean> {
   const { manifest, fetchManifest } = usePermissionStore.getState();
   if (manifest) {
     return true;

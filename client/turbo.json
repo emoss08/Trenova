@@ -3,11 +3,23 @@
   "ui": "stream",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^codegen"],
       "outputs": ["dist/**", ".wrangler/**"]
     },
+    "codegen": {
+      "inputs": [
+        "codegen.ts",
+        "scripts/**",
+        "src/operations/**",
+        "$TURBO_ROOT$/../services/tms/internal/api/graphql/schema/**",
+        "$TURBO_ROOT$/../services/tms/pkg/errortypes/enums.go",
+        "$TURBO_ROOT$/../services/tms/internal/api/helpers/problemtypes.go",
+        "$TURBO_ROOT$/../services/tms/internal/core/domain/permission/resource_gen.go"
+      ],
+      "outputs": ["src/generated/**", "src/schema.graphql"]
+    },
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "^codegen"]
     },
     "lint": {},
     "lint:fix": {

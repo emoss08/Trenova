@@ -1,0 +1,131 @@
+enum WorkerEmploymentEventKind {
+  Hired
+  ProbationEnded
+  Promoted
+  Transferred
+  LeaveStarted
+  LeaveEnded
+  Suspended
+  Reinstated
+  Terminated
+  Rehired
+  RateChanged
+}
+
+"""
+One key/value the event moved. Keys are stable identifiers (fleetCodeId,
+driverType, rate, ...); the client owns the labels.
+"""
+type WorkerEmploymentValue {
+  key: String!
+  value: String!
+}
+
+type WorkerEmploymentEvent {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  workerId: ID!
+  kind: WorkerEmploymentEventKind!
+  effectiveAt: Timestamp!
+  reason: String
+  notes: String
+  fromValues: [WorkerEmploymentValue!]!
+  toValues: [WorkerEmploymentValue!]!
+  documentId: ID
+  document: WorkerCredentialDocument
+  recordedById: ID
+  recordedBy: User
+  amendedById: ID
+  amendedBy: User
+  amendedAt: Timestamp
+  amendmentNote: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+What a status-changing event did beyond the worker row.
+"""
+type WorkerEmploymentCascade {
+  ptoAssignmentEnded: Boolean!
+  payAssignmentEnded: Boolean!
+  upcomingPtoCancelled: Int!
+  defaultPolicyApplied: Boolean!
+  checklistStarted: Boolean!
+  """
+  Days paid out / forfeited when a termination closed the PTO balances.
+  """
+  ptoPaidOutDays: Decimal!
+  ptoForfeitedDays: Decimal!
+  """
+  Required courses opened for the worker by a hire, rehire or promotion.
+  """
+  trainingAssigned: Int!
+  """
+  Whether a termination shut off the worker's Dash sign-in, and why it could
+  not be shut off when it failed. The termination itself still stands, so an
+  empty string means there was nothing wrong, not that nothing was tried.
+  """
+  portalAccessRevoked: Boolean!
+  portalRevocationError: String!
+}
+
+type RecordWorkerEmploymentEventPayload {
+  event: WorkerEmploymentEvent!
+  cascade: WorkerEmploymentCascade!
+}
+
+input RecordWorkerEmploymentEventInput {
+  workerId: ID!
+  kind: WorkerEmploymentEventKind!
+  effectiveAt: Timestamp!
+  reason: String
+  notes: String
+  documentId: ID
+  """
+  Transferred: the destination fleet. Pass null to leave the worker unassigned.
+  """
+  fleetCodeId: ID
+  managerId: ID
+  """
+  Promoted: the new driver type and/or worker type.
+  """
+  driverType: DriverType
+  workerType: WorkerType
+  """
+  RateChanged: the new rate as entered, with an optional unit label.
+  """
+  rate: String
+  rateUnit: String
+  """
+  LeaveStarted: what kind of leave this is.
+  """
+  leaveType: WorkerLeaveType
+}
+
+input AmendWorkerEmploymentEventInput {
+  id: ID!
+  effectiveAt: Timestamp
+  reason: String
+  notes: String
+  documentId: ID
+  amendmentNote: String!
+  version: Int
+}
+
+extend type Query {
+  workerEmploymentEvents(
+    workerId: ID!
+    kinds: [WorkerEmploymentEventKind!]
+  ): [WorkerEmploymentEvent!]!
+  workerEmploymentEvent(id: ID!): WorkerEmploymentEvent!
+}
+
+extend type Mutation {
+  recordWorkerEmploymentEvent(
+    input: RecordWorkerEmploymentEventInput!
+  ): RecordWorkerEmploymentEventPayload!
+  amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
+}

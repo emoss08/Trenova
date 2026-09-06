@@ -128,3 +128,20 @@ func (k Kind) NowEpoch() string {
 
 	return "extract(epoch from current_timestamp)::bigint"
 }
+
+// MonthStartEpoch returns the SQL expression that truncates an epoch column to
+// the first instant of its UTC month, as an integer. Grouping a trend by month
+// is the one bucketing both dialects spell differently enough that writing
+// either one inline makes the query Postgres-only.
+//
+// UTC rather than the organization's timezone: a month boundary that moves per
+// tenant would make two carriers' trends incomparable, and the day either side
+// of midnight is not what a safety meeting is arguing about.
+func (k Kind) MonthStartEpoch(column string) string {
+	if k.IsSQLite() {
+		return "unixepoch(strftime('%Y-%m-01 00:00:00', " + column + ", 'unixepoch'))"
+	}
+
+	return "extract(epoch from date_trunc('month', to_timestamp(" + column +
+		") at time zone 'UTC'))::bigint"
+}

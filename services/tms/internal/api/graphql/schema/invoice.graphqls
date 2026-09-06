@@ -46,25 +46,25 @@ type Invoice {
   status: InvoiceStatus!
   paymentTerm: InvoicePaymentTerm!
   currencyCode: String!
-  invoiceDate: Int!
-  dueDate: Int
-  postedAt: Int
+  invoiceDate: Timestamp!
+  dueDate: Timestamp
+  postedAt: Timestamp
   shipmentProNumber: String!
   shipmentBol: String!
-  serviceDate: Int
+  serviceDate: Timestamp
   billToName: String!
-  subtotalAmount: String!
-  otherAmount: String!
-  totalAmount: String!
-  appliedAmount: String!
+  subtotalAmount: Decimal!
+  otherAmount: Decimal!
+  totalAmount: Decimal!
+  appliedAmount: Decimal!
   settlementStatus: InvoiceSettlementStatus!
   disputeStatus: InvoiceDisputeStatus!
   sendStatus: InvoiceSendStatus!
-  sentAt: Int
+  sentAt: Timestamp
   isAdjustmentArtifact: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   customer: Customer
   order: Order
   lines: [InvoiceLine!]
@@ -86,11 +86,11 @@ type InvoiceLine {
   lineNumber: Int!
   type: InvoiceLineType!
   description: String!
-  quantity: String!
-  unitPrice: String!
-  amount: String!
-  createdAt: Int!
-  updatedAt: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  amount: Decimal!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type InvoiceEdge {

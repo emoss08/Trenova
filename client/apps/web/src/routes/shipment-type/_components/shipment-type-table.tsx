@@ -1,6 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
-import { shipmentTypeTableGraphQLConfig } from "@/lib/graphql/shipment-type-table";
+import {
+  shipmentTypeTableGraphQLConfig,
+  type ShipmentTypeRow,
+} from "@/lib/graphql/shipment-type-table";
 import { apiService } from "@/services/api";
 import type { ShipmentType } from "@/types/shipment-type";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,14 +16,14 @@ import { toast } from "sonner";
 import { getColumns } from "./shipment-type-columns";
 import { ShipmentTypePanel } from "./shipment-type-panel";
 
-const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentType>(["code", "description"]);
+const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentTypeRow>(["code", "description"]);
 
 export default function ShipmentTypeTable() {
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: ShipmentType[], status: string) => {
+    async (rows: ShipmentTypeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.shipmentTypeService.bulkUpdateStatus({
@@ -43,9 +46,9 @@ export default function ShipmentTypeTable() {
     [queryClient],
   );
 
-  const handleCellEditCommit = useCallback<CellEditCommitFn<ShipmentType>>(
+  const handleCellEditCommit = useCallback<CellEditCommitFn<ShipmentTypeRow>>(
     async ({ rowId, columnId, value }) => {
-      const field = columnId as keyof ShipmentType;
+      const field = columnId as keyof ShipmentTypeRow;
       if (!INLINE_EDITABLE_FIELDS.has(field)) return;
       if (field === "code" && (value === null || value === "")) {
         throw new Error("Code is required.");
@@ -62,7 +65,7 @@ export default function ShipmentTypeTable() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<ShipmentType>[]>(
+  const dockActions = useMemo<DockAction<ShipmentTypeRow>[]>(
     () => [
       {
         id: "status-update",
@@ -79,7 +82,7 @@ export default function ShipmentTypeTable() {
   );
 
   return (
-    <DataTable<ShipmentType>
+    <DataTable<ShipmentTypeRow>
       name="Shipment Type"
       queryKey="shipment-type-list"
       graphql={shipmentTypeTableGraphQLConfig}

@@ -4,6 +4,6 @@ type UsState {
   abbreviation: String!
   countryName: String!
   countryIso3: String!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }

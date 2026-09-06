@@ -45,8 +45,8 @@ function formatUsageType(type: string): string {
   switch (type) {
     case "shipment":
       return "shipments";
-    case "accessorial_charge":
-      return "accessorial charges";
+    case "rate_matrix":
+      return "rate matrices";
     case "rate_agreement_rule":
       return "rate agreement rules";
     case "rate_agreement_accessorial":

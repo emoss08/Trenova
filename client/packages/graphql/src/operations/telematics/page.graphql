@@ -75,7 +75,7 @@ query WorkerHosState($workerId: ID!) {
   }
 }
 
-query WorkerHosViolations($workerId: ID, $since: Int, $limit: Int) {
+query WorkerHosViolations($workerId: ID, $since: Timestamp, $limit: Int) {
   workerHosViolations(workerId: $workerId, since: $since, limit: $limit) {
     workerId
     violationType
@@ -104,7 +104,7 @@ query TelematicsStatus {
   }
 }
 
-query WorkerHosLogs($workerId: ID!, $startTime: Int!, $endTime: Int!) {
+query WorkerHosLogs($workerId: ID!, $startTime: Timestamp!, $endTime: Timestamp!) {
   workerHosLogs(workerId: $workerId, startTime: $startTime, endTime: $endTime) {
     hosStatusType
     logStartAt
@@ -155,7 +155,7 @@ query ShipmentDriverFeasibility($shipmentId: ID!) {
   }
 }
 
-query VehicleInspections($tractorId: ID, $workerId: ID, $since: Int, $limit: Int) {
+query VehicleInspections($tractorId: ID, $workerId: ID, $since: Timestamp, $limit: Int) {
   vehicleInspections(tractorId: $tractorId, workerId: $workerId, since: $since, limit: $limit) {
     id
     provider
@@ -175,7 +175,7 @@ query VehicleInspections($tractorId: ID, $workerId: ID, $since: Int, $limit: Int
   }
 }
 
-query WorkerFormSubmissions($workerId: ID!, $startTime: Int!, $endTime: Int!) {
+query WorkerFormSubmissions($workerId: ID!, $startTime: Timestamp!, $endTime: Timestamp!) {
   workerFormSubmissions(workerId: $workerId, startTime: $startTime, endTime: $endTime) {
     id
     templateId

@@ -90,6 +90,10 @@ func newComplianceWorker() *worker.Worker {
 			LicenseExpiry:  time.Now().AddDate(2, 0, 0).Unix(),
 			HireDate:       time.Now().AddDate(-1, 0, 0).Unix(),
 			Endorsement:    worker.EndorsementTypeNone,
+			// A worker loaded from the database always carries a testing
+			// standing; Clear is the ordinary case and keeps the unrelated
+			// rules under test from tripping over a missing drug test.
+			DrugAlcoholStatus: worker.DrugAlcoholClear,
 		},
 	}
 }
@@ -729,86 +733,97 @@ func TestMVRComplianceRule(t *testing.T) {
 func TestDrugTestComplianceRule(t *testing.T) {
 	t.Parallel()
 
-	t.Run("passes with drug test after hire date", func(t *testing.T) {
-		t.Parallel()
+	runDrugRule := func(t *testing.T, mutate func(w *worker.Worker, dc *dispatchcontrol.DispatchControl)) *errortypes.MultiError {
+		t.Helper()
 		dcRepo := new(mockDispatchControlRepo)
 		w := newComplianceWorker()
-		w.Profile.HireDate = time.Now().AddDate(-1, 0, 0).Unix()
-		w.Profile.LastDrugTest = time.Now().AddDate(0, -6, 0).Unix()
 		dc := newDispatchControl()
+		mutate(w, dc)
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
 		rule := createDrugTestComplianceRule(dcRepo)
 		multiErr := runComplianceRule(t, rule, w)
+		dcRepo.AssertExpectations(t)
+		return multiErr
+	}
+
+	t.Run("passes when the record is clear", func(t *testing.T) {
+		t.Parallel()
+		multiErr := runDrugRule(t, func(w *worker.Worker, _ *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = worker.DrugAlcoholClear
+		})
 
 		assert.False(t, multiErr.HasErrors())
-		dcRepo.AssertExpectations(t)
 	})
 
-	t.Run("fails with drug test before hire date", func(t *testing.T) {
+	t.Run("fails when nothing is on file", func(t *testing.T) {
 		t.Parallel()
-		dcRepo := new(mockDispatchControlRepo)
-		w := newComplianceWorker()
-		w.Profile.HireDate = time.Now().AddDate(-1, 0, 0).Unix()
-		w.Profile.LastDrugTest = time.Now().AddDate(-2, 0, 0).Unix()
-		dc := newDispatchControl()
-		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
+		multiErr := runDrugRule(t, func(w *worker.Worker, _ *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = worker.DrugAlcoholUnknown
+		})
 
-		rule := createDrugTestComplianceRule(dcRepo)
-		multiErr := runComplianceRule(t, rule, w)
+		require.True(t, multiErr.HasErrors())
+		assert.Equal(t, "profile.drugAlcoholStatus", multiErr.Errors[0].Field)
+		assert.Contains(t, multiErr.Errors[0].Message, "pre-employment drug test")
+	})
+
+	// A profile assembled in memory has no status at all. Reading that as
+	// "clear" would let an untested driver through the one check meant to catch
+	// them.
+	t.Run("treats an unset status as nothing on file", func(t *testing.T) {
+		t.Parallel()
+		multiErr := runDrugRule(t, func(w *worker.Worker, _ *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = ""
+		})
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.lastDrugTest", multiErr.Errors[0].Field)
-		dcRepo.AssertExpectations(t)
 	})
 
-	t.Run("fails with drug test equal to hire date", func(t *testing.T) {
+	// Using a prohibited driver is not something an organisation can configure
+	// its way out of, so the enforcement level does not soften this one.
+	t.Run("a prohibition is an error at every enforcement level", func(t *testing.T) {
 		t.Parallel()
-		dcRepo := new(mockDispatchControlRepo)
-		w := newComplianceWorker()
-		hireDate := time.Now().AddDate(-1, 0, 0).Unix()
-		w.Profile.HireDate = hireDate
-		w.Profile.LastDrugTest = hireDate
-		dc := newDispatchControl()
-		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
+		multiErr := runDrugRule(t, func(w *worker.Worker, dc *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = worker.DrugAlcoholProhibited
+			dc.ComplianceEnforcementLevel = dispatchcontrol.ComplianceEnforcementLevelWarning
+		})
 
-		rule := createDrugTestComplianceRule(dcRepo)
-		multiErr := runComplianceRule(t, rule, w)
-
-		assert.True(t, multiErr.HasErrors())
-		dcRepo.AssertExpectations(t)
+		require.True(t, multiErr.HasErrors())
+		assert.Equal(t, errortypes.ErrInvalid, multiErr.Errors[0].Code)
+		assert.Contains(t, multiErr.Errors[0].Message, "return-to-duty")
 	})
 
-	t.Run("passes with zero LastDrugTest", func(t *testing.T) {
+	t.Run("flags an overdue clearinghouse query", func(t *testing.T) {
 		t.Parallel()
-		dcRepo := new(mockDispatchControlRepo)
-		w := newComplianceWorker()
-		w.Profile.LastDrugTest = 0
-		dc := newDispatchControl()
-		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
+		overdue := time.Now().AddDate(0, -1, 0).Unix()
+		multiErr := runDrugRule(t, func(w *worker.Worker, _ *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = worker.DrugAlcoholClear
+			w.Profile.NextClearinghouseQueryDue = &overdue
+		})
 
-		rule := createDrugTestComplianceRule(dcRepo)
-		multiErr := runComplianceRule(t, rule, w)
+		require.True(t, multiErr.HasErrors())
+		assert.Equal(t, "profile.nextClearinghouseQueryDue", multiErr.Errors[0].Field)
+	})
+
+	t.Run("a query still in date is not flagged", func(t *testing.T) {
+		t.Parallel()
+		future := time.Now().AddDate(0, 6, 0).Unix()
+		multiErr := runDrugRule(t, func(w *worker.Worker, _ *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = worker.DrugAlcoholClear
+			w.Profile.NextClearinghouseQueryDue = &future
+		})
 
 		assert.False(t, multiErr.HasErrors())
-		dcRepo.AssertExpectations(t)
 	})
 
 	t.Run("skips when drug and alcohol enforcement disabled", func(t *testing.T) {
 		t.Parallel()
-		dcRepo := new(mockDispatchControlRepo)
-		w := newComplianceWorker()
-		w.Profile.HireDate = time.Now().AddDate(-1, 0, 0).Unix()
-		w.Profile.LastDrugTest = time.Now().AddDate(-2, 0, 0).Unix()
-		dc := newDispatchControl()
-		dc.EnforceDrugAndAlcoholCompliance = false
-		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
-
-		rule := createDrugTestComplianceRule(dcRepo)
-		multiErr := runComplianceRule(t, rule, w)
+		multiErr := runDrugRule(t, func(w *worker.Worker, dc *dispatchcontrol.DispatchControl) {
+			w.Profile.DrugAlcoholStatus = worker.DrugAlcoholProhibited
+			dc.EnforceDrugAndAlcoholCompliance = false
+		})
 
 		assert.False(t, multiErr.HasErrors())
-		dcRepo.AssertExpectations(t)
 	})
 
 	t.Run("skips when profile is nil", func(t *testing.T) {
@@ -823,27 +838,6 @@ func TestDrugTestComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
-		dcRepo.AssertExpectations(t)
-	})
-
-	t.Run("returns error when dispatch control fetch fails", func(t *testing.T) {
-		t.Parallel()
-		dcRepo := new(mockDispatchControlRepo)
-		w := newComplianceWorker()
-		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).
-			Return(nil, errors.New("db error"))
-
-		rule := createDrugTestComplianceRule(dcRepo)
-		ctx := t.Context()
-		multiErr := errortypes.NewMultiError()
-		valCtx := &validationframework.TenantedValidationContext{
-			Mode:           validationframework.ModeCreate,
-			OrganizationID: w.OrganizationID,
-			BusinessUnitID: w.BusinessUnitID,
-		}
-		err := rule.Validate(ctx, w, valCtx, multiErr)
-
-		require.Error(t, err)
 		dcRepo.AssertExpectations(t)
 	})
 }

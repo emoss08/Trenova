@@ -222,7 +222,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
   const [assignOpen, setAssignOpen] = useState(false);
   const { data: assignments } = useQuery({
     queryKey: ["pay-profile-assignments", profileId],
-    queryFn: () => fetchPayProfileAssignments(profileId),
+    queryFn: ({ signal }) => fetchPayProfileAssignments(profileId, { signal }),
   });
 
   return (

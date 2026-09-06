@@ -2,7 +2,8 @@ import { DataTableColorColumn } from "@/components/data-table/_components/data-t
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { fieldTypeChoices } from "@/lib/choices";
-import type { CustomFieldDefinition, FieldType } from "@/types/custom-field";
+import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-definition-table";
+import type { FieldType } from "@/types/custom-field";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const fieldTypeBadgeVariants: Record<FieldType, BadgeVariant> = {
@@ -14,14 +15,14 @@ const fieldTypeBadgeVariants: Record<FieldType, BadgeVariant> = {
   multiSelect: "pink",
 };
 
-export function getColumns(): ColumnDef<CustomFieldDefinition>[] {
+export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
   return [
     {
       accessorKey: "label",
       header: "Label",
       cell: ({ row }) => {
         const { color, label } = row.original;
-        return <DataTableColorColumn text={label} color={color} />;
+        return <DataTableColorColumn text={label} color={color ?? undefined} />;
       },
       meta: {
         label: "Label",

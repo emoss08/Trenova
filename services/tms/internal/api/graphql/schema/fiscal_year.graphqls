@@ -13,14 +13,14 @@ type FiscalYear {
   year: Int!
   name: String!
   description: String!
-  startDate: Int!
-  endDate: Int!
+  startDate: Timestamp!
+  endDate: Timestamp!
   isCurrent: Boolean!
   isCalendarYear: Boolean!
   allowAdjustingEntries: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   businessUnit: BusinessUnit
   organization: Organization
   periods: [FiscalPeriod!]!

@@ -25,23 +25,23 @@ type RecurringShipment {
   status: RecurringShipmentStatus!
   cronExpression: String!
   timezone: String!
-  startDate: Int
-  endDate: Int
+  startDate: Timestamp
+  endDate: Timestamp
   maxOccurrences: Int
   leadTimeDays: Int!
   skipWeekends: Boolean!
   exceptionPolicy: RecurringShipmentExceptionPolicy!
   blackoutDates: [String!]
   autoGenerate: Boolean!
-  nextOccurrenceAt: Int
-  nextOccurrenceSourceAt: Int
-  lastOccurrenceAt: Int
-  lastRunAt: Int
+  nextOccurrenceAt: Timestamp
+  nextOccurrenceSourceAt: Timestamp
+  lastOccurrenceAt: Timestamp
+  lastRunAt: Timestamp
   generationCount: Int!
   consecutiveFailures: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   customer: Customer
   originLocation: Location
   destinationLocation: Location

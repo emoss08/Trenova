@@ -5,8 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/graph-gophers/dataloader/v7"
+	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
 )
 
@@ -30,54 +29,37 @@ func NewShipmentProfitabilityLoaderFactory(
 
 func (f *ShipmentProfitabilityLoaderFactory) NewForTenant(
 	tenantInfo pagination.TenantInfo,
-) *dataloader.Loader[string, *costingservice.ShipmentProfitabilityEstimate] {
-	return dataloader.NewBatchedLoader(f.batchFunc(tenantInfo))
+) *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate] {
+	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *ShipmentProfitabilityLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) dataloader.BatchFunc[string, *costingservice.ShipmentProfitabilityEstimate] {
+) batchFetchFunc[*costingservice.ShipmentProfitabilityEstimate] {
 	return func(
 		ctx context.Context,
 		keys []string,
-	) []*dataloader.Result[*costingservice.ShipmentProfitabilityEstimate] {
-		results := make(
-			[]*dataloader.Result[*costingservice.ShipmentProfitabilityEstimate],
-			len(keys),
-		)
+	) ([]*costingservice.ShipmentProfitabilityEstimate, []error) {
+		values := make([]*costingservice.ShipmentProfitabilityEstimate, len(keys))
+		errs := make([]error, len(keys))
 
-		shipmentIDs := make([]pulid.ID, 0, len(keys))
-		for _, key := range keys {
-			parsed, err := pulid.MustParse(key)
-			if err != nil {
-				continue
-			}
-			shipmentIDs = append(shipmentIDs, parsed)
+		ids, indexesByID := parseBatchKeys(keys, errs)
+		if len(ids) == 0 {
+			return values, errs
 		}
 
-		estimates, err := f.costingService.EstimateShipments(ctx, tenantInfo, shipmentIDs)
+		estimates, err := f.costingService.EstimateShipments(ctx, tenantInfo, ids)
 		if err != nil {
-			for i := range results {
-				results[i] = &dataloader.Result[*costingservice.ShipmentProfitabilityEstimate]{
-					Error: err,
-				}
-			}
-			return results
+			fillMissingErrors(errs, err)
+			return values, errs
 		}
 
-		for i, key := range keys {
-			parsed, parseErr := pulid.MustParse(key)
-			if parseErr != nil {
-				results[i] = &dataloader.Result[*costingservice.ShipmentProfitabilityEstimate]{
-					Error: parseErr,
-				}
-				continue
-			}
-			results[i] = &dataloader.Result[*costingservice.ShipmentProfitabilityEstimate]{
-				Data: estimates[parsed],
+		for _, id := range ids {
+			for _, idx := range indexesByID[id] {
+				values[idx] = estimates[id]
 			}
 		}
 
-		return results
+		return values, errs
 	}
 }

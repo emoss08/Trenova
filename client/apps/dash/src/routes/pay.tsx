@@ -13,7 +13,7 @@ import { YtdCard } from "../_components/ytd-card";
 export function DashPayPage() {
   const settlements = useQuery({
     queryKey: ["dash-settlements"],
-    queryFn: () => fetchMySettlements(50, 0),
+    queryFn: ({ signal }) => fetchMySettlements(50, 0, { signal }),
   });
 
   return (

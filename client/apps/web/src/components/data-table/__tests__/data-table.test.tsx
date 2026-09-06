@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
@@ -20,8 +20,8 @@ const testGraphQLConfig = {
   operationName: "TestTable",
   connectionKey: "tests",
 };
-const useDataTableQueryMock = vi.hoisted(() =>
-  vi.fn(() => ({
+const { useDataTableQueryMock, defaultQueryResult } = vi.hoisted(() => {
+  const defaultQueryResult = {
     data: {
       results: [
         { id: "1", name: "Alice" },
@@ -32,8 +32,12 @@ const useDataTableQueryMock = vi.hoisted(() =>
     isLoading: false,
     isError: false,
     error: null,
-  })),
-);
+  };
+  return {
+    defaultQueryResult,
+    useDataTableQueryMock: vi.fn((..._args: unknown[]): unknown => defaultQueryResult),
+  };
+});
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermissions: () => ({
@@ -186,6 +190,167 @@ describe("DataTable", () => {
 
     expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Bob").length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ── Cursor pagination total count ──────────────────────────────────────
+
+type CursorPage = {
+  results: TestRow[];
+  totalCount: number | null;
+  endCursor: string | null;
+};
+
+function cursorQueryResult(page: CursorPage) {
+  return {
+    data: {
+      results: page.results,
+      count: page.totalCount ?? page.results.length,
+      next: null,
+      prev: null,
+      pageInfo: {
+        mode: "cursor" as const,
+        hasNextPage: page.endCursor != null,
+        endCursor: page.endCursor,
+        totalCount: page.totalCount,
+      },
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  };
+}
+
+function mockCursorPages(pages: Record<string, CursorPage>) {
+  useDataTableQueryMock.mockImplementation((...args: unknown[]) => {
+    const options = args[3] as { cursor?: string } | undefined;
+    const page = pages[options?.cursor ?? ""];
+    if (!page) {
+      throw new Error(`Unexpected cursor ${String(options?.cursor)}`);
+    }
+    return cursorQueryResult(page);
+  });
+}
+
+const firstPage: CursorPage = {
+  results: [
+    { id: "1", name: "Alice" },
+    { id: "2", name: "Bob" },
+  ],
+  totalCount: 30,
+  endCursor: "cursor-page-2",
+};
+
+const secondPageWithoutTotal: CursorPage = {
+  results: [
+    { id: "3", name: "Carol" },
+    { id: "4", name: "Dave" },
+  ],
+  totalCount: null,
+  endCursor: "cursor-page-3",
+};
+
+describe("DataTable cursor total count", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("keeps the total from the first page when a later page omits it", async () => {
+    mockCursorPages({ "": firstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    const { container } = renderDataTable();
+
+    expect(container).toHaveTextContent("Showing 1 to 2 of 30 results");
+    expect(container).toHaveTextContent(/Page\s*1\s*of\s*3/);
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+    expect(container).toHaveTextContent("Showing 11 to 12 of 30 results");
+    expect(container).toHaveTextContent(/Page\s*2\s*of\s*3/);
+    expect(screen.getByLabelText("Go to next page")).not.toBeDisabled();
+  });
+
+  it("offers select-all-matching on a later page using the remembered total", async () => {
+    mockCursorPages({ "": firstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    renderDataTable({ enableRowSelection: true });
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Select all"));
+    });
+
+    expect(screen.getByText("Select all 30 matching")).toBeInTheDocument();
+  });
+
+  it("keeps the remembered total when returning to a first page that omits it", async () => {
+    mockCursorPages({ "": firstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    const { container } = renderDataTable();
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+
+    mockCursorPages({
+      "": { ...firstPage, totalCount: null },
+      "cursor-page-2": secondPageWithoutTotal,
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to previous page"));
+    });
+
+    expect(await screen.findAllByText("Alice")).not.toHaveLength(0);
+    expect(container).toHaveTextContent("Showing 1 to 2 of 30 results");
+  });
+
+  it("forgets the remembered total when the query scope changes", async () => {
+    mockCursorPages({ "": firstPage, "cursor-page-2": secondPageWithoutTotal });
+    const queryClient = createQueryClient();
+    const tree = (graphql: typeof testGraphQLConfig) => (
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={graphql}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>
+    );
+
+    const { container, rerender } = render(tree(testGraphQLConfig));
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+    expect(container).toHaveTextContent("of 30");
+
+    mockCursorPages({
+      "": { results: [{ id: "9", name: "Zed" }], totalCount: null, endCursor: null },
+      "cursor-page-2": secondPageWithoutTotal,
+    });
+
+    rerender(tree({ ...testGraphQLConfig, operationName: "OtherTestTable" }));
+
+    expect(await screen.findAllByText("Zed")).not.toHaveLength(0);
+    expect(container).toHaveTextContent("Showing 1 to 1 results");
+    expect(container).not.toHaveTextContent("of 30");
   });
 });
 

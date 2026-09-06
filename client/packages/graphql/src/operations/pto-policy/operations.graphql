@@ -1,0 +1,309 @@
+fragment PtoPolicyRuleFields on PTOPolicyRule {
+  id
+  ptoPolicyId
+  ptoType
+  accrualMethod
+  accrualAmountDays
+  maxBalanceDays
+  carryoverCapDays
+  carryoverExpiryDays
+  tiers {
+    minMonths
+    accrualAmountDays
+    maxBalanceDays
+  }
+  onTermination
+  sortOrder
+}
+
+fragment PtoPolicyFields on PTOPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isDefault
+  yearBasis
+  countWeekends
+  waitingPeriodDays
+  requiresApproval
+  enforceBalance
+  allowNegative
+  negativeFloorDays
+  openAssignmentCount
+  version
+  createdAt
+  updatedAt
+  rules {
+    id
+    ptoPolicyId
+    ptoType
+    accrualMethod
+    accrualAmountDays
+    maxBalanceDays
+    carryoverCapDays
+    carryoverExpiryDays
+    tiers {
+      minMonths
+      accrualAmountDays
+      maxBalanceDays
+    }
+    onTermination
+    sortOrder
+  }
+}
+
+fragment PtoPolicyAssignmentFields on WorkerPTOPolicyAssignment {
+  id
+  workerId
+  ptoPolicyId
+  effectiveFrom
+  effectiveTo
+  assignedById
+  note
+  version
+  createdAt
+  updatedAt
+  ptoPolicy {
+    id
+    name
+    code
+    status
+    countWeekends
+    requiresApproval
+    enforceBalance
+  }
+}
+
+fragment PlannedPtoAccrualFields on PlannedPTOAccrual {
+  entryType
+  periodKey
+  effectiveAt
+  nominalDays
+  deferred
+}
+
+fragment WorkerPtoBalanceFields on WorkerPTOBalance {
+  ptoType
+  tracked
+  enforced
+  balanceDays
+  pendingDays
+  availableDays
+  accruedYtdDays
+  usedYtdDays
+  carriedDays
+  maxBalanceDays
+  nextAccrual {
+    entryType
+    periodKey
+    effectiveAt
+    nominalDays
+    deferred
+  }
+}
+
+fragment WorkerPtoLedgerEntryFields on WorkerPTOLedgerEntry {
+  id
+  workerId
+  ptoType
+  entryType
+  amountDays
+  balanceAfterDays
+  sequence
+  effectiveAt
+  periodKey
+  sourcePtoId
+  assignmentId
+  ptoPolicyId
+  actorType
+  createdById
+  note
+  createdAt
+}
+
+query PtoPolicyTable($input: PTOPoliciesInput!, $includeTotalCount: Boolean = true) {
+  ptoPolicies(input: $input) {
+    edges {
+      node {
+        ...PtoPolicyFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query PtoPolicy($id: ID!) {
+  ptoPolicy(id: $id) {
+    ...PtoPolicyFields
+  }
+}
+
+query PtoPolicyOptions($input: PTOPoliciesInput!) {
+  ptoPolicies(input: $input) {
+    edges {
+      node {
+        id
+        name
+        code
+        status
+        isDefault
+        rules {
+          ptoType
+        }
+      }
+    }
+  }
+}
+
+query WorkerPtoPolicyAssignments($workerId: ID!) {
+  workerPtoPolicyAssignments(workerId: $workerId) {
+    ...PtoPolicyAssignmentFields
+  }
+}
+
+query WorkerPtoBalances($workerId: ID!) {
+  workerPtoBalances(workerId: $workerId) {
+    ...WorkerPtoBalanceFields
+  }
+}
+
+query WorkerPtoLedger($input: WorkerPTOLedgerInput!) {
+  workerPtoLedger(input: $input) {
+    edges {
+      node {
+        ...WorkerPtoLedgerEntryFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query WorkerPtoAvailability($input: PTOAvailabilityInput!) {
+  workerPtoAvailability(input: $input) {
+    tracked
+    enforced
+    allowed
+    days
+    balanceDays
+    pendingDays
+    projectedAccrualDays
+    projectedAvailableDays
+    floorDays
+    message
+  }
+}
+
+query PreviewWorkerPtoAccrual($workerId: ID!, $asOf: Timestamp) {
+  previewWorkerPtoAccrual(workerId: $workerId, asOf: $asOf) {
+    ...PlannedPtoAccrualFields
+  }
+}
+
+query PtoBalanceSummary {
+  ptoBalanceSummary {
+    workersTracked
+    workersUnassigned
+    totalBalanceDays
+    totalPendingDays
+    accruedYtdDays
+    usedYtdDays
+  }
+}
+
+query PtoLiabilityReport($asOf: Timestamp) {
+  ptoLiabilityReport(asOf: $asOf) {
+    asOf
+    workersTracked
+    totalBalanceDays
+    liabilityDays
+    forfeitableDays
+    rows {
+      workerId
+      worker {
+        id
+        wholeName
+        firstName
+        lastName
+        profilePicUrl
+        status
+      }
+      ptoType
+      balanceDays
+      accruedYtdDays
+      usedYtdDays
+      onTermination
+      liabilityDays
+    }
+  }
+}
+
+mutation CreatePtoPolicy($input: PTOPolicyInput!) {
+  createPtoPolicy(input: $input) {
+    ...PtoPolicyFields
+  }
+}
+
+mutation UpdatePtoPolicy($id: ID!, $input: PTOPolicyInput!) {
+  updatePtoPolicy(id: $id, input: $input) {
+    ...PtoPolicyFields
+  }
+}
+
+mutation ArchivePtoPolicy($id: ID!, $version: Int) {
+  archivePtoPolicy(id: $id, version: $version) {
+    ...PtoPolicyFields
+  }
+}
+
+mutation RestorePtoPolicy($id: ID!, $version: Int) {
+  restorePtoPolicy(id: $id, version: $version) {
+    ...PtoPolicyFields
+  }
+}
+
+mutation AssignWorkerPtoPolicy($input: AssignWorkerPTOPolicyInput!) {
+  assignWorkerPtoPolicy(input: $input) {
+    assignments {
+      ...PtoPolicyAssignmentFields
+    }
+    failures {
+      workerId
+      error
+    }
+  }
+}
+
+mutation EndWorkerPtoPolicyAssignment($input: EndWorkerPTOPolicyAssignmentInput!) {
+  endWorkerPtoPolicyAssignment(input: $input) {
+    ...PtoPolicyAssignmentFields
+  }
+}
+
+mutation AdjustWorkerPtoBalance($input: AdjustWorkerPTOBalanceInput!) {
+  adjustWorkerPtoBalance(input: $input) {
+    ...WorkerPtoLedgerEntryFields
+  }
+}
+
+mutation RunPtoAccrual($input: RunPTOAccrualInput!) {
+  runPtoAccrual(input: $input) {
+    queued
+    workflowId
+    workersProcessed
+    workersSkipped
+    entriesPosted
+    entriesCapped
+    entriesSkipped
+  }
+}

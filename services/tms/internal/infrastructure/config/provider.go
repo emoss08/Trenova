@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -33,31 +34,46 @@ func ProvideConfig() (*Config, error) {
 	return config, nil
 }
 
-func ProvideLogger(config *Config) (*zap.Logger, error) {
-	logger, err := newLogger(config.Logging)
+// LogSink owns whatever the logger writes to, so the application can release
+// it on the way out. Logging to stdout or stderr has nothing to close; logging
+// to a file holds a handle open for the life of the process, and closing it is
+// what flushes the last of the buffer to disk.
+type LogSink struct {
+	closer io.Closer
+}
+
+func (s *LogSink) Close() error {
+	if s == nil || s.closer == nil {
+		return nil
+	}
+	return s.closer.Close()
+}
+
+func ProvideLogger(config *Config) (*zap.Logger, *LogSink, error) {
+	logger, sink, err := newLogger(config.Logging)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
+		return nil, nil, fmt.Errorf("failed to create logger: %w", err)
 	}
 
 	zap.ReplaceGlobals(logger)
 
-	return logger, nil
+	return logger, sink, nil
 }
 
-func newLogger(cfg LoggingConfig) (*zap.Logger, error) {
+func newLogger(cfg LoggingConfig) (*zap.Logger, *LogSink, error) {
 	level, err := parseLogLevel(cfg.Level)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	encoder, err := newLogEncoder(cfg.Format)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	sink, err := newLogSink(cfg)
+	sink, closer, err := newLogSink(cfg)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	core := zapcore.NewCore(encoder, sink, level)
@@ -73,7 +89,7 @@ func newLogger(cfg LoggingConfig) (*zap.Logger, error) {
 		options = append(options, zap.AddStacktrace(zapcore.WarnLevel))
 	}
 
-	return zap.New(core, options...), nil
+	return zap.New(core, options...), &LogSink{closer: closer}, nil
 }
 
 func parseLogLevel(level string) (zapcore.Level, error) {
@@ -100,33 +116,37 @@ func newLogEncoder(format string) (zapcore.Encoder, error) {
 	}
 }
 
-func newLogSink(cfg LoggingConfig) (zapcore.WriteSyncer, error) {
+// newLogSink returns where the logger writes and, when that is something the
+// process holds open, the closer for it. Stdout and stderr belong to the
+// process rather than to us, so they come back with no closer.
+func newLogSink(cfg LoggingConfig) (zapcore.WriteSyncer, io.Closer, error) {
 	switch cfg.Output {
 	case "stdout":
-		return zapcore.Lock(os.Stdout), nil
+		return zapcore.Lock(os.Stdout), nil, nil
 	case "stderr":
-		return zapcore.Lock(os.Stderr), nil
+		return zapcore.Lock(os.Stderr), nil, nil
 	case "file":
 		if cfg.File == nil {
-			return nil, ErrLoggingOutputIsFileButFileConfigIsMissing
+			return nil, nil, ErrLoggingOutputIsFileButFileConfigIsMissing
 		}
 
 		dir := filepath.Dir(cfg.File.Path)
 		if dir != "." && dir != "" {
 			if err := os.MkdirAll(dir, 0o750); err != nil {
-				return nil, fmt.Errorf("create log directory: %w", err)
+				return nil, nil, fmt.Errorf("create log directory: %w", err)
 			}
 		}
 
-		return zapcore.AddSync(&lumberjack.Logger{
+		rotator := &lumberjack.Logger{
 			Filename:   cfg.File.Path,
 			MaxSize:    cfg.File.MaxSize,
 			MaxAge:     cfg.File.MaxAge,
 			MaxBackups: cfg.File.MaxBackups,
 			Compress:   cfg.File.Compress,
-		}), nil
+		}
+		return zapcore.AddSync(rotator), rotator, nil
 	default:
-		return nil, fmt.Errorf("invalid log output %q", cfg.Output)
+		return nil, nil, fmt.Errorf("invalid log output %q", cfg.Output)
 	}
 }
 
@@ -138,7 +158,7 @@ type Params struct {
 
 func Hooks() fx.Option {
 	return fx.Options(
-		fx.Invoke(func(lc fx.Lifecycle, config *Config, logger *zap.Logger) {
+		fx.Invoke(func(lc fx.Lifecycle, config *Config, logger *zap.Logger, sink *LogSink) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
 					logger.Debug("Database configuration",
@@ -162,7 +182,9 @@ func Hooks() fx.Option {
 					logger.Info("Shutting down application")
 					// Ignore sync errors for stderr/stdout as they're not regular files
 					_ = logger.Sync()
-					return nil
+					// Closing the sink is what releases a log file. Syncing
+					// alone leaves the handle open for the life of the process.
+					return sink.Close()
 				},
 			})
 		}),

@@ -9,19 +9,19 @@ import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import { usePermission } from "@/hooks/use-permission";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import { auditLogTableGraphQLConfig } from "@/lib/graphql/audit-log-table";
+import { auditLogTableGraphQLConfig, type AuditEntryRow } from "@/lib/graphql/audit-log-table";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   formatAuditValueWithDates,
   formatFieldLabel,
+  isRecordValue,
   normalizeAuditChanges,
   operationLabel,
   operationVariant,
   userInitials,
   type NormalizedAuditChange,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
-import type { AuditEntry } from "@/types/audit-entry";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, fromUnixTime } from "date-fns";
@@ -39,12 +39,17 @@ function auditEntryUrl(entryId: string) {
 export default function AuditTab({ resourceId }: { resourceId: string }) {
   const query = useInfiniteQuery({
     queryKey: [...queries.audit.history(resourceId).queryKey],
-    queryFn: async ({ pageParam }) =>
-      fetchGraphQLData(PAGE_SIZE, auditLogTableGraphQLConfig, {
-        cursor: pageParam ?? undefined,
-        fieldFilters: [{ field: "resourceId", operator: "eq", value: resourceId }],
-        sort: [{ field: "timestamp", direction: "desc" }],
-      }),
+    queryFn: async ({ pageParam, signal }) =>
+      fetchGraphQLData(
+        PAGE_SIZE,
+        auditLogTableGraphQLConfig,
+        {
+          cursor: pageParam ?? undefined,
+          fieldFilters: [{ field: "resourceId", operator: "eq", value: resourceId }],
+          sort: [{ field: "timestamp", direction: "desc" }],
+        },
+        { signal },
+      ),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.pageInfo?.hasNextPage ? (lastPage.pageInfo.endCursor ?? undefined) : undefined,
@@ -126,7 +131,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   );
 }
 
-function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boolean }) {
+function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: boolean }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const date = fromUnixTime(entry.timestamp);
@@ -136,7 +141,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boo
   const operation = entry.operation?.toLowerCase() || "";
 
   const changes =
-    operation === "update" && entry.changes && Object.keys(entry.changes).length > 0
+    operation === "update" && isRecordValue(entry.changes) && Object.keys(entry.changes).length > 0
       ? normalizeAuditChanges(entry.changes)
       : [];
 

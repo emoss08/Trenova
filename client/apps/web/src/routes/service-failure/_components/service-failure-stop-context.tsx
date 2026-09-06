@@ -1,7 +1,8 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { findChoice, stopTypeChoices } from "@/lib/choices";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-failure";
+import type { ServiceFailureStopSummary } from "@/types/service-failure";
+import type { StopType } from "@trenova/shared/types/shipment";
 import type { ReactNode } from "react";
 
 type ServiceFailureStopContextProps = {
@@ -11,8 +12,33 @@ type ServiceFailureStopContextProps = {
   className?: string;
 };
 
+type ServiceFailureStopSource = {
+  type?: StopType | null;
+  sequence?: number | null;
+  locationId?: string | null;
+  location?: {
+    name?: string | null;
+    code?: string | null;
+    city?: string | null;
+    state?: { abbreviation?: string | null } | null;
+  } | null;
+};
+
+export type ServiceFailureStopSummarySource = {
+  id?: string;
+  shipmentId: string;
+  shipmentMoveId: string;
+  stopId: string;
+  stopType: StopType;
+  scheduledCutoff: number;
+  actualArrival: number;
+  gracePeriodMinutes: number;
+  lateMinutes: number;
+  stop?: ServiceFailureStopSource | null;
+};
+
 export function serviceFailureStopSummaryFromFailure(
-  failure: ServiceFailure,
+  failure: ServiceFailureStopSummarySource,
 ): ServiceFailureStopSummary {
   const stop = failure.stop;
   const location = stop?.location ?? undefined;

@@ -1,9 +1,9 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import type { StoredMileage } from "@/types/stored-mileage";
+import type { StoredMileageRow } from "@/lib/graphql/stored-mileage-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-function stopLabel(key: StoredMileage["originKey"]) {
+function stopLabel(key: StoredMileageRow["originKey"]) {
   if (key.postalCode) {
     return key.postalCode;
   }
@@ -13,23 +13,26 @@ function stopLabel(key: StoredMileage["originKey"]) {
   return key.key;
 }
 
-export function getColumns(): ColumnDef<StoredMileage>[] {
+export function getColumns(): ColumnDef<StoredMileageRow>[] {
   return [
     {
       accessorKey: "routeSignature",
       header: "Lane",
-      cell: ({ row }) => (
-        <div className="min-w-0">
-          <div className="truncate font-medium">
-            {stopLabel(row.original.originKey)} {"->"} {stopLabel(row.original.destinationKey)}
+      cell: ({ row }) => {
+        const intermediateStopCount = row.original.intermediateKeys?.length ?? 0;
+        return (
+          <div className="min-w-0">
+            <div className="truncate font-medium">
+              {stopLabel(row.original.originKey)} {"->"} {stopLabel(row.original.destinationKey)}
+            </div>
+            <div className="text-muted-foreground truncate text-xs">
+              {intermediateStopCount > 0
+                ? `${intermediateStopCount} intermediate stops`
+                : row.original.routeHash}
+            </div>
           </div>
-          <div className="text-muted-foreground truncate text-xs">
-            {row.original.intermediateKeys.length > 0
-              ? `${row.original.intermediateKeys.length} intermediate stops`
-              : row.original.routeHash}
-          </div>
-        </div>
-      ),
+        );
+      },
       meta: { label: "Route", apiField: "routeSignature", filterable: true, sortable: true },
       size: 320,
     },

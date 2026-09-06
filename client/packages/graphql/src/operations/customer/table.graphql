@@ -107,14 +107,14 @@ fragment CustomerTableRowFields on Customer {
   }
 }
 
-query CustomerTable($input: DataTableConnectionInput!) {
+query CustomerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   customers(input: $input) {
     edges {
       node {
         ...CustomerTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

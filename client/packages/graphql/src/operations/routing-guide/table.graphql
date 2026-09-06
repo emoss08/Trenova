@@ -5,6 +5,7 @@ fragment RoutingGuideEntryFields on RoutingGuideEntry {
   rank
   rateMethod
   rate
+  useContractRate
   offerTtlSeconds
   channel
   version
@@ -39,21 +40,21 @@ fragment RoutingGuideRowFields on RoutingGuide {
   }
 }
 
-query RoutingGuideTable($input: DataTableConnectionInput!) {
+query RoutingGuideTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   routingGuides(input: $input) {
     edges {
       node {
         ...RoutingGuideRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
   }
 }
 
-query RoutingGuideOptions($input: DataTableConnectionInput!) {
+query RoutingGuideOptions($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   routingGuides(input: $input) {
     edges {
       node {
@@ -83,7 +84,7 @@ query RoutingGuideOptions($input: DataTableConnectionInput!) {
         }
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

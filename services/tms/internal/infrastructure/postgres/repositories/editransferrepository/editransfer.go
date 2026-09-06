@@ -383,19 +383,23 @@ func (r *repository) listCursor(
 		return sq
 	}
 
-	total, err := dba.
-		NewSelect().
-		Model((*edi.EDITransfer)(nil)).
-		Apply(scope).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*edi.EDITransfer)(nil)).
+			Apply(scope).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITransfer]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*edi.EDITransfer) *bun.SelectQuery {
 			rel := buncolgen.EDITransferRelations
 			return dba.

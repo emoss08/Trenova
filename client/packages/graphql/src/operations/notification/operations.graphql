@@ -16,14 +16,18 @@ fragment NotificationFields on Notification {
   createdAt
 }
 
-query NotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {
+query NotificationList(
+  $input: DataTableConnectionInput!
+  $filter: NotificationFilterInput
+  $includeTotalCount: Boolean = true
+) {
   notifications(input: $input, filter: $filter) {
     edges {
       node {
         ...NotificationFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -34,14 +38,18 @@ query NotificationUnreadCount {
   notificationUnreadCount
 }
 
-query MyNotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {
+query MyNotificationList(
+  $input: DataTableConnectionInput!
+  $filter: NotificationFilterInput
+  $includeTotalCount: Boolean = true
+) {
   myNotifications(input: $input, filter: $filter) {
     edges {
       node {
         ...NotificationFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

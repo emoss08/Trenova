@@ -59,8 +59,8 @@ type DocumentTemplate {
   isOrgDefault: Boolean!
   activeVersionId: ID
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   createdById: ID
   updatedById: ID
 
@@ -103,13 +103,13 @@ type DocumentTemplateVersion {
 
   publishNotes: String!
   publishedById: ID
-  publishedAt: Int
+  publishedAt: Timestamp
   archivedById: ID
-  archivedAt: Int
+  archivedAt: Timestamp
 
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type DocumentTemplateAssignment {
@@ -120,8 +120,8 @@ type DocumentTemplateAssignment {
   templateId: ID!
   customerId: ID!
   assignedById: ID
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 
   template: DocumentTemplate
   customer: Customer

@@ -4,7 +4,7 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
-import { RouteCommandPalette } from "../command-palette/route-command-palette";
+import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
@@ -54,7 +54,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
   return (
     <>
-      <RouteCommandPalette />
+      <CommandPaletteMount />
       <KeyboardShortcutsDialog />
       <div className="flex h-screen overflow-hidden">
         <CommandSidebar />

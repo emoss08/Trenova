@@ -366,7 +366,7 @@ export const loadTenderChargeSchema = z.object({
 
 export type LoadTenderCharge = z.infer<typeof loadTenderChargeSchema>;
 
-const loadTenderPayloadSchema = z.object({
+export const loadTenderPayloadSchema = z.object({
   shipmentId: z.string().nullish(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),

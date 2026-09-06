@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -76,24 +77,43 @@ func applyTableConfigurationPatch(
 	existing *tableconfiguration.TableConfiguration,
 	input gqlmodel.TableConfigurationPatchInput,
 ) error {
-	if input.Name != nil {
-		existing.Name = *input.Name
+	if name, ok := input.Name.ValueOK(); ok {
+		value, err := requiredPatchValue("name", "Name", name)
+		if err != nil {
+			return err
+		}
+		existing.Name = value
 	}
 	if description, ok := input.Description.ValueOK(); ok {
 		existing.Description = stringValue(description)
 	}
-	if input.Resource != nil {
-		existing.Resource = *input.Resource
+	if resource, ok := input.Resource.ValueOK(); ok {
+		value, err := requiredPatchValue("resource", "Resource", resource)
+		if err != nil {
+			return err
+		}
+		existing.Resource = value
 	}
-	if input.TableConfig != nil {
-		cfg, err := tableConfigFromMap(input.TableConfig)
+	if tableConfig, ok := input.TableConfig.ValueOK(); ok {
+		if tableConfig == nil {
+			return errortypes.NewValidationError(
+				"tableConfig",
+				errortypes.ErrRequired,
+				"Table Config cannot be cleared",
+			)
+		}
+		cfg, err := tableConfigFromMap(tableConfig)
 		if err != nil {
 			return err
 		}
 		existing.TableConfig = cfg
 	}
-	if input.Visibility != nil {
-		existing.Visibility = *input.Visibility
+	if visibility, ok := input.Visibility.ValueOK(); ok {
+		value, err := requiredPatchValue("visibility", "Visibility", visibility)
+		if err != nil {
+			return err
+		}
+		existing.Visibility = value
 	}
 	if isDefault, ok := input.IsDefault.ValueOK(); ok {
 		existing.IsDefault = boolValue(isDefault)

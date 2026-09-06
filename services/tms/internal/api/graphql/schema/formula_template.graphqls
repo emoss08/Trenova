@@ -47,14 +47,14 @@ type FormulaTemplate {
   schemaId: String!
   variableDefinitions: [FormulaTemplateVariableDefinition!]!
   breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
-  minCharge: String
-  maxCharge: String
+  minCharge: Decimal
+  maxCharge: Decimal
   roundingMode: RateRoundingMode!
   roundingPrecision: Int!
   submittedById: ID
-  submittedAt: Int
+  submittedAt: Timestamp
   approvedById: ID
-  approvedAt: Int
+  approvedAt: Timestamp
   reviewComment: String!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
@@ -62,8 +62,8 @@ type FormulaTemplate {
   sourceTemplateId: ID
   sourceVersionNumber: Int
   currentVersionNumber: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
   usageCount: Int!
   "How many saved scenarios gate this template's approval."

@@ -10,9 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -20,17 +25,32 @@ import (
 const (
 	sweepHorizonDays = 30
 	sweepGraceDays   = 7
+	sweepPageSize    = 500
 	dedupeWindowDays = 6
 	secondsPerDay    = int64(86400)
+
+	eventDriverExpiring     = "dash.credential_expiring"
+	eventComplianceExpiring = "credential_expiring"
+	eventComplianceExpired  = "credential_expired"
+	complianceLink          = "/hr/workers?tab=credentials"
 )
 
-// reminderSteps are the days-until-expiry marks at which a driver is reminded.
-var reminderSteps = []int64{30, 14, 3}
+// reminderSteps are the days-until-expiry marks at which a driver and the
+// back office are reminded; day 0 and every day past expiry always fire, the
+// dedupe window keeps that to one notice a week.
+var reminderSteps = []int64{30, 14, 7}
 
 type ActivitiesParams struct {
 	fx.In
 
-	WorkerRepo      repositories.WorkerRepository
+	CredentialRepo  repositories.WorkerCredentialRepository
+	Credentials     *workercredentialservice.Service
+	TrainingRepo    repositories.WorkerTrainingRepository
+	Training        *workertrainingservice.Service
+	SafetyRepo      repositories.WorkerSafetyRepository
+	Safety          *workersafetyservice.Service
+	DrugAlcoholRepo repositories.WorkerDrugAlcoholRepository
+	DrugAlcohol     *workerdrugalcoholservice.Service
 	DashControlRepo repositories.DashControlRepository
 	Notifications   *notificationservice.Service
 	DriverNotify    *drivernotificationservice.Service
@@ -38,7 +58,14 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	workerRepo      repositories.WorkerRepository
+	credentialRepo  repositories.WorkerCredentialRepository
+	credentials     *workercredentialservice.Service
+	trainingRepo    repositories.WorkerTrainingRepository
+	safetyRepo      repositories.WorkerSafetyRepository
+	drugAlcoholRepo repositories.WorkerDrugAlcoholRepository
+	training        *workertrainingservice.Service
+	safety          *workersafetyservice.Service
+	drugAlcohol     *workerdrugalcoholservice.Service
 	dashControlRepo repositories.DashControlRepository
 	notifications   *notificationservice.Service
 	driverNotify    *drivernotificationservice.Service
@@ -47,7 +74,14 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		workerRepo:      p.WorkerRepo,
+		credentialRepo:  p.CredentialRepo,
+		credentials:     p.Credentials,
+		trainingRepo:    p.TrainingRepo,
+		safetyRepo:      p.SafetyRepo,
+		drugAlcoholRepo: p.DrugAlcoholRepo,
+		training:        p.Training,
+		safety:          p.Safety,
+		drugAlcohol:     p.DrugAlcohol,
 		dashControlRepo: p.DashControlRepo,
 		notifications:   p.Notifications,
 		driverNotify:    p.DriverNotify,
@@ -55,104 +89,144 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-type credential struct {
-	Name   string
-	Expiry *int64
-}
-
-func workerCredentials(profile *worker.WorkerProfile) []credential {
-	if profile == nil {
-		return nil
-	}
-	licenseExpiry := profile.LicenseExpiry
-	return []credential{
-		{Name: "CDL", Expiry: &licenseExpiry},
-		{Name: "Hazmat endorsement", Expiry: profile.HazmatExpiry},
-		{Name: "Medical card", Expiry: profile.MedicalCardExpiry},
-		{Name: "DOT physical", Expiry: profile.PhysicalDueDate},
-		{Name: "MVR review", Expiry: profile.MVRDueDate},
-		{Name: "TWIC card", Expiry: profile.TWICExpiry},
-	}
+type sweepState struct {
+	now            int64
+	remindersByOrg map[pulid.ID]bool
+	touchedWorkers map[pulid.ID]pagination.TenantInfo
+	result         *CredentialExpirySweepResult
 }
 
 func (a *Activities) CredentialExpirySweepActivity(
 	ctx context.Context,
 ) (*CredentialExpirySweepResult, error) {
-	result := new(CredentialExpirySweepResult)
-
-	workers, err := a.workerRepo.ListWorkersWithExpiringCredentials(
-		ctx,
-		repositories.ListExpiringCredentialsRequest{
-			HorizonDays: sweepHorizonDays,
-			GraceDays:   sweepGraceDays,
-		},
-	)
-	if err != nil {
-		return nil, err
+	state := &sweepState{
+		now:            timeutils.NowUnix(),
+		remindersByOrg: make(map[pulid.ID]bool),
+		touchedWorkers: make(map[pulid.ID]pagination.TenantInfo),
+		result:         new(CredentialExpirySweepResult),
 	}
 
-	now := timeutils.NowUnix()
-	remindersByOrg := make(map[pulid.ID]bool)
-	for _, wrk := range workers {
-		result.WorkersChecked++
-		if err = a.sweepWorker(ctx, now, wrk, remindersByOrg, result); err != nil {
-			result.Failed++
-			a.logger.Error("credential sweep failed for worker",
-				zap.String("workerId", wrk.ID.String()),
+	var after pulid.ID
+	for {
+		page, err := a.credentialRepo.ListExpiring(
+			ctx,
+			&repositories.ListExpiringWorkerCredentialsRequest{
+				HorizonDays: sweepHorizonDays,
+				GraceDays:   sweepGraceDays,
+				AfterID:     after,
+				Limit:       sweepPageSize,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		for _, cred := range page {
+			state.result.CredentialsChecked++
+			if err = a.sweepCredential(ctx, state, cred); err != nil {
+				state.result.Failed++
+				a.logger.Error("credential sweep failed",
+					zap.String("credentialId", cred.ID.String()),
+					zap.String("workerId", cred.WorkerID.String()),
+					zap.Error(err))
+			}
+		}
+		activity.RecordHeartbeat(ctx, state.result.CredentialsChecked)
+		if len(page) < sweepPageSize {
+			break
+		}
+		after = page[len(page)-1].ID
+	}
+
+	for workerID, tenantInfo := range state.touchedWorkers {
+		state.result.WorkersChecked++
+		if _, err := a.credentials.RefreshCompliance(ctx, tenantInfo, workerID); err != nil {
+			a.logger.Warn("failed to refresh compliance after sweep",
+				zap.String("workerId", workerID.String()),
 				zap.Error(err))
 		}
 	}
-	return result, nil
+
+	return state.result, nil
 }
 
-func (a *Activities) sweepWorker(
+func (a *Activities) sweepCredential(
 	ctx context.Context,
-	now int64,
-	wrk *worker.Worker,
-	remindersByOrg map[pulid.ID]bool,
-	result *CredentialExpirySweepResult,
+	state *sweepState,
+	cred *worker.WorkerCredential,
 ) error {
-	tenantInfo := pagination.TenantInfo{
-		OrgID: wrk.OrganizationID,
-		BuID:  wrk.BusinessUnitID,
+	if cred.Worker == nil || cred.CredentialType == nil || cred.ExpiresAt == nil {
+		return nil
 	}
-	remindDrivers, err := a.driverRemindersEnabled(ctx, tenantInfo, remindersByOrg)
+	tenantInfo := pagination.TenantInfo{
+		OrgID: cred.OrganizationID,
+		BuID:  cred.BusinessUnitID,
+	}
+	state.touchedWorkers[cred.WorkerID] = tenantInfo
+
+	daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
+	if daysLeft > sweepHorizonDays || daysLeft < -sweepGraceDays {
+		return nil
+	}
+	step := reminderStep(daysLeft)
+	if step < 0 {
+		return nil
+	}
+
+	remindDrivers, err := a.driverRemindersEnabled(ctx, tenantInfo, state.remindersByOrg)
 	if err != nil {
 		return err
 	}
-
-	for _, cred := range workerCredentials(wrk.Profile) {
-		if cred.Expiry == nil || *cred.Expiry == 0 {
-			continue
+	if remindDrivers && !cred.Worker.UserID.IsNil() {
+		sent, notifyErr := a.notifyDriver(ctx, tenantInfo, cred, daysLeft)
+		if notifyErr != nil {
+			return notifyErr
 		}
-		daysLeft := (*cred.Expiry - now) / secondsPerDay
-		if daysLeft > sweepHorizonDays || daysLeft < -sweepGraceDays {
-			continue
+		if sent {
+			state.result.DriverNotifications++
 		}
+	}
 
-		if remindDrivers && a.shouldRemindDriver(daysLeft) && !wrk.UserID.IsNil() {
-			sent, notifyErr := a.notifyDriver(ctx, tenantInfo, wrk, cred, daysLeft)
-			if notifyErr != nil {
-				return notifyErr
-			}
-			if sent {
-				result.DriverNotifications++
-			}
+	if daysLeft <= 0 {
+		sent, alertErr := a.alertCompliance(ctx, tenantInfo, cred, daysLeft, true)
+		if alertErr != nil {
+			return alertErr
 		}
+		if sent {
+			state.result.ComplianceAlerts++
+		}
+		return nil
+	}
 
-		if daysLeft <= 0 {
-			sent, alertErr := a.alertCompliance(ctx, tenantInfo, wrk, cred, daysLeft)
-			if alertErr != nil {
-				return alertErr
-			}
-			if sent {
-				result.ComplianceAlerts++
-			}
+	if cred.CredentialType.IsRequired && step <= 14 {
+		sent, alertErr := a.alertCompliance(ctx, tenantInfo, cred, daysLeft, false)
+		if alertErr != nil {
+			return alertErr
+		}
+		if sent {
+			state.result.ComplianceAlerts++
 		}
 	}
 	return nil
 }
 
+// reminderStep returns the escalation mark a days-left value sits on, or -1
+// when the day is between marks. Expiry day and every day after are mark 0.
+func reminderStep(daysLeft int64) int64 {
+	if daysLeft <= 0 {
+		return 0
+	}
+	for _, step := range reminderSteps {
+		if daysLeft == step {
+			return step
+		}
+	}
+	return -1
+}
+
+// driverRemindersEnabled reports whether a driver should be told about this
+// one credential now. A carrier on a daily or weekly digest still gets its
+// reminders — bundled, by the digest pass — so sending one here as well would
+// tell the driver twice.
 func (a *Activities) driverRemindersEnabled(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -165,8 +239,9 @@ func (a *Activities) driverRemindersEnabled(
 	if err != nil {
 		return false, err
 	}
-	cache[tenantInfo.OrgID] = control.SendCredentialReminders
-	return control.SendCredentialReminders, nil
+	enabled := control.SendCredentialReminders && !control.DriverDigestCadence.Bundles()
+	cache[tenantInfo.OrgID] = enabled
+	return enabled, nil
 }
 
 // credentialExpiryDate renders the expiry for the driver's message.
@@ -175,60 +250,51 @@ func (a *Activities) driverRemindersEnabled(
 // acts on rather than a clock time, so this formats the calendar date in UTC —
 // which is the day the compliance sweep itself used to decide the credential was
 // expiring.
-func credentialExpiryDate(cred *credential) string {
-	if cred.Expiry == nil {
+func credentialExpiryDate(cred *worker.WorkerCredential) string {
+	if cred.ExpiresAt == nil {
 		return ""
 	}
-
-	return timeutils.FormatUnixDateIn(*cred.Expiry, "")
+	return timeutils.FormatUnixDateIn(*cred.ExpiresAt, "")
 }
 
-func (a *Activities) shouldRemindDriver(daysLeft int64) bool {
-	if daysLeft <= 0 {
-		return true
-	}
-	for _, step := range reminderSteps {
-		if daysLeft <= step && daysLeft > step-1 {
-			return true
-		}
-	}
-	return false
+func (a *Activities) alreadySent(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	eventType, correlation string,
+) (bool, error) {
+	return a.notifications.ExistsRecent(
+		ctx,
+		repositories.ExistsRecentNotificationRequest{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			EventType:      eventType,
+			CorrelationID:  correlation,
+			Since:          timeutils.NowUnix() - dedupeWindowDays*secondsPerDay,
+		},
+	)
 }
 
 func (a *Activities) notifyDriver(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	wrk *worker.Worker,
-	cred credential,
+	cred *worker.WorkerCredential,
 	daysLeft int64,
 ) (bool, error) {
-	correlation := fmt.Sprintf("cred-driver-%s-%s", wrk.ID, cred.Name)
-	exists, err := a.notifications.ExistsRecent(
-		ctx,
-		repositories.ExistsRecentNotificationRequest{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			EventType:      "dash.credential_expiring",
-			CorrelationID:  correlation,
-			Since:          timeutils.NowUnix() - dedupeWindowDays*secondsPerDay,
-		},
-	)
-	if err != nil {
+	correlation := fmt.Sprintf("cred-driver-%s", cred.ID)
+	exists, err := a.alreadySent(ctx, tenantInfo, eventDriverExpiring, correlation)
+	if err != nil || exists {
 		return false, err
-	}
-	if exists {
-		return false, nil
 	}
 
 	a.driverNotify.NotifyWithCorrelation(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
-		WorkerID:   wrk.ID,
-		EventType:  "dash.credential_expiring",
+		WorkerID:   cred.WorkerID,
+		EventType:  eventDriverExpiring,
 		Priority:   notification.PriorityHigh,
 		Context: documenttemplate.DriverNotificationContext{
-			CredentialName: cred.Name,
+			CredentialName: cred.CredentialType.Name,
 			ExpiresInDays:  int(daysLeft),
-			ExpiresAt:      credentialExpiryDate(&cred),
+			ExpiresAt:      credentialExpiryDate(cred),
 		},
 		Link: "/dash/profile",
 	}, correlation)
@@ -238,50 +304,52 @@ func (a *Activities) notifyDriver(
 func (a *Activities) alertCompliance(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	wrk *worker.Worker,
-	cred credential,
+	cred *worker.WorkerCredential,
 	daysLeft int64,
+	expired bool,
 ) (bool, error) {
-	correlation := fmt.Sprintf("cred-compliance-%s-%s", wrk.ID, cred.Name)
-	exists, err := a.notifications.ExistsRecent(
-		ctx,
-		repositories.ExistsRecentNotificationRequest{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			EventType:      "credential_expired",
-			CorrelationID:  correlation,
-			Since:          timeutils.NowUnix() - dedupeWindowDays*secondsPerDay,
-		},
-	)
-	if err != nil {
-		return false, err
+	eventType := eventComplianceExpiring
+	if expired {
+		eventType = eventComplianceExpired
 	}
-	if exists {
-		return false, nil
+	correlation := fmt.Sprintf("cred-compliance-%s-%s", cred.ID, eventType)
+	exists, err := a.alreadySent(ctx, tenantInfo, eventType, correlation)
+	if err != nil || exists {
+		return false, err
 	}
 
 	buID := tenantInfo.BuID
 	correlationID := correlation
-	name := wrk.FirstName + " " + wrk.LastName
+	name := cred.Worker.FirstName + " " + cred.Worker.LastName
 	entity := &notification.Notification{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: &buID,
-		EventType:      "credential_expired",
-		Priority:       notification.PriorityCritical,
-		Channel:        notification.ChannelGlobal,
-		Title:          "Driver credential expired",
-		Message: fmt.Sprintf(
+		OrganizationID:  tenantInfo.OrgID,
+		BusinessUnitID:  &buID,
+		EventType:       eventType,
+		Channel:         notification.ChannelGlobal,
+		Data:            map[string]any{"link": complianceLink, "workerId": cred.WorkerID.String()},
+		RelatedEntities: map[string]any{"workerId": cred.WorkerID.String(), "credentialId": cred.ID.String()},
+		CorrelationID:   &correlationID,
+		Source:          "compliance_sweep",
+	}
+	if expired {
+		entity.Priority = notification.PriorityCritical
+		entity.Title = "Driver credential expired"
+		entity.Message = fmt.Sprintf(
 			"%s's %s expired %d day(s) ago. The driver should not be dispatched until it is renewed.",
 			name,
-			cred.Name,
+			cred.CredentialType.Name,
 			-daysLeft,
-		),
-		Data: map[string]any{"link": "/dispatch-management/workers"},
-		RelatedEntities: map[string]any{
-			"workerId": wrk.ID.String(),
-		},
-		CorrelationID: &correlationID,
-		Source:        "compliance_sweep",
+		)
+	} else {
+		entity.Priority = notification.PriorityHigh
+		entity.Title = "Driver credential expiring"
+		entity.Message = fmt.Sprintf(
+			"%s's %s expires in %d day(s) on %s. Schedule the renewal now.",
+			name,
+			cred.CredentialType.Name,
+			daysLeft,
+			credentialExpiryDate(cred),
+		)
 	}
 	if _, err = a.notifications.Create(ctx, entity); err != nil {
 		return false, err

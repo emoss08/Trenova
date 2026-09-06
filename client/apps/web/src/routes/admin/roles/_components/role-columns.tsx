@@ -3,10 +3,10 @@ import { DataTableDescription } from "@/components/data-table/_components/data-t
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { fieldSensitivityChoices } from "@/lib/choices";
-import type { FieldSensitivity, Role } from "@trenova/shared/types/role";
+import type { RoleRow } from "@/lib/graphql/role-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-function SensitivityBadge({ sensitivity }: { sensitivity: FieldSensitivity }) {
+function SensitivityBadge({ sensitivity }: { sensitivity: RoleRow["maxSensitivity"] }) {
   const choice = fieldSensitivityChoices.find((c) => c.value === sensitivity);
   return (
     <Badge variant={choice?.variant ?? "info"} className="font-normal">
@@ -15,7 +15,7 @@ function SensitivityBadge({ sensitivity }: { sensitivity: FieldSensitivity }) {
   );
 }
 
-export function getColumns(): ColumnDef<Role>[] {
+export function getColumns(): ColumnDef<RoleRow>[] {
   return [
     {
       accessorKey: "name",

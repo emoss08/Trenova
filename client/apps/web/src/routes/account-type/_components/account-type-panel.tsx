@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { accountTypeSchema, type AccountType } from "@/types/account-type";
+import type { AccountTypeRow } from "@/lib/graphql/account-type-table";
+import { accountTypeSchema } from "@/types/account-type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { AccountTypeForm } from "./account-type-form";
@@ -11,7 +12,7 @@ export function AccountTypePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<AccountType>) {
+}: DataTablePanelProps<AccountTypeRow>) {
   const form = useForm({
     resolver: zodResolver(accountTypeSchema),
     defaultValues: {

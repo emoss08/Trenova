@@ -2,6 +2,7 @@ package routingguiderepository
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
@@ -133,16 +134,20 @@ func (r *repository) ListConnection(
 	)
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*tender.RoutingGuide)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyTotalCountFilters(sq, req)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count routing guides", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*tender.RoutingGuide)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.applyTotalCountFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count routing guides", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(
@@ -150,7 +155,7 @@ func (r *repository) ListConnection(
 		dbhelper.CursorListParams[*tender.RoutingGuide]{
 			Filter:     req.Filter,
 			Cursor:     req.Cursor,
-			TotalCount: &total,
+			TotalCount: totalCount,
 			Query: func(entities *[]*tender.RoutingGuide) *bun.SelectQuery {
 				return dba.
 					NewSelect().
@@ -197,6 +202,30 @@ func (r *repository) GetByID(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req repositories.GetRoutingGuidesByIDsRequest,
+) ([]*tender.RoutingGuide, error) {
+	entities := make([]*tender.RoutingGuide, 0, len(req.RoutingGuideIDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.addOptions(sq, req.RoutingGuideFilterOptions)
+		}).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.RoutingGuideScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.RoutingGuideColumns.ID.In(), bun.List(req.RoutingGuideIDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to get routing guides by ids", zap.Error(err))
+		return nil, fmt.Errorf("get routing guides by ids: %w", err)
+	}
+
+	return entities, nil
 }
 
 // stampEntries pins entries to the guide and tenant. IDs are left alone: kept

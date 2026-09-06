@@ -1,7 +1,10 @@
 "use no memo";
 import { DataTable } from "@/components/data-table/data-table";
 import { DuplicateAlertDialog } from "@/components/duplicate-alert-dialog";
-import { formulaTemplateTableGraphQLConfig } from "@/lib/graphql/formula-template-table";
+import {
+  formulaTemplateTableGraphQLConfig,
+  type FormulaTemplateRow,
+} from "@/lib/graphql/formula-template-table";
 import {
   buildBulkExport,
   downloadJson,
@@ -22,7 +25,6 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
-import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, CopyIcon, DownloadIcon, GitForkIcon, NetworkIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -42,18 +44,20 @@ export default function FormulaTemplatesDataTable() {
   const [isInstalling, setIsInstalling] = useState(false);
 
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
-  const [pendingDuplicateRows, setPendingDuplicateRows] = useState<FormulaTemplate[]>([]);
+  const [pendingDuplicateRows, setPendingDuplicateRows] = useState<FormulaTemplateRow[]>([]);
   const [isDuplicating, setIsDuplicating] = useState(false);
 
-  const [pendingArchiveRows, setPendingArchiveRows] = useState<FormulaTemplate[]>([]);
+  const [pendingArchiveRows, setPendingArchiveRows] = useState<FormulaTemplateRow[]>([]);
   const [isArchiving, setIsArchiving] = useState(false);
 
-  const [exportDialogTemplate, setExportDialogTemplate] = useState<FormulaTemplate | null>(null);
+  const [exportDialogTemplate, setExportDialogTemplate] = useState<FormulaTemplateRow | null>(null);
 
-  const [forkDialogTemplate, setForkDialogTemplate] = useState<FormulaTemplate | null>(null);
-  const [lineageDialogTemplate, setLineageDialogTemplate] = useState<FormulaTemplate | null>(null);
+  const [forkDialogTemplate, setForkDialogTemplate] = useState<FormulaTemplateRow | null>(null);
+  const [lineageDialogTemplate, setLineageDialogTemplate] = useState<FormulaTemplateRow | null>(
+    null,
+  );
 
-  const handleExportClick = useCallback((template: FormulaTemplate) => {
+  const handleExportClick = useCallback((template: FormulaTemplateRow) => {
     setExportDialogTemplate(template);
   }, []);
 
@@ -94,13 +98,13 @@ export default function FormulaTemplatesDataTable() {
   }, [queryClient]);
 
   const handleDuplicate = useCallback(
-    (row: Row<FormulaTemplate>) => {
+    (row: Row<FormulaTemplateRow>) => {
       const id = row.original.id;
       if (!id) return;
 
       toast.promise(
         apiService.formulaTemplateService.bulkDuplicate({
-          templateIds: [id] as string[],
+          templateIds: [id],
         }),
         {
           loading: "Duplicating template...",
@@ -117,7 +121,7 @@ export default function FormulaTemplatesDataTable() {
 
   const columns = useMemo(() => getColumns(), []);
 
-  const requestArchive = useCallback((templates: FormulaTemplate[]) => {
+  const requestArchive = useCallback((templates: FormulaTemplateRow[]) => {
     const withIds = templates.filter((template) => template.id);
     if (withIds.length === 0) {
       toast.error("No formula templates selected");
@@ -156,7 +160,7 @@ export default function FormulaTemplatesDataTable() {
       });
   }, [pendingArchiveRows, queryClient]);
 
-  const contextMenuActions = useMemo<RowAction<FormulaTemplate>[]>(
+  const contextMenuActions = useMemo<RowAction<FormulaTemplateRow>[]>(
     () => [
       {
         id: "fork",
@@ -197,18 +201,17 @@ export default function FormulaTemplatesDataTable() {
     [handleDuplicate, handleExportClick, requestArchive],
   );
 
-  const handleBulkExport = useCallback(async (rows: FormulaTemplate[]) => {
+  const handleBulkExport = useCallback(async (rows: FormulaTemplateRow[]) => {
     try {
-      const testCaseLists = await Promise.all(
-        rows.map((row) =>
-          row.id ? apiService.formulaTemplateService.listTestCases(row.id) : Promise.resolve([]),
-        ),
-      );
+      const [templates, testCaseLists] = await Promise.all([
+        Promise.all(rows.map((row) => apiService.formulaTemplateService.get(row.id))),
+        Promise.all(rows.map((row) => apiService.formulaTemplateService.listTestCases(row.id))),
+      ]);
       const testCasesByTemplateId = Object.fromEntries(
-        rows.flatMap((row, index) => (row.id ? [[row.id, testCaseLists[index]]] : [])),
+        rows.map((row, index) => [row.id, testCaseLists[index]]),
       );
 
-      const exportData = buildBulkExport(rows, testCasesByTemplateId);
+      const exportData = buildBulkExport(templates, testCasesByTemplateId);
       const filename = getBulkExportFilename();
       downloadJson(exportData, filename);
       toast.success(`Exported ${rows.length} templates`, {
@@ -221,7 +224,7 @@ export default function FormulaTemplatesDataTable() {
     }
   }, []);
 
-  const handleBulkDuplicate = useCallback((rows: FormulaTemplate[]) => {
+  const handleBulkDuplicate = useCallback((rows: FormulaTemplateRow[]) => {
     setPendingDuplicateRows(rows);
     setIsDuplicateDialogOpen(true);
   }, []);
@@ -231,7 +234,7 @@ export default function FormulaTemplatesDataTable() {
     setIsDuplicating(true);
     await apiService.formulaTemplateService
       .bulkDuplicate({
-        templateIds: ids as string[],
+        templateIds: ids,
       })
       .then(() => {
         toast.success("Templates duplicated successfully");
@@ -247,7 +250,7 @@ export default function FormulaTemplatesDataTable() {
       });
   }, [pendingDuplicateRows, queryClient]);
 
-  const dockActions = useMemo<DockAction<FormulaTemplate>[]>(
+  const dockActions = useMemo<DockAction<FormulaTemplateRow>[]>(
     () => [
       {
         id: "duplicate",
@@ -277,7 +280,7 @@ export default function FormulaTemplatesDataTable() {
 
   return (
     <>
-      <DataTable<FormulaTemplate>
+      <DataTable<FormulaTemplateRow>
         name="Formula Template"
         queryKey="formula-template-list"
         graphql={formulaTemplateTableGraphQLConfig}

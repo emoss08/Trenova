@@ -146,18 +146,21 @@ export function AutocompleteCommandContent<TOption>({
       graphql,
       initialLimit,
     ],
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam, signal }) => {
       if (graphql) {
-        return (await fetchGraphQLSelectOptions({
-          resource: graphql.resource,
-          query: debouncedSearchTerm,
-          page: pageParam,
-          initialLimit,
-          filters: {
-            ...selectOptionFiltersFromSearchParams(extraSearchParams),
-            ...graphql.filters,
+        return (await fetchGraphQLSelectOptions(
+          {
+            resource: graphql.resource,
+            query: debouncedSearchTerm,
+            page: pageParam,
+            initialLimit,
+            filters: {
+              ...selectOptionFiltersFromSearchParams(extraSearchParams),
+              ...graphql.filters,
+            },
           },
-        })) as GenericLimitOffsetResponse<TOption>;
+          { signal },
+        )) as GenericLimitOffsetResponse<TOption>;
       }
 
       return fetchOptions<TOption>(

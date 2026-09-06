@@ -32,14 +32,14 @@ fragment JurisdictionRuleTableRowFields on JurisdictionRule {
   }
 }
 
-query JurisdictionRuleTable($input: DataTableConnectionInput!) {
+query JurisdictionRuleTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   jurisdictionRules(input: $input) {
     edges {
       node {
         ...JurisdictionRuleTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -20,14 +20,14 @@ fragment CommodityTableRowFields on Commodity {
   updatedAt
 }
 
-query CommodityTable($input: DataTableConnectionInput!) {
+query CommodityTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   commodities(input: $input) {
     edges {
       node {
         ...CommodityTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

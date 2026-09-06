@@ -1,0 +1,193 @@
+"""
+The part of the business a position sits in. Headcount is read by department
+at least as often as by terminal, which is why it is an enum rather than free
+text somebody spells three ways.
+"""
+enum JobDepartment {
+  Operations
+  Safety
+  Maintenance
+  Billing
+  Administration
+  Sales
+  HumanResources
+  Executive
+  Other
+}
+
+"""
+What a delegation covers. A manager going away usually hands over everything;
+one handing a specific queue to a specialist hands over one thing, and a
+delegation that quietly covered more than it said would be worse than none.
+"""
+enum ApprovalScope {
+  All
+  TimeOff
+  Expenses
+}
+
+"""
+What somebody does, as distinct from where they do it. A fleet code is a
+terminal; this is the title the headcount is counted by and the org chart is
+drawn from.
+"""
+type JobPosition {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: EntityStatus!
+  code: String!
+  title: String!
+  description: String
+  department: JobDepartment!
+  """
+  Whether the position is exempt from overtime under the Fair Labor Standards
+  Act. Recorded per position because that is where the duties test is applied.
+  """
+  flsaExempt: Boolean!
+  "Separates the roster that needs a CDL from the one that does not."
+  isDrivingPosition: Boolean!
+  reportsToPositionId: ID
+  reportsTo: JobPosition
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input JobPositionInput {
+  code: String!
+  title: String!
+  description: String
+  department: JobDepartment!
+  flsaExempt: Boolean
+  isDrivingPosition: Boolean
+  reportsToPositionId: ID
+  status: EntityStatus
+}
+
+input UpdateJobPositionInput {
+  id: ID!
+  code: String!
+  title: String!
+  description: String
+  department: JobDepartment!
+  flsaExempt: Boolean
+  isDrivingPosition: Boolean
+  reportsToPositionId: ID
+  status: EntityStatus
+  version: Int
+}
+
+"""
+One person approving in another's place for a while. It widens what the
+delegate may act on; it never widens what the delegator could approve in the
+first place.
+"""
+type ApprovalDelegation {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  delegatorId: ID!
+  delegateId: ID!
+  scope: ApprovalScope!
+  startsAt: Timestamp!
+  endsAt: Timestamp
+  reason: String
+  """
+  Set when a delegation is called back before its window ends. The row is kept
+  rather than deleted so an approval made under it can still be explained.
+  """
+  revokedAt: Timestamp
+  revokedById: ID
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  delegator: User
+  delegate: User
+}
+
+input DelegateApprovalInput {
+  """
+  Whose approvals are being handed over. Left empty it is the signed-in user;
+  naming somebody else needs the manage grant.
+  """
+  delegatorId: ID
+  delegateId: ID!
+  scope: ApprovalScope
+  startsAt: Timestamp
+  endsAt: Timestamp
+  reason: String
+}
+
+"One grouping of the roster."
+type HeadcountRow {
+  key: String!
+  label: String!
+  code: String!
+  color: String!
+  workers: Int!
+  "How many of them hold a driving position, which is the number a safety director wants."
+  drivers: Int!
+  terminated: Int!
+}
+
+"The roster counted three ways."
+type Headcount {
+  activeTotal: Int!
+  driverTotal: Int!
+  terminated: Int!
+  byFleet: [HeadcountRow!]!
+  byPosition: [HeadcountRow!]!
+  byDepartment: [HeadcountRow!]!
+}
+
+"One person on a manager's team."
+type TeamMember {
+  workerId: ID!
+  name: String!
+  status: String!
+  fleetCodeId: ID
+  fleetCode: String!
+  fleetColor: String!
+  positionId: ID
+  positionTitle: String!
+  """
+  Whether the worker names this manager themselves, rather than being reached
+  through a terminal they run. A terminal manager covering forty drivers is not
+  forty direct reports.
+  """
+  direct: Boolean!
+  complianceStatus: String!
+  trainingHealth: String!
+  safetyRating: String!
+  hireDate: Timestamp!
+  terminationDate: Timestamp
+}
+
+extend type Query {
+  jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
+  jobPosition(id: ID!): JobPosition!
+  headcount: Headcount!
+  """
+  Everyone the signed-in user answers for, directly or through a terminal they
+  run, plus anyone delegated to them.
+  """
+  myTeam(includeInactive: Boolean): [TeamMember!]!
+  """
+  Delegations. Left unfiltered it is what the signed-in user has been handed;
+  naming a delegator reads what they have handed out.
+  """
+  approvalDelegations(
+    delegatorId: ID
+    delegateId: ID
+    activeOnly: Boolean
+  ): [ApprovalDelegation!]!
+}
+
+extend type Mutation {
+  createJobPosition(input: JobPositionInput!): JobPosition!
+  updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
+  delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
+  revokeApprovalDelegation(id: ID!): ApprovalDelegation!
+}

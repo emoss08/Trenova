@@ -11,10 +11,10 @@ import {
   ediMessageDeliveryStatusChoices,
   ediTransactionSetChoices,
 } from "@/lib/choices";
-import type { EDIMessage } from "@trenova/shared/types/edi";
+import type { EDIMessageRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getMessageColumns(): ColumnDef<EDIMessage>[] {
+export function getMessageColumns(): ColumnDef<EDIMessageRow>[] {
   return [
     {
       accessorKey: "transactionSet",

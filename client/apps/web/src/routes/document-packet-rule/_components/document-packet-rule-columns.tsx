@@ -1,13 +1,13 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { resourceTypeChoices } from "@/lib/choices";
-import type { DocumentPacketRule } from "@/types/document-packet-rule";
+import type { DocumentPacketRuleRow } from "@/lib/graphql/document-packet-rule-table";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(
   documentTypeMap: Map<string, DocumentType>,
-): ColumnDef<DocumentPacketRule>[] {
+): ColumnDef<DocumentPacketRuleRow>[] {
   return [
     {
       accessorKey: "resourceType",

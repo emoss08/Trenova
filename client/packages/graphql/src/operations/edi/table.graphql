@@ -37,14 +37,14 @@ fragment EdiPartnerRowFields on EdiPartner {
   }
 }
 
-query EdiPartnerTable($input: DataTableConnectionInput!) {
+query EdiPartnerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   ediPartners(input: $input) {
     edges {
       node {
         ...EdiPartnerRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -62,6 +62,7 @@ fragment EdiCommunicationProfileRowFields on EdiCommunicationProfile {
   status
   name
   description
+  config
   secretState {
     key
   }
@@ -75,14 +76,17 @@ fragment EdiCommunicationProfileRowFields on EdiCommunicationProfile {
   }
 }
 
-query EdiCommunicationProfileTable($input: DataTableConnectionInput!) {
+query EdiCommunicationProfileTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   ediCommunicationProfiles(input: $input) {
     edges {
       node {
         ...EdiCommunicationProfileRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -123,14 +127,18 @@ fragment EdiTransferRowFields on EdiTransfer {
   }
 }
 
-query EdiTransferTable($input: DataTableConnectionInput!, $direction: EdiTransferDirection!) {
+query EdiTransferTable(
+  $input: DataTableConnectionInput!
+  $direction: EdiTransferDirection!
+  $includeTotalCount: Boolean = true
+) {
   ediTransfers(input: $input, direction: $direction) {
     edges {
       node {
         ...EdiTransferRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -175,14 +183,14 @@ fragment EdiMessageRowFields on EdiMessage {
   }
 }
 
-query EdiMessageTable($input: DataTableConnectionInput!) {
+query EdiMessageTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   ediMessages(input: $input) {
     edges {
       node {
         ...EdiMessageRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -219,14 +227,14 @@ fragment EdiInboundFileRowFields on EdiInboundFile {
   }
 }
 
-query EdiInboundFileTable($input: DataTableConnectionInput!) {
+query EdiInboundFileTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   ediInboundFiles(input: $input) {
     edges {
       node {
         ...EdiInboundFileRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -259,14 +267,17 @@ fragment EdiMappingProfileRowFields on EdiMappingProfile {
   }
 }
 
-query EdiMappingProfileTable($input: DataTableConnectionInput!) {
+query EdiMappingProfileTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   ediMappingProfiles(input: $input) {
     edges {
       node {
         ...EdiMappingProfileRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -299,14 +310,18 @@ fragment EdiTestCaseRowFields on EdiTestCase {
   }
 }
 
-query EdiTestCaseTable($input: DataTableConnectionInput!, $partnerDocumentProfileId: ID) {
+query EdiTestCaseTable(
+  $input: DataTableConnectionInput!
+  $partnerDocumentProfileId: ID
+  $includeTotalCount: Boolean = true
+) {
   ediTestCases(input: $input, partnerDocumentProfileId: $partnerDocumentProfileId) {
     edges {
       node {
         ...EdiTestCaseRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

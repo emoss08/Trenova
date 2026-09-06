@@ -1,0 +1,2 @@
+{{ range .Digest }}- {{ .What }}{{ if .Overdue }} — overdue{{ if .DueAt }} since {{ .DueAt }}{{ end }}{{ else if gt .DueInDays 0 }} — due in {{ .DueInDays }} day{{ if ne .DueInDays 1 }}s{{ end }}{{ if .DueAt }}, on {{ .DueAt }}{{ end }}{{ else }} — due today{{ end }}
+{{ end }}Bring what you can to the office, or upload it in Dash.

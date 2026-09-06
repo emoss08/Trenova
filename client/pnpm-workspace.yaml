@@ -23,29 +23,67 @@ minimumReleaseAgeExclude:
   - "@graphql-codegen/typescript@6.1.0"
   - "@graphql-codegen/visitor-plugin-common@7.2.0"
   - "@graphql-tools/utils@11.2.0"
-  - "@vitest/browser-playwright@4.1.10"
-  - "@vitest/browser@4.1.10"
+  - '@vitest/browser-playwright@4.1.10 || 5.0.0'
+  - '@vitest/browser@4.1.10 || 5.0.0'
   - "@vitest/expect@4.1.10"
-  - "@vitest/mocker@4.1.10"
-  - "@vitest/pretty-format@4.1.10"
+  - '@vitest/mocker@4.1.10 || 5.0.0'
+  - '@vitest/pretty-format@4.1.10 || 5.0.0'
   - "@vitest/runner@4.1.10"
   - "@vitest/snapshot@4.1.10"
-  - "@vitest/spy@4.1.10"
-  - "@vitest/ui@4.1.10"
-  - "@vitest/utils@4.1.10"
-  - vitest@4.1.10
-  - '@cloudflare/vite-plugin@1.44.0 || 1.51.1'
+  - '@vitest/spy@4.1.10 || 5.0.0'
+  - '@vitest/ui@4.1.10 || 5.0.0'
+  - '@vitest/utils@4.1.10 || 5.0.0'
+  - vitest@4.1.10 || 5.0.0
+  - '@cloudflare/vite-plugin@1.44.0 || 1.51.1 || 1.54.4'
   - '@foony/realtime@0.14.0'
   - deslop-js@0.7.3 || 0.9.6
-  - lucide-react@1.24.0 || 1.30.0
-  - miniflare@4.20260708.1 || 5.20260801.1-alpha
+  - lucide-react@1.24.0 || 1.30.0 || 1.40.0
+  - miniflare@4.20260708.1 || 5.20260801.1-alpha || 5.20260903.0-alpha
   - oxlint-plugin-react-doctor@0.7.3 || 0.9.6
   - prettier@3.9.5
   - react-doctor@0.7.3 || 0.9.6
   - vite@8.1.4
-  - wrangler@4.110.0 || 4.120.0
+  - wrangler@4.110.0 || 4.120.0 || 4.129.0
   - '@tanstack/react-table@9.1.0'
   - '@tanstack/table-core@9.1.0'
   - happy-dom@20.11.2
-  - '@types/google.maps@3.65.5'
+  - '@types/google.maps@3.65.5 || 3.66.2'
   - '@types/node@26.2.0'
+  - '@cloudflare/workerd-darwin-64@1.20260903.1'
+  - '@cloudflare/workerd-darwin-arm64@1.20260903.1'
+  - '@cloudflare/workerd-linux-64@1.20260903.1'
+  - '@cloudflare/workerd-linux-arm64@1.20260903.1'
+  - '@cloudflare/workerd-windows-64@1.20260903.1'
+  - '@tiptap/core@3.31.2'
+  - '@tiptap/extension-blockquote@3.31.2'
+  - '@tiptap/extension-bold@3.31.2'
+  - '@tiptap/extension-bubble-menu@3.31.2'
+  - '@tiptap/extension-bullet-list@3.31.2'
+  - '@tiptap/extension-code-block@3.31.2'
+  - '@tiptap/extension-code@3.31.2'
+  - '@tiptap/extension-document@3.31.2'
+  - '@tiptap/extension-dropcursor@3.31.2'
+  - '@tiptap/extension-floating-menu@3.31.2'
+  - '@tiptap/extension-gapcursor@3.31.2'
+  - '@tiptap/extension-hard-break@3.31.2'
+  - '@tiptap/extension-heading@3.31.2'
+  - '@tiptap/extension-horizontal-rule@3.31.2'
+  - '@tiptap/extension-italic@3.31.2'
+  - '@tiptap/extension-link@3.31.2'
+  - '@tiptap/extension-list-item@3.31.2'
+  - '@tiptap/extension-list-keymap@3.31.2'
+  - '@tiptap/extension-list@3.31.2'
+  - '@tiptap/extension-mention@3.31.2'
+  - '@tiptap/extension-ordered-list@3.31.2'
+  - '@tiptap/extension-paragraph@3.31.2'
+  - '@tiptap/extension-placeholder@3.31.2'
+  - '@tiptap/extension-strike@3.31.2'
+  - '@tiptap/extension-text@3.31.2'
+  - '@tiptap/extension-underline@3.31.2'
+  - '@tiptap/extensions@3.31.2'
+  - '@tiptap/pm@3.31.2'
+  - '@tiptap/react@3.31.2'
+  - '@tiptap/starter-kit@3.31.2'
+  - '@tiptap/suggestion@3.31.2'
+  - '@types/react-dom@19.2.7'
+  - workerd@1.20260903.1

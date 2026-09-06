@@ -121,8 +121,8 @@ type EdiPartner {
   enabledForInbound: Boolean!
   enabledForOutbound: Boolean!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   internalOrganization: Organization
   connection: EdiConnection
   defaultTransport: EdiCommunicationProfile
@@ -142,10 +142,15 @@ type EdiCommunicationProfile {
   status: EntityStatus!
   name: String!
   description: String
+  """
+  Transport settings for the connection method (AS2, SFTP, VAN, HTTP...). Secret
+  values are never included; see secretState for which ones are set.
+  """
+  config: JSON!
   secretState: [EdiCommunicationProfileSecretState!]
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   partner: EdiPartner
 }
 
@@ -165,11 +170,11 @@ type EdiTransfer {
   mappingSnapshot: Any!
   rejectionReason: String
   failureReason: String
-  submittedAt: Int!
-  processedAt: Int
+  submittedAt: Timestamp!
+  processedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   sourcePartner: EdiPartner
   targetPartner: EdiPartner
 }
@@ -197,17 +202,17 @@ type EdiMessage {
   deliveryStatus: EdiMessageDeliveryStatus
   deliveryRemotePath: String
   deliveryAttempts: Int!
-  deliveryLastAttemptAt: Int
-  deliverySentAt: Int
+  deliveryLastAttemptAt: Timestamp
+  deliverySentAt: Timestamp
   deliveryLastError: String
   ackStatus: EdiMessageAckStatus
   ackMessageId: ID
-  ackReceivedAt: Int
+  ackReceivedAt: Timestamp
   ackLastError: String
-  generatedAt: Int!
+  generatedAt: Timestamp!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   partner: EdiPartner
 }
 
@@ -230,11 +235,11 @@ type EdiInboundFile {
   status: EdiInboundFileStatus!
   failureReason: String
   transactionCount: Int!
-  receivedAt: Int!
-  processedAt: Int
+  receivedAt: Timestamp!
+  processedAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   partner: EdiPartner
 }
 
@@ -255,14 +260,14 @@ type EdiTemplateVersion {
   archiveNotes: String
   deprecatedNotes: String
   supersededNotes: String
-  certifiedAt: Int
-  activatedAt: Int
-  archivedAt: Int
-  deprecatedAt: Int
-  supersededAt: Int
+  certifiedAt: Timestamp
+  activatedAt: Timestamp
+  archivedAt: Timestamp
+  deprecatedAt: Timestamp
+  supersededAt: Timestamp
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type EdiTemplate {
@@ -277,8 +282,8 @@ type EdiTemplate {
   transactionSet: String!
   status: EdiTemplateStatus!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   activeVersion: EdiTemplateVersion
   versions: [EdiTemplateVersion!]
 }
@@ -295,8 +300,8 @@ type EdiMappingProfileItem {
   targetId: ID!
   targetLabel: String
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type EdiMappingProfile {
@@ -307,8 +312,8 @@ type EdiMappingProfile {
   name: String!
   description: String
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   partner: EdiPartner
   entries: [EdiMappingProfileItem!]
 }
@@ -409,8 +414,8 @@ type EdiTestCase {
   expectedWarnings: Int!
   expectedErrors: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   documentProfile: EdiPartnerDocumentProfile
 }
 
@@ -427,7 +432,7 @@ type EdiSummaryAttentionItem {
   partnerCode: String
   reference: String
   error: String
-  occurredAt: Int!
+  occurredAt: Timestamp!
 }
 
 enum EdiSummaryAttentionKind {
@@ -470,7 +475,7 @@ type EdiPartnerScorecard {
 }
 
 type EdiVolumePoint {
-  bucketStart: Int!
+  bucketStart: Timestamp!
   bucketSeconds: Int!
   outboundCount: Int!
   sentCount: Int!

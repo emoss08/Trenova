@@ -20,10 +20,11 @@ func TestProvideLogger_BuildsForStandardOutputs(t *testing.T) {
 		cfg := newValidConfig()
 		cfg.Logging.Output = "stdout"
 
-		logger, err := ProvideLogger(cfg)
+		logger, sink, err := ProvideLogger(cfg)
 
 		require.NoError(t, err)
 		require.NotNil(t, logger)
+		require.NoError(t, sink.Close())
 	})
 
 	t.Run("stderr", func(t *testing.T) {
@@ -32,10 +33,11 @@ func TestProvideLogger_BuildsForStandardOutputs(t *testing.T) {
 		cfg := newValidConfig()
 		cfg.Logging.Output = "stderr"
 
-		logger, err := ProvideLogger(cfg)
+		logger, sink, err := ProvideLogger(cfg)
 
 		require.NoError(t, err)
 		require.NotNil(t, logger)
+		require.NoError(t, sink.Close())
 	})
 }
 
@@ -47,8 +49,9 @@ func TestProvideLogger_FileOutputWritesLog(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(cfg)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = sink.Close() })
 
 	logger.Info("file log message")
 	require.NoError(t, logger.Sync())
@@ -67,8 +70,9 @@ func TestProvideLogger_UsesJSONFormat(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(cfg)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = sink.Close() })
 
 	logger.Info("json message")
 	require.NoError(t, logger.Sync())
@@ -87,8 +91,9 @@ func TestProvideLogger_UsesTextFormat(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(cfg)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = sink.Close() })
 
 	logger.Info("text message")
 	require.NoError(t, logger.Sync())
@@ -107,8 +112,9 @@ func TestProvideLogger_RespectsLogLevel(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(cfg)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = sink.Close() })
 
 	logger.Info("info message")
 	logger.Error("error message")
@@ -129,8 +135,9 @@ func TestProvideLogger_DisablesSamplingWhenConfigured(t *testing.T) {
 	cfg.Logging.File = testLogFileConfig(logPath)
 	cfg.Logging.Sampling = false
 
-	logger, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(cfg)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = sink.Close() })
 
 	for range 5 {
 		logger.Info("repeat message")

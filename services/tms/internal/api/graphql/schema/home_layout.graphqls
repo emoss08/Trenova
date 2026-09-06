@@ -97,8 +97,8 @@ type HomeLayoutPreset {
   priority: Int!
   assignedUserCount: Int!
   version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 input HomeWidgetConfigInput {

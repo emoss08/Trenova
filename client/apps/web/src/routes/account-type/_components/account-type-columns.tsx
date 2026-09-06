@@ -6,12 +6,13 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { accountCategoryChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { AccountTypeRow } from "@/lib/graphql/account-type-table";
 import type { AccountType } from "@/types/account-type";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function AccountTypeStatusCell({ row }: { row: AccountType }) {
+function AccountTypeStatusCell({ row }: { row: AccountTypeRow }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -37,7 +38,7 @@ function AccountTypeStatusCell({ row }: { row: AccountType }) {
   );
 }
 
-export function getColumns(): ColumnDef<AccountType>[] {
+export function getColumns(): ColumnDef<AccountTypeRow>[] {
   return [
     {
       accessorKey: "status",
@@ -60,7 +61,7 @@ export function getColumns(): ColumnDef<AccountType>[] {
       header: "Code",
       cell: ({ row }) => {
         const { code, color } = row.original;
-        return <DataTableColorColumn text={code} color={color} />;
+        return <DataTableColorColumn text={code} color={color ?? undefined} />;
       },
       meta: {
         apiField: "code",

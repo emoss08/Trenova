@@ -53,11 +53,6 @@ type WorkerSyncDriftRecord struct {
 	DetectedAt      int64  `json:"detectedAt"`
 }
 
-type ListExpiringCredentialsRequest struct {
-	HorizonDays int `json:"horizonDays"`
-	GraceDays   int `json:"graceDays"`
-}
-
 type WorkerRepository interface {
 	List(
 		ctx context.Context,
@@ -92,8 +87,47 @@ type WorkerRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]WorkerSyncDriftRecord, error)
-	ListWorkersWithExpiringCredentials(
+	PatchProfileCredentialField(
 		ctx context.Context,
-		req ListExpiringCredentialsRequest,
-	) ([]*worker.Worker, error)
+		req *PatchProfileCredentialFieldRequest,
+	) error
+	UpdateProfileComplianceStatus(
+		ctx context.Context,
+		req *UpdateProfileComplianceStatusRequest,
+	) error
+	UpdateProfileQualification(
+		ctx context.Context,
+		req *UpdateProfileQualificationRequest,
+	) error
+	UpdateProfileTrainingRollup(
+		ctx context.Context,
+		req *UpdateProfileTrainingRollupRequest,
+	) error
+	UpdateProfileSafetyRollup(
+		ctx context.Context,
+		req *UpdateProfileSafetyRollupRequest,
+	) error
+	CountRosterAttention(
+		ctx context.Context,
+		req *CountRosterAttentionRequest,
+	) (*RosterAttention, error)
+}
+
+// CountRosterAttentionRequest asks how many active workers need attention.
+// ExpiryHorizon is the cutoff for "expiring soon"; the caller owns the clock
+// so the answer is stable within a request.
+type CountRosterAttentionRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
+	ExpiryHorizon int64                 `json:"expiryHorizon"`
+}
+
+// RosterAttention counts the roster in the terms HR works in. Every number is
+// read from the roll-up columns on worker_profiles in one pass, which is the
+// reason those columns exist.
+type RosterAttention struct {
+	ActiveWorkers   int `bun:"active_workers"`
+	NonCompliant    int `bun:"non_compliant"`
+	TrainingOverdue int `bun:"training_overdue"`
+	AtRisk          int `bun:"at_risk"`
+	ExpiringSoon    int `bun:"expiring_soon"`
 }

@@ -20,6 +20,7 @@ type UpdateOrganizationSettingsResponse = {
 
 export async function getOrganizationSettingsGraphQL(
   organizationId: OrganizationSettings["id"],
+  options?: { signal?: AbortSignal },
 ): Promise<OrganizationSettings> {
   const data = await requestGraphQL<OrganizationSettingsResponse>({
     document: OrganizationSettingsDocument,
@@ -29,6 +30,7 @@ export async function getOrganizationSettingsGraphQL(
       includeState: true,
       includeBu: false,
     },
+    signal: options?.signal,
   });
 
   return safeParse(organizationSettingsSchema, data.organization, "OrganizationSettings");

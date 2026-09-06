@@ -2,30 +2,68 @@ import { useTheme } from "@trenova/shared/components/theme-provider";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useState } from "react";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import { createHighlighterCore, type HighlighterCore } from "shiki/core";
-import vitesseBlack from "shiki/themes/vitesse-black.mjs";
-import vitesseDark from "shiki/themes/vitesse-dark.mjs";
-import vitesseLight from "shiki/themes/vitesse-light.mjs";
-import jsonLanguage from "shiki/langs/json.mjs";
-import javascriptLanguage from "shiki/langs/javascript.mjs";
-import plsqlLanguage from "shiki/langs/plsql.mjs";
-import graphqlLanguage from "shiki/langs/graphql.mjs";
+import {
+  createHighlighterCore,
+  type HighlighterCore,
+  type LanguageInput,
+  type ThemeInput,
+} from "shiki/core";
 
 type ResolvedTheme = "light" | "dark";
 type SupportedLang = "json" | "plsql" | "javascript" | "graphql";
 type DarkTheme = "vitesse-black" | "vitesse-dark";
+type ShikiTheme = DarkTheme | "vitesse-light";
+
+// Grammars and themes are fetched per code block rather than bundled together.
+// The four grammars come to roughly 750 kB — the GraphQL one alone embeds the
+// TypeScript grammar — and any given block needs exactly one of them.
+const LANGUAGE_LOADERS: Record<SupportedLang, LanguageInput> = {
+  json: () => import("shiki/langs/json.mjs"),
+  plsql: () => import("shiki/langs/plsql.mjs"),
+  javascript: () => import("shiki/langs/javascript.mjs"),
+  graphql: () => import("shiki/langs/graphql.mjs"),
+};
+
+const THEME_LOADERS: Record<ShikiTheme, ThemeInput> = {
+  "vitesse-light": () => import("shiki/themes/vitesse-light.mjs"),
+  "vitesse-black": () => import("shiki/themes/vitesse-black.mjs"),
+  "vitesse-dark": () => import("shiki/themes/vitesse-dark.mjs"),
+};
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
+const pendingLanguages = new Map<SupportedLang, Promise<void>>();
+const pendingThemes = new Map<ShikiTheme, Promise<void>>();
 
 function getHighlighter() {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighterCore({
-      themes: [vitesseLight, vitesseBlack, vitesseDark],
-      langs: [jsonLanguage, plsqlLanguage, javascriptLanguage, graphqlLanguage],
-      engine: createJavaScriptRegexEngine(),
-    });
-  }
+  highlighterPromise ??= createHighlighterCore({
+    themes: [],
+    langs: [],
+    engine: createJavaScriptRegexEngine(),
+  });
   return highlighterPromise;
+}
+
+/**
+ * Resolves a highlighter that has exactly the requested grammar and theme
+ * registered. Each grammar and theme is fetched and registered once per page.
+ */
+async function getHighlighterFor(lang: SupportedLang, theme: ShikiTheme) {
+  const highlighter = await getHighlighter();
+
+  let language = pendingLanguages.get(lang);
+  if (!language) {
+    language = highlighter.loadLanguage(LANGUAGE_LOADERS[lang]);
+    pendingLanguages.set(lang, language);
+  }
+
+  let themeRegistration = pendingThemes.get(theme);
+  if (!themeRegistration) {
+    themeRegistration = highlighter.loadTheme(THEME_LOADERS[theme]);
+    pendingThemes.set(theme, themeRegistration);
+  }
+
+  await Promise.all([language, themeRegistration]);
+  return highlighter;
 }
 
 function useResolvedTheme(): ResolvedTheme {
@@ -69,8 +107,8 @@ export function ShikiCodeBlock({
     let cancelled = false;
 
     async function render() {
-      const highlighter = await getHighlighter();
-      const shikiTheme = resolvedTheme === "dark" ? darkTheme : "vitesse-light";
+      const shikiTheme: ShikiTheme = resolvedTheme === "dark" ? darkTheme : "vitesse-light";
+      const highlighter = await getHighlighterFor(lang, shikiTheme);
       let rendered = highlighter.codeToHtml(code, {
         lang,
         theme: shikiTheme,

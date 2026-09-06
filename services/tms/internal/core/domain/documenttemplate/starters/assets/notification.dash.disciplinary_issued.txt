@@ -1,0 +1,1 @@
+A {{ if .DisciplineLevel }}{{ .DisciplineLevel }}{{ else }}disciplinary action{{ end }} has been added to your record{{ if .DisciplineReason }}: {{ .DisciplineReason }}{{ end }}. Open Dash under Profile → Safety to read it and acknowledge it; you can add your response there.

@@ -518,6 +518,66 @@ func (rr *RouteRegistry) registerEquipmentRoutes() {
 
 func (rr *RouteRegistry) registerWorkerRoutes() {
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/checklist-templates",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceWorkerChecklistTemplate, Operation: OpRead},
+		},
+		DisplayName: "Checklist Templates",
+		Category:    "Workers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/holidays",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceOrgHoliday, Operation: OpRead},
+		},
+		DisplayName: "Holiday Calendar",
+		Category:    "Workers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/review-templates",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourcePerformanceReviewTemplate, Operation: OpRead},
+		},
+		DisplayName: "Review Templates",
+		Category:    "Workers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/training-courses",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceTrainingCourse, Operation: OpRead},
+		},
+		DisplayName: "Training Courses",
+		Category:    "Workers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/credential-types",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceWorkerCredentialType, Operation: OpRead},
+		},
+		DisplayName: "Credential Types",
+		Category:    "Workers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/pto-policies",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourcePTOPolicy, Operation: OpRead},
+		},
+		DisplayName: "PTO Policies",
+		Category:    "Workers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/workers",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

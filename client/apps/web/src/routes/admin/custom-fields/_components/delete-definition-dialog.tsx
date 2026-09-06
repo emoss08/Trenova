@@ -10,8 +10,9 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-definition-table";
 import { CustomFieldService } from "@/services/custom-field";
-import type { CustomFieldDefinition, DefinitionUsageStats } from "@/types/custom-field";
+import type { DefinitionUsageStats } from "@/types/custom-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +21,7 @@ import { toast } from "sonner";
 type DeleteDefinitionDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  definition: CustomFieldDefinition | null;
+  definition: CustomFieldDefinitionRow | null;
 };
 
 const customFieldService = new CustomFieldService();

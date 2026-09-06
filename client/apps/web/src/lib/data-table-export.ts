@@ -1,7 +1,7 @@
 import type { RowData } from "@tanstack/react-table";
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import type {
-  DataTableGraphQLConfig,
+  DataTableGraphQLSource,
   DataTableQueryOptions,
   Column,
 } from "@trenova/shared/types/data-table";
@@ -94,11 +94,12 @@ export type ExportProgress = {
 };
 
 export type FetchAllRowsParams<TData extends Record<string, unknown>> = {
-  graphql: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLSource<TData>;
   options: Omit<DataTableQueryOptions, "cursor">;
   maxRows?: number;
   onProgress?: (progress: ExportProgress) => void;
   isCancelled?: () => boolean;
+  signal?: AbortSignal;
 };
 
 export async function fetchAllRows<TData extends Record<string, unknown>>({
@@ -107,22 +108,29 @@ export async function fetchAllRows<TData extends Record<string, unknown>>({
   maxRows = EXPORT_MAX_ROWS,
   onProgress,
   isCancelled,
+  signal,
 }: FetchAllRowsParams<TData>): Promise<TData[]> {
   const rows: TData[] = [];
   let cursor: string | undefined;
+  let total: number | null = null;
 
   for (;;) {
-    if (isCancelled?.()) break;
+    if (isCancelled?.() || signal?.aborted) break;
 
     const pageSize = Math.min(EXPORT_PAGE_SIZE, maxRows - rows.length);
     if (pageSize <= 0) break;
 
-    const page = await fetchGraphQLData<TData>(pageSize, graphql, { ...options, cursor });
+    const page = await fetchGraphQLData<TData>(
+      pageSize,
+      graphql,
+      { ...options, cursor },
+      { signal },
+    );
     rows.push(...page.results);
-    onProgress?.({
-      fetched: rows.length,
-      total: page.pageInfo?.totalCount != null ? Math.min(page.pageInfo.totalCount, maxRows) : null,
-    });
+    if (page.pageInfo?.totalCount != null) {
+      total = Math.min(page.pageInfo.totalCount, maxRows);
+    }
+    onProgress?.({ fetched: rows.length, total });
 
     if (!page.pageInfo?.hasNextPage || !page.pageInfo.endCursor) break;
     cursor = page.pageInfo.endCursor;

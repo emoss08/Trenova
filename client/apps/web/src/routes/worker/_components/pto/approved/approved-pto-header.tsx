@@ -1,12 +1,24 @@
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
+import { BarChart3Icon, CalendarDaysIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";
 import { usePTOFilters } from "../use-pto-filters";
-import { ptoOverviewFiltersSearchParamsParser } from "../use-pto-state";
+import {
+  ptoOverviewFiltersSearchParamsParser,
+  ptoViewTypeSearchParamsParser,
+  type PTOViewType,
+} from "../use-pto-state";
+
+const VIEW_ITEMS = [
+  { value: "chart" as const, label: "Chart", icon: BarChart3Icon },
+  { value: "calendar" as const, label: "Calendar", icon: CalendarDaysIcon },
+];
 
 export function ApprovedPTOHeader() {
   const [, setSearchParams] = useQueryStates(ptoOverviewFiltersSearchParamsParser);
+  const [{ viewType }, setViewType] = useQueryStates(ptoViewTypeSearchParamsParser);
   const { defaultValues } = usePTOFilters();
 
   const handleFilterSubmit = (data: PTOFilter) => {
@@ -35,6 +47,13 @@ export function ApprovedPTOHeader() {
 
   return (
     <HeaderContent title="Approved PTO Overview">
+      <SegmentedControl<PTOViewType>
+        items={VIEW_ITEMS}
+        value={viewType}
+        className="h-full"
+        onValueChange={(value) => void setViewType({ viewType: value })}
+        aria-label="PTO view"
+      />
       <PTOFilterPopover
         defaultValues={defaultValues}
         onSubmit={handleFilterSubmit}

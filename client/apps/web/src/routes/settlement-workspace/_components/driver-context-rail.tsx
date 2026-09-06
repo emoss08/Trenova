@@ -124,7 +124,7 @@ function UnsettledPaySection({
   const [holdTarget, setHoldTarget] = useState<DriverPayEventRow | null>(null);
   const { data: events, isLoading } = useQuery({
     queryKey: ["worker-unsettled-events", workerId],
-    queryFn: () => fetchWorkerUnsettledPayEvents(workerId),
+    queryFn: ({ signal }) => fetchWorkerUnsettledPayEvents(workerId, { signal }),
   });
 
   const canAttach = selectedSettlement?.status === "Draft";
@@ -304,7 +304,7 @@ function HoldDialog({
 function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged: () => void }) {
   const { data: earnings, isLoading } = useQuery({
     queryKey: ["worker-recurring-earnings", workerId],
-    queryFn: () => fetchWorkerRecurringEarnings(workerId),
+    queryFn: ({ signal }) => fetchWorkerRecurringEarnings(workerId, { signal }),
   });
 
   const toggleMutation = useMutation({
@@ -402,7 +402,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
 function DeductionsSection({ workerId, onChanged }: { workerId: string; onChanged: () => void }) {
   const { data: deductions, isLoading } = useQuery({
     queryKey: ["worker-recurring-deductions", workerId],
-    queryFn: () => fetchWorkerRecurringDeductions(workerId),
+    queryFn: ({ signal }) => fetchWorkerRecurringDeductions(workerId, { signal }),
   });
 
   const toggleMutation = useMutation({
@@ -501,7 +501,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
 function AdvancesSection({ workerId }: { workerId: string }) {
   const { data: advances, isLoading } = useQuery({
     queryKey: ["worker-pay-advances", workerId],
-    queryFn: () => fetchWorkerPayAdvances(workerId),
+    queryFn: ({ signal }) => fetchWorkerPayAdvances(workerId, { signal }),
   });
 
   if (isLoading) {
@@ -562,7 +562,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
 function EscrowSection({ workerId }: { workerId: string }) {
   const { data: summary, isLoading } = useQuery({
     queryKey: ["worker-earnings-summary", workerId],
-    queryFn: () => fetchWorkerEarningsSummary(workerId),
+    queryFn: ({ signal }) => fetchWorkerEarningsSummary(workerId, { signal }),
   });
 
   if (isLoading) {

@@ -5,36 +5,39 @@ import {
   type MatchRoutingGuideInput,
   type MatchRoutingGuideQuery,
   type RoutingGuideOptionsQuery,
-  type RoutingGuideTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import type { RoutingGuide } from "@trenova/shared/types/routing-guide";
 
-export const routingGuideTableGraphQLConfig = defineDataTableGraphQLConfig<
-  RoutingGuide,
-  RoutingGuideTableQueryVariables
->({
+export const routingGuideTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: RoutingGuideTableDocument,
   operationName: "RoutingGuideTable",
   connectionKey: "routingGuides",
 });
+
+export type RoutingGuideRow = DataTableConfigRow<typeof routingGuideTableGraphQLConfig>;
 
 export type MatchedRoutingGuide = NonNullable<MatchRoutingGuideQuery["matchRoutingGuide"]>;
 export type RoutingGuideOption = RoutingGuideOptionsQuery["routingGuides"]["edges"][number]["node"];
 
 export async function matchRoutingGuideGraphQL(
   input: MatchRoutingGuideInput,
+  options?: { signal?: AbortSignal },
 ): Promise<MatchedRoutingGuide | null> {
   const data = await requestGraphQL({
     document: MatchRoutingGuideDocument,
     operationName: "MatchRoutingGuide",
     variables: { input },
+    signal: options?.signal,
   });
   return data.matchRoutingGuide ?? null;
 }
 
-export async function getRoutingGuideOptionsGraphQL(query: string): Promise<RoutingGuideOption[]> {
+export async function getRoutingGuideOptionsGraphQL(
+  query: string,
+  options?: { signal?: AbortSignal },
+): Promise<RoutingGuideOption[]> {
   const data = await requestGraphQL({
     document: RoutingGuideOptionsDocument,
     operationName: "RoutingGuideOptions",
@@ -45,6 +48,7 @@ export async function getRoutingGuideOptionsGraphQL(query: string): Promise<Rout
         fieldFilters: [{ field: "status", operator: "eq", value: "Active" }],
       },
     },
+    signal: options?.signal,
   });
   return data.routingGuides.edges.map((edge) => edge.node);
 }

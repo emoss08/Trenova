@@ -144,7 +144,7 @@ function RecentLogsSection({ enabled }: { enabled: boolean }) {
 
   const logs = useQuery({
     queryKey: ["dash-hos-logs", range.start, range.end],
-    queryFn: () => fetchMyHosDailyLogs(range.start, range.end),
+    queryFn: ({ signal }) => fetchMyHosDailyLogs(range.start, range.end, { signal }),
     staleTime: 60_000,
     enabled,
   });
@@ -206,7 +206,7 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
 
   const violations = useQuery({
     queryKey: ["dash-hos-violations", since],
-    queryFn: () => fetchMyHosViolations(since),
+    queryFn: ({ signal }) => fetchMyHosViolations(since, { signal }),
     staleTime: 60_000,
     enabled,
   });
@@ -250,7 +250,7 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
 export function DashHosPage() {
   const state = useQuery({
     queryKey: ["dash-hos-state"],
-    queryFn: fetchMyHosState,
+    queryFn: ({ signal }) => fetchMyHosState({ signal }),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });

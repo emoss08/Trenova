@@ -2,6 +2,12 @@
 #
 # Mapper generation discovers eligible gqlgen-bound domain objects globally.
 # Add entries here only when inference needs a skip, excluded field, rename, or create default.
+#
+# Patch inputs marked `@goField(omittable: true)` get PATCH semantics: an absent field
+# leaves the entity untouched, an explicit null clears it. A field whose domain column is
+# neither a pointer, a slice, a map, nor `nullzero` is inferred as required-on-entity and
+# an explicit null is rejected with a validation error instead. Force either direction
+# per input field with `required: [field]` or `clearable: [field]`.
 types:
   EquipmentType:
     imports:

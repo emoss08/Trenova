@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/graph-gophers/dataloader/v7"
+	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
 )
 
@@ -31,26 +31,20 @@ func NewEDIPartnerByCustomerIDLoaderFactory(
 
 func (f *EDIPartnerByCustomerIDLoaderFactory) NewForTenant(
 	tenantInfo pagination.TenantInfo,
-) *dataloader.Loader[string, *edi.EDIPartner] {
-	return dataloader.NewBatchedLoader(f.batchFunc(tenantInfo))
+) *dataloadgen.Loader[string, *edi.EDIPartner] {
+	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *EDIPartnerByCustomerIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) dataloader.BatchFunc[string, *edi.EDIPartner] {
-	return func(
-		ctx context.Context,
-		keys []string,
-	) []*dataloader.Result[*edi.EDIPartner] {
-		results := make([]*dataloader.Result[*edi.EDIPartner], len(keys))
+) batchFetchFunc[*edi.EDIPartner] {
+	return func(ctx context.Context, keys []string) ([]*edi.EDIPartner, []error) {
+		values := make([]*edi.EDIPartner, len(keys))
+		errs := make([]error, len(keys))
 
-		customerIDs := make([]pulid.ID, 0, len(keys))
-		for _, key := range keys {
-			parsed, err := pulid.MustParse(key)
-			if err != nil {
-				continue
-			}
-			customerIDs = append(customerIDs, parsed)
+		customerIDs, indexesByID := parseBatchKeys(keys, errs)
+		if len(customerIDs) == 0 {
+			return values, errs
 		}
 
 		partners, err := f.partnerRepo.ListInternalOutboundPartnersByCustomerIDs(
@@ -61,10 +55,8 @@ func (f *EDIPartnerByCustomerIDLoaderFactory) batchFunc(
 			},
 		)
 		if err != nil {
-			for i := range results {
-				results[i] = &dataloader.Result[*edi.EDIPartner]{Error: err}
-			}
-			return results
+			fillMissingErrors(errs, err)
+			return values, errs
 		}
 
 		byCustomerID := make(map[pulid.ID]*edi.EDIPartner, len(partners))
@@ -74,15 +66,12 @@ func (f *EDIPartnerByCustomerIDLoaderFactory) batchFunc(
 			}
 		}
 
-		for i, key := range keys {
-			parsed, parseErr := pulid.MustParse(key)
-			if parseErr != nil {
-				results[i] = &dataloader.Result[*edi.EDIPartner]{Error: parseErr}
-				continue
+		for _, id := range customerIDs {
+			for _, idx := range indexesByID[id] {
+				values[idx] = byCustomerID[id]
 			}
-			results[i] = &dataloader.Result[*edi.EDIPartner]{Data: byCustomerID[parsed]}
 		}
 
-		return results
+		return values, errs
 	}
 }

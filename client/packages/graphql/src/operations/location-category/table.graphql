@@ -16,14 +16,14 @@ fragment LocationCategoryTableRowFields on LocationCategory {
   updatedAt
 }
 
-query LocationCategoryTable($input: DataTableConnectionInput!) {
+query LocationCategoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
   locationCategories(input: $input) {
     edges {
       node {
         ...LocationCategoryTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

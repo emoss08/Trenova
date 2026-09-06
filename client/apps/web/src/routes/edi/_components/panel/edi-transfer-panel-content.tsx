@@ -1,10 +1,10 @@
 "use no memo";
 
-import type { EDITransfer } from "@trenova/shared/types/edi";
+import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import type { ReactNode } from "react";
 
 type EDITransferPanelContentProps = {
-  transfer: EDITransfer;
+  transfer: EDITransferRow;
   children: ReactNode;
 };
 

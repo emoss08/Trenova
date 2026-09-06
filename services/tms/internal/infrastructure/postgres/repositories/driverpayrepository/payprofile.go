@@ -82,27 +82,31 @@ func (r *payProfileRepository) ListConnection(
 	log := r.l.With(zap.String("operation", "ListConnection"))
 
 	dba := r.db.DBForContext(ctx)
-	total, err := dba.
-		NewSelect().
-		Model((*driverpay.PayProfile)(nil)).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFiltersWithoutSort(
-				sq,
-				"dpp",
-				req.Filter,
-				(*driverpay.PayProfile)(nil),
-			)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count pay profiles", zap.Error(err))
-		return nil, err
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*driverpay.PayProfile)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					"dpp",
+					req.Filter,
+					(*driverpay.PayProfile)(nil),
+				)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count pay profiles", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
 	}
 
 	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*driverpay.PayProfile]{
 		Filter:     req.Filter,
 		Cursor:     req.Cursor,
-		TotalCount: &total,
+		TotalCount: totalCount,
 		Query: func(entities *[]*driverpay.PayProfile) *bun.SelectQuery {
 			return dba.NewSelect().
 				Model(entities).
@@ -254,6 +258,34 @@ func (r *payProfileRepository) CountActiveAssignments(
 		return 0, fmt.Errorf("count active pay assignments: %w", err)
 	}
 	return count, nil
+}
+
+func (r *payProfileRepository) CountActiveAssignmentsByIDs(
+	ctx context.Context,
+	req repositories.CountActivePayAssignmentsRequest,
+) (map[pulid.ID]int, error) {
+	if len(req.ProfileIDs) == 0 {
+		return map[pulid.ID]int{}, nil
+	}
+
+	cols := buncolgen.WorkerPayAssignmentColumns
+	q := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*driverpay.WorkerPayAssignment)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.WorkerPayAssignmentScopeTenant(sq, req.TenantInfo).
+				Where(cols.PayProfileID.In(), bun.In(req.ProfileIDs)).
+				WhereGroup(" OR ", func(og *bun.SelectQuery) *bun.SelectQuery {
+					return og.Where(cols.EffectiveTo.IsNull()).
+						WhereOr(cols.EffectiveTo.Gt(), bun.Safe(r.db.NowEpoch()))
+				})
+		})
+
+	counts, err := dbhelper.CountByID(ctx, q, cols.PayProfileID, len(req.ProfileIDs))
+	if err != nil {
+		return nil, fmt.Errorf("count active pay assignments by profile: %w", err)
+	}
+	return counts, nil
 }
 
 func assignComponentFields(entity *driverpay.PayProfile) {

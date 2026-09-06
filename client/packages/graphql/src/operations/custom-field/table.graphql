@@ -11,19 +11,41 @@ fragment CustomFieldDefinitionTableRowFields on CustomFieldDefinition {
   isActive
   displayOrder
   color
+  options {
+    value
+    label
+    color
+    description
+  }
+  validationRules {
+    minLength
+    maxLength
+    min
+    max
+    pattern
+  }
+  defaultValue
+  uiAttributes {
+    placeholder
+    helpText
+    width
+  }
   version
   createdAt
   updatedAt
 }
 
-query CustomFieldDefinitionTable($input: DataTableConnectionInput!) {
+query CustomFieldDefinitionTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
   customFieldDefinitions(input: $input) {
     edges {
       node {
         ...CustomFieldDefinitionTableRowFields
       }
     }
-    totalCount
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

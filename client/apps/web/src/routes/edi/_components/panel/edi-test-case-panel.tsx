@@ -8,6 +8,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import type { EDITestCaseTableRow } from "@/lib/graphql/edi-table";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -36,7 +37,7 @@ export function TestCasePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<EDITestCaseRow>) {
+}: DataTablePanelProps<EDITestCaseTableRow>) {
   if (mode === "create") {
     return <CreateTestCasePanel open={open} onOpenChange={onOpenChange} />;
   }

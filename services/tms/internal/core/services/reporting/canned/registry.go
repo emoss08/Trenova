@@ -76,5 +76,12 @@ func Default() *Registry {
 		driverRoster(),
 		driverQualificationStatus(),
 		expiringWorkerCredentials(),
+
+		headcountSnapshot(),
+		workforceTenure(),
+		workforceTurnover(),
+		ptoLiability(),
+		credentialExpiryForecast(),
+		dqfCredentialDetail(),
 	})
 }

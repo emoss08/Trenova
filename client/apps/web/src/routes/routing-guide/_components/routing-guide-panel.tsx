@@ -1,6 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import type { RoutingGuideRow } from "@/lib/graphql/routing-guide-table";
 import { apiService } from "@/services/api";
 import {
   AlertDialog,
@@ -31,7 +32,7 @@ import { RoutingGuideForm } from "./routing-guide-form";
 
 const QUERY_KEY = "routing-guide-list";
 
-function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuide; onDeleted: () => void }) {
+function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted: () => void }) {
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -88,7 +89,7 @@ export function RoutingGuidePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<RoutingGuide>) {
+}: DataTablePanelProps<RoutingGuideRow>) {
   const form = useForm<RoutingGuidePayloadInput, unknown, RoutingGuidePayload>({
     resolver: zodResolver(routingGuidePayloadSchema),
     defaultValues: { ...emptyRoutingGuidePayload },
@@ -97,7 +98,7 @@ export function RoutingGuidePanel({
 
   if (mode === "edit") {
     return (
-      <FormEditPanel<RoutingGuidePayloadInput, RoutingGuide, RoutingGuidePayload, RoutingGuide>
+      <FormEditPanel<RoutingGuidePayloadInput, RoutingGuideRow, RoutingGuidePayload, RoutingGuide>
         open={open}
         onOpenChange={onOpenChange}
         row={row}

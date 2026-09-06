@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
+import { equipmentTableGraphQLConfigs, type TractorRow } from "@/lib/graphql/equipment-table";
 import { getColumns } from "./tractor-columns";
 import { TractorPanel } from "./tractor-panel";
 
@@ -17,7 +17,7 @@ export default function Table() {
   const columns = useMemo(() => getColumns(), []);
 
   const handleBulkStatusUpdate = useCallback(
-    async (rows: Tractor[], status: string) => {
+    async (rows: TractorRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
         apiService.tractorService.bulkUpdateStatus({
@@ -40,7 +40,7 @@ export default function Table() {
     [queryClient],
   );
 
-  const dockActions = useMemo<DockAction<Tractor>[]>(
+  const dockActions = useMemo<DockAction<TractorRow>[]>(
     () => [
       {
         id: "status-update",
@@ -57,7 +57,7 @@ export default function Table() {
   );
 
   return (
-    <DataTable<Tractor>
+    <DataTable<TractorRow>
       name="Tractor"
       queryKey="tractor-list"
       graphql={equipmentTableGraphQLConfigs.tractor}

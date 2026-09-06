@@ -43,6 +43,8 @@ enum SelectOptionResource {
   EDI_PARTNER_DOCUMENT_PROFILE
   EDI_TEMPLATE
   EMAIL_PROFILE
+  SHIFT_TEMPLATE
+  WORKER_POLICY
 }
 
 input SelectOptionsInput {

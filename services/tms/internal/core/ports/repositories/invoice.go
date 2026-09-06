@@ -23,6 +23,11 @@ type GetInvoiceByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetInvoicesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceIDs []pulid.ID            `json:"invoiceIds"`
+}
+
 type GetInvoiceByBillingQueueItemIDRequest struct {
 	BillingQueueItemID pulid.ID              `json:"billingQueueItemId"`
 	TenantInfo         pagination.TenantInfo `json:"tenantInfo"`
@@ -67,6 +72,10 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		req GetInvoiceByIDRequest,
 	) (*invoice.Invoice, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetInvoicesByIDsRequest,
+	) ([]*invoice.Invoice, error)
 	GetByBillingQueueItemID(
 		ctx context.Context,
 		req GetInvoiceByBillingQueueItemIDRequest,

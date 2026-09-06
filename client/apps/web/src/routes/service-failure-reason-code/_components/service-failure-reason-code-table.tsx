@@ -1,9 +1,11 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { serviceFailureReasonCodeTableGraphQLConfig } from "@/lib/graphql/service-failure-reason-code-table";
+import {
+  serviceFailureReasonCodeTableGraphQLConfig,
+  type ServiceFailureReasonCodeRow,
+} from "@/lib/graphql/service-failure-reason-code-table";
 import { apiService } from "@/services/api";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, RotateCcwIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -20,19 +22,19 @@ export default function ServiceFailureReasonCodeTable() {
     });
   };
 
-  const handleArchive = async (row: Row<ServiceFailureReasonCode>) => {
-    await apiService.serviceFailureReasonCodeService.archive(row.original.id ?? "");
+  const handleArchive = async (row: Row<ServiceFailureReasonCodeRow>) => {
+    await apiService.serviceFailureReasonCodeService.archive(row.original.id);
     toast.success("Reason code archived");
     invalidate();
   };
 
-  const handleActivate = async (row: Row<ServiceFailureReasonCode>) => {
-    await apiService.serviceFailureReasonCodeService.activate(row.original.id ?? "");
+  const handleActivate = async (row: Row<ServiceFailureReasonCodeRow>) => {
+    await apiService.serviceFailureReasonCodeService.activate(row.original.id);
     toast.success("Reason code activated");
     invalidate();
   };
 
-  const contextMenuActions: RowAction<ServiceFailureReasonCode>[] = [
+  const contextMenuActions: RowAction<ServiceFailureReasonCodeRow>[] = [
     {
       id: "archive",
       label: "Archive",
@@ -51,7 +53,7 @@ export default function ServiceFailureReasonCodeTable() {
   ];
 
   return (
-    <DataTable<ServiceFailureReasonCode>
+    <DataTable<ServiceFailureReasonCodeRow>
       name="Service Failure Reason Code"
       queryKey="service-failure-reason-code-list"
       graphql={serviceFailureReasonCodeTableGraphQLConfig}

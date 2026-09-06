@@ -3,6 +3,7 @@ import {
   createCapabilityLoader,
   createPermissionLoader,
 } from "@/lib/route-permission";
+import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
 import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
@@ -47,6 +48,10 @@ export const routes: RouteObject[] = [
         children: [
           {
             path: "/",
+            loader: combineLoaders(
+              protectedLoader,
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/home/page"))),
+            ),
             async lazy() {
               const { Home } = await import("@/routes/home/page");
               return { Component: Home };
@@ -80,7 +85,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/shipment-management/shipments",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Shipment)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Shipment),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/shipment/page"))),
+            ),
             async lazy() {
               const { ShipmentsPage } = await import("@/routes/shipment/page");
               return { Component: ShipmentsPage };
@@ -244,7 +253,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/billing/queue",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BillingQueue)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BillingQueue),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/billing-queue/page"))),
+            ),
             async lazy() {
               const { BillingQueuePage } = await import("@/routes/billing-queue/page");
               return { Component: BillingQueuePage };
@@ -903,6 +916,7 @@ export const routes: RouteObject[] = [
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.Report, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/reports/page"))),
             ),
             async lazy() {
               const { ReportsPage } = await import("@/routes/reports/page");
@@ -985,23 +999,253 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/console",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentMove)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.ShipmentMove),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/dispatch-console/page"))),
+            ),
             async lazy() {
               const { DispatchConsolePage } = await import("@/routes/dispatch-console/page");
               return { Component: DispatchConsolePage };
             },
           },
           {
-            path: "/dispatch/workers",
+            path: "/hr/workers",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Worker),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/worker/page"))),
+            ),
+            async lazy() {
+              const { WorkersPage } = await import("@/routes/worker/page");
+              return { Component: WorkersPage };
+            },
+          },
+          {
+            path: "/hr/checklist-templates",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerChecklistTemplate),
+            ),
+            async lazy() {
+              const { WorkerChecklistTemplatesPage } =
+                await import("@/routes/worker-checklist-template/page");
+              return { Component: WorkerChecklistTemplatesPage };
+            },
+          },
+          {
+            path: "/hr/review-templates",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.PerformanceReviewTemplate),
+            ),
+            async lazy() {
+              const { ReviewTemplatesPage } = await import("@/routes/review-template/page");
+              return { Component: ReviewTemplatesPage };
+            },
+          },
+          {
+            path: "/hr/training-courses",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.TrainingCourse),
+            ),
+            async lazy() {
+              const { TrainingCoursesPage } = await import("@/routes/training-course/page");
+              return { Component: TrainingCoursesPage };
+            },
+          },
+          {
+            path: "/hr/credential-types",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerCredentialType),
+            ),
+            async lazy() {
+              const { WorkerCredentialTypesPage } =
+                await import("@/routes/worker-credential-type/page");
+              return { Component: WorkerCredentialTypesPage };
+            },
+          },
+          {
+            path: "/hr/holidays",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.OrgHoliday),
+            ),
+            async lazy() {
+              const { HolidayCalendarPage } = await import("@/routes/holiday/page");
+              return { Component: HolidayCalendarPage };
+            },
+          },
+          {
+            path: "/hr/leave-settings",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerLeave),
+            ),
+            async lazy() {
+              const { LeaveControlPage } = await import("@/routes/leave-control/page");
+              return { Component: LeaveControlPage };
+            },
+          },
+          {
+            path: "/hr/my-team",
             loader: combineLoaders(
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.Worker),
             ),
             async lazy() {
-              const { WorkersPage } = await import("@/routes/worker/page");
-              return { Component: WorkersPage };
+              const { MyTeamPage } = await import("@/routes/my-team/page");
+              return { Component: MyTeamPage };
             },
+          },
+          {
+            path: "/hr/benefits",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.BenefitPlan),
+            ),
+            async lazy() {
+              const { BenefitsPage } = await import("@/routes/benefits/page");
+              return { Component: BenefitsPage };
+            },
+          },
+          {
+            path: "/hr/policies",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerPolicy),
+            ),
+            async lazy() {
+              const { PoliciesPage } = await import("@/routes/policies/page");
+              return { Component: PoliciesPage };
+            },
+          },
+          {
+            path: "/hr/time-attendance",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Timesheet),
+            ),
+            async lazy() {
+              const { TimeAttendancePage } = await import("@/routes/time-attendance/page");
+              return { Component: TimeAttendancePage };
+            },
+          },
+          {
+            path: "/hr/scheduling",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerSchedule),
+            ),
+            async lazy() {
+              const { SchedulingPage } = await import("@/routes/scheduling/page");
+              return { Component: SchedulingPage };
+            },
+          },
+          {
+            path: "/hr/org-structure",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.JobPosition),
+            ),
+            async lazy() {
+              const { OrgStructurePage } = await import("@/routes/org-structure/page");
+              return { Component: OrgStructurePage };
+            },
+          },
+          {
+            path: "/hr/fleet-safety",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerSafetyEvent),
+            ),
+            async lazy() {
+              const { FleetSafetyPage } = await import("@/routes/fleet-safety/page");
+              return { Component: FleetSafetyPage };
+            },
+          },
+          {
+            path: "/hr/osha-log",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.WorkerInjury),
+            ),
+            async lazy() {
+              const { OshaLogPage } = await import("@/routes/osha/page");
+              return { Component: OshaLogPage };
+            },
+          },
+          {
+            path: "/hr/random-testing",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.DOTRandomPool),
+            ),
+            async lazy() {
+              const { RandomTestingPage } = await import("@/routes/random-testing/page");
+              return { Component: RandomTestingPage };
+            },
+          },
+          {
+            path: "/hr/pto-policies",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.PTOPolicy),
+            ),
+            async lazy() {
+              const { PTOPoliciesPage } = await import("@/routes/pto-policy/page");
+              return { Component: PTOPoliciesPage };
+            },
+          },
+          {
+            // Moved to Human Resource Management. Links already sent — stored
+            // notifications, bookmarks — keep working and carry their query on.
+            path: "/dispatch/workers",
+            loader: ({ request }) => redirect(`/hr/workers${new URL(request.url).search}`),
+          },
+          {
+            path: "/dispatch/configuration-files/checklist-templates",
+            loader: ({ request }) =>
+              redirect(`/hr/checklist-templates${new URL(request.url).search}`),
+          },
+          {
+            path: "/dispatch/configuration-files/review-templates",
+            loader: ({ request }) => redirect(`/hr/review-templates${new URL(request.url).search}`),
+          },
+          {
+            path: "/dispatch/configuration-files/training-courses",
+            loader: ({ request }) => redirect(`/hr/training-courses${new URL(request.url).search}`),
+          },
+          {
+            path: "/dispatch/configuration-files/credential-types",
+            loader: ({ request }) => redirect(`/hr/credential-types${new URL(request.url).search}`),
+          },
+          {
+            path: "/dispatch/configuration-files/holidays",
+            loader: ({ request }) => redirect(`/hr/holidays${new URL(request.url).search}`),
+          },
+          {
+            path: "/dispatch/configuration-files/pto-policies",
+            loader: ({ request }) => redirect(`/hr/pto-policies${new URL(request.url).search}`),
           },
           {
             path: "/dispatch/carriers",
@@ -1052,7 +1296,12 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "organization-settings",
-                loader: createPermissionLoader(Resource.Organization, Operation.Read),
+                loader: combineLoaders(
+                  createPermissionLoader(Resource.Organization, Operation.Read),
+                  createPrefetchLoader(
+                    lazyPrefetch(() => import("@/routes/admin/organization-settings/page")),
+                  ),
+                ),
                 async lazy() {
                   const { OrganizationSettingsPage } =
                     await import("@/routes/admin/organization-settings/page");

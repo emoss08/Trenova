@@ -104,14 +104,81 @@ describe("requestGraphQL", () => {
     expect(data).toEqual({ ok: true });
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(JSON.parse(init.body as string)).toMatchObject({
-      query: expect.stringContaining("query TractorTable"),
+    expect(JSON.parse(init.body as string)).toEqual({
       extensions: {
         persistedQuery: { version: 1, sha256Hash: `sha256:${"a".repeat(64)}` },
       },
       operationName: "TractorTable",
       variables: { first: 10 },
     });
+  });
+
+  // With replaceDocumentWithHash the generated document is a bare object holding only
+  // __meta__ — there is no SDL to scan, so the name and kind must come from the metadata.
+  it("sends a hash-only document using its embedded operation name", async () => {
+    setCsrfToken("graphql-token");
+
+    const document = {
+      __meta__: { hash: `sha256:${"b".repeat(64)}`, kind: "query", name: "TractorTable" },
+    } as unknown as string;
+
+    await requestGraphQL({ document, variables: { first: 10 } });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/graphql?op=TractorTable");
+    expect(JSON.parse(init.body as string)).toEqual({
+      extensions: {
+        persistedQuery: { version: 1, sha256Hash: `sha256:${"b".repeat(64)}` },
+      },
+      operationName: "TractorTable",
+      variables: { first: 10 },
+    });
+  });
+
+  it("forwards the abort signal to fetch", async () => {
+    setCsrfToken("graphql-token");
+    const controller = new AbortController();
+
+    await requestGraphQL({
+      document: "query Test { ok }",
+      operationName: "Test",
+      signal: controller.signal,
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.signal).toBe(controller.signal);
+  });
+
+  it("treats a hash-only mutation as a failure when the response is partial", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(
+      createGraphQLResponse({
+        data: { createTractor: null },
+        errors: [{ message: "Code already exists" }],
+      }),
+    );
+
+    const document = {
+      __meta__: { hash: `sha256:${"c".repeat(64)}`, kind: "mutation", name: "CreateTractor" },
+    } as unknown as string;
+
+    await expect(requestGraphQL({ document })).rejects.toThrow("Code already exists");
+  });
+
+  it("returns partial data for a hash-only query", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(
+      createGraphQLResponse({
+        data: { tractors: null },
+        errors: [{ message: "No tractor access" }],
+      }),
+    );
+
+    const document = {
+      __meta__: { hash: `sha256:${"d".repeat(64)}`, kind: "query", name: "TractorTable" },
+    } as unknown as string;
+
+    await expect(requestGraphQL({ document })).resolves.toEqual({ tractors: null });
   });
 
   it("throws the first GraphQL error message", async () => {

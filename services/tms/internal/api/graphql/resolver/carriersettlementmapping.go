@@ -179,7 +179,7 @@ func createCarrierInvoiceMatchRequest(
 	input *gqlmodel.CreateCarrierInvoiceMatchInput,
 	tenantInfo pagination.TenantInfo,
 ) (*carriersettlementservice.CreateMatchRequest, error) {
-	ediInvoiceID, err := optionalPulid(input.EdiCarrierInvoiceID)
+	ediInvoiceID, err := optionalPulid(input.EDICarrierInvoiceID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"ediCarrierInvoiceId",

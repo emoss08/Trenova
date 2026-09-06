@@ -1,7 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { fiscalYearSchema, type FiscalYear } from "@/types/fiscal-year";
+import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
+import { fiscalYearSchema } from "@/types/fiscal-year";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FiscalYearForm } from "./fiscal-year-form";
@@ -11,7 +12,7 @@ export function FiscalYearPanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<FiscalYear>) {
+}: DataTablePanelProps<FiscalYearRow>) {
   const currentYear = new Date().getFullYear();
 
   const form = useForm({
