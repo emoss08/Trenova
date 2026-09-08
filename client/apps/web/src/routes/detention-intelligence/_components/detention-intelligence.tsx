@@ -1,23 +1,46 @@
 import { CustomerMargin } from "./customer-margin";
+import { DetentionIntelligenceEmpty } from "./detention-intelligence-empty";
 import { DetentionLedger, DetentionLedgerSkeleton } from "./detention-ledger";
 import { FacilityProfiles } from "./facility-profiles";
 import { PanelError } from "./intelligence-panel";
 import {
+  DETENTION_WINDOW_OPTIONS,
   useDetentionIntelligence,
   type DetentionWindowValue,
   detentionWindowDays,
 } from "./use-detention-intelligence";
 import { WaiverLeakage } from "./waiver-leakage";
 
+const WIDEST_WINDOW = DETENTION_WINDOW_OPTIONS[DETENTION_WINDOW_OPTIONS.length - 1];
+
 /**
  * Detention intelligence: which facilities cost the most, which customers are
  * unprofitable once driver pay is netted off, and where discretionary revenue
  * is going.
  */
-export function DetentionIntelligence({ windowValue }: { windowValue: DetentionWindowValue }) {
-  const { facilities, customers, waivers, rollup } = useDetentionIntelligence(
-    detentionWindowDays(windowValue),
-  );
+export function DetentionIntelligence({
+  windowValue,
+  onWiden,
+}: {
+  windowValue: DetentionWindowValue;
+  /** Moves the page's window to its widest; absent once it is already there. */
+  onWiden?: () => void;
+}) {
+  const days = detentionWindowDays(windowValue);
+  const { facilities, customers, waivers, rollup } = useDetentionIntelligence(days);
+
+  // Facilities cover every settled stop exactly once, so an empty facility
+  // list means the whole window is empty, not just one panel of it.
+  if (!facilities.isLoading && !facilities.isError && (facilities.data ?? []).length === 0) {
+    return (
+      <DetentionIntelligenceEmpty
+        title="No detention in this window"
+        description={`No stop settled detention at any facility in the last ${days} days. Look back further, or check that the detention engine is switched on for this organization.`}
+        onWiden={windowValue === WIDEST_WINDOW.value ? undefined : onWiden}
+        widenLabel={`Look back ${WIDEST_WINDOW.days} days`}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

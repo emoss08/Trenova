@@ -54,7 +54,7 @@ export function DetentionIntelligencePage() {
         ),
       }}
     >
-      <DetentionIntelligence windowValue={windowValue} />
+      <DetentionIntelligence windowValue={windowValue} onWiden={() => setWindowValue("180")} />
     </PageLayout>
   );
 }
