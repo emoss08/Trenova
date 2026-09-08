@@ -1,7 +1,11 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { EmptyState } from "@/components/empty-state";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
+import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -15,24 +19,12 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { queries } from "@/lib/queries";
+import { formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
-import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BanknoteIcon,
-  CheckCircle2Icon,
-  LinkIcon,
-  ReceiptTextIcon,
-  SearchIcon,
-  TriangleAlertIcon,
-  WalletCardsIcon,
-} from "lucide-react";
+import { CheckCircle2Icon, LinkIcon, SearchIcon, TriangleAlertIcon } from "lucide-react";
 import { parseAsString, useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
-import { formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const bankReceiptSearchParams = {
   item: parseAsString,
@@ -50,6 +42,8 @@ export function BankReceiptPage() {
   const [searchParams, setSearchParams] = useQueryStates(bankReceiptSearchParams);
   const { item: selectedReceiptId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
+  const hasActiveFilters = Boolean(query || status);
+  const clearFilters = () => void setSearchParams({ query: "", status: null });
   const queryClient = useQueryClient();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -124,6 +118,7 @@ export function BankReceiptPage() {
         title: "Bank Receipt Reconciliation",
         description: "Match imported bank receipts to customer payments and resolve exceptions.",
       }}
+      className="p-0"
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
           <SummaryCard
@@ -190,14 +185,15 @@ export function BankReceiptPage() {
                   ))
                 : null}
               {!isLoading && allRows.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <EmptyState
-                    title="No bank receipts"
-                    description="Adjust the filters or import new bank receipts."
-                    icons={[BanknoteIcon, ReceiptTextIcon, WalletCardsIcon]}
-                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-                  />
-                </div>
+                <BillingListEmpty
+                  title={hasActiveFilters ? "Nothing matches" : "No receipts yet"}
+                  description={
+                    hasActiveFilters
+                      ? "No receipt fits the search and filters. Widen them, or clear them to see every receipt."
+                      : "A receipt lands here when a bank file is imported. Import one from Import Batches and its receipts appear here for matching."
+                  }
+                  onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                />
               ) : null}
               {allRows.map((row) => {
                 const isSelected = row.id === selectedRow?.id;
@@ -249,14 +245,11 @@ export function BankReceiptPage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center">
-              <EmptyState
-                title="No receipt selected"
-                description="Select a bank receipt from the list to view details and match suggestions."
-                icons={[BanknoteIcon, ReceiptTextIcon, WalletCardsIcon]}
-                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-8 shadow-none"
-              />
-            </div>
+            <BillingDetailUnselected
+              layout="cards"
+              title="Nothing open"
+              description="Pick a receipt from the list to see its details and the payments it could be matched to."
+            />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
               <Skeleton className="h-24 w-full" />

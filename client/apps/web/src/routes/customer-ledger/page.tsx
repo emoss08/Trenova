@@ -1,20 +1,13 @@
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
-import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
-import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import {
-  BookOpenIcon,
-  DownloadIcon,
-  FileTextIcon,
-  HandCoinsIcon,
-  ReceiptTextIcon,
-  UserSearchIcon,
-} from "lucide-react";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { DownloadIcon, FileTextIcon, HandCoinsIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
@@ -24,6 +17,16 @@ import { LedgerTable } from "./_components/ledger-table";
 type FilterValues = {
   customerId: string;
 };
+
+const LEDGER_COLUMNS = [
+  { label: "Date" },
+  { label: "Document" },
+  { label: "Event" },
+  { label: "Source" },
+  { label: "Debit", numeric: true },
+  { label: "Credit", numeric: true },
+  { label: "Balance", numeric: true },
+] as const;
 
 export function CustomerLedgerPage() {
   const navigate = useNavigate();
@@ -124,9 +127,10 @@ export function CustomerLedgerPage() {
           </div>
         ) : undefined,
       }}
+      className="p-0"
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
-        <div className="w-[300px]">
+        <div className="w-75">
           <label className="text-2xs text-muted-foreground mb-1 block font-medium">Customer</label>
           <CustomerAutocompleteField
             control={filterForm.control}
@@ -137,13 +141,11 @@ export function CustomerLedgerPage() {
         </div>
 
         {!customerId ? (
-          <div className="flex justify-center pt-12">
-            <EmptyState
-              title="Select a customer"
-              description="Choose a customer to see their AR profile, running ledger, and payment history."
-              icons={[UserSearchIcon, BookOpenIcon, ReceiptTextIcon]}
-            />
-          </div>
+          <EmptyTable
+            title="Pick a customer"
+            description="Choose a customer above and their receivables profile, running ledger and payment history are laid out here."
+            columns={LEDGER_COLUMNS}
+          />
         ) : (
           <>
             <CustomerSnapshotHeader profile={profile} isLoading={profileLoading} />
@@ -155,13 +157,11 @@ export function CustomerLedgerPage() {
                 ))}
               </div>
             ) : !entries || entries.length === 0 ? (
-              <div className="flex justify-center pt-8">
-                <EmptyState
-                  title="No ledger activity"
-                  description="This customer has no posted AR transactions yet."
-                  icons={[BookOpenIcon, FileTextIcon, ReceiptTextIcon]}
-                />
-              </div>
+              <EmptyTable
+                title="No activity yet"
+                description="Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger."
+                columns={LEDGER_COLUMNS}
+              />
             ) : (
               <LedgerTable entries={entries} />
             )}

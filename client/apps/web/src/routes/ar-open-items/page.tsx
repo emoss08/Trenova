@@ -1,28 +1,22 @@
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import {
   AgingDistributionBar,
   type AgingBucketTotals,
 } from "@/components/accounting/aging-buckets";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
-import { EmptyState } from "@/components/empty-state";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { usePermission } from "@/hooks/use-permission";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
+import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { usePermission } from "@/hooks/use-permission";
 import { getEndOfDay } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQuery } from "@tanstack/react-query";
-import type { RowSelectionState } from "@tanstack/react-table";
-import {
-  ClipboardListIcon,
-  FileTextIcon,
-  HandCoinsIcon,
-  ReceiptTextIcon,
-  XIcon,
-} from "lucide-react";
+import { HandCoinsIcon, XIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -33,6 +27,15 @@ type FilterValues = {
   customerId: string;
   asOfDate: number | null;
 };
+
+const OPEN_ITEM_COLUMNS = [
+  { label: "Invoice" },
+  { label: "Customer" },
+  { label: "Due" },
+  { label: "Days", numeric: true },
+  { label: "Original", numeric: true },
+  { label: "Open", numeric: true },
+] as const;
 
 function bucketize(daysPastDue: number): keyof AgingBucketTotals {
   if (daysPastDue <= 0) return "currentMinor";
@@ -52,6 +55,7 @@ export function AROpenItemsPage() {
   });
   const customerId = useWatch({ control: filterForm.control, name: "customerId" });
   const asOfValue = useWatch({ control: filterForm.control, name: "asOfDate" });
+  const hasActiveFilters = Boolean(customerId || asOfValue);
 
   const asOfUnix = useMemo(() => {
     if (!asOfValue) return undefined;
@@ -131,6 +135,7 @@ export function AROpenItemsPage() {
           </Button>
         ) : undefined,
       }}
+      className="p-2"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-3">
@@ -257,13 +262,16 @@ export function AROpenItemsPage() {
             ) : null}
 
             {openItems.length === 0 ? (
-              <div className="flex justify-center pt-8">
-                <EmptyState
-                  title="No open items"
-                  description="There are no outstanding invoices matching your filters."
-                  icons={[ClipboardListIcon, FileTextIcon, ReceiptTextIcon]}
-                />
-              </div>
+              <EmptyTable
+                title={hasActiveFilters ? "Nothing matches" : "Nothing open"}
+                description={
+                  hasActiveFilters
+                    ? "No invoice is open under that filter. Widen it, or clear it to see everything outstanding."
+                    : "Every invoice is settled. An invoice sits here from the day it posts until it is paid in full."
+                }
+                columns={OPEN_ITEM_COLUMNS}
+                onClearFilters={hasActiveFilters ? () => filterForm.reset() : undefined}
+              />
             ) : (
               <OpenItemsTable
                 items={openItems}

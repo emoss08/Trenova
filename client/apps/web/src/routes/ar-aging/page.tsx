@@ -1,8 +1,10 @@
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import type { AgingBucketTotals } from "@/components/accounting/aging-buckets";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
-import { EmptyState } from "@/components/empty-state";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -11,9 +13,7 @@ import {
   toUserWallClock,
   userWallClockNow,
 } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
-import { useQuery } from "@tanstack/react-query";
-import { ClipboardListIcon, DownloadIcon, FileTextIcon, UsersIcon } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { AgingSummaryHeader } from "./_components/aging-summary-header";
@@ -23,6 +23,16 @@ type FilterValues = {
   customerId: string;
   asOfDate: number | null;
 };
+
+const AGING_COLUMNS = [
+  { label: "Customer" },
+  { label: "Current", numeric: true },
+  { label: "1-30", numeric: true },
+  { label: "31-60", numeric: true },
+  { label: "61-90", numeric: true },
+  { label: "90+", numeric: true },
+  { label: "Total open", numeric: true },
+] as const;
 
 function toCsv(rows: ReturnType<typeof buildCsvRows>): string {
   return rows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
@@ -53,6 +63,7 @@ export function ARAgingPage() {
   });
   const customerId = useWatch({ control: filterForm.control, name: "customerId" });
   const asOfValue = useWatch({ control: filterForm.control, name: "asOfDate" });
+  const hasActiveFilters = Boolean(customerId || asOfValue);
 
   const asOfUnix = useMemo(() => {
     if (!asOfValue) return undefined;
@@ -119,10 +130,11 @@ export function ARAgingPage() {
           </Button>
         ),
       }}
+      className="p-0"
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="w-[260px]">
+          <div className="w-65">
             <CustomerAutocompleteField
               control={filterForm.control}
               name="customerId"
@@ -131,7 +143,7 @@ export function ARAgingPage() {
               clearable
             />
           </div>
-          <div className="w-[180px]">
+          <div className="w-45">
             <AutoCompleteDateField
               control={filterForm.control}
               name="asOfDate"
@@ -147,13 +159,16 @@ export function ARAgingPage() {
         {isLoading ? (
           <Skeleton className="h-64 w-full rounded-md" />
         ) : filteredRows.length === 0 ? (
-          <div className="flex justify-center pt-8">
-            <EmptyState
-              title="No open balances"
-              description="No customers have outstanding receivables matching your filters."
-              icons={[UsersIcon, ClipboardListIcon, FileTextIcon]}
-            />
-          </div>
+          <EmptyTable
+            title={hasActiveFilters ? "Nothing matches" : "Nothing outstanding"}
+            description={
+              hasActiveFilters
+                ? "No customer carried a balance under that filter. Widen it, or clear it to see everyone who owes."
+                : "Every invoice is paid, or none has been raised yet. A customer appears here with their balance by age the moment an invoice posts."
+            }
+            columns={AGING_COLUMNS}
+            onClearFilters={hasActiveFilters ? () => filterForm.reset() : undefined}
+          />
         ) : filteredTotals ? (
           <AgingTable totals={filteredTotals} rows={filteredRows} />
         ) : null}

@@ -1,10 +1,20 @@
-import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useState } from "react";
+
+const TRIAL_BALANCE_COLUMNS = [
+  { label: "Account" },
+  { label: "Name" },
+  { label: "Category" },
+  { label: "Debit", numeric: true },
+  { label: "Credit", numeric: true },
+  { label: "Net change", numeric: true },
+] as const;
 
 export function TrialBalancePage() {
   const [periodId, setPeriodId] = useState<string | null>(null);
@@ -26,22 +36,29 @@ export function TrialBalancePage() {
         title: "Trial Balance",
         description: "View account balances for a fiscal period.",
       }}
+      className="p-0"
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
-          <div className="bg-card flex h-64 items-center justify-center rounded-lg border">
-            <p className="text-muted-foreground text-sm">
-              Select a fiscal period to view the trial balance.
-            </p>
-          </div>
+          <EmptyTable
+            title="Pick a period"
+            description="Choose a fiscal period above and every account's debits, credits and net change for it are listed here."
+            columns={TRIAL_BALANCE_COLUMNS}
+          />
         ) : isLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
+        ) : balances.length === 0 ? (
+          <EmptyTable
+            title="Nothing posted"
+            description="No journal entry landed in this period, so every account stands where it did. Post one, or pick another period."
+            columns={TRIAL_BALANCE_COLUMNS}
+          />
         ) : (
           <div className="overflow-hidden rounded-md border">
             <table className="w-full text-sm">
