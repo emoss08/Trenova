@@ -1,5 +1,5 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { EmptyState } from "@/components/empty-state";
+import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import {
   Card,
   CardContent,
@@ -20,12 +20,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  ExternalLinkIcon,
-  ReceiptTextIcon,
-  WalletCardsIcon,
-} from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { Link } from "react-router";
@@ -41,6 +36,8 @@ export function InvoiceReconciliationPage() {
   const [searchParams, setSearchParams] = useQueryStates(invoiceReconciliationSearchParamsParser);
   const { item: selectedExceptionId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
+  const hasActiveFilters = Boolean(query || status);
+  const clearFilters = () => void setSearchParams({ query: "", status: null });
 
   const params = useMemo(() => {
     const next = new URLSearchParams({ limit: "100" });
@@ -140,14 +137,15 @@ export function InvoiceReconciliationPage() {
                   ))
                 : null}
               {!listQuery.isLoading && listQuery.data?.results.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <EmptyState
-                    title="No reconciliation exceptions"
-                    description="Open issues will appear here when adjustments need finance follow-up."
-                    icons={[AlertTriangleIcon, WalletCardsIcon, ReceiptTextIcon]}
-                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-                  />
-                </div>
+                <BillingListEmpty
+                  title={hasActiveFilters ? "Nothing matches" : "Nothing to reconcile"}
+                  description={
+                    hasActiveFilters
+                      ? "No exception fits the search and filters. Widen them, or clear them to see everything open."
+                      : "An exception is raised when an adjustment leaves finance something to settle by hand, such as an unapplied credit or a replacement invoice that needs review."
+                  }
+                  onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                />
               ) : null}
               {listQuery.data?.results.map((row) => (
                 <button
@@ -183,14 +181,11 @@ export function InvoiceReconciliationPage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center p-6">
-              <EmptyState
-                title="No exception selected"
-                description="Select a reconciliation exception to inspect linked adjustment and invoice artifacts."
-                icons={[AlertTriangleIcon, ReceiptTextIcon, WalletCardsIcon]}
-                className="border-none shadow-none"
-              />
-            </div>
+            <BillingDetailUnselected
+              layout="cards"
+              title="Nothing open"
+              description="Pick an exception from the list to trace it back to the adjustment and invoices it came from."
+            />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
               <Skeleton className="h-24 w-full" />

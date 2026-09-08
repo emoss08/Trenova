@@ -1,5 +1,5 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { EmptyState } from "@/components/empty-state";
+import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -26,15 +26,7 @@ import type {
   InvoiceApprovalQueueItem,
 } from "@/types/invoice-adjustment";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckIcon,
-  ClipboardListIcon,
-  ExternalLinkIcon,
-  GitBranchPlusIcon,
-  ReceiptTextIcon,
-  SearchIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckIcon, ExternalLinkIcon, SearchIcon, XIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -61,6 +53,8 @@ export function InvoiceApprovalPage() {
   const [searchParams, setSearchParams] = useQueryStates(invoiceApprovalSearchParamsParser);
   const { item: selectedAdjustmentId, query, kind } = searchParams;
   const deferredQuery = useDeferredValue(query);
+  const hasActiveFilters = Boolean(query || kind);
+  const clearFilters = () => void setSearchParams({ query: "", kind: null });
   const queryClient = useQueryClient();
   const [showRejectForm, setShowRejectForm] = useState(false);
   const rejectForm = useForm<{ rejectReason: string }>({
@@ -250,14 +244,15 @@ export function InvoiceApprovalPage() {
                   ))
                 : null}
               {!isLoading && allRows.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <EmptyState
-                    title="No pending approvals"
-                    description="Adjust the filters or wait for new submitted adjustments."
-                    icons={[ReceiptTextIcon, ClipboardListIcon, GitBranchPlusIcon]}
-                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-                  />
-                </div>
+                <BillingListEmpty
+                  title={hasActiveFilters ? "Nothing matches" : "Nothing waiting"}
+                  description={
+                    hasActiveFilters
+                      ? "No submitted adjustment fits the search and filters. Widen them, or clear them to see everything waiting."
+                      : "An adjustment lands here when its policy needs finance to approve it before it posts. Until one does, there is nothing to decide."
+                  }
+                  onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                />
               ) : null}
               {allRows.map((row) => {
                 const isSelected = row.adjustmentId === selectedRow?.adjustmentId;
@@ -316,14 +311,11 @@ export function InvoiceApprovalPage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center">
-              <EmptyState
-                title="No approval selected"
-                description="Select a submitted adjustment to review policy context and approve or reject it."
-                icons={[GitBranchPlusIcon, ReceiptTextIcon, ClipboardListIcon]}
-                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-              />
-            </div>
+            <BillingDetailUnselected
+              layout="cards"
+              title="Nothing open"
+              description="Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it."
+            />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
               <Skeleton className="h-24 w-full" />

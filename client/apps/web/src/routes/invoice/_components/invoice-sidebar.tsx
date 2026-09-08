@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/empty-state";
+import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
@@ -20,7 +20,7 @@ import { billTypeChoices, invoiceStatusChoices } from "@/lib/choices";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { invoiceSidebarSearchParamsParser } from "../use-invoice-state";
@@ -46,6 +46,8 @@ export function InvoiceSidebar({
   const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
   const { status, query, billType } = searchParams;
   const deferredSearch = useDeferredValue(query);
+  const hasActiveFilters = Boolean(status || billType || query);
+  const clearFilters = () => void setSearchParams({ status: null, billType: null, query: "" });
   const observerTarget = useRef<HTMLDivElement>(null);
   const { mutate: postInvoice } = usePostInvoice();
 
@@ -171,14 +173,15 @@ export function InvoiceSidebar({
           className={cn("flex flex-col gap-1.5 p-2", invoices.length === 0 && "h-full gap-0 p-0")}
         >
           {!isLoading && invoices.length === 0 ? (
-            <div className="flex h-full items-center justify-center">
-              <EmptyState
-                title="No invoices found"
-                description="Adjust the search or filters to find draft and posted invoices."
-                icons={[ReceiptTextIcon, FileTextIcon, ReceiptTextIcon]}
-                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-              />
-            </div>
+            <BillingListEmpty
+              title={hasActiveFilters ? "Nothing matches" : "No invoices yet"}
+              description={
+                hasActiveFilters
+                  ? "No invoice fits the search and filters. Widen them, or clear them to see every draft and posted invoice."
+                  : "An invoice is drafted from the billing queue as each item there is approved. Until one is, there is nothing to review here."
+              }
+              onClearFilters={hasActiveFilters ? clearFilters : undefined}
+            />
           ) : null}
           {invoices.map((invoice) => (
             <InvoiceItemCard

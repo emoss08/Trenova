@@ -1,3 +1,4 @@
+import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -20,7 +21,7 @@ import type {
 } from "@trenova/shared/types/billing-queue";
 import type { User } from "@trenova/shared/types/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FilterIcon, InboxIcon, SaveIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
+import { FilterIcon, SaveIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useState } from "react";
 import type { FieldValues } from "react-hook-form";
@@ -370,10 +371,15 @@ export function BillingQueueSidebar({
             </div>
           )}
           {!isLoading && items.length === 0 && (
-            <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-12">
-              <InboxIcon className="size-8" />
-              <p className="text-sm">No items in queue</p>
-            </div>
+            <BillingListEmpty
+              title={hasActiveFilters ? "Nothing matches" : "Nothing waiting"}
+              description={
+                hasActiveFilters
+                  ? "No item in the queue fits the search and filters. Widen them, or clear them to see everything waiting."
+                  : "A shipment lands here once it is marked ready to bill, by its billing policy or by hand from the shipment. Until one does, there is nothing to review."
+              }
+              onClearFilters={hasActiveFilters ? clearFilters : undefined}
+            />
           )}
           {items.map((item: BillingQueueItem) => (
             <BillingQueueItemCard

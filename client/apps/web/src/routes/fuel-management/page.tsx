@@ -43,7 +43,7 @@ export function FuelManagementPage() {
         </div>
         <TabsContent value="dashboard" className="pt-4">
           <DataTableLazyComponent>
-            <FuelDashboard />
+            <FuelDashboard onOpenIndices={() => void setActiveTab("indices")} />
           </DataTableLazyComponent>
         </TabsContent>
         <TabsContent value="programs" className="pt-4">

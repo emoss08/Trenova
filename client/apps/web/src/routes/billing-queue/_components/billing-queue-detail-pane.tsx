@@ -1,4 +1,5 @@
 import AuditTab from "@/components/audit-tab";
+import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -11,13 +12,7 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
 import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  ChevronDownIcon,
-  ClipboardListIcon,
-  RefreshCwIcon,
-  TimerIcon,
-} from "lucide-react";
+import { AlertTriangleIcon, ChevronDownIcon, RefreshCwIcon, TimerIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
@@ -53,13 +48,11 @@ export default function BillingQueueDetailPane({
 
   if (!selectedItemId) {
     return (
-      <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 p-4">
-        <ClipboardListIcon className="size-12" />
-        <div className="text-center">
-          <p className="text-sm font-medium">No item selected</p>
-          <p className="mt-1 text-xs">Select a billing queue item from the sidebar to review it</p>
-        </div>
-      </div>
+      <BillingDetailUnselected
+        layout="tabs"
+        title="Nothing open"
+        description="Pick an item from the queue to review it here, or press J to start at the top."
+      />
     );
   }
 

@@ -1,5 +1,7 @@
+import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { EmptyState } from "@/components/empty-state";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -17,15 +19,13 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, Layers3Icon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { Link } from "react-router";
 import { invoiceAdjustmentBatchSearchParamsParser } from "./use-invoice-adjustment-batch-state";
-import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const statusChoices = [
   { label: "Queued", value: "Queued" },
@@ -40,6 +40,8 @@ export function InvoiceAdjustmentBatchPage() {
   const [searchParams, setSearchParams] = useQueryStates(invoiceAdjustmentBatchSearchParamsParser);
   const { item: selectedBatchId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
+  const hasActiveFilters = Boolean(query || status);
+  const clearFilters = () => void setSearchParams({ query: "", status: null });
 
   const params = useMemo(() => {
     const next = new URLSearchParams({ limit: "100" });
@@ -138,14 +140,15 @@ export function InvoiceAdjustmentBatchPage() {
                   ))
                 : null}
               {!listQuery.isLoading && listQuery.data?.results.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <EmptyState
-                    title="No batches found"
-                    description="Batch submissions will appear here when operators submit multi-invoice adjustments."
-                    icons={[Layers3Icon, CheckCircle2Icon, AlertTriangleIcon]}
-                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-                  />
-                </div>
+                <BillingListEmpty
+                  title={hasActiveFilters ? "Nothing matches" : "No batches yet"}
+                  description={
+                    hasActiveFilters
+                      ? "No batch fits the search and filters. Widen them, or clear them to see every batch."
+                      : "A batch appears here when somebody submits adjustments across several invoices at once, and follows each item as it runs."
+                  }
+                  onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                />
               ) : null}
               {listQuery.data?.results.map((row) => (
                 <button
@@ -188,14 +191,11 @@ export function InvoiceAdjustmentBatchPage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center p-6">
-              <EmptyState
-                title="No batch selected"
-                description="Select a batch to inspect item-level execution results and linked artifacts."
-                icons={[Layers3Icon, CheckCircle2Icon, AlertTriangleIcon]}
-                className="border-none shadow-none"
-              />
-            </div>
+            <BillingDetailUnselected
+              layout="cards"
+              title="Nothing open"
+              description="Pick a batch from the list to see how each item ran and what it created."
+            />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
               <Skeleton className="h-24 w-full" />
