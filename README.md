@@ -59,7 +59,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 
 ## Repository layout
 
-```
+```text
 services/tms          Core TMS API (Go)
 services/gtc          PostgreSQL change-data-capture connector (Go)
 services/samsara-sim  Samsara telematics simulator for local development
