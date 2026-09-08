@@ -1,4 +1,5 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
@@ -67,6 +68,11 @@ export function SettlementQueue({
   onActionComplete: () => void;
 }) {
   const [search, setSearch] = useState("");
+  const hasActiveFilters = filter !== "all" || search.trim() !== "";
+  const clearFilters = () => {
+    setSearch("");
+    onFilterChange("all");
+  };
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -184,9 +190,15 @@ export function SettlementQueue({
             <Skeleton className="h-14 w-full" />
           </div>
         ) : visible.length === 0 ? (
-          <p className="text-muted-foreground p-4 text-center text-xs">
-            No settlements match this view.
-          </p>
+          <BillingListEmpty
+            title={hasActiveFilters ? "Nothing matches" : "Nothing to work"}
+            description={
+              hasActiveFilters
+                ? "No settlement fits the search and chip. Widen them, or clear them to see the whole queue."
+                : "Every settlement in this pay period has been voided. Generate again once new pay has accrued."
+            }
+            onClearFilters={hasActiveFilters ? clearFilters : undefined}
+          />
         ) : (
           <ul>
             {visible.map((settlement) => (
