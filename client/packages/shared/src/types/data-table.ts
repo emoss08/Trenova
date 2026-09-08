@@ -161,6 +161,17 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
   onCellEditCommit?: CellEditCommitFn<TData>;
+  /**
+   * Draws the table's own empty state in place of the generic one. It is told
+   * whether a search or filter is what emptied the table, and given the
+   * table's own clear-filters action to offer.
+   */
+  renderEmptyState?: (state: DataTableEmptyStateRenderProps) => React.ReactNode;
+};
+
+export type DataTableEmptyStateRenderProps = {
+  hasActiveFilters: boolean;
+  onClearFilters: () => void;
 };
 
 export type DataTableGraphQLExtraVariableParams = {

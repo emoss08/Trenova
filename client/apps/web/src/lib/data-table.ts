@@ -13,6 +13,8 @@ import type {
   ColumnDef,
   Row,
 } from "@trenova/shared/types/data-table";
+import type { EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
+import { toTitleCase } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type {
   FormatRuleColor,
@@ -589,4 +591,33 @@ export function initializeFilterItemsFromFieldFilters<TData extends RowData>(
       filterOptions: resolved.filterOptions,
     };
   });
+}
+
+type LabelledColumn = {
+  id: string;
+  columnDef: { header?: unknown; meta?: { label?: string; filterType?: string } };
+};
+
+/**
+ * The name a column shows in its header cell: a string header as written,
+ * otherwise the label its meta carries, otherwise its id read as words.
+ */
+export function columnHeaderLabel(column: LabelledColumn): string {
+  const { header, meta } = column.columnDef;
+  if (typeof header === "string") return header;
+  return meta?.label || toTitleCase(column.id);
+}
+
+/**
+ * The visible columns of a table as the headings of an empty sketch. The
+ * selection column is chrome, not data, so it is left out; numeric columns
+ * keep their right alignment.
+ */
+export function emptyTableColumns(columns: readonly LabelledColumn[]): EmptyTableColumn[] {
+  return columns
+    .filter((column) => column.id !== "select")
+    .map((column) => ({
+      label: columnHeaderLabel(column),
+      numeric: column.columnDef.meta?.filterType === "number",
+    }));
 }

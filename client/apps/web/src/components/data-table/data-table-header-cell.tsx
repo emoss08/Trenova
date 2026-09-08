@@ -1,6 +1,11 @@
 "use no memo";
 import { TableHead } from "@trenova/shared/components/ui/table";
-import { columnSizeVar, pinnedCellClass, pinnedCellStyle } from "@/lib/data-table";
+import {
+  columnHeaderLabel,
+  columnSizeVar,
+  pinnedCellClass,
+  pinnedCellStyle,
+} from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SortDirection, SortField, Header } from "@trenova/shared/types/data-table";
 import { useSortable } from "@dnd-kit/sortable";
@@ -50,11 +55,7 @@ export function DataTableHeaderCell<TData extends RowData>({
       {header.isPlaceholder ? null : isSortable ? (
         <DataTableColumnHeader
           column={column}
-          title={
-            typeof column.columnDef.header === "string"
-              ? column.columnDef.header
-              : meta?.label || column.id
-          }
+          title={columnHeaderLabel(column)}
           currentSort={sort}
           onSort={onSort}
         />
