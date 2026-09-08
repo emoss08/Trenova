@@ -69,6 +69,20 @@ func (t ChecklistTrigger) IsValid() bool {
 	}
 }
 
+// ChecklistKindClosedByEvent names the kind of open checklist an employment
+// event makes moot: a termination ends an unfinished onboarding, and a hire
+// or rehire ends an unfinished offboarding. Other events close nothing.
+func ChecklistKindClosedByEvent(kind EmploymentEventKind) (ChecklistKind, bool) {
+	switch kind {
+	case EmploymentEventTerminated:
+		return ChecklistKindOnboarding, true
+	case EmploymentEventHired, EmploymentEventRehired:
+		return ChecklistKindOffboarding, true
+	default:
+		return "", false
+	}
+}
+
 // ChecklistTriggerForEvent maps an employment event to the trigger that spawns
 // a checklist, or false when the event never spawns one.
 func ChecklistTriggerForEvent(kind EmploymentEventKind) (ChecklistTrigger, bool) {

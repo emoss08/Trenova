@@ -233,6 +233,7 @@ type harness struct {
 	payRepo  *fakePayRepo
 	portal   *fakePortal
 	fleet    *mocks.MockFleetCodeRepository
+	lists    *fakeChecklists
 	tenant   pagination.TenantInfo
 	wrk      *worker.Worker
 	userID   pulid.ID
@@ -272,6 +273,7 @@ func newHarness(t *testing.T) *harness {
 		pay:      &fakePay{},
 		payRepo:  payRepo,
 		portal:   &fakePortal{hadAccess: true},
+		lists:    &fakeChecklists{},
 		fleet:    fleet,
 		tenant:   tenant,
 		wrk:      wrk,
@@ -290,8 +292,42 @@ func newHarness(t *testing.T) *harness {
 		DriverPay:     h.pay,
 		AuditService:  audit,
 		Portal:        h.portal,
+		Checklists:    h.lists,
 	})
 	return h
+}
+
+// fakeChecklists records what the employment service asked of the checklist
+// port, so a test can see the order and the event each call carried.
+type fakeChecklists struct {
+	closed  []worker.EmploymentEventKind
+	spawned []worker.EmploymentEventKind
+}
+
+func (f *fakeChecklists) SpawnForEvent(
+	_ context.Context,
+	event *worker.WorkerEmploymentEvent,
+	_ *worker.Worker,
+	_ pulid.ID,
+) (*worker.WorkerChecklist, error) {
+	f.spawned = append(f.spawned, event.Kind)
+	if _, ok := worker.ChecklistTriggerForEvent(event.Kind); !ok {
+		return nil, nil //nolint:nilnil // nothing to spawn
+	}
+	return &worker.WorkerChecklist{ID: pulid.MustNew("wcl_"), SourceEventID: event.ID}, nil
+}
+
+func (f *fakeChecklists) CloseForEvent(
+	_ context.Context,
+	event *worker.WorkerEmploymentEvent,
+	_ *worker.Worker,
+	_ pulid.ID,
+) (int, error) {
+	f.closed = append(f.closed, event.Kind)
+	if _, ok := worker.ChecklistKindClosedByEvent(event.Kind); ok {
+		return 1, nil
+	}
+	return 0, nil
 }
 
 func (h *harness) record(kind worker.EmploymentEventKind, effective int64, mutate func(*workeremploymentservice.RecordRequest)) (*workeremploymentservice.RecordResult, error) {
@@ -592,4 +628,19 @@ func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
 	})
 	require.ErrorAs(t, err, &verr)
 	assert.Equal(t, "version", verr.Field)
+}
+
+// A termination closes the onboarding it interrupts before it opens the
+// offboarding, and the office is told both happened.
+func TestRecord_TerminatedClosesStaleChecklistsThenSpawns(t *testing.T) {
+	h := newHarness(t)
+
+	result, err := h.record(worker.EmploymentEventTerminated, 1_700_500_000, func(req *workeremploymentservice.RecordRequest) {
+		req.Reason = "Resigned"
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.Cascade.ChecklistsClosed)
+	assert.True(t, result.Cascade.ChecklistStarted)
+	assert.Equal(t, []worker.EmploymentEventKind{worker.EmploymentEventTerminated}, h.lists.closed)
+	assert.Equal(t, []worker.EmploymentEventKind{worker.EmploymentEventTerminated}, h.lists.spawned)
 }

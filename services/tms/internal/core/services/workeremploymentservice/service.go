@@ -258,9 +258,13 @@ type CascadeSummary struct {
 	UpcomingPTOCancelled int
 	DefaultPolicyApplied bool
 	ChecklistStarted     bool
-	PTOPaidOutDays       decimal.Decimal
-	PTOForfeitedDays     decimal.Decimal
-	TrainingAssigned     int
+	// ChecklistsClosed counts the open checklists the event made moot: an
+	// unfinished onboarding on a termination, an unfinished offboarding on a
+	// hire or rehire.
+	ChecklistsClosed int
+	PTOPaidOutDays   decimal.Decimal
+	PTOForfeitedDays decimal.Decimal
+	TrainingAssigned int
 	// PortalAccessRevoked reports that a termination shut off the worker's
 	// Dash sign-in. PortalRevocationError carries why it could not be shut
 	// off, because a termination that is already recorded must still be
@@ -352,6 +356,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 
 	s.audit(created, nil, permission.OpCreate, req.UserID, "Employment event recorded", log)
 	s.publish(ctx, req.TenantInfo, created, permission.OpCreate, req.UserID)
+	cascade.ChecklistsClosed = s.closeChecklists(ctx, created, wrk, req.UserID, log)
 	cascade.ChecklistStarted = s.spawnChecklist(ctx, created, wrk, req.UserID, log)
 
 	return &RecordResult{Event: created, Cascade: cascade}, nil
@@ -385,8 +390,30 @@ func (s *Service) RecordHired(ctx context.Context, wrk *worker.Worker, userID pu
 		return err
 	}
 	s.publish(ctx, tenantInfo, created, permission.OpCreate, userID)
-	s.spawnChecklist(ctx, created, wrk, userID, s.l.With(zap.String("operation", "RecordHired")))
+	log := s.l.With(zap.String("operation", "RecordHired"))
+	s.closeChecklists(ctx, created, wrk, userID, log)
+	s.spawnChecklist(ctx, created, wrk, userID, log)
 	return nil
+}
+
+// closeChecklists cancels the checklists the event makes moot. Best-effort
+// for the same reason spawnChecklist is: the employment change is already
+// recorded and stands regardless.
+func (s *Service) closeChecklists(
+	ctx context.Context,
+	event *worker.WorkerEmploymentEvent,
+	wrk *worker.Worker,
+	userID pulid.ID,
+	log *zap.Logger,
+) int {
+	if s.checklists == nil {
+		return 0
+	}
+	closed, err := s.checklists.CloseForEvent(ctx, event, wrk, userID)
+	if err != nil {
+		log.Warn("failed to close checklists for employment event", zap.Error(err))
+	}
+	return closed
 }
 
 // spawnChecklist starts the default onboarding/offboarding checklist for the

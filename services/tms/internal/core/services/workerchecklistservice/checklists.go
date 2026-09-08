@@ -80,8 +80,11 @@ type StartRequest struct {
 	UserID        pulid.ID
 }
 
-// Start spawns a checklist from a template. A worker never carries two open
-// checklists from the same template; the existing one is returned instead.
+// Start spawns a checklist from a template. Onboarding and offboarding
+// templates are driven by the employment event that carries them: they can
+// only be started with a source event, once per event, so a worker is
+// onboarded once per hire rather than whenever somebody presses a button.
+// Templates started by hand never run twice at once; the open one is returned.
 func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerChecklist, error) {
 	log := s.l.With(
 		zap.String("operation", "Start"),
@@ -104,17 +107,32 @@ func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerC
 			"This checklist template is inactive",
 		)
 	}
+	fromEvent := !req.SourceEventID.IsNil()
+	if !fromEvent && template.Trigger != worker.ChecklistTriggerManual {
+		return nil, errortypes.NewValidationError(
+			"templateId",
+			errortypes.ErrInvalidOperation,
+			"This checklist is started by the employment event it belongs to, not by hand",
+		)
+	}
 
 	existing, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerChecklistsRequest{
-		TenantInfo:   req.TenantInfo,
-		WorkerID:     req.WorkerID,
-		IncludeItems: true,
+		TenantInfo:    req.TenantInfo,
+		WorkerID:      req.WorkerID,
+		IncludeClosed: fromEvent,
+		IncludeItems:  true,
 	})
 	if err != nil {
 		return nil, err
 	}
 	for _, checklist := range existing {
-		if checklist.TemplateID == template.ID {
+		if checklist.TemplateID != template.ID {
+			continue
+		}
+		if fromEvent && checklist.SourceEventID == req.SourceEventID {
+			return checklist, nil
+		}
+		if !fromEvent && checklist.IsOpen() {
 			return checklist, nil
 		}
 	}
@@ -196,6 +214,48 @@ func (s *Service) SpawnForEvent(
 		SourceEventID: event.ID,
 		UserID:        userID,
 	})
+}
+
+// CloseForEvent implements services.ChecklistSpawner: it cancels the open
+// checklists the event makes moot, so a driver who leaves mid-onboarding does
+// not keep an onboarding open, and one who is rehired mid-offboarding does
+// not keep being offboarded.
+func (s *Service) CloseForEvent(
+	ctx context.Context,
+	event *worker.WorkerEmploymentEvent,
+	wrk *worker.Worker,
+	userID pulid.ID,
+) (int, error) {
+	if event == nil || wrk == nil {
+		return 0, nil
+	}
+	kind, ok := worker.ChecklistKindClosedByEvent(event.Kind)
+	if !ok {
+		return 0, nil
+	}
+	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
+	open, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerChecklistsRequest{
+		TenantInfo:   tenantInfo,
+		WorkerID:     wrk.ID,
+		IncludeItems: true,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	reason := "Superseded by " + strings.ToLower(string(event.Kind)) + " event"
+	log := s.l.With(zap.String("operation", "CloseForEvent"), zap.String("eventId", event.ID.String()))
+	closed := 0
+	for _, checklist := range open {
+		if checklist.Kind != kind || !checklist.IsOpen() {
+			continue
+		}
+		if _, err = s.cancelChecklist(ctx, checklist, reason, tenantInfo, userID, log); err != nil {
+			return closed, err
+		}
+		closed++
+	}
+	return closed, nil
 }
 
 type ItemRequest struct {
@@ -430,10 +490,21 @@ func (s *Service) Cancel(ctx context.Context, req *CancelRequest) (*worker.Worke
 		return checklist, nil
 	}
 
+	return s.cancelChecklist(ctx, checklist, req.Reason, req.TenantInfo, req.UserID, log)
+}
+
+func (s *Service) cancelChecklist(
+	ctx context.Context,
+	checklist *worker.WorkerChecklist,
+	reason string,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+	log *zap.Logger,
+) (*worker.WorkerChecklist, error) {
 	now := timeutils.NowUnix()
 	checklist.Status = worker.ChecklistStatusCancelled
 	checklist.CancelledAt = &now
-	checklist.CancelReason = strings.TrimSpace(req.Reason)
+	checklist.CancelReason = strings.TrimSpace(reason)
 	items := checklist.Items
 	saved, err := s.repo.Update(ctx, checklist)
 	if err != nil {
@@ -446,13 +517,13 @@ func (s *Service) Cancel(ctx context.Context, req *CancelRequest) (*worker.Worke
 		resource:   permission.ResourceWorkerChecklist,
 		resourceID: saved.GetResourceID(),
 		operation:  permission.OpCancel,
-		userID:     req.UserID,
-		tenant:     req.TenantInfo,
+		userID:     userID,
+		tenant:     tenantInfo,
 		current:    saved,
 		comment:    "Checklist cancelled",
 		log:        log,
 	})
-	s.publish(ctx, req.TenantInfo, realtimeResource, permission.OpCancel, saved.ID, req.UserID)
+	s.publish(ctx, tenantInfo, realtimeResource, permission.OpCancel, saved.ID, userID)
 
 	return saved, nil
 }

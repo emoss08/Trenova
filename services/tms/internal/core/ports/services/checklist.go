@@ -17,4 +17,12 @@ type ChecklistSpawner interface {
 		wrk *worker.Worker,
 		userID pulid.ID,
 	) (*worker.WorkerChecklist, error)
+	// CloseForEvent cancels the open checklists the event makes moot and
+	// reports how many it closed.
+	CloseForEvent(
+		ctx context.Context,
+		event *worker.WorkerEmploymentEvent,
+		wrk *worker.Worker,
+		userID pulid.ID,
+	) (int, error)
 }
