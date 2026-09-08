@@ -119,6 +119,8 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   name="kind"
                   label="Kind"
                   options={KIND_OPTIONS}
+                  placeholder="Pick a kind"
+                  description="What the recognition is for; it is shown with the title on the safety record."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -126,6 +128,8 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                 <AutoCompleteDateField<RecognitionFormValues>
                   control={control}
                   name="occurredAt"
+                  placeholder="MM/DD/YYYY"
+                  description="The day the achievement happened; it defaults to today."
                   label="When"
                   rules={{ required: true }}
                 />
@@ -136,6 +140,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   name="title"
                   label="Title"
                   placeholder="e.g. One year accident-free"
+                  description="The headline on the record; it is also the subject of the driver's notification when shared."
                   rules={{ required: true }}
                   maxLength={120}
                 />
@@ -146,6 +151,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   name="message"
                   label="Message"
                   placeholder="What you want the driver to read"
+                  description="Optional detail that goes out with the notification when the recognition is shared."
                   maxLength={2000}
                 />
               </FormControl>

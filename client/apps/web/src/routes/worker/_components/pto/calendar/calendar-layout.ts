@@ -1,8 +1,9 @@
-import { toDateFromUnixSeconds } from "@trenova/shared/lib/date";
+import { formatUnixWeekday, toDateFromUnixSeconds } from "@trenova/shared/lib/date";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
 
 export const DAY_SECONDS = 86_400;
 export const WEEK_DAYS = 7;
+export const MAX_VISIBLE_LANES = 3;
 
 export type CalendarDay = {
   key: string;
@@ -98,7 +99,7 @@ export function buildMonthGrid(
   return weeks;
 }
 
-function dayIndex(unix: number): number {
+export function dayIndex(unix: number): number {
   return Math.floor(localMidnight(toDateFromUnixSeconds(unix)).getTime() / DAY_SECONDS / 1000);
 }
 
@@ -159,6 +160,72 @@ export function selectionRange(anchor: number, focus: number): { start: number; 
   return anchor <= focus ? { start: anchor, end: focus } : { start: focus, end: anchor };
 }
 
+export function inclusiveDaysOf(startUnix: number, endUnix: number): number {
+  return Math.max(1, dayIndex(endUnix) - dayIndex(startUnix) + 1);
+}
+
 export function isWithin(unix: number, range: { start: number; end: number } | null): boolean {
   return !!range && unix >= range.start && unix <= range.end;
+}
+
+export type VisibleSegments<T extends PTOSpan = PTOSpan> = {
+  visible: CalendarSegment<T>[];
+  overflow: number[];
+};
+
+export function splitVisibleSegments<T extends PTOSpan>(
+  segments: readonly CalendarSegment<T>[],
+  maxLanes: number = MAX_VISIBLE_LANES,
+): VisibleSegments<T> {
+  const visible: CalendarSegment<T>[] = [];
+  const overflow = Array.from({ length: WEEK_DAYS }, () => 0);
+  for (const segment of segments) {
+    if (segment.lane < maxLanes) {
+      visible.push(segment);
+      continue;
+    }
+    for (let col = segment.startCol; col <= segment.endCol; col += 1) {
+      overflow[col] += 1;
+    }
+  }
+  return { visible, overflow };
+}
+
+export function spansOnDay<T extends PTOSpan>(items: readonly T[], dayUnix: number): T[] {
+  const idx = dayIndex(dayUnix);
+  const covering = items.filter(
+    (item) => dayIndex(item.startDate) <= idx && dayIndex(item.endDate) >= idx,
+  );
+  covering.sort((a, b) => {
+    if (a.startDate !== b.startDate) return a.startDate - b.startDate;
+    return (a.id ?? "").localeCompare(b.id ?? "");
+  });
+  return covering;
+}
+
+export type PTOTimingTone = "upcoming" | "active" | "past";
+
+export type PTOTiming = {
+  tone: PTOTimingTone;
+  label: string;
+};
+
+export function ptoTiming(
+  span: Pick<PTOSpan, "startDate" | "endDate">,
+  todayUnix: number,
+): PTOTiming {
+  const today = dayIndex(todayUnix);
+  const start = dayIndex(span.startDate);
+  const end = dayIndex(span.endDate);
+
+  if (start > today) {
+    const days = start - today;
+    return { tone: "upcoming", label: days === 1 ? "Starts tomorrow" : `Starts in ${days} days` };
+  }
+  if (end >= today) {
+    const back = formatUnixWeekday(span.endDate + DAY_SECONDS);
+    return { tone: "active", label: `Out now · back ${back}` };
+  }
+  const days = today - end;
+  return { tone: "past", label: days === 1 ? "Ended yesterday" : `Ended ${days} days ago` };
 }

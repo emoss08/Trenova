@@ -196,7 +196,9 @@ export function AssignShiftDialog({
                   control={control}
                   name="effectiveFrom"
                   label="Effective from"
+                  placeholder="Today"
                   rules={{ required: true }}
+                  description="The first day the worker is on this pattern."
                 />
               </FormControl>
               {rotates ? (
@@ -205,6 +207,7 @@ export function AssignShiftDialog({
                     control={control}
                     name="cycleOffsetWeeks"
                     label="Rotation offset (weeks)"
+                    placeholder="0"
                     description={`0 to ${(preview?.cycleWeeks ?? 1) - 1}. Two workers on the same shift at different offsets alternate.`}
                   />
                 </FormControl>
@@ -215,6 +218,7 @@ export function AssignShiftDialog({
                   name="notes"
                   label="Notes"
                   placeholder="Why they are on this shift"
+                  description="Kept on the assignment record."
                 />
               </FormControl>
             </FormGroup>

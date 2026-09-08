@@ -2,10 +2,10 @@ import type {
   WorkerTrainingRecordRow,
   WorkerTrainingSummaryItem,
 } from "@/lib/graphql/worker-training";
+import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { TrainingHealthBadge } from "@trenova/shared/components/training-health-badge";
-import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { describeTrainingTiming, trainingHealthMeta } from "@trenova/shared/lib/training";
+import { describeTrainingTiming } from "@trenova/shared/lib/training";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   TRAINING_CATEGORY_LABELS,
@@ -30,7 +30,7 @@ export type TrainingSlotPermissions = {
   canWaive: boolean;
 };
 
-type TrainingSlotCardProps = {
+type TrainingSlotRowProps = {
   item: WorkerTrainingSummaryItem;
   permissions: TrainingSlotPermissions;
   busy: boolean;
@@ -40,7 +40,12 @@ type TrainingSlotCardProps = {
   onCancel: (record: WorkerTrainingRecordRow) => void;
 };
 
-export function TrainingSlotCard({
+/**
+ * One course in the matrix as a row: what it is, where it stands in time,
+ * what the record says, and what can be done about it. The health badge is
+ * the only colour; a course that was never assigned reads as an empty line.
+ */
+export function TrainingSlotRow({
   item,
   permissions,
   busy,
@@ -48,10 +53,9 @@ export function TrainingSlotCard({
   onRecord,
   onWaive,
   onCancel,
-}: TrainingSlotCardProps) {
+}: TrainingSlotRowProps) {
   const { course, health } = item;
   const record = item.record as WorkerTrainingRecordRow | null | undefined;
-  const meta = trainingHealthMeta(health);
   const isOpen = record?.status === "Assigned" || record?.status === "InProgress";
   const needsRenewal = health === "Expired" || health === "Failed" || health === "ExpiringSoon";
   const timing = describeTrainingTiming({
@@ -59,86 +63,84 @@ export function TrainingSlotCard({
     daysUntilDue: item.daysUntilDue,
     daysUntilExpiry: item.daysUntilExpiry,
   });
+  const caption = [
+    TRAINING_CATEGORY_LABELS[course.category as TrainingCategory],
+    TRAINING_DELIVERY_LABELS[course.delivery as TrainingDelivery],
+    course.durationMinutes > 0 ? `${course.durationMinutes} min` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const actions: RowAction[] = [];
+  if (record && isOpen) {
+    if (permissions.canRecord) {
+      actions.push({
+        id: "record",
+        label: "Record result",
+        icon: ClipboardCheckIcon,
+        disabled: busy,
+        onSelect: () => onRecord(item),
+      });
+    }
+    if (permissions.canWaive) {
+      actions.push({
+        id: "waive",
+        label: "Waive",
+        icon: CheckCheckIcon,
+        disabled: busy,
+        onSelect: () => onWaive(record),
+      });
+      actions.push({
+        id: "cancel",
+        label: `Cancel ${course.name} assignment`,
+        icon: BanIcon,
+        disabled: busy,
+        destructive: true,
+        onSelect: () => onCancel(record),
+      });
+    }
+  } else {
+    if (permissions.canAssign) {
+      actions.push({
+        id: "assign",
+        label: needsRenewal ? "Assign renewal" : "Assign",
+        icon: needsRenewal ? RefreshCwIcon : PlusIcon,
+        disabled: busy,
+        onSelect: () => onAssign(course.id),
+      });
+    }
+    if (permissions.canRecord && health !== "Current") {
+      actions.push({
+        id: "record-completion",
+        label: "Record completion",
+        icon: ClipboardCheckIcon,
+        disabled: busy,
+        onSelect: () => onRecord(item),
+      });
+    }
+  }
 
   return (
     <div
       data-testid={`training-slot-${course.id}`}
-      className="bg-card flex flex-col gap-3 rounded-xl border p-4 transition-colors"
+      data-health={health}
+      className="group hover:bg-muted/30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-3 py-2.5 transition-colors sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)_auto]"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{course.name}</p>
-          <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs w-full">
-            <span>{TRAINING_CATEGORY_LABELS[course.category as TrainingCategory]}</span>
-            <span aria-hidden>·</span>
-            <span>{TRAINING_DELIVERY_LABELS[course.delivery as TrainingDelivery]}</span>
-            {course.durationMinutes > 0 ? (
-              <>
-                <span aria-hidden>·</span>
-                <span>{course.durationMinutes} min</span>
-              </>
-            ) : null}
-          </p>
-        </div>
-        <TrainingHealthBadge health={health} />
+      <div className="min-w-0">
+        <p className={cn("truncate text-sm font-medium", !record && "text-muted-foreground")}>
+          {course.name}
+        </p>
+        <p className="text-muted-foreground truncate text-xs">{caption}</p>
       </div>
 
-      <div className="flex flex-col gap-0.5 text-xs">
-        <p className={cn("font-medium", meta.textClass)}>{timing}</p>
+      <div className="col-span-2 min-w-0 text-xs sm:col-span-1">
+        <p className="font-medium">{timing}</p>
         <RecordFacts record={record} />
       </div>
 
-      <div className="mt-auto flex flex-row items-center gap-2">
-        {record && isOpen ? (
-          <>
-            {permissions.canRecord ? (
-              <Button size="sm" disabled={busy} onClick={() => onRecord(item)}>
-                <ClipboardCheckIcon className="size-3.5" />
-                Record result
-              </Button>
-            ) : null}
-            {permissions.canWaive ? (
-              <>
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => onWaive(record)}>
-                  <CheckCheckIcon className="size-3.5" />
-                  Waive
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-muted-foreground"
-                  disabled={busy}
-                  aria-label={`Cancel ${course.name} assignment`}
-                  onClick={() => onCancel(record)}
-                >
-                  <BanIcon className="size-3.5" />
-                  Cancel
-                </Button>
-              </>
-            ) : null}
-          </>
-        ) : null}
-        {!isOpen && permissions.canAssign ? (
-          <Button
-            size="sm"
-            variant={needsRenewal ? "default" : "outline"}
-            disabled={busy}
-            onClick={() => onAssign(course.id)}
-          >
-            {needsRenewal ? (
-              <RefreshCwIcon className="size-3.5" />
-            ) : (
-              <PlusIcon className="size-3.5" />
-            )}
-            {needsRenewal ? "Assign renewal" : "Assign"}
-          </Button>
-        ) : null}
-        {!isOpen && permissions.canRecord && health !== "Current" ? (
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => onRecord(item)}>
-            <ClipboardCheckIcon className="size-3.5" />
-            Record completion
-          </Button>
-        ) : null}
+      <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:col-start-3">
+        <TrainingHealthBadge health={health} />
+        <RowActionsMenu label={`Actions for ${course.name}`} actions={actions} />
       </div>
     </div>
   );
@@ -166,7 +168,7 @@ function RecordFacts({ record }: { record: WorkerTrainingRecordRow | null | unde
     facts.push("Certificate on file");
   }
   return (
-    <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5">
+    <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 truncate">
       {facts.map((fact, index) => (
         <span key={fact} className="flex items-center gap-1">
           {index > 0 ? <span aria-hidden>·</span> : null}

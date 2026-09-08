@@ -1,15 +1,23 @@
+import { InfoPopover } from "@/components/info-popover";
 import type { SafetyScorecard } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
-import { safetyRatingMeta, scoreRingValue, summariseInspections } from "@trenova/shared/lib/safety";
+import { safetyRatingMeta, summariseInspections } from "@trenova/shared/lib/safety";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   DISCIPLINARY_LEVEL_LABELS,
   type DisciplinaryLevel,
   type SafetyRating,
 } from "@trenova/shared/types/worker-safety";
-import { AwardIcon, PlusIcon } from "lucide-react";
+import {
+  AwardIcon,
+  CalendarCheckIcon,
+  ClipboardCheckIcon,
+  GaugeIcon,
+  PlusIcon,
+  TargetIcon,
+  type LucideIcon,
+} from "lucide-react";
 
 type SafetyScorecardCardProps = {
   scorecard: SafetyScorecard;
@@ -19,6 +27,12 @@ type SafetyScorecardCardProps = {
   onRecognise: () => void;
 };
 
+/**
+ * The scorecard as a row of KPI tiles rather than a badge strip: a score, the
+ * points against the thresholds that move the rating, the clean-inspection
+ * record, and how long it has been quiet. Below them, the raw counts as plain
+ * facts. Colour lives in the rating badge and the goal bar and nowhere else.
+ */
 export function SafetyScorecardCard({
   scorecard,
   canRecord,
@@ -27,115 +41,185 @@ export function SafetyScorecardCard({
   onRecognise,
 }: SafetyScorecardCardProps) {
   const meta = safetyRatingMeta(scorecard.rating as SafetyRating);
-  const pointsTone =
-    scorecard.activePoints >= scorecard.pointsAtRiskThreshold
-      ? "critical"
-      : scorecard.activePoints >= scorecard.pointsWatchThreshold
-        ? "warning"
-        : "muted";
+  const quiet = scorecard.daysSinceLastEvent;
 
   return (
-    <div
-      data-testid="safety-scorecard"
-      className="bg-card border-border flex flex-wrap items-center gap-4 rounded-xl border p-4"
-    >
-      <RingGauge
-        value={scoreRingValue(scorecard.score)}
-        size={72}
-        strokeWidth={7}
-        tone={meta.ringTone}
-        aria-label="Safety score"
-      >
-        <span className="text-sm font-semibold tabular-nums">{scorecard.score}</span>
-      </RingGauge>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Safety scorecard</h3>
-            <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {canRecognise ? (
-              <Button size="sm" variant="outline" onClick={onRecognise}>
-                <AwardIcon className="size-3.5" />
-                Add recognition
-              </Button>
-            ) : null}
-            {canRecord ? (
-              <Button size="sm" onClick={onRecordEvent}>
-                <PlusIcon className="size-3.5" />
-                Record event
-              </Button>
-            ) : null}
-          </div>
+    <div data-testid="safety-scorecard" className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">Safety</h3>
+          <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+          <InfoPopover title="Safety score">
+            <p>
+              The score starts at 100 and loses 5 for each active point, 10 for each preventable
+              accident, 15 for each out-of-service order and 5 for each disciplinary action still
+              active. Event counts cover the last twelve months.
+            </p>
+            <p>
+              Points stay active for two years from the date of the event, then roll off. The rating
+              turns to Watch at 6 active points or a score under 75, and to At risk at 10 points or
+              a score under 50.
+            </p>
+          </InfoPopover>
         </div>
-        <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
-          <span>{summariseInspections(scorecard)}</span>
-          <span aria-hidden>·</span>
-          <span>
-            {scorecard.daysSinceLastEvent == null
-              ? "No accidents, incidents or citations on record"
-              : `${scorecard.daysSinceLastEvent} days since the last accident, incident or citation`}
-          </span>
-        </p>
-        <div className="mt-1 flex flex-wrap gap-2">
-          <Tile
-            label={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
-            value={scorecard.activePoints}
-            tone={pointsTone}
-          />
-          <Tile label="Accidents" value={scorecard.accidents} tone="critical" />
-          <Tile label="Preventable" value={scorecard.preventableAccidents} tone="critical" />
-          <Tile label="Citations" value={scorecard.citations} tone="warning" />
-          <Tile label="Out of service" value={scorecard.outOfServiceOrders} tone="critical" />
-          <Tile label="Open" value={scorecard.openEvents} tone="warning" />
-          <Tile label="Recognition" value={scorecard.recognitions} tone="success" />
+        <div className="flex items-center gap-2">
+          {canRecognise ? (
+            <Button size="sm" variant="outline" onClick={onRecognise}>
+              <AwardIcon className="size-3.5" />
+              Add recognition
+            </Button>
+          ) : null}
+          {canRecord ? (
+            <Button size="sm" onClick={onRecordEvent}>
+              <PlusIcon className="size-3.5" />
+              Record event
+            </Button>
+          ) : null}
         </div>
-        {scorecard.highestDiscipline ? (
-          <p className="text-muted-foreground mt-1 text-[11px]">
-            {scorecard.activeDiscipline} active disciplinary action
-            {scorecard.activeDiscipline === 1 ? "" : "s"}, highest{" "}
-            {DISCIPLINARY_LEVEL_LABELS[
-              scorecard.highestDiscipline as DisciplinaryLevel
-            ]?.toLowerCase() ?? scorecard.highestDiscipline}
-            .
-          </p>
-        ) : null}
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Metric
+          label="Score"
+          icon={GaugeIcon}
+          value={String(scorecard.score)}
+          unit="of 100"
+          sub="From the last two years of events"
+        />
+        <Metric
+          label="Active points"
+          icon={TargetIcon}
+          value={String(scorecard.activePoints)}
+          unit="pts"
+          sub={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
+        >
+          <ThresholdBar
+            value={scorecard.activePoints}
+            watch={scorecard.pointsWatchThreshold}
+            atRisk={scorecard.pointsAtRiskThreshold}
+          />
+        </Metric>
+        <Metric
+          label="Inspections"
+          icon={ClipboardCheckIcon}
+          value={
+            scorecard.inspections > 0
+              ? `${scorecard.inspectionsPassed}/${scorecard.inspections}`
+              : "—"
+          }
+          unit={scorecard.inspections > 0 ? "clean" : undefined}
+          sub={summariseInspections(scorecard)}
+        />
+        <Metric
+          label="Quiet for"
+          icon={CalendarCheckIcon}
+          value={quiet == null ? "—" : `${quiet} days`}
+          sub={
+            quiet == null
+              ? "No accidents, incidents or citations on record"
+              : "Since the last accident, incident or citation"
+          }
+        />
+      </div>
+
+      <dl className="flex flex-wrap gap-x-6 gap-y-2 rounded-lg border px-4 py-3 text-xs">
+        <Count label="Accidents" value={scorecard.accidents} />
+        <Count label="Preventable" value={scorecard.preventableAccidents} />
+        <Count label="Citations" value={scorecard.citations} />
+        <Count label="Out of service" value={scorecard.outOfServiceOrders} />
+        <Count label="Open" value={scorecard.openEvents} />
+        <Count label="Recognition" value={scorecard.recognitions} />
+        {scorecard.highestDiscipline ? (
+          <div className="ml-auto flex flex-col">
+            <dt className="text-2xs text-muted-foreground uppercase">Discipline</dt>
+            <dd className="font-medium tabular-nums">
+              {scorecard.activeDiscipline} active, highest{" "}
+              {DISCIPLINARY_LEVEL_LABELS[
+                scorecard.highestDiscipline as DisciplinaryLevel
+              ]?.toLowerCase() ?? scorecard.highestDiscipline}
+            </dd>
+          </div>
+        ) : null}
+      </dl>
     </div>
   );
 }
 
-function Tile({
+/**
+ * A metric tile sized for the panel: the dashboard KPI cards carry fixed
+ * heights and a six-column rhythm that a 650px panel cannot honour.
+ */
+function Metric({
   label,
+  icon: Icon,
   value,
-  tone,
+  unit,
+  sub,
+  children,
 }: {
   label: string;
-  value: number;
-  tone: "success" | "warning" | "critical" | "muted";
+  icon: LucideIcon;
+  value: string;
+  unit?: string;
+  sub: string;
+  children?: React.ReactNode;
 }) {
-  const active = value > 0;
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
-        !active && "text-muted-foreground border-dashed",
-        active &&
-          tone === "success" &&
-          "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400",
-        active &&
-          tone === "warning" &&
-          "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-        active &&
-          tone === "critical" &&
-          "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
-        active && tone === "muted" && "border-border bg-muted/50",
-      )}
-    >
-      <span className="font-semibold tabular-nums">{value}</span>
-      <span>{label}</span>
+    <div className="border-border/80 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground truncate text-[11px] font-semibold uppercase">
+          {label}
+        </span>
+        <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
+          <Icon className="size-3.5" />
+        </span>
+      </div>
+      <div className="flex min-w-0 items-baseline gap-1">
+        <span className="truncate text-2xl leading-none font-semibold tracking-tight tabular-nums">
+          {value}
+        </span>
+        {unit ? <span className="text-muted-foreground shrink-0 text-xs">{unit}</span> : null}
+      </div>
+      {children}
+      <p className="text-muted-foreground truncate text-[11px]" title={sub}>
+        {sub}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Points against the two thresholds that move the rating. The fill stays
+ * neutral below the watch line and turns to the warning token above it; the
+ * at-risk line is the end of the bar.
+ */
+function ThresholdBar({ value, watch, atRisk }: { value: number; watch: number; atRisk: number }) {
+  const max = Math.max(atRisk, value, 1);
+  const fill = Math.min(100, (value / max) * 100);
+  const watchAt = Math.min(100, (watch / max) * 100);
+  return (
+    <div className="bg-muted relative h-1.5 rounded-sm" aria-hidden>
+      <div
+        className={cn(
+          "absolute inset-y-0 left-0 rounded-sm",
+          value >= atRisk ? "bg-destructive" : value >= watch ? "bg-warning" : "bg-primary/60",
+        )}
+        style={{ width: `${fill}%` }}
+      />
+      <div
+        className="bg-foreground/50 absolute -top-0.5 -bottom-0.5 w-0.5 rounded-[1px]"
+        style={{ left: `calc(${watchAt}% - 1px)` }}
+        title={`Watch at ${watch}`}
+      />
+    </div>
+  );
+}
+
+function Count({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col">
+      <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+      <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );
 }

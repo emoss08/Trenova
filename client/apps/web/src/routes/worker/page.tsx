@@ -9,6 +9,7 @@ import WorkersContent, {
   WORKERS_PAGE_TAB_PARAM,
   workersPageTabParser,
 } from "./_components/page-content";
+import { PTOContent } from "./_components/pto-content";
 import {
   approvedPtoChartQuery,
   requestedPtoCountQuery,
@@ -19,7 +20,6 @@ import {
   ptoOverviewFiltersSearchParamsParser,
   ptoViewTypeSearchParamsParser,
 } from "./_components/pto/use-pto-state";
-import { PTOContent } from "./_components/pto-content";
 
 const WORKER_TABLE_NAME = "Worker";
 
@@ -65,6 +65,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 export function WorkersPage() {
   return (
     <PageLayout
+      className="gap-y-2"
       pageHeaderProps={{
         title: "Workers",
         description: "Manage and track workers along with their compliance and paid time off",

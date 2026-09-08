@@ -104,6 +104,7 @@ export function RescindActionDialog({
                   name="reason"
                   label="Reason"
                   placeholder="e.g. The delay was the shipper's, not the driver's"
+                  description="Saved on the rescinded row so an auditor can see why the action was withdrawn."
                   rules={{ required: true }}
                   maxLength={255}
                 />

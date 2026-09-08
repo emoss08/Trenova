@@ -149,6 +149,8 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   label="Plan"
                   options={planOptions}
                   rules={{ required: true }}
+                  placeholder="Pick a plan"
+                  description="The plan they are joining or declining; only plans open for enrollment are listed."
                 />
               </FormControl>
               <FormControl>
@@ -158,6 +160,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   label="Coverage"
                   options={TIER_OPTIONS}
                   isReadOnly={waive}
+                  placeholder="Pick a tier"
                   description="The plan's employee price is scaled for a wider tier."
                 />
               </FormControl>
@@ -167,6 +170,8 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   name="effectiveFrom"
                   label="Effective from"
                   rules={{ required: true }}
+                  placeholder="e.g. First of next month"
+                  description="The day the cover starts; the deduction is taken from the first settlement on or after it."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -185,6 +190,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                     label="Why"
                     placeholder="e.g. Covered by a spouse's plan"
                     rules={{ required: true }}
+                    description="Kept on the enrollment as the record of why the cover was declined."
                   />
                 </FormControl>
               ) : (
@@ -194,6 +200,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                       control={control}
                       name="employeeCostMinor"
                       label="Employee cost per period"
+                      placeholder="0.00"
                       description="Leave empty to take the plan's own arithmetic for the tier."
                     />
                   </FormControl>
@@ -212,6 +219,8 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="e.g. Enrolled during open enrollment"
+                  description="Kept with the enrollment and shown on the worker's benefits record."
                   maxLength={2000}
                 />
               </FormControl>

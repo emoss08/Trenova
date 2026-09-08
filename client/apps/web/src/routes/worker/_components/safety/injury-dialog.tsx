@@ -251,6 +251,8 @@ export function InjuryDialog({
                   control={control}
                   name="occurredAt"
                   label="When it happened"
+                  placeholder="MM/DD/YYYY"
+                  description="Sets the log year the case is numbered in."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -259,6 +261,8 @@ export function InjuryDialog({
                   control={control}
                   name="reportedAt"
                   label="When it was reported"
+                  placeholder="MM/DD/YYYY"
+                  description="When the injury was first reported to the company."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -267,6 +271,7 @@ export function InjuryDialog({
                   name="description"
                   label="What happened"
                   placeholder="How the injury occurred, as it would read on the 301 form"
+                  description="The narrative for the 301 incident report: what the employee was doing and how it happened."
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -277,6 +282,7 @@ export function InjuryDialog({
                   name="location"
                   label="Where"
                   placeholder="e.g. Dock 4, Joliet terminal"
+                  description="Where the event occurred; the 300 log asks for it."
                 />
               </FormControl>
               <FormControl>
@@ -285,6 +291,7 @@ export function InjuryDialog({
                   name="bodyPart"
                   label="Body part"
                   placeholder="e.g. Lower back"
+                  description="The part of the body affected; it goes in the 300 log description."
                 />
               </FormControl>
               <FormControl>
@@ -293,6 +300,7 @@ export function InjuryDialog({
                   name="harmfulAgent"
                   label="What harmed them"
                   placeholder="Object or substance"
+                  description="The object or substance that directly caused the injury, as the 300 log asks."
                 />
               </FormControl>
               <FormControl>
@@ -301,6 +309,8 @@ export function InjuryDialog({
                   name="illnessType"
                   label="Injury or illness"
                   options={ILLNESS_OPTIONS}
+                  placeholder="Pick a type"
+                  description="Which column of the 300 log the case is tallied in."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -310,6 +320,8 @@ export function InjuryDialog({
                   name="treatment"
                   label="Treatment given"
                   options={TREATMENT_OPTIONS}
+                  placeholder="Pick the treatment"
+                  description="Feeds the classification suggestion; first aid alone does not make a case recordable."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -318,6 +330,8 @@ export function InjuryDialog({
                   control={control}
                   name="daysAway"
                   label="Days away from work"
+                  placeholder="0"
+                  description="Calendar days away from work; drives the classification suggestion and the log totals."
                 />
               </FormControl>
               <FormControl>
@@ -325,6 +339,8 @@ export function InjuryDialog({
                   control={control}
                   name="daysRestricted"
                   label="Days on restriction or transfer"
+                  placeholder="0"
+                  description="Calendar days on restricted work or job transfer; counted in the DART rate."
                 />
               </FormControl>
               <FormControl>
@@ -333,6 +349,8 @@ export function InjuryDialog({
                   name="classification"
                   label="OSHA classification"
                   options={CLASSIFICATION_OPTIONS}
+                  placeholder="Pick a classification"
+                  description="The employer's judgement; suggested from treatment and days lost until you choose one yourself."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -343,6 +361,8 @@ export function InjuryDialog({
                     name="status"
                     label="Case status"
                     options={STATUS_OPTIONS}
+                    placeholder="Pick a status"
+                    description="An open case can still accrue days away or restricted; close it once the count is final."
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -363,6 +383,8 @@ export function InjuryDialog({
                   control={control}
                   name="returnedToWorkAt"
                   label="Returned to work"
+                  placeholder="MM/DD/YYYY"
+                  description="When the employee came back to full duty."
                 />
               </FormControl>
               <FormControl>
@@ -380,6 +402,8 @@ export function InjuryDialog({
                   name="claimStatus"
                   label="Workers' compensation"
                   options={CLAIM_OPTIONS}
+                  placeholder="Pick a status"
+                  description="Tracks the workers' compensation claim; the claim dates are dropped while it is not filed."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -390,6 +414,8 @@ export function InjuryDialog({
                       control={control}
                       name="claimFiledAt"
                       label="Claim filed"
+                      placeholder="MM/DD/YYYY"
+                      description="The date the claim was submitted to the carrier."
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -398,6 +424,8 @@ export function InjuryDialog({
                       control={control}
                       name="claimNumber"
                       label="Claim number"
+                      placeholder="e.g. WC-2026-001234"
+                      description="The carrier's claim number, for matching correspondence."
                     />
                   </FormControl>
                   <FormControl>
@@ -405,6 +433,8 @@ export function InjuryDialog({
                       control={control}
                       name="claimCarrier"
                       label="Carrier"
+                      placeholder="Insurer handling the claim"
+                      description="The workers' compensation insurer handling the claim."
                     />
                   </FormControl>
                   {claimStatus === "Closed" ? (
@@ -413,6 +443,8 @@ export function InjuryDialog({
                         control={control}
                         name="claimClosedAt"
                         label="Claim closed"
+                        placeholder="MM/DD/YYYY"
+                        description="When the carrier closed the claim."
                         rules={{ required: true }}
                       />
                     </FormControl>
@@ -424,6 +456,8 @@ export function InjuryDialog({
                 <TextareaField<InjuryFormValues>
                   control={control}
                   name="notes"
+                  placeholder="Anything else the case file should carry"
+                  description="Internal notes kept with the case."
                   label="Notes"
                   maxLength={2000}
                 />

@@ -163,7 +163,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   description={
                     templates.length === 0 && !templatesQuery.isLoading
                       ? "No active templates. Create one under Review Templates first."
-                      : undefined
+                      : "Decides which items are rated and how they are weighted."
                   }
                 />
               </FormControl>
@@ -172,7 +172,9 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   control={control}
                   name="periodStart"
                   label="Period from"
+                  placeholder="A year ago"
                   rules={{ required: true }}
+                  description="The first day of the work being reviewed."
                 />
               </FormControl>
               <FormControl>
@@ -180,7 +182,9 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   control={control}
                   name="periodEnd"
                   label="Period to"
+                  placeholder="Today"
                   rules={{ required: true }}
+                  description="The last day being reviewed; it also dates the default title."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -188,8 +192,9 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   control={control}
                   name="title"
                   label="Title"
-                  placeholder="Defaults to the template name and period end"
+                  placeholder="e.g. Annual driver review"
                   maxLength={120}
+                  description="Leave blank to use the template name and the period end date."
                 />
               </FormControl>
             </FormGroup>
@@ -324,6 +329,7 @@ function EditDraft({
                     label="Summary"
                     placeholder="The overall picture, in the words you would use to their face"
                     maxLength={4000}
+                    description="The first thing the worker reads once the review is submitted."
                   />
                 </FormControl>
                 <FormControl cols="full">
@@ -331,7 +337,9 @@ function EditDraft({
                     control={control}
                     name="strengths"
                     label="Strengths"
+                    placeholder="e.g. Clean inspections and on-time deliveries all year"
                     maxLength={4000}
+                    description="Specific things the worker should keep doing."
                   />
                 </FormControl>
                 <FormControl cols="full">
@@ -339,7 +347,9 @@ function EditDraft({
                     control={control}
                     name="improvements"
                     label="Where to improve"
+                    placeholder="e.g. Log fuel receipts the same day"
                     maxLength={4000}
+                    description="Where the worker should focus before the next review."
                   />
                 </FormControl>
               </FormGroup>
@@ -434,6 +444,7 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
         label="Comment"
         placeholder="Optional — what you saw"
         maxLength={2000}
+        description="The example behind the score; kept with the rating."
       />
     </div>
   );
@@ -472,18 +483,22 @@ function GoalsSection() {
             name={`goals.${index}.title`}
             label="Goal"
             placeholder="e.g. Zero late expense submissions this quarter"
+            description="One outcome the worker can be measured against."
           />
           <AutoCompleteDateField<ReviewDraftFormValues>
             control={control}
             name={`goals.${index}.dueAt`}
             label="By"
             placeholder="No date"
+            description="When the goal should be met."
           />
           <SelectField<ReviewDraftFormValues>
             control={control}
             name={`goals.${index}.status`}
             label="Status"
+            placeholder="Pick a status"
             options={GOAL_STATUS_OPTIONS}
+            description="Where the goal stands right now."
           />
           <Button
             type="button"

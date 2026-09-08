@@ -1,5 +1,6 @@
 import {
   FleetCodeAutocompleteField,
+  JobPositionAutocompleteField,
   UsStateAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { CustomFieldsSection } from "@/components/custom-fields-section";
@@ -40,7 +41,7 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="status"
               label="Status"
-              placeholder="Status"
+              placeholder="Set from the timeline"
               isReadOnly
               description="Employment status moves through the Timeline tab — record a Terminated, Rehired or similar event."
             />
@@ -52,7 +53,7 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="type"
               label="Worker Type"
-              placeholder="Worker Type"
+              placeholder="Employee or contractor"
               description="Whether the worker is an employee or contractor."
             />
           </FormControl>
@@ -62,8 +63,8 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="firstName"
               label="First Name"
-              placeholder="First Name"
-              description="Worker's legal first name."
+              placeholder="e.g. Maria"
+              description="Legal first name as it appears on the CDL."
               maxLength={100}
             />
           </FormControl>
@@ -73,8 +74,8 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="lastName"
               label="Last Name"
-              placeholder="Last Name"
-              description="Worker's legal last name."
+              placeholder="e.g. Alvarez"
+              description="Legal last name as it appears on the CDL."
               maxLength={100}
             />
           </FormControl>
@@ -85,8 +86,8 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="gender"
               label="Gender"
-              placeholder="Gender"
-              description="Worker's gender."
+              placeholder="Pick a gender"
+              description="Gender as recorded on the license."
             />
           </FormControl>
           <FormControl>
@@ -96,7 +97,7 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="driverType"
               label="Driver Type"
-              placeholder="Driver Type"
+              placeholder="Local, regional, OTR or team"
               description="Type of driving operations (Local, Regional, OTR, Team)."
             />
           </FormControl>
@@ -106,8 +107,19 @@ export function GeneralTab() {
               control={control}
               clearable
               label="Fleet Code"
-              placeholder="Fleet Code"
+              placeholder="Search fleet codes"
               description="The fleet code associated with this worker."
+            />
+          </FormControl>
+          <FormControl cols="full" className="pb-2">
+            <JobPositionAutocompleteField<Worker>
+              name="positionId"
+              control={control}
+              driving
+              clearable
+              label="Position"
+              placeholder="Driving position"
+              description="The title the roster is counted by. Front-office titles are held by users, not workers."
             />
           </FormControl>
         </FormGroup>
@@ -125,8 +137,8 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="addressLine1"
               label="Address Line 1"
-              placeholder="Address Line 1"
-              description="Street address."
+              placeholder="e.g. 1200 W Main St"
+              description="Street address of the worker's residence."
               maxLength={150}
             />
           </FormControl>
@@ -135,7 +147,7 @@ export function GeneralTab() {
               control={control}
               name="addressLine2"
               label="Address Line 2"
-              placeholder="Address Line 2"
+              placeholder="e.g. Apt 4B"
               description="Apartment, suite, or unit number (optional)."
               maxLength={150}
             />
@@ -146,7 +158,7 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="city"
               label="City"
-              placeholder="City"
+              placeholder="e.g. Joliet"
               description="City of residence."
               maxLength={100}
             />
@@ -157,7 +169,7 @@ export function GeneralTab() {
               name="stateId"
               label="State"
               rules={{ required: true }}
-              placeholder="State"
+              placeholder="Search states"
               description="U.S. state of residence."
             />
           </FormControl>
@@ -167,7 +179,7 @@ export function GeneralTab() {
               rules={{ required: true }}
               name="postalCode"
               label="Postal Code"
-              placeholder="Postal Code"
+              placeholder="e.g. 60432"
               description="5-digit ZIP code (or ZIP+4)."
               maxLength={10}
             />
@@ -182,7 +194,7 @@ export function GeneralTab() {
               control={control}
               name="email"
               label="Email"
-              placeholder="Email"
+              placeholder="e.g. driver@example.com"
               description="Worker's email address."
               maxLength={255}
             />
@@ -192,7 +204,7 @@ export function GeneralTab() {
               control={control}
               name="phoneNumber"
               label="Phone Number"
-              placeholder="Phone Number"
+              placeholder="(555) 555-0100"
               description="Worker's primary phone number."
             />
           </FormControl>
@@ -201,7 +213,7 @@ export function GeneralTab() {
               control={control}
               name="emergencyContactName"
               label="Emergency Contact Name"
-              placeholder="Emergency Contact Name"
+              placeholder="e.g. Ana Alvarez"
               description="Name of emergency contact."
               maxLength={100}
             />
@@ -211,7 +223,7 @@ export function GeneralTab() {
               control={control}
               name="emergencyContactPhone"
               label="Emergency Contact Phone"
-              placeholder="Emergency Contact Phone"
+              placeholder="(555) 555-0100"
               description="Phone number of emergency contact."
             />
           </FormControl>
@@ -242,8 +254,8 @@ export function EmploymentTab() {
               name="profile.dob"
               label="Date of Birth"
               rules={{ required: true }}
-              description="Worker's date of birth."
-              placeholder="Date of Birth"
+              description="Date of birth as shown on the license."
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
           <FormControl>
@@ -252,8 +264,8 @@ export function EmploymentTab() {
               name="profile.hireDate"
               label="Hire Date"
               rules={{ required: true }}
-              description="Date the worker was hired."
-              placeholder="Hire Date"
+              description="Date the worker was hired; tenure is counted from here."
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
           <FormControl className="pb-2">
@@ -261,7 +273,7 @@ export function EmploymentTab() {
               control={control}
               name="profile.terminationDate"
               label="Termination Date"
-              description="Set by a Terminated event on the Timeline tab."
+              description="Set by a Terminated event in the employment history."
               placeholder="Not terminated"
               disabled
             />
@@ -281,8 +293,8 @@ export function EmploymentTab() {
               rules={{ required: true }}
               name="profile.licenseNumber"
               label="License Number"
-              placeholder="License Number"
-              description="Driver's license number."
+              placeholder="e.g. A123-4567-8901"
+              description="CDL number as printed on the license."
               maxLength={50}
             />
           </FormControl>
@@ -291,7 +303,7 @@ export function EmploymentTab() {
               control={control}
               name="profile.licenseStateId"
               label="License State"
-              placeholder="License State"
+              placeholder="Search states"
               description="State that issued the license."
             />
           </FormControl>
@@ -301,8 +313,8 @@ export function EmploymentTab() {
               name="profile.licenseExpiry"
               label="License Expiry"
               rules={{ required: true }}
-              description="Expiration date of the license."
-              placeholder="License Expiry"
+              description="When the CDL expires."
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
           <FormControl>
@@ -312,7 +324,7 @@ export function EmploymentTab() {
               rules={{ required: true }}
               name="profile.cdlClass"
               label="CDL Class"
-              placeholder="CDL Class"
+              placeholder="A, B or C"
               description="Commercial driver's license class (A, B, or C)."
             />
           </FormControl>
@@ -321,8 +333,8 @@ export function EmploymentTab() {
               control={control}
               name="profile.cdlRestrictions"
               label="CDL Restrictions"
-              placeholder="CDL Restrictions"
-              description="Any restrictions on the CDL."
+              placeholder="e.g. L, Z"
+              description="Restriction codes printed on the CDL, such as L for no air brakes."
               maxLength={100}
             />
           </FormControl>
@@ -333,8 +345,8 @@ export function EmploymentTab() {
               rules={{ required: true }}
               name="profile.endorsement"
               label="Endorsement"
-              placeholder="Endorsement"
-              description="CDL endorsement type."
+              placeholder="Pick an endorsement"
+              description="CDL endorsement; H and X require a hazmat expiry date."
             />
           </FormControl>
           {requiresHazmatExpiry && (
@@ -345,7 +357,7 @@ export function EmploymentTab() {
                 label="Hazmat Expiry"
                 rules={{ required: requiresHazmatExpiry }}
                 description="Expiration date of hazmat endorsement."
-                placeholder="Hazmat Expiry"
+                placeholder="MM/DD/YYYY"
               />
             </FormControl>
           )}
@@ -363,7 +375,7 @@ export function EmploymentTab() {
               name="profile.medicalCardExpiry"
               label="Medical Card Expiry"
               description="Expiration date of medical examiner's certificate."
-              placeholder="Medical Card Expiry"
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
           <FormControl>
@@ -372,7 +384,7 @@ export function EmploymentTab() {
               name="profile.physicalDueDate"
               label="Physical Due Date"
               description="Next physical examination due date."
-              placeholder="Physical Due Date"
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
           <FormControl>
@@ -380,7 +392,7 @@ export function EmploymentTab() {
               control={control}
               name="profile.medicalExaminerName"
               label="Medical Examiner Name"
-              placeholder="Medical Examiner Name"
+              placeholder="e.g. Dr. J. Patel"
               description="Name of the medical examiner."
               maxLength={100}
             />
@@ -390,7 +402,7 @@ export function EmploymentTab() {
               control={control}
               name="profile.medicalExaminerNpi"
               label="Medical Examiner NPI"
-              placeholder="Medical Examiner NPI"
+              placeholder="10-digit NPI"
               description="National Provider Identifier of the medical examiner."
               maxLength={20}
             />
@@ -419,7 +431,7 @@ export function ComplianceTab() {
               rules={{ required: true }}
               name="profile.complianceStatus"
               label="Compliance Status"
-              placeholder="Compliance Status"
+              placeholder="Pick a status"
               description="Current compliance status of the worker."
             />
           </FormControl>
@@ -429,7 +441,7 @@ export function ComplianceTab() {
               name="profile.mvrDueDate"
               label="MVR Due Date"
               description="Next motor vehicle record check due date."
-              placeholder="MVR Due Date"
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
           <FormControl>
@@ -445,7 +457,7 @@ export function ComplianceTab() {
               control={control}
               name="profile.disqualificationReason"
               label="Disqualification Reason"
-              placeholder="Disqualification Reason"
+              placeholder="e.g. Medical certificate lapsed"
               description="Reason for disqualification (if applicable)."
               maxLength={255}
             />
@@ -463,7 +475,7 @@ export function ComplianceTab() {
               control={control}
               name="profile.twicCardNumber"
               label="TWIC Card Number"
-              placeholder="TWIC Card Number"
+              placeholder="e.g. 1234567890"
               description="Transportation Worker Identification Credential number."
               maxLength={50}
             />
@@ -474,7 +486,7 @@ export function ComplianceTab() {
               name="profile.twicExpiry"
               label="TWIC Expiry"
               description="Expiration date of TWIC card."
-              placeholder="TWIC Expiry"
+              placeholder="MM/DD/YYYY"
             />
           </FormControl>
         </FormGroup>

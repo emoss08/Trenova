@@ -100,6 +100,8 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                   control={control}
                   name="usedOn"
                   label="Day"
+                  placeholder="Day the leave was taken"
+                  description="The calendar day these hours belong to."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -108,6 +110,8 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                   control={control}
                   name="hours"
                   label="Hours"
+                  placeholder="e.g. 8"
+                  description="Hours of leave taken that day, more than zero and up to 24."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -125,6 +129,8 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="e.g. Half day for a medical appointment"
+                  description="Kept on the entry and shown in the case's list of days."
                   maxLength={2000}
                 />
               </FormControl>

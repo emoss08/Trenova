@@ -126,6 +126,8 @@ export function ViolationProgressDialog({
                   control={control}
                   name="sapName"
                   label="Substance abuse professional"
+                  placeholder="Name of the SAP"
+                  description="The substance abuse professional handling the evaluation and follow-up plan."
                 />
               </FormControl>
               <FormControl>
@@ -133,6 +135,8 @@ export function ViolationProgressDialog({
                   control={control}
                   name="sapReferredAt"
                   label="Referred on"
+                  placeholder="MM/DD/YYYY"
+                  description="When the driver was given the SAP referral."
                 />
               </FormControl>
               <FormControl>
@@ -140,6 +144,8 @@ export function ViolationProgressDialog({
                   control={control}
                   name="sapEvaluationCompletedAt"
                   label="Evaluation completed"
+                  placeholder="MM/DD/YYYY"
+                  description="A passed return-to-duty test only releases the driver once this date is set."
                 />
               </FormControl>
               <FormControl>
@@ -147,12 +153,15 @@ export function ViolationProgressDialog({
                   control={control}
                   name="reportedToClearinghouseAt"
                   label="Reported to the Clearinghouse"
+                  placeholder="MM/DD/YYYY"
+                  description="When the violation was reported to the Clearinghouse."
                 />
               </FormControl>
               <FormControl>
                 <NumberField<ViolationProgressFormValues>
                   control={control}
                   name="followUpTestCount"
+                  placeholder="e.g. 6"
                   label="Follow-up tests required"
                   description="At least six in the first twelve months (49 CFR 382.311)."
                 />
@@ -162,12 +171,16 @@ export function ViolationProgressDialog({
                   control={control}
                   name="followUpEndsAt"
                   label="Follow-up programme ends"
+                  placeholder="MM/DD/YYYY"
+                  description="When the SAP's follow-up plan ends; it may run up to five years after the return to duty."
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<ViolationProgressFormValues>
                   control={control}
                   name="notes"
+                  placeholder="e.g. Driver began treatment on 3/12"
+                  description="Internal notes kept with the violation."
                   label="Notes"
                   maxLength={2000}
                 />

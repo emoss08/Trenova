@@ -241,6 +241,7 @@ function DecideDialog({
                       ? "Anything the driver should know"
                       : "e.g. The address needs a unit number"
                   }
+                  description="Sent to the driver with the decision and kept on the request."
                   rules={{ required: !approve }}
                 />
               </FormControl>

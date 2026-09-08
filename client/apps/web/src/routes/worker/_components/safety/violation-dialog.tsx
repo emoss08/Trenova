@@ -139,6 +139,8 @@ export function ViolationDialog({
                   name="basic"
                   label="BASIC"
                   options={BASIC_OPTIONS}
+                  placeholder="Pick a BASIC"
+                  description="The CSA category the violation is scored under; each BASIC has its own measure and threshold."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -155,6 +157,7 @@ export function ViolationDialog({
                 <NumberField<SafetyViolationFormValues>
                   control={control}
                   name="severityWeight"
+                  placeholder="e.g. 5"
                   label="Severity weight"
                   rules={{ required: true }}
                   description="The FMCSA's published weight, 1 to 10."
@@ -165,6 +168,8 @@ export function ViolationDialog({
                   control={control}
                   name="description"
                   label="What was cited"
+                  placeholder="e.g. Brake out of adjustment on two axles"
+                  description="The violation as written on the inspection report."
                   rules={{ required: true }}
                 />
               </FormControl>

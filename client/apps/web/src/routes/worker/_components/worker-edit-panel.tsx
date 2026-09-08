@@ -4,6 +4,7 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-list";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Tabs, TabsContent } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -42,10 +43,11 @@ import {
   HeartPulseIcon,
 } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
-import { Suspense, lazy, useCallback, useEffect, useRef } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
+import { resolveWorkerPanelTab, type EmploymentView } from "./worker-panel-tabs";
 
 const GENERAL_FIELDS = [
   "status",
@@ -113,6 +115,11 @@ const WorkerLeaveTab = lazy(() => import("./leave/worker-leave-tab"));
 const WorkerOverviewTab = lazy(() => import("./worker-overview-tab"));
 const WorkerReviewsTab = lazy(() => import("./worker-reviews-tab"));
 
+const EMPLOYMENT_VIEWS = [
+  { value: "details", label: "Details" },
+  { value: "history", label: "History", icon: HistoryIcon },
+] satisfies { value: EmploymentView; label: string; icon?: typeof HistoryIcon }[];
+
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
   { id: "save-close", label: "Save & Close" },
@@ -133,6 +140,19 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
   // The panel opens on the overview because most visits are to read a worker,
   // not to edit one. Deep links that name a tab are unaffected.
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("overview"));
+
+  // The employment history used to be its own tab. Links and concerns still
+  // name "timeline", so that value resolves to the Employment tab with the
+  // history view showing rather than to nothing.
+  const [employmentViewChoice, setEmploymentViewChoice] = useState<EmploymentView>("details");
+  const { tab: resolvedTab, employmentView } = resolveWorkerPanelTab(
+    activeTab,
+    employmentViewChoice,
+  );
+  const showEmploymentView = (view: EmploymentView) => {
+    setEmploymentViewChoice(view);
+    if (activeTab === "timeline") void setActiveTab("employment");
+  };
 
   const {
     formState: { isSubmitting, errors },
@@ -275,7 +295,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                 className="flex flex-1 flex-col overflow-hidden"
               >
                 <Tabs
-                  value={activeTab}
+                  value={resolvedTab}
                   onValueChange={(value) => void setActiveTab(value as string)}
                   className="flex flex-1 flex-col overflow-hidden"
                 >
@@ -306,7 +326,6 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           className: cn(hasComplianceErrors && "text-destructive"),
                         },
                         { value: "credentials", label: "Credentials", icon: IdCardIcon },
-                        { value: "timeline", label: "Timeline", icon: HistoryIcon },
                         { value: "checklist", label: "Checklist", icon: ClipboardListIcon },
                         { value: "training", label: "Training", icon: GraduationCapIcon },
                         { value: "safety", label: "Safety", icon: ShieldAlertIcon },
@@ -321,7 +340,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         { value: "documents", label: "Documents", icon: FileTextIcon },
                         { value: "portal", label: "Portal", icon: SmartphoneIcon },
                       ]}
-                      activeValue={activeTab}
+                      activeValue={resolvedTab}
                       onSelect={(value) => void setActiveTab(value)}
                     />
                   </div>
@@ -344,7 +363,43 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <GeneralTab />
                     </TabsContent>
                     <TabsContent value="employment" className="p-4">
-                      <EmploymentTab />
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-semibold">Employment</h3>
+                          <p className="text-muted-foreground text-xs">
+                            {employmentView === "details"
+                              ? "Dates, licence and medical details on the record."
+                              : "Every hire, transfer, leave and termination, with who recorded it."}
+                          </p>
+                        </div>
+                        <SegmentedControl<EmploymentView>
+                          items={EMPLOYMENT_VIEWS}
+                          value={employmentView}
+                          onValueChange={showEmploymentView}
+                          aria-label="Employment view"
+                        />
+                      </div>
+                      {employmentView === "details" ? (
+                        <EmploymentTab />
+                      ) : (
+                        <Suspense
+                          fallback={
+                            <div className="flex items-center justify-center py-12">
+                              <ComponentLoader message="Loading..." />
+                            </div>
+                          }
+                        >
+                          <WorkerTimelineTab
+                            workerId={row?.id as string}
+                            worker={{
+                              fleetCodeId: row?.fleetCodeId ?? null,
+                              driverType: row?.driverType ?? "",
+                              type: row?.type ?? "",
+                              status: row?.status ?? "",
+                            }}
+                          />
+                        </Suspense>
+                      )}
                     </TabsContent>
                     <TabsContent value="compliance" className="p-4">
                       <ComplianceTab />
@@ -358,25 +413,6 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         }
                       >
                         <WorkerCredentialsTab workerId={row?.id as string} />
-                      </Suspense>
-                    </TabsContent>
-                    <TabsContent value="timeline" className="p-4">
-                      <Suspense
-                        fallback={
-                          <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
-                          </div>
-                        }
-                      >
-                        <WorkerTimelineTab
-                          workerId={row?.id as string}
-                          worker={{
-                            fleetCodeId: row?.fleetCodeId ?? null,
-                            driverType: row?.driverType ?? "",
-                            type: row?.type ?? "",
-                            status: row?.status ?? "",
-                          }}
-                        />
                       </Suspense>
                     </TabsContent>
                     <TabsContent value="checklist" className="p-4">
@@ -431,7 +467,10 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           </div>
                         }
                       >
-                        <WorkerDQFTab workerId={row?.id as string} />
+                        <WorkerDQFTab
+                          workerId={row?.id as string}
+                          onOpenTab={(tab) => void setActiveTab(tab)}
+                        />
                       </Suspense>
                     </TabsContent>
                     <TabsContent value="reviews" className="p-4">

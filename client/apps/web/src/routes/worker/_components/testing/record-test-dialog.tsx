@@ -145,6 +145,8 @@ export function RecordTestDialog({
                   name="testType"
                   label="Reason for the test"
                   options={TYPE_OPTIONS}
+                  placeholder="Pick a reason"
+                  description="Reasonable suspicion and post-accident tests must say what prompted them."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -154,6 +156,8 @@ export function RecordTestDialog({
                   name="substance"
                   label="What is analysed"
                   options={SUBSTANCE_OPTIONS}
+                  placeholder="Pick a substance"
+                  description="Drug results go through an MRO; alcohol results are graded by the concentration."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -165,6 +169,7 @@ export function RecordTestDialog({
                     name="reason"
                     label="What prompted it"
                     placeholder="What the supervisor observed, or the accident that triggered the collection"
+                    description="Kept with the test as the documented basis for ordering it."
                     rules={{ required: true }}
                     maxLength={2000}
                   />
@@ -176,6 +181,8 @@ export function RecordTestDialog({
                   control={control}
                   name="scheduledAt"
                   label="Scheduled for"
+                  placeholder="MM/DD/YYYY"
+                  description="When the driver is due at the collection site."
                 />
               </FormControl>
               <FormControl>
@@ -183,6 +190,8 @@ export function RecordTestDialog({
                   control={control}
                   name="collectedAt"
                   label="Collected on"
+                  placeholder="MM/DD/YYYY"
+                  description="Entering a date marks the specimen as collected; leave it blank if it has not been taken yet."
                 />
               </FormControl>
               <FormControl>
@@ -191,6 +200,7 @@ export function RecordTestDialog({
                   name="collectionSite"
                   label="Collection site"
                   placeholder="e.g. Concentra, Joliet IL"
+                  description="Where the specimen was collected."
                 />
               </FormControl>
               <FormControl>
@@ -198,6 +208,8 @@ export function RecordTestDialog({
                   control={control}
                   name="collectorName"
                   label="Collector"
+                  placeholder="Name of the collector"
+                  description="The collector who took the specimen, as named on the CCF."
                 />
               </FormControl>
               <FormControl>
@@ -206,6 +218,7 @@ export function RecordTestDialog({
                   name="specimenId"
                   label="Specimen ID"
                   placeholder="CCF specimen number"
+                  description="The specimen ID from the custody and control form, for matching the laboratory report."
                 />
               </FormControl>
               <FormControl>
@@ -220,6 +233,8 @@ export function RecordTestDialog({
                 <TextareaField<DOTTestFormValues>
                   control={control}
                   name="notes"
+                  placeholder="e.g. Driver escorted to the site"
+                  description="Internal notes kept with the test record."
                   label="Notes"
                   maxLength={2000}
                 />

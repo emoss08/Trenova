@@ -92,7 +92,8 @@ export function CredentialArchiveDialog({
                   control={control}
                   name="reason"
                   label="Reason"
-                  placeholder="Optional — why this credential is being retired"
+                  placeholder="e.g. Endorsement surrendered"
+                  description="Optional; stored with the archived credential and shown in the worker's history."
                   maxLength={255}
                 />
               </FormControl>

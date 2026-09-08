@@ -138,6 +138,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 2,
         defaultPolicyApplied: false,
         checklistStarted: false,
+        checklistsClosed: 0,
       },
     });
     const today = getTodayDate();
@@ -185,6 +186,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 0,
         defaultPolicyApplied: false,
         checklistStarted: false,
+        checklistsClosed: 0,
       },
     });
     renderSheet();
@@ -211,6 +213,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 0,
         defaultPolicyApplied: false,
         checklistStarted: false,
+        checklistsClosed: 0,
         ptoPaidOutDays: "0.00",
         ptoForfeitedDays: "0.00",
       },
@@ -243,6 +246,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 0,
         defaultPolicyApplied: false,
         checklistStarted: true,
+        checklistsClosed: 0,
         ptoPaidOutDays: "6.50",
         ptoForfeitedDays: "2.00",
       },
@@ -270,6 +274,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 0,
         defaultPolicyApplied: false,
         checklistStarted: true,
+        checklistsClosed: 0,
         ptoPaidOutDays: "0.00",
         ptoForfeitedDays: "0.00",
         trainingAssigned: 0,
@@ -303,6 +308,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 0,
         defaultPolicyApplied: false,
         checklistStarted: true,
+        checklistsClosed: 0,
         ptoPaidOutDays: "0.00",
         ptoForfeitedDays: "0.00",
         trainingAssigned: 0,
@@ -335,6 +341,7 @@ describe("EmploymentEventSheet", () => {
         upcomingPtoCancelled: 0,
         defaultPolicyApplied: true,
         checklistStarted: true,
+        checklistsClosed: 0,
         ptoPaidOutDays: "0.00",
         ptoForfeitedDays: "0.00",
         trainingAssigned: 3,

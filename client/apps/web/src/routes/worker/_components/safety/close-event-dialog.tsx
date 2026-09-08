@@ -90,6 +90,7 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
                   name="resolution"
                   label="Resolution"
                   placeholder="e.g. Coached on backing procedure; dock damage repaired"
+                  description="Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first."
                   rules={{ required: true }}
                   maxLength={4000}
                 />

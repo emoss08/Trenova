@@ -132,6 +132,8 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   name="queryType"
                   label="Query"
                   options={TYPE_OPTIONS}
+                  placeholder="Pick a query type"
+                  description="A full query needs the driver's specific consent; a limited query runs on the general consent on file."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -140,6 +142,8 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   control={control}
                   name="requestedAt"
                   label="Requested on"
+                  placeholder="MM/DD/YYYY"
+                  description="The date the query was submitted to the Clearinghouse."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -148,9 +152,12 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   control={control}
                   name="consentObtainedAt"
                   label="Consent obtained"
+                  placeholder="MM/DD/YYYY"
                   rules={{ required: isFull }}
                   description={
-                    isFull ? "A full query cannot be run without the driver's consent." : undefined
+                    isFull
+                      ? "A full query cannot be run without the driver's consent."
+                      : "When the driver's general consent for limited queries was signed."
                   }
                 />
               </FormControl>
@@ -159,6 +166,8 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   control={control}
                   name="consentExpiresAt"
                   label="Consent expires"
+                  placeholder="MM/DD/YYYY"
+                  description="When the consent on file lapses; a new one is needed before the next query."
                 />
               </FormControl>
               <FormControl>
@@ -167,6 +176,7 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   name="reference"
                   label="Reference"
                   placeholder="Clearinghouse query reference"
+                  description="The query ID the Clearinghouse assigned, for matching the answer when it comes back."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -174,6 +184,8 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="Anything an auditor should know about this query"
+                  description="Internal notes kept with the query."
                   maxLength={2000}
                 />
               </FormControl>
@@ -281,6 +293,8 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   name="result"
                   label="Answer"
                   options={RESULT_OPTIONS}
+                  placeholder="Pick an answer"
+                  description="Violations found or consent denied prohibits the driver from safety-sensitive duty at once."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -289,6 +303,8 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   control={control}
                   name="completedAt"
                   label="Answered on"
+                  placeholder="MM/DD/YYYY"
+                  description="When the Clearinghouse returned the answer; the next annual query is due twelve months on."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -298,6 +314,8 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                     control={control}
                     name="violationCount"
                     label="Violations returned"
+                    placeholder="e.g. 1"
+                    description="How many violations the Clearinghouse reported."
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -307,6 +325,8 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   control={control}
                   name="reference"
                   label="Reference"
+                  placeholder="Clearinghouse response reference"
+                  description="The query ID on the Clearinghouse response."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -314,6 +334,8 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="e.g. Driver notified and taken off the board"
+                  description="Internal notes kept with the answer."
                   maxLength={2000}
                 />
               </FormControl>

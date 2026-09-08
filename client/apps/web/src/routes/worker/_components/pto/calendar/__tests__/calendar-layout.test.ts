@@ -5,8 +5,11 @@ import {
   laneCount,
   monthEndUnix,
   monthStartUnix,
+  ptoTiming,
   selectionRange,
   shiftMonth,
+  spansOnDay,
+  splitVisibleSegments,
 } from "../calendar-layout";
 import { buildWhosOut } from "../whos-out-strip";
 
@@ -123,5 +126,68 @@ describe("buildWhosOut", () => {
     expect(days[1].out.map((p) => p.id)).toEqual(["1"]);
     expect(days[3].out.map((p) => p.id)).toEqual(["3"]);
     expect(days[6].out).toHaveLength(0);
+  });
+});
+
+describe("splitVisibleSegments", () => {
+  const weeks = buildMonthGrid(2026, 2, new Date(2026, 2, 1));
+  const items = [
+    { id: "a", startDate: local(2026, 2, 1), endDate: local(2026, 2, 3) },
+    { id: "b", startDate: local(2026, 2, 1), endDate: local(2026, 2, 1) },
+    { id: "c", startDate: local(2026, 2, 1), endDate: local(2026, 2, 2) },
+    { id: "d", startDate: local(2026, 2, 2), endDate: local(2026, 2, 2) },
+  ];
+
+  it("keeps every lane when they fit under the cap", () => {
+    const segments = buildWeekSegments(items, weeks[0]);
+    const { visible, overflow } = splitVisibleSegments(segments, 3);
+    expect(visible).toHaveLength(4);
+    expect(overflow).toEqual([0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it("drops lanes past the cap and counts the hidden spans on each day they cover", () => {
+    const segments = buildWeekSegments(items, weeks[0]);
+    const { visible, overflow } = splitVisibleSegments(segments, 2);
+    expect(visible.map((s) => s.item.id).sort()).toEqual(["a", "c"]);
+    expect(overflow).toEqual([1, 1, 0, 0, 0, 0, 0]);
+  });
+});
+
+describe("spansOnDay", () => {
+  it("returns the spans covering a day, earliest start first", () => {
+    const items = [
+      { id: "late", startDate: local(2026, 2, 9), endDate: local(2026, 2, 12) },
+      { id: "early", startDate: local(2026, 2, 5), endDate: local(2026, 2, 10) },
+      { id: "outside", startDate: local(2026, 2, 11), endDate: local(2026, 2, 11) },
+    ];
+    expect(spansOnDay(items, local(2026, 2, 10)).map((s) => s.id)).toEqual(["early", "late"]);
+    expect(spansOnDay(items, local(2026, 2, 13))).toEqual([]);
+  });
+});
+
+describe("ptoTiming", () => {
+  const today = local(2026, 2, 10);
+
+  it("describes upcoming, active and past spans relative to today", () => {
+    expect(
+      ptoTiming({ startDate: local(2026, 2, 11), endDate: local(2026, 2, 12) }, today),
+    ).toEqual({ tone: "upcoming", label: "Starts tomorrow" });
+    expect(
+      ptoTiming({ startDate: local(2026, 2, 14), endDate: local(2026, 2, 15) }, today).label,
+    ).toBe("Starts in 4 days");
+    const active = ptoTiming({ startDate: local(2026, 2, 9), endDate: local(2026, 2, 12) }, today);
+    expect(active.tone).toBe("active");
+    expect(active.label).toMatch(/^Out now · back /);
+    expect(ptoTiming({ startDate: local(2026, 2, 1), endDate: local(2026, 2, 9) }, today)).toEqual({
+      tone: "past",
+      label: "Ended yesterday",
+    });
+    expect(
+      ptoTiming({ startDate: local(2026, 2, 1), endDate: local(2026, 2, 4) }, today).label,
+    ).toBe("Ended 6 days ago");
+  });
+
+  it("treats a span ending today as still active", () => {
+    expect(ptoTiming({ startDate: local(2026, 2, 10), endDate: today }, today).tone).toBe("active");
   });
 });

@@ -169,7 +169,8 @@ export function AssignPolicyDialog({
                   label="Policy"
                   options={policyOptions}
                   rules={{ required: true }}
-                  placeholder={isLoading ? "Loading policies..." : "Select policy"}
+                  placeholder={isLoading ? "Loading policies..." : "Pick a policy"}
+                  description="Decides how time off accrues and which PTO types are tracked."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -177,7 +178,13 @@ export function AssignPolicyDialog({
                   control={control}
                   name="effectiveFrom"
                   label="Effective from"
+                  placeholder="Today"
                   rules={{ required: true }}
+                  description={
+                    currentPolicyId
+                      ? "The new policy applies from this date; it must be after the current assignment started."
+                      : "Accruals count from this date."
+                  }
                 />
               </FormControl>
               {openingArray.fields.length > 0 ? (
@@ -198,6 +205,7 @@ export function AssignPolicyDialog({
                               ?.label ?? field.ptoType
                           }
                           placeholder="0"
+                          description="Posted on the effective date; leave 0 for none."
                         />
                       ))}
                     </div>
@@ -209,8 +217,9 @@ export function AssignPolicyDialog({
                   control={control}
                   name="note"
                   label="Assignment note"
-                  placeholder="Why this policy applies (optional)"
+                  placeholder="e.g. Moved to the regional driver policy"
                   maxLength={255}
+                  description="Optional; kept on the assignment record."
                 />
               </FormControl>
             </FormGroup>

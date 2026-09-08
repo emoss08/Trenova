@@ -1,3 +1,4 @@
+import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
   closeLeaveCase,
@@ -152,6 +153,18 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-medium">FMLA entitlement</h3>
+              <InfoPopover title="FMLA entitlement">
+                <p>
+                  Measured on read from the days recorded against this worker&apos;s cases, inside
+                  the window the measurement method sets. Only days on a case designated as FMLA
+                  draw it down: approving a case and designating it FMLA are separate decisions, so
+                  approved leave that was not designated is recorded but counts for nothing.
+                </p>
+                <p>
+                  Exhausted means nothing is left. Days designated after the fact can push use past
+                  the entitlement; the remainder then reads zero rather than negative.
+                </p>
+              </InfoPopover>
               {entitlement.exhausted ? <Badge variant="inactive">Exhausted</Badge> : null}
               {entitlement.militaryCaregiver ? (
                 <Badge variant="info">Military caregiver — 26 weeks</Badge>

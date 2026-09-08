@@ -222,7 +222,7 @@ export function PTOReasonDialog({
                   rules={{ required: mode === "reject" }}
                   name="reason"
                   label="Reason"
-                  placeholder="Reason"
+                  placeholder="e.g. No coverage for those dates"
                   description={copy.reasonDescription}
                   presets={copy.presets}
                   maxLength={255}

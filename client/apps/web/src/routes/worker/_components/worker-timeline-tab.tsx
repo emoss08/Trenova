@@ -1,3 +1,4 @@
+import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchWorkerEmploymentEvents,
@@ -6,8 +7,14 @@ import {
 } from "@/lib/graphql/worker-employment";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   EMPLOYMENT_EVENT_LABELS,
@@ -24,6 +31,7 @@ import { ALL_EMPLOYMENT_EVENT_KINDS } from "./timeline/employment-event-meta";
 import { TimelineList } from "./timeline/timeline-list";
 
 type SheetState = { mode: "record" } | { mode: "amend"; event: WorkerEmploymentEventRow };
+type KindFilter = EmploymentEventKind | "all";
 
 export default function WorkerTimelineTab({
   workerId,
@@ -34,7 +42,7 @@ export default function WorkerTimelineTab({
 }) {
   const { allowed: canRecord } = usePermission(Resource.WorkerEmploymentEvent, Operation.Create);
   const { allowed: canAmend } = usePermission(Resource.WorkerEmploymentEvent, Operation.Update);
-  const [activeKinds, setActiveKinds] = useState<Set<EmploymentEventKind>>(() => new Set());
+  const [kind, setKind] = useState<KindFilter>("all");
   const [sheet, setSheet] = useState<SheetState | null>(null);
 
   const eventsQuery = useQuery({
@@ -49,21 +57,16 @@ export default function WorkerTimelineTab({
   }, [events]);
 
   const visible = useMemo(
-    () => (activeKinds.size === 0 ? events : events.filter((event) => activeKinds.has(event.kind))),
-    [events, activeKinds],
+    () => (kind === "all" ? events : events.filter((event) => event.kind === kind)),
+    [events, kind],
   );
-
-  const toggleKind = (kind: EmploymentEventKind) => {
-    setActiveKinds((current) => {
-      const next = new Set(current);
-      if (next.has(kind)) {
-        next.delete(kind);
-      } else {
-        next.add(kind);
-      }
-      return next;
-    });
-  };
+  const kindOptions = useMemo<{ value: KindFilter; label: string }[]>(
+    () => [
+      { value: "all", label: "All events" },
+      ...presentKinds.map((option) => ({ value: option, label: EMPLOYMENT_EVENT_LABELS[option] })),
+    ],
+    [presentKinds],
+  );
 
   if (eventsQuery.isLoading) {
     return (
@@ -77,46 +80,54 @@ export default function WorkerTimelineTab({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold">Employment timeline</h3>
-          <p className="text-muted-foreground text-xs">
-            Every hire, transfer, leave and termination, with who recorded it.
-          </p>
-        </div>
-        {canRecord ? (
-          <Button size="sm" onClick={() => setSheet({ mode: "record" })}>
-            <PlusIcon className="size-3.5" />
-            Record event
-          </Button>
-        ) : null}
-      </div>
-
       <LeaveStandingStrip workerId={workerId} />
 
-      {presentKinds.length > 1 ? (
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by event kind">
-          {presentKinds.map((kind) => {
-            const pressed = activeKinds.has(kind);
-            return (
-              <button
-                key={kind}
-                type="button"
-                aria-pressed={pressed}
-                onClick={() => toggleKind(kind)}
-                className={cn(
-                  "border-border rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors",
-                  pressed
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "text-muted-foreground hover:bg-muted",
-                )}
-              >
-                {EMPLOYMENT_EVENT_LABELS[kind]}
-              </button>
-            );
-          })}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <p className="text-muted-foreground text-xs">
+            {events.length === 0
+              ? "Nothing recorded yet."
+              : `${visible.length} of ${events.length} event${events.length === 1 ? "" : "s"} shown.`}
+          </p>
+          <InfoPopover title="Employment events">
+            <p>
+              Recording an event is the only way a worker&apos;s employment status moves. A leave or
+              suspension takes them off the dispatch board, a termination ends employment and closes
+              their PTO and pay assignments, a rehire reopens it.
+            </p>
+            <p>
+              Amending an event corrects what was written and never replays those effects: a
+              corrected termination date does not move the worker&apos;s termination date.
+            </p>
+          </InfoPopover>
         </div>
-      ) : null}
+        <div className="flex items-center gap-2">
+          {presentKinds.length > 1 ? (
+            <Select
+              value={kind}
+              items={kindOptions}
+              onValueChange={(value) => setKind(value as KindFilter)}
+            >
+              <SelectTrigger className="h-7 w-40 text-xs" aria-label="Filter by event kind">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {kindOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
+          {canRecord ? (
+            <Button size="sm" onClick={() => setSheet({ mode: "record" })}>
+              <PlusIcon className="size-3.5" />
+              Record event
+            </Button>
+          ) : null}
+        </div>
+      </div>
 
       {visible.length === 0 ? (
         <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">

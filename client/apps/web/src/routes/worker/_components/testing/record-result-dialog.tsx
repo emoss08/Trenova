@@ -141,6 +141,7 @@ export function RecordResultDialog({
                       name="alcoholConcentration"
                       label="Concentration"
                       placeholder="0.000"
+                      description="The breath alcohol concentration from the confirmation test; it decides the result on its own."
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -162,6 +163,8 @@ export function RecordResultDialog({
                   name="result"
                   label="Result"
                   options={RESULT_OPTIONS}
+                  placeholder="Pick a result"
+                  description="A positive, refusal, adulterated or substituted result opens a violation and prohibits the driver at once."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -170,6 +173,8 @@ export function RecordResultDialog({
                   control={control}
                   name="resultAt"
                   label="Reported on"
+                  placeholder="MM/DD/YYYY"
+                  description="When the laboratory or MRO reported the result; it also fills the collection date if none was recorded."
                 />
               </FormControl>
 
@@ -180,6 +185,8 @@ export function RecordResultDialog({
                       control={control}
                       name="labName"
                       label="Laboratory"
+                      placeholder="HHS-certified laboratory"
+                      description="The HHS-certified laboratory that analysed the specimen."
                     />
                   </FormControl>
                   <FormControl>
@@ -187,6 +194,8 @@ export function RecordResultDialog({
                       control={control}
                       name="mroName"
                       label="Medical review officer"
+                      placeholder="Name of the MRO"
+                      description="The medical review officer who verified the laboratory result."
                     />
                   </FormControl>
                   <FormControl>
@@ -194,6 +203,8 @@ export function RecordResultDialog({
                       control={control}
                       name="mroVerifiedAt"
                       label="MRO verified on"
+                      placeholder="MM/DD/YYYY"
+                      description="When the MRO verified the result; a drug result is not final until then."
                     />
                   </FormControl>
                 </>
@@ -203,6 +214,8 @@ export function RecordResultDialog({
                 <TextareaField<DOTTestResultFormValues>
                   control={control}
                   name="notes"
+                  placeholder="e.g. Split specimen requested"
+                  description="Internal notes kept with the test record."
                   label="Notes"
                   maxLength={2000}
                 />

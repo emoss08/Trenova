@@ -94,6 +94,7 @@ export function WaiveTrainingDialog({
                   placeholder="e.g. Completed at previous carrier; certificate on file"
                   rules={{ required: true }}
                   maxLength={255}
+                  description="Kept on the record and in the audit log."
                 />
               </FormControl>
             </FormGroup>

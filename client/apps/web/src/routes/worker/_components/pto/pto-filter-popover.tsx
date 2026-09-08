@@ -85,6 +85,7 @@ export function PTOFilterPopover({
                   label="PTO Type"
                   placeholder="Select type"
                   options={ptoTypeOptions}
+                  description="Show only this kind of time off."
                 />
               </FormControl>
               <FormControl className="min-h-[2em]">
@@ -93,6 +94,7 @@ export function PTOFilterPopover({
                   name="workerId"
                   label="Worker"
                   placeholder="Select worker"
+                  description="Show only this worker's time off."
                   clearable
                 />
               </FormControl>
@@ -102,6 +104,7 @@ export function PTOFilterPopover({
                   name="fleetCodeId"
                   label="Fleet Code"
                   placeholder="Select fleet code"
+                  description="Show only workers in this fleet."
                   clearable
                 />
               </FormControl>
@@ -112,6 +115,7 @@ export function PTOFilterPopover({
                   label="Start Date"
                   placeholder="Start date"
                   rules={{ required: true }}
+                  description="The earliest day of time off to include."
                 />
               </FormControl>
               <FormControl className="min-h-[2em]">
@@ -121,6 +125,7 @@ export function PTOFilterPopover({
                   label="End Date"
                   placeholder="End date"
                   rules={{ required: true }}
+                  description="The latest day of time off to include."
                 />
               </FormControl>
             </FormGroup>

@@ -19,7 +19,7 @@ import { AssignTrainingDialog } from "./training/assign-training-dialog";
 import { CompleteTrainingDialog } from "./training/complete-training-dialog";
 import { TrainingHistory } from "./training/training-history";
 import { TrainingOverview } from "./training/training-overview";
-import { TrainingSlotCard, type TrainingSlotPermissions } from "./training/training-slot-card";
+import { TrainingSlotRow, type TrainingSlotPermissions } from "./training/training-slot-card";
 import { useTrainingInvalidation } from "./training/use-training-invalidation";
 import { WaiveTrainingDialog } from "./training/waive-training-dialog";
 
@@ -134,12 +134,9 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
 
   if (summaryQuery.isLoading || recordsQuery.isLoading) {
     return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Skeleton className="h-36 w-full rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-xl" />
-        </div>
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-24 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
       </div>
     );
   }
@@ -238,18 +235,18 @@ type TrainingSectionProps = {
 function TrainingSection({ title, hint, items, empty, ...cardProps }: TrainingSectionProps) {
   return (
     <section className="flex flex-col gap-2">
-      <div>
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-muted-foreground text-xs">{hint}</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{title}</h4>
+        <p className="text-muted-foreground truncate text-xs">{hint}</p>
       </div>
       {items.length === 0 ? (
-        <p className="text-muted-foreground border-border rounded-lg border border-dashed px-3 py-4 text-center text-xs">
+        <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
           {empty ?? "Nothing on file."}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="divide-border divide-y rounded-lg border">
           {items.map((item) => (
-            <TrainingSlotCard key={item.course.id} item={item} {...cardProps} />
+            <TrainingSlotRow key={item.course.id} item={item} {...cardProps} />
           ))}
         </div>
       )}
