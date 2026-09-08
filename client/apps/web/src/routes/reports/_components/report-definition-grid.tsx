@@ -38,7 +38,6 @@ import { formatDistanceToNowStrict } from "date-fns";
 import {
   CalendarClockIcon,
   CopyIcon,
-  FileChartColumnIcon,
   GlobeIcon,
   LockIcon,
   MoreHorizontalIcon,
@@ -59,7 +58,7 @@ import {
   type ReportSortOrder,
   type ReportStatusFilter,
 } from "../reports-page-state";
-import { CategoryGroupHeader, ReportCard, ReportGridEmptyState } from "./report-card-chrome";
+import { CategoryGroupHeader, ReportCard, ReportGridEmpty } from "./report-card-chrome";
 import { ReportSchedulesDialog } from "./report-schedules-dialog";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
 
@@ -231,11 +230,13 @@ export function ReportDefinitionGrid({
   sortBy,
   category,
   status,
+  onClearFilters,
 }: {
   search: string;
   sortBy: ReportSortOrder;
   category: string;
   status: ReportStatusFilter;
+  onClearFilters: () => void;
 }) {
   const navigate = useNavigate();
   const { data: definitions, isLoading } = useReportDefinitionList(search);
@@ -303,19 +304,24 @@ export function ReportDefinitionGrid({
     <>
       {filtered.length === 0 ? (
         <div className="grid p-4">
-          <ReportGridEmptyState
-            icon={FileChartColumnIcon}
-            title={hasFilters ? "No reports match your search and filters" : "No reports yet"}
+          <ReportGridEmpty
+            variant="reports"
+            title={hasFilters ? "Nothing matches" : "No reports yet"}
             description={
               hasFilters
-                ? "Try a different name, or clear the search and filters."
-                : "Build a custom report or customize one from the gallery."
+                ? "No report fits the search and filters. Widen them, or clear them to see every report you own."
+                : "A report you build or customize from the gallery lands here, grouped by what it is about, ready to run or schedule."
             }
+            onClearFilters={hasFilters ? onClearFilters : undefined}
             action={
-              !hasFilters && canCreate ? (
-                <Button size="sm" onClick={() => void navigate("/reports/builder")}>
-                  <PlusIcon className="size-4" />
-                  New Report
+              canCreate ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void navigate("/reports/builder")}
+                >
+                  <PlusIcon className="size-3.5" />
+                  New report
                 </Button>
               ) : undefined
             }

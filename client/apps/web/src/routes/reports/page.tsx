@@ -136,6 +136,8 @@ export function ReportsPage() {
   const isDashboards = params.tab === "dashboards";
   const sortChoices = isLibrary ? LIBRARY_SORT_CHOICES : GALLERY_SORT_CHOICES;
 
+  const clearFilters = () => void setParams({ query: "", category: "all", status: "all" });
+
   const switchTab = (tab: ReportTab) => {
     void setParams({
       tab,
@@ -259,12 +261,24 @@ export function ReportsPage() {
           sortBy={params.sortBy}
           category={params.category}
           status={params.status}
+          onClearFilters={clearFilters}
         />
       )}
       {params.tab === "gallery" && (
-        <CannedGallery search={params.query} sortBy={params.sortBy} category={params.category} />
+        <CannedGallery
+          search={params.query}
+          sortBy={params.sortBy}
+          category={params.category}
+          onClearFilters={clearFilters}
+        />
       )}
-      {isDashboards && <DashboardGallery search={debouncedQuery} sortBy={params.sortBy} />}
+      {isDashboards && (
+        <DashboardGallery
+          search={debouncedQuery}
+          sortBy={params.sortBy}
+          onClearFilters={clearFilters}
+        />
+      )}
     </PageLayout>
   );
 }
