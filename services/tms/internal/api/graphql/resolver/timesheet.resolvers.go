@@ -249,6 +249,27 @@ func (r *queryResolver) OpenTimeClockEntry(ctx context.Context, workerID string)
 	return r.timesheetService.OpenEntry(ctx, tenantInfo(authCtx), id)
 }
 
+func (r *queryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*worker.TimeClockEntry, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceTimesheet, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &repositories.ListTimeClockEntriesRequest{
+		TenantInfo:    tenantInfo(authCtx),
+		OpenOnly:      true,
+		IncludeWorker: true,
+		Limit:         intValue(limit),
+	}
+	if boolValue(teamOnly) {
+		if req.ManagerIDs, err = r.rotaManagerIDs(ctx, authCtx.UserID, tenantInfo(authCtx)); err != nil {
+			return nil, err
+		}
+	}
+
+	return r.timesheetService.ListEntries(ctx, req)
+}
+
 func (r *queryResolver) PayrollExports(ctx context.Context, limit *int) ([]*worker.PayrollExport, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {

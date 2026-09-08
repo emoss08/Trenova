@@ -545,6 +545,29 @@ func (ec *executionContext) fieldContext_Worker_managerId(_ context.Context, fie
 	return graphql.NewScalarFieldContext("Worker", field, true, true, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _Worker_positionId(ctx context.Context, field graphql.CollectedField, obj *worker.Worker) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Worker_positionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PositionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Worker_positionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Worker", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _Worker_status(ctx context.Context, field graphql.CollectedField, obj *worker.Worker) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3922,6 +3945,11 @@ func (ec *executionContext) _Worker(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "positionId":
+			out.Values[i] = ec._Worker_positionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "status":
 			out.Values[i] = ec._Worker_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

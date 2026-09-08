@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -142,7 +143,8 @@ var (
 )
 
 type DOTRandomPool struct {
-	bun.BaseModel `bun:"table:dot_random_pools,alias:drpool" json:"-"`
+	bun.BaseModel             `bun:"table:dot_random_pools,alias:drpool" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -159,35 +161,44 @@ type DOTRandomPool struct {
 	IncludedDriverTypes []string     `json:"includedDriverTypes" bun:"included_driver_types,type:JSONB,notnull,default:'[]'"`
 	IsDefault           bool         `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (p *DOTRandomPool) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(p,
-		validation.Field(&p.Code,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		p,
+		validation.Field(
+			&p.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 50).Error("Code cannot exceed 50 characters"),
 		),
-		validation.Field(&p.Name,
+		validation.Field(
+			&p.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name cannot exceed 100 characters"),
 		),
-		validation.Field(&p.Status,
+		validation.Field(
+			&p.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
 				Error("Status must be either Active or Inactive"),
 		),
-		validation.Field(&p.Period,
+		validation.Field(
+			&p.Period,
 			validation.Required.Error("Draw period is required"),
 			domainvalidation.ValidEnum[RandomPeriod]("Draw period is not valid"),
 		),
-		validation.Field(&p.DrugRatePercent,
+		validation.Field(
+			&p.DrugRatePercent,
 			validation.Min(int16(0)).Error("Drug rate cannot be negative"),
 			validation.Max(int16(100)).Error("Drug rate cannot exceed 100%"),
 		),
-		validation.Field(&p.AlcoholRatePercent,
+		validation.Field(
+			&p.AlcoholRatePercent,
 			validation.Min(int16(0)).Error("Alcohol rate cannot be negative"),
 			validation.Max(int16(100)).Error("Alcohol rate cannot exceed 100%"),
 		),
@@ -344,13 +355,16 @@ type DOTRandomDraw struct {
 }
 
 func (d *DOTRandomDraw) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		d,
 		validation.Field(&d.PoolID, validation.Required.Error("Pool is required")),
-		validation.Field(&d.PeriodKey,
+		validation.Field(
+			&d.PeriodKey,
 			validation.Required.Error("Period is required"),
 			validation.Length(1, 20).Error("Period cannot exceed 20 characters"),
 		),
-		validation.Field(&d.Status,
+		validation.Field(
+			&d.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[RandomDrawStatus]("Status is not valid"),
 		),
@@ -450,18 +464,22 @@ type DOTRandomDrawEntry struct {
 }
 
 func (e *DOTRandomDrawEntry) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(e,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		e,
 		validation.Field(&e.DrawID, validation.Required.Error("Draw is required")),
 		validation.Field(&e.WorkerID, validation.Required.Error("Worker is required")),
-		validation.Field(&e.Substance,
+		validation.Field(
+			&e.Substance,
 			validation.Required.Error("Substance is required"),
 			domainvalidation.ValidEnum[DOTTestSubstance]("Substance must be Drug or Alcohol"),
 		),
-		validation.Field(&e.Status,
+		validation.Field(
+			&e.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[RandomEntryStatus]("Status is not valid"),
 		),
-		validation.Field(&e.ExcuseReason,
+		validation.Field(
+			&e.ExcuseReason,
 			validation.Length(0, 255).Error("Reason cannot exceed 255 characters"),
 		),
 	))

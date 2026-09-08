@@ -3679,6 +3679,7 @@ type ComplexityRoot struct {
 		ByFleet      func(childComplexity int) int
 		ByPosition   func(childComplexity int) int
 		DriverTotal  func(childComplexity int) int
+		StaffTotal   func(childComplexity int) int
 		Terminated   func(childComplexity int) int
 	}
 
@@ -3688,6 +3689,7 @@ type ComplexityRoot struct {
 		Drivers    func(childComplexity int) int
 		Key        func(childComplexity int) int
 		Label      func(childComplexity int) int
+		Staff      func(childComplexity int) int
 		Terminated func(childComplexity int) int
 		Workers    func(childComplexity int) int
 	}
@@ -4262,7 +4264,9 @@ type ComplexityRoot struct {
 		AssignDocumentTemplate                func(childComplexity int, input gqlmodel.AssignDocumentTemplateInput) int
 		AssignPayProfileToWorker              func(childComplexity int, input gqlmodel.AssignPayProfileInput) int
 		AssignRequiredWorkerTraining          func(childComplexity int, workerID string) int
+		AssignUserPosition                    func(childComplexity int, userID string, positionID *string) int
 		AssignWorkerPTOPolicy                 func(childComplexity int, input gqlmodel.AssignWorkerPTOPolicyInput) int
+		AssignWorkerPosition                  func(childComplexity int, workerID string, positionID *string) int
 		AssignWorkerShift                     func(childComplexity int, input gqlmodel.AssignShiftInput) int
 		AssignWorkerTraining                  func(childComplexity int, input gqlmodel.AssignWorkerTrainingInput) int
 		AttachOrderShipments                  func(childComplexity int, orderID string, shipmentIds []string) int
@@ -5391,6 +5395,14 @@ type ComplexityRoot struct {
 		Status                  func(childComplexity int) int
 	}
 
+	PositionHolder struct {
+		Detail func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Kind   func(childComplexity int) int
+		Name   func(childComplexity int) int
+		Status func(childComplexity int) int
+	}
+
 	ProfileFieldChange struct {
 		Field func(childComplexity int) int
 		From  func(childComplexity int) int
@@ -5435,6 +5447,7 @@ type ComplexityRoot struct {
 		AuditEntriesByResourceID            func(childComplexity int, input gqlmodel.DataTableConnectionInput, resourceID string) int
 		AuditEntry                          func(childComplexity int, id string) int
 		BenefitCosts                        func(childComplexity int, planYear *int) int
+		BenefitEnrollments                  func(childComplexity int, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) int
 		BenefitPlan                         func(childComplexity int, id string) int
 		BenefitPlans                        func(childComplexity int, activeOnly *bool, planYear *int) int
 		CannedReports                       func(childComplexity int) int
@@ -5561,6 +5574,7 @@ type ComplexityRoot struct {
 		Invoice                             func(childComplexity int, id string) int
 		Invoices                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JobPosition                         func(childComplexity int, id string) int
+		JobPositionHolders                  func(childComplexity int, id string) int
 		JobPositions                        func(childComplexity int, activeOnly *bool, drivingOnly *bool) int
 		JournalEntriesBySource              func(childComplexity int, sourceType string, sourceID string) int
 		JournalEntry                        func(childComplexity int, id string) int
@@ -5621,6 +5635,7 @@ type ComplexityRoot struct {
 		Notifications                       func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) int
 		OpenDOTTests                        func(childComplexity int) int
 		OpenSettlementDisputeCount          func(childComplexity int) int
+		OpenTimeClockEntries                func(childComplexity int, teamOnly *bool, limit *int) int
 		OpenTimeClockEntry                  func(childComplexity int, workerID string) int
 		Order                               func(childComplexity int, id string) int
 		Orders                              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -8006,6 +8021,7 @@ type ComplexityRoot struct {
 		FleetCodeID      func(childComplexity int) int
 		FleetColor       func(childComplexity int) int
 		HireDate         func(childComplexity int) int
+		ManagerID        func(childComplexity int) int
 		Name             func(childComplexity int) int
 		PositionID       func(childComplexity int) int
 		PositionTitle    func(childComplexity int) int
@@ -8431,6 +8447,7 @@ type ComplexityRoot struct {
 		OrganizationID        func(childComplexity int) int
 		PTO                   func(childComplexity int) int
 		PhoneNumber           func(childComplexity int) int
+		PositionID            func(childComplexity int) int
 		PostalCode            func(childComplexity int) int
 		Profile               func(childComplexity int) int
 		ProfilePicURL         func(childComplexity int) int
@@ -8815,6 +8832,7 @@ type ComplexityRoot struct {
 
 	WorkerEmploymentCascade struct {
 		ChecklistStarted      func(childComplexity int) int
+		ChecklistsClosed      func(childComplexity int) int
 		DefaultPolicyApplied  func(childComplexity int) int
 		PTOAssignmentEnded    func(childComplexity int) int
 		PTOForfeitedDays      func(childComplexity int) int
@@ -25793,6 +25811,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Headcount.DriverTotal(childComplexity), true
+	case "Headcount.staffTotal":
+		if e.ComplexityRoot.Headcount.StaffTotal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Headcount.StaffTotal(childComplexity), true
 	case "Headcount.terminated":
 		if e.ComplexityRoot.Headcount.Terminated == nil {
 			break
@@ -25830,6 +25854,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.HeadcountRow.Label(childComplexity), true
+	case "HeadcountRow.staff":
+		if e.ComplexityRoot.HeadcountRow.Staff == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HeadcountRow.Staff(childComplexity), true
 	case "HeadcountRow.terminated":
 		if e.ComplexityRoot.HeadcountRow.Terminated == nil {
 			break
@@ -28642,6 +28672,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AssignRequiredWorkerTraining(childComplexity, args["workerId"].(string)), true
+	case "Mutation.assignUserPosition":
+		if e.ComplexityRoot.Mutation.AssignUserPosition == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_assignUserPosition_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AssignUserPosition(childComplexity, args["userId"].(string), args["positionId"].(*string)), true
 	case "Mutation.assignWorkerPtoPolicy":
 		if e.ComplexityRoot.Mutation.AssignWorkerPTOPolicy == nil {
 			break
@@ -28653,6 +28694,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AssignWorkerPTOPolicy(childComplexity, args["input"].(gqlmodel.AssignWorkerPTOPolicyInput)), true
+	case "Mutation.assignWorkerPosition":
+		if e.ComplexityRoot.Mutation.AssignWorkerPosition == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_assignWorkerPosition_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AssignWorkerPosition(childComplexity, args["workerId"].(string), args["positionId"].(*string)), true
 	case "Mutation.assignWorkerShift":
 		if e.ComplexityRoot.Mutation.AssignWorkerShift == nil {
 			break
@@ -35809,6 +35861,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PortalTraining.Status(childComplexity), true
 
+	case "PositionHolder.detail":
+		if e.ComplexityRoot.PositionHolder.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PositionHolder.Detail(childComplexity), true
+	case "PositionHolder.id":
+		if e.ComplexityRoot.PositionHolder.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PositionHolder.ID(childComplexity), true
+	case "PositionHolder.kind":
+		if e.ComplexityRoot.PositionHolder.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PositionHolder.Kind(childComplexity), true
+	case "PositionHolder.name":
+		if e.ComplexityRoot.PositionHolder.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PositionHolder.Name(childComplexity), true
+	case "PositionHolder.status":
+		if e.ComplexityRoot.PositionHolder.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PositionHolder.Status(childComplexity), true
+
 	case "ProfileFieldChange.field":
 		if e.ComplexityRoot.ProfileFieldChange.Field == nil {
 			break
@@ -36190,6 +36273,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.BenefitCosts(childComplexity, args["planYear"].(*int)), true
+	case "Query.benefitEnrollments":
+		if e.ComplexityRoot.Query.BenefitEnrollments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_benefitEnrollments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.BenefitEnrollments(childComplexity, args["planId"].(*string), args["statuses"].([]driverpay.BenefitEnrollmentStatus), args["openOnly"].(*bool), args["limit"].(*int)), true
 	case "Query.benefitPlan":
 		if e.ComplexityRoot.Query.BenefitPlan == nil {
 			break
@@ -37497,6 +37591,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.JobPosition(childComplexity, args["id"].(string)), true
+	case "Query.jobPositionHolders":
+		if e.ComplexityRoot.Query.JobPositionHolders == nil {
+			break
+		}
+
+		args, err := ec.field_Query_jobPositionHolders_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.JobPositionHolders(childComplexity, args["id"].(string)), true
 	case "Query.jobPositions":
 		if e.ComplexityRoot.Query.JobPositions == nil {
 			break
@@ -38017,6 +38122,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.OpenSettlementDisputeCount(childComplexity), true
+	case "Query.openTimeClockEntries":
+		if e.ComplexityRoot.Query.OpenTimeClockEntries == nil {
+			break
+		}
+
+		args, err := ec.field_Query_openTimeClockEntries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.OpenTimeClockEntries(childComplexity, args["teamOnly"].(*bool), args["limit"].(*int)), true
 	case "Query.openTimeClockEntry":
 		if e.ComplexityRoot.Query.OpenTimeClockEntry == nil {
 			break
@@ -49945,6 +50061,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TeamMember.HireDate(childComplexity), true
+	case "TeamMember.managerId":
+		if e.ComplexityRoot.TeamMember.ManagerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamMember.ManagerID(childComplexity), true
 	case "TeamMember.name":
 		if e.ComplexityRoot.TeamMember.Name == nil {
 			break
@@ -52036,6 +52158,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Worker.PhoneNumber(childComplexity), true
+	case "Worker.positionId":
+		if e.ComplexityRoot.Worker.PositionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Worker.PositionID(childComplexity), true
 	case "Worker.postalCode":
 		if e.ComplexityRoot.Worker.PostalCode == nil {
 			break
@@ -53915,6 +54043,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkerEmploymentCascade.ChecklistStarted(childComplexity), true
+	case "WorkerEmploymentCascade.checklistsClosed":
+		if e.ComplexityRoot.WorkerEmploymentCascade.ChecklistsClosed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkerEmploymentCascade.ChecklistsClosed(childComplexity), true
 	case "WorkerEmploymentCascade.defaultPolicyApplied":
 		if e.ComplexityRoot.WorkerEmploymentCascade.DefaultPolicyApplied == nil {
 			break
@@ -58289,6 +58423,17 @@ extend type Query {
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   benefitPlan(id: ID!): BenefitPlan!
   workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]!
+  """
+  Enrollments across the organisation, newest first, with the worker and the
+  plan on each. It is what "who is on this plan" reads; a worker's own history
+  is read through workerBenefitEnrollments.
+  """
+  benefitEnrollments(
+    planId: ID
+    statuses: [BenefitEnrollmentStatus!]
+    openOnly: Boolean
+    limit: Int
+  ): [WorkerBenefitEnrollment!]!
   benefitCosts(planYear: Int): [BenefitCostRow!]!
   """
   A worker's total compensation. The signed-in driver reads their own through
@@ -65958,6 +66103,12 @@ type HeadcountRow {
   "How many of them hold a driving position, which is the number a safety director wants."
   drivers: Int!
   terminated: Int!
+  """
+  Users holding the title in this organisation. The front office is made of
+  people who log in rather than workers, and a chart that counted only
+  workers would show every desk empty.
+  """
+  staff: Int!
 }
 
 "The roster counted three ways."
@@ -65965,9 +66116,30 @@ type Headcount {
   activeTotal: Int!
   driverTotal: Int!
   terminated: Int!
+  "Active users holding a title in the organisation, counted apart from the roster."
+  staffTotal: Int!
   byFleet: [HeadcountRow!]!
   byPosition: [HeadcountRow!]!
   byDepartment: [HeadcountRow!]!
+}
+
+"Which roster a position holder comes from."
+enum PositionHolderKind {
+  Worker
+  User
+}
+
+"""
+One person in a position. A driving title is held by a worker; a front-office
+title is held by a user through their membership in the organisation.
+"""
+type PositionHolder {
+  kind: PositionHolderKind!
+  id: ID!
+  name: String!
+  status: String!
+  "The terminal for a worker, the email address for a user."
+  detail: String!
 }
 
 "One person on a manager's team."
@@ -65986,6 +66158,12 @@ type TeamMember {
   forty direct reports.
   """
   direct: Boolean!
+  """
+  The user the worker names as their manager. Beside the delegations the
+  signed-in user holds, it says whether somebody is on the team in the user's
+  own right or only while they are covering for that manager.
+  """
+  managerId: ID
   complianceStatus: String!
   trainingHealth: String!
   safetyRating: String!
@@ -65997,6 +66175,8 @@ extend type Query {
   jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
   jobPosition(id: ID!): JobPosition!
   headcount: Headcount!
+  "Everyone in a position from either roster, workers first."
+  jobPositionHolders(id: ID!): [PositionHolder!]!
   """
   Everyone the signed-in user answers for, directly or through a terminal they
   run, plus anyone delegated to them.
@@ -66016,6 +66196,16 @@ extend type Query {
 extend type Mutation {
   createJobPosition(input: JobPositionInput!): JobPosition!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
+  """
+  Puts a worker on a driving position, or takes them off one with no
+  position. A front-office title is refused: it is held by users.
+  """
+  assignWorkerPosition(workerId: ID!, positionId: ID): Boolean!
+  """
+  Puts a user on a front-office position through their membership in the
+  organisation, or takes them off one. A driving title is refused.
+  """
+  assignUserPosition(userId: ID!, positionId: ID): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
 }
@@ -67911,6 +68101,7 @@ extend type Query {
   EMAIL_PROFILE
   SHIFT_TEMPLATE
   WORKER_POLICY
+  JOB_POSITION
 }
 
 input SelectOptionsInput {
@@ -70929,6 +71120,11 @@ extend type Query {
   timeClockEntries(workerId: ID!, from: Timestamp, to: Timestamp, limit: Int): [TimeClockEntry!]!
   "The punch a worker is currently on, or nothing. It is what the clock button reads."
   openTimeClockEntry(workerId: ID!): TimeClockEntry
+  """
+  Everyone on the clock right now, longest-running first. Narrowed to the
+  people a manager answers for when asked, the same way the queue is.
+  """
+  openTimeClockEntries(teamOnly: Boolean, limit: Int): [TimeClockEntry!]!
   payrollExports(limit: Int): [PayrollExport!]!
   payrollExport(id: ID!): PayrollExport!
   payrollExportRows(id: ID!): [PayrollExportRow!]!
@@ -71379,6 +71575,8 @@ type Worker {
   stateId: ID!
   fleetCodeId: ID
   managerId: ID
+  "The driving title the worker holds; front-office titles are held by users."
+  positionId: ID
   status: EntityStatus!
   type: WorkerType!
   driverType: DriverType!
@@ -72777,6 +72975,11 @@ type WorkerEmploymentCascade {
   upcomingPtoCancelled: Int!
   defaultPolicyApplied: Boolean!
   checklistStarted: Boolean!
+  """
+  Open checklists the event made moot and closed: an unfinished onboarding on
+  a termination, an unfinished offboarding on a hire or rehire.
+  """
+  checklistsClosed: Int!
   """
   Days paid out / forfeited when a termination closed the PTO balances.
   """
@@ -81156,6 +81359,8 @@ func (ec *executionContext) childFields_Headcount(ctx context.Context, field gra
 		return ec.fieldContext_Headcount_driverTotal(ctx, field)
 	case "terminated":
 		return ec.fieldContext_Headcount_terminated(ctx, field)
+	case "staffTotal":
+		return ec.fieldContext_Headcount_staffTotal(ctx, field)
 	case "byFleet":
 		return ec.fieldContext_Headcount_byFleet(ctx, field)
 	case "byPosition":
@@ -81182,6 +81387,8 @@ func (ec *executionContext) childFields_HeadcountRow(ctx context.Context, field 
 		return ec.fieldContext_HeadcountRow_drivers(ctx, field)
 	case "terminated":
 		return ec.fieldContext_HeadcountRow_terminated(ctx, field)
+	case "staff":
+		return ec.fieldContext_HeadcountRow_staff(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type HeadcountRow", field.Name)
 }
@@ -83886,6 +84093,22 @@ func (ec *executionContext) childFields_PortalTraining(ctx context.Context, fiel
 		return ec.fieldContext_PortalTraining_score(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type PortalTraining", field.Name)
+}
+
+func (ec *executionContext) childFields_PositionHolder(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_PositionHolder_kind(ctx, field)
+	case "id":
+		return ec.fieldContext_PositionHolder_id(ctx, field)
+	case "name":
+		return ec.fieldContext_PositionHolder_name(ctx, field)
+	case "status":
+		return ec.fieldContext_PositionHolder_status(ctx, field)
+	case "detail":
+		return ec.fieldContext_PositionHolder_detail(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PositionHolder", field.Name)
 }
 
 func (ec *executionContext) childFields_ProfileFieldChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -87920,6 +88143,8 @@ func (ec *executionContext) childFields_TeamMember(ctx context.Context, field gr
 		return ec.fieldContext_TeamMember_positionTitle(ctx, field)
 	case "direct":
 		return ec.fieldContext_TeamMember_direct(ctx, field)
+	case "managerId":
+		return ec.fieldContext_TeamMember_managerId(ctx, field)
 	case "complianceStatus":
 		return ec.fieldContext_TeamMember_complianceStatus(ctx, field)
 	case "trainingHealth":
@@ -88720,6 +88945,8 @@ func (ec *executionContext) childFields_Worker(ctx context.Context, field graphq
 		return ec.fieldContext_Worker_fleetCodeId(ctx, field)
 	case "managerId":
 		return ec.fieldContext_Worker_managerId(ctx, field)
+	case "positionId":
+		return ec.fieldContext_Worker_positionId(ctx, field)
 	case "status":
 		return ec.fieldContext_Worker_status(ctx, field)
 	case "type":
@@ -89540,6 +89767,8 @@ func (ec *executionContext) childFields_WorkerEmploymentCascade(ctx context.Cont
 		return ec.fieldContext_WorkerEmploymentCascade_defaultPolicyApplied(ctx, field)
 	case "checklistStarted":
 		return ec.fieldContext_WorkerEmploymentCascade_checklistStarted(ctx, field)
+	case "checklistsClosed":
+		return ec.fieldContext_WorkerEmploymentCascade_checklistsClosed(ctx, field)
 	case "ptoPaidOutDays":
 		return ec.fieldContext_WorkerEmploymentCascade_ptoPaidOutDays(ctx, field)
 	case "ptoForfeitedDays":

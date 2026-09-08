@@ -74,6 +74,7 @@ export type ClearinghouseQueryRow = ClearinghouseQueryFieldsFragment;
 export type RandomPoolRow = DotRandomPoolFieldsFragment;
 export type RandomDrawRow = DotRandomDrawFieldsFragment;
 export type RandomDrawEntryRow = DotRandomDrawEntryFieldsFragment;
+export type RandomDrawListRow = DotRandomDrawsQuery["dotRandomDraws"][number];
 export type DrugAlcoholStanding = WorkerDrugAlcoholFileQuery["workerDrugAlcoholStanding"];
 
 /**

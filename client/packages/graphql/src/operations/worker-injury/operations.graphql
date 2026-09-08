@@ -86,16 +86,45 @@ query OshaLog($year: Int) {
       status
       recordable
       occurredAt
+      reportedAt
+      returnedToWorkAt
       logName
       location
       description
       bodyPart
+      harmfulAgent
       daysAway
       daysRestricted
       privacyCase
       claimStatus
+      claimNumber
+      claimCarrier
+      claimFiledAt
+      claimClosedAt
+      safetyEventId
+      documentId
+      notes
       version
+      worker {
+        id
+        firstName
+        lastName
+        profilePicUrl
+      }
     }
+  }
+}
+
+# The status of every year's summary, so the year picker can say which years
+# are certified without reading each log.
+query OshaSummaries {
+  oshaSummaries {
+    id
+    year
+    status
+    certifiedAt
+    submittedAt
+    version
   }
 }
 

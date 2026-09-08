@@ -55,7 +55,7 @@ func (r *repository) ListEntries(
 	cols := buncolgen.TimeClockEntryColumns
 	entities := make([]*worker.TimeClockEntry, 0, 16)
 
-	if err := r.db.DBForContext(ctx).
+	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -75,11 +75,27 @@ func (r *repository) ListEntries(
 			if req.OpenOnly {
 				sq = sq.Where(cols.ClockedOutAt.IsNull())
 			}
+			if len(req.ManagerIDs) > 0 {
+				sq = sq.Where(
+					"tce.worker_id IN (SELECT id FROM workers"+
+						" WHERE organization_id = tce.organization_id"+
+						" AND business_unit_id = tce.business_unit_id"+
+						" AND manager_id IN (?))",
+					bun.List(req.ManagerIDs),
+				)
+			}
 			return sq
 		}).
 		Order(cols.ClockedInAt.OrderAsc()).
-		Limit(limitOr(req.Limit, defaultEntryPageSize)).
-		Scan(ctx); err != nil {
+		Limit(limitOr(req.Limit, defaultEntryPageSize))
+
+	if req.IncludeWorker {
+		q = q.
+			Relation(buncolgen.TimeClockEntryRelations.Worker).
+			Relation(buncolgen.TimeClockEntryRelations.Worker + "." + buncolgen.WorkerRelations.FleetCode)
+	}
+
+	if err := q.Scan(ctx); err != nil {
 		r.l.Error("failed to list time clock entries", zap.Error(err))
 		return nil, fmt.Errorf("list time clock entries: %w", err)
 	}

@@ -50,6 +50,47 @@ query WorkerBenefitEnrollments($workerId: ID!, $openOnly: Boolean) {
   }
 }
 
+query BenefitEnrollments(
+  $planId: ID
+  $statuses: [BenefitEnrollmentStatus!]
+  $openOnly: Boolean
+  $limit: Int
+) {
+  benefitEnrollments(planId: $planId, statuses: $statuses, openOnly: $openOnly, limit: $limit) {
+    id
+    workerId
+    benefitPlanId
+    status
+    coverageTier
+    effectiveFrom
+    effectiveTo
+    employeeCostMinor
+    employerCostMinor
+    waivedReason
+    notes
+    version
+    benefitPlan {
+      id
+      code
+      name
+      planType
+      planYear
+      currencyCode
+    }
+    worker {
+      id
+      firstName
+      lastName
+      profilePicUrl
+      fleetCode {
+        id
+        code
+        color
+      }
+    }
+  }
+}
+
 query BenefitCosts($planYear: Int) {
   benefitCosts(planYear: $planYear) {
     planId

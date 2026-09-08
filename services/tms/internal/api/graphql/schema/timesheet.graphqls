@@ -183,6 +183,11 @@ extend type Query {
   timeClockEntries(workerId: ID!, from: Timestamp, to: Timestamp, limit: Int): [TimeClockEntry!]!
   "The punch a worker is currently on, or nothing. It is what the clock button reads."
   openTimeClockEntry(workerId: ID!): TimeClockEntry
+  """
+  Everyone on the clock right now, longest-running first. Narrowed to the
+  people a manager answers for when asked, the same way the queue is.
+  """
+  openTimeClockEntries(teamOnly: Boolean, limit: Int): [TimeClockEntry!]!
   payrollExports(limit: Int): [PayrollExport!]!
   payrollExport(id: ID!): PayrollExport!
   payrollExportRows(id: ID!): [PayrollExportRow!]!

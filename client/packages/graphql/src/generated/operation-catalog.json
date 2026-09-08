@@ -1,5 +1,5 @@
 {
-  "operationCount": 647,
+  "operationCount": 653,
   "fragmentCount": 156,
   "operations": [
     {
@@ -1270,6 +1270,56 @@
       "sdl": "mutation AssignRequiredWorkerTraining($workerId: ID!) {\n  assignRequiredWorkerTraining(workerId: $workerId) {\n    ...WorkerTrainingRecordFields\n  }\n}\n\nfragment WorkerTrainingRecordFields on WorkerTrainingRecord {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  courseId\n  course {\n    id\n    businessUnitId\n    organizationId\n    code\n    name\n    description\n    category\n    status\n    delivery\n    contentUrl\n    durationMinutes\n    passingScore\n    validityMonths\n    renewalWindowDays\n    isRequired\n    requiredForDriverTypes\n    dueDaysAfterAssignment\n    requiresAcknowledgement\n    sortOrder\n    openRecordCount\n    version\n    createdAt\n    updatedAt\n  }\n  status\n  assignedAt\n  dueAt\n  startedAt\n  completedAt\n  expiresAt\n  score\n  passed\n  acknowledgedAt\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  assignedById\n  assignedBy {\n    id\n    name\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  notes\n  waivedReason\n  health\n  daysUntilDue\n  daysUntilExpiry\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AssignUserPosition",
+      "kind": "mutation",
+      "domain": "org-structure",
+      "sourceFile": "src/operations/org-structure/operations.graphql",
+      "hash": "sha256:f5275f25d13601ad7e7222ccacde02928b055315eb169b02de357eb43cdbc965",
+      "rootFields": [
+        "assignUserPosition"
+      ],
+      "variables": [
+        {
+          "name": "userId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "positionId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AssignUserPosition($userId: ID!, $positionId: ID) {\n  assignUserPosition(userId: $userId, positionId: $positionId)\n}"
+    },
+    {
+      "name": "AssignWorkerPosition",
+      "kind": "mutation",
+      "domain": "org-structure",
+      "sourceFile": "src/operations/org-structure/operations.graphql",
+      "hash": "sha256:522e27140eb4575c291273126ab4bc35cea904416f0f592f66a09e56d51f3694",
+      "rootFields": [
+        "assignWorkerPosition"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "positionId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AssignWorkerPosition($workerId: ID!, $positionId: ID) {\n  assignWorkerPosition(workerId: $workerId, positionId: $positionId)\n}"
+    },
+    {
       "name": "AssignWorkerPtoPolicy",
       "kind": "mutation",
       "domain": "pto-policy",
@@ -1520,6 +1570,41 @@
       "fragments": [],
       "usages": [],
       "sdl": "query BenefitCosts($planYear: Int) {\n  benefitCosts(planYear: $planYear) {\n    planId\n    planName\n    planType\n    enrolled\n    waived\n    employeeCostMinor\n    employerCostMinor\n  }\n}"
+    },
+    {
+      "name": "BenefitEnrollments",
+      "kind": "query",
+      "domain": "benefits",
+      "sourceFile": "src/operations/benefits/operations.graphql",
+      "hash": "sha256:76e1d395564d801bd963846ad035ca701d7b748b6f51c2205081f2f469937707",
+      "rootFields": [
+        "benefitEnrollments"
+      ],
+      "variables": [
+        {
+          "name": "planId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[BenefitEnrollmentStatus!]",
+          "defaultValue": null
+        },
+        {
+          "name": "openOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query BenefitEnrollments($planId: ID, $statuses: [BenefitEnrollmentStatus!], $openOnly: Boolean, $limit: Int) {\n  benefitEnrollments(\n    planId: $planId\n    statuses: $statuses\n    openOnly: $openOnly\n    limit: $limit\n  ) {\n    id\n    workerId\n    benefitPlanId\n    status\n    coverageTier\n    effectiveFrom\n    effectiveTo\n    employeeCostMinor\n    employerCostMinor\n    waivedReason\n    notes\n    version\n    benefitPlan {\n      id\n      code\n      name\n      planType\n      planYear\n      currencyCode\n    }\n    worker {\n      id\n      firstName\n      lastName\n      profilePicUrl\n      fleetCode {\n        id\n        code\n        color\n      }\n    }\n  }\n}"
     },
     {
       "name": "BenefitPlans",
@@ -6173,14 +6258,14 @@
       "kind": "query",
       "domain": "org-structure",
       "sourceFile": "src/operations/org-structure/operations.graphql",
-      "hash": "sha256:9bd9697a292029501e37d7cd2b1c4c643584359467389a7b2f587c02ad22fd52",
+      "hash": "sha256:a465fd40460ccbc7d4a412a1e0d3f78101d54f436d31b3e6b512a52abaf478e8",
       "rootFields": [
         "headcount"
       ],
       "variables": [],
       "fragments": [],
       "usages": [],
-      "sdl": "query Headcount {\n  headcount {\n    activeTotal\n    driverTotal\n    terminated\n    byFleet {\n      key\n      label\n      code\n      color\n      workers\n      drivers\n      terminated\n    }\n    byPosition {\n      key\n      label\n      code\n      color\n      workers\n      drivers\n      terminated\n    }\n    byDepartment {\n      key\n      label\n      code\n      color\n      workers\n      drivers\n      terminated\n    }\n  }\n}"
+      "sdl": "query Headcount {\n  headcount {\n    activeTotal\n    driverTotal\n    terminated\n    staffTotal\n    byFleet {\n      key\n      label\n      code\n      color\n      workers\n      drivers\n      terminated\n      staff\n    }\n    byPosition {\n      key\n      label\n      code\n      color\n      workers\n      drivers\n      terminated\n      staff\n    }\n    byDepartment {\n      key\n      label\n      code\n      color\n      workers\n      drivers\n      terminated\n      staff\n    }\n  }\n}"
     },
     {
       "name": "HoldDriverPayEvent",
@@ -6443,6 +6528,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation IssuePayAdvance($input: IssuePayAdvanceInput!) {\n  issuePayAdvance(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "JobPositionHolders",
+      "kind": "query",
+      "domain": "org-structure",
+      "sourceFile": "src/operations/org-structure/operations.graphql",
+      "hash": "sha256:52015b6b422ba0f5f168cd2a5deb4df591bb631ab002d3cf65c7f4c737f2361c",
+      "rootFields": [
+        "jobPositionHolders"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query JobPositionHolders($id: ID!) {\n  jobPositionHolders(id: $id) {\n    kind\n    id\n    name\n    status\n    detail\n  }\n}"
     },
     {
       "name": "JobPositions",
@@ -7582,7 +7687,7 @@
       "kind": "query",
       "domain": "org-structure",
       "sourceFile": "src/operations/org-structure/operations.graphql",
-      "hash": "sha256:bd02032ee04eef79ba916e98c3e3a4f65fbdb983e1e30efd8601ae4cb289a90a",
+      "hash": "sha256:98848b2d79664809fa2139d3037d6cacb86c588cf11ee5ad303fd919f6e47c9a",
       "rootFields": [
         "myTeam"
       ],
@@ -7595,7 +7700,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query MyTeam($includeInactive: Boolean) {\n  myTeam(includeInactive: $includeInactive) {\n    workerId\n    name\n    status\n    fleetCodeId\n    fleetCode\n    fleetColor\n    positionId\n    positionTitle\n    direct\n    complianceStatus\n    trainingHealth\n    safetyRating\n    hireDate\n    terminationDate\n  }\n}"
+      "sdl": "query MyTeam($includeInactive: Boolean) {\n  myTeam(includeInactive: $includeInactive) {\n    workerId\n    name\n    status\n    fleetCodeId\n    fleetCode\n    fleetColor\n    positionId\n    positionTitle\n    direct\n    managerId\n    complianceStatus\n    trainingHealth\n    safetyRating\n    hireDate\n    terminationDate\n  }\n}"
     },
     {
       "name": "MyTotalCompensation",
@@ -7755,6 +7860,31 @@
       "sdl": "query OpenSettlementDisputeCount {\n  openSettlementDisputeCount\n}"
     },
     {
+      "name": "OpenTimeClockEntries",
+      "kind": "query",
+      "domain": "timesheet",
+      "sourceFile": "src/operations/timesheet/operations.graphql",
+      "hash": "sha256:98cc8429a287bb408dc0b19de2fd3f19191c70cf94b5b28aa012618153446cca",
+      "rootFields": [
+        "openTimeClockEntries"
+      ],
+      "variables": [
+        {
+          "name": "teamOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query OpenTimeClockEntries($teamOnly: Boolean, $limit: Int) {\n  openTimeClockEntries(teamOnly: $teamOnly, limit: $limit) {\n    id\n    workerId\n    source\n    clockedInAt\n    breakMinutes\n    note\n    worker {\n      id\n      firstName\n      lastName\n      profilePicUrl\n      fleetCode {\n        id\n        code\n        color\n      }\n    }\n  }\n}"
+    },
+    {
       "name": "OpenTimeClockEntry",
       "kind": "query",
       "domain": "timesheet",
@@ -7882,7 +8012,7 @@
       "kind": "query",
       "domain": "worker-injury",
       "sourceFile": "src/operations/worker-injury/operations.graphql",
-      "hash": "sha256:b34b4d7d963e620b46d6eab58c5fec48224bd198fcb645af72240ad16d853361",
+      "hash": "sha256:002d71fed8f001b6015722e5c3a3c34ac0766cb7d16e5e9bba09c053c4e95acb",
       "rootFields": [
         "oshaLog"
       ],
@@ -7895,7 +8025,21 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query OshaLog($year: Int) {\n  oshaLog(year: $year) {\n    year\n    postFrom\n    postThrough\n    totalRecordableIncidentRate\n    daysAwayRestrictedRate\n    totals {\n      deaths\n      daysAwayCases\n      jobTransferCases\n      otherRecordableCases\n      totalRecordableCases\n      totalDaysAway\n      totalDaysRestricted\n      injuryCount\n      skinDisorderCount\n      respiratoryCount\n      poisoningCount\n      hearingLossCount\n      otherIllnessCount\n      openCases\n    }\n    summary {\n      id\n      year\n      status\n      naicsCode\n      averageEmployees\n      totalHoursWorked\n      executiveName\n      executiveTitle\n      executivePhone\n      certifiedAt\n      postedFrom\n      postedThrough\n      submittedAt\n      submissionReference\n      notes\n      version\n    }\n    cases {\n      id\n      workerId\n      caseNumber\n      caseYear\n      classification\n      illnessType\n      treatment\n      status\n      recordable\n      occurredAt\n      logName\n      location\n      description\n      bodyPart\n      daysAway\n      daysRestricted\n      privacyCase\n      claimStatus\n      version\n    }\n  }\n}"
+      "sdl": "query OshaLog($year: Int) {\n  oshaLog(year: $year) {\n    year\n    postFrom\n    postThrough\n    totalRecordableIncidentRate\n    daysAwayRestrictedRate\n    totals {\n      deaths\n      daysAwayCases\n      jobTransferCases\n      otherRecordableCases\n      totalRecordableCases\n      totalDaysAway\n      totalDaysRestricted\n      injuryCount\n      skinDisorderCount\n      respiratoryCount\n      poisoningCount\n      hearingLossCount\n      otherIllnessCount\n      openCases\n    }\n    summary {\n      id\n      year\n      status\n      naicsCode\n      averageEmployees\n      totalHoursWorked\n      executiveName\n      executiveTitle\n      executivePhone\n      certifiedAt\n      postedFrom\n      postedThrough\n      submittedAt\n      submissionReference\n      notes\n      version\n    }\n    cases {\n      id\n      workerId\n      caseNumber\n      caseYear\n      classification\n      illnessType\n      treatment\n      status\n      recordable\n      occurredAt\n      reportedAt\n      returnedToWorkAt\n      logName\n      location\n      description\n      bodyPart\n      harmfulAgent\n      daysAway\n      daysRestricted\n      privacyCase\n      claimStatus\n      claimNumber\n      claimCarrier\n      claimFiledAt\n      claimClosedAt\n      safetyEventId\n      documentId\n      notes\n      version\n      worker {\n        id\n        firstName\n        lastName\n        profilePicUrl\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "OshaSummaries",
+      "kind": "query",
+      "domain": "worker-injury",
+      "sourceFile": "src/operations/worker-injury/operations.graphql",
+      "hash": "sha256:21dde6660c05c8cb697843a8247948a9cf17f369acd8981b36f1c273ca32793e",
+      "rootFields": [
+        "oshaSummaries"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query OshaSummaries {\n  oshaSummaries {\n    id\n    year\n    status\n    certifiedAt\n    submittedAt\n    version\n  }\n}"
     },
     {
       "name": "OutstandingEmploymentVerifications",
@@ -9032,7 +9176,7 @@
       "kind": "mutation",
       "domain": "worker-employment",
       "sourceFile": "src/operations/worker-employment/operations.graphql",
-      "hash": "sha256:eeb6c000e56ded89f751eecb1c9eb4ec62ff45a0079a91fddb0127dd91b59a35",
+      "hash": "sha256:a1934f179b72af6cceeff8c4541137566522d253469ab84624083777d163d8c1",
       "rootFields": [
         "recordWorkerEmploymentEvent"
       ],
@@ -9047,7 +9191,7 @@
         "WorkerEmploymentEventFields"
       ],
       "usages": [],
-      "sdl": "mutation RecordWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) {\n  recordWorkerEmploymentEvent(input: $input) {\n    event {\n      ...WorkerEmploymentEventFields\n    }\n    cascade {\n      ptoAssignmentEnded\n      payAssignmentEnded\n      upcomingPtoCancelled\n      defaultPolicyApplied\n      checklistStarted\n      ptoPaidOutDays\n      ptoForfeitedDays\n      trainingAssigned\n      portalAccessRevoked\n      portalRevocationError\n    }\n  }\n}\n\nfragment WorkerEmploymentEventFields on WorkerEmploymentEvent {\n  id\n  workerId\n  kind\n  effectiveAt\n  reason\n  notes\n  fromValues {\n    key\n    value\n  }\n  toValues {\n    key\n    value\n  }\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  amendedById\n  amendedBy {\n    id\n    name\n  }\n  amendedAt\n  amendmentNote\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation RecordWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) {\n  recordWorkerEmploymentEvent(input: $input) {\n    event {\n      ...WorkerEmploymentEventFields\n    }\n    cascade {\n      ptoAssignmentEnded\n      payAssignmentEnded\n      upcomingPtoCancelled\n      defaultPolicyApplied\n      checklistStarted\n      checklistsClosed\n      ptoPaidOutDays\n      ptoForfeitedDays\n      trainingAssigned\n      portalAccessRevoked\n      portalRevocationError\n    }\n  }\n}\n\nfragment WorkerEmploymentEventFields on WorkerEmploymentEvent {\n  id\n  workerId\n  kind\n  effectiveAt\n  reason\n  notes\n  fromValues {\n    key\n    value\n  }\n  toValues {\n    key\n    value\n  }\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  amendedById\n  amendedBy {\n    id\n    name\n  }\n  amendedAt\n  amendmentNote\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RecordWorkerInjury",
@@ -17511,6 +17655,16 @@
         }
       ],
       "sdl": "input AttachWorkerTrainingDocumentInput {\n  documentId: ID!\n  id: ID!\n}"
+    },
+    "BenefitEnrollmentStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Ended",
+        "Pending",
+        "Waived"
+      ],
+      "sdl": "enum BenefitEnrollmentStatus {\n  Active\n  Ended\n  Pending\n  Waived\n}"
     },
     "BenefitPlanInput": {
       "kind": "input",
@@ -27539,6 +27693,7 @@
         "FUEL_SURCHARGE_PROGRAM",
         "GL_ACCOUNT",
         "HAZARDOUS_MATERIAL",
+        "JOB_POSITION",
         "LOCATION",
         "LOCATION_CATEGORY",
         "ORDER",
@@ -27559,7 +27714,7 @@
         "WORKER",
         "WORKER_POLICY"
       ],
-      "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  USER\n  US_STATE\n  WORKER\n  WORKER_POLICY\n}"
+      "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  USER\n  US_STATE\n  WORKER\n  WORKER_POLICY\n}"
     },
     "AvailabilityPreference": {
       "kind": "enum",

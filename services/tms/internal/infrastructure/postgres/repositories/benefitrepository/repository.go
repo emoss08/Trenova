@@ -199,6 +199,9 @@ func (r *repository) ListEnrollments(
 					driverpay.EnrollmentActive,
 				}))
 			}
+			if len(req.Statuses) > 0 {
+				sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
+			}
 			return sq
 		}).
 		Order(cols.EffectiveFrom.OrderDesc()).

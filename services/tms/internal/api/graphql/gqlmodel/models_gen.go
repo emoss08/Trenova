@@ -3145,6 +3145,17 @@ type PolicyComplianceRow struct {
 	SignatureName  *string `json:"signatureName,omitempty"`
 }
 
+// One person in a position. A driving title is held by a worker; a front-office
+// title is held by a user through their membership in the organisation.
+type PositionHolder struct {
+	Kind   PositionHolderKind `json:"kind"`
+	ID     string             `json:"id"`
+	Name   string             `json:"name"`
+	Status string             `json:"status"`
+	// The terminal for a worker, the email address for a user.
+	Detail string `json:"detail"`
+}
+
 type PostCustomerPaymentInput struct {
 	CustomerID      string                             `json:"customerId"`
 	PaymentDate     int                                `json:"paymentDate"`
@@ -6058,12 +6069,16 @@ type TeamMember struct {
 	// Whether the worker names this manager themselves, rather than being reached
 	// through a terminal they run. A terminal manager covering forty drivers is not
 	// forty direct reports.
-	Direct           bool   `json:"direct"`
-	ComplianceStatus string `json:"complianceStatus"`
-	TrainingHealth   string `json:"trainingHealth"`
-	SafetyRating     string `json:"safetyRating"`
-	HireDate         int    `json:"hireDate"`
-	TerminationDate  *int   `json:"terminationDate,omitempty"`
+	Direct bool `json:"direct"`
+	// The user the worker names as their manager. Beside the delegations the
+	// signed-in user holds, it says whether somebody is on the team in the user's
+	// own right or only while they are covering for that manager.
+	ManagerID        *string `json:"managerId,omitempty"`
+	ComplianceStatus string  `json:"complianceStatus"`
+	TrainingHealth   string  `json:"trainingHealth"`
+	SafetyRating     string  `json:"safetyRating"`
+	HireDate         int     `json:"hireDate"`
+	TerminationDate  *int    `json:"terminationDate,omitempty"`
 }
 
 type TelematicsFormFieldValue struct {
@@ -7838,6 +7853,62 @@ func (e NotificationState) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Which roster a position holder comes from.
+type PositionHolderKind string
+
+const (
+	PositionHolderKindWorker PositionHolderKind = "Worker"
+	PositionHolderKindUser   PositionHolderKind = "User"
+)
+
+var AllPositionHolderKind = []PositionHolderKind{
+	PositionHolderKindWorker,
+	PositionHolderKindUser,
+}
+
+func (e PositionHolderKind) IsValid() bool {
+	switch e {
+	case PositionHolderKindWorker, PositionHolderKindUser:
+		return true
+	}
+	return false
+}
+
+func (e PositionHolderKind) String() string {
+	return string(e)
+}
+
+func (e *PositionHolderKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PositionHolderKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PositionHolderKind", str)
+	}
+	return nil
+}
+
+func (e PositionHolderKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PositionHolderKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PositionHolderKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type RateAgreementPartyType string
 
 const (
@@ -8188,6 +8259,7 @@ const (
 	SelectOptionResourceEmailProfile              SelectOptionResource = "EMAIL_PROFILE"
 	SelectOptionResourceShiftTemplate             SelectOptionResource = "SHIFT_TEMPLATE"
 	SelectOptionResourceWorkerPolicy              SelectOptionResource = "WORKER_POLICY"
+	SelectOptionResourceJobPosition               SelectOptionResource = "JOB_POSITION"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
@@ -8237,11 +8309,12 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceEmailProfile,
 	SelectOptionResourceShiftTemplate,
 	SelectOptionResourceWorkerPolicy,
+	SelectOptionResourceJobPosition,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition:
 		return true
 	}
 	return false

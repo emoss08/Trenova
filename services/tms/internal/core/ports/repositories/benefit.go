@@ -29,10 +29,12 @@ type ListBenefitEnrollmentsRequest struct {
 	PlanID     pulid.ID              `json:"planId"`
 	// OpenOnly drops waived and ended enrollments, which is what a payroll run
 	// wants; a benefits administrator reading somebody's history wants them all.
-	OpenOnly      bool `json:"openOnly"`
-	IncludePlan   bool `json:"includePlan"`
-	IncludeWorker bool `json:"includeWorker"`
-	Limit         int  `json:"limit"`
+	OpenOnly bool `json:"openOnly"`
+	// Statuses narrows to the states named; empty means every state.
+	Statuses      []driverpay.BenefitEnrollmentStatus `json:"statuses"`
+	IncludePlan   bool                                `json:"includePlan"`
+	IncludeWorker bool                                `json:"includeWorker"`
+	Limit         int                                 `json:"limit"`
 }
 
 type GetBenefitEnrollmentByIDRequest struct {

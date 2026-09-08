@@ -75,6 +75,28 @@ query OpenTimeClockEntry($workerId: ID!) {
   }
 }
 
+query OpenTimeClockEntries($teamOnly: Boolean, $limit: Int) {
+  openTimeClockEntries(teamOnly: $teamOnly, limit: $limit) {
+    id
+    workerId
+    source
+    clockedInAt
+    breakMinutes
+    note
+    worker {
+      id
+      firstName
+      lastName
+      profilePicUrl
+      fleetCode {
+        id
+        code
+        color
+      }
+    }
+  }
+}
+
 query TimeClockEntries($workerId: ID!, $from: Timestamp, $to: Timestamp, $limit: Int) {
   timeClockEntries(workerId: $workerId, from: $from, to: $to, limit: $limit) {
     id
