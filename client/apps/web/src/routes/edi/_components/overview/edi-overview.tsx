@@ -1,5 +1,6 @@
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { ediWindowHasTraffic } from "@/lib/edi-summary";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { EdiSummaryDocument } from "@trenova/graphql/generated/graphql";
@@ -8,6 +9,7 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { InfoTile } from "../panel/edi-panel-primitives";
+import { EDIOverviewEmpty } from "./edi-overview-empty";
 import { EDIPartnerScorecards } from "./edi-partner-scorecards";
 import { EDITrendCharts } from "./edi-trend-charts";
 import { useEDIPartnerScorecards, useEDISummary, useEDIVolumeSeries } from "./use-edi-summary";
@@ -22,6 +24,14 @@ const TIME_RANGE_OPTIONS: { label: string; sinceHours?: number }[] = [
   { label: "30d", sinceHours: 720 },
   { label: "All", sinceHours: undefined },
 ];
+
+const HOURS_PER_DAY = 24;
+
+function windowInWords(sinceHours: number): string {
+  if (sinceHours < HOURS_PER_DAY) return `last ${sinceHours} hours`;
+  if (sinceHours === HOURS_PER_DAY) return "last 24 hours";
+  return `last ${sinceHours / HOURS_PER_DAY} days`;
+}
 
 export function EDIOverview() {
   const [sinceHours, setSinceHours] = useState<number | undefined>(24);
@@ -41,6 +51,9 @@ export function EDIOverview() {
   }
 
   const summary = data.ediSummary;
+  // A window nothing moved through is drawn as the overview it will become,
+  // not as eight zeros; the range control stays so the reader can widen it.
+  const quiet = !ediWindowHasTraffic(summary);
   const deadLettered = countFor(summary.deliveryStatusCounts, "DeadLettered");
   const failedDeliveries = countFor(summary.deliveryStatusCounts, "Failed");
   const quarantined = countFor(summary.inboundFileStatusCounts, "Quarantined");
@@ -70,135 +83,149 @@ export function EDIOverview() {
           ))}
         </div>
       </div>
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Needs attention</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Link to="/edi/messages">
-            <InfoTile
-              label="Dead-lettered messages"
-              value={deadLettered}
-              hint="Outbound deliveries that exhausted retries"
-              size="kpi"
-              emphasizeWhenPositive
-            />
-          </Link>
-          <Link to="/edi/inbound-files">
-            <InfoTile
-              label="Quarantined files"
-              value={quarantined}
-              hint="Inbound files that failed processing"
-              size="kpi"
-              emphasizeWhenPositive
-            />
-          </Link>
-          <Link to="/edi/transfers/inbound">
-            <InfoTile
-              label="Stuck transfers"
-              value={mappingRequired}
-              hint="Inbound tenders waiting on mappings"
-              size="kpi"
-              emphasizeWhenPositive
-            />
-          </Link>
-          <Link to="/edi/messages">
-            <InfoTile
-              label="Overdue acknowledgments"
-              value={summary.overdueAckCount}
-              hint="Pending 997/999 past the expected window"
-              size="kpi"
-              emphasizeWhenPositive
-            />
-          </Link>
-        </div>
-      </section>
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Pipeline state</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Link to="/edi/messages">
-            <InfoTile
-              label="Failed deliveries"
-              value={failedDeliveries}
-              hint="Retrying with backoff"
-              size="kpi"
-            />
-          </Link>
-          <Link to="/edi/inbound-files">
-            <InfoTile
-              label="Partially processed files"
-              value={partiallyProcessed}
-              hint="Processed with warnings or failures"
-              size="kpi"
-            />
-          </Link>
-          <Link to="/edi/transfers/inbound">
-            <InfoTile
-              label="Pending approval"
-              value={pendingApproval}
-              hint="Inbound tenders awaiting review"
-              size="kpi"
-            />
-          </Link>
-          <Link to="/edi/messages">
-            <InfoTile
-              label="Rejected acknowledgments"
-              value={rejectedAcks}
-              hint="Partners rejected our documents"
-              size="kpi"
-            />
-          </Link>
-        </div>
-      </section>
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Trends</h2>
-        {volumeQuery.isError ? (
-          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-            The volume trend could not be loaded.
-          </div>
-        ) : (
-          <EDITrendCharts points={volumeQuery.data?.ediVolumeSeries ?? []} />
-        )}
-      </section>
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Partner scorecards</h2>
-        {scorecardsQuery.isError ? (
-          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-            Partner scorecards could not be loaded.
-          </div>
-        ) : (
-          <EDIPartnerScorecards scorecards={scorecardsQuery.data?.ediPartnerScorecards ?? []} />
-        )}
-      </section>
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">
-            Recent failures
-            {summary.attentionItems.length > 0 && (
-              <span className="text-muted-foreground ml-2 text-xs font-normal">
-                showing the {summary.attentionItems.length} most recent
-              </span>
+      {quiet ? (
+        <EDIOverviewEmpty
+          title={sinceHours === undefined ? "Nothing yet" : "Nothing in this window"}
+          description={
+            sinceHours === undefined
+              ? "No document has moved through EDI for this organization. Set up a trading partner and the first tender, invoice or acknowledgment fills this in."
+              : `No document moved through EDI in the ${windowInWords(sinceHours)}. Look at everything to see older traffic, or wait for the next document to arrive.`
+          }
+          onWiden={sinceHours === undefined ? undefined : () => setSinceHours(undefined)}
+        />
+      ) : (
+        <>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">Needs attention</h2>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Link to="/edi/messages">
+                <InfoTile
+                  label="Dead-lettered messages"
+                  value={deadLettered}
+                  hint="Outbound deliveries that exhausted retries"
+                  size="kpi"
+                  emphasizeWhenPositive
+                />
+              </Link>
+              <Link to="/edi/inbound-files">
+                <InfoTile
+                  label="Quarantined files"
+                  value={quarantined}
+                  hint="Inbound files that failed processing"
+                  size="kpi"
+                  emphasizeWhenPositive
+                />
+              </Link>
+              <Link to="/edi/transfers/inbound">
+                <InfoTile
+                  label="Stuck transfers"
+                  value={mappingRequired}
+                  hint="Inbound tenders waiting on mappings"
+                  size="kpi"
+                  emphasizeWhenPositive
+                />
+              </Link>
+              <Link to="/edi/messages">
+                <InfoTile
+                  label="Overdue acknowledgments"
+                  value={summary.overdueAckCount}
+                  hint="Pending 997/999 past the expected window"
+                  size="kpi"
+                  emphasizeWhenPositive
+                />
+              </Link>
+            </div>
+          </section>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">Pipeline state</h2>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Link to="/edi/messages">
+                <InfoTile
+                  label="Failed deliveries"
+                  value={failedDeliveries}
+                  hint="Retrying with backoff"
+                  size="kpi"
+                />
+              </Link>
+              <Link to="/edi/inbound-files">
+                <InfoTile
+                  label="Partially processed files"
+                  value={partiallyProcessed}
+                  hint="Processed with warnings or failures"
+                  size="kpi"
+                />
+              </Link>
+              <Link to="/edi/transfers/inbound">
+                <InfoTile
+                  label="Pending approval"
+                  value={pendingApproval}
+                  hint="Inbound tenders awaiting review"
+                  size="kpi"
+                />
+              </Link>
+              <Link to="/edi/messages">
+                <InfoTile
+                  label="Rejected acknowledgments"
+                  value={rejectedAcks}
+                  hint="Partners rejected our documents"
+                  size="kpi"
+                />
+              </Link>
+            </div>
+          </section>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">Trends</h2>
+            {volumeQuery.isError ? (
+              <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
+                The volume trend could not be loaded.
+              </div>
+            ) : (
+              <EDITrendCharts points={volumeQuery.data?.ediVolumeSeries ?? []} />
             )}
-          </h2>
-          <div className="flex items-center gap-3 text-xs">
-            <Link to="/edi/messages" className="text-muted-foreground hover:underline">
-              View all messages
-            </Link>
-            <Link to="/edi/inbound-files" className="text-muted-foreground hover:underline">
-              View all inbound files
-            </Link>
-          </div>
-        </div>
-        {summary.attentionItems.length === 0 ? (
-          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-            No dead-lettered messages or quarantined files. The pipeline is healthy.
-          </div>
-        ) : (
-          <div className="bg-background flex flex-col divide-y rounded-md border">
-            {summary.attentionItems.map((item) => (
-              <AttentionRow key={`${item.kind}-${item.id}`} item={item} />
-            ))}
-          </div>
-        )}
-      </section>
+          </section>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">Partner scorecards</h2>
+            {scorecardsQuery.isError ? (
+              <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
+                Partner scorecards could not be loaded.
+              </div>
+            ) : (
+              <EDIPartnerScorecards scorecards={scorecardsQuery.data?.ediPartnerScorecards ?? []} />
+            )}
+          </section>
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">
+                Recent failures
+                {summary.attentionItems.length > 0 && (
+                  <span className="text-muted-foreground ml-2 text-xs font-normal">
+                    showing the {summary.attentionItems.length} most recent
+                  </span>
+                )}
+              </h2>
+              <div className="flex items-center gap-3 text-xs">
+                <Link to="/edi/messages" className="text-muted-foreground hover:underline">
+                  View all messages
+                </Link>
+                <Link to="/edi/inbound-files" className="text-muted-foreground hover:underline">
+                  View all inbound files
+                </Link>
+              </div>
+            </div>
+            {summary.attentionItems.length === 0 ? (
+              <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
+                No dead-lettered messages or quarantined files. The pipeline is healthy.
+              </div>
+            ) : (
+              <div className="bg-background flex flex-col divide-y rounded-md border">
+                {summary.attentionItems.map((item) => (
+                  <AttentionRow key={`${item.kind}-${item.id}`} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
