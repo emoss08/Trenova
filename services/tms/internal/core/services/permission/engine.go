@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -50,15 +51,16 @@ type permissionResultRequest struct {
 type Params struct {
 	fx.In
 
-	RoleRepository      repositories.RoleRepository
-	RBACRepository      repositories.RBACRepository
-	IAMRepository       repositories.IAMRepository
-	APIKeyRepository    repositories.APIKeyRepository
-	PermissionCacheRepo repositories.PermissionCacheRepository
-	UserRepository      repositories.UserRepository
-	Registry            *permission.Registry
-	RouteRegistry       *permission.RouteRegistry
-	Logger              *zap.Logger
+	RoleRepository        repositories.RoleRepository
+	RBACRepository        repositories.RBACRepository
+	IAMRepository         repositories.IAMRepository
+	APIKeyRepository      repositories.APIKeyRepository
+	PermissionCacheRepo   repositories.PermissionCacheRepository
+	AccessPolicyCacheRepo repositories.AccessPolicyCacheRepository
+	UserRepository        repositories.UserRepository
+	Registry              *permission.Registry
+	RouteRegistry         *permission.RouteRegistry
+	Logger                *zap.Logger
 }
 
 type engine struct {
@@ -67,6 +69,7 @@ type engine struct {
 	iamRepo       repositories.IAMRepository
 	apiKeyRepo    repositories.APIKeyRepository
 	cacheRepo     repositories.PermissionCacheRepository
+	policyCache   repositories.AccessPolicyCacheRepository
 	userRepo      repositories.UserRepository
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
@@ -81,6 +84,7 @@ func NewEngine(p Params) services.PermissionEngine {
 		iamRepo:       p.IAMRepository,
 		apiKeyRepo:    p.APIKeyRepository,
 		cacheRepo:     p.PermissionCacheRepo,
+		policyCache:   p.AccessPolicyCacheRepo,
 		userRepo:      p.UserRepository,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
@@ -93,12 +97,7 @@ func (e *engine) Check(
 	req *services.PermissionCheckRequest,
 ) (*services.PermissionCheckResult, error) {
 	start := time.Now()
-	log := e.l.With(
-		zap.String("operation", "Check"),
-		zap.String("principalID", req.PrincipalID.String()),
-		zap.String("resource", req.Resource),
-		zap.String("op", string(req.Operation)),
-	)
+	log := e.checkLogger("Check", req)
 
 	if req.PrincipalType == services.PrincipalTypeAPIKey {
 		return e.checkAPIKeyPermission(ctx, req, start)
@@ -115,7 +114,20 @@ func (e *engine) Check(
 		return nil, err
 	}
 
-	return e.checkUserPermission(ctx, log, start, load, req)
+	policies := e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID)
+	return e.checkUserPermission(ctx, log, start, load, req, policies)
+}
+
+func (e *engine) checkLogger(
+	operation string,
+	req *services.PermissionCheckRequest,
+) *zap.Logger {
+	return e.l.With(
+		zap.String("operation", operation),
+		zap.String("principalID", req.PrincipalID.String()),
+		zap.String("resource", req.Resource),
+		zap.String("op", string(req.Operation)),
+	)
 }
 
 func (e *engine) checkAgentPermission(
@@ -143,6 +155,7 @@ func (e *engine) checkUserPermission(
 	start time.Time,
 	load permissionLoadResult,
 	req *services.PermissionCheckRequest,
+	policies accessPolicySource,
 ) (*services.PermissionCheckResult, error) {
 	resourcePerms, ok := e.resolveResourcePermission(load.perms, req.Resource, req.Operation)
 	if !ok {
@@ -167,7 +180,7 @@ func (e *engine) checkUserPermission(
 	if !result.Allowed {
 		return result, nil
 	}
-	return e.applyAccessPolicies(ctx, req, result)
+	return e.applyAccessPolicies(ctx, req, result, policies)
 }
 
 func (e *engine) resolveResourcePermission(
@@ -195,22 +208,22 @@ func (e *engine) applyAccessPolicies(
 	ctx context.Context,
 	req *services.PermissionCheckRequest,
 	result *services.PermissionCheckResult,
+	policies accessPolicySource,
 ) (*services.PermissionCheckResult, error) {
-	if e.iamRepo == nil {
+	if policies == nil {
 		return result, nil
 	}
 
-	policies, err := e.iamRepo.ListEnabledAccessPolicies(ctx, repositories.IAMPolicyLookupRequest{
-		OrganizationID: req.OrganizationID,
-		BusinessUnitID: req.BusinessUnitID,
-		Resource:       e.registry.GetEffectiveResource(req.Resource),
-		Operation:      req.Operation,
-	})
+	enabled, err := policies.enabledPolicies(
+		ctx,
+		e.registry.GetEffectiveResource(req.Resource),
+		req.Operation,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	decision := evaluateAccessPolicies(policies, req)
+	decision := evaluateAccessPolicies(enabled, req)
 	if decision == "" || decision == iam.PolicyEffectAllow {
 		return result, nil
 	}
@@ -218,6 +231,94 @@ func (e *engine) applyAccessPolicies(
 	result.Allowed = false
 	result.Reason = "iam_policy_denied"
 	return result, nil
+}
+
+func (e *engine) newAccessPolicySource(orgID, buID pulid.ID) accessPolicySource {
+	if e.iamRepo == nil {
+		return nil
+	}
+	return &tenantAccessPolicySource{
+		repo:  e.iamRepo,
+		cache: e.policyCache,
+		log:   e.l,
+		req: repositories.IAMTenantPolicyLookupRequest{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+		},
+	}
+}
+
+type accessPolicySource interface {
+	enabledPolicies(
+		ctx context.Context,
+		resource string,
+		op permission.Operation,
+	) ([]*iam.AccessPolicy, error)
+}
+
+type accessPolicyKey struct {
+	resource  string
+	operation string
+}
+
+type tenantAccessPolicySource struct {
+	repo   repositories.IAMRepository
+	cache  repositories.AccessPolicyCacheRepository
+	log    *zap.Logger
+	req    repositories.IAMTenantPolicyLookupRequest
+	loaded bool
+	byKey  map[accessPolicyKey][]*iam.AccessPolicy
+}
+
+func (s *tenantAccessPolicySource) enabledPolicies(
+	ctx context.Context,
+	resource string,
+	op permission.Operation,
+) ([]*iam.AccessPolicy, error) {
+	if !s.loaded {
+		if err := s.load(ctx); err != nil {
+			return nil, err
+		}
+	}
+	return s.byKey[accessPolicyKey{resource: resource, operation: string(op)}], nil
+}
+
+func (s *tenantAccessPolicySource) load(ctx context.Context) error {
+	policies, err := s.fetch(ctx)
+	if err != nil {
+		return err
+	}
+
+	s.byKey = make(map[accessPolicyKey][]*iam.AccessPolicy, len(policies))
+	for _, policy := range policies {
+		key := accessPolicyKey{resource: policy.Resource, operation: policy.Operation}
+		s.byKey[key] = append(s.byKey[key], policy)
+	}
+	s.loaded = true
+	return nil
+}
+
+func (s *tenantAccessPolicySource) fetch(ctx context.Context) ([]*iam.AccessPolicy, error) {
+	if s.cache != nil {
+		cached, found, err := s.cache.GetEnabled(ctx, s.req)
+		if err != nil {
+			s.log.Warn("access policy cache lookup failed, reading from database", zap.Error(err))
+		} else if found {
+			return cached, nil
+		}
+	}
+
+	policies, err := s.repo.ListEnabledTenantAccessPolicies(ctx, s.req)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cache != nil {
+		if err = s.cache.SetEnabled(ctx, s.req, policies); err != nil {
+			s.log.Warn("failed to cache access policies", zap.Error(err))
+		}
+	}
+	return policies, nil
 }
 
 func evaluateAccessPolicies(
@@ -361,32 +462,114 @@ func (e *engine) CheckBatch(
 	start := time.Now()
 
 	results := make([]services.PermissionCheckResult, len(req.Checks))
+	if len(req.Checks) == 0 {
+		return &services.BatchPermissionCheckResult{
+			Results:       results,
+			CheckDuration: time.Since(start).Milliseconds(),
+		}, nil
+	}
 
-	for i, check := range req.Checks {
-		result, err := e.Check(ctx, &services.PermissionCheckRequest{
-			PrincipalType:      req.PrincipalType,
-			PrincipalID:        req.PrincipalID,
-			UserID:             req.UserID,
-			APIKeyID:           req.APIKeyID,
-			BusinessUnitID:     req.BusinessUnitID,
-			OrganizationID:     req.OrganizationID,
-			Resource:           check.Resource,
-			Operation:          check.Operation,
-			ResourceID:         check.ResourceID,
-			ResourceAttributes: check.ResourceAttributes,
-			ContextAttributes:  req.ContextAttributes,
-		})
-		if err != nil {
-			return nil, err
-		}
-		results[i] = *result
+	var err error
+	switch req.PrincipalType {
+	case services.PrincipalTypeAPIKey:
+		err = e.checkAPIKeyBatch(ctx, req, results)
+	case services.PrincipalTypeAgent:
+		e.checkAgentBatch(req, results)
+	default:
+		err = e.checkUserBatch(ctx, req, results)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return &services.BatchPermissionCheckResult{
 		Results:       results,
-		CacheHit:      len(results) > 0 && results[0].CacheHit,
+		CacheHit:      results[0].CacheHit,
 		CheckDuration: time.Since(start).Milliseconds(),
 	}, nil
+}
+
+func batchCheckRequest(
+	req *services.BatchPermissionCheckRequest,
+	check services.ResourceOperationCheck,
+) *services.PermissionCheckRequest {
+	return &services.PermissionCheckRequest{
+		PrincipalType:      req.PrincipalType,
+		PrincipalID:        req.PrincipalID,
+		UserID:             req.UserID,
+		APIKeyID:           req.APIKeyID,
+		BusinessUnitID:     req.BusinessUnitID,
+		OrganizationID:     req.OrganizationID,
+		Resource:           check.Resource,
+		Operation:          check.Operation,
+		ResourceID:         check.ResourceID,
+		ResourceAttributes: check.ResourceAttributes,
+		ContextAttributes:  req.ContextAttributes,
+	}
+}
+
+func (e *engine) checkUserBatch(
+	ctx context.Context,
+	req *services.BatchPermissionCheckRequest,
+	results []services.PermissionCheckResult,
+) error {
+	load, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
+	if err != nil {
+		e.l.Error("failed to get permissions",
+			zap.String("operation", "CheckBatch"),
+			zap.String("principalID", req.PrincipalID.String()),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	policies := e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID)
+	for i, check := range req.Checks {
+		checkReq := batchCheckRequest(req, check)
+		result, checkErr := e.checkUserPermission(
+			ctx,
+			e.checkLogger("CheckBatch", checkReq),
+			time.Now(),
+			load,
+			checkReq,
+			policies,
+		)
+		if checkErr != nil {
+			return checkErr
+		}
+		results[i] = *result
+	}
+	return nil
+}
+
+func (e *engine) checkAPIKeyBatch(
+	ctx context.Context,
+	req *services.BatchPermissionCheckRequest,
+	results []services.PermissionCheckResult,
+) error {
+	perms, err := e.computeAPIKeyPermissions(
+		ctx,
+		req.APIKeyID,
+		req.BusinessUnitID,
+		req.OrganizationID,
+	)
+	if err != nil {
+		return err
+	}
+
+	for i, check := range req.Checks {
+		results[i] = *e.resolveAPIKeyPermission(perms, batchCheckRequest(req, check), time.Now())
+	}
+	return nil
+}
+
+func (e *engine) checkAgentBatch(
+	req *services.BatchPermissionCheckRequest,
+	results []services.PermissionCheckResult,
+) {
+	for i, check := range req.Checks {
+		results[i] = *e.checkAgentPermission(batchCheckRequest(req, check), time.Now())
+	}
 }
 
 func enforceResourceAttributes(
@@ -766,6 +949,14 @@ func (e *engine) checkAPIKeyPermission(
 		return nil, err
 	}
 
+	return e.resolveAPIKeyPermission(perms, req, start), nil
+}
+
+func (e *engine) resolveAPIKeyPermission(
+	perms *repositories.CachedPermissions,
+	req *services.PermissionCheckRequest,
+	start time.Time,
+) *services.PermissionCheckResult {
 	resourcePerms, ok := e.resolveResourcePermission(perms, req.Resource, req.Operation)
 	if !ok {
 		return &services.PermissionCheckResult{
@@ -774,7 +965,7 @@ func (e *engine) checkAPIKeyPermission(
 			DataScope:     "",
 			CacheHit:      false,
 			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
+		}
 	}
 
 	return &services.PermissionCheckResult{
@@ -783,7 +974,7 @@ func (e *engine) checkAPIKeyPermission(
 		DataScope:     permission.DataScope(resourcePerms.DataScope),
 		CacheHit:      false,
 		CheckDuration: time.Since(start).Milliseconds(),
-	}, nil
+	}
 }
 
 func (e *engine) computeAPIKeyPermissions(
@@ -815,17 +1006,14 @@ func (e *engine) getOrComputePermissions(
 	userID, orgID pulid.ID,
 ) (permissionLoadResult, error) {
 	result := permissionLoadResult{}
-	_, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
-	if hasRoleActivation {
-		computeStart := time.Now()
-		perms, err := e.computePermissions(ctx, userID, orgID)
-		result.computeDuration = time.Since(computeStart)
-		result.perms = perms
-		return result, err
+	key := repositories.PermissionCacheKey{
+		UserID:  userID,
+		OrgID:   orgID,
+		Variant: permissionCacheVariant(ctx),
 	}
 
 	cacheStart := time.Now()
-	cached, err := e.cacheRepo.Get(ctx, userID, orgID)
+	cached, err := e.cacheRepo.Get(ctx, key)
 	result.cacheLookupDuration = time.Since(cacheStart)
 	if err != nil {
 		e.l.Warn("cache lookup failed, computing fresh", zap.Error(err))
@@ -844,12 +1032,28 @@ func (e *engine) getOrComputePermissions(
 		return result, err
 	}
 
-	if cacheErr := e.cacheRepo.Set(ctx, userID, orgID, perms, cacheTTL); cacheErr != nil {
+	if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
 		e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
 	}
 
 	result.perms = perms
 	return result, nil
+}
+
+func permissionCacheVariant(ctx context.Context) string {
+	activation, ok := authctx.GetSessionRoleActivation(ctx)
+	if !ok {
+		return repositories.PermissionCacheVariantAllRoles
+	}
+
+	ids := make([]string, 0, len(activation.ActiveRoleIDs))
+	for _, id := range activation.ActiveRoleIDs {
+		ids = append(ids, id.String())
+	}
+	sort.Strings(ids)
+	ids = slices.Compact(ids)
+
+	return "roles:" + hashutils.SHA256Hex(strings.Join(ids, ","))
 }
 
 func (e *engine) computePermissions(

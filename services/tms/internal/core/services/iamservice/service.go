@@ -27,25 +27,28 @@ const (
 type Params struct {
 	fx.In
 
-	Repo       repositories.IAMRepository
-	Encryption *encryptionservice.Service
-	Validator  *Validator
-	Logger     *zap.Logger
+	Repo        repositories.IAMRepository
+	PolicyCache repositories.AccessPolicyCacheRepository
+	Encryption  *encryptionservice.Service
+	Validator   *Validator
+	Logger      *zap.Logger
 }
 
 type service struct {
-	repo      repositories.IAMRepository
-	enc       *encryptionservice.Service
-	validator *Validator
-	l         *zap.Logger
+	repo        repositories.IAMRepository
+	policyCache repositories.AccessPolicyCacheRepository
+	enc         *encryptionservice.Service
+	validator   *Validator
+	l           *zap.Logger
 }
 
 func New(p Params) services.IAMService {
 	return &service{
-		repo:      p.Repo,
-		enc:       p.Encryption,
-		validator: p.Validator,
-		l:         p.Logger.Named("service.iam"),
+		repo:        p.Repo,
+		policyCache: p.PolicyCache,
+		enc:         p.Encryption,
+		validator:   p.Validator,
+		l:           p.Logger.Named("service.iam"),
 	}
 }
 
@@ -434,7 +437,12 @@ func (s *service) CreateAccessPolicy(
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
-	return s.repo.CreateAccessPolicy(ctx, entity)
+	created, err := s.repo.CreateAccessPolicy(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	return created, nil
 }
 
 func (s *service) UpdateAccessPolicy(
@@ -450,7 +458,12 @@ func (s *service) UpdateAccessPolicy(
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
-	return s.repo.UpdateAccessPolicy(ctx, entity)
+	updated, err := s.repo.UpdateAccessPolicy(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	return updated, nil
 }
 
 func prepareAccessPolicy(entity *iam.AccessPolicy) {
@@ -465,7 +478,31 @@ func (s *service) DeleteAccessPolicy(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	return s.repo.DeleteAccessPolicy(ctx, tenantInfo, id)
+	if err := s.repo.DeleteAccessPolicy(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	return nil
+}
+
+func (s *service) invalidateAccessPolicyCache(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) {
+	if s.policyCache == nil {
+		return
+	}
+	err := s.policyCache.Invalidate(ctx, repositories.IAMTenantPolicyLookupRequest{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	})
+	if err != nil {
+		s.l.Error("failed to invalidate access policy cache",
+			zap.String("orgID", tenantInfo.OrgID.String()),
+			zap.String("buID", tenantInfo.BuID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *service) ListAuthEvents(
