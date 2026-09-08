@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import FleetSafetyConsole from "../fleet-safety-console";
@@ -13,6 +14,14 @@ vi.mock("@/lib/graphql/fleet-safety", () => ({
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
+}));
+
+vi.mock("@number-flow/react", () => ({
+  default: ({ value, className, ...rest }: { value: number; className?: string }) => (
+    <span className={className} {...rest}>
+      {value}
+    </span>
+  ),
 }));
 
 function basic(over: Record<string, unknown> = {}) {
@@ -39,10 +48,13 @@ const baseSummary = {
   openEvents: 4,
   outOfServiceOrders: 1,
   basicsInferred: false,
-  ratings: [{ rating: "Excellent", workers: 15 }],
+  ratings: [
+    { rating: "Excellent", workers: 15 },
+    { rating: "AtRisk", workers: 2 },
+  ],
   basics: [
     basic({ basic: "UnsafeDriving", violations: 4, weightedScore: 60 }),
-    basic({ basic: "HOSCompliance", violations: 1, weightedScore: 10 }),
+    basic({ basic: "HOSCompliance", violations: 1, weightedScore: 30 }),
     basic({ basic: "DriverFitness" }),
     basic({ basic: "ControlledSubstances" }),
     basic({ basic: "VehicleMaintenance" }),
@@ -50,14 +62,8 @@ const baseSummary = {
     basic({ basic: "CrashIndicator" }),
   ],
   kinds: [
-    {
-      kind: "Accident",
-      events: 3,
-      points: 18,
-      preventable: 2,
-      outOfService: 0,
-      open: 1,
-    },
+    { kind: "Accident", events: 3, points: 18, preventable: 2, outOfService: 0, open: 1 },
+    { kind: "Inspection", events: 11, points: 13, preventable: 0, outOfService: 1, open: 3 },
   ],
   terminals: [
     {
@@ -69,6 +75,16 @@ const baseSummary = {
       atRisk: 2,
       watch: 1,
       averageScore: 81,
+    },
+    {
+      fleetCodeId: "fc_2",
+      code: "NORTH",
+      description: "",
+      color: "",
+      workers: 8,
+      atRisk: 0,
+      watch: 2,
+      averageScore: 93,
     },
   ],
   trend: [
@@ -141,31 +157,63 @@ afterEach(() => {
 });
 
 describe("FleetSafetyConsole", () => {
-  it("shows the fleet's standing across the window", async () => {
+  // The loading state is the loaded page drawn in grey: the four KPI cards,
+  // all seven BASIC rows and the three panels, at the sizes they take once the
+  // roll-up lands, so the page does not reflow when the numbers arrive.
+  it("draws the page's own shape while the roll-up is still being read", () => {
+    fetchFleetSafety.mockReturnValue(new Promise(() => {}));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={client}>
+          <FleetSafetyConsole />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    const loading = screen.getByLabelText("Loading fleet safety");
+    expect(loading).toHaveAttribute("aria-busy", "true");
+    const hidden = { hidden: true } as const;
+    const basics = within(loading).getByRole("region", { name: "CSA BASICs", ...hidden });
+    expect(within(basics).getAllByRole("listitem", hidden)).toHaveLength(7);
+    for (const name of ["Events by month", "By terminal", "Needs attention", "Best records"]) {
+      expect(within(loading).getByRole("region", { name, ...hidden })).toBeInTheDocument();
+    }
+  });
+
+  it("heads the page with drivers by rating, the average, the window and out-of-service orders", async () => {
     renderConsole();
 
-    expect(await screen.findByText("86")).toBeInTheDocument();
-    expect(screen.getByText("Drivers")).toBeInTheDocument();
-    expect(screen.getByText("20")).toBeInTheDocument();
-    expect(screen.getByText("4 open")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Drivers", { selector: "span" })).toHaveTextContent("20");
+    expect(screen.getByRole("img", { name: /Drivers by rating/ })).toHaveAccessibleName(
+      "Drivers by rating: Excellent 15, Good 0, Watch 0, At risk 2",
+    );
+    expect(screen.getByLabelText("Average score", { selector: "span" })).toHaveTextContent("86");
+    expect(screen.getByText("2 at risk · 3 on watch")).toBeInTheDocument();
+    expect(screen.getByLabelText("Events in window", { selector: "span" })).toHaveTextContent("14");
+    expect(screen.getByText("4 open · 2 preventable")).toBeInTheDocument();
+    expect(screen.getByLabelText("Out of service", { selector: "span" })).toHaveTextContent("1");
   });
 
   // A scorecard that hides its zeroes reads as a shorter list every month, and
   // a BASIC missing from the page is not the same as a BASIC at zero.
-  it("lists all seven BASICs in the agency's order", async () => {
+  it("lists all seven BASICs in the agency's order, read against the fleet's own worst", async () => {
     renderConsole();
 
-    expect(await screen.findByText("Unsafe Driving")).toBeInTheDocument();
-    for (const label of [
-      "Hours of Service",
-      "Driver Fitness",
-      "Controlled Substances",
-      "Vehicle Maintenance",
-      "Hazmat Compliance",
-      "Crash Indicator",
-    ]) {
-      expect(screen.getByText(label)).toBeInTheDocument();
-    }
+    const card = await screen.findByRole("region", { name: "CSA BASICs" });
+    const bars = within(card).getAllByRole("img");
+    expect(bars.map((bar) => bar.getAttribute("aria-label"))).toEqual([
+      "Unsafe Driving: 60 weighted",
+      "Hours of Service: 30 weighted",
+      "Driver Fitness: 0 weighted",
+      "Controlled Substances: 0 weighted",
+      "Vehicle Maintenance: 0 weighted",
+      "Hazmat Compliance: 0 weighted",
+      "Crash Indicator: 0 weighted",
+    ]);
+    expect(within(card).getByText("Highest")).toBeInTheDocument();
+    expect(within(card).getByText("Elevated")).toBeInTheDocument();
+    expect(within(card).getByText("· 4 violations")).toBeInTheDocument();
   });
 
   // A number reached from the kind of event is an estimate. Presenting it as
@@ -186,24 +234,68 @@ describe("FleetSafetyConsole", () => {
   it("ranks the drivers who need attention and the ones who do not", async () => {
     renderConsole();
 
-    const attention = (await screen.findByText("Needs attention")).closest(
-      "section",
-    ) as HTMLElement;
+    const attention = await screen.findByRole("region", { name: "Needs attention" });
     expect(within(attention).getByText("Ada Byrne")).toBeInTheDocument();
     expect(within(attention).getByText("At risk")).toBeInTheDocument();
+    expect(within(attention).getByText("· 11 pts")).toBeInTheDocument();
 
-    const best = screen.getByText("Best records").closest("section") as HTMLElement;
+    const best = screen.getByRole("region", { name: "Best records" });
     expect(within(best).getByText("Cal Diaz")).toBeInTheDocument();
+    expect(within(best).queryByText("Ada Byrne")).not.toBeInTheDocument();
   });
 
-  it("breaks the roster down by terminal", async () => {
+  // The question after "how is the fleet" is "is it one yard": the terminal
+  // list narrows the whole page, and the worst yard comes first.
+  it("breaks the fleet down by terminal, worst first, and narrows the page to one", async () => {
+    const user = userEvent.setup();
     renderConsole();
 
-    const section = (await screen.findByText("By terminal")).closest("section") as HTMLElement;
-    expect(within(section).getByText("SOUTH")).toBeInTheDocument();
-    expect(within(section).getByText("Southern lanes")).toBeInTheDocument();
-    expect(within(section).getByText("2 at risk")).toBeInTheDocument();
-    expect(within(section).getByText("12 · avg 81")).toBeInTheDocument();
+    const section = await screen.findByRole("region", { name: "By terminal" });
+    const rows = within(section).getAllByRole("button", { pressed: false });
+    expect(rows.map((row) => row.getAttribute("aria-pressed"))).toEqual(["false", "false"]);
+    expect(within(rows[0]).getByText("SOUTH")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("Southern lanes")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("2 at risk")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("12 · avg 81")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("NORTH")).toBeInTheDocument();
+
+    await user.click(rows[0]);
+    await waitFor(() =>
+      expect(fetchFleetSafety).toHaveBeenLastCalledWith(
+        { windowMonths: 12, fleetCodeId: "fc_1", rankLimit: 10 },
+        expect.anything(),
+      ),
+    );
+    expect(await screen.findByRole("button", { name: "Clear terminal SOUTH" })).toBeInTheDocument();
+  });
+
+  it("re-reads the fleet for a different window", async () => {
+    const user = userEvent.setup();
+    renderConsole();
+
+    await screen.findByRole("region", { name: "CSA BASICs" });
+    await user.click(
+      within(screen.getByRole("radiogroup", { name: "Counting window" })).getByRole("radio", {
+        name: "6 months",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(fetchFleetSafety).toHaveBeenLastCalledWith(
+        { windowMonths: 6, fleetCodeId: null, rankLimit: 10 },
+        expect.anything(),
+      ),
+    );
+  });
+
+  it("lists what the events were made of", async () => {
+    renderConsole();
+
+    const kinds = await screen.findByRole("list", { name: "Events by kind" });
+    expect(within(kinds).getByText("Accidents")).toBeInTheDocument();
+    expect(within(kinds).getByText("3 · 2 preventable · 1 open")).toBeInTheDocument();
+    expect(within(kinds).getByText("11 · 1 out of service · 3 open")).toBeInTheDocument();
+    expect(within(kinds).getByText("14 · 31 points")).toBeInTheDocument();
   });
 
   it("says nothing happened rather than drawing an empty chart", async () => {

@@ -5,12 +5,14 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   CREDENTIAL_CATEGORY_LABELS,
   credentialCategorySchema,
   type CredentialTypeFormValues,
 } from "@trenova/shared/types/worker-credential";
+import { InfoIcon } from "lucide-react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const CATEGORY_OPTIONS = credentialCategorySchema.options.map((value) => ({
@@ -64,6 +66,7 @@ export function CredentialTypeForm({
               label="Name"
               placeholder="e.g. Hazmat Endorsement"
               rules={{ required: true }}
+              description="Shown on worker records, in credential pickers and on compliance reports."
             />
           </FormControl>
           <FormControl>
@@ -73,6 +76,8 @@ export function CredentialTypeForm({
               label="Category"
               options={CATEGORY_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select a category"
+              description="Groups the credential on the worker's record and in the type list."
             />
           </FormControl>
           <FormControl>
@@ -83,6 +88,7 @@ export function CredentialTypeForm({
               options={statusChoices}
               rules={{ required: true }}
               isReadOnly={Boolean(profileField)}
+              placeholder="Select a status"
               description={
                 profileField
                   ? "Mirrors a worker-profile field and cannot be deactivated."
@@ -99,6 +105,7 @@ export function CredentialTypeForm({
               label="Description"
               placeholder="What this credential is and the regulation behind it"
               maxLength={1000}
+              description="Optional notes on what the credential covers and why it is tracked."
             />
           </FormControl>
         </FormGroup>
@@ -109,6 +116,15 @@ export function CredentialTypeForm({
           title="Compliance"
           hint="Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant."
         />
+        <Alert variant="default">
+          <InfoIcon className="size-4" />
+          <AlertTitle>One active credential per worker</AlertTitle>
+          <AlertDescription>
+            A worker holds a single active credential of each type. Renewing supersedes the earlier
+            one instead of adding a second; the renewal window and validity below drive when that
+            renewal is prompted.
+          </AlertDescription>
+        </Alert>
         <FormGroup cols={2}>
           <FormControl className="col-span-2">
             <SwitchField
@@ -138,6 +154,7 @@ export function CredentialTypeForm({
               sideText="days"
               min={0}
               max={365}
+              placeholder="30"
               description="How far ahead of expiry the credential is flagged as expiring soon."
             />
           </FormControl>
@@ -148,6 +165,7 @@ export function CredentialTypeForm({
               label="Typical validity"
               sideText="months"
               min={1}
+              placeholder="24"
               description="Pre-fills the expiry from the issue date when adding or renewing. Leave empty if it varies."
             />
           </FormControl>

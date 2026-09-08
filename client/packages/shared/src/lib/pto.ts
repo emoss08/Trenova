@@ -4,6 +4,7 @@ export type PTOTypeMeta = {
   label: string;
   badgeVariant: "purple" | "inactive" | "info" | "active" | "pink" | "teal" | "secondary";
   barClass: string;
+  dotClass: string;
   accentClass: string;
 };
 
@@ -12,42 +13,49 @@ export const PTO_TYPE_META: Record<PTOType, PTOTypeMeta> = {
     label: "Vacation",
     badgeVariant: "purple",
     barClass: "bg-purple-600/80 text-white",
+    dotClass: "bg-purple-600",
     accentClass: "from-purple-600 to-purple-600/5",
   },
   Sick: {
     label: "Sick",
     badgeVariant: "inactive",
     barClass: "bg-red-600/80 text-white",
+    dotClass: "bg-red-600",
     accentClass: "from-red-600 to-red-600/5",
   },
   Holiday: {
     label: "Holiday",
     badgeVariant: "info",
     barClass: "bg-blue-600/80 text-white",
+    dotClass: "bg-blue-600",
     accentClass: "from-blue-600 to-blue-600/5",
   },
   Bereavement: {
     label: "Bereavement",
     badgeVariant: "active",
     barClass: "bg-green-600/80 text-white",
+    dotClass: "bg-green-600",
     accentClass: "from-green-600 to-green-600/5",
   },
   Maternity: {
     label: "Maternity",
     badgeVariant: "pink",
     barClass: "bg-pink-600/80 text-white",
+    dotClass: "bg-pink-600",
     accentClass: "from-pink-600 to-pink-600/5",
   },
   Paternity: {
     label: "Paternity",
     badgeVariant: "teal",
     barClass: "bg-teal-600/80 text-white",
+    dotClass: "bg-teal-600",
     accentClass: "from-teal-600 to-teal-600/5",
   },
   Personal: {
     label: "Personal",
     badgeVariant: "secondary",
     barClass: "bg-slate-500/80 text-white",
+    dotClass: "bg-slate-500",
     accentClass: "from-slate-500 to-slate-500/5",
   },
 };
@@ -58,13 +66,14 @@ export function ptoTypeMeta(type: PTOType | string): PTOTypeMeta {
       label: String(type),
       badgeVariant: "secondary",
       barClass: "bg-muted-foreground/60 text-white",
+      dotClass: "bg-muted-foreground",
       accentClass: "from-muted-foreground/30 to-transparent",
     }
   );
 }
 
 export const PTO_STATUS_BAR_CLASS: Record<PTOStatus, string> = {
-  Requested: "border border-dashed border-current opacity-70",
+  Requested: "border-dashed",
   Approved: "",
   Rejected: "line-through opacity-40",
   Cancelled: "line-through opacity-40",

@@ -67,6 +67,8 @@ export type ConcernSeverityMeta = {
   label: string;
   textClass: string;
   borderClass: string;
+  /** A marker dot: the one place a concern row spends colour. */
+  dotClass: string;
   rank: number;
 };
 
@@ -75,18 +77,21 @@ const SEVERITY_META: Record<ConcernSeverity, ConcernSeverityMeta> = {
     label: "Needs action",
     textClass: "text-red-600 dark:text-red-400",
     borderClass: "border-red-500/40 bg-red-500/5",
+    dotClass: "bg-destructive",
     rank: 0,
   },
   Warning: {
     label: "Coming due",
     textClass: "text-amber-600 dark:text-amber-400",
     borderClass: "border-amber-500/40 bg-amber-500/5",
+    dotClass: "bg-warning",
     rank: 1,
   },
   Info: {
     label: "For information",
     textClass: "text-muted-foreground",
     borderClass: "border-border",
+    dotClass: "bg-muted-foreground/50",
     rank: 2,
   },
 };
@@ -95,6 +100,7 @@ const SEVERITY_FALLBACK: ConcernSeverityMeta = {
   label: "Note",
   textClass: "text-muted-foreground",
   borderClass: "border-border",
+  dotClass: "bg-muted-foreground/50",
   rank: 3,
 };
 

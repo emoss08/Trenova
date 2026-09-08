@@ -17,8 +17,10 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDate } from "@trenova/shared/lib/date";
+import { entryTally } from "@/lib/random-testing";
 import { randomEntryStatusLabel } from "@trenova/shared/lib/drug-alcohol";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 export type DrawDetailSheetProps = {
@@ -57,6 +59,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
   });
 
   const draw = drawQuery.data;
+  const tallies = useMemo(() => entryTally(draw?.entries ?? []), [draw]);
 
   return (
     <Sheet open={Boolean(drawId)} onOpenChange={onOpenChange}>
@@ -99,6 +102,32 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
               <p className="text-muted-foreground mt-2 text-[11px]">
                 The same seed over the same roster reproduces exactly these names, in this order.
               </p>
+            </section>
+
+            <section aria-label="Collections" className="grid grid-cols-2 gap-2">
+              {tallies.map((tally) => (
+                <div key={tally.substance} className="rounded-md border p-3 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="cc-label text-foreground">{tally.substance}</span>
+                    <span className="font-mono tabular-nums">
+                      {tally.collected}
+                      <span className="text-muted-foreground">/{tally.total} collected</span>
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground mt-1 tabular-nums">
+                    {tally.total === 0
+                      ? "Nobody selected"
+                      : [
+                          tally.outstanding > 0 ? `${tally.outstanding} to collect` : null,
+                          tally.notified > 0 ? `${tally.notified} notified` : null,
+                          tally.excused > 0 ? `${tally.excused} excused` : null,
+                          tally.missed > 0 ? `${tally.missed} missed` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "All collected"}
+                  </p>
+                </div>
+              ))}
             </section>
 
             <section>

@@ -111,6 +111,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="averageEmployees"
                   label="Annual average employees"
+                  placeholder="42"
+                  description="Average number of employees over the year, as OSHA Form 300A asks for it; required before the summary can be certified."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -119,6 +121,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="totalHoursWorked"
                   label="Total hours worked"
+                  placeholder="240000"
+                  description="Hours every employee worked during the year; the incident and DART rates are calculated from it."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -128,6 +132,7 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   name="naicsCode"
                   label="NAICS code"
                   placeholder="e.g. 484121"
+                  description="The industry code printed on the 300A; 484121 is long-distance truckload freight."
                 />
               </FormControl>
               <FormControl>
@@ -135,6 +140,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="executiveName"
                   label="Certifying executive"
+                  placeholder="e.g. Jane Doe"
+                  description="The company executive who will certify the summary; a name is required before it can be certified."
                 />
               </FormControl>
               <FormControl>
@@ -142,6 +149,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="executiveTitle"
                   label="Title"
+                  placeholder="e.g. Vice President of Operations"
+                  description="The executive's job title, as it appears on the 300A."
                 />
               </FormControl>
               <FormControl>
@@ -149,6 +158,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="executivePhone"
                   label="Phone"
+                  placeholder="e.g. (555) 123-4567"
+                  description="A number where the executive can be reached about the summary."
                 />
               </FormControl>
               <FormControl>
@@ -156,6 +167,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="submittedAt"
                   label="Electronically submitted"
+                  placeholder="e.g. Mar 2"
+                  description="The day the 300A was filed electronically with OSHA; leave it blank until it has been."
                 />
               </FormControl>
               <FormControl>
@@ -163,6 +176,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="submissionReference"
                   label="Submission reference"
+                  placeholder="e.g. 2026-0001234"
+                  description="The confirmation reference returned when the 300A was filed, so it can be found again."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -170,6 +185,8 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="e.g. Hours include the yard crew and seasonal drivers"
+                  description="Working notes on where the figures came from, for whoever prepares next year's form."
                   maxLength={2000}
                 />
               </FormControl>

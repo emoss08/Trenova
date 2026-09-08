@@ -173,6 +173,8 @@ export function RecordEntryDialog({
                   control={control}
                   name="clockedInAt"
                   label="Started"
+                  placeholder="Pick a date and time"
+                  description="When the worker started, in your own time zone."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -181,6 +183,8 @@ export function RecordEntryDialog({
                   control={control}
                   name="clockedOutAt"
                   label="Finished"
+                  placeholder="Pick a date and time"
+                  description="When the worker finished; it has to be after the start."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -190,6 +194,8 @@ export function RecordEntryDialog({
                     control={control}
                     name="breakMinutes"
                     label="Unpaid break (minutes)"
+                    placeholder="0"
+                    description="Taken off the period before it is paid."
                     min={0}
                     step={5}
                   />
@@ -232,7 +238,8 @@ export function RecordEntryDialog({
                   control={control}
                   name="note"
                   label="Note"
-                  placeholder="What this period covers"
+                  placeholder="e.g. Yard shift covering for Ben"
+                  description="Optional; anything worth knowing about the period, such as the job or site."
                 />
               </FormControl>
             </FormGroup>

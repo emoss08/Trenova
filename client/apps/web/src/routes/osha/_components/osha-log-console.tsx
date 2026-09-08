@@ -1,47 +1,111 @@
+import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
   certifyOshaSummary,
-  fetchOshaLog,
+  deleteWorkerInjury,
   OSHA_LOG_KEY,
+  OSHA_SUMMARIES_KEY,
   uncertifyOshaSummary,
+  WORKER_INJURIES_KEY,
+  type OshaLogCase,
 } from "@/lib/graphql/worker-injury";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import {
-  caseClassificationLabel,
-  classificationTone,
-  formatRate,
-  illnessTypeLabel,
-} from "@trenova/shared/lib/injury";
-import { cn } from "@trenova/shared/lib/utils";
+  caseLabel,
+  certificationTrack,
+  summaryCaption,
+  yearOf,
+  yearsOffered,
+  type CaseFilter,
+} from "@/lib/osha-log";
+import { InjuryDialog } from "@/routes/worker/_components/safety/injury-dialog";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@trenova/shared/components/ui/alert-dialog";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { Stepper } from "@trenova/shared/components/ui/stepper";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useState } from "react";
+import { MilestoneIcon, Trash2Icon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { OshaCaseSheet } from "./osha-case-sheet";
+import { OshaCaseTable } from "./osha-case-table";
+import { OshaOverview } from "./osha-overview";
+import { OshaLogSkeleton } from "./osha-skeleton";
+import { OshaSummaryCard } from "./osha-summary-card";
 import { OshaSummaryDialog } from "./osha-summary-dialog";
-
-/** How many years back the picker offers. Five is the retention period. */
-const YEARS_OFFERED = 5;
-
-function currentYear(): number {
-  return new Date(getTodayDate() * 1000).getUTCFullYear();
-}
+import { oshaLogQuery, oshaSummariesQuery } from "./queries";
 
 export default function OshaLogConsole() {
   const queryClient = useQueryClient();
+  const { allowed: canRead } = usePermission(Resource.WorkerInjury, Operation.Read);
   const { allowed: canUpdate } = usePermission(Resource.WorkerInjury, Operation.Update);
+  const { allowed: canDelete } = usePermission(Resource.WorkerInjury, Operation.Delete);
   const { allowed: canCertify } = usePermission(Resource.WorkerInjury, Operation.Manage);
-  const [year, setYear] = useState(currentYear());
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
+  const thisYear = yearOf(now);
+  const [year, setYear] = useState(thisYear);
+  const [filter, setFilter] = useState<CaseFilter>("all");
+  const [query, setQuery] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [openCaseId, setOpenCaseId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<OshaLogCase | null>(null);
+  const [deleting, setDeleting] = useState<OshaLogCase | null>(null);
 
-  const logQuery = useQuery({
-    queryKey: [OSHA_LOG_KEY, year],
-    queryFn: ({ signal }) => fetchOshaLog(year, { signal }),
-  });
+  const logQuery = useQuery({ ...oshaLogQuery(year), enabled: canRead });
+  const summariesQuery = useQuery({ ...oshaSummariesQuery(), enabled: canRead });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: [OSHA_LOG_KEY] });
+  const years = useMemo(() => yearsOffered(thisYear), [thisYear]);
+  const summariesByYear = useMemo(
+    () => new Map((summariesQuery.data ?? []).map((row) => [row.year, row])),
+    [summariesQuery.data],
+  );
+  const yearItems = useMemo(
+    () =>
+      years.map((option) => ({
+        value: String(option),
+        label: String(option),
+        caption: summariesQuery.data ? summaryCaption(summariesByYear.get(option)) : undefined,
+      })),
+    [years, summariesQuery.data, summariesByYear],
+  );
+
+  const log = logQuery.data;
+  const track = useMemo(
+    () =>
+      log
+        ? certificationTrack({
+            totals: log.totals,
+            summary: log.summary,
+            postFrom: log.postFrom,
+            postThrough: log.postThrough,
+            now,
+            formatDate: (unix) => formatUnixDateMedium(unix),
+          })
+        : [],
+    [log, now],
+  );
+  // Read back from the query rather than kept as a copy, so the sheet shows
+  // an edit the moment the log is refetched.
+  const openCase = useMemo(
+    () => log?.cases.find((entry) => entry.id === openCaseId) ?? null,
+    [log, openCaseId],
+  );
+
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: [OSHA_LOG_KEY] }),
+      queryClient.invalidateQueries({ queryKey: [OSHA_SUMMARIES_KEY] }),
+    ]);
 
   const certifyMutation = useMutation({
     mutationFn: () => certifyOshaSummary(year),
@@ -67,201 +131,133 @@ export default function OshaLogConsole() {
       toast.error("Could not reopen the summary", { description: error.message }),
   });
 
-  if (logQuery.isLoading) {
-    return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    );
-  }
+  const deleteMutation = useMutation({
+    mutationFn: (entry: OshaLogCase) => deleteWorkerInjury(entry.id),
+    onSuccess: (_, entry) => {
+      toast.success(`Case ${caseLabel(entry)} deleted`, {
+        description: "The case number is not reused, so two cases can never share one.",
+      });
+      setDeleting(null);
+      if (openCaseId === entry.id) setOpenCaseId(null);
+      void queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, entry.workerId] });
+      void invalidate();
+    },
+    onError: (error: Error) =>
+      toast.error("Could not delete the case", { description: error.message }),
+  });
 
-  const log = logQuery.data;
-  if (!log) return null;
+  // The log carries names, body parts and claims. Somebody without the grant
+  // sees nothing rather than an empty page implying a clean year.
+  if (!canRead) return null;
 
-  const totals = log.totals;
-  const summary = log.summary;
-  const years = Array.from({ length: YEARS_OFFERED }, (_, index) => currentYear() - index);
+  if (logQuery.isLoading || !log) return <OshaLogSkeleton />;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-1.5">
-        {years.map((option) => (
-          <Button
-            key={option}
-            size="sm"
-            variant={option === year ? "default" : "outline"}
-            onClick={() => setYear(option)}
-          >
-            {option}
-          </Button>
-        ))}
+    <div className="flex flex-col gap-4">
+      <SegmentedControl<string>
+        items={yearItems}
+        value={String(year)}
+        onValueChange={(value) => {
+          setYear(Number(value));
+          setFilter("all");
+          setQuery("");
+        }}
+        aria-label="Log year"
+      />
+
+      <OshaOverview log={log} />
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <OshaSummaryCard
+          log={log}
+          canUpdate={canUpdate}
+          canCertify={canCertify}
+          certifying={certifyMutation.isPending}
+          reopening={uncertifyMutation.isPending}
+          onEditFigures={() => setSummaryOpen(true)}
+          onCertify={() => certifyMutation.mutate()}
+          onReopen={() => uncertifyMutation.mutate()}
+        />
+        <aside className="bg-card flex min-w-0 flex-col rounded-lg border">
+          <header className="flex items-center gap-2 border-b px-3 py-2">
+            <MilestoneIcon className="text-muted-foreground size-3.5" />
+            <h2 className="text-sm font-medium">Where {log.year} stands</h2>
+            <InfoPopover title={`Where ${log.year} stands`}>
+              The year on its way to a posted 300A. OSHA wants the summary certified by a company
+              executive and posted where employees can see it from 1 February to 30 April of the
+              following year (29 CFR 1904.32).
+            </InfoPopover>
+          </header>
+          <div className="p-3">
+            <Stepper key={log.year} steps={track} aria-label={`Where ${log.year} stands`} />
+          </div>
+        </aside>
       </div>
 
-      <section className="rounded-lg border p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm font-medium">300A summary for {log.year}</h2>
-              <Badge variant={summary?.status === "Certified" ? "active" : "warning"}>
-                {summary?.status === "Certified" ? "Certified" : "Draft"}
-              </Badge>
-              {totals.openCases > 0 ? (
-                <Badge variant="warning">
-                  {totals.openCases} case{totals.openCases === 1 ? "" : "s"} still open
-                </Badge>
-              ) : null}
-            </div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Post from {formatUnixDate(log.postFrom)} to {formatUnixDate(log.postThrough)}
-              {summary?.certifiedAt ? ` · certified ${formatUnixDate(summary.certifiedAt)}` : ""}
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            {canUpdate ? (
-              <Button size="sm" variant="outline" onClick={() => setSummaryOpen(true)}>
-                {summary ? "Edit figures" : "Start the summary"}
-              </Button>
-            ) : null}
-            {canCertify && summary && summary.status !== "Certified" ? (
-              <Button
-                size="sm"
-                isLoading={certifyMutation.isPending}
-                onClick={() => certifyMutation.mutate()}
-              >
-                Certify
-              </Button>
-            ) : null}
-            {canCertify && summary?.status === "Certified" ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                isLoading={uncertifyMutation.isPending}
-                onClick={() => uncertifyMutation.mutate()}
-              >
-                Reopen
-              </Button>
-            ) : null}
-          </div>
-        </div>
+      <OshaCaseTable
+        year={log.year}
+        cases={log.cases}
+        filter={filter}
+        onFilterChange={setFilter}
+        query={query}
+        onQueryChange={setQuery}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
+        onOpen={(entry) => setOpenCaseId(entry.id)}
+        onEdit={setEditing}
+        onDelete={setDeleting}
+      />
 
-        <dl className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4 lg:grid-cols-6">
-          <Figure label="Deaths" value={totals.deaths} alarm={totals.deaths > 0} />
-          <Figure label="Days away" value={totals.daysAwayCases} />
-          <Figure label="Transfer / restriction" value={totals.jobTransferCases} />
-          <Figure label="Other recordable" value={totals.otherRecordableCases} />
-          <Figure label="Total recordable" value={totals.totalRecordableCases} />
-          <Figure label="Total days away" value={totals.totalDaysAway} />
-        </dl>
-
-        <dl className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4 lg:grid-cols-6">
-          <Figure label="Injuries" value={totals.injuryCount} />
-          <Figure label="Skin disorders" value={totals.skinDisorderCount} />
-          <Figure label="Respiratory" value={totals.respiratoryCount} />
-          <Figure label="Poisonings" value={totals.poisoningCount} />
-          <Figure label="Hearing loss" value={totals.hearingLossCount} />
-          <Figure label="Other illnesses" value={totals.otherIllnessCount} />
-        </dl>
-
-        <div className="border-border/60 mt-4 grid grid-cols-2 gap-3 border-t pt-3 text-xs sm:grid-cols-4">
-          <div>
-            <dt className="text-muted-foreground text-[11px]">TRIR</dt>
-            <dd className="font-semibold tabular-nums">
-              {formatRate(log.totalRecordableIncidentRate)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-[11px]">DART</dt>
-            <dd className="font-semibold tabular-nums">{formatRate(log.daysAwayRestrictedRate)}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-[11px]">Average employees</dt>
-            <dd className="font-semibold tabular-nums">{summary?.averageEmployees ?? "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-[11px]">Hours worked</dt>
-            <dd className="font-semibold tabular-nums">
-              {summary?.totalHoursWorked ? summary.totalHoursWorked.toLocaleString("en-US") : "—"}
-            </dd>
-          </div>
-        </div>
-        {log.totalRecordableIncidentRate === null ? (
-          <p className="text-muted-foreground mt-2 text-[11px]">
-            The rates need the hours worked. A rate with no denominator is not a small number — it
-            is not a number.
-          </p>
-        ) : null}
-      </section>
-
-      <section>
-        <h2 className="cc-label text-foreground mb-2">
-          Log for {log.year} ({log.cases.length} case{log.cases.length === 1 ? "" : "s"})
-        </h2>
-        {log.cases.length === 0 ? (
-          <p className="text-muted-foreground rounded-md border border-dashed p-4 text-xs">
-            No case has been recorded for {log.year}.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {log.cases.map((entry) => (
-              <li
-                key={entry.id}
-                className={cn(
-                  "rounded-md border px-3 py-2 text-xs",
-                  !entry.recordable && "opacity-70",
-                )}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-muted-foreground tabular-nums">
-                      {entry.caseYear}-{entry.caseNumber}
-                    </span>
-                    <span className="font-medium">{entry.logName}</span>
-                    <Badge variant={classificationTone(entry.classification)}>
-                      {caseClassificationLabel(entry.classification)}
-                    </Badge>
-                    {entry.recordable ? null : <Badge variant="secondary">Off the log</Badge>}
-                    {entry.status === "Open" ? <Badge variant="warning">Open</Badge> : null}
-                  </span>
-                  <span className="text-muted-foreground tabular-nums">
-                    {formatUnixDate(entry.occurredAt)}
-                  </span>
-                </div>
-                <p className="text-muted-foreground mt-1">
-                  {illnessTypeLabel(entry.illnessType)}
-                  {entry.bodyPart ? ` · ${entry.bodyPart}` : ""}
-                  {entry.location ? ` · ${entry.location}` : ""}
-                  {entry.daysAway > 0 ? ` · ${entry.daysAway} days away` : ""}
-                  {entry.daysRestricted > 0 ? ` · ${entry.daysRestricted} restricted` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <OshaCaseSheet
+        entry={openCase}
+        onOpenChange={(open) => !open && setOpenCaseId(null)}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
+        onEdit={setEditing}
+        onDelete={setDeleting}
+      />
 
       <OshaSummaryDialog
         open={summaryOpen}
         onOpenChange={setSummaryOpen}
         year={year}
-        summary={summary ?? null}
+        summary={log.summary ?? null}
       />
-    </div>
-  );
-}
 
-function Figure({ label, value, alarm }: { label: string; value: number; alarm?: boolean }) {
-  return (
-    <div>
-      <dt className="text-muted-foreground text-[11px]">{label}</dt>
-      <dd
-        className={cn(
-          "text-sm font-semibold tabular-nums",
-          alarm && "text-red-600 dark:text-red-400",
-        )}
-      >
-        {value}
-      </dd>
+      {editing ? (
+        <InjuryDialog
+          open
+          onOpenChange={(open) => !open && setEditing(null)}
+          workerId={editing.workerId}
+          injury={editing}
+        />
+      ) : null}
+
+      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <Trash2Icon />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete case {deleting ? caseLabel(deleting) : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The case comes off the log and out of the totals. Its number is never reused, and the
+              rule expects a recordable case to stay on the log for five years, so delete only a
+              case that was recorded in error.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep the case</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleting && deleteMutation.mutate(deleting)}
+            >
+              Delete case
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   WORKER_CREDENTIAL_TYPES_KEY,
 } from "@/lib/graphql/worker-credential";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { cn } from "@trenova/shared/lib/utils";
@@ -24,7 +25,7 @@ import {
   checklistTriggerSchema,
   type ChecklistTemplateFormValues,
 } from "@trenova/shared/types/worker-checklist";
-import { GripVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { GripVerticalIcon, InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useMemo } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
@@ -90,6 +91,7 @@ export function ChecklistTemplateForm({
               label="Code"
               placeholder="e.g. DRIVER-ONBOARDING"
               rules={{ required: true }}
+              description="Short unique identifier; saved in uppercase."
             />
           </FormControl>
           <FormControl>
@@ -99,6 +101,7 @@ export function ChecklistTemplateForm({
               label="Name"
               placeholder="e.g. Driver onboarding"
               rules={{ required: true }}
+              description="Shown on the worker's Checklist tab once a checklist is started from this template."
             />
           </FormControl>
           <FormControl>
@@ -108,6 +111,7 @@ export function ChecklistTemplateForm({
               label="Kind"
               options={KIND_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select a kind"
               description="Onboarding completion marks the worker DQF-ready."
             />
           </FormControl>
@@ -118,6 +122,7 @@ export function ChecklistTemplateForm({
               label="Starts"
               options={TRIGGER_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select an event"
               description="The employment event that starts this checklist for a worker."
             />
           </FormControl>
@@ -128,6 +133,7 @@ export function ChecklistTemplateForm({
               label="Status"
               options={statusChoices}
               rules={{ required: true }}
+              placeholder="Select a status"
               description={
                 isEdit && openChecklistCount > 0
                   ? `${openChecklistCount} checklist${openChecklistCount === 1 ? " is" : "s are"} in progress from this template; they keep their items either way.`
@@ -155,6 +161,7 @@ export function ChecklistTemplateForm({
               label="Description"
               placeholder="Who this checklist is for and what done looks like"
               maxLength={1000}
+              description="Optional context for the people working through the checklist."
             />
           </FormControl>
         </FormGroup>
@@ -187,6 +194,14 @@ export function ChecklistTemplateForm({
             Add item
           </Button>
         </div>
+        <Alert variant="default">
+          <InfoIcon className="size-4" />
+          <AlertTitle>Items are copied when a checklist starts</AlertTitle>
+          <AlertDescription>
+            Changes to the items below only affect checklists started after you save. Checklists
+            already in progress keep the items they were started with.
+          </AlertDescription>
+        </Alert>
         <div className="flex flex-col gap-3">
           {itemsArray.fields.map((field, index) => (
             <ItemRow
@@ -272,6 +287,7 @@ function ItemRow({
             label="Label"
             placeholder="e.g. Fuel card issued"
             rules={{ required: true }}
+            description="Shown as the line the owner ticks off on the worker's checklist."
           />
         </FormControl>
         <FormControl>
@@ -281,6 +297,7 @@ function ItemRow({
             label="Kind"
             options={ITEM_KIND_OPTIONS}
             rules={{ required: true }}
+            placeholder="Select a kind"
             description={ITEM_KIND_HINT[kind ?? "Task"]}
           />
         </FormControl>
@@ -291,6 +308,8 @@ function ItemRow({
             label="Owner"
             options={OWNER_OPTIONS}
             rules={{ required: true }}
+            placeholder="Select a team"
+            description="The team responsible for getting this item done."
           />
         </FormControl>
         {kind === "Credential" ? (
@@ -302,6 +321,7 @@ function ItemRow({
               options={credentialTypeOptions}
               rules={{ required: true }}
               placeholder="Which credential completes this item"
+              description="The item completes itself once the worker holds a valid credential of this type."
             />
           </FormControl>
         ) : null}
@@ -312,6 +332,7 @@ function ItemRow({
               name={`items.${index}.documentTypeId`}
               label="Document type"
               placeholder="Which document completes this item"
+              description="The item completes itself once a worker document of this type is on file."
             />
           </FormControl>
         ) : null}
@@ -323,6 +344,8 @@ function ItemRow({
             sideText="days after start"
             min={0}
             max={365}
+            placeholder="3"
+            description="Days after the checklist starts before this item counts as overdue."
           />
         </FormControl>
         <FormControl>
@@ -341,6 +364,7 @@ function ItemRow({
             label="Description"
             placeholder="What done looks like for this item"
             maxLength={1000}
+            description="Optional guidance shown with the item to whoever completes it."
           />
         </FormControl>
       </FormGroup>

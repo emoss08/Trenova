@@ -1,6 +1,7 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
+import { PoliciesSkeleton } from "./_components/policies-skeleton";
 
 const PoliciesConsole = lazy(() => import("./_components/policies-console"));
 
@@ -14,7 +15,7 @@ export function PoliciesPage() {
       }}
     >
       <div className="flex flex-col gap-4">
-        <DataTableLazyComponent>
+        <DataTableLazyComponent fallback={<PoliciesSkeleton />}>
           <PoliciesConsole />
         </DataTableLazyComponent>
       </div>

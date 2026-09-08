@@ -120,6 +120,8 @@ function MeasurementCard() {
               name="measurementMethod"
               label="How the year is measured"
               options={METHOD_OPTIONS}
+              placeholder="Choose a method"
+              description="The twelve-month period every employee's entitlement is counted against."
               rules={{ required: true }}
             />
           </FormControl>
@@ -153,7 +155,8 @@ function EntitlementCard() {
               control={control}
               name="entitlementWeeks"
               label="Weeks of leave"
-              description="The statute is a floor of twelve. A more generous figure is allowed."
+              placeholder="12"
+              description="Weeks of leave each eligible employee gets per period; the statute is a floor of twelve and a more generous figure is allowed."
               rules={{ required: true }}
             />
           </FormControl>
@@ -162,7 +165,8 @@ function EntitlementCard() {
               control={control}
               name="militaryCaregiverWeeks"
               label="Military caregiver weeks"
-              description="Twenty-six weeks in a single twelve-month period (29 CFR 825.127)."
+              placeholder="26"
+              description="Weeks allowed for military caregiver leave; twenty-six in a single twelve-month period under 29 CFR 825.127."
               rules={{ required: true }}
             />
           </FormControl>
@@ -171,7 +175,8 @@ function EntitlementCard() {
               control={control}
               name="workweekHours"
               label="Hours in a workweek"
-              description="What one week of the entitlement converts to."
+              placeholder="40"
+              description="What one week of the entitlement converts to when leave is taken in hours."
               rules={{ required: true }}
             />
           </FormControl>
@@ -199,7 +204,8 @@ function EligibilityCard() {
               control={control}
               name="eligibilityMonths"
               label="Months of service"
-              description="Twelve under 29 CFR 825.110(a), and they need not be consecutive."
+              placeholder="12"
+              description="Months since hire an employee needs before they qualify; twelve under 29 CFR 825.110(a), and they need not be consecutive."
               rules={{ required: true }}
             />
           </FormControl>
@@ -208,7 +214,8 @@ function EligibilityCard() {
               control={control}
               name="eligibilityHours"
               label="Hours worked in the prior year"
-              description="1,250 under the statute. Shown beside each case for the office to check."
+              placeholder="1250"
+              description="Hours an employee must have worked in the prior twelve months; 1,250 under the statute, shown beside each case for the office to check."
               rules={{ required: true }}
             />
           </FormControl>
@@ -217,7 +224,8 @@ function EligibilityCard() {
               control={control}
               name="certificationDueDays"
               label="Days to return a certification"
-              description="At least fifteen calendar days from the request (29 CFR 825.305(b))."
+              placeholder="15"
+              description="Calendar days an employee has to return a medical certification once it is requested; at least fifteen under 29 CFR 825.305(b)."
               rules={{ required: true }}
             />
           </FormControl>
