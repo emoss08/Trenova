@@ -375,6 +375,30 @@ func TestGet(t *testing.T) {
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
+	t.Run("never links a portal user at creation", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTest(t)
+		userID := pulid.MustNew("usr_")
+		entity := newCreateWorker()
+		entity.UserID = userID
+
+		created := newTestWorker()
+		deps.repo.On("Create", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+			return w.UserID.IsNil()
+		})).Return(created, nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+
+		_, err := deps.svc.Create(
+			t.Context(),
+			entity,
+			internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+		)
+
+		require.NoError(t, err)
+		assert.True(t, entity.UserID.IsNil())
+		deps.repo.AssertExpectations(t)
+	})
+
 	t.Run("creates worker successfully", func(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
@@ -590,6 +614,36 @@ func TestCreate(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	t.Parallel()
+
+	t.Run("keeps the stored portal user link on the edit path", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTest(t)
+		userID := pulid.MustNew("usr_")
+		entity := newTestWorker()
+		entity.UserID = userID
+
+		original := newTestWorker()
+		original.ID = entity.ID
+		original.OrganizationID = entity.OrganizationID
+		original.BusinessUnitID = entity.BusinessUnitID
+		original.UserID = pulid.MustNew("usr_")
+
+		deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+		deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+			return w.UserID == original.UserID
+		})).Return(original, nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := deps.svc.Update(
+			t.Context(),
+			entity,
+			internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, original.UserID, entity.UserID)
+		deps.repo.AssertExpectations(t)
+	})
 
 	t.Run("updates worker successfully", func(t *testing.T) {
 		t.Parallel()

@@ -275,6 +275,10 @@ const workerPolicySelectOptionsGraphQL = {
   resource: "WORKER_POLICY",
 } satisfies GraphQLSelectOptionsConfig;
 
+const jobPositionSelectOptionsGraphQL = {
+  resource: "JOB_POSITION",
+} satisfies GraphQLSelectOptionsConfig;
+
 const formulaTemplateSelectOptionsGraphQL = {
   resource: "FORMULA_TEMPLATE",
 } satisfies GraphQLSelectOptionsConfig;
@@ -1971,6 +1975,43 @@ export function RateAgreementAutocompleteField<T extends FieldValues>({
  * A shift pattern. The option carries the pattern's mask and cycle in its
  * meta so a picker can say what it is putting somebody on.
  */
+/**
+ * A job title. Driving titles are held by workers and front-office ones by
+ * users, so the picker is told which roster it is filling and offers only
+ * that half of the chart.
+ */
+export function JobPositionAutocompleteField<T extends FieldValues>({
+  driving,
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
+  driving: boolean;
+}) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/job-positions/select-options/"
+      graphql={{
+        ...jobPositionSelectOptionsGraphQL,
+        filters: driving ? { drivingOnly: true } : { nonDrivingOnly: true },
+      }}
+      popoutLink="/hr/org-structure"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "code")}
+            {selectOptionMetaString(option, "department")
+              ? ` · ${selectOptionMetaString(option, "department")}`
+              : ""}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
 export function ShiftTemplateAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {

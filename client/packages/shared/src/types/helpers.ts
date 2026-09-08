@@ -104,3 +104,32 @@ export const nullableIntegerSchema = z
   .nullish();
 
 export type NullableInteger = z.infer<typeof nullableIntegerSchema>;
+
+/**
+ * A relation hanging off another record is a display projection, not an
+ * editable subform: a query selects the columns it renders and leaves the rest
+ * out. Validating such a relation against the owning entity's full schema fails
+ * every row the API actually returns.
+ *
+ * Omission reaches the client two different ways. GraphQL drops an unselected
+ * field entirely, but REST marshals the whole Go struct, so a column the
+ * repository never selected arrives as its zero value — `""` for a string or
+ * enum, `null` for a pointer — rather than absent. A plain `.partial()` only
+ * covers the first case and still trips `min(1)` and enum checks on the second,
+ * so zero values are stripped before the partial schema sees them.
+ */
+export const relationSchema = <T extends z.ZodObject<z.ZodRawShape>>(schema: T) =>
+  z.preprocess((value) => {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+      return value;
+    }
+
+    const projected: Record<string, unknown> = {};
+    for (const [key, columnValue] of Object.entries(value as Record<string, unknown>)) {
+      if (columnValue !== null && columnValue !== "") {
+        projected[key] = columnValue;
+      }
+    }
+
+    return projected;
+  }, schema.partial().nullish());

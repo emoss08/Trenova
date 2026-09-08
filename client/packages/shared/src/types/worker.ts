@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fleetCodeSchema } from "./fleet-code";
+import { fleetCodeRelationSchema } from "./fleet-code";
 import {
   nullableEnumSchema,
   nullableIntegerSchema,
@@ -207,6 +207,7 @@ export const workerSchema = z.object({
   }),
   fleetCodeId: nullableStringSchema,
   managerId: nullableStringSchema,
+  positionId: nullableStringSchema,
   status: statusSchema,
   type: workerTypeSchema,
   driverType: driverTypeSchema,
@@ -247,7 +248,7 @@ export const workerSchema = z.object({
   availableForDispatch: z.boolean().default(true),
 
   state: usStateRelationSchema,
-  fleetCode: fleetCodeSchema.partial().nullish(),
+  fleetCode: fleetCodeRelationSchema,
   profile: workerProfileSchema.nullish(),
   pto: z.array(workerPtoSchema).nullish(),
   customFields: z.record(z.string(), z.any()).nullish(),

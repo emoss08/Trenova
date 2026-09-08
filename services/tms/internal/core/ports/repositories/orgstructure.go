@@ -55,6 +55,51 @@ type HeadcountRow struct {
 	Workers    int `bun:"workers"`
 	Drivers    int `bun:"drivers"`
 	Terminated int `bun:"terminated"`
+	// Staff is how many users hold the position in this organisation. The
+	// front office is made of people who log in rather than workers, and a
+	// chart that counted only workers would show every desk empty.
+	Staff int `bun:"staff"`
+}
+
+// StaffCountRow is the users holding one position, read from their
+// memberships in the organisation.
+type StaffCountRow struct {
+	PositionID pulid.ID `bun:"position_id"`
+	Title      string   `bun:"title"`
+	Code       string   `bun:"code"`
+	Department string   `bun:"department"`
+	Staff      int      `bun:"staff"`
+}
+
+// PositionHolderKind says which roster a holder comes from.
+type PositionHolderKind string
+
+const (
+	PositionHolderWorker PositionHolderKind = "Worker"
+	PositionHolderUser   PositionHolderKind = "User"
+)
+
+// PositionHolderRow is one person in a position, whichever roster they are
+// on: a worker on a driving title, or a user on a front-office one.
+type PositionHolderRow struct {
+	Kind   PositionHolderKind `bun:"kind"`
+	ID     pulid.ID           `bun:"id"`
+	Name   string             `bun:"name"`
+	Status string             `bun:"status"`
+	// Detail is the terminal for a worker and the email for a user.
+	Detail string `bun:"detail"`
+}
+
+type SetWorkerPositionRequest struct {
+	TenantInfo pagination.TenantInfo
+	WorkerID   pulid.ID
+	PositionID pulid.ID
+}
+
+type SetUserPositionRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	PositionID pulid.ID
 }
 
 // TeamMemberRow is one person on a manager's team, read from the roster cache
@@ -158,4 +203,25 @@ type OrgStructureRepository interface {
 		managerIDs []pulid.ID,
 		workerID pulid.ID,
 	) (bool, error)
+
+	// StaffByPosition counts the users holding each position through their
+	// membership in the organisation; positions nobody holds are absent.
+	StaffByPosition(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]StaffCountRow, error)
+	// ListPositionHolders is everyone in a position from either roster,
+	// workers first, each alphabetically.
+	ListPositionHolders(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		positionID pulid.ID,
+	) ([]PositionHolderRow, error)
+	// SetWorkerPosition moves a worker onto a position, or off one with a nil
+	// id. It touches the one column so the worker's own validation is not
+	// re-run over a record nothing else about has changed.
+	SetWorkerPosition(ctx context.Context, req *SetWorkerPositionRequest) error
+	// SetUserPosition does the same for a user's membership in the organisation.
+	// It reports ErrNotFound when the user is not a member.
+	SetUserPosition(ctx context.Context, req *SetUserPositionRequest) error
 }

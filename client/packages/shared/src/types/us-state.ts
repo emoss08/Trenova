@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalStringSchema } from "./helpers";
+import { optionalStringSchema, relationSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
 
 export const usStateSchema = z.object({
@@ -25,13 +25,11 @@ export const usStateSchema = z.object({
 export type UsState = z.infer<typeof usStateSchema>;
 
 /**
- * A `state` relation hanging off another record is a display projection, not an
- * editable subform: table queries select the columns they render (id, name,
- * abbreviation) and leave the country columns out. Validating such a relation
- * against the full schema fails every row the API actually returns, so relations
- * relax the fields the projections omit.
+ * The `state` on another record is a display projection — queries select the
+ * columns they render (id, name, abbreviation) and leave the country columns
+ * out — so it is validated with the relaxed relation schema.
  */
-export const usStateRelationSchema = usStateSchema.partial().nullish();
+export const usStateRelationSchema = relationSchema(usStateSchema);
 
 export type UsStateRelation = z.infer<typeof usStateRelationSchema>;
 

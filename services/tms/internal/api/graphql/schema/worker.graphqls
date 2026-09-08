@@ -127,6 +127,8 @@ type Worker {
   stateId: ID!
   fleetCodeId: ID
   managerId: ID
+  "The driving title the worker holds; front-office titles are held by users."
+  positionId: ID
   status: EntityStatus!
   type: WorkerType!
   driverType: DriverType!

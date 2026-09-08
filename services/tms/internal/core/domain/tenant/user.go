@@ -30,6 +30,10 @@ type OrganizationMembership struct {
 	JoinedAt       int64    `json:"joinedAt"       bun:"joined_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	GrantedByID    pulid.ID `json:"grantedByID"    bun:"granted_by_id,type:VARCHAR(100)"`
 	ExpiresAt      *int64   `json:"expiresAt"      bun:"expires_at"`
+	// PositionID is the title the user holds in this organisation. It sits on
+	// the membership rather than the user because a position belongs to one
+	// organisation and the same person may hold different titles in two.
+	PositionID pulid.ID `json:"positionId" bun:"position_id,type:VARCHAR(100),nullzero"`
 
 	// Relationships
 	User         *User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`

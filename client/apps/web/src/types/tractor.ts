@@ -1,15 +1,16 @@
 import { z } from "zod";
 import { equipmentManufacturerSchema } from "./equipment-manufacturer";
 import { equipmentTypeSchema } from "./equipment-type";
-import { fleetCodeSchema } from "@trenova/shared/types/fleet-code";
+import { fleetCodeRelationSchema } from "@trenova/shared/types/fleet-code";
 import {
   equipmentStatusSchema,
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
+  relationSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
-import { usStateSchema } from "@trenova/shared/types/us-state";
+import { usStateRelationSchema } from "@trenova/shared/types/us-state";
 import { workerSchema } from "@trenova/shared/types/worker";
 
 export const tractorSchema = z.object({
@@ -39,12 +40,12 @@ export const tractorSchema = z.object({
   registrationExpiry: nullableIntegerSchema,
   externalId: optionalStringSchema.default(""),
 
-  equipmentType: equipmentTypeSchema.partial().nullish(),
-  equipmentManufacturer: equipmentManufacturerSchema.partial().nullish(),
-  fleetCode: fleetCodeSchema.partial().nullish(),
-  state: usStateSchema.partial().nullish(),
-  primaryWorker: workerSchema.partial().nullish(),
-  secondaryWorker: workerSchema.partial().nullish(),
+  equipmentType: relationSchema(equipmentTypeSchema),
+  equipmentManufacturer: relationSchema(equipmentManufacturerSchema),
+  fleetCode: fleetCodeRelationSchema,
+  state: usStateRelationSchema,
+  primaryWorker: relationSchema(workerSchema),
+  secondaryWorker: relationSchema(workerSchema),
   customFields: z.record(z.string(), z.any()).nullish(),
 });
 
