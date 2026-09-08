@@ -1,4 +1,5 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useReportCatalog, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { CircleAlertIcon } from "lucide-react";
@@ -33,6 +34,7 @@ export function ReportBuilderPage() {
   const { definitionId } = useParams<{ definitionId: string }>();
   const catalog = useReportCatalog();
   const definition = useReportDefinition(definitionId);
+  useBreadcrumbLabel(definition.data?.name);
 
   if (catalog.isLoading || (definitionId && definition.isLoading)) {
     return <BuilderSkeleton />;

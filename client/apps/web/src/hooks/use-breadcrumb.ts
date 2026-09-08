@@ -1,39 +1,34 @@
-import { generateBreadcrumbSegments, getPageTitle } from "@/lib/route-utils";
+import { generateBreadcrumbSegments } from "@/lib/route-utils";
+import { useBreadcrumbStore } from "@/stores/breadcrumb-store";
 import type { BreadcrumbMatch } from "@/types/router";
+import { useMemo } from "react";
 import { useLocation, useMatches } from "react-router";
 
 export function useBreadcrumbs() {
   const matches = useMatches() as unknown as BreadcrumbMatch[];
   const location = useLocation();
+  const labels = useBreadcrumbStore((state) => state.labels);
 
-  // Get matches with explicit crumbs from route handles
-  const explicitCrumbs = matches
-    .filter((match) => match.handle?.crumb && match.handle?.showBreadcrumbs !== false)
-    .map((match) => ({
-      id: match.id,
-      pathname: match.pathname,
-      crumb:
-        typeof match.handle?.crumb === "function"
-          ? match.handle.crumb(match.data)
-          : match.handle?.crumb,
-    }));
+  return useMemo(() => {
+    // Crumbs a route declares on its handle win over anything derived from the URL
+    const explicitCrumbs = matches
+      .filter((match) => match.handle?.crumb && match.handle?.showBreadcrumbs !== false)
+      .map((match) => ({
+        id: match.id,
+        pathname: match.pathname,
+        crumb:
+          typeof match.handle?.crumb === "function"
+            ? match.handle.crumb(match.data)
+            : match.handle?.crumb,
+      }));
 
-  // Generate implicit crumbs from the current path
-  const segments = generateBreadcrumbSegments(location.pathname);
-
-  // Merge explicit and implicit crumbs, preferring explicit ones
-  const allCrumbs = segments.map((segment, index) => {
-    const explicitCrumb = explicitCrumbs.find((c) => c.pathname === segment.path);
-
-    const isLastSegment = index === segments.length - 1;
-    return (
-      explicitCrumb || {
-        id: segment.path,
-        pathname: segment.path,
-        crumb: isLastSegment ? getPageTitle(segment.path) : segment.label,
-      }
+    return generateBreadcrumbSegments(location.pathname, labels).map(
+      (segment) =>
+        explicitCrumbs.find((crumb) => crumb.pathname === segment.path) ?? {
+          id: segment.path,
+          pathname: segment.path,
+          crumb: segment.label,
+        },
     );
-  });
-
-  return allCrumbs;
+  }, [matches, location.pathname, labels]);
 }

@@ -1,4 +1,3 @@
-import { preloadCommandPalette } from "@/components/command-palette/command-palette-mount";
 import { ActivitySection } from "@/components/navigation/activity-section";
 import { AttentionSection } from "@/components/navigation/attention-section";
 import { BrowseSection } from "@/components/navigation/browse-section";
@@ -6,15 +5,13 @@ import { CustomizeSidebarDialog } from "@/components/navigation/customize-sideba
 import { FavoritesSection } from "@/components/navigation/favorites-section";
 import { OrgSwitcher } from "@/components/navigation/org-switcher";
 import { QuickActionsSection } from "@/components/navigation/quick-actions-section";
+import { SearchTrigger } from "@/components/navigation/sidebar-chrome";
 import { UserMenu } from "@/components/navigation/user-menu";
-import { Kbd } from "@trenova/shared/components/ui/kbd";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { type SidebarSectionKey } from "@/lib/graphql/sidebar-preferences";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCommandPaletteStore } from "@/stores/command-palette-store";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useNavigationStore } from "@/stores/navigation-store";
-import { Search } from "lucide-react";
 import type { ComponentType } from "react";
 
 const SECTION_COMPONENTS: Record<SidebarSectionKey, ComponentType> = {
@@ -25,25 +22,11 @@ const SECTION_COMPONENTS: Record<SidebarSectionKey, ComponentType> = {
   browse: BrowseSection,
 };
 
-function SearchTrigger() {
-  const setOpen = useCommandPaletteStore((state) => state.setOpen);
-
-  return (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
-      onPointerEnter={() => void preloadCommandPalette()}
-      onFocus={() => void preloadCommandPalette()}
-      className="border-border bg-background text-muted-foreground hover:border-ring/40 hover:text-foreground flex h-7 w-full items-center gap-2 rounded-md border px-2 text-xs transition-colors"
-    >
-      <Search className="size-3.5 shrink-0" strokeWidth={1.75} />
-      <span className="flex-1 truncate text-left">Search or jump to…</span>
-      <Kbd>⌘K</Kbd>
-    </button>
-  );
-}
-
-export function CommandSidebar() {
+/**
+ * The sidebar as it shipped before the layout review: every section stacked
+ * in the order the person arranged them.
+ */
+export function ClassicSidebar() {
   const collapsed = useNavigationStore((state) => state.sidebarCollapsed);
   const { data: preferences } = useSidebarPreferences();
 

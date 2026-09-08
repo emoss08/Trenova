@@ -37,9 +37,11 @@ const homeModule: NavModule = {
 const adminModule: NavModule = {
   id: "admin",
   label: "Organization Settings",
+  shortLabel: "Settings",
   icon: SettingsIcon,
   description: "System administration",
   basePath: "/admin/organization-settings",
+  routePrefixes: ["/admin", "/organization"],
   hideSecondarySidebar: true,
   resource: Resource.Organization,
   navigation: [],
@@ -48,9 +50,11 @@ const adminModule: NavModule = {
 const shipmentManagementModule: NavModule = {
   id: "shipment",
   label: "Shipment Management",
+  shortLabel: "Shipments",
   icon: TruckIcon,
   description: "Shipments and related configuration",
   basePath: "#",
+  routePrefixes: ["/shipment-management"],
   navigation: [
     {
       id: "shipments",
@@ -80,6 +84,7 @@ const shipmentManagementModule: NavModule = {
     {
       id: "config-files-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -114,6 +119,7 @@ const shipmentManagementModule: NavModule = {
 const dispatchModule: NavModule = {
   id: "dispatch",
   label: "Dispatch Management",
+  shortLabel: "Dispatch",
   icon: RouteIcon,
   description: "The board, the lanes, and the carriers that run them",
   basePath: "/dispatch",
@@ -147,6 +153,7 @@ const dispatchModule: NavModule = {
     {
       id: "dispatch-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -175,6 +182,7 @@ const dispatchModule: NavModule = {
 const humanResourcesModule: NavModule = {
   id: "hr",
   label: "Human Resource Management",
+  shortLabel: "People",
   icon: UsersIcon,
   description: "Employee records, qualifications, time off, and performance",
   basePath: "/hr",
@@ -197,6 +205,7 @@ const humanResourcesModule: NavModule = {
     {
       id: "hr-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -312,6 +321,7 @@ const humanResourcesModule: NavModule = {
 const equipmentModule: NavModule = {
   id: "fleet",
   label: "Equipment Management",
+  shortLabel: "Equipment",
   icon: ContainerIcon,
   description: "Tractors, trailers, and equipment",
   basePath: "/equipment",
@@ -333,6 +343,7 @@ const equipmentModule: NavModule = {
     {
       id: "equipment-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -355,6 +366,7 @@ const equipmentModule: NavModule = {
 const billingModule: NavModule = {
   id: "billing",
   label: "Billing Management",
+  shortLabel: "Billing",
   icon: ReceiptTextIcon,
   description: "Invoicing and financial management",
   basePath: "/billing",
@@ -405,6 +417,7 @@ const billingModule: NavModule = {
     {
       id: "billing-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -459,6 +472,7 @@ const billingModule: NavModule = {
 const detentionModule: NavModule = {
   id: "detention",
   label: "Detention Management",
+  shortLabel: "Detention",
   icon: TimerIcon,
   description: "Live dwell clocks, detention billing, and contract terms",
   basePath: "/detention",
@@ -478,6 +492,7 @@ const detentionModule: NavModule = {
     {
       id: "detention-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -494,6 +509,7 @@ const detentionModule: NavModule = {
 const payrollModule: NavModule = {
   id: "payroll",
   label: "Payroll & Settlements",
+  shortLabel: "Payroll",
   icon: WalletIcon,
   description: "Driver and owner-operator pay",
   basePath: "/payroll",
@@ -538,6 +554,7 @@ const payrollModule: NavModule = {
     {
       id: "payroll-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -628,6 +645,7 @@ const ediModule: NavModule = {
   icon: FileSlidersIcon,
   description: "Internal partner exchange and load tender workflow",
   basePath: "/edi/overview",
+  routePrefixes: ["/edi"],
   navigation: [
     {
       id: "edi-overview",
@@ -675,6 +693,7 @@ const ediModule: NavModule = {
     {
       id: "edi-config-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -703,6 +722,7 @@ const ediModule: NavModule = {
 const accountingModule: NavModule = {
   id: "accounting",
   label: "Accounting Management",
+  shortLabel: "Accounting",
   icon: CalculatorIcon,
   description: "Accounting management",
   basePath: "/accounting",
@@ -810,6 +830,7 @@ const accountingModule: NavModule = {
     {
       id: "configuration-files-group",
       label: "Configuration Files",
+      kind: "configuration",
       defaultOpen: false,
       items: [
         {
@@ -951,12 +972,11 @@ export const navigationConfig: NavigationConfig = {
     {
       id: "create-formula-template",
       label: "Create Formula Template",
-      description: "Add a new formula template",
-      path: "/billing/configuration-files/formula-templates",
+      description: "Open the Formula Studio and start a new template",
+      path: "/billing/configuration-files/formula-templates/new",
       resource: Resource.FormulaTemplate,
       requiredOperation: Operation.Create,
-      query: { panelType: "create" },
-      keywords: ["formula", "template"],
+      keywords: ["formula", "template", "studio"],
     },
     {
       id: "create-rate-agreement",
@@ -1243,12 +1263,17 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "operations",
     label: "Operations",
-    moduleIds: ["shipment", "dispatch", "hr", "fleet", "edi"],
+    moduleIds: ["shipment", "dispatch", "fleet", "edi"],
   },
   {
-    id: "financial",
-    label: "Financial",
-    moduleIds: ["billing", "detention", "payroll", "carrier-settlements", "reports", "accounting"],
+    id: "people",
+    label: "People",
+    moduleIds: ["hr", "payroll"],
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    moduleIds: ["billing", "detention", "carrier-settlements", "accounting", "reports"],
   },
   {
     id: "admin",

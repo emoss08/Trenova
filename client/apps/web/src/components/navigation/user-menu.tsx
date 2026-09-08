@@ -1,3 +1,4 @@
+import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import {
@@ -77,7 +78,11 @@ function UserSettingsDialogSkeleton({
   );
 }
 
-export function UserMenu() {
+/**
+ * `compact` renders the avatar alone as the trigger, for a rail with no room
+ * for a name; the full menu is unchanged.
+ */
+export function UserMenu({ compact = false }: { compact?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
@@ -104,30 +109,51 @@ export function UserMenu() {
         </Suspense>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              className="hover:bg-accent/50 flex w-full items-center gap-2 rounded-md p-1.5 transition-colors"
+        {compact ? (
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                aria-label={`Account menu for ${displayName}`}
+                className="hover:ring-ring/40 inline-flex rounded-full transition-shadow hover:ring-2 data-popup-open:ring-2"
+              />
+            }
+          >
+            <ResolvedUserAvatar
+              userId={user?.id}
+              name={user?.name}
+              profilePicUrl={user?.profilePicUrl}
+              thumbnailUrl={user?.thumbnailUrl}
+              className="size-7"
+              fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
             />
-          }
-        >
-          <ResolvedUserAvatar
-            userId={user?.id}
-            name={user?.name}
-            profilePicUrl={user?.profilePicUrl}
-            thumbnailUrl={user?.thumbnailUrl}
-            className="size-7"
-            fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
-          />
-          <span className="grid min-w-0 flex-1 text-left leading-tight">
-            <span className="truncate text-sm font-medium">{displayName}</span>
-            <span className="text-2xs text-muted-foreground truncate">{user?.emailAddress}</span>
-          </span>
-          <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
-        </DropdownMenuTrigger>
+          </DropdownMenuTrigger>
+        ) : (
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                className="hover:bg-accent/50 flex w-full items-center gap-2 rounded-md p-1.5 transition-colors"
+              />
+            }
+          >
+            <ResolvedUserAvatar
+              userId={user?.id}
+              name={user?.name}
+              profilePicUrl={user?.profilePicUrl}
+              thumbnailUrl={user?.thumbnailUrl}
+              className="size-7"
+              fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
+            />
+            <span className="grid min-w-0 flex-1 text-left leading-tight">
+              <span className="truncate text-sm font-medium">{displayName}</span>
+              <span className="text-2xs text-muted-foreground truncate">{user?.emailAddress}</span>
+            </span>
+            <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
+          </DropdownMenuTrigger>
+        )}
         <DropdownMenuContent
-          side="right"
+          side={compact ? "bottom" : "right"}
           align="end"
           sideOffset={8}
           className="min-w-56 rounded-lg"
@@ -165,6 +191,7 @@ export function UserMenu() {
                 setSettingsOpen(true);
               }}
             />
+            <SidebarLayoutSubmenu />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <Palette className="mr-2 size-4" />

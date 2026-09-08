@@ -113,7 +113,7 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
   );
 }
 
-function OnlineIndicator() {
+export function ActivityOnlineIndicator() {
   const { onlineUserIDs } = useOnlineUsers();
 
   if (onlineUserIDs.size === 0) {
@@ -128,18 +128,49 @@ function OnlineIndicator() {
   );
 }
 
-export function ActivitySection() {
-  const { data: preferences } = useSidebarPreferences();
-  const [openOverride, setOpenOverride] = useState<boolean | null>(null);
-  const open = openOverride ?? preferences?.activity.defaultOpen ?? true;
-  const {
-    data: entries,
-    isLoading,
-    isSuccess,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useRecentActivityInfinite(preferences?.activity.pageSize);
+function ActivityFeedList({
+  entries,
+  isLoading,
+  isFetchingNextPage,
+  observerTarget,
+  maxHeightClassName,
+}: {
+  entries: RecentActivityEntry[] | undefined;
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  observerTarget: React.RefObject<HTMLDivElement | null>;
+  maxHeightClassName: string;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-0.5">
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton key={index} className="h-8 w-full rounded-md" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <ScrollArea viewportClassName={maxHeightClassName} maskHeight={16} maskVariant="sidebar">
+      <div className="relative flex w-full flex-col gap-0.5 pr-2.5 pl-2">
+        {entries?.map((entry) => (
+          <ActivityRow key={entry.id} entry={entry} />
+        ))}
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center py-1.5">
+            <Loader2 className="text-muted-foreground size-3.5 animate-spin" />
+          </div>
+        )}
+        <div ref={observerTarget} aria-hidden className="h-px w-full" />
+      </div>
+    </ScrollArea>
+  );
+}
+
+function useActivityFeed(pageSize: number | undefined, active: boolean) {
+  const query = useRecentActivityInfinite(pageSize);
+  const { hasNextPage, isFetchingNextPage, fetchNextPage, isLoading } = query;
   const observerTarget = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -159,12 +190,64 @@ export function ActivitySection() {
     return () => {
       observer.unobserve(currentTarget);
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, open, isLoading]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, active, isLoading]);
 
-  if (isSuccess && entries.length === 0) {
-    return null;
+  const isEmpty = query.isSuccess && query.data.length === 0;
+  const isUnavailable = !query.isLoading && !query.isSuccess;
+
+  return { ...query, observerTarget, isEmpty, isUnavailable };
+}
+
+/**
+ * The feed on its own, for surfaces that draw their own heading. With
+ * `emptyState="message"` it says so when there is nothing to show; with
+ * `"hidden"` it disappears, heading included, so a sidebar does not carry a
+ * label over nothing.
+ */
+export function ActivityFeed({
+  maxHeightClassName = "max-h-80",
+  emptyState = "message",
+  heading,
+}: {
+  maxHeightClassName?: string;
+  emptyState?: "message" | "hidden";
+  heading?: React.ReactNode;
+}) {
+  const { data: preferences } = useSidebarPreferences();
+  const feed = useActivityFeed(preferences?.activity.pageSize, true);
+
+  if (feed.isEmpty || feed.isUnavailable) {
+    if (emptyState === "hidden") {
+      return null;
+    }
+    return (
+      <p className="text-muted-foreground px-2 py-6 text-center text-xs">
+        {feed.isUnavailable ? "Activity is not available right now." : "Nothing has happened yet."}
+      </p>
+    );
   }
-  if (!isLoading && !isSuccess) {
+
+  return (
+    <>
+      {heading}
+      <ActivityFeedList
+        entries={feed.data}
+        isLoading={feed.isLoading}
+        isFetchingNextPage={feed.isFetchingNextPage}
+        observerTarget={feed.observerTarget}
+        maxHeightClassName={maxHeightClassName}
+      />
+    </>
+  );
+}
+
+export function ActivitySection() {
+  const { data: preferences } = useSidebarPreferences();
+  const [openOverride, setOpenOverride] = useState<boolean | null>(null);
+  const open = openOverride ?? preferences?.activity.defaultOpen ?? true;
+  const feed = useActivityFeed(preferences?.activity.pageSize, open);
+
+  if (feed.isEmpty || feed.isUnavailable) {
     return null;
   }
 
@@ -185,30 +268,16 @@ export function ActivitySection() {
               </button>
             )}
           />
-          <OnlineIndicator />
+          <ActivityOnlineIndicator />
         </div>
         <CollapsibleContent>
-          {isLoading ? (
-            <div className="flex flex-col gap-0.5">
-              {Array.from({ length: 3 }, (_, index) => (
-                <Skeleton key={index} className="h-8 w-full rounded-md" />
-              ))}
-            </div>
-          ) : (
-            <ScrollArea viewportClassName="max-h-56" maskHeight={16} maskVariant="sidebar">
-              <div className="relative flex w-full flex-col gap-0.5 pr-2.5 pl-2">
-                {entries?.map((entry) => (
-                  <ActivityRow key={entry.id} entry={entry} />
-                ))}
-                {isFetchingNextPage && (
-                  <div className="flex items-center justify-center py-1.5">
-                    <Loader2 className="text-muted-foreground size-3.5 animate-spin" />
-                  </div>
-                )}
-                <div ref={observerTarget} aria-hidden className="h-px w-full" />
-              </div>
-            </ScrollArea>
-          )}
+          <ActivityFeedList
+            entries={feed.data}
+            isLoading={feed.isLoading}
+            isFetchingNextPage={feed.isFetchingNextPage}
+            observerTarget={feed.observerTarget}
+            maxHeightClassName="max-h-56"
+          />
         </CollapsibleContent>
       </div>
     </Collapsible>

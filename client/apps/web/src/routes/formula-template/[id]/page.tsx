@@ -1,4 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { saveDemotesToDraft } from "@/lib/formula-template-material";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { queries } from "@/lib/queries";
@@ -135,6 +136,7 @@ export function FormulaStudioEditPage() {
     ...queries.formulaTemplate.get(id ?? ""),
     enabled: !!id,
   });
+  useBreadcrumbLabel(template?.name);
 
   const form = useForm<FormulaTemplateFormValues>({
     resolver: zodResolver(formulaTemplateSchema),

@@ -1,4 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
@@ -19,6 +20,7 @@ import { FormulaStudio } from "../_components/studio/formula-studio";
 export function FormulaStudioCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useBreadcrumbLabel("New Formula Template");
 
   const form = useForm<FormulaTemplateFormValues>({
     resolver: zodResolver(formulaTemplateSchema),

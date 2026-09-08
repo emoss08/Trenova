@@ -25,17 +25,20 @@ export function SidebarNavLink({
   active,
   disabled,
   className,
+  onClick,
   children,
 }: {
   to: string;
   active?: boolean;
   disabled?: boolean;
   className?: string;
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={cn(
         "relative flex h-6 items-center gap-2 rounded-md px-2 text-base transition-colors",
         active

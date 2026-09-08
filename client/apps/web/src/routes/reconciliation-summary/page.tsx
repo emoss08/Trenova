@@ -1,10 +1,10 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon } from "lucide-react";
 import { Link } from "react-router";
 
@@ -22,6 +22,7 @@ export function ReconciliationSummaryPage() {
         title: "Reconciliation Summary",
         description: "Overview of bank receipt reconciliation status.",
       }}
+      className="p-0"
     >
       <div className="mx-4 mt-3 mb-4 space-y-6">
         {isLoading ? (

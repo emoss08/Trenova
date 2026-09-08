@@ -1,3 +1,4 @@
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useHomeLayoutPreset } from "@/hooks/use-home-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -7,6 +8,7 @@ import { PresetEditor } from "../_components/preset-editor";
 export function EditHomeLayoutPage() {
   const { id } = useParams<{ id: string }>();
   const { data: preset, isLoading, isError } = useHomeLayoutPreset(id);
+  useBreadcrumbLabel(preset?.name);
 
   if (isLoading) {
     return (

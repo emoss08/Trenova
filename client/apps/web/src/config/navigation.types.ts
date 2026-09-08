@@ -44,12 +44,21 @@ export interface NavItem {
   badge?: NavItemBadgeKind;
 }
 
+export type NavGroupKind = "configuration";
+
 export interface NavGroup {
   id: string;
   label: string;
   icon?: LucideIcon;
   items: NavItem[];
   defaultOpen?: boolean;
+  /**
+   * Marks a group the sidebar demotes below a module's working pages. The
+   * catalogues a module is configured with are reached far less often than
+   * the records it manages, so they render as a quiet footer instead of a
+   * peer of the module's pages.
+   */
+  kind?: NavGroupKind;
   resource?: string;
   capability?: OrganizationCapabilityType;
 }
@@ -57,6 +66,11 @@ export interface NavGroup {
 export interface NavModule {
   id: ModuleId;
   label: string;
+  /**
+   * The name the sidebar shows when space is scarce. Breadcrumbs, page titles
+   * and the command palette keep using `label`.
+   */
+  shortLabel?: string;
   icon: React.ComponentType<{
     className?: string;
     size?: number;
@@ -64,6 +78,12 @@ export interface NavModule {
   }>;
   description?: string;
   basePath: string;
+  /**
+   * Route prefixes that belong to the module when `basePath` alone cannot
+   * say so: a module whose pages live under a different prefix than its
+   * landing route, or one that owns several prefixes.
+   */
+  routePrefixes?: readonly string[];
   navigation: (NavItem | NavGroup)[];
   hideSecondarySidebar?: boolean;
   resource?: string;

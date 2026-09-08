@@ -2,6 +2,9 @@ import logoRainbow from "@/assets/logo.webp";
 import { LazyImage } from "@/components/image";
 import { Metadata } from "@/components/metadata";
 import { SidebarLayout } from "@/components/navigation";
+import { handleMutationError } from "@/hooks/use-api-mutation";
+import { usePermissionPolling } from "@/hooks/use-permission-polling";
+import { useRealtimeConnection } from "@/hooks/use-realtime-connection";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -11,10 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@trenova/shared/components/ui/card";
-import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useUserDatePreferenceKey } from "@trenova/shared/hooks/use-user-date-preferences";
-import { usePermissionPolling } from "@/hooks/use-permission-polling";
-import { useRealtimeConnection } from "@/hooks/use-realtime-connection";
 import { cn } from "@trenova/shared/lib/utils";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -81,7 +81,7 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
             className="size-14 object-contain drop-shadow-[0_4px_24px_rgba(255,255,255,0.25)]"
           />
           <m.div
-            className="w-full max-w-[400px]"
+            className="w-full max-w-100"
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
