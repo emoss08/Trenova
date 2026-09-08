@@ -11,6 +11,46 @@ type generatorOptions struct {
 	DomainDir    string
 	ResolverDir  string
 	GoModPath    string
+	ReportPath   string
+	Verbose      bool
+}
+
+type declineStage string
+
+const (
+	declineStageType   declineStage = "type"
+	declineStageCreate declineStage = "create"
+	declineStagePatch  declineStage = "patch"
+)
+
+type decline struct {
+	TypeName string
+	Stage    declineStage
+	Field    string
+	Reason   string
+	Routine  bool
+}
+
+type declineLog struct {
+	entries []decline
+}
+
+func (l *declineLog) note(typeName string, stage declineStage, field, reason string) {
+	l.entries = append(l.entries, decline{
+		TypeName: typeName,
+		Stage:    stage,
+		Field:    field,
+		Reason:   reason,
+	})
+}
+
+func (l *declineLog) noteRoutine(typeName string, stage declineStage, reason string) {
+	l.entries = append(l.entries, decline{
+		TypeName: typeName,
+		Stage:    stage,
+		Reason:   reason,
+		Routine:  true,
+	})
 }
 
 const (
@@ -126,7 +166,8 @@ type patchAssignment struct {
 }
 
 type parsedPackage struct {
-	Name    string
-	Files   []*ast.File
-	Structs map[string]goStruct
+	Name      string
+	Files     []*ast.File
+	Structs   map[string]goStruct
+	TypeNames map[string]struct{}
 }

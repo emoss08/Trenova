@@ -15,6 +15,12 @@ var (
 	domainDir    = flag.String("domain", "", "Path to internal/core/domain")
 	resolverDir  = flag.String("resolver", "", "Path to resolver package")
 	goModPath    = flag.String("gomod", "", "Path to go.mod")
+	reportPath   = flag.String("report", "", "Path to write the declined-type report")
+	verbose      = flag.Bool(
+		"verbose",
+		false,
+		"Include types that declare no GraphQL input in the declined-type report",
+	)
 )
 
 func main() {
@@ -29,6 +35,8 @@ func main() {
 		DomainDir:    *domainDir,
 		ResolverDir:  *resolverDir,
 		GoModPath:    *goModPath,
+		ReportPath:   *reportPath,
+		Verbose:      *verbose,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "Error generating GraphQL resolver mappers: %v\n", err)
 		os.Exit(1)
