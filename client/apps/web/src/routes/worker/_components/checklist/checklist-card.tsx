@@ -1,7 +1,8 @@
 import type { WorkerChecklistItemRow, WorkerChecklistRow } from "@/lib/graphql/worker-checklist";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
+import { Progress } from "@trenova/shared/components/ui/progress";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -25,12 +26,11 @@ type ChecklistCardProps = {
   onCancel: (checklist: WorkerChecklistRow) => void;
 };
 
-const KIND_BADGE: Record<ChecklistKind, "active" | "orange" | "secondary"> = {
-  Onboarding: "active",
-  Offboarding: "orange",
-  Custom: "secondary",
-};
-
+/**
+ * One checklist: a figure for how far along it is, the counts behind the
+ * figure, and the items grouped by whoever owns them. The status badge is the
+ * only colour; an overdue count is a fact in the counts line, not an alarm.
+ */
 export function ChecklistCard({
   checklist,
   permissions,
@@ -44,81 +44,84 @@ export function ChecklistCard({
   const groups = useMemo(() => groupByOwner(checklist.items), [checklist.items]);
   const { progress } = checklist;
   const open = checklist.status === "Open";
-  const tone: RingGaugeTone = !open
-    ? "muted"
-    : progress.overdue > 0
-      ? "critical"
-      : progress.complete
-        ? "success"
-        : "brand";
 
   return (
     <section
       data-testid={`checklist-${checklist.id}`}
-      className={cn(
-        "bg-card border-border flex flex-col overflow-hidden rounded-xl border",
-        !open && "opacity-80",
-      )}
+      className={cn("flex flex-col overflow-hidden rounded-lg border", !open && "opacity-80")}
     >
-      <header className="flex flex-wrap items-center gap-4 p-4">
-        <RingGauge value={progress.percent / 100} size={64} strokeWidth={6} tone={tone}>
-          <span className="text-xs font-semibold tabular-nums">{progress.percent}%</span>
-        </RingGauge>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold">{checklist.name}</h3>
-            <Badge variant={KIND_BADGE[checklist.kind as ChecklistKind] ?? "secondary"}>
-              {CHECKLIST_KIND_LABELS[checklist.kind as ChecklistKind] ?? checklist.kind}
-            </Badge>
-            {checklist.status === "Completed" ? (
-              <Badge variant="active">Completed</Badge>
-            ) : checklist.status === "Cancelled" ? (
-              <Badge variant="inactive">Cancelled</Badge>
-            ) : null}
+      <header className="flex flex-col gap-3 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold">{checklist.name}</h3>
+              <Badge variant="outline">
+                {CHECKLIST_KIND_LABELS[checklist.kind as ChecklistKind] ?? checklist.kind}
+              </Badge>
+              {checklist.status === "Completed" ? (
+                <Badge variant="active">Completed</Badge>
+              ) : checklist.status === "Cancelled" ? (
+                <Badge variant="inactive">Cancelled</Badge>
+              ) : null}
+            </div>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Started {formatUnixDateMedium(checklist.startedAt)}
+              {checklist.startedBy?.name ? ` by ${checklist.startedBy.name}` : ""}
+              {checklist.dueAt && open ? ` · due ${formatUnixDateMedium(checklist.dueAt)}` : ""}
+              {checklist.completedAt
+                ? ` · completed ${formatUnixDateMedium(checklist.completedAt)}`
+                : ""}
+              {checklist.cancelledAt
+                ? ` · cancelled ${formatUnixDateMedium(checklist.cancelledAt)}${checklist.cancelReason ? ` — ${checklist.cancelReason}` : ""}`
+                : ""}
+            </p>
           </div>
-          <p className="text-muted-foreground flex flex-wrap gap-x-3 text-xs">
-            <span className="font-medium tabular-nums">
-              {progress.requiredDone}/{progress.requiredTotal} required
-            </span>
-            <span>
-              {progress.settled} of {progress.total} settled
-            </span>
-            {progress.overdue > 0 && open ? (
-              <span className="font-medium text-red-600 dark:text-red-400">
-                {progress.overdue} overdue
-              </span>
-            ) : null}
-          </p>
-          <p className="text-muted-foreground text-[11px]">
-            Started {formatUnixDateMedium(checklist.startedAt)}
-            {checklist.startedBy?.name ? ` by ${checklist.startedBy.name}` : ""}
-            {checklist.dueAt && open ? ` · due ${formatUnixDateMedium(checklist.dueAt)}` : ""}
-            {checklist.completedAt
-              ? ` · completed ${formatUnixDateMedium(checklist.completedAt)}`
-              : ""}
-            {checklist.cancelledAt
-              ? ` · cancelled ${formatUnixDateMedium(checklist.cancelledAt)}${checklist.cancelReason ? ` — ${checklist.cancelReason}` : ""}`
-              : ""}
-          </p>
+          {open && permissions.canCancel ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-muted-foreground hover:text-destructive"
+              aria-label={`Cancel ${checklist.name}`}
+              onClick={() => onCancel(checklist)}
+            >
+              <XIcon className="size-3.5" />
+              Cancel
+            </Button>
+          ) : null}
         </div>
-        {open && permissions.canCancel ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-muted-foreground hover:text-destructive"
-            aria-label={`Cancel ${checklist.name}`}
-            onClick={() => onCancel(checklist)}
-          >
-            <XIcon className="size-3.5" />
-            Cancel
-          </Button>
+
+        <div className="flex items-center gap-4">
+          <span className="text-2xl leading-none font-semibold tracking-tight tabular-nums">
+            {progress.percent}%
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <Progress value={progress.percent} className="h-1.5" />
+            <p className="text-muted-foreground flex flex-wrap gap-x-3 text-xs tabular-nums">
+              <span className="text-foreground font-medium">
+                {progress.requiredDone}/{progress.requiredTotal} required
+              </span>
+              <span>
+                {progress.settled} of {progress.total} settled
+              </span>
+              {progress.overdue > 0 && open ? <span>{progress.overdue} overdue</span> : null}
+            </p>
+          </div>
+        </div>
+
+        {open && checklist.kind === "Onboarding" ? (
+          <Alert>
+            <AlertDescription>
+              When the last required item is settled this checklist closes on its own and the worker
+              is marked qualified.
+            </AlertDescription>
+          </Alert>
         ) : null}
       </header>
 
       <div className="divide-border border-border divide-y border-t">
         {groups.map((group) => (
           <div key={group.owner} data-testid={`checklist-owner-${group.owner}`}>
-            <p className="bg-muted/40 text-muted-foreground px-3 py-1 text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-2xs bg-muted/40 text-muted-foreground px-3 py-1 font-medium uppercase">
               {CHECKLIST_OWNER_LABELS[group.owner] ?? group.owner}
             </p>
             <ul className="divide-border divide-y">

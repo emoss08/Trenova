@@ -113,6 +113,28 @@ func (r *mutationResolver) UpdateJobPosition(ctx context.Context, input gqlmodel
 	return r.orgStructureService.UpdatePosition(ctx, entity, authCtx.UserID)
 }
 
+func (r *mutationResolver) AssignWorkerPosition(ctx context.Context, workerID string, positionID *string) (bool, error) {
+	req, err := r.assignRequest(ctx, "workerId", workerID, positionID)
+	if err != nil {
+		return false, err
+	}
+	if err = r.orgStructureService.AssignWorkerPosition(ctx, req); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) AssignUserPosition(ctx context.Context, userID string, positionID *string) (bool, error) {
+	req, err := r.assignRequest(ctx, "userId", userID, positionID)
+	if err != nil {
+		return false, err
+	}
+	if err = r.orgStructureService.AssignUserPosition(ctx, req); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *mutationResolver) DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*worker.ApprovalDelegation, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
@@ -256,6 +278,25 @@ func (r *queryResolver) Headcount(ctx context.Context) (*orgstructureservice.Hea
 	}
 
 	return r.orgStructureService.Headcount(ctx, tenantInfo(authCtx))
+}
+
+func (r *queryResolver) JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceJobPosition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	positionID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Position is invalid")
+	}
+
+	rows, err := r.orgStructureService.ListPositionHolders(ctx, tenantInfo(authCtx), positionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return toPositionHolders(rows), nil
 }
 
 func (r *queryResolver) MyTeam(ctx context.Context, includeInactive *bool) ([]*gqlmodel.TeamMember, error) {

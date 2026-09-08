@@ -6,19 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const (
-	permissionCachePrefix = "perms"
-	roleUsersPrefix       = "role_users"
-	orgUsersPrefix        = "org_users"
-)
+const permissionCachePrefix = "perms:v2"
 
 type PermissionCacheRepositoryParams struct {
 	fx.In
@@ -43,21 +39,17 @@ func NewPermissionCacheRepository(
 
 func (r *permissionCacheRepository) Get(
 	ctx context.Context,
-	userID, orgID pulid.ID,
+	key repositories.PermissionCacheKey,
 ) (*repositories.CachedPermissions, error) {
 	log := r.l.With(
 		zap.String("operation", "Get"),
-		zap.String("userID", userID.String()),
-		zap.String("orgID", orgID.String()),
+		zap.String("userID", key.UserID.String()),
+		zap.String("orgID", key.OrgID.String()),
+		zap.String("variant", key.Variant),
 	)
 
-	perms := new(repositories.CachedPermissions)
-	if err := redishelpers.GetJSON(
-		ctx,
-		r.client,
-		r.getPermissionKey(userID, orgID),
-		perms,
-	); err != nil {
+	raw, err := r.client.HGet(ctx, r.getPermissionKey(key.UserID, key.OrgID), key.Variant).Bytes()
+	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil //nolint:nilnil // nil is valid for redis.Nil
 		}
@@ -66,28 +58,39 @@ func (r *permissionCacheRepository) Get(
 		return nil, err
 	}
 
+	perms := new(repositories.CachedPermissions)
+	if err = sonic.Unmarshal(raw, perms); err != nil {
+		log.Error("failed to decode cached permissions", zap.Error(err))
+		return nil, err
+	}
+
 	return perms, nil
 }
 
 func (r *permissionCacheRepository) Set(
 	ctx context.Context,
-	userID, orgID pulid.ID,
+	key repositories.PermissionCacheKey,
 	perms *repositories.CachedPermissions,
 	ttl time.Duration,
 ) error {
 	log := r.l.With(
 		zap.String("operation", "Set"),
-		zap.String("userID", userID.String()),
-		zap.String("orgID", orgID.String()),
+		zap.String("userID", key.UserID.String()),
+		zap.String("orgID", key.OrgID.String()),
+		zap.String("variant", key.Variant),
 	)
 
-	if err := redishelpers.SetJSON(
-		ctx,
-		r.client,
-		r.getPermissionKey(userID, orgID),
-		perms,
-		ttl,
-	); err != nil {
+	payload, err := sonic.Marshal(perms)
+	if err != nil {
+		log.Error("failed to encode permissions for cache", zap.Error(err))
+		return err
+	}
+
+	redisKey := r.getPermissionKey(key.UserID, key.OrgID)
+	pipe := r.client.TxPipeline()
+	pipe.HSet(ctx, redisKey, key.Variant, payload)
+	pipe.Expire(ctx, redisKey, ttl)
+	if _, err = pipe.Exec(ctx); err != nil {
 		log.Error("failed to set permissions in cache", zap.Error(err))
 		return err
 	}

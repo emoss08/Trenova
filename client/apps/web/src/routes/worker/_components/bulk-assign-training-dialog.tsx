@@ -179,7 +179,8 @@ export function BulkAssignTrainingDialog({
                   control={control}
                   name="notes"
                   label="Notes"
-                  placeholder="Why this is going out"
+                  placeholder="e.g. Annual hazmat refresher"
+                  description="Copied onto every training record this run creates."
                   maxLength={4000}
                 />
               </FormControl>

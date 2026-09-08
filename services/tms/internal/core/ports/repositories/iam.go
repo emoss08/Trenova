@@ -21,6 +21,24 @@ type IAMPolicyLookupRequest struct {
 	Operation      permission.Operation
 }
 
+type IAMTenantPolicyLookupRequest struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+}
+
+type AccessPolicyCacheRepository interface {
+	GetEnabled(
+		ctx context.Context,
+		req IAMTenantPolicyLookupRequest,
+	) ([]*iam.AccessPolicy, bool, error)
+	SetEnabled(
+		ctx context.Context,
+		req IAMTenantPolicyLookupRequest,
+		policies []*iam.AccessPolicy,
+	) error
+	Invalidate(ctx context.Context, req IAMTenantPolicyLookupRequest) error
+}
+
 type ListSCIMDirectoryRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
@@ -108,6 +126,10 @@ type IAMRepository interface {
 	ListEnabledAccessPolicies(
 		ctx context.Context,
 		req IAMPolicyLookupRequest,
+	) ([]*iam.AccessPolicy, error)
+	ListEnabledTenantAccessPolicies(
+		ctx context.Context,
+		req IAMTenantPolicyLookupRequest,
 	) ([]*iam.AccessPolicy, error)
 	CreateAccessPolicy(ctx context.Context, entity *iam.AccessPolicy) (*iam.AccessPolicy, error)
 	UpdateAccessPolicy(ctx context.Context, entity *iam.AccessPolicy) (*iam.AccessPolicy, error)

@@ -46,9 +46,14 @@ export type PositionDialogProps = {
   onOpenChange: (open: boolean) => void;
   position: JobPositionRow | null;
   positions: JobPositionRow[];
+  /** Where a new position hangs when it is added from a node on the chart. */
+  defaultReportsToPositionId?: string | null;
 };
 
-function defaultsFor(position: JobPositionRow | null): JobPositionFormValues {
+function defaultsFor(
+  position: JobPositionRow | null,
+  defaultReportsToPositionId: string | null,
+): JobPositionFormValues {
   if (!position) {
     return {
       code: "",
@@ -57,7 +62,7 @@ function defaultsFor(position: JobPositionRow | null): JobPositionFormValues {
       department: "Operations",
       flsaExempt: false,
       isDrivingPosition: true,
-      reportsToPositionId: null,
+      reportsToPositionId: defaultReportsToPositionId,
       status: "Active",
     };
   }
@@ -73,19 +78,25 @@ function defaultsFor(position: JobPositionRow | null): JobPositionFormValues {
   };
 }
 
-export function PositionDialog({ open, onOpenChange, position, positions }: PositionDialogProps) {
+export function PositionDialog({
+  open,
+  onOpenChange,
+  position,
+  positions,
+  defaultReportsToPositionId = null,
+}: PositionDialogProps) {
   const queryClient = useQueryClient();
   const isEdit = Boolean(position);
   const form = useForm<JobPositionFormValues>({
     resolver: zodResolver(jobPositionFormSchema) as Resolver<JobPositionFormValues>,
-    defaultValues: defaultsFor(position),
+    defaultValues: defaultsFor(position, defaultReportsToPositionId),
   });
   const { control, handleSubmit, reset } = form;
 
   useEffect(() => {
     if (!open) return;
-    reset(defaultsFor(position));
-  }, [open, position, reset]);
+    reset(defaultsFor(position, defaultReportsToPositionId));
+  }, [open, position, defaultReportsToPositionId, reset]);
 
   // A position cannot report to itself, so it is not offered as its own parent.
   // The deeper cycles are the server's to refuse — it is the only thing that
@@ -155,7 +166,7 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   label="Code"
                   placeholder="e.g. DRV-OTR"
                   rules={{ required: true }}
-                  description="Unique within the organisation, however it is spelled."
+                  description="A short identifier that must be unique across the organisation, whatever its case."
                 />
               </FormControl>
               <FormControl>
@@ -164,6 +175,7 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   name="title"
                   label="Title"
                   placeholder="e.g. Over-the-Road Driver"
+                  description="The name of the job as it appears on the chart and on each holder's record."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -173,6 +185,8 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   name="department"
                   label="Department"
                   options={DEPARTMENT_OPTIONS}
+                  placeholder="Pick a department"
+                  description="The part of the business the position sits in."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -182,6 +196,7 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   name="status"
                   label="Status"
                   options={STATUS_OPTIONS}
+                  placeholder="Pick a status"
                   description="Archiving is refused while anybody still holds the position."
                 />
               </FormControl>
@@ -191,8 +206,9 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   name="reportsToPositionId"
                   label="Reports to"
                   options={reportsToOptions}
+                  placeholder="Pick a position"
                   isClearable
-                  description="The shape of the org chart. A person's own manager is set on their record, because two people in the same position can report to different managers."
+                  description="The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers."
                 />
               </FormControl>
               <FormControl>
@@ -200,7 +216,7 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   control={control}
                   name="isDrivingPosition"
                   label="Driving position"
-                  description="Needs a CDL. This is the line most compliance rules are drawn along."
+                  description="Needs a CDL and is filled from the worker roster; a front-office position is filled by people who log in. This is the line most compliance rules are drawn along."
                 />
               </FormControl>
               <FormControl>
@@ -216,6 +232,8 @@ export function PositionDialog({ open, onOpenChange, position, positions }: Posi
                   control={control}
                   name="description"
                   label="Description"
+                  placeholder="e.g. Runs regional lanes out of the home terminal on a five-day schedule"
+                  description="Optional notes on the duties and expectations of the role."
                   maxLength={2000}
                 />
               </FormControl>

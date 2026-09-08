@@ -95,6 +95,7 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
                   name="reason"
                   label="Why"
                   placeholder="e.g. Wrong period — the Friday sheets were still open"
+                  description="Kept with the voided run so the reopened weeks can be explained later."
                   rules={{ required: true }}
                 />
               </FormControl>

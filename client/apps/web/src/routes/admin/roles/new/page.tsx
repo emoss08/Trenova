@@ -8,6 +8,7 @@ import {
 } from "@trenova/shared/components/ui/card";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { api } from "@trenova/shared/lib/api";
 import type { AddPermission, CreateRole, Role } from "@trenova/shared/types/role";
 import { createRoleSchema } from "@trenova/shared/types/role";
@@ -27,6 +28,7 @@ export function RoleCreatePage() {
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState<AddPermission[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  useBreadcrumbLabel("New Role");
 
   const form = useForm<CreateRole>({
     resolver: zodResolver(createRoleSchema),

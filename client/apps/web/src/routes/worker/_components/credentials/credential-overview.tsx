@@ -1,8 +1,7 @@
+import { InfoPopover } from "@/components/info-popover";
 import type { WorkerCredentialSummary } from "@/lib/graphql/worker-credential";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
-import { cn } from "@trenova/shared/lib/utils";
 import { PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 
@@ -27,87 +26,71 @@ export function requiredHealthyCount(summary: WorkerCredentialSummary): number {
   ).length;
 }
 
+/**
+ * The roll-up. The one figure that matters is how many required credentials
+ * are in good standing; the rest are counts a manager scans, so they are
+ * plain numbers and the compliance badge is the only colour.
+ */
 export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOverviewProps) {
   const healthy = useMemo(() => requiredHealthyCount(summary), [summary]);
-  const ratio = summary.requiredCount === 0 ? 1 : healthy / summary.requiredCount;
-  const tone: RingGaugeTone =
-    summary.complianceStatus === "NonCompliant"
-      ? "critical"
-      : summary.expiringCount > 0
-        ? "warning"
-        : "success";
   const chip = COMPLIANCE_CHIP[summary.complianceStatus] ?? COMPLIANCE_CHIP.Pending;
 
   return (
-    <div
-      data-testid="credential-overview"
-      className="bg-card border-border flex flex-wrap items-center gap-4 rounded-xl border p-4"
-    >
-      <RingGauge
-        value={ratio}
-        size={72}
-        strokeWidth={7}
-        tone={tone}
-        aria-label="Required credentials"
-      >
-        <span className="text-sm font-semibold tabular-nums">
-          {healthy}/{summary.requiredCount}
-        </span>
-      </RingGauge>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center gap-2">
+    <div data-testid="credential-overview" className="flex flex-col gap-4 rounded-lg border p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold">Qualification file</h3>
           <Badge variant={chip.variant}>{chip.label}</Badge>
+          <InfoPopover title="Qualification file">
+            <p>
+              Each credential type holds one active credential per worker; renewing files a new one
+              and archives the old. Health is graded from the expiry against the type&apos;s renewal
+              window: Valid, Expiring soon while inside the window, Expired once past it, and
+              Missing when nothing active is on file.
+            </p>
+            <p>
+              Expiring soon still counts as good standing. The file is Non-compliant while any
+              required credential is expired or missing.
+            </p>
+          </InfoPopover>
         </div>
-        <p className="text-muted-foreground text-xs">
-          {summary.requiredCount === 0
-            ? "No credential types are required for this worker."
-            : `${healthy} of ${summary.requiredCount} required credentials are in good standing.`}
-        </p>
-        <div className="mt-1 flex flex-wrap gap-2">
-          <StatTile label="Expiring" value={summary.expiringCount} tone="warning" />
-          <StatTile label="Expired" value={summary.expiredCount} tone="critical" />
-          <StatTile label="Missing" value={summary.missingCount} tone="muted" />
-        </div>
+        {canCreate ? (
+          <Button size="sm" onClick={onAdd}>
+            <PlusIcon className="size-3.5" />
+            Add credential
+          </Button>
+        ) : null}
       </div>
 
-      {canCreate ? (
-        <Button size="sm" onClick={onAdd}>
-          <PlusIcon className="size-3.5" />
-          Add credential
-        </Button>
-      ) : null}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl leading-none font-semibold tracking-tight tabular-nums">
+              {healthy}/{summary.requiredCount}
+            </span>
+            <span className="text-muted-foreground text-xs">required</span>
+          </div>
+          <p className="text-muted-foreground mt-1 text-xs">
+            {summary.requiredCount === 0
+              ? "No credential types are required for this worker."
+              : `${healthy} of ${summary.requiredCount} required credentials are in good standing.`}
+          </p>
+        </div>
+        <dl className="grid grid-cols-3 gap-x-6 text-xs">
+          <Count label="Expiring" value={summary.expiringCount} />
+          <Count label="Expired" value={summary.expiredCount} />
+          <Count label="Missing" value={summary.missingCount} />
+        </dl>
+      </div>
     </div>
   );
 }
 
-function StatTile({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "warning" | "critical" | "muted";
-}) {
-  const active = value > 0;
+function Count({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
-        !active && "text-muted-foreground border-dashed",
-        active &&
-          tone === "warning" &&
-          "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-        active &&
-          tone === "critical" &&
-          "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
-        active && tone === "muted" && "border-border bg-muted/50",
-      )}
-    >
-      <span className="font-semibold tabular-nums">{value}</span>
-      <span>{label}</span>
+    <div className="flex flex-col">
+      <dt className="text-2xs text-muted-foreground uppercase">{label}</dt>
+      <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );
 }

@@ -279,10 +279,10 @@ type integrationPermCacheRepo struct {
 
 func (p *integrationPermCacheRepo) Get(
 	ctx context.Context,
-	userID, orgID pulid.ID,
+	key repositories.PermissionCacheKey,
 ) (*repositories.CachedPermissions, error) {
-	key := "perms:" + userID.String() + ":" + orgID.String()
-	data, err := p.client.Get(ctx, key).Bytes()
+	redisKey := fmt.Sprintf("perms:%s:%s", key.UserID.String(), key.OrgID.String())
+	data, err := p.client.HGet(ctx, redisKey, key.Variant).Bytes()
 	if err == redis.Nil {
 		return nil, nil
 	}
@@ -298,16 +298,19 @@ func (p *integrationPermCacheRepo) Get(
 
 func (p *integrationPermCacheRepo) Set(
 	ctx context.Context,
-	userID, orgID pulid.ID,
+	key repositories.PermissionCacheKey,
 	perms *repositories.CachedPermissions,
 	ttl time.Duration,
 ) error {
-	key := fmt.Sprintf("perms:%s:%s", userID.String(), orgID.String())
+	redisKey := fmt.Sprintf("perms:%s:%s", key.UserID.String(), key.OrgID.String())
 	data, err := sonic.Marshal(perms)
 	if err != nil {
 		return err
 	}
-	return p.client.Set(ctx, key, data, ttl).Err()
+	if err := p.client.HSet(ctx, redisKey, key.Variant, data).Err(); err != nil {
+		return err
+	}
+	return p.client.Expire(ctx, redisKey, ttl).Err()
 }
 
 func (p *integrationPermCacheRepo) Delete(ctx context.Context, userID, orgID pulid.ID) error {

@@ -4,7 +4,7 @@ import {
   type PostingEntry,
 } from "@/components/accounting/journal-entry-posting-card";
 import { SourceDrillDownLink } from "@/components/accounting/source-drill-down-link";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent } from "@trenova/shared/components/ui/card";
@@ -12,7 +12,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon, BookOpenIcon, CheckCircle2Icon, ScrollTextIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckCircle2Icon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -26,6 +26,14 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   journal_reversal: "Journal Reversal",
   shipment: "Shipment",
 };
+
+const POSTING_COLUMNS = [
+  { label: "Account" },
+  { label: "Name" },
+  { label: "Debit", numeric: true },
+  { label: "Credit", numeric: true },
+  { label: "Net", numeric: true },
+] as const;
 
 function humanizeSourceType(type: string): string {
   const known = SOURCE_TYPE_LABELS[type];
@@ -131,13 +139,11 @@ export function SourceDrillDownPage() {
             <Skeleton className="h-64 w-full rounded-md" />
           </>
         ) : postings.length === 0 ? (
-          <div className="flex justify-center pt-8">
-            <EmptyState
-              title="No journal entries"
-              description={`Nothing has been posted to the general ledger for this ${sourceLabel.toLowerCase()} yet.`}
-              icons={[ScrollTextIcon, BookOpenIcon]}
-            />
-          </div>
+          <EmptyTable
+            title="Nothing posted"
+            description={`Nothing has been posted to the general ledger for this ${sourceLabel.toLowerCase()} yet. Its entries appear here, account by account, once it posts.`}
+            columns={POSTING_COLUMNS}
+          />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">

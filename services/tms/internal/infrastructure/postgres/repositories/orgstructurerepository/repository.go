@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -156,7 +157,7 @@ func (r *repository) CountPositionHolders(
 	tenantInfo pagination.TenantInfo,
 	positionID pulid.ID,
 ) (int, error) {
-	total, err := r.db.DBForContext(ctx).
+	workers, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*worker.Worker)(nil)).
 		Where("wrk.organization_id = ?", tenantInfo.OrgID).
@@ -168,7 +169,21 @@ func (r *repository) CountPositionHolders(
 		return 0, fmt.Errorf("count position holders: %w", err)
 	}
 
-	return total, nil
+	// The front office holds titles through memberships, and archiving a
+	// title out from under a dispatcher is no better than doing it to a driver.
+	staff, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*tenant.OrganizationMembership)(nil)).
+		Where("uom.organization_id = ?", tenantInfo.OrgID).
+		Where("uom.business_unit_id = ?", tenantInfo.BuID).
+		Where("uom.position_id = ?", positionID).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count staff in position", zap.Error(err))
+		return 0, fmt.Errorf("count staff in position: %w", err)
+	}
+
+	return workers + staff, nil
 }
 
 func (r *repository) ListDelegations(

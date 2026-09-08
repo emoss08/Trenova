@@ -130,6 +130,12 @@ type HeadcountRow {
   "How many of them hold a driving position, which is the number a safety director wants."
   drivers: Int!
   terminated: Int!
+  """
+  Users holding the title in this organisation. The front office is made of
+  people who log in rather than workers, and a chart that counted only
+  workers would show every desk empty.
+  """
+  staff: Int!
 }
 
 "The roster counted three ways."
@@ -137,9 +143,30 @@ type Headcount {
   activeTotal: Int!
   driverTotal: Int!
   terminated: Int!
+  "Active users holding a title in the organisation, counted apart from the roster."
+  staffTotal: Int!
   byFleet: [HeadcountRow!]!
   byPosition: [HeadcountRow!]!
   byDepartment: [HeadcountRow!]!
+}
+
+"Which roster a position holder comes from."
+enum PositionHolderKind {
+  Worker
+  User
+}
+
+"""
+One person in a position. A driving title is held by a worker; a front-office
+title is held by a user through their membership in the organisation.
+"""
+type PositionHolder {
+  kind: PositionHolderKind!
+  id: ID!
+  name: String!
+  status: String!
+  "The terminal for a worker, the email address for a user."
+  detail: String!
 }
 
 "One person on a manager's team."
@@ -158,6 +185,12 @@ type TeamMember {
   forty direct reports.
   """
   direct: Boolean!
+  """
+  The user the worker names as their manager. Beside the delegations the
+  signed-in user holds, it says whether somebody is on the team in the user's
+  own right or only while they are covering for that manager.
+  """
+  managerId: ID
   complianceStatus: String!
   trainingHealth: String!
   safetyRating: String!
@@ -169,6 +202,8 @@ extend type Query {
   jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
   jobPosition(id: ID!): JobPosition!
   headcount: Headcount!
+  "Everyone in a position from either roster, workers first."
+  jobPositionHolders(id: ID!): [PositionHolder!]!
   """
   Everyone the signed-in user answers for, directly or through a terminal they
   run, plus anyone delegated to them.
@@ -188,6 +223,16 @@ extend type Query {
 extend type Mutation {
   createJobPosition(input: JobPositionInput!): JobPosition!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
+  """
+  Puts a worker on a driving position, or takes them off one with no
+  position. A front-office title is refused: it is held by users.
+  """
+  assignWorkerPosition(workerId: ID!, positionId: ID): Boolean!
+  """
+  Puts a user on a front-office position through their membership in the
+  organisation, or takes them off one. A driving title is refused.
+  """
+  assignUserPosition(userId: ID!, positionId: ID): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
 }

@@ -5,7 +5,6 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { PTOBalanceSummaryCard } from "./pto/pto-balance-summary-card";
 import PTODataTable from "./pto/pto-table";
-import { RosterViews } from "./roster-views";
 
 const WorkerTable = lazy(() => import("./worker-table"));
 
@@ -40,7 +39,6 @@ export default function WorkersContent() {
         </TabsTab>
       </TabsList>
       <TabsContent value="workers" className="flex flex-col gap-2">
-        <RosterViews />
         <DataTableLazyComponent>
           <WorkerTable />
         </DataTableLazyComponent>

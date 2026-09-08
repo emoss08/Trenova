@@ -60,7 +60,7 @@ concurrent queries fire into it indistinguishably.
 - Every GraphQL query wrapper takes a trailing `{ signal }` option and every `queryFn`
   forwards TanStack's `signal`; a new wrapper or query must do the same.
 - Data-table configs are inferred from the document: `defineDataTableGraphQLConfig({
-  document, operationName, connectionKey })` derives the row type from the unmasked
+document, operationName, connectionKey })` derives the row type from the unmasked
   connection node. Do not pass a hand-written REST row type unless the fragment
   structurally satisfies it; add the field to the fragment instead.
 - Table queries request `totalCount` only on the first page (`includeTotalCount`); the

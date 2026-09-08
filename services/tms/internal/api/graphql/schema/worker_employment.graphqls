@@ -55,6 +55,11 @@ type WorkerEmploymentCascade {
   defaultPolicyApplied: Boolean!
   checklistStarted: Boolean!
   """
+  Open checklists the event made moot and closed: an unfinished onboarding on
+  a termination, an unfinished offboarding on a hire or rehire.
+  """
+  checklistsClosed: Int!
+  """
   Days paid out / forfeited when a termination closed the PTO balances.
   """
   ptoPaidOutDays: Decimal!

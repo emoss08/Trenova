@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkerCredentialsTab from "../../worker-credentials-tab";
 
@@ -168,6 +169,13 @@ const summary = {
   ],
 };
 
+/** Opens a row's actions menu and returns the user driving it. */
+async function openActions(scope: HTMLElement, name: string) {
+  const user = userEvent.setup();
+  await user.click(within(scope).getByRole("button", { name }));
+  return user;
+}
+
 function renderTab() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -204,8 +212,9 @@ describe("WorkerCredentialsTab", () => {
 
     const medSlot = screen.getByTestId("credential-slot-wct_med");
     expect(medSlot).toHaveAttribute("data-health", "Missing");
+    await openActions(medSlot, "Actions for DOT Medical Card");
     expect(
-      within(medSlot).getByRole("button", { name: "Add DOT Medical Card" }),
+      await screen.findByRole("menuitem", { name: "Add DOT Medical Card" }),
     ).toBeInTheDocument();
 
     const forkSlot = screen.getByTestId("credential-slot-wct_fork");
@@ -218,7 +227,9 @@ describe("WorkerCredentialsTab", () => {
     fetchWorkerCredentials.mockResolvedValue([cdlCred, forkCred]);
     renderTab();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Add DOT Medical Card" }));
+    const medSlot = await screen.findByTestId("credential-slot-wct_med");
+    const user = await openActions(medSlot, "Actions for DOT Medical Card");
+    await user.click(await screen.findByRole("menuitem", { name: "Add DOT Medical Card" }));
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     expect(dialogProps.last).toMatchObject({
       mode: "create",
@@ -233,8 +244,9 @@ describe("WorkerCredentialsTab", () => {
     renderTab();
 
     const cdlSlot = await screen.findByTestId("credential-slot-wct_cdl");
-    fireEvent.click(
-      within(cdlSlot).getByRole("button", { name: "Renew Commercial Driver's License" }),
+    const user = await openActions(cdlSlot, "Actions for Commercial Driver's License");
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Renew Commercial Driver's License" }),
     );
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     expect(dialogProps.last).toMatchObject({
@@ -251,8 +263,9 @@ describe("WorkerCredentialsTab", () => {
     renderTab();
 
     const cdlSlot = await screen.findByTestId("credential-slot-wct_cdl");
-    fireEvent.click(
-      within(cdlSlot).getByRole("button", { name: "Verify Commercial Driver's License" }),
+    const user = await openActions(cdlSlot, "Actions for Commercial Driver's License");
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Verify Commercial Driver's License" }),
     );
     await waitFor(() =>
       expect(verifyWorkerCredential).toHaveBeenCalledExactlyOnceWith("wcred_cdl", 2),
@@ -268,14 +281,20 @@ describe("WorkerCredentialsTab", () => {
     renderTab();
 
     const medSlot = await screen.findByTestId("credential-slot-wct_med");
-    expect(within(medSlot).queryByRole("button", { name: "Add DOT Medical Card" })).toBeNull();
+    expect(
+      within(medSlot).queryByRole("button", { name: "Actions for DOT Medical Card" }),
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: "Add credential" })).toBeNull();
     const cdlSlot = screen.getByTestId("credential-slot-wct_cdl");
+    await openActions(cdlSlot, "Actions for Commercial Driver's License");
     expect(
-      within(cdlSlot).queryByRole("button", { name: "Verify Commercial Driver's License" }),
+      await screen.findByRole("menuitem", { name: "Edit Commercial Driver's License" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Verify Commercial Driver's License" }),
     ).toBeNull();
     expect(
-      within(cdlSlot).queryByRole("button", { name: "Renew Commercial Driver's License" }),
+      screen.queryByRole("menuitem", { name: "Renew Commercial Driver's License" }),
     ).toBeNull();
   });
 

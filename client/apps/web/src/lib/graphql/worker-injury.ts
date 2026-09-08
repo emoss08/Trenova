@@ -2,6 +2,7 @@ import {
   CertifyOshaSummaryDocument,
   DeleteWorkerInjuryDocument,
   OshaLogDocument,
+  OshaSummariesDocument,
   RecordWorkerInjuryDocument,
   SaveOshaSummaryDocument,
   UncertifyOshaSummaryDocument,
@@ -13,6 +14,8 @@ import {
   type DeleteWorkerInjuryMutationVariables,
   type OshaLogQuery,
   type OshaLogQueryVariables,
+  type OshaSummariesQuery,
+  type OshaSummariesQueryVariables,
   type RecordWorkerInjuryInput,
   type RecordWorkerInjuryMutation,
   type RecordWorkerInjuryMutationVariables,
@@ -33,9 +36,11 @@ export type WorkerInjuryRow = WorkerInjuriesQuery["workerInjuries"][number];
 export type OshaLog = OshaLogQuery["oshaLog"];
 export type OshaLogCase = OshaLog["cases"][number];
 export type OshaSummary = NonNullable<OshaLog["summary"]>;
+export type OshaSummaryRow = OshaSummariesQuery["oshaSummaries"][number];
 
 export const WORKER_INJURIES_KEY = "worker-injuries";
 export const OSHA_LOG_KEY = "osha-log";
+export const OSHA_SUMMARIES_KEY = "osha-summaries";
 
 export async function fetchWorkerInjuries(
   workerId: string,
@@ -61,6 +66,18 @@ export async function fetchOshaLog(
     signal: options?.signal,
   });
   return data.oshaLog;
+}
+
+export async function fetchOshaSummaries(options?: {
+  signal?: AbortSignal;
+}): Promise<OshaSummaryRow[]> {
+  const data = await requestGraphQL<OshaSummariesQuery, OshaSummariesQueryVariables>({
+    document: OshaSummariesDocument,
+    operationName: "OshaSummaries",
+    variables: {},
+    signal: options?.signal,
+  });
+  return data.oshaSummaries;
 }
 
 export async function recordWorkerInjury(input: RecordWorkerInjuryInput) {

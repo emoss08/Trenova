@@ -158,6 +158,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="code"
                   label="Code"
                   placeholder="DOT"
+                  description="A short identifier that must be unique across your pools; it is saved in upper case."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -166,6 +167,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   control={control}
                   name="name"
                   label="Name"
+                  placeholder="e.g. DOT safety-sensitive drivers"
+                  description="How the pool is referred to on rounds and reports."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -174,6 +177,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   control={control}
                   name="description"
                   label="Description"
+                  placeholder="e.g. Every CDL holder who drives for the company"
+                  description="Optional notes on who the pool covers and why."
                   maxLength={2000}
                 />
               </FormControl>
@@ -183,6 +188,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="status"
                   label="Status"
                   options={statusChoices}
+                  placeholder="Pick a status"
+                  description="Whether the pool is in use; an inactive pool stays on record with its past rounds."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -192,6 +199,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="period"
                   label="Draw every"
                   options={PERIOD_OPTIONS}
+                  placeholder="Pick a period"
+                  description="How often a round is drawn; each round takes its share of the annual rate."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -200,6 +209,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   control={control}
                   name="drugRatePercent"
                   label="Drug rate (% a year)"
+                  placeholder="50"
+                  description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_DRUG_RATE}% for drugs (49 CFR 382.305).`}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -208,6 +219,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   control={control}
                   name="alcoholRatePercent"
                   label="Alcohol rate (% a year)"
+                  placeholder="10"
+                  description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_ALCOHOL_RATE}% for alcohol (49 CFR 382.305).`}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -225,7 +238,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   control={control}
                   name="isDefault"
                   label="Default pool"
-                  description="The pool a draw runs against when none is named. Only one pool can be the default."
+                  description="The pool a draw runs against when none is named; turning this on takes the default off whichever pool had it."
                 />
               </FormControl>
               <FormControl cols="full">

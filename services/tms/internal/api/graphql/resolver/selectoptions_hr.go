@@ -129,3 +129,69 @@ func workerPolicySelectOptionItem(entity *worker.WorkerPolicy) selectOptionConne
 		entity.ID,
 	)
 }
+
+// resolveJobPositionSelectOptions offers the half of the chart the picker is
+// filling: driving titles for a worker's record, front-office titles for a
+// user's membership. Offering both would put somebody on the wrong roster.
+func (r *Resolver) resolveJobPositionSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.orgStructureService.GetPosition(ctx, req.tenantInfo, id)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, jobPositionSelectOptionItem(entity))
+		}
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	positions, err := r.orgStructureService.ListPositions(
+		ctx,
+		&repositories.ListJobPositionsRequest{
+			TenantInfo:  req.tenantInfo,
+			ActiveOnly:  true,
+			DrivingOnly: selectOptionBoolFilter(req.filters, "drivingOnly"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	nonDrivingOnly := selectOptionBoolFilter(req.filters, "nonDrivingOnly")
+	query := strings.ToLower(strings.TrimSpace(req.selectQuery.Query))
+	items := make([]selectOptionConnectionItem, 0, len(positions))
+	for _, position := range positions {
+		if nonDrivingOnly && position.IsDrivingPosition {
+			continue
+		}
+		if query != "" &&
+			!strings.Contains(strings.ToLower(position.Code), query) &&
+			!strings.Contains(strings.ToLower(position.Title), query) {
+			continue
+		}
+		items = append(items, jobPositionSelectOptionItem(position))
+	}
+
+	return selectOptionConnection(items, len(items), 0)
+}
+
+func jobPositionSelectOptionItem(entity *worker.JobPosition) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		&gqlmodel.SelectOption{
+			ID:          entity.ID.String(),
+			Label:       entity.Title,
+			Description: stringPtr(entity.Code),
+			Meta: map[string]any{
+				"code":              entity.Code,
+				"department":        string(entity.Department),
+				"isDrivingPosition": entity.IsDrivingPosition,
+			},
+		},
+		entity.CreatedAt,
+		entity.ID,
+	)
+}

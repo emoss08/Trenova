@@ -24,13 +24,13 @@ const HR_ITEM_IDS = [
 ];
 
 describe("human resource management module", () => {
-  it("is registered with its own base path and sits in the operations group", () => {
+  it("is registered with its own base path and sits in the people group", () => {
     const hr = moduleById("hr");
     expect(hr.label).toBe("Human Resource Management");
     expect(hr.basePath).toBe("/hr");
 
-    const operations = appModuleGroups.find((group) => group.id === "operations");
-    expect(operations?.moduleIds).toContain("hr");
+    const people = appModuleGroups.find((group) => group.id === "people");
+    expect(people?.moduleIds).toContain("hr");
   });
 
   it("owns the worker record and every people-related configuration file", () => {

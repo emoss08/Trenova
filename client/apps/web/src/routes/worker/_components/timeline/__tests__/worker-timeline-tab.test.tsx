@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkerTimelineTab from "../../worker-timeline-tab";
 
@@ -139,13 +140,16 @@ describe("WorkerTimelineTab", () => {
     renderTab();
     await screen.findByTestId("timeline-event-wee_hire");
 
-    fireEvent.click(screen.getByRole("button", { name: "Terminated", pressed: false }));
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "Filter by event kind" }));
+    await user.click(await screen.findByRole("option", { name: "Terminated" }));
+    await waitFor(() => expect(screen.queryByTestId("timeline-event-wee_hire")).toBeNull());
     expect(screen.getByTestId("timeline-event-wee_term")).toBeInTheDocument();
-    expect(screen.queryByTestId("timeline-event-wee_hire")).toBeNull();
     expect(fetchWorkerEmploymentEvents).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "Terminated", pressed: true }));
-    expect(screen.getByTestId("timeline-event-wee_hire")).toBeInTheDocument();
+    await user.click(screen.getByRole("combobox", { name: "Filter by event kind" }));
+    await user.click(await screen.findByRole("option", { name: "All events" }));
+    expect(await screen.findByTestId("timeline-event-wee_hire")).toBeInTheDocument();
   });
 
   it("opens the sheet to record and to amend", async () => {

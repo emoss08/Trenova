@@ -190,7 +190,9 @@ func (r *repository) FleetEventBasics(
 				" AND wsvi.business_unit_id = wsev.business_unit_id)",
 		).
 		ColumnExpr("wsev.kind AS kind").
-		ColumnExpr("COALESCE(wsev.inspection_result, '') AS inspection_result").
+		// The column is an enum; coalescing it straight against '' asks the
+		// database to read '' as a result, which it refuses. Text first.
+		ColumnExpr("COALESCE(CAST(wsev.inspection_result AS TEXT), '') AS inspection_result").
 		ColumnExpr(bucket+" AS bucket").
 		ColumnExpr("COUNT(*) AS events").
 		ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").

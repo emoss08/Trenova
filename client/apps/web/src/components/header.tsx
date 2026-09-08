@@ -12,6 +12,7 @@ import { useHistoryNavigation } from "@/hooks/use-history-navigation";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { queries } from "@/lib/queries";
 import { getPageTitle } from "@/lib/route-utils";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -26,10 +27,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 export function Header() {
-  const navigation = useNavigation();
-  const breadcrumbs = useBreadcrumbs();
-  const isLoading = navigation.state === "loading";
-
   return (
     <header
       className={cn(
@@ -40,49 +37,14 @@ export function Header() {
       <div className="flex items-center gap-3">
         <SidebarToggle />
         <HistoryNavigation />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                render={<Link to="/" />}
-                className={cn(
-                  "text-muted-foreground hover:text-foreground transition-opacity",
-                  isLoading ? "opacity-50" : "",
-                )}
-              >
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
-            {breadcrumbs.map((crumb, index) => (
-              <React.Fragment key={crumb.id}>
-                <BreadcrumbItem>
-                  {index < breadcrumbs.length - 1 ? (
-                    <BreadcrumbLink
-                      render={<Link to={crumb.pathname} />}
-                      className={cn(
-                        "text-muted-foreground hover:text-foreground transition-opacity",
-                        isLoading ? "opacity-50" : "",
-                      )}
-                    >
-                      {crumb.crumb}
-                    </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbPage className="line-clamp-1">{crumb.crumb}</BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-                {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-              </React.Fragment>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
+        <HeaderBreadcrumbs />
       </div>
       <NavActions />
     </header>
   );
 }
 
-function HistoryNavigation() {
+export function HistoryNavigation() {
   const { canGoBack, canGoForward, goBack, goForward } = useHistoryNavigation();
 
   return (
@@ -126,9 +88,21 @@ function HistoryNavigation() {
 }
 
 function NavActions() {
+  return (
+    <div className="ml-auto flex items-center gap-1 px-3 text-center">
+      <SystemInformation />
+      <NotificationSheet />
+      <FavoriteToggle />
+    </div>
+  );
+}
+
+export function FavoriteToggle({ className }: { className?: string }) {
   const location = useLocation();
+  const breadcrumbs = useBreadcrumbs();
   const pageUrl = location.pathname;
-  const pageTitle = getPageTitle(pageUrl);
+  const lastCrumb = breadcrumbs.at(-1)?.crumb;
+  const pageTitle = typeof lastCrumb === "string" ? lastCrumb : getPageTitle(pageUrl);
 
   const { data, isLoading } = useQuery({
     ...queries.pageFavorite.check(pageUrl),
@@ -154,50 +128,102 @@ function NavActions() {
   };
 
   return (
-    <div className="ml-auto flex items-center gap-1 px-3 text-center">
-      <SystemInformation />
-      <NotificationSheet />
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              className="cursor-pointer"
-              size="xs"
-              onClick={handleToggle}
-              disabled={isLoading || isPending}
-              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Star
-                className={cn(
-                  "size-3 transition-colors",
-                  isFavorited && "fill-amber-400 text-amber-400",
-                )}
-              />
-            </Button>
-          }
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            className={cn("cursor-pointer", className)}
+            size="xs"
+            onClick={handleToggle}
+            disabled={isLoading || isPending}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          />
+        }
+      >
+        <Star
+          className={cn("size-3 transition-colors", isFavorited && "fill-amber-400 text-amber-400")}
         />
-        <TooltipContent>
-          {isFavorited ? "Remove from favorites" : "Add to favorites"}
-        </TooltipContent>
-      </Tooltip>
-    </div>
+      </TooltipTrigger>
+      <TooltipContent>{isFavorited ? "Remove from favorites" : "Add to favorites"}</TooltipContent>
+    </Tooltip>
   );
 }
 
-function SidebarToggle() {
-  const toggleSidebar = useNavigationStore((state) => state.toggleSidebar);
+/**
+ * The trail as the header draws it: Home first, then every crumb the route
+ * provides, the last one as plain text.
+ */
+export function HeaderBreadcrumbs() {
+  const navigation = useNavigation();
+  const breadcrumbs = useBreadcrumbs();
+  const isLoading = navigation.state === "loading";
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-xs"
-      onClick={toggleSidebar}
-      aria-label="Toggle sidebar"
-    >
-      <PanelLeftIcon className="size-3.5" />
-    </Button>
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            render={<Link to="/" />}
+            className={cn(
+              "text-muted-foreground hover:text-foreground transition-opacity",
+              isLoading ? "opacity-50" : "",
+            )}
+          >
+            Home
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={crumb.id}>
+            <BreadcrumbItem>
+              {index < breadcrumbs.length - 1 ? (
+                <BreadcrumbLink
+                  render={<Link to={crumb.pathname} />}
+                  className={cn(
+                    "text-muted-foreground hover:text-foreground transition-opacity",
+                    isLoading ? "opacity-50" : "",
+                  )}
+                >
+                  {crumb.crumb}
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage className="line-clamp-1">{crumb.crumb}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+            {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+export function SidebarToggle() {
+  const collapsed = useNavigationStore((state) => state.sidebarCollapsed);
+  const toggleSidebar = useNavigationStore((state) => state.toggleSidebar);
+  const label = collapsed ? "Show sidebar" : "Hide sidebar";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={toggleSidebar}
+            aria-label={label}
+            aria-pressed={!collapsed}
+          />
+        }
+      >
+        <PanelLeftIcon className="size-3.5" />
+      </TooltipTrigger>
+      <TooltipContent>
+        {label} ({formatShortcut("B")})
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -45,6 +45,7 @@ enum SelectOptionResource {
   EMAIL_PROFILE
   SHIFT_TEMPLATE
   WORKER_POLICY
+  JOB_POSITION
 }
 
 input SelectOptionsInput {

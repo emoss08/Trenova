@@ -1,4 +1,3 @@
-import { EmptyState } from "@/components/empty-state";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchShiftSwapRequests,
@@ -11,21 +10,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import {
+  SegmentedControl,
+  type SegmentedControlItem,
+} from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate, isSwapOpen, SWAP_STATUS_TONES } from "@trenova/shared/lib/scheduling";
 import { initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowRightIcon, CheckIcon, RepeatIcon, UsersIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { ArrowRightIcon, CheckIcon, XIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { SwapsEmpty } from "./scheduling-empty";
 
 type Scope = "open" | "all";
-
-const SCOPE_ITEMS = [
-  { value: "open", label: "Waiting" },
-  { value: "all", label: "Everything" },
-] satisfies { value: Scope; label: string }[];
 
 /**
  * The office half of a swap. Two drivers agree it between themselves and the
@@ -56,6 +54,14 @@ export function SwapQueue() {
 
   const swaps = swapsQuery.data ?? [];
   const decidable = swaps.filter((swap) => swap.status === "Accepted").length;
+  const open = swaps.filter((swap) => isSwapOpen(swap.status)).length;
+  const scopeItems = useMemo<SegmentedControlItem<Scope>[]>(
+    () => [
+      { value: "open", label: "Waiting", caption: swapsQuery.data ? String(open) : undefined },
+      { value: "all", label: "Everything" },
+    ],
+    [open, swapsQuery.data],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -68,7 +74,7 @@ export function SwapQueue() {
           ) : null}
         </p>
         <SegmentedControl<Scope>
-          items={SCOPE_ITEMS}
+          items={scopeItems}
           value={scope}
           onValueChange={setScope}
           aria-label="Which swaps to show"
@@ -81,15 +87,13 @@ export function SwapQueue() {
           <Skeleton className="h-16 rounded-lg" />
         </div>
       ) : swaps.length === 0 ? (
-        <EmptyState
-          className="max-w-none"
+        <SwapsEmpty
           title={scope === "open" ? "Nothing waiting" : "No swaps yet"}
           description={
             scope === "open"
-              ? "Swaps drivers agree between themselves land here for the office's say."
-              : "When a driver offers a day to a colleague from Dash, it shows up here."
+              ? "Swaps drivers agree between themselves land here for the office's say. Until one does, there is nothing to decide."
+              : "When a driver offers a day to a colleague from Dash, it shows up here with every step it has taken."
           }
-          icons={[RepeatIcon, UsersIcon, CheckIcon]}
         />
       ) : (
         <ul className="flex flex-col gap-2">
@@ -123,7 +127,7 @@ function SwapRow({
   const decidable = swap.status === "Accepted";
 
   return (
-    <li className="border-border/80 hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs transition-colors">
+    <li className="bg-card border-border/80 hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs transition-colors">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex items-center gap-1.5">
           <Person person={swap.requestingWorker} />

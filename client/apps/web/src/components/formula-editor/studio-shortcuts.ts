@@ -1,3 +1,4 @@
+import { formatShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { useEffect } from "react";
 
 export type StudioShortcut = "save" | "run" | "search" | "preview" | "scenarios";
@@ -37,14 +38,8 @@ export function matchStudioShortcut(event: KeyLike): StudioShortcut | null {
   return KEY_TO_SHORTCUT[event.key.toLowerCase()] ?? null;
 }
 
-export function isMacPlatform(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-}
-
 export function shortcutHint(shortcut: StudioShortcut, mac: boolean = isMacPlatform()): string {
-  const key = SHORTCUT_KEY_LABEL[shortcut];
-  return mac ? `⌘${key}` : `Ctrl+${key}`;
+  return formatShortcut(SHORTCUT_KEY_LABEL[shortcut], mac);
 }
 
 /**

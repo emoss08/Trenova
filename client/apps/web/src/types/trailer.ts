@@ -1,15 +1,16 @@
 import { z } from "zod";
 import { equipmentManufacturerSchema } from "./equipment-manufacturer";
 import { equipmentTypeSchema } from "./equipment-type";
-import { fleetCodeSchema } from "@trenova/shared/types/fleet-code";
+import { fleetCodeRelationSchema } from "@trenova/shared/types/fleet-code";
 import {
   equipmentStatusSchema,
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
+  relationSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
-import { usStateSchema } from "@trenova/shared/types/us-state";
+import { usStateRelationSchema } from "@trenova/shared/types/us-state";
 
 export const trailerSchema = z.object({
   ...tenantInfoSchema.shape,
@@ -53,10 +54,10 @@ export const trailerSchema = z.object({
   lastKnownLocationId: nullableStringSchema,
   lastKnownLocationName: optionalStringSchema,
 
-  equipmentType: equipmentTypeSchema.partial().nullish(),
-  equipmentManufacturer: equipmentManufacturerSchema.partial().nullish(),
-  fleetCode: fleetCodeSchema.partial().nullish(),
-  registrationState: usStateSchema.partial().nullish(),
+  equipmentType: relationSchema(equipmentTypeSchema),
+  equipmentManufacturer: relationSchema(equipmentManufacturerSchema),
+  fleetCode: fleetCodeRelationSchema,
+  registrationState: usStateRelationSchema,
   customFields: z.record(z.string(), z.any()).optional(),
 });
 

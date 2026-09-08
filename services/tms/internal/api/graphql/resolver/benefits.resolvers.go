@@ -188,6 +188,28 @@ func (r *queryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID s
 	})
 }
 
+func (r *queryResolver) BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	plan, err := optionalID(planID)
+	if err != nil {
+		return nil, errortypes.NewValidationError("planId", errortypes.ErrInvalid, "Plan is invalid")
+	}
+
+	return r.benefitsService.ListEnrollments(ctx, &repositories.ListBenefitEnrollmentsRequest{
+		TenantInfo:    tenantInfo(authCtx),
+		PlanID:        plan,
+		Statuses:      statuses,
+		OpenOnly:      boolValue(openOnly),
+		IncludePlan:   true,
+		IncludeWorker: true,
+		Limit:         intValue(limit),
+	})
+}
+
 func (r *queryResolver) BenefitCosts(ctx context.Context, planYear *int) ([]*repositories.BenefitCostRow, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {

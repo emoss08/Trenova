@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkerSafetyTab from "../../worker-safety-tab";
 
@@ -256,12 +257,16 @@ describe("WorkerSafetyTab", () => {
     mockAll();
     renderTab();
 
+    const user = userEvent.setup();
     const open = within(await screen.findByTestId("safety-event-wsev_open"));
-    fireEvent.click(open.getByRole("button", { name: "Close event" }));
+    await user.click(open.getByRole("button", { name: /^Actions for/ }));
+    await user.click(await screen.findByRole("menuitem", { name: "Close event" }));
     expect(screen.getByTestId("close-dialog")).toHaveTextContent("wsev_open");
 
     const closed = within(screen.getByTestId("safety-event-wsev_closed"));
-    expect(closed.queryByRole("button", { name: "Close event" })).not.toBeInTheDocument();
+    await user.click(closed.getByRole("button", { name: /^Actions for/ }));
+    expect(await screen.findByRole("menuitem", { name: "Reopen" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Close event" })).not.toBeInTheDocument();
   });
 
   it("shows the ladder with the next rung and opens the issue dialog pre-set to it", async () => {

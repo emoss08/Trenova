@@ -1,5 +1,5 @@
+import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -12,12 +12,8 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { resolutionTypeChoices, workItemStatusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   BankReceiptWorkItem,
@@ -25,17 +21,14 @@ import type {
   WorkItemStatus,
 } from "@/types/bank-receipt-work-item";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ClipboardListIcon,
-  InboxIcon,
-  PlayIcon,
-  SearchIcon,
-  ShieldCheckIcon,
-  UserPlusIcon,
-} from "lucide-react";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { PlayIcon, SearchIcon, ShieldCheckIcon, UserPlusIcon } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const STATUS_LABELS: Record<WorkItemStatus, string> = {
   Open: "Open",
@@ -60,6 +53,11 @@ export function BankReceiptQueuePage() {
   const [selectedWorkItemId, setSelectedWorkItemId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const hasActiveFilters = Boolean(searchQuery || statusFilter);
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter(null);
+  };
   const queryClient = useQueryClient();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -188,6 +186,7 @@ export function BankReceiptQueuePage() {
         title: "Bank Receipt Work Queue",
         description: "Review and resolve bank receipt exceptions requiring attention.",
       }}
+      className="p-0 gap-y-2"
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
           <SummaryCard
@@ -249,14 +248,15 @@ export function BankReceiptQueuePage() {
                   ))
                 : null}
               {!isLoading && allRows.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <EmptyState
-                    title="No work items"
-                    description="Adjust the filters or wait for new exceptions."
-                    icons={[InboxIcon, ClipboardListIcon, ShieldCheckIcon]}
-                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-                  />
-                </div>
+                <BillingListEmpty
+                  title={hasActiveFilters ? "Nothing matches" : "Nothing waiting"}
+                  description={
+                    hasActiveFilters
+                      ? "No work item fits the search and filters. Widen them, or clear them to see everything waiting."
+                      : "A work item is raised when an imported receipt cannot be matched on its own. Until one is, there is nothing to resolve."
+                  }
+                  onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                />
               ) : null}
               {allRows.map((row) => {
                 const isSelected = row.id === selectedWorkItemId;
@@ -301,14 +301,11 @@ export function BankReceiptQueuePage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center">
-              <EmptyState
-                title="No work item selected"
-                description="Select a work item from the list to review and take action."
-                icons={[ClipboardListIcon, InboxIcon, ShieldCheckIcon]}
-                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-8 shadow-none"
-              />
-            </div>
+            <BillingDetailUnselected
+              layout="cards"
+              title="Nothing open"
+              description="Pick a work item from the list to review the receipt behind it and settle it."
+            />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
               <Skeleton className="h-24 w-full" />

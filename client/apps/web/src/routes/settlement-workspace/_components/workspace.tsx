@@ -1,3 +1,5 @@
+import { BillingDetailUnselected } from "@/components/billing/billing-empty";
+import { SettlementPeriodEmpty } from "@/components/settlements/settlement-period-empty";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -219,9 +221,11 @@ export default function Workspace() {
                 scrollMaskVariant="card"
               />
             ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center p-8 text-center text-sm">
-                Select a settlement from the queue to work it here.
-              </div>
+              <BillingDetailUnselected
+                layout="tabs"
+                title="Nothing open"
+                description="Pick a settlement from the queue to review its earnings and deductions, approve it and post it here."
+              />
             )}
           </div>
           <DriverContextRail
@@ -236,45 +240,25 @@ export default function Workspace() {
           />
         </div>
       ) : (
-        <EmptyPeriodState
-          unsettledEventCount={summary.unsettledEventCount}
-          unsettledWorkerCount={summary.unsettledWorkerCount}
+        <SettlementPeriodEmpty
+          title="No settlements this period yet"
+          description={periodEmptyDescription(
+            summary.unsettledEventCount,
+            summary.unsettledWorkerCount,
+          )}
           generating={generateMutation.isPending}
-          onGenerate={() => generateMutation.mutate()}
+          onGenerate={summary.unsettledEventCount > 0 ? () => generateMutation.mutate() : undefined}
         />
       )}
     </div>
   );
 }
 
-function EmptyPeriodState({
-  unsettledEventCount,
-  unsettledWorkerCount,
-  generating,
-  onGenerate,
-}: {
-  unsettledEventCount: number;
-  unsettledWorkerCount: number;
-  generating: boolean;
-  onGenerate: () => void;
-}) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 text-center">
-      <Sparkles className="text-muted-foreground size-8" />
-      <div>
-        <h3 className="text-sm font-semibold">No settlements for this pay period yet</h3>
-        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-          {unsettledEventCount > 0
-            ? `${unsettledEventCount} pay event${unsettledEventCount === 1 ? "" : "s"} across ${unsettledWorkerCount} driver${unsettledWorkerCount === 1 ? "" : "s"} are waiting to be settled. Generating builds one draft settlement per driver — earnings, deductions, advance recoveries, and escrow are pulled in automatically.`
-            : "Pay events accrue automatically as drivers complete moves. Once there is unsettled pay, generate the period's settlements from here."}
-        </p>
-      </div>
-      {unsettledEventCount > 0 && (
-        <Button disabled={generating} onClick={onGenerate}>
-          <Sparkles className="size-4" />
-          Generate Settlements
-        </Button>
-      )}
-    </div>
-  );
+function periodEmptyDescription(unsettledEventCount: number, unsettledWorkerCount: number) {
+  if (unsettledEventCount === 0) {
+    return "Pay events accrue automatically as drivers complete moves. Once there is unsettled pay, generate the period's settlements from here.";
+  }
+  const events = `${unsettledEventCount} pay event${unsettledEventCount === 1 ? "" : "s"}`;
+  const drivers = `${unsettledWorkerCount} driver${unsettledWorkerCount === 1 ? "" : "s"}`;
+  return `${events} across ${drivers} are waiting to be settled. Generating builds one draft settlement per driver, with earnings, deductions, advance recoveries and escrow pulled in on their own.`;
 }

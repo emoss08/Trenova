@@ -21,7 +21,7 @@ import {
 import { CredentialHistory } from "./credentials/credential-history";
 import { CredentialOverview } from "./credentials/credential-overview";
 import {
-  CredentialSlotCard,
+  CredentialSlotRow,
   type CredentialSlotPermissions,
 } from "./credentials/credential-slot-card";
 import { useCredentialInvalidation } from "./credentials/use-credential-invalidation";
@@ -96,12 +96,9 @@ export default function WorkerCredentialsTab({ workerId }: { workerId: string })
 
   if (summaryQuery.isLoading || credentialsQuery.isLoading) {
     return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Skeleton className="h-36 w-full rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-xl" />
-        </div>
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-20 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
       </div>
     );
   }
@@ -210,18 +207,18 @@ function CredentialSection({
 }: CredentialSectionProps) {
   return (
     <section className="flex flex-col gap-2">
-      <div>
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-muted-foreground text-xs">{hint}</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{title}</h4>
+        <p className="text-muted-foreground truncate text-xs">{hint}</p>
       </div>
       {items.length === 0 ? (
-        <p className="text-muted-foreground border-border rounded-lg border border-dashed px-3 py-4 text-center text-xs">
+        <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
           {empty ?? "Nothing on file."}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="divide-border divide-y rounded-lg border">
           {items.map((item) => (
-            <CredentialSlotCard
+            <CredentialSlotRow
               key={item.credentialType.id}
               item={item}
               permissions={permissions}

@@ -326,6 +326,21 @@ func (r *repository) ListEnabledAccessPolicies(
 	return entities, err
 }
 
+func (r *repository) ListEnabledTenantAccessPolicies(
+	ctx context.Context,
+	req repositories.IAMTenantPolicyLookupRequest,
+) ([]*iam.AccessPolicy, error) {
+	entities := make([]*iam.AccessPolicy, 0)
+	err := r.db.DB().NewSelect().
+		Model(&entities).
+		Where("ap.organization_id = ?", req.OrganizationID).
+		Where("ap.business_unit_id = ?", req.BusinessUnitID).
+		Where("ap.enabled = TRUE").
+		Order("ap.priority DESC", "ap.effect DESC", "ap.created_at ASC").
+		Scan(ctx)
+	return entities, err
+}
+
 func (r *repository) CreateAccessPolicy(
 	ctx context.Context,
 	entity *iam.AccessPolicy,

@@ -1,7 +1,7 @@
 import type { WorkerCredentialSummaryItem } from "@/lib/graphql/worker-credential";
+import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { CredentialHealthBadge } from "@trenova/shared/components/credential-health-badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import { credentialHealthMeta, describeDaysUntil } from "@trenova/shared/lib/credential";
+import { describeDaysUntil } from "@trenova/shared/lib/credential";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { CREDENTIAL_CATEGORY_LABELS } from "@trenova/shared/types/worker-credential";
@@ -21,7 +21,7 @@ export type CredentialSlotPermissions = {
   canArchive: boolean;
 };
 
-type CredentialSlotCardProps = {
+type CredentialSlotRowProps = {
   item: WorkerCredentialSummaryItem;
   permissions: CredentialSlotPermissions;
   verifying?: boolean;
@@ -32,7 +32,12 @@ type CredentialSlotCardProps = {
   onArchive: (item: WorkerCredentialSummaryItem) => void;
 };
 
-export function CredentialSlotCard({
+/**
+ * One credential type as a row in the file: what it is, what is on file,
+ * when it runs out, and how it stands. The health badge is the only colour;
+ * a missing slot reads as an empty line, not an alarm.
+ */
+export function CredentialSlotRow({
   item,
   permissions,
   verifying = false,
@@ -41,150 +46,114 @@ export function CredentialSlotCard({
   onEdit,
   onVerify,
   onArchive,
-}: CredentialSlotCardProps) {
+}: CredentialSlotRowProps) {
   const { credentialType: type, credential, health } = item;
-  const meta = credentialHealthMeta(health);
   const verified = Boolean(credential?.verifiedAt);
+  const caption = [
+    CREDENTIAL_CATEGORY_LABELS[type.category] ?? type.category,
+    credential?.number,
+    credential?.issuingAuthority,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const actions: RowAction[] = [];
+  if (!credential && permissions.canCreate) {
+    actions.push({
+      id: "add",
+      label: `Add ${type.name}`,
+      icon: PlusIcon,
+      onSelect: () => onAdd(type.id),
+    });
+  }
+  if (credential) {
+    if (!verified && permissions.canVerify) {
+      actions.push({
+        id: "verify",
+        label: `Verify ${type.name}`,
+        icon: ShieldCheckIcon,
+        disabled: verifying,
+        onSelect: () => onVerify(item),
+      });
+    }
+    if (permissions.canUpdate) {
+      actions.push({
+        id: "edit",
+        label: `Edit ${type.name}`,
+        icon: PencilIcon,
+        onSelect: () => onEdit(item),
+      });
+    }
+    if (permissions.canCreate) {
+      actions.push({
+        id: "renew",
+        label: `Renew ${type.name}`,
+        icon: RefreshCwIcon,
+        onSelect: () => onRenew(item),
+      });
+    }
+    if (permissions.canArchive) {
+      actions.push({
+        id: "archive",
+        label: `Archive ${type.name}`,
+        icon: ArchiveIcon,
+        destructive: true,
+        onSelect: () => onArchive(item),
+      });
+    }
+  }
 
   return (
     <div
       data-testid={`credential-slot-${type.id}`}
       data-health={health}
-      className={cn(
-        "group bg-card flex flex-col gap-2.5 rounded-xl border p-3 transition-shadow hover:shadow-sm",
-        meta.ringClass,
-      )}
+      className="group hover:bg-muted/30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-3 py-2.5 transition-colors sm:grid-cols-[minmax(0,1fr)_minmax(0,11rem)_auto]"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
-            {CREDENTIAL_CATEGORY_LABELS[type.category] ?? type.category}
-            {item.required ? " · Required" : ""}
-          </p>
-          <p className="truncate text-sm font-semibold">{type.name}</p>
-        </div>
-        <CredentialHealthBadge health={health} daysUntilExpiry={item.daysUntilExpiry} />
-      </div>
-
-      {credential ? (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
-          {credential.number ? (
-            <>
-              <dt className="text-muted-foreground">Number</dt>
-              <dd className="truncate font-medium tabular-nums">{credential.number}</dd>
-            </>
-          ) : null}
-          {credential.issuingAuthority ? (
-            <>
-              <dt className="text-muted-foreground">Issued by</dt>
-              <dd className="truncate">{credential.issuingAuthority}</dd>
-            </>
-          ) : null}
-          <dt className="text-muted-foreground">Expires</dt>
-          <dd className={cn("font-medium", meta.textClass)}>
-            {credential.expiresAt ? formatUnixDateMedium(credential.expiresAt) : "Never"}
-            <span className="text-muted-foreground ml-1 font-normal" aria-hidden>
-              ·
-            </span>
-            <span className="text-muted-foreground ml-1 font-normal">
-              {describeDaysUntil(item.daysUntilExpiry)}
-            </span>
-          </dd>
-        </dl>
-      ) : (
-        <p className="text-muted-foreground text-xs">
-          Nothing on file. Add the {type.name.toLowerCase()} to complete the qualification file.
+      <div className="min-w-0">
+        <p className={cn("truncate text-sm font-medium", !credential && "text-muted-foreground")}>
+          {type.name}
         </p>
-      )}
-
-      <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-        <div className="flex min-w-0 items-center gap-2 text-[11px]">
+        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 truncate text-xs">
+          <span className="truncate">{caption}</span>
           {credential ? (
             verified ? (
-              <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
-                <ShieldCheckIcon className="size-3.5" />
-                Verified
-                {credential.verifiedBy?.name ? (
-                  <span className="text-muted-foreground">by {credential.verifiedBy.name}</span>
-                ) : null}
+              <span className="flex shrink-0 items-center gap-1">
+                <ShieldCheckIcon className="size-3" />
+                <span>Verified</span>
+                {credential.verifiedBy?.name ? <span>by {credential.verifiedBy.name}</span> : null}
               </span>
             ) : (
-              <span className="text-muted-foreground">Unverified</span>
+              <span className="shrink-0">Unverified</span>
             )
           ) : null}
           {credential?.document ? (
             <span
-              className="text-muted-foreground flex min-w-0 items-center gap-1"
+              className="flex min-w-0 shrink items-center gap-1"
               title={credential.document.originalName}
             >
-              <PaperclipIcon className="size-3.5 shrink-0" />
+              <PaperclipIcon className="size-3 shrink-0" />
               <span className="truncate">{credential.document.originalName}</span>
             </span>
           ) : null}
-        </div>
+        </p>
+      </div>
 
-        <div className="flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100">
-          {!credential && permissions.canCreate ? (
-            <Button
-              size="sm"
-              variant="outline"
-              aria-label={`Add ${type.name}`}
-              onClick={() => onAdd(type.id)}
-            >
-              <PlusIcon className="size-3.5" />
-              Add
-            </Button>
-          ) : null}
-          {credential && !verified && permissions.canVerify ? (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-7"
-              aria-label={`Verify ${type.name}`}
-              title="Mark as verified"
-              disabled={verifying}
-              onClick={() => onVerify(item)}
-            >
-              <ShieldCheckIcon className="size-3.5" />
-            </Button>
-          ) : null}
-          {credential && permissions.canUpdate ? (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-7"
-              aria-label={`Edit ${type.name}`}
-              title="Edit"
-              onClick={() => onEdit(item)}
-            >
-              <PencilIcon className="size-3.5" />
-            </Button>
-          ) : null}
-          {credential && permissions.canCreate ? (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-7"
-              aria-label={`Renew ${type.name}`}
-              title="Renew"
-              onClick={() => onRenew(item)}
-            >
-              <RefreshCwIcon className="size-3.5" />
-            </Button>
-          ) : null}
-          {credential && permissions.canArchive ? (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground hover:text-destructive size-7"
-              aria-label={`Archive ${type.name}`}
-              title="Archive"
-              onClick={() => onArchive(item)}
-            >
-              <ArchiveIcon className="size-3.5" />
-            </Button>
-          ) : null}
-        </div>
+      <div className="col-span-2 text-xs sm:col-span-1">
+        {credential ? (
+          <>
+            <p className="font-medium tabular-nums">
+              {credential.expiresAt ? formatUnixDateMedium(credential.expiresAt) : "No expiry"}
+            </p>
+            <p className="text-muted-foreground">{describeDaysUntil(item.daysUntilExpiry)}</p>
+          </>
+        ) : (
+          <p className="text-muted-foreground">Nothing on file</p>
+        )}
+      </div>
+
+      <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:col-start-3">
+        <CredentialHealthBadge health={health} daysUntilExpiry={item.daysUntilExpiry} />
+        <RowActionsMenu label={`Actions for ${type.name}`} actions={actions} />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { ptoTypeChoices } from "@/lib/choices";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
@@ -15,7 +16,7 @@ import {
   type PTOTerminationAction,
   type PTOYearBasis,
 } from "@trenova/shared/types/pto-policy";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const POLICY_STATUS_OPTIONS = [
@@ -88,6 +89,7 @@ export function PTOPolicyForm({
               label="Name"
               placeholder="e.g. Standard Driver"
               rules={{ required: true }}
+              description="Shown on worker records, assignments and PTO reports."
             />
           </FormControl>
           <FormControl cols="full">
@@ -97,6 +99,7 @@ export function PTOPolicyForm({
               label="Status"
               options={POLICY_STATUS_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select a status"
               description={
                 isEdit && openAssignmentCount > 0
                   ? `${openAssignmentCount} worker${openAssignmentCount === 1 ? " is" : "s are"} assigned; reassign them before deactivating.`
@@ -121,6 +124,7 @@ export function PTOPolicyForm({
               label="Description"
               placeholder="Who this policy covers and anything unusual about it"
               maxLength={1000}
+              description="Optional notes for whoever assigns or maintains the policy."
             />
           </FormControl>
         </FormGroup>
@@ -139,6 +143,7 @@ export function PTOPolicyForm({
               label="Policy year"
               options={YEAR_BASIS_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select a year basis"
               description="Carryover caps, expiries, and annual grants apply at the start of this year."
             />
           </FormControl>
@@ -149,6 +154,7 @@ export function PTOPolicyForm({
               label="Waiting period"
               sideText="days"
               min={0}
+              placeholder="90"
               description="Days after hire before any accrual starts. Skipped periods are not back-filled."
             />
           </FormControl>
@@ -157,7 +163,7 @@ export function PTOPolicyForm({
               control={control}
               name="countWeekends"
               label="Count weekends"
-              description="On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request."
+              description="On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays."
               position="left"
               outlined
             />
@@ -192,6 +198,15 @@ export function PTOPolicyForm({
             Add type
           </Button>
         </div>
+        <Alert variant="default">
+          <InfoIcon className="size-4" />
+          <AlertTitle>Rule changes apply going forward</AlertTitle>
+          <AlertDescription>
+            Accruals are posted once per period. Changing an amount, cap or tier affects periods
+            that have not been posted yet; days already in a worker&apos;s ledger are not
+            recalculated.
+          </AlertDescription>
+        </Alert>
         <div className="flex flex-col gap-3">
           {rulesArray.fields.map((field, index) => (
             <RuleRow
@@ -287,6 +302,8 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             label="PTO type"
             options={ptoTypeChoices}
             rules={{ required: true }}
+            placeholder="Select a PTO type"
+            description="The kind of time off this rule accrues and tracks a balance for."
           />
         </FormControl>
         <FormControl>
@@ -296,8 +313,11 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             label="Accrual"
             options={ACCRUAL_METHOD_OPTIONS}
             rules={{ required: true }}
+            placeholder="Select an accrual method"
             description={
-              method === "PerPayPeriod" ? "Follows the settlement pay period calendar." : undefined
+              method === "PerPayPeriod"
+                ? "Follows the settlement pay period calendar."
+                : "How often days are added to the balance."
             }
           />
         </FormControl>
@@ -308,6 +328,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             label={amountLabel(method)}
             placeholder="0.83"
             disabled={!accrues}
+            description="Days a worker earns per period; balances are kept in days."
           />
         </FormControl>
         <FormControl>
@@ -335,6 +356,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             label="Carryover expires"
             sideText="days"
             min={0}
+            placeholder="90"
             description="Carried days expire this many days into the new year. 0 = never."
           />
         </FormControl>
@@ -345,6 +367,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             label="When employment ends"
             options={TERMINATION_OPTIONS}
             rules={{ required: true }}
+            placeholder="Select an action"
             description="Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date."
           />
         </FormControl>
@@ -380,6 +403,10 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
         </div>
         {tiersArray.fields.length > 0 ? (
           <div className="mt-2 flex flex-col gap-2">
+            <p className="text-muted-foreground text-[11px]">
+              After: months of service before the tier applies. Amount: replaces the base accrual
+              from then on. Max balance: overrides the rule&apos;s cap; leave empty to inherit it.
+            </p>
             {tiersArray.fields.map((tier, tierIndex) => (
               <div
                 key={tier.id}
@@ -391,6 +418,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
                   label="After"
                   sideText="months"
                   min={1}
+                  placeholder="12"
                 />
                 <InputField
                   control={control}

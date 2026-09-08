@@ -5,19 +5,25 @@ import { usePermission } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { parseDashboardLayout } from "@/types/report";
-import { CircleAlertIcon, LayoutDashboardIcon, LayoutGridIcon, PlusIcon } from "lucide-react";
+import { CircleAlertIcon, LayoutDashboardIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
-import { CategoryTile, ReportCard, ReportGridEmptyState } from "./report-card-chrome";
+import {
+  CategoryTile,
+  ReportCard,
+  ReportGridEmpty,
+  ReportGridEmptyState,
+} from "./report-card-chrome";
 import { useCreateDashboardAction } from "./use-create-dashboard-action";
 import { compareReportsBySort, type ReportSortOrder } from "../reports-page-state";
 
 type DashboardGalleryProps = {
   search: string;
   sortBy: ReportSortOrder;
+  onClearFilters: () => void;
 };
 
-export function DashboardGallery({ search, sortBy }: DashboardGalleryProps) {
+export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGalleryProps) {
   const navigate = useNavigate();
   const dashboards = useReportDashboards();
   const createDashboard = useCreateDashboardAction();
@@ -63,19 +69,25 @@ export function DashboardGallery({ search, sortBy }: DashboardGalleryProps) {
     <div className="p-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {visible.length === 0 ? (
-          <ReportGridEmptyState
-            icon={LayoutGridIcon}
-            title="No dashboards yet"
-            description="A dashboard puts saved reports side by side under one set of filters."
+          <ReportGridEmpty
+            variant="dashboards"
+            title={search.trim() ? "Nothing matches" : "No dashboards yet"}
+            description={
+              search.trim()
+                ? "No dashboard fits that search. Clear it to see every dashboard."
+                : "A dashboard puts saved reports side by side under one set of filters. Create one and lay your reports out on it."
+            }
+            onClearFilters={search.trim() ? onClearFilters : undefined}
             action={
               canCreate ? (
                 <Button
+                  variant="outline"
                   size="sm"
                   onClick={createDashboard.create}
                   disabled={createDashboard.isPending}
                 >
                   <PlusIcon className="size-3.5" />
-                  New Dashboard
+                  New dashboard
                 </Button>
               ) : undefined
             }

@@ -9,6 +9,7 @@ import {
   columnPinOffsetVar,
   columnSizeVar,
   compileFormatRules,
+  emptyTableColumns,
   fromColumnPinningState,
   isTableConfigEqual,
   toColumnPinningState,
@@ -54,6 +55,7 @@ import { Table, TableHeader, TableRow } from "@trenova/shared/components/ui/tabl
 import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
 import { DataTableDock } from "./data-table-dock";
+import { DataTableEmptyState } from "./data-table-empty-state";
 import DataTableFilterChips from "./data-table-filter-chips";
 import { DataTableHeaderCell } from "./data-table-header-cell";
 import { DataTablePanelContent, DataTablePanelWrapper } from "./data-table-panel";
@@ -91,6 +93,7 @@ export function DataTable<TData extends Record<string, any>>({
   graphql,
   refetchIntervalMs,
   onCellEditCommit,
+  renderEmptyState,
 }: DataTableProps<TData>) {
   "use no memo";
   const permissions = usePermissions(resource ?? "");
@@ -644,6 +647,16 @@ export function DataTable<TData extends Record<string, any>>({
 
   const reorderableIds = table.getVisibleLeafColumns().map((col) => col.id);
 
+  // An empty page is drawn as the table it will become rather than as a
+  // table with no rows, so the header row and the pager step aside for it.
+  const isEmpty = !dataQuery.isLoading && !dataQuery.isError && currentPageRowCount === 0;
+  const emptyColumns = useMemo(
+    () => emptyTableColumns(table.getVisibleLeafColumns()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [table, liveColumnVisibility, liveColumnOrder],
+  );
+  const defaultCreate = resolvedAddRecordActions.find((action) => action.id === "default-create");
+
   return (
     <DataTableProvider
       isLoading={dataQuery.isLoading}
@@ -713,68 +726,84 @@ export function DataTable<TData extends Record<string, any>>({
                 onClearSelection={handleClearSelection}
               />
             )}
-            <div className="relative min-w-0">
-              <DataTableRefreshPill
-                visible={liveRefresh.hasPendingUpdate}
-                onRefresh={liveRefresh.applyStaged}
-                onDismiss={liveRefresh.dismissStaged}
-              />
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                modifiers={[restrictToHorizontalAxis]}
-                onDragEnd={handleColumnDragEnd}
-              >
-                <Table
-                  data-density={density}
-                  className={cn(
-                    "border-separate border-spacing-0",
-                    density === "compact" && "[&_td]:py-1 [&_td]:text-xs [&_th]:h-8",
-                  )}
-                  containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-md border border-border"
-                  style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
-                >
-                  <TableHeader className="bg-muted sticky top-0 z-20 backdrop-blur-sm">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                        <SortableContext
-                          items={reorderableIds}
-                          strategy={horizontalListSortingStrategy}
-                        >
-                          {headerGroup.headers.map((header) => (
-                            <DataTableHeaderCell
-                              key={header.id}
-                              header={header}
-                              sort={sort}
-                              onSort={handleSortChange}
-                            />
-                          ))}
-                        </SortableContext>
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <DataTableBody
-                    table={table}
-                    columns={tableColumns}
-                    isLoading={dataQuery.isLoading}
-                    contextMenuActions={contextMenuActions}
-                    onRowClick={onRowClick}
-                    getFormatClass={compiledFormatRules}
+            {isEmpty ? (
+              <div className="border-border rounded-md border">
+                {renderEmptyState ? (
+                  renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
+                ) : (
+                  <DataTableEmptyState
+                    name={name}
+                    columns={emptyColumns}
                     hasActiveFilters={hasActiveFilters}
                     onClearFilters={handleClearFilters}
+                    onAddRecord={hasActiveFilters ? undefined : defaultCreate?.onClick}
                   />
-                </Table>
-              </DndContext>
-            </div>
-            <DataTablePagination
-              table={table}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              mode="cursor"
-              hasNextPage={cursorPageInfo?.hasNextPage}
-              currentPageRowCount={currentPageRowCount}
-              totalCount={totalCount}
-            />
+                )}
+              </div>
+            ) : (
+              <div className="relative min-w-0">
+                <DataTableRefreshPill
+                  visible={liveRefresh.hasPendingUpdate}
+                  onRefresh={liveRefresh.applyStaged}
+                  onDismiss={liveRefresh.dismissStaged}
+                />
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToHorizontalAxis]}
+                  onDragEnd={handleColumnDragEnd}
+                >
+                  <Table
+                    data-density={density}
+                    className={cn(
+                      "border-separate border-spacing-0",
+                      density === "compact" && "[&_td]:py-1 [&_td]:text-xs [&_th]:h-8",
+                    )}
+                    containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-md border border-border"
+                    style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
+                  >
+                    <TableHeader className="bg-muted sticky top-0 z-20 backdrop-blur-sm">
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                          <SortableContext
+                            items={reorderableIds}
+                            strategy={horizontalListSortingStrategy}
+                          >
+                            {headerGroup.headers.map((header) => (
+                              <DataTableHeaderCell
+                                key={header.id}
+                                header={header}
+                                sort={sort}
+                                onSort={handleSortChange}
+                              />
+                            ))}
+                          </SortableContext>
+                        </TableRow>
+                      ))}
+                    </TableHeader>
+                    <DataTableBody
+                      table={table}
+                      columns={tableColumns}
+                      isLoading={dataQuery.isLoading}
+                      contextMenuActions={contextMenuActions}
+                      onRowClick={onRowClick}
+                      getFormatClass={compiledFormatRules}
+                    />
+                  </Table>
+                </DndContext>
+              </div>
+            )}
+            {isEmpty ? null : (
+              <DataTablePagination
+                table={table}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                mode="cursor"
+                hasNextPage={cursorPageInfo?.hasNextPage}
+                currentPageRowCount={currentPageRowCount}
+                totalCount={totalCount}
+              />
+            )}
           </div>
         </DataTablePanelContent>
         {TablePanel && (

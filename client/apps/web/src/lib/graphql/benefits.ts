@@ -1,5 +1,6 @@
 import {
   BenefitCostsDocument,
+  BenefitEnrollmentsDocument,
   BenefitPlansDocument,
   CreateBenefitPlanDocument,
   EndBenefitEnrollmentDocument,
@@ -9,6 +10,9 @@ import {
   WorkerTotalCompensationDocument,
   type BenefitCostsQuery,
   type BenefitCostsQueryVariables,
+  type BenefitEnrollmentsQuery,
+  type BenefitEnrollmentsQueryVariables,
+  type BenefitEnrollmentStatus,
   type BenefitPlanInput,
   type BenefitPlansQuery,
   type BenefitPlansQueryVariables,
@@ -34,11 +38,13 @@ export type BenefitPlanRow = BenefitPlansQuery["benefitPlans"][number];
 export type BenefitEnrollmentRow =
   WorkerBenefitEnrollmentsQuery["workerBenefitEnrollments"][number];
 export type BenefitCostRow = BenefitCostsQuery["benefitCosts"][number];
+export type BenefitEnrollmentListRow = BenefitEnrollmentsQuery["benefitEnrollments"][number];
 export type TotalCompensationSummary = WorkerTotalCompensationQuery["workerTotalCompensation"];
 
 export const BENEFIT_PLANS_KEY = "benefit-plans";
 export const BENEFIT_ENROLLMENTS_KEY = "benefit-enrollments";
 export const BENEFIT_COSTS_KEY = "benefit-costs";
+export const BENEFIT_ENROLLMENT_LIST_KEY = "benefit-enrollment-list";
 export const TOTAL_COMPENSATION_KEY = "total-compensation";
 
 export async function fetchBenefitPlans(
@@ -72,6 +78,29 @@ export async function fetchWorkerBenefitEnrollments(
     signal: options?.signal,
   });
   return data.workerBenefitEnrollments;
+}
+
+export async function fetchBenefitEnrollments(
+  args: {
+    planId?: string | null;
+    statuses?: BenefitEnrollmentStatus[];
+    openOnly?: boolean;
+    limit?: number;
+  } = {},
+  options?: { signal?: AbortSignal },
+): Promise<BenefitEnrollmentListRow[]> {
+  const data = await requestGraphQL<BenefitEnrollmentsQuery, BenefitEnrollmentsQueryVariables>({
+    document: BenefitEnrollmentsDocument,
+    operationName: "BenefitEnrollments",
+    variables: {
+      planId: args.planId ?? null,
+      statuses: args.statuses ?? null,
+      openOnly: args.openOnly ?? null,
+      limit: args.limit ?? null,
+    },
+    signal: options?.signal,
+  });
+  return data.benefitEnrollments;
 }
 
 export async function fetchBenefitCosts(

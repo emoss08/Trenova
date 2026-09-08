@@ -28,3 +28,6 @@ TODO
 enterprise/
 .playwright-mcp
 shipment_page_design
+# Captured feature screenshots are regenerated with scripts/screenshots; only the README is tracked
+docs/screenshots/light/
+docs/screenshots/dark/

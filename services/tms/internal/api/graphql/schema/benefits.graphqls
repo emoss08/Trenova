@@ -184,6 +184,17 @@ extend type Query {
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   benefitPlan(id: ID!): BenefitPlan!
   workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]!
+  """
+  Enrollments across the organisation, newest first, with the worker and the
+  plan on each. It is what "who is on this plan" reads; a worker's own history
+  is read through workerBenefitEnrollments.
+  """
+  benefitEnrollments(
+    planId: ID
+    statuses: [BenefitEnrollmentStatus!]
+    openOnly: Boolean
+    limit: Int
+  ): [WorkerBenefitEnrollment!]!
   benefitCosts(planYear: Int): [BenefitCostRow!]!
   """
   A worker's total compensation. The signed-in driver reads their own through

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkerChecklistTab from "../../worker-checklist-tab";
 
@@ -10,6 +11,7 @@ const {
   skipWorkerChecklistItem,
   reopenWorkerChecklistItem,
   startWorkerChecklist,
+  fetchWorkerEmploymentEvents,
 } = vi.hoisted(() => ({
   fetchWorkerChecklists: vi.fn(),
   fetchActiveWorkerChecklistTemplates: vi.fn(),
@@ -17,6 +19,7 @@ const {
   skipWorkerChecklistItem: vi.fn(),
   reopenWorkerChecklistItem: vi.fn(),
   startWorkerChecklist: vi.fn(),
+  fetchWorkerEmploymentEvents: vi.fn(),
 }));
 const permissionState = vi.hoisted(() => ({ create: true, update: true, cancel: true }));
 
@@ -31,6 +34,11 @@ vi.mock("@/lib/graphql/worker-checklist", () => ({
   cancelWorkerChecklist: vi.fn(),
   WORKER_CHECKLISTS_KEY: "worker-checklists",
   WORKER_CHECKLIST_TEMPLATES_KEY: "worker-checklist-templates",
+}));
+
+vi.mock("@/lib/graphql/worker-employment", () => ({
+  fetchWorkerEmploymentEvents,
+  WORKER_EMPLOYMENT_EVENTS_KEY: "worker-employment-events",
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -137,7 +145,26 @@ const checklist = {
   ],
 };
 
-function renderTab() {
+const employmentEvent = (id: string, kind: string, effectiveAt: number) => ({
+  id,
+  workerId: "wrk_1",
+  kind,
+  effectiveAt,
+  reason: null,
+  notes: null,
+  fromValues: [],
+  toValues: [],
+});
+
+/** Opens a row's actions menu and returns the user driving it. */
+async function openActions(scope: HTMLElement, name: string) {
+  const user = userEvent.setup();
+  await user.click(within(scope).getByRole("button", { name }));
+  return user;
+}
+
+function renderTab(events: unknown[] = []) {
+  fetchWorkerEmploymentEvents.mockResolvedValue(events);
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -179,9 +206,11 @@ describe("WorkerChecklistTab", () => {
 
     const fuel = within(card).getByTestId("checklist-item-wcli_fuel");
     expect(fuel).toHaveAttribute("data-overdue", "true");
+    const user = await openActions(fuel, "Actions for Fuel card issued");
     expect(
-      within(fuel).getByRole("button", { name: "Complete Fuel card issued" }),
+      await screen.findByRole("menuitem", { name: "Complete Fuel card issued" }),
     ).toBeInTheDocument();
+    await user.keyboard("{Escape}");
 
     const handbook = within(card).getByTestId("checklist-item-wcli_handbook");
     expect(within(handbook).getByText("Skipped")).toBeInTheDocument();
@@ -189,7 +218,11 @@ describe("WorkerChecklistTab", () => {
     expect(within(handbook).getByText(/Grace/)).toBeInTheDocument();
 
     const dash = within(card).getByTestId("checklist-item-wcli_dash");
-    expect(within(dash).queryByRole("button", { name: /Complete/ })).toBeNull();
+    await openActions(dash, "Actions for Invited to Dash");
+    expect(
+      await screen.findByRole("menuitem", { name: "Skip Invited to Dash" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Complete/ })).toBeNull();
     expect(within(dash).getByText("Auto")).toBeInTheDocument();
   });
 
@@ -200,7 +233,8 @@ describe("WorkerChecklistTab", () => {
     renderTab();
 
     const fuel = await screen.findByTestId("checklist-item-wcli_fuel");
-    fireEvent.click(within(fuel).getByRole("button", { name: "Complete Fuel card issued" }));
+    const user = await openActions(fuel, "Actions for Fuel card issued");
+    await user.click(await screen.findByRole("menuitem", { name: "Complete Fuel card issued" }));
     await waitFor(() =>
       expect(completeWorkerChecklistItem).toHaveBeenCalledExactlyOnceWith({
         id: "wcli_fuel",
@@ -217,7 +251,8 @@ describe("WorkerChecklistTab", () => {
     renderTab();
 
     const fuel = await screen.findByTestId("checklist-item-wcli_fuel");
-    fireEvent.click(within(fuel).getByRole("button", { name: "Skip Fuel card issued" }));
+    const user = await openActions(fuel, "Actions for Fuel card issued");
+    await user.click(await screen.findByRole("menuitem", { name: "Skip Fuel card issued" }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Skip item" }));
     expect(
@@ -245,13 +280,17 @@ describe("WorkerChecklistTab", () => {
     renderTab();
 
     const handbook = await screen.findByTestId("checklist-item-wcli_handbook");
-    fireEvent.click(within(handbook).getByRole("button", { name: "Reopen Handbook acknowledged" }));
+    const user = await openActions(handbook, "Actions for Handbook acknowledged");
+    await user.click(await screen.findByRole("menuitem", { name: "Reopen Handbook acknowledged" }));
     await waitFor(() =>
       expect(reopenWorkerChecklistItem).toHaveBeenCalledExactlyOnceWith("wcli_handbook", 1),
     );
   });
 
-  it("starts a checklist from a template when there is none open", async () => {
+  // Onboarding and offboarding are started by the hire and the termination.
+  // Offering them here would let somebody onboard a driver twice by hand, so
+  // only a template the office starts itself is on the list.
+  it("starts a hand-run checklist and never offers the event-driven ones", async () => {
     fetchWorkerChecklists.mockResolvedValue([]);
     fetchActiveWorkerChecklistTemplates.mockResolvedValue([
       { id: "wclt_on", name: "Driver onboarding", kind: "Onboarding", trigger: "Hired", items: [] },
@@ -262,18 +301,79 @@ describe("WorkerChecklistTab", () => {
         trigger: "Terminated",
         items: [],
       },
+      { id: "wclt_audit", name: "Annual file audit", kind: "Custom", trigger: "Manual", items: [] },
     ]);
     startWorkerChecklist.mockResolvedValue(checklist);
     renderTab();
 
     expect(await screen.findByText("No checklists yet")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Start Driver offboarding" }));
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "Start a checklist" }));
+    expect(await screen.findByRole("option", { name: "Annual file audit" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Driver onboarding" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "Driver offboarding" })).toBeNull();
+    await user.click(screen.getByRole("option", { name: "Annual file audit" }));
+    await user.click(screen.getByRole("button", { name: "Start" }));
     await waitFor(() =>
       expect(startWorkerChecklist).toHaveBeenCalledExactlyOnceWith({
         workerId: "wrk_1",
-        templateId: "wclt_off",
+        templateId: "wclt_audit",
       }),
     );
+  });
+
+  // A driver who left and came back has been onboarded twice. The current
+  // employment is the process on screen; the earlier one is history, kept
+  // with its own onboarding and offboarding.
+  it("shows the current employment as a process and files earlier ones in history", async () => {
+    const oldOnboarding = {
+      ...checklist,
+      id: "wcl_old",
+      status: "Completed",
+      startedAt: 1_600_000_000,
+      completedAt: 1_600_500_000,
+      sourceEventId: "wee_hire",
+      progress: { ...checklist.progress, percent: 100, complete: true, overdue: 0 },
+      items: [],
+    };
+    const offboarding = {
+      ...checklist,
+      id: "wcl_off",
+      name: "Driver offboarding",
+      kind: "Offboarding",
+      status: "Completed",
+      startedAt: 1_650_000_000,
+      completedAt: 1_650_500_000,
+      sourceEventId: "wee_term",
+      progress: { ...checklist.progress, percent: 100, complete: true, overdue: 0 },
+      items: [],
+    };
+    fetchWorkerChecklists.mockResolvedValue([
+      oldOnboarding,
+      offboarding,
+      { ...checklist, sourceEventId: "wee_rehire" },
+    ]);
+    fetchActiveWorkerChecklistTemplates.mockResolvedValue([]);
+    renderTab([
+      employmentEvent("wee_hire", "Hired", 1_600_000_000),
+      employmentEvent("wee_term", "Terminated", 1_650_000_000),
+      employmentEvent("wee_rehire", "Rehired", 1_756_000_000),
+    ]);
+
+    const process = await screen.findByTestId("employment-process");
+    await waitFor(() =>
+      expect(within(process).getByText("Onboarding").closest("[aria-current]")).toHaveAttribute(
+        "aria-current",
+        "step",
+      ),
+    );
+    expect(screen.getByTestId("checklist-wcl_1")).toBeInTheDocument();
+    expect(screen.queryByTestId("checklist-wcl_old")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /History \(2\)/ }));
+    const cycle = await screen.findByTestId("checklist-cycle");
+    expect(within(cycle).getByTestId("checklist-wcl_old")).toBeInTheDocument();
+    expect(within(cycle).getByTestId("checklist-wcl_off")).toBeInTheDocument();
   });
 
   it("hides item actions without permission", async () => {
@@ -284,7 +384,7 @@ describe("WorkerChecklistTab", () => {
     renderTab();
 
     const fuel = await screen.findByTestId("checklist-item-wcli_fuel");
-    expect(within(fuel).queryByRole("button", { name: /Complete/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Start / })).toBeNull();
+    expect(within(fuel).queryByRole("button", { name: /^Actions for/ })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "Start a checklist" })).toBeNull();
   });
 });

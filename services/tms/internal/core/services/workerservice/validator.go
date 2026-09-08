@@ -43,8 +43,41 @@ func NewValidator(p ValidatorParams) *Validator {
 				func(w *worker.Worker) pulid.ID { return w.FleetCodeID },
 				createFleetCodeCheck(p.DB),
 			).
+			// A worker holds a driving title. Front-office titles are held by
+			// users through their membership, so offering one here would put a
+			// driver on the wrong roster.
+			WithOptionalCustomReferenceCheck(
+				"positionId",
+				"Position must be an open driving position in your organization",
+				func(w *worker.Worker) pulid.ID { return w.PositionID },
+				createDrivingPositionCheck(p.DB),
+			).
 			WithCustomRule(createWorkerComplianceRule(p.DispatchControlRepo)).
 			Build(),
+	}
+}
+
+func createDrivingPositionCheck(
+	db *postgres.Connection,
+) validationframework.CustomReferenceCheckFunc {
+	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
+		if refID.IsNil() {
+			return true, nil
+		}
+
+		exists, err := db.DB().NewSelect().
+			TableExpr("job_positions").
+			ColumnExpr("1").
+			Where("id = ?", refID).
+			Where("organization_id = ?", orgID).
+			Where("business_unit_id = ?", buID).
+			Where("status = 'Active'").
+			Where("is_driving_position").
+			Exists(ctx)
+		if err != nil {
+			return false, err
+		}
+		return exists, nil
 	}
 }
 

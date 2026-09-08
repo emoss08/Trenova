@@ -1,3 +1,4 @@
+import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
   cancelDotTest,
@@ -8,6 +9,7 @@ import {
   type DotViolationRow,
 } from "@/lib/graphql/worker-drug-alcohol";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -114,6 +116,19 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
               {file.standing.returnToDuty !== "NotRequired" ? (
                 <Badge variant="secondary">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
               ) : null}
+              <InfoPopover title="Testing standing">
+                <p>
+                  Prohibited while an open violation is still short of return to duty, or a
+                  Clearinghouse query found violations. Awaiting result while a collection is at the
+                  lab. Clear once a negative result is on file with nothing open. Not on file when
+                  no test has been recorded.
+                </p>
+                <p>
+                  Only Prohibited bars dispatch. Follow-up testing runs after the driver is back at
+                  work and is not a bar. The next Clearinghouse query falls due twelve months after
+                  the last answered one.
+                </p>
+              </InfoPopover>
             </div>
             <p className="text-muted-foreground mt-2 max-w-prose text-xs">{standing.detail}</p>
           </div>
@@ -182,6 +197,14 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             ) : null
           }
         >
+          {openViolation.status === "FollowUp" ? (
+            <Alert className="mb-2">
+              <AlertDescription>
+                The driver is back on duty. Follow-up testing does not bar dispatch on its own; the
+                violation stays open here until the last follow-up test is recorded.
+              </AlertDescription>
+            </Alert>
+          ) : null}
           <div className="rounded-md border p-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="inactive">{dotViolationTypeLabel(openViolation.violationType)}</Badge>

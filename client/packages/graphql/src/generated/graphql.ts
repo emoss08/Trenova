@@ -2447,6 +2447,11 @@ export type PortalStopAction =
   | 'Arrive'
   | 'Depart';
 
+/** Which roster a position holder comes from. */
+export type PositionHolderKind =
+  | 'User'
+  | 'Worker';
+
 export type PostCustomerPaymentInput = {
   accountingDate: number;
   amountMinor: number;
@@ -3233,6 +3238,7 @@ export type SelectOptionResource =
   | 'FUEL_SURCHARGE_PROGRAM'
   | 'GL_ACCOUNT'
   | 'HAZARDOUS_MATERIAL'
+  | 'JOB_POSITION'
   | 'LOCATION'
   | 'LOCATION_CATEGORY'
   | 'ORDER'
@@ -4902,6 +4908,16 @@ export type WorkerBenefitEnrollmentsQueryVariables = Exact<{
 
 
 export type WorkerBenefitEnrollmentsQuery = { workerBenefitEnrollments: Array<{ id: string, workerId: string, benefitPlanId: string, status: BenefitEnrollmentStatus, coverageTier: CoverageTier, effectiveFrom: number, effectiveTo: number | null, employeeCostMinor: number, employerCostMinor: number, recurringDeductionId: string | null, waivedReason: string | null, notes: string | null, version: number, benefitPlan: { id: string, code: string, name: string, planType: BenefitPlanType, carrier: string | null } | null }> };
+
+export type BenefitEnrollmentsQueryVariables = Exact<{
+  planId?: string | number | null | undefined;
+  statuses?: Array<BenefitEnrollmentStatus> | BenefitEnrollmentStatus | null | undefined;
+  openOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type BenefitEnrollmentsQuery = { benefitEnrollments: Array<{ id: string, workerId: string, benefitPlanId: string, status: BenefitEnrollmentStatus, coverageTier: CoverageTier, effectiveFrom: number, effectiveTo: number | null, employeeCostMinor: number, employerCostMinor: number, waivedReason: string | null, notes: string | null, version: number, benefitPlan: { id: string, code: string, name: string, planType: BenefitPlanType, planYear: number, currencyCode: string } | null, worker: { id: string, firstName: string, lastName: string, profilePicUrl: string, fleetCode: { id: string, code: string, color: string } | null } | null }> };
 
 export type BenefitCostsQueryVariables = Exact<{
   planYear?: number | null | undefined;
@@ -7241,14 +7257,21 @@ export type JobPositionsQuery = { jobPositions: Array<{ id: string, status: Enti
 export type HeadcountQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type HeadcountQuery = { headcount: { activeTotal: number, driverTotal: number, terminated: number, byFleet: Array<{ key: string, label: string, code: string, color: string, workers: number, drivers: number, terminated: number }>, byPosition: Array<{ key: string, label: string, code: string, color: string, workers: number, drivers: number, terminated: number }>, byDepartment: Array<{ key: string, label: string, code: string, color: string, workers: number, drivers: number, terminated: number }> } };
+export type HeadcountQuery = { headcount: { activeTotal: number, driverTotal: number, terminated: number, staffTotal: number, byFleet: Array<{ key: string, label: string, code: string, color: string, workers: number, drivers: number, terminated: number, staff: number }>, byPosition: Array<{ key: string, label: string, code: string, color: string, workers: number, drivers: number, terminated: number, staff: number }>, byDepartment: Array<{ key: string, label: string, code: string, color: string, workers: number, drivers: number, terminated: number, staff: number }> } };
+
+export type JobPositionHoldersQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type JobPositionHoldersQuery = { jobPositionHolders: Array<{ kind: PositionHolderKind, id: string, name: string, status: string, detail: string }> };
 
 export type MyTeamQueryVariables = Exact<{
   includeInactive?: boolean | null | undefined;
 }>;
 
 
-export type MyTeamQuery = { myTeam: Array<{ workerId: string, name: string, status: string, fleetCodeId: string | null, fleetCode: string, fleetColor: string, positionId: string | null, positionTitle: string, direct: boolean, complianceStatus: string, trainingHealth: string, safetyRating: string, hireDate: number, terminationDate: number | null }> };
+export type MyTeamQuery = { myTeam: Array<{ workerId: string, name: string, status: string, fleetCodeId: string | null, fleetCode: string, fleetColor: string, positionId: string | null, positionTitle: string, direct: boolean, managerId: string | null, complianceStatus: string, trainingHealth: string, safetyRating: string, hireDate: number, terminationDate: number | null }> };
 
 export type ApprovalDelegationsQueryVariables = Exact<{
   delegatorId?: string | number | null | undefined;
@@ -7258,6 +7281,22 @@ export type ApprovalDelegationsQueryVariables = Exact<{
 
 
 export type ApprovalDelegationsQuery = { approvalDelegations: Array<{ id: string, delegatorId: string, delegateId: string, scope: ApprovalScope, startsAt: number, endsAt: number | null, reason: string | null, revokedAt: number | null, version: number, delegator: { id: string, name: string } | null, delegate: { id: string, name: string } | null }> };
+
+export type AssignWorkerPositionMutationVariables = Exact<{
+  workerId: string | number;
+  positionId?: string | number | null | undefined;
+}>;
+
+
+export type AssignWorkerPositionMutation = { assignWorkerPosition: boolean };
+
+export type AssignUserPositionMutationVariables = Exact<{
+  userId: string | number;
+  positionId?: string | number | null | undefined;
+}>;
+
+
+export type AssignUserPositionMutation = { assignUserPosition: boolean };
 
 export type CreateJobPositionMutationVariables = Exact<{
   input: JobPositionInput;
@@ -8675,6 +8714,14 @@ export type OpenTimeClockEntryQueryVariables = Exact<{
 
 export type OpenTimeClockEntryQuery = { openTimeClockEntry: { id: string, workerId: string, clockedInAt: number, source: TimeEntrySource, note: string | null } | null };
 
+export type OpenTimeClockEntriesQueryVariables = Exact<{
+  teamOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type OpenTimeClockEntriesQuery = { openTimeClockEntries: Array<{ id: string, workerId: string, source: TimeEntrySource, clockedInAt: number, breakMinutes: number, note: string | null, worker: { id: string, firstName: string, lastName: string, profilePicUrl: string, fleetCode: { id: string, code: string, color: string } | null } | null }> };
+
 export type TimeClockEntriesQueryVariables = Exact<{
   workerId: string | number;
   from?: number | null | undefined;
@@ -9170,7 +9217,7 @@ export type RecordWorkerEmploymentEventMutationVariables = Exact<{
 }>;
 
 
-export type RecordWorkerEmploymentEventMutation = { recordWorkerEmploymentEvent: { event: { ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } }, cascade: { ptoAssignmentEnded: boolean, payAssignmentEnded: boolean, upcomingPtoCancelled: number, defaultPolicyApplied: boolean, checklistStarted: boolean, ptoPaidOutDays: string, ptoForfeitedDays: string, trainingAssigned: number, portalAccessRevoked: boolean, portalRevocationError: string } } };
+export type RecordWorkerEmploymentEventMutation = { recordWorkerEmploymentEvent: { event: { ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } }, cascade: { ptoAssignmentEnded: boolean, payAssignmentEnded: boolean, upcomingPtoCancelled: number, defaultPolicyApplied: boolean, checklistStarted: boolean, checklistsClosed: number, ptoPaidOutDays: string, ptoForfeitedDays: string, trainingAssigned: number, portalAccessRevoked: boolean, portalRevocationError: string } } };
 
 export type AmendWorkerEmploymentEventMutationVariables = Exact<{
   input: AmendWorkerEmploymentEventInput;
@@ -9191,7 +9238,12 @@ export type OshaLogQueryVariables = Exact<{
 }>;
 
 
-export type OshaLogQuery = { oshaLog: { year: number, postFrom: number, postThrough: number, totalRecordableIncidentRate: number | null, daysAwayRestrictedRate: number | null, totals: { deaths: number, daysAwayCases: number, jobTransferCases: number, otherRecordableCases: number, totalRecordableCases: number, totalDaysAway: number, totalDaysRestricted: number, injuryCount: number, skinDisorderCount: number, respiratoryCount: number, poisoningCount: number, hearingLossCount: number, otherIllnessCount: number, openCases: number }, summary: { id: string, year: number, status: OshaSummaryStatus, naicsCode: string | null, averageEmployees: number, totalHoursWorked: number, executiveName: string | null, executiveTitle: string | null, executivePhone: string | null, certifiedAt: number | null, postedFrom: number | null, postedThrough: number | null, submittedAt: number | null, submissionReference: string | null, notes: string | null, version: number } | null, cases: Array<{ id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, logName: string, location: string | null, description: string, bodyPart: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, claimStatus: WorkersCompClaimStatus, version: number }> } };
+export type OshaLogQuery = { oshaLog: { year: number, postFrom: number, postThrough: number, totalRecordableIncidentRate: number | null, daysAwayRestrictedRate: number | null, totals: { deaths: number, daysAwayCases: number, jobTransferCases: number, otherRecordableCases: number, totalRecordableCases: number, totalDaysAway: number, totalDaysRestricted: number, injuryCount: number, skinDisorderCount: number, respiratoryCount: number, poisoningCount: number, hearingLossCount: number, otherIllnessCount: number, openCases: number }, summary: { id: string, year: number, status: OshaSummaryStatus, naicsCode: string | null, averageEmployees: number, totalHoursWorked: number, executiveName: string | null, executiveTitle: string | null, executivePhone: string | null, certifiedAt: number | null, postedFrom: number | null, postedThrough: number | null, submittedAt: number | null, submissionReference: string | null, notes: string | null, version: number } | null, cases: Array<{ id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, reportedAt: number | null, returnedToWorkAt: number | null, logName: string, location: string | null, description: string, bodyPart: string | null, harmfulAgent: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, claimStatus: WorkersCompClaimStatus, claimNumber: string | null, claimCarrier: string | null, claimFiledAt: number | null, claimClosedAt: number | null, safetyEventId: string | null, documentId: string | null, notes: string | null, version: number, worker: { id: string, firstName: string, lastName: string, profilePicUrl: string } | null }> } };
+
+export type OshaSummariesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OshaSummariesQuery = { oshaSummaries: Array<{ id: string, year: number, status: OshaSummaryStatus, certifiedAt: number | null, submittedAt: number | null, version: number }> };
 
 export type RecordWorkerInjuryMutationVariables = Exact<{
   input: RecordWorkerInjuryInput;
@@ -14590,6 +14642,7 @@ export const RecentActivityDocument = {"__meta__":{"kind":"query","name":"Recent
 export const AuditLogTableDocument = {"__meta__":{"kind":"query","name":"AuditLogTable","hash":"sha256:25bcb0e024c30d7999751de7b49eaab0773e668bf4ae7c845b79d54c634acd55"}} as unknown as TypedDocumentString<AuditLogTableQuery, AuditLogTableQueryVariables>;
 export const BenefitPlansDocument = {"__meta__":{"kind":"query","name":"BenefitPlans","hash":"sha256:2567ccf7c3576f87385f4b57db408918a0a5b33b31eb1018cd5405f4e4e76c2a"}} as unknown as TypedDocumentString<BenefitPlansQuery, BenefitPlansQueryVariables>;
 export const WorkerBenefitEnrollmentsDocument = {"__meta__":{"kind":"query","name":"WorkerBenefitEnrollments","hash":"sha256:59102c2ac200a90ce1c1994ab3745c81b199b3dea70ba5dfd55b0c57e530e8f4"}} as unknown as TypedDocumentString<WorkerBenefitEnrollmentsQuery, WorkerBenefitEnrollmentsQueryVariables>;
+export const BenefitEnrollmentsDocument = {"__meta__":{"kind":"query","name":"BenefitEnrollments","hash":"sha256:76e1d395564d801bd963846ad035ca701d7b748b6f51c2205081f2f469937707"}} as unknown as TypedDocumentString<BenefitEnrollmentsQuery, BenefitEnrollmentsQueryVariables>;
 export const BenefitCostsDocument = {"__meta__":{"kind":"query","name":"BenefitCosts","hash":"sha256:3d4ae7ffd3d6ed029c7c0f5fc2b9c949ee8e309121001a0afab537fe505920ed"}} as unknown as TypedDocumentString<BenefitCostsQuery, BenefitCostsQueryVariables>;
 export const WorkerTotalCompensationDocument = {"__meta__":{"kind":"query","name":"WorkerTotalCompensation","hash":"sha256:3c03c3ffb6dfcefc0f694cfa7adc42d81766d9d8426078de4586ce1401b4d82e"}} as unknown as TypedDocumentString<WorkerTotalCompensationQuery, WorkerTotalCompensationQueryVariables>;
 export const MyTotalCompensationDocument = {"__meta__":{"kind":"query","name":"MyTotalCompensation","hash":"sha256:b0992f04068d95517dd04872f28d0f213e2a05d2539eb01f840b57e36661e18e"}} as unknown as TypedDocumentString<MyTotalCompensationQuery, MyTotalCompensationQueryVariables>;
@@ -14901,9 +14954,12 @@ export const CreateOrgHolidayDocument = {"__meta__":{"kind":"mutation","name":"C
 export const UpdateOrgHolidayDocument = {"__meta__":{"kind":"mutation","name":"UpdateOrgHoliday","hash":"sha256:66bf22b62518d8ed2465729f42928f3500a72588e2c43587571d24e08ad21cd9"}} as unknown as TypedDocumentString<UpdateOrgHolidayMutation, UpdateOrgHolidayMutationVariables>;
 export const DeleteOrgHolidayDocument = {"__meta__":{"kind":"mutation","name":"DeleteOrgHoliday","hash":"sha256:77755adf35c13425eb649644016f482b87682416ff74ad6ba740b9e8f4d366c6"}} as unknown as TypedDocumentString<DeleteOrgHolidayMutation, DeleteOrgHolidayMutationVariables>;
 export const JobPositionsDocument = {"__meta__":{"kind":"query","name":"JobPositions","hash":"sha256:297d7dc041761e5f52aa7576b606ee11dce20d05a8e70eb8e9040485c0b347cc"}} as unknown as TypedDocumentString<JobPositionsQuery, JobPositionsQueryVariables>;
-export const HeadcountDocument = {"__meta__":{"kind":"query","name":"Headcount","hash":"sha256:9bd9697a292029501e37d7cd2b1c4c643584359467389a7b2f587c02ad22fd52"}} as unknown as TypedDocumentString<HeadcountQuery, HeadcountQueryVariables>;
-export const MyTeamDocument = {"__meta__":{"kind":"query","name":"MyTeam","hash":"sha256:bd02032ee04eef79ba916e98c3e3a4f65fbdb983e1e30efd8601ae4cb289a90a"}} as unknown as TypedDocumentString<MyTeamQuery, MyTeamQueryVariables>;
+export const HeadcountDocument = {"__meta__":{"kind":"query","name":"Headcount","hash":"sha256:a465fd40460ccbc7d4a412a1e0d3f78101d54f436d31b3e6b512a52abaf478e8"}} as unknown as TypedDocumentString<HeadcountQuery, HeadcountQueryVariables>;
+export const JobPositionHoldersDocument = {"__meta__":{"kind":"query","name":"JobPositionHolders","hash":"sha256:52015b6b422ba0f5f168cd2a5deb4df591bb631ab002d3cf65c7f4c737f2361c"}} as unknown as TypedDocumentString<JobPositionHoldersQuery, JobPositionHoldersQueryVariables>;
+export const MyTeamDocument = {"__meta__":{"kind":"query","name":"MyTeam","hash":"sha256:98848b2d79664809fa2139d3037d6cacb86c588cf11ee5ad303fd919f6e47c9a"}} as unknown as TypedDocumentString<MyTeamQuery, MyTeamQueryVariables>;
 export const ApprovalDelegationsDocument = {"__meta__":{"kind":"query","name":"ApprovalDelegations","hash":"sha256:904abb7b074d030255e95e0961b43262bc441bb4025ac4acaf8dfd7c696f5ed4"}} as unknown as TypedDocumentString<ApprovalDelegationsQuery, ApprovalDelegationsQueryVariables>;
+export const AssignWorkerPositionDocument = {"__meta__":{"kind":"mutation","name":"AssignWorkerPosition","hash":"sha256:522e27140eb4575c291273126ab4bc35cea904416f0f592f66a09e56d51f3694"}} as unknown as TypedDocumentString<AssignWorkerPositionMutation, AssignWorkerPositionMutationVariables>;
+export const AssignUserPositionDocument = {"__meta__":{"kind":"mutation","name":"AssignUserPosition","hash":"sha256:f5275f25d13601ad7e7222ccacde02928b055315eb169b02de357eb43cdbc965"}} as unknown as TypedDocumentString<AssignUserPositionMutation, AssignUserPositionMutationVariables>;
 export const CreateJobPositionDocument = {"__meta__":{"kind":"mutation","name":"CreateJobPosition","hash":"sha256:ea76cbe061c46ef447cb9a471bca62fae67aed5262380d631370a035b6d49ffa"}} as unknown as TypedDocumentString<CreateJobPositionMutation, CreateJobPositionMutationVariables>;
 export const UpdateJobPositionDocument = {"__meta__":{"kind":"mutation","name":"UpdateJobPosition","hash":"sha256:72d0dd1e3604bbd3563c7ce4d292b7291f4b46d4b06b324b4268671d1e3e7dda"}} as unknown as TypedDocumentString<UpdateJobPositionMutation, UpdateJobPositionMutationVariables>;
 export const DelegateApprovalDocument = {"__meta__":{"kind":"mutation","name":"DelegateApproval","hash":"sha256:93460a1c55714740ee8c7f8b74b8479a9c2341f6d6b489187a7721b71ae30e56"}} as unknown as TypedDocumentString<DelegateApprovalMutation, DelegateApprovalMutationVariables>;
@@ -15077,6 +15133,7 @@ export const LiveTenderByMoveDocument = {"__meta__":{"kind":"query","name":"Live
 export const TimesheetsDocument = {"__meta__":{"kind":"query","name":"Timesheets","hash":"sha256:1a3d62286efe8793991946101a825bae461f64101f9b2d0b37973d5e228493e0"}} as unknown as TypedDocumentString<TimesheetsQuery, TimesheetsQueryVariables>;
 export const TimesheetDocument = {"__meta__":{"kind":"query","name":"Timesheet","hash":"sha256:12711c2b971babc2942d764b5117b49c3a678cc51c7e642fc8b9affe70bb320b"}} as unknown as TypedDocumentString<TimesheetQuery, TimesheetQueryVariables>;
 export const OpenTimeClockEntryDocument = {"__meta__":{"kind":"query","name":"OpenTimeClockEntry","hash":"sha256:1272e13c5df6e922bb9654c8b1c49a45e7dc60e640b9d7246ab34285c1882fc4"}} as unknown as TypedDocumentString<OpenTimeClockEntryQuery, OpenTimeClockEntryQueryVariables>;
+export const OpenTimeClockEntriesDocument = {"__meta__":{"kind":"query","name":"OpenTimeClockEntries","hash":"sha256:98cc8429a287bb408dc0b19de2fd3f19191c70cf94b5b28aa012618153446cca"}} as unknown as TypedDocumentString<OpenTimeClockEntriesQuery, OpenTimeClockEntriesQueryVariables>;
 export const TimeClockEntriesDocument = {"__meta__":{"kind":"query","name":"TimeClockEntries","hash":"sha256:0f6d1c017299bf302802a64bf4f95a82176d6fe82dfb004c973abfd959402084"}} as unknown as TypedDocumentString<TimeClockEntriesQuery, TimeClockEntriesQueryVariables>;
 export const PayrollExportsDocument = {"__meta__":{"kind":"query","name":"PayrollExports","hash":"sha256:b5858725b15914817f0c75820ddbaab0fb39595b887b6d4c3e927a0265dc46b4"}} as unknown as TypedDocumentString<PayrollExportsQuery, PayrollExportsQueryVariables>;
 export const PayrollExportRowsDocument = {"__meta__":{"kind":"query","name":"PayrollExportRows","hash":"sha256:aff11886ac35bfb8c18224f9e7af7325515fb7c7b15cd7ea5802afa38de499e7"}} as unknown as TypedDocumentString<PayrollExportRowsQuery, PayrollExportRowsQueryVariables>;
@@ -15141,10 +15198,11 @@ export const FinalizeDotRandomDrawDocument = {"__meta__":{"kind":"mutation","nam
 export const CancelDotRandomDrawDocument = {"__meta__":{"kind":"mutation","name":"CancelDotRandomDraw","hash":"sha256:3873a5e97d88cd556b9383195485e502cd198d41b034e3945703f12e99531539"}} as unknown as TypedDocumentString<CancelDotRandomDrawMutation, CancelDotRandomDrawMutationVariables>;
 export const UpdateDotRandomDrawEntryDocument = {"__meta__":{"kind":"mutation","name":"UpdateDotRandomDrawEntry","hash":"sha256:257f8030a8c6d044ebb9e30aafca59e3908310484dcfb2e09e7fe471a8da063b"}} as unknown as TypedDocumentString<UpdateDotRandomDrawEntryMutation, UpdateDotRandomDrawEntryMutationVariables>;
 export const WorkerEmploymentEventsDocument = {"__meta__":{"kind":"query","name":"WorkerEmploymentEvents","hash":"sha256:d8403e85963f946f041a760e19e39811a4913e1fecd0a6a7629c92353724d41f"}} as unknown as TypedDocumentString<WorkerEmploymentEventsQuery, WorkerEmploymentEventsQueryVariables>;
-export const RecordWorkerEmploymentEventDocument = {"__meta__":{"kind":"mutation","name":"RecordWorkerEmploymentEvent","hash":"sha256:eeb6c000e56ded89f751eecb1c9eb4ec62ff45a0079a91fddb0127dd91b59a35"}} as unknown as TypedDocumentString<RecordWorkerEmploymentEventMutation, RecordWorkerEmploymentEventMutationVariables>;
+export const RecordWorkerEmploymentEventDocument = {"__meta__":{"kind":"mutation","name":"RecordWorkerEmploymentEvent","hash":"sha256:a1934f179b72af6cceeff8c4541137566522d253469ab84624083777d163d8c1"}} as unknown as TypedDocumentString<RecordWorkerEmploymentEventMutation, RecordWorkerEmploymentEventMutationVariables>;
 export const AmendWorkerEmploymentEventDocument = {"__meta__":{"kind":"mutation","name":"AmendWorkerEmploymentEvent","hash":"sha256:99e58a22719473b054e5a4591d2553caf4e1191e1b69bc77f6ea0683bd81edbf"}} as unknown as TypedDocumentString<AmendWorkerEmploymentEventMutation, AmendWorkerEmploymentEventMutationVariables>;
 export const WorkerInjuriesDocument = {"__meta__":{"kind":"query","name":"WorkerInjuries","hash":"sha256:28de1e1adc4c00d369501b49ab3033fa8cb7e9511b87b423743f05b9b865b817"}} as unknown as TypedDocumentString<WorkerInjuriesQuery, WorkerInjuriesQueryVariables>;
-export const OshaLogDocument = {"__meta__":{"kind":"query","name":"OshaLog","hash":"sha256:b34b4d7d963e620b46d6eab58c5fec48224bd198fcb645af72240ad16d853361"}} as unknown as TypedDocumentString<OshaLogQuery, OshaLogQueryVariables>;
+export const OshaLogDocument = {"__meta__":{"kind":"query","name":"OshaLog","hash":"sha256:002d71fed8f001b6015722e5c3a3c34ac0766cb7d16e5e9bba09c053c4e95acb"}} as unknown as TypedDocumentString<OshaLogQuery, OshaLogQueryVariables>;
+export const OshaSummariesDocument = {"__meta__":{"kind":"query","name":"OshaSummaries","hash":"sha256:21dde6660c05c8cb697843a8247948a9cf17f369acd8981b36f1c273ca32793e"}} as unknown as TypedDocumentString<OshaSummariesQuery, OshaSummariesQueryVariables>;
 export const RecordWorkerInjuryDocument = {"__meta__":{"kind":"mutation","name":"RecordWorkerInjury","hash":"sha256:be687be20f7cc054ccf0b8427b5b8e7e66d48cc049c3b7dcc52eab7d58adc957"}} as unknown as TypedDocumentString<RecordWorkerInjuryMutation, RecordWorkerInjuryMutationVariables>;
 export const UpdateWorkerInjuryDocument = {"__meta__":{"kind":"mutation","name":"UpdateWorkerInjury","hash":"sha256:957e2cc1c02b08496d7cdd56241d790f0f1398283aa53ced6c0167b5743cb744"}} as unknown as TypedDocumentString<UpdateWorkerInjuryMutation, UpdateWorkerInjuryMutationVariables>;
 export const DeleteWorkerInjuryDocument = {"__meta__":{"kind":"mutation","name":"DeleteWorkerInjury","hash":"sha256:b080cba57322aaf61aa597b758c6f426370e78e0a4acc91e404531524d5f33e5"}} as unknown as TypedDocumentString<DeleteWorkerInjuryMutation, DeleteWorkerInjuryMutationVariables>;

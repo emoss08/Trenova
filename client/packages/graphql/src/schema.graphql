@@ -5998,6 +5998,10 @@ type Headcount {
   byFleet: [HeadcountRow!]!
   byPosition: [HeadcountRow!]!
   driverTotal: Int!
+  """
+  Active users holding a title in the organisation, counted apart from the roster.
+  """
+  staffTotal: Int!
   terminated: Int!
 }
 
@@ -6011,6 +6015,12 @@ type HeadcountRow {
   drivers: Int!
   key: String!
   label: String!
+  """
+  Users holding the title in this organisation. The front office is made of
+  people who log in rather than workers, and a chart that counted only
+  workers would show every desk empty.
+  """
+  staff: Int!
   terminated: Int!
   workers: Int!
 }
@@ -6976,6 +6986,16 @@ type Mutation {
   lapse. Returns what was assigned.
   """
   assignRequiredWorkerTraining(workerId: ID!): [WorkerTrainingRecord!]!
+  """
+  Puts a user on a front-office position through their membership in the
+  organisation, or takes them off one. A driving title is refused.
+  """
+  assignUserPosition(positionId: ID, userId: ID!): Boolean!
+  """
+  Puts a worker on a driving position, or takes them off one with no
+  position. A front-office title is refused: it is held by users.
+  """
+  assignWorkerPosition(positionId: ID, workerId: ID!): Boolean!
   assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload!
   assignWorkerShift(input: AssignShiftInput!): WorkerShiftAssignment!
   assignWorkerTraining(input: AssignWorkerTrainingInput!): WorkerTrainingRecord!
@@ -8855,6 +8875,25 @@ type PortalTraining {
   status: WorkerTrainingStatus
 }
 
+"""
+One person in a position. A driving title is held by a worker; a front-office
+title is held by a user through their membership in the organisation.
+"""
+type PositionHolder {
+  """The terminal for a worker, the email address for a user."""
+  detail: String!
+  id: ID!
+  kind: PositionHolderKind!
+  name: String!
+  status: String!
+}
+
+"""Which roster a position holder comes from."""
+enum PositionHolderKind {
+  User
+  Worker
+}
+
 input PostCustomerPaymentInput {
   accountingDate: Timestamp!
   amountMinor: Int!
@@ -8954,6 +8993,12 @@ type Query {
   auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
   benefitCosts(planYear: Int): [BenefitCostRow!]!
+  """
+  Enrollments across the organisation, newest first, with the worker and the
+  plan on each. It is what "who is on this plan" reads; a worker's own history
+  is read through workerBenefitEnrollments.
+  """
+  benefitEnrollments(limit: Int, openOnly: Boolean, planId: ID, statuses: [BenefitEnrollmentStatus!]): [WorkerBenefitEnrollment!]!
   benefitPlan(id: ID!): BenefitPlan!
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   cannedReports: [CannedReport!]!
@@ -9105,6 +9150,8 @@ type Query {
   invoice(id: ID!): Invoice
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   jobPosition(id: ID!): JobPosition!
+  """Everyone in a position from either roster, workers first."""
+  jobPositionHolders(id: ID!): [PositionHolder!]!
   jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
   journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
   journalEntry(id: ID!): JournalEntry
@@ -9218,6 +9265,11 @@ type Query {
   openDotTests: [WorkerDOTTest!]!
   """Count of open or in-review disputes for workspace badges."""
   openSettlementDisputeCount: Int!
+  """
+  Everyone on the clock right now, longest-running first. Narrowed to the
+  people a manager answers for when asked, the same way the queue is.
+  """
+  openTimeClockEntries(limit: Int, teamOnly: Boolean): [TimeClockEntry!]!
   """
   The punch a worker is currently on, or nothing. It is what the clock button reads.
   """
@@ -11001,6 +11053,7 @@ enum SelectOptionResource {
   FUEL_SURCHARGE_PROGRAM
   GL_ACCOUNT
   HAZARDOUS_MATERIAL
+  JOB_POSITION
   LOCATION
   LOCATION_CATEGORY
   ORDER
@@ -13327,6 +13380,12 @@ type TeamMember {
   fleetCodeId: ID
   fleetColor: String!
   hireDate: Timestamp!
+  """
+  The user the worker names as their manager. Beside the delegations the
+  signed-in user holds, it says whether somebody is on the team in the user's
+  own right or only while they are covering for that manager.
+  """
+  managerId: ID
   name: String!
   positionId: ID
   positionTitle: String!
@@ -14501,6 +14560,10 @@ type Worker {
   organization: Organization
   organizationId: ID!
   phoneNumber: String!
+  """
+  The driving title the worker holds; front-office titles are held by users.
+  """
+  positionId: ID
   postalCode: String!
   profile: WorkerProfile
   profilePicUrl: String!
@@ -15085,6 +15148,11 @@ type WorkerEdge {
 """What a status-changing event did beyond the worker row."""
 type WorkerEmploymentCascade {
   checklistStarted: Boolean!
+  """
+  Open checklists the event made moot and closed: an unfinished onboarding on
+  a termination, an unfinished offboarding on a hire or rehire.
+  """
+  checklistsClosed: Int!
   defaultPolicyApplied: Boolean!
   payAssignmentEnded: Boolean!
   """

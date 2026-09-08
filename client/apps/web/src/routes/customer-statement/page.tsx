@@ -1,5 +1,5 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,6 +19,15 @@ import {
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+
+const STATEMENT_COLUMNS = [
+  { label: "Date" },
+  { label: "Document" },
+  { label: "Description" },
+  { label: "Charges", numeric: true },
+  { label: "Payments", numeric: true },
+  { label: "Balance", numeric: true },
+] as const;
 
 function formatDate(unix: number): string {
   return formatUnixDateMedium(unix);
@@ -90,6 +99,11 @@ export function CustomerStatementPage() {
   const navigate = useNavigate();
   const [statementDate, setStatementDate] = useState("");
   const [startDate, setStartDate] = useState("");
+  const hasDateFilters = Boolean(statementDate || startDate);
+  const clearDateFilters = () => {
+    setStatementDate("");
+    setStartDate("");
+  };
 
   const queryOptions = useMemo(() => {
     const options: { startDate?: number; asOfDate?: number } = {};
@@ -199,6 +213,7 @@ export function CustomerStatementPage() {
               </label>
               <Input
                 type="date"
+                aria-label="Statement Date"
                 value={statementDate}
                 onChange={(e) => setStatementDate(e.target.value)}
                 className="h-8 w-[160px] text-xs"
@@ -210,6 +225,7 @@ export function CustomerStatementPage() {
               </label>
               <Input
                 type="date"
+                aria-label="Start Date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="h-8 w-[160px] text-xs"
@@ -289,14 +305,16 @@ export function CustomerStatementPage() {
             </h3>
           </div>
           {statement.transactions.length === 0 ? (
-            <div className="flex justify-center py-10">
-              <EmptyState
-                title="No transactions"
-                description="No transactions found for this period."
-                icons={[FileTextIcon]}
-                className="max-w-none border-none shadow-none"
-              />
-            </div>
+            <EmptyTable
+              title="Nothing in this period"
+              description={
+                hasDateFilters
+                  ? "No invoice, payment or credit touched this account between those dates. Widen the range, or clear it to see everything on record."
+                  : "No invoice, payment or credit has touched this account yet. The first one starts the statement."
+              }
+              columns={STATEMENT_COLUMNS}
+              onClearFilters={hasDateFilters ? clearDateFilters : undefined}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

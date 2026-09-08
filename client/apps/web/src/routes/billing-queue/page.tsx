@@ -1,7 +1,9 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { queries } from "@/lib/queries";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
+import { useHotkey } from "@tanstack/react-hotkeys";
+import { useQueryClient } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   Sheet,
   SheetContent,
@@ -9,8 +11,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@trenova/shared/components/ui/sheet";
-import { useHotkey } from "@tanstack/react-hotkeys";
-import { useQueryClient } from "@tanstack/react-query";
 import { createLoader, useQueryStates } from "nuqs";
 import { lazy, useCallback, useState } from "react";
 import { BillingQueueKPIStrip } from "./_components/billing-queue-kpi-strip";
@@ -121,6 +121,7 @@ export function BillingQueuePage() {
           title: "Billing Queue",
           description: "Review and approve shipments before invoicing",
         }}
+        className="gap-y-2 p-0"
         toolbar={
           <BillingQueueKPIStrip
             statusFilter={statusFilter}

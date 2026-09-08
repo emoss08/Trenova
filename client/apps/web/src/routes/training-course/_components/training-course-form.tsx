@@ -65,6 +65,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Name"
               placeholder="e.g. Defensive Driving"
               rules={{ required: true }}
+              description="Shown on the worker's training record and in Dash."
             />
           </FormControl>
           <FormControl>
@@ -74,6 +75,8 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Category"
               options={CATEGORY_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select a category"
+              description="Groups the course on worker records and in the course list."
             />
           </FormControl>
           <FormControl>
@@ -83,6 +86,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Status"
               options={statusChoices}
               rules={{ required: true }}
+              placeholder="Select a status"
               description={
                 isEdit && openRecordCount > 0
                   ? `${openRecordCount} worker${openRecordCount === 1 ? " has" : "s have"} this course open; finish or cancel those first to deactivate.`
@@ -97,6 +101,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Description"
               placeholder="What the course covers and the regulation behind it, if any"
               maxLength={1000}
+              description="Optional notes on the course content and why it is required."
             />
           </FormControl>
         </FormGroup>
@@ -115,6 +120,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Delivery"
               options={DELIVERY_OPTIONS}
               rules={{ required: true }}
+              placeholder="Select a delivery method"
               description={TRAINING_DELIVERY_HINTS[delivery]}
             />
           </FormControl>
@@ -125,6 +131,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Duration"
               sideText="min"
               min={0}
+              placeholder="60"
               description="Shown to the driver so they can plan for it."
             />
           </FormControl>
@@ -142,7 +149,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               }
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <InputField
               control={control}
               name="passingScore"
@@ -158,7 +165,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               }
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               control={control}
               name="requiresAcknowledgement"
@@ -206,6 +213,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               sideText="days"
               min={0}
               max={730}
+              placeholder="30"
               description="How long a worker has once the course is assigned. 0 = no due date."
             />
           </FormControl>
@@ -216,10 +224,11 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               label="Valid for"
               sideText="months"
               min={1}
+              placeholder="12"
               description="A completion lapses after this and a renewal is assigned. Leave empty for one-time courses."
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <NumberField
               control={control}
               name="renewalWindowDays"
@@ -227,6 +236,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               sideText="days"
               min={0}
               max={365}
+              placeholder="30"
               description="How far ahead of lapsing the driver and the office are reminded."
             />
           </FormControl>

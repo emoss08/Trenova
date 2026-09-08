@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PTOMonthCalendar } from "../pto-month-calendar";
 
@@ -37,8 +37,8 @@ vi.mock("../../pto-form-dialog", () => ({
   },
 }));
 
-vi.mock("../../requested/upcoming-pto-content", () => ({
-  UpcomingPTOContent: ({ pto }: { pto: { id: string } }) => <div>actions-for-{pto.id}</div>,
+vi.mock("../../pto-actions-menu", () => ({
+  PTOActionsMenu: ({ pto }: { pto: { id: string } }) => <div>actions-for-{pto.id}</div>,
 }));
 
 const local = (y: number, m: number, d: number) => new Date(y, m, d).getTime() / 1000;
@@ -74,6 +74,20 @@ const rows = [
   },
 ];
 
+const crowded = ["Ada", "Grace", "Linus", "Margaret", "Barbara"].map((firstName, index) => ({
+  id: `wrkpto_${index}`,
+  status: "Approved",
+  type: "Vacation",
+  startDate: local(2026, 2, 9),
+  endDate: local(2026, 2, 9 + index),
+  reason: "Trip",
+  worker: { firstName, lastName: "Worker" },
+}));
+
+function page(results: unknown[]) {
+  return { results, count: results.length, next: null, prev: null };
+}
+
 function renderCalendar(onMonthChange = vi.fn()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -82,6 +96,13 @@ function renderCalendar(onMonthChange = vi.fn()) {
     </QueryClientProvider>,
   );
   return { onMonthChange };
+}
+
+function currentMonthRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  return [start.getTime() / 1000, Math.floor(end.getTime() / 1000)] as const;
 }
 
 afterEach(() => {
@@ -93,7 +114,7 @@ afterEach(() => {
 
 describe("PTOMonthCalendar", () => {
   it("queries the month covered by the filters with the active filter values", async () => {
-    fetchUpcomingWorkerPTO.mockResolvedValue({ results: rows, count: 3, next: null, prev: null });
+    fetchUpcomingWorkerPTO.mockResolvedValue(page(rows));
     renderCalendar();
 
     await screen.findAllByTestId("pto-span-wrkpto_a");
@@ -112,7 +133,7 @@ describe("PTOMonthCalendar", () => {
   });
 
   it("renders approved and requested spans across week rows and hides decided-against ones", async () => {
-    fetchUpcomingWorkerPTO.mockResolvedValue({ results: rows, count: 3, next: null, prev: null });
+    fetchUpcomingWorkerPTO.mockResolvedValue(page(rows));
     renderCalendar();
 
     const spans = await screen.findAllByTestId("pto-span-wrkpto_a");
@@ -123,7 +144,7 @@ describe("PTOMonthCalendar", () => {
   });
 
   it("moves months from the arrows and the keyboard", async () => {
-    fetchUpcomingWorkerPTO.mockResolvedValue({ results: [], count: 0, next: null, prev: null });
+    fetchUpcomingWorkerPTO.mockResolvedValue(page([]));
     const { onMonthChange } = renderCalendar();
 
     fireEvent.click(await screen.findByRole("button", { name: "Next month" }));
@@ -133,13 +154,27 @@ describe("PTOMonthCalendar", () => {
     expect(onMonthChange).toHaveBeenLastCalledWith(local(2026, 1, 1), local(2026, 1, 28) + 86_399);
   });
 
+  it("jumps back to the current month from the Today button and the T key", async () => {
+    fetchUpcomingWorkerPTO.mockResolvedValue(page([]));
+    const { onMonthChange } = renderCalendar();
+    const [start, end] = currentMonthRange();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Today" }));
+    expect(onMonthChange).toHaveBeenLastCalledWith(start, end);
+
+    onMonthChange.mockClear();
+    fireEvent.keyDown(await screen.findByRole("grid"), { key: "t" });
+    expect(onMonthChange).toHaveBeenLastCalledWith(start, end);
+  });
+
   it("opens the request dialog prefilled with the dragged range", async () => {
-    fetchUpcomingWorkerPTO.mockResolvedValue({ results: [], count: 0, next: null, prev: null });
+    fetchUpcomingWorkerPTO.mockResolvedValue(page([]));
     renderCalendar();
 
     fireEvent.mouseDown(await screen.findByTestId("pto-day-2026-03-09"));
     fireEvent.mouseEnter(screen.getByTestId("pto-day-2026-03-11"));
     expect(screen.getByTestId("pto-day-2026-03-10")).toHaveAttribute("data-selected", "true");
+    expect(screen.getByTestId("pto-selection-pill")).toHaveTextContent("3 days");
     fireEvent.mouseUp(window);
 
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
@@ -150,12 +185,69 @@ describe("PTOMonthCalendar", () => {
   });
 
   it("does not start a selection without create permission", async () => {
-    fetchUpcomingWorkerPTO.mockResolvedValue({ results: [], count: 0, next: null, prev: null });
+    fetchUpcomingWorkerPTO.mockResolvedValue(page([]));
     permissionState.create = false;
     renderCalendar();
 
     fireEvent.mouseDown(await screen.findByTestId("pto-day-2026-03-09"));
     fireEvent.mouseUp(window);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("lets the legend hide a type without touching the server filter", async () => {
+    fetchUpcomingWorkerPTO.mockResolvedValue(page(rows));
+    renderCalendar();
+
+    await screen.findAllByTestId("pto-span-wrkpto_a");
+    const chip = screen.getByRole("button", { name: "Vacation" });
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByTestId("pto-span-wrkpto_a")).not.toBeInTheDocument();
+    expect(screen.getByTestId("pto-span-wrkpto_b")).toBeInTheDocument();
+    expect(fetchUpcomingWorkerPTO).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(chip);
+    expect(await screen.findAllByTestId("pto-span-wrkpto_a")).toHaveLength(2);
+  });
+
+  it("folds lanes past the cap into a per-day overflow chip that lists everyone out", async () => {
+    fetchUpcomingWorkerPTO.mockResolvedValue(page(crowded));
+    renderCalendar();
+
+    await screen.findByTestId("pto-span-wrkpto_4");
+    expect(screen.queryByTestId("pto-span-wrkpto_0")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("pto-span-wrkpto_1")).not.toBeInTheDocument();
+    const chip = screen.getByTestId("pto-overflow-2026-03-09");
+    expect(chip).toHaveTextContent("+2");
+    expect(screen.getByTestId("pto-overflow-2026-03-10")).toHaveTextContent("+1");
+    expect(screen.queryByTestId("pto-overflow-2026-03-11")).not.toBeInTheDocument();
+
+    fireEvent.click(chip);
+    const list = within(await screen.findByTestId("pto-day-list"));
+    expect(list.getByText("Ada Worker")).toBeInTheDocument();
+    expect(list.getByText("Barbara Worker")).toBeInTheDocument();
+    expect(list.getByText("actions-for-wrkpto_0")).toBeInTheDocument();
+  });
+
+  it("opens the span detail with the reason, the timing and the actions", async () => {
+    fetchUpcomingWorkerPTO.mockResolvedValue(page(rows));
+    renderCalendar();
+
+    const [span] = await screen.findAllByTestId("pto-span-wrkpto_a");
+    fireEvent.click(span);
+    expect(await screen.findByText("Beach")).toBeInTheDocument();
+    expect(screen.getByText("actions-for-wrkpto_a")).toBeInTheDocument();
+    expect(screen.getByText(/^Ended/)).toBeInTheDocument();
+  });
+
+  it("navigates to the month of a who's-out day when it is not on screen", async () => {
+    fetchUpcomingWorkerPTO.mockResolvedValue(page([]));
+    const { onMonthChange } = renderCalendar();
+    const [start, end] = currentMonthRange();
+
+    fireEvent.click(await screen.findByRole("button", { name: /^Today: / }));
+    expect(onMonthChange).toHaveBeenLastCalledWith(start, end);
   });
 });

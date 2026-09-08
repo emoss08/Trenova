@@ -11,9 +11,10 @@ import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Fuel, TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { FuelDashboardEmpty } from "./fuel-management-empty";
 
 const priceChartConfig = {
   price: {
@@ -47,7 +48,7 @@ function shortDate(priceDate: string) {
   });
 }
 
-export default function FuelDashboard() {
+export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () => void }) {
   const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.dashboard());
   const [selectedIndexId, setSelectedIndexId] = useState<string | null>(null);
   const [range, setRange] = useState<number>(26);
@@ -77,16 +78,14 @@ export default function FuelDashboard() {
 
   if (activeEntries.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-        <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-          <Fuel className="text-muted-foreground size-5" />
-        </div>
-        <p className="mt-3 text-sm font-medium">No fuel indices yet</p>
-        <p className="text-muted-foreground mt-1 max-w-md text-xs">
-          Enable the EIA Fuel Prices integration to auto-provision the DOE diesel indices and start
-          ingesting weekly prices, or create a custom index from the Fuel Indices tab.
-        </p>
-      </div>
+      <FuelDashboardEmpty
+        title="No fuel indices yet"
+        description={
+          "Enable the EIA Fuel Prices integration and the DOE diesel indices are provisioned and " +
+          "fed each week on their own, or create a custom index from the Fuel Indices tab."
+        }
+        onOpenIndices={onOpenIndices}
+      />
     );
   }
 

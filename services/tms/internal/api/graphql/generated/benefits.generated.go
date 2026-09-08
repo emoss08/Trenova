@@ -2231,6 +2231,42 @@ func (ec *executionContext) marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋem
 	return ec._WorkerBenefitEnrollment(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOBenefitEnrollmentStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdriverpayᚐBenefitEnrollmentStatusᚄ(ctx context.Context, v any) ([]driverpay.BenefitEnrollmentStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]driverpay.BenefitEnrollmentStatus, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdriverpayᚐBenefitEnrollmentStatus(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOBenefitEnrollmentStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdriverpayᚐBenefitEnrollmentStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []driverpay.BenefitEnrollmentStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdriverpayᚐBenefitEnrollmentStatus(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdriverpayᚐBenefitPlan(ctx context.Context, sel ast.SelectionSet, v *driverpay.BenefitPlan) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null

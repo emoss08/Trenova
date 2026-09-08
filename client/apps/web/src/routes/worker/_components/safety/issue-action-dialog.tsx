@@ -148,6 +148,8 @@ export function IssueActionDialog({
                   name="level"
                   label="Level"
                   options={LEVEL_OPTIONS}
+                  placeholder="Pick a level"
+                  description="Preset to the next rung from what is still active; choose another if the conduct warrants it."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -169,6 +171,7 @@ export function IssueActionDialog({
                   name="reason"
                   label="Reason"
                   placeholder="What the worker is being disciplined for"
+                  description="Sent to the driver in the notification and copied onto the timeline event for a suspension or termination."
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -179,6 +182,7 @@ export function IssueActionDialog({
                   name="details"
                   label="Details"
                   placeholder="Context, prior conversations, what happens next"
+                  description="Internal context kept on the action; it is not sent to the driver."
                   maxLength={4000}
                 />
               </FormControl>
@@ -187,7 +191,9 @@ export function IssueActionDialog({
                   <NumberField<IssueActionFormValues>
                     control={control}
                     name="suspensionDays"
+                    placeholder="e.g. 3"
                     label="Suspension length"
+                    description="How many days the driver is off duty for this suspension."
                     sideText="days"
                     min={1}
                     rules={{ required: true }}
@@ -200,6 +206,11 @@ export function IssueActionDialog({
                   name="expiresAt"
                   label="Rolls off"
                   placeholder={meta.endsEmployment ? "Never" : "One year from today"}
+                  description={
+                    meta.endsEmployment
+                      ? "A termination never rolls off the record."
+                      : "When it stops counting toward the next rung; leave blank for one year from today."
+                  }
                 />
               </FormControl>
               {movesEmployment ? (

@@ -1,4 +1,5 @@
 import AuditTab from "@/components/audit-tab";
+import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
 import {
   PlainInvoiceStatusBadge,
@@ -92,14 +93,11 @@ export default function InvoiceDetailPane({
 
   if (!selectedInvoiceId) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <EmptyState
-          title="No invoice selected"
-          description="Select an invoice to review the posted billing record, shipment references, and receivable details."
-          icons={[ReceiptTextIcon, FileTextIcon, PackageCheckIcon]}
-          className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
-        />
-      </div>
+      <BillingDetailUnselected
+        layout="tabs"
+        title="Nothing open"
+        description="Pick an invoice from the list to review its charges, documents and what has been sent or paid."
+      />
     );
   }
 

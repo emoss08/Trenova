@@ -123,7 +123,8 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
                   control={control}
                   name="note"
                   label="Note"
-                  placeholder="What happened instead"
+                  placeholder="e.g. Completed at the previous terminal"
+                  description="Kept on the item so an auditor can see why it was not done."
                   rules={{ required: true }}
                   maxLength={500}
                 />

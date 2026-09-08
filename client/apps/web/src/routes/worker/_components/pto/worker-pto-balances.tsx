@@ -1,4 +1,5 @@
 import { formatPtoDays } from "@trenova/shared/lib/pto";
+import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import { ptoTypeChoices } from "@/lib/choices";
 import {
@@ -104,7 +105,20 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">Balances</h3>
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold">Balances</h3>
+            <InfoPopover title="Balances">
+              <p>
+                Kept in days and built from the ledger: accruals post from the policy on its
+                schedule, approved time off draws down, adjustments correct by hand. Available is
+                the balance less requests still awaiting a decision.
+              </p>
+              <p>
+                A cap on the policy, or on the worker&apos;s tenure tier, stops accrual above it. A
+                policy marked informational shows the figures without holding requests to them.
+              </p>
+            </InfoPopover>
+          </div>
           <PolicyChip assignment={current} />
         </div>
         <div className="flex items-center gap-2">

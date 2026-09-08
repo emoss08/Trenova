@@ -519,6 +519,29 @@ func (ec *executionContext) fieldContext_Headcount_terminated(_ context.Context,
 	return graphql.NewScalarFieldContext("Headcount", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _Headcount_staffTotal(ctx context.Context, field graphql.CollectedField, obj *orgstructureservice.Headcount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Headcount_staffTotal(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StaffTotal, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Headcount_staffTotal(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Headcount", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _Headcount_byFleet(ctx context.Context, field graphql.CollectedField, obj *orgstructureservice.Headcount) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -773,6 +796,29 @@ func (ec *executionContext) _HeadcountRow_terminated(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_HeadcountRow_terminated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HeadcountRow", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HeadcountRow_staff(ctx context.Context, field graphql.CollectedField, obj *repositories.HeadcountRow) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HeadcountRow_staff(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Staff, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HeadcountRow_staff(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("HeadcountRow", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
@@ -1130,6 +1176,121 @@ func (ec *executionContext) fieldContext_JobPosition_updatedAt(_ context.Context
 	return graphql.NewScalarFieldContext("JobPosition", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
+func (ec *executionContext) _PositionHolder_kind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PositionHolder) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PositionHolder_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.PositionHolderKind) graphql.Marshaler {
+			return ec.marshalNPositionHolderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolderKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PositionHolder_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PositionHolder", field, false, false, errors.New("field of type PositionHolderKind does not have child fields"))
+}
+
+func (ec *executionContext) _PositionHolder_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PositionHolder) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PositionHolder_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PositionHolder_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PositionHolder", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _PositionHolder_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PositionHolder) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PositionHolder_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PositionHolder_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PositionHolder", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PositionHolder_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PositionHolder) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PositionHolder_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PositionHolder_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PositionHolder", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PositionHolder_detail(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PositionHolder) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PositionHolder_detail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Detail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PositionHolder_detail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PositionHolder", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _TeamMember_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TeamMember) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1335,6 +1496,29 @@ func (ec *executionContext) _TeamMember_direct(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_TeamMember_direct(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("TeamMember", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TeamMember_managerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TeamMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamMember_managerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ManagerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TeamMember_managerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamMember", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _TeamMember_complianceStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TeamMember) (ret graphql.Marshaler) {
@@ -1978,6 +2162,11 @@ func (ec *executionContext) _Headcount(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "staffTotal":
+			out.Values[i] = ec._Headcount_staffTotal(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "byFleet":
 			out.Values[i] = ec._Headcount_byFleet(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2058,6 +2247,11 @@ func (ec *executionContext) _HeadcountRow(ctx context.Context, sel ast.Selection
 			}
 		case "terminated":
 			out.Values[i] = ec._HeadcountRow_terminated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "staff":
+			out.Values[i] = ec._HeadcountRow_staff(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2223,6 +2417,64 @@ func (ec *executionContext) _JobPosition(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var positionHolderImplementors = []string{"PositionHolder"}
+
+func (ec *executionContext) _PositionHolder(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.PositionHolder) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, positionHolderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PositionHolder")
+		case "kind":
+			out.Values[i] = ec._PositionHolder_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._PositionHolder_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._PositionHolder_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._PositionHolder_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detail":
+			out.Values[i] = ec._PositionHolder_detail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var teamMemberImplementors = []string{"TeamMember"}
 
 func (ec *executionContext) _TeamMember(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.TeamMember) graphql.Marshaler {
@@ -2278,6 +2530,11 @@ func (ec *executionContext) _TeamMember(ctx context.Context, sel ast.SelectionSe
 		case "direct":
 			out.Values[i] = ec._TeamMember_direct(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "managerId":
+			out.Values[i] = ec._TeamMember_managerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		case "complianceStatus":
@@ -2454,6 +2711,42 @@ func (ec *executionContext) marshalNJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtren
 func (ec *executionContext) unmarshalNJobPositionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJobPositionInput(ctx context.Context, v any) (gqlmodel.JobPositionInput, error) {
 	res, err := ec.unmarshalInputJobPositionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPositionHolder2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolderᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.PositionHolder) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNPositionHolder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolder(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPositionHolder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolder(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.PositionHolder) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PositionHolder(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPositionHolderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolderKind(ctx context.Context, v any) (gqlmodel.PositionHolderKind, error) {
+	var res gqlmodel.PositionHolderKind
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPositionHolderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolderKind(ctx context.Context, sel ast.SelectionSet, v gqlmodel.PositionHolderKind) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNTeamMember2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTeamMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.TeamMember) graphql.Marshaler {

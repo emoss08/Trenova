@@ -127,8 +127,10 @@ export function AdjustBalanceDialog({
                   control={control}
                   name="ptoType"
                   label="PTO type"
+                  placeholder="Pick a PTO type"
                   options={ptoTypeChoices}
                   rules={{ required: true }}
+                  description="The balance this correction is posted to."
                 />
               </FormControl>
               <FormControl>
@@ -141,7 +143,7 @@ export function AdjustBalanceDialog({
                   description={
                     current
                       ? `Current ${current.balanceDays}${preview ? ` → ${preview}` : ""}`
-                      : undefined
+                      : "Days to add, or remove with a minus sign."
                   }
                 />
               </FormControl>
@@ -150,7 +152,9 @@ export function AdjustBalanceDialog({
                   control={control}
                   name="effectiveAt"
                   label="Effective date"
+                  placeholder="Today"
                   rules={{ required: true }}
+                  description="The date the ledger shows the correction taking effect."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -161,6 +165,7 @@ export function AdjustBalanceDialog({
                   placeholder="e.g. Credited 2 days for holiday worked"
                   rules={{ required: true }}
                   maxLength={255}
+                  description="Why the balance is being corrected; it stays on the ledger entry."
                 />
               </FormControl>
             </FormGroup>

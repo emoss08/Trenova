@@ -232,6 +232,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="kind"
                   label="What happened"
                   options={KIND_OPTIONS}
+                  placeholder="Pick an event type"
+                  description="Sets which fields apply and what the points suggestion starts from."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -241,6 +243,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="severity"
                   label="Severity"
                   options={SEVERITY_OPTIONS}
+                  placeholder="Pick a severity"
+                  description="Drives the suggested points; more severe events count for more on the scorecard."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -248,6 +252,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <AutoCompleteDateField<SafetyEventFormValues>
                   control={control}
                   name="occurredAt"
+                  placeholder="MM/DD/YYYY"
+                  description="Points roll off two years after this date, not after the date you record it."
                   label="When"
                   rules={{ required: true }}
                 />
@@ -258,6 +264,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="location"
                   label="Where"
                   placeholder="e.g. I-80 WB, Joliet IL"
+                  description="Where it happened, so the event can be matched to an inspection report or citation."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -266,6 +273,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="description"
                   label="What happened"
                   placeholder="Plain description of the event, as it would read in a file review"
+                  description="The narrative of the event as it will read in the driver's file and to an auditor."
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -279,6 +287,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                       name="inspectionResult"
                       label="Outcome"
                       options={RESULT_OPTIONS}
+                      placeholder="Pick an outcome"
+                      description="Only a failed or out-of-service inspection carries points; a clean one records none."
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -288,6 +298,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                       name="inspectionLevel"
                       label="Level"
                       options={LEVEL_OPTIONS}
+                      placeholder="Pick a level"
+                      description="The North American Standard inspection level from the report, 1 to 6."
                       isClearable
                     />
                   </FormControl>
@@ -311,6 +323,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <NumberField<SafetyEventFormValues>
                   control={control}
                   name="points"
+                  placeholder="e.g. 3"
                   label="Points"
                   min={0}
                   description={
@@ -326,6 +339,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="referenceNumber"
                   label="Reference"
                   placeholder="Citation or report number"
+                  description="The citation, report or claim number, so the event can be matched to its paperwork."
                 />
               </FormControl>
               <FormControl>
@@ -333,6 +347,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   control={control}
                   name="fineAmount"
                   label="Fine"
+                  description="Any fine assessed against the driver or the carrier for this event."
                   placeholder="0.00"
                   sideText="$"
                 />
@@ -342,6 +357,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   control={control}
                   name="costAmount"
                   label="Cost to the carrier"
+                  description="What the event cost the carrier in damage, towing, cargo or claims."
                   placeholder="0.00"
                   sideText="$"
                 />

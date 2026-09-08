@@ -1,3 +1,5 @@
+import { InfoPopover } from "@/components/info-popover";
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import type { DisciplinaryLadder, WorkerDisciplinaryActionRow } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -11,7 +13,7 @@ import {
   type DisciplinaryLevel,
   type DisciplinaryStatus,
 } from "@trenova/shared/types/worker-safety";
-import { GavelIcon, TriangleAlertIcon, UndoIcon } from "lucide-react";
+import { CheckIcon, GavelIcon, TriangleAlertIcon, UndoIcon } from "lucide-react";
 
 type DisciplineLadderProps = {
   ladder: DisciplinaryLadder;
@@ -25,6 +27,17 @@ type DisciplineLadderProps = {
 
 const LADDER: DisciplinaryLevel[] = disciplinaryLevelSchema.options;
 
+const STATUS_VARIANT: Record<DisciplinaryStatus, "warning" | "outline" | "inactive"> = {
+  Active: "warning",
+  Rescinded: "outline",
+  Expired: "inactive",
+};
+
+/**
+ * The ladder as six rungs. Rungs already climbed are filled, the next one is
+ * outlined, and the rest wait in the background — the same stepper the
+ * employment process uses, read as a warning rather than a journey.
+ */
 export function DisciplineLadder({
   ladder,
   actions,
@@ -38,28 +51,35 @@ export function DisciplineLadder({
     ? disciplinaryLevelMeta(ladder.highestLevel as DisciplinaryLevel).rank
     : 0;
   const suggestedRank = disciplinaryLevelMeta(ladder.suggestedLevel as DisciplinaryLevel).rank;
+  const nextLabel =
+    DISCIPLINARY_LEVEL_LABELS[ladder.suggestedLevel as DisciplinaryLevel] ?? ladder.suggestedLevel;
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold">Discipline</h3>
-          <p className="text-muted-foreground flex flex-wrap items-center gap-x-1 text-xs">
-            <span className="font-medium">
-              {`Next step: ${
-                DISCIPLINARY_LEVEL_LABELS[ladder.suggestedLevel as DisciplinaryLevel] ??
-                ladder.suggestedLevel
-              }`}
-            </span>
+          <div className="flex items-center gap-1.5">
+            <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+              Discipline
+            </h4>
+            <InfoPopover title="Discipline ladder">
+              Six rungs from coaching to termination. The next step is one rung above the highest
+              action still active, and drops back as actions expire or are rescinded. It is a
+              suggestion, not a rule: any rung can be issued, and a rung that ends employment is
+              flagged before it is.
+            </InfoPopover>
+          </div>
+          <p className="mt-0.5 text-xs">
+            <span className="font-medium">{`Next step: ${nextLabel}`}</span>
             {ladder.atFinalStep ? (
-              <span className="text-destructive">— this would end employment.</span>
+              <span className="text-destructive"> — this would end employment.</span>
             ) : null}
           </p>
         </div>
         {canIssue ? (
           <Button
             size="sm"
-            variant={ladder.atFinalStep ? "destructive" : "default"}
+            variant={ladder.atFinalStep ? "destructive" : "outline"}
             disabled={busy}
             onClick={onIssue}
           >
@@ -73,34 +93,54 @@ export function DisciplineLadder({
         ) : null}
       </div>
 
-      <ol className="flex flex-wrap items-center gap-1.5">
-        {LADDER.map((level) => {
+      <ol className="flex items-center gap-2 rounded-lg border px-4 py-3" aria-label="Ladder">
+        {LADDER.map((level, index) => {
           const meta = disciplinaryLevelMeta(level);
           const taken = meta.rank <= highestRank;
-          const isNext = meta.rank === suggestedRank;
+          const isNext = meta.rank === suggestedRank && !taken;
           return (
-            <li key={level}>
+            <li key={level} className="flex flex-1 items-center gap-2 last:flex-none">
               <span
-                className={cn(
-                  "flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]",
-                  taken && "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
-                  isNext && !taken && "border-primary text-primary border-dashed font-medium",
-                  !taken && !isNext && "text-muted-foreground border-dashed",
-                )}
+                className="flex items-center gap-1.5"
+                aria-current={isNext ? "step" : undefined}
               >
-                {DISCIPLINARY_LEVEL_LABELS[level]}
+                <span
+                  className={cn(
+                    "inline-flex size-5 items-center justify-center rounded-full border text-[10px] font-medium tabular-nums",
+                    taken && "border-primary bg-primary text-primary-foreground",
+                    isNext && "border-primary border-dashed",
+                    !taken && !isNext && "text-muted-foreground",
+                  )}
+                  aria-hidden
+                >
+                  {taken ? <CheckIcon className="size-3" /> : meta.rank}
+                </span>
+                <span
+                  className={cn(
+                    "hidden text-xs sm:inline",
+                    taken || isNext ? "font-medium" : "text-muted-foreground",
+                  )}
+                >
+                  {DISCIPLINARY_LEVEL_LABELS[level]}
+                </span>
               </span>
+              {index < LADDER.length - 1 ? (
+                <span
+                  className={cn("h-px flex-1", taken ? "bg-primary/40" : "bg-border")}
+                  aria-hidden
+                />
+              ) : null}
             </li>
           );
         })}
       </ol>
 
       {actions.length === 0 ? (
-        <p className="text-muted-foreground border-border rounded-lg border border-dashed px-3 py-4 text-center text-xs">
+        <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
           No disciplinary actions on record
         </p>
       ) : (
-        <ul className="divide-border border-border divide-y rounded-lg border">
+        <ul className="divide-border divide-y rounded-lg border">
           {actions.map((action) => {
             const meta = disciplinaryLevelMeta(action.level as DisciplinaryLevel);
             const status = action.status as DisciplinaryStatus;
@@ -108,29 +148,26 @@ export function DisciplineLadder({
               <li
                 key={action.id}
                 data-testid={`discipline-${action.id}`}
-                className="flex flex-wrap items-start gap-3 px-3 py-2.5"
+                className="flex items-start gap-3 px-3 py-2.5"
               >
+                <span
+                  className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-medium tabular-nums"
+                  aria-hidden
+                >
+                  {meta.rank}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-2 text-sm font-medium">
-                    <span className={meta.textClass}>{meta.label}</span>
-                    <Badge
-                      variant={
-                        status === "Active"
-                          ? "warning"
-                          : status === "Rescinded"
-                            ? "outline"
-                            : "inactive"
-                      }
-                      className="px-1.5 py-0 text-[10px]"
-                    >
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    {meta.label}
+                    <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
                       {DISCIPLINARY_STATUS_LABELS[status] ?? status}
                     </Badge>
                     {action.acknowledgedAt ? (
-                      <span className="text-muted-foreground text-[10px]">Acknowledged</span>
+                      <span className="text-2xs text-muted-foreground uppercase">Acknowledged</span>
                     ) : null}
                   </p>
                   <p className="text-xs">{action.reason}</p>
-                  <p className="text-muted-foreground text-[11px]">
+                  <p className="text-muted-foreground text-xs">
                     Issued {formatUnixDate(action.issuedAt)}
                     {action.issuedBy?.name ? ` by ${action.issuedBy.name}` : ""}
                     {action.expiresAt ? ` · rolls off ${formatUnixDate(action.expiresAt)}` : ""}
@@ -138,24 +175,26 @@ export function DisciplineLadder({
                     {action.rescindReason ? ` · rescinded: ${action.rescindReason}` : ""}
                   </p>
                   {action.workerComment ? (
-                    <p className="text-muted-foreground mt-1 text-[11px] italic">
-                      &ldquo;{action.workerComment}&rdquo;
-                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">“{action.workerComment}”</p>
                   ) : null}
                 </div>
-                {canRescind && status === "Active" ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-muted-foreground"
-                    disabled={busy}
-                    aria-label={`Rescind ${meta.label}`}
-                    onClick={() => onRescind(action)}
-                  >
-                    <UndoIcon className="size-3.5" />
-                    Rescind
-                  </Button>
-                ) : null}
+                <RowActionsMenu
+                  label={`Actions for ${meta.label}`}
+                  actions={
+                    canRescind && status === "Active"
+                      ? [
+                          {
+                            id: "rescind",
+                            label: `Rescind ${meta.label}`,
+                            icon: UndoIcon,
+                            disabled: busy,
+                            destructive: true,
+                            onSelect: () => onRescind(action),
+                          },
+                        ]
+                      : []
+                  }
+                />
               </li>
             );
           })}

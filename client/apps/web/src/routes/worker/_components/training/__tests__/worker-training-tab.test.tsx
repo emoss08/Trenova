@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkerTrainingTab from "../../worker-training-tab";
 
@@ -217,21 +218,27 @@ describe("WorkerTrainingTab", () => {
     expect(await screen.findByText("1/3")).toBeInTheDocument();
     expect(screen.getByText("Not qualified")).toBeInTheDocument();
 
+    const user = userEvent.setup();
     const hazmatCard = within(screen.getByTestId("training-slot-trnc_hazmat"));
     expect(hazmatCard.getByText("Overdue by 4 days")).toBeInTheDocument();
     expect(hazmatCard.getByText(/Acknowledged by the driver/)).toBeInTheDocument();
-    expect(hazmatCard.getByRole("button", { name: "Record result" })).toBeInTheDocument();
-    expect(hazmatCard.getByRole("button", { name: "Waive" })).toBeInTheDocument();
+    await user.click(hazmatCard.getByRole("button", { name: /^Actions for/ }));
+    expect(await screen.findByRole("menuitem", { name: "Record result" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Waive" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
 
     const hosCard = within(screen.getByTestId("training-slot-trnc_hos"));
     expect(hosCard.getByText("Not assigned")).toBeInTheDocument();
-    expect(hosCard.getByRole("button", { name: "Assign" })).toBeInTheDocument();
+    await user.click(hosCard.getByRole("button", { name: /^Actions for/ }));
+    expect(await screen.findByRole("menuitem", { name: "Assign" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
 
     const orientationCard = within(screen.getByTestId("training-slot-trnc_orient"));
     expect(orientationCard.getByText("Does not expire")).toBeInTheDocument();
-    expect(
-      orientationCard.queryByRole("button", { name: "Record result" }),
-    ).not.toBeInTheDocument();
+    await user.click(orientationCard.getByRole("button", { name: /^Actions for/ }));
+    expect(await screen.findByRole("menuitem", { name: "Assign" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Record result" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
 
     const slots = screen.getAllByTestId(/^training-slot-/);
     expect(slots[0]).toHaveAttribute("data-testid", "training-slot-trnc_orient");
@@ -262,11 +269,14 @@ describe("WorkerTrainingTab", () => {
     ]);
     renderTab();
 
+    const user = userEvent.setup();
     const hazmatCard = within(await screen.findByTestId("training-slot-trnc_hazmat"));
-    fireEvent.click(hazmatCard.getByRole("button", { name: "Record result" }));
+    await user.click(hazmatCard.getByRole("button", { name: /^Actions for/ }));
+    await user.click(await screen.findByRole("menuitem", { name: "Record result" }));
     expect(screen.getByTestId("complete-dialog")).toHaveTextContent("trnc_hazmat");
 
-    fireEvent.click(hazmatCard.getByRole("button", { name: "Waive" }));
+    await user.click(hazmatCard.getByRole("button", { name: /^Actions for/ }));
+    await user.click(await screen.findByRole("menuitem", { name: "Waive" }));
     expect(screen.getByTestId("waive-dialog")).toHaveTextContent("wtrn_hazmat");
 
     fireEvent.click(screen.getByRole("button", { name: /History \(2\)/ }));

@@ -135,4 +135,41 @@ describe("workerSchema", () => {
     expect(parsed.fleetCode?.code).toBe("EAST");
     expect(parsed.profile?.licenseState?.abbreviation).toBe("NJ");
   });
+
+  // REST marshals the whole Go struct, so a relation column the repository never
+  // selected arrives as its zero value rather than being absent.
+  it("accepts a state relation whose unselected columns arrive as zero values", () => {
+    const row = workerTableRow();
+    const result = workerSchema.safeParse({
+      ...row,
+      state: { ...row.state, countryName: "", countryIso3: "" },
+      profile: {
+        ...row.profile,
+        licenseState: { ...row.profile.licenseState, countryName: "", countryIso3: "" },
+      },
+    });
+
+    expect(result.error?.issues ?? []).toEqual([]);
+    expect(result.data?.state?.abbreviation).toBe("NJ");
+    expect(result.data?.state?.countryIso3).toBeUndefined();
+    expect(result.data?.profile?.licenseState?.countryIso3).toBeUndefined();
+  });
+
+  it("accepts a fleet code relation whose unselected columns arrive as zero values", () => {
+    const row = workerTableRow();
+    const result = workerSchema.safeParse({
+      ...row,
+      fleetCode: {
+        ...row.fleetCode,
+        organizationId: null,
+        businessUnitId: null,
+        status: "",
+        managerId: null,
+      },
+    });
+
+    expect(result.error?.issues ?? []).toEqual([]);
+    expect(result.data?.fleetCode?.code).toBe("EAST");
+    expect(result.data?.fleetCode?.status).toBeUndefined();
+  });
 });

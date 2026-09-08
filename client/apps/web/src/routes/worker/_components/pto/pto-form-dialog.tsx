@@ -323,6 +323,7 @@ export function PTOFormDialog({
                     rules={{ required: true }}
                     options={ptoTypeChoices}
                     placeholder="Select type"
+                    description="Decides which balance the days are taken from."
                   />
                 </FormControl>
                 <FormControl>
@@ -332,6 +333,7 @@ export function PTOFormDialog({
                     label="First day"
                     rules={{ required: true }}
                     placeholder="First day off"
+                    description="The first day off; weekends count only if the policy says so."
                   />
                 </FormControl>
                 <FormControl>
@@ -341,6 +343,7 @@ export function PTOFormDialog({
                     label="Last day"
                     rules={{ required: true }}
                     placeholder="Last day off"
+                    description="The last day off, counted inclusively."
                   />
                 </FormControl>
                 {hasDateRange ? (
@@ -360,8 +363,9 @@ export function PTOFormDialog({
                     name="reason"
                     label="Reason"
                     rules={{ required: true }}
-                    placeholder="Reason for the time off"
+                    placeholder="e.g. Family wedding"
                     maxLength={255}
+                    description="Seen by whoever reviews the request."
                   />
                 </FormControl>
               </FormGroup>

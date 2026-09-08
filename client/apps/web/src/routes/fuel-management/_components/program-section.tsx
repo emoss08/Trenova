@@ -19,9 +19,10 @@ import { fuelSurchargeMethodChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Fuel, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FuelProgramsEmpty } from "./fuel-management-empty";
 import { ProgramPanel } from "./program-panel";
 
 function methodLabel(method: string) {
@@ -77,20 +78,14 @@ export default function ProgramSection() {
           ))}
         </div>
       ) : !entries || entries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-            <Fuel className="text-muted-foreground size-5" />
-          </div>
-          <p className="mt-3 text-sm font-medium">No fuel surcharge programs</p>
-          <p className="text-muted-foreground mt-1 max-w-md text-xs">
-            Create a program with a peg price and increment, assign it to customers from their
-            billing profile, and fuel surcharges apply to shipments automatically.
-          </p>
-          <Button type="button" size="sm" onClick={openCreate} className="mt-4 gap-1.5">
-            <Plus className="size-3.5" />
-            Create Program
-          </Button>
-        </div>
+        <FuelProgramsEmpty
+          title="No programs yet"
+          description={
+            "Create a program with a peg price and increment, assign it to customers from their " +
+            "billing profile, and the fuel surcharge lands on their shipments on its own."
+          }
+          onCreate={openCreate}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {entries.map((entry) => (

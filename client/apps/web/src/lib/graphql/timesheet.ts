@@ -3,6 +3,7 @@ import {
   ClockOutDocument,
   DeleteTimeEntryDocument,
   GeneratePayrollExportDocument,
+  OpenTimeClockEntriesDocument,
   OpenTimeClockEntryDocument,
   PayrollExportRowsDocument,
   PayrollExportsDocument,
@@ -23,6 +24,8 @@ import {
   type GeneratePayrollExportInput,
   type GeneratePayrollExportMutation,
   type GeneratePayrollExportMutationVariables,
+  type OpenTimeClockEntriesQuery,
+  type OpenTimeClockEntriesQueryVariables,
   type OpenTimeClockEntryQuery,
   type OpenTimeClockEntryQueryVariables,
   type PayrollExportRowsQuery,
@@ -52,6 +55,8 @@ export type TimesheetRow = TimesheetsQuery["timesheets"][number];
 export type TimesheetDetail = TimesheetQuery["timesheet"];
 export type TimeEntryRow = NonNullable<TimesheetDetail["entries"]>[number];
 export type OpenTimeEntry = OpenTimeClockEntryQuery["openTimeClockEntry"];
+export type OpenTimeEntryRow = OpenTimeClockEntriesQuery["openTimeClockEntries"][number];
+export type TimeClockEntryRow = TimeClockEntriesQuery["timeClockEntries"][number];
 export type PayrollExportRow = PayrollExportsQuery["payrollExports"][number];
 export type PayrollExportLine = PayrollExportRowsQuery["payrollExportRows"][number];
 
@@ -59,6 +64,7 @@ export const TIMESHEETS_KEY = "timesheets";
 export const TIMESHEET_KEY = "timesheet";
 export const TIME_ENTRIES_KEY = "time-clock-entries";
 export const OPEN_ENTRY_KEY = "open-time-clock-entry";
+export const OPEN_ENTRIES_KEY = "open-time-clock-entries";
 export const PAYROLL_EXPORTS_KEY = "payroll-exports";
 
 export async function fetchTimesheets(
@@ -98,6 +104,19 @@ export async function fetchOpenTimeEntry(
     signal: options?.signal,
   });
   return data.openTimeClockEntry;
+}
+
+export async function fetchOpenTimeEntries(
+  args: { teamOnly?: boolean; limit?: number } = {},
+  options?: { signal?: AbortSignal },
+): Promise<OpenTimeEntryRow[]> {
+  const data = await requestGraphQL<OpenTimeClockEntriesQuery, OpenTimeClockEntriesQueryVariables>({
+    document: OpenTimeClockEntriesDocument,
+    operationName: "OpenTimeClockEntries",
+    variables: { teamOnly: args.teamOnly ?? null, limit: args.limit ?? null },
+    signal: options?.signal,
+  });
+  return data.openTimeClockEntries;
 }
 
 export async function fetchTimeClockEntries(

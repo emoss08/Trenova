@@ -245,6 +245,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="code"
                   label="Code"
                   placeholder="e.g. HANDBOOK"
+                  description="A short reference for the policy; it is stored in upper case."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -254,6 +255,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="title"
                   label="Title"
                   placeholder="e.g. Driver handbook"
+                  description="The name drivers see in their list of policies to read and sign."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -262,7 +264,8 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   control={control}
                   name="summary"
                   label="One-line summary"
-                  placeholder="What a driver sees before opening it"
+                  placeholder="e.g. Hours, conduct and equipment rules for every driver"
+                  description="Optional line a driver sees before opening the policy."
                 />
               </FormControl>
 
@@ -282,7 +285,8 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                     control={control}
                     name="body"
                     label="Policy text"
-                    placeholder="Short policies can be written here. Longer ones are better attached as a document."
+                    placeholder="e.g. Drivers must complete a pre-trip inspection before every dispatch..."
+                    description="The wording drivers read and sign; short policies fit here, longer ones are better attached as a document."
                     rows={6}
                   />
                 </FormControl>
@@ -394,7 +398,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   label="Version"
                   placeholder="e.g. 2026.1"
                   rules={{ required: true }}
-                  description="What a signature records."
+                  description="What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures."
                 />
               </FormControl>
               <FormControl>
@@ -403,8 +407,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="appliesTo"
                   label="Applies to"
                   options={AUDIENCE_OPTIONS}
+                  placeholder="Choose who it binds"
                   rules={{ required: true }}
-                  description="A handbook for employees is not a contract term for an owner-operator."
+                  description="Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator."
                 />
               </FormControl>
               <FormControl>
@@ -412,7 +417,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   control={control}
                   name="effectiveFrom"
                   label="Effective from"
+                  placeholder="e.g. Jan 1"
                   rules={{ required: true }}
+                  description="The day this version of the policy takes effect."
                 />
               </FormControl>
               <FormControl>
@@ -421,8 +428,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="status"
                   label="Status"
                   options={STATUS_OPTIONS}
+                  placeholder="Choose a status"
                   rules={{ required: true }}
-                  description="A retired policy is kept so old signatures still point at something."
+                  description="Only a policy in force can be signed; a retired one is kept so old signatures still point at something."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -430,7 +438,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   control={control}
                   name="requiresSignature"
                   label="Needs a signature"
-                  description="Off means drivers only confirm they have read it."
+                  description="On, drivers type their name to sign it; off means they only confirm they have read it."
                 />
               </FormControl>
             </FormGroup>

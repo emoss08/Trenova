@@ -1,4 +1,5 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useCannedReports, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { CircleAlertIcon } from "lucide-react";
@@ -44,6 +45,7 @@ export function ReportExplorePage() {
   const cannedKey = searchParams.get("canned") ?? undefined;
 
   const definition = useReportDefinition(definitionId);
+  useBreadcrumbLabel(definition.data?.name);
   const canned = useCannedReports(!definitionId && Boolean(cannedKey));
 
   if (definitionId) {

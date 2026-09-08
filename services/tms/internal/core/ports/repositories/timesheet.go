@@ -17,7 +17,11 @@ type ListTimeClockEntriesRequest struct {
 	From        int64    `json:"from"`
 	To          int64    `json:"to"`
 	OpenOnly    bool     `json:"openOnly"`
-	Limit       int      `json:"limit"`
+	// ManagerIDs narrows the list to the people a manager answers for, the
+	// same way the timesheet queue is narrowed.
+	ManagerIDs    []pulid.ID `json:"managerIds"`
+	IncludeWorker bool       `json:"includeWorker"`
+	Limit         int        `json:"limit"`
 }
 
 type GetTimeClockEntryByIDRequest struct {

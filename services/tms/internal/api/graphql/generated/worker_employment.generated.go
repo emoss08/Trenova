@@ -222,6 +222,29 @@ func (ec *executionContext) fieldContext_WorkerEmploymentCascade_checklistStarte
 	return graphql.NewScalarFieldContext("WorkerEmploymentCascade", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _WorkerEmploymentCascade_checklistsClosed(ctx context.Context, field graphql.CollectedField, obj *workeremploymentservice.CascadeSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkerEmploymentCascade_checklistsClosed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChecklistsClosed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkerEmploymentCascade_checklistsClosed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkerEmploymentCascade", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _WorkerEmploymentCascade_ptoPaidOutDays(ctx context.Context, field graphql.CollectedField, obj *workeremploymentservice.CascadeSummary) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1186,6 +1209,11 @@ func (ec *executionContext) _WorkerEmploymentCascade(ctx context.Context, sel as
 			}
 		case "checklistStarted":
 			out.Values[i] = ec._WorkerEmploymentCascade_checklistStarted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "checklistsClosed":
+			out.Values[i] = ec._WorkerEmploymentCascade_checklistsClosed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

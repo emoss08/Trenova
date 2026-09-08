@@ -1,4 +1,5 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useReportDashboard } from "@/hooks/use-reports";
 import { usePermission } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
@@ -10,6 +11,7 @@ import { DashboardView } from "./_components/dashboard-view";
 export function ReportDashboardPage() {
   const { dashboardId } = useParams<{ dashboardId: string }>();
   const dashboard = useReportDashboard(dashboardId);
+  useBreadcrumbLabel(dashboard.data?.name);
   const { allowed: canEdit } = usePermission(Resource.Report, Operation.Update);
 
   if (dashboard.isLoading) {

@@ -156,3 +156,16 @@ func TestChecklist_AutoSatisfyIgnoresExpiredCredentialAndFlipsPortalRuleForOffbo
 	require.Len(t, changed, 1)
 	assert.Equal(t, worker.ChecklistItemPortalAccess, changed[0].Kind)
 }
+
+func TestChecklistKindClosedByEvent(t *testing.T) {
+	kind, ok := worker.ChecklistKindClosedByEvent(worker.EmploymentEventTerminated)
+	require.True(t, ok)
+	assert.Equal(t, worker.ChecklistKindOnboarding, kind)
+
+	kind, ok = worker.ChecklistKindClosedByEvent(worker.EmploymentEventRehired)
+	require.True(t, ok)
+	assert.Equal(t, worker.ChecklistKindOffboarding, kind)
+
+	_, ok = worker.ChecklistKindClosedByEvent(worker.EmploymentEventPromoted)
+	assert.False(t, ok)
+}

@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/empty-state";
+import { InfoPopover } from "@/components/info-popover";
 import { KpiStat } from "@/components/kpi/kpi-stat";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -10,14 +10,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { policyAudienceLabel } from "@trenova/shared/lib/self-service";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   ArchiveIcon,
-  BookOpenTextIcon,
   FileSignatureIcon,
   FileTextIcon,
   PenLineIcon,
@@ -27,6 +25,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { PolicyComplianceDialog } from "./policy-compliance-dialog";
+import { PoliciesEmpty } from "./policies-empty";
+import { PolicyCardsSkeleton } from "./policies-skeleton";
 import { PolicyDialog } from "./policy-dialog";
 
 type Scope = "active" | "all";
@@ -82,12 +82,19 @@ export default function PoliciesConsole() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SegmentedControl<Scope>
-          items={SCOPE_ITEMS}
-          value={scope}
-          onValueChange={setScope}
-          aria-label="Which policies to show"
-        />
+        <div className="flex items-center gap-2">
+          <SegmentedControl<Scope>
+            items={SCOPE_ITEMS}
+            value={scope}
+            onValueChange={setScope}
+            aria-label="Which policies to show"
+          />
+          <InfoPopover title="Signatures">
+            A signature is pinned to the version label it was given for. Correcting the text under
+            the same label keeps every signature; publishing a new label asks everybody it applies
+            to to read and sign again from Dash.
+          </InfoPopover>
+        </div>
         {canCreate ? (
           <Button size="sm" onClick={() => setDialog({ policy: null })}>
             <PlusIcon className="size-3.5" />
@@ -97,26 +104,12 @@ export default function PoliciesConsole() {
       </div>
 
       {policies.isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Skeleton className="h-40 rounded-lg" />
-          <Skeleton className="h-40 rounded-lg" />
-          <Skeleton className="h-40 rounded-lg" />
-        </div>
+        <PolicyCardsSkeleton />
       ) : shown.length === 0 ? (
-        <EmptyState
-          className="max-w-none"
+        <PoliciesEmpty
           title={scope === "active" ? "Nothing in force" : "No policies yet"}
           description="Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash."
-          icons={[BookOpenTextIcon, FileSignatureIcon, UsersIcon]}
-          action={
-            canCreate
-              ? {
-                  label: "Publish a policy",
-                  icon: PlusIcon,
-                  onClick: () => setDialog({ policy: null }),
-                }
-              : undefined
-          }
+          onPublish={canCreate ? () => setDialog({ policy: null }) : undefined}
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

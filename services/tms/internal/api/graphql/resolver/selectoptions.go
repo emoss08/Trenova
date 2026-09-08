@@ -204,6 +204,9 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceWorkerPolicy: {
 			resolve: r.resolveWorkerPolicySelectOptions,
 		},
+		gqlmodel.SelectOptionResourceJobPosition: {
+			resolve: r.resolveJobPositionSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceFormulaTemplate: {
 			resolve: r.resolveFormulaTemplateSelectOptions,
 		},

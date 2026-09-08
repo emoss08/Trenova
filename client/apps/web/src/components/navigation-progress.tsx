@@ -6,8 +6,8 @@ const MAX_TRICKLE_PROGRESS = 0.94;
 const FIRST_TRICKLE_MS = 50;
 const TRICKLE_MIN_INTERVAL_MS = 140;
 const TRICKLE_JITTER_MS = 160;
-const COMPLETE_TRANSITION = "transform 150ms ease-out, opacity 200ms ease 100ms";
-const TRICKLE_TRANSITION = "transform 250ms ease-out";
+const COMPLETE_TRANSITION = "transform 200ms ease-out, opacity 320ms ease 160ms";
+const TRICKLE_TRANSITION = "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)";
 const RESET_DELAY_MS = 350;
 
 type LoaderPhase = "idle" | "loading" | "done";
@@ -75,9 +75,12 @@ export function NavigationProgress() {
   const isAtStart = phase === "loading" && progress === INITIAL_PROGRESS;
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-[3px] overflow-hidden"
+    >
       <div
-        className="bg-brand relative h-full will-change-transform"
+        className="relative h-full w-full overflow-hidden will-change-transform"
         style={{
           transform: `translateX(${(progress - 1) * 100}%)`,
           transition: isAtStart
@@ -88,10 +91,8 @@ export function NavigationProgress() {
           opacity: phase === "done" ? 0 : 1,
         }}
       >
-        <div
-          className="absolute -top-px right-0 h-1 w-24 rotate-2"
-          style={{ boxShadow: "0 0 10px var(--brand), 0 0 5px var(--brand)" }}
-        />
+        <div className="nav-progress-flow" />
+        <div className="nav-progress-sheen" />
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { fieldSensitivityChoices } from "@/lib/choices";
 import { getRole, updateRole } from "@/lib/role-api";
 import type { AddPermission, CreateRole, Role } from "@trenova/shared/types/role";
@@ -36,6 +37,7 @@ export function RoleEditPage() {
     queryFn: () => getRole(id!),
     enabled: !!id,
   });
+  useBreadcrumbLabel(role?.name);
 
   const form = useForm<CreateRole>({
     resolver: zodResolver(createRoleSchema),

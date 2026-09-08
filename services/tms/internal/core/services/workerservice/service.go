@@ -198,6 +198,8 @@ func (s *Service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
+	entity.UserID = pulid.Nil
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -320,6 +322,7 @@ func (s *Service) update(
 		}
 		entity.LeaveType = original.LeaveType
 	}
+	entity.UserID = original.UserID
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {

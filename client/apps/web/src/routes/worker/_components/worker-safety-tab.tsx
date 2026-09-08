@@ -142,10 +142,14 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
 
   if (scorecardQuery.isLoading || eventsQuery.isLoading || ladderQuery.isLoading) {
     return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-6 gap-3 sm:grid-cols-8">
+          <Skeleton className="col-span-2 h-24 rounded-md" />
+          <Skeleton className="col-span-2 h-24 rounded-md" />
+          <Skeleton className="col-span-2 h-24 rounded-md" />
+          <Skeleton className="col-span-2 h-24 rounded-md" />
+        </div>
+        <Skeleton className="h-40 w-full rounded-lg" />
       </div>
     );
   }
@@ -174,26 +178,26 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
         onRecognise={() => setDialog({ kind: "recognition" })}
       />
 
-      <section className="flex flex-col gap-2">
-        <div>
-          <h3 className="text-sm font-semibold">Events</h3>
-          <p className="text-muted-foreground text-xs">
-            Accidents, incidents, near misses, citations and roadside inspections. Open ones come
-            first.
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">Events</h4>
+          <p className="text-muted-foreground truncate text-xs">
+            Accidents, incidents, near misses, citations and inspections. Open ones first.
           </p>
         </div>
         {events.length === 0 ? (
-          <p className="text-muted-foreground border-border rounded-lg border border-dashed px-3 py-6 text-center text-xs">
+          <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-6 text-center text-xs">
             Nothing on record
           </p>
         ) : (
-          <div className="flex flex-col gap-3">
-            {events.map((event) => (
+          <ol className="animate-in fade-in-0 rounded-lg border p-4 duration-200">
+            {events.map((event, index) => (
               <SafetyEventRow
                 key={event.id}
                 event={event}
                 permissions={permissions}
                 busy={busy}
+                last={index === events.length - 1}
                 onEdit={(row) => setDialog({ kind: "event", event: row })}
                 onClose={(row) => setDialog({ kind: "close", event: row })}
                 onReview={(row) => review.mutate(row)}
@@ -202,7 +206,7 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
                 onDiscipline={(row) => setDialog({ kind: "action", safetyEventId: row.id })}
               />
             ))}
-          </div>
+          </ol>
         )}
       </section>
 

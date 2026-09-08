@@ -1,3 +1,4 @@
+import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
   deleteOrgHoliday,
@@ -168,6 +169,11 @@ export function HolidayCalendar() {
             {holidayCount} {holidayCount === 1 ? "holiday" : "holidays"} · {blackoutCount}{" "}
             {blackoutCount === 1 ? "blackout" : "blackouts"}
           </p>
+          <InfoPopover title="How the calendar is used">
+            A time-off request that crosses a blackout is refused outright. A holiday inside a
+            request is not charged against the balance, but only under a policy that does not count
+            weekends; a policy that charges every calendar day charges holidays too.
+          </InfoPopover>
         </div>
         <div className="flex items-center gap-3">
           <Legend />

@@ -13,6 +13,7 @@ import {
 } from "@/lib/graphql/scheduling";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -163,6 +164,14 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
             pair one shift with two assignments rather than two near-identical shifts.
           </DialogDescription>
         </DialogHeader>
+        {isEdit ? (
+          <Alert variant="warning">
+            <AlertDescription>
+              The rota is drawn from this pattern every time it is read, so changing the days, start
+              or length redraws every week for everyone assigned, past weeks included.
+            </AlertDescription>
+          </Alert>
+        ) : null}
         <FormProvider {...form}>
           <Form
             onSubmit={(submitEvent) => {
@@ -180,6 +189,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label="Code"
                     placeholder="e.g. DAY-A"
                     rules={{ required: true }}
+                    description="A short tag the board labels the shift with; it is stored in upper case."
                   />
                 </FormControl>
                 <FormControl>
@@ -189,6 +199,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label="Name"
                     placeholder="e.g. Weekday days"
                     rules={{ required: true }}
+                    description="The name dispatchers and drivers see on the rota and on assignments."
                   />
                 </FormControl>
 
@@ -250,7 +261,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label="Starts at"
                     type="time"
                     step={300}
+                    placeholder="06:00"
                     rules={{ required: true }}
+                    description="The clock time each working day begins; the finish is worked out from the length."
                   />
                 </FormControl>
                 <FormControl>
@@ -261,7 +274,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     step={0.25}
                     min={0.25}
                     max={24}
+                    placeholder="10"
                     rules={{ required: true }}
+                    description="How many hours each working day runs, in quarter-hour steps and at most a day."
                   />
                 </FormControl>
                 <FormControl>
@@ -271,8 +286,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label="Rotation (weeks)"
                     min={1}
                     max={8}
+                    placeholder="1"
                     rules={{ required: true }}
-                    description="1 works every week. 2 alternates, which is how an A/B pair is built."
+                    description="1 works every week; 2 alternates, which is how an A/B pair is built from one shift."
                   />
                 </FormControl>
                 <FormControl>
@@ -281,8 +297,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     name="status"
                     label="Status"
                     options={STATUS_OPTIONS}
+                    placeholder="Pick a status"
                     rules={{ required: true }}
-                    description="Retiring is refused while anybody is still on it."
+                    description="A retired shift cannot be assigned, and retiring is refused while anybody is still on it."
                   />
                 </FormControl>
                 <FormControl>
@@ -290,7 +307,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     control={control}
                     name="color"
                     label="Colour"
-                    description="How the shift reads on the board."
+                    description="Shown on the rota in this colour so the shift is recognisable at a glance."
                   />
                 </FormControl>
                 <FormControl cols="full">
@@ -298,7 +315,8 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     control={control}
                     name="description"
                     label="Description"
-                    placeholder="What this shift covers"
+                    placeholder="e.g. Overnight line-haul out of the Dallas yard"
+                    description="Notes for whoever schedules against the shift, such as what it covers or where it starts."
                   />
                 </FormControl>
               </FormGroup>

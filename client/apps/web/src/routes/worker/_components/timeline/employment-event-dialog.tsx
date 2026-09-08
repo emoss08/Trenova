@@ -100,6 +100,11 @@ export function describeCascade(cascade: EmploymentCascade): string {
     );
   }
   if (cascade.checklistStarted) parts.push("Started the matching checklist");
+  if (cascade.checklistsClosed > 0) {
+    parts.push(
+      `Closed ${cascade.checklistsClosed} checklist${cascade.checklistsClosed === 1 ? "" : "s"} the event made moot`,
+    );
+  }
   return parts.length > 0 ? parts.join(" · ") : "The timeline has been updated.";
 }
 
@@ -260,7 +265,8 @@ function RecordSheet({
                   name="effectiveAt"
                   label="Effective"
                   rules={{ required: true }}
-                  placeholder="Effective date"
+                  placeholder="Today"
+                  description="Moves the worker to the new state from this date; the change cannot be replayed by editing it later."
                 />
               </FormControl>
               {kind === "Transferred" ? (
@@ -322,6 +328,7 @@ function RecordSheet({
                       label="New rate"
                       placeholder="e.g. 0.62"
                       rules={{ required: true }}
+                      description="The new pay figure; it is recorded on the event exactly as typed."
                     />
                   </FormControl>
                   <FormControl>
@@ -330,6 +337,7 @@ function RecordSheet({
                       name="rateUnit"
                       label="Unit"
                       placeholder="per mile, per hour, salary"
+                      description="What the rate is per, so the figure reads correctly later."
                     />
                   </FormControl>
                 </>
@@ -339,9 +347,14 @@ function RecordSheet({
                   control={control}
                   name="reason"
                   label="Reason"
-                  placeholder={requiresReason ? "Required" : "Optional"}
+                  placeholder={requiresReason ? "e.g. Repeated no-shows" : "Optional"}
                   rules={{ required: requiresReason }}
                   maxLength={255}
+                  description={
+                    requiresReason
+                      ? "Required for this event; shown on the timeline entry."
+                      : "Shown on the timeline entry."
+                  }
                 />
               </FormControl>
               <FormControl cols="full">
@@ -351,6 +364,7 @@ function RecordSheet({
                   label="Notes"
                   placeholder="Context for whoever reads this later"
                   maxLength={4000}
+                  description="Kept with the event on the timeline."
                 />
               </FormControl>
             </FormGroup>
@@ -457,7 +471,8 @@ function AmendSheet({
                   name="effectiveAt"
                   label="Effective"
                   rules={{ required: true }}
-                  placeholder="Effective date"
+                  placeholder="Pick a date"
+                  description="Corrects the recorded date only; what the event already did is not replayed."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -465,8 +480,9 @@ function AmendSheet({
                   control={control}
                   name="reason"
                   label="Reason"
-                  placeholder="Reason for the event being amended"
+                  placeholder="e.g. Voluntary resignation"
                   maxLength={255}
+                  description="The reason recorded on the event itself."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -476,6 +492,7 @@ function AmendSheet({
                   label="Notes"
                   placeholder="Context for whoever reads this later"
                   maxLength={4000}
+                  description="The notes kept with the event."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -486,6 +503,7 @@ function AmendSheet({
                   placeholder="e.g. Wrong effective date was entered"
                   rules={{ required: true }}
                   maxLength={255}
+                  description="Kept alongside the original record as the reason for the correction."
                 />
               </FormControl>
             </FormGroup>

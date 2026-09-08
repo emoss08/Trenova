@@ -1,15 +1,19 @@
 package permission
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/apikey"
+	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +21,22 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+func allRolesKey(userID, orgID pulid.ID) repositories.PermissionCacheKey {
+	return repositories.PermissionCacheKey{
+		UserID:  userID,
+		OrgID:   orgID,
+		Variant: repositories.PermissionCacheVariantAllRoles,
+	}
+}
+
+func activeRolesKey(ctx context.Context, userID, orgID pulid.ID) repositories.PermissionCacheKey {
+	return repositories.PermissionCacheKey{
+		UserID:  userID,
+		OrgID:   orgID,
+		Variant: permissionCacheVariant(ctx),
+	}
+}
 
 func setupTestEngine(
 	t *testing.T,
@@ -50,7 +70,7 @@ func TestCheck_AllowedByPermission(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -71,7 +91,7 @@ func TestCheck_AllowedByPermission(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
@@ -100,7 +120,7 @@ func TestCheck_NoPermission(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -121,7 +141,7 @@ func TestCheck_NoPermission(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
@@ -148,7 +168,7 @@ func TestCheck_CacheHit(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityInternal),
 		Resources: map[string]*repositories.CachedResourcePermission{
 			"shipment": {
@@ -228,7 +248,7 @@ func TestCheck_EnforcesResourceAttributes(t *testing.T) {
 			orgID := pulid.MustNew("org_")
 			buID := pulid.MustNew("bu_")
 
-			cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
+			cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
 				MaxSensitivity: string(permission.SensitivityInternal),
 				Resources: map[string]*repositories.CachedResourcePermission{
 					"shipment": {
@@ -279,7 +299,7 @@ func TestCheckBatch_PropagatesResourceAttributes(t *testing.T) {
 		},
 		ExpiresAt: timeutils.NowUnix() + 3600,
 	}
-	cacheRepo.On("Get", ctx, userID, orgID).Return(cachedPermissions, nil).Twice()
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(cachedPermissions, nil).Once()
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
 		UserID:         userID,
@@ -322,10 +342,10 @@ func TestCheck_NoRoles(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
@@ -352,18 +372,13 @@ func TestCheckBatch(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil).Once()
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil).Once()
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil).
 		Once()
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil).
 		Once()
-	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
-		MaxSensitivity: string(permission.SensitivityConfidential),
-		Resources:      map[string]*repositories.CachedResourcePermission{},
-		ExpiresAt:      timeutils.NowUnix() + 3600,
-	}, nil).Once()
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
 		UserID:         userID,
@@ -394,7 +409,7 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -415,7 +430,7 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
@@ -450,10 +465,14 @@ func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testi
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
+	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
+	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.MatchedBy(func(perms *repositories.CachedPermissions) bool {
+		return len(perms.Resources) == 0
+	}), cacheTTL).Return(nil)
 
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
@@ -467,8 +486,7 @@ func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testi
 
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
-	cacheRepo.AssertNotCalled(t, "Get")
-	cacheRepo.AssertNotCalled(t, "Set")
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *testing.T) {
@@ -482,8 +500,11 @@ func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
+	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
+	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+		Return(nil)
 
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
@@ -496,8 +517,7 @@ func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *
 
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
-	cacheRepo.AssertNotCalled(t, "Get")
-	cacheRepo.AssertNotCalled(t, "Set")
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestInvalidateUser(t *testing.T) {
@@ -660,7 +680,7 @@ func TestExpiredAssignmentsIgnored(t *testing.T) {
 
 	expiredTime := timeutils.NowUnix() - 3600
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -680,7 +700,7 @@ func TestExpiredAssignmentsIgnored(t *testing.T) {
 			Permissions:    []*permission.ResourcePermission{},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
@@ -706,7 +726,7 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 	role1ID := pulid.MustNew("rol_")
 	role2ID := pulid.MustNew("rol_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: role1ID, UserID: userID, OrganizationID: orgID},
@@ -743,7 +763,7 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 				},
 			},
 		}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.MatchedBy(func(perms *repositories.CachedPermissions) bool {
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.MatchedBy(func(perms *repositories.CachedPermissions) bool {
 		rp, ok := perms.Resources["shipment"]
 		if !ok {
 			return false
@@ -787,7 +807,7 @@ func TestCheck_OperationNotAllowed(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityInternal),
 		Resources: map[string]*repositories.CachedResourcePermission{
 			"shipment": {
@@ -819,7 +839,7 @@ func TestCheckBatch_Error(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return(nil, errors.New("role lookup error"))
 
@@ -844,10 +864,10 @@ func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).
 		Return(nil, errors.New("summaries error"))
@@ -869,7 +889,7 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -890,7 +910,7 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
@@ -914,7 +934,7 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -935,7 +955,7 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
@@ -1156,4 +1176,523 @@ func TestGetEffectivePermissions_ExpiredAssignmentsSkipped(t *testing.T) {
 	assert.Len(t, result.Roles, 1)
 	assert.Equal(t, "Active", result.Roles[0].Name)
 	roleRepo.AssertExpectations(t)
+}
+
+func TestPermissionCacheVariant(t *testing.T) {
+	t.Parallel()
+
+	roleA := pulid.MustNew("rol_")
+	roleB := pulid.MustNew("rol_")
+
+	assert.Equal(
+		t,
+		repositories.PermissionCacheVariantAllRoles,
+		permissionCacheVariant(t.Context()),
+	)
+
+	ab := permissionCacheVariant(
+		authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{roleA, roleB}, false),
+	)
+	ba := permissionCacheVariant(
+		authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{roleB, roleA}, false),
+	)
+	aab := permissionCacheVariant(
+		authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{roleA, roleA, roleB}, false),
+	)
+	a := permissionCacheVariant(
+		authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{roleA}, false),
+	)
+	none := permissionCacheVariant(
+		authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{}, true),
+	)
+
+	assert.Equal(t, ab, ba)
+	assert.Equal(t, ab, aab)
+	assert.NotEqual(t, ab, a)
+	assert.NotEqual(t, a, none)
+	assert.NotEqual(t, repositories.PermissionCacheVariantAllRoles, none)
+}
+
+func TestCheck_WithRoleActivationUsesCache(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	ctx := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{roleID}, false)
+
+	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(&repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityInternal),
+		Resources: map[string]*repositories.CachedResourcePermission{
+			"shipment": {
+				Operations: []string{"read"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+		},
+		ExpiresAt: timeutils.NowUnix() + 3600,
+	}, nil).Once()
+
+	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, result.Allowed)
+	assert.True(t, result.CacheHit)
+	roleRepo.AssertNotCalled(t, "GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything)
+	cacheRepo.AssertExpectations(t)
+}
+
+func TestCheck_WithRoleActivationCachesActiveSubset(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	activeRoleID := pulid.MustNew("rol_")
+	inactiveRoleID := pulid.MustNew("rol_")
+	ctx := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{activeRoleID}, false)
+
+	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil).Once()
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: activeRoleID, UserID: userID, OrganizationID: orgID},
+			{ID: pulid.MustNew("ura_"), RoleID: inactiveRoleID, UserID: userID, OrganizationID: orgID},
+		}, nil).Once()
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeRoleID}).Return([]*permission.Role{
+		{
+			ID:             activeRoleID,
+			Name:           "Dispatcher",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     activeRoleID,
+					Resource:   "shipment",
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		},
+	}, nil).Once()
+	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.MatchedBy(func(perms *repositories.CachedPermissions) bool {
+		rp, ok := perms.Resources["shipment"]
+		return ok && len(rp.Operations) == 1 && rp.Operations[0] == "read"
+	}), cacheTTL).Return(nil).Once()
+
+	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, result.Allowed)
+	assert.False(t, result.CacheHit)
+	roleRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
+}
+
+func TestCheckBatch_LoadsPermissionsAndPoliciesOnce(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	eng.iamRepo = iamRepo
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityInternal),
+		Resources: map[string]*repositories.CachedResourcePermission{
+			"shipment": {
+				Operations: []string{"read", "create"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+			"customer": {
+				Operations: []string{"create"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+		},
+		ExpiresAt: timeutils.NowUnix() + 3600,
+	}, nil).Once()
+	iamRepo.EXPECT().
+		ListEnabledTenantAccessPolicies(ctx, repositories.IAMTenantPolicyLookupRequest{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+		}).
+		Return([]*iam.AccessPolicy{
+			{
+				ID:             pulid.MustNew("ap_"),
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				Resource:       "customer",
+				Operation:      string(permission.OpCreate),
+				Effect:         iam.PolicyEffectDeny,
+				Priority:       10,
+				Enabled:        true,
+			},
+			{
+				ID:             pulid.MustNew("ap_"),
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				Resource:       "shipment",
+				Operation:      string(permission.OpRead),
+				Effect:         iam.PolicyEffectAllow,
+				Priority:       5,
+				Enabled:        true,
+			},
+		}, nil).
+		Once()
+
+	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Checks: []services.ResourceOperationCheck{
+			{Resource: "shipment", Operation: permission.OpRead},
+			{Resource: "shipment", Operation: permission.OpCreate},
+			{Resource: "customer", Operation: permission.OpCreate},
+			{Resource: "worker", Operation: permission.OpRead},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 4)
+	assert.True(t, result.CacheHit)
+	assert.True(t, result.Results[0].Allowed)
+	assert.True(t, result.Results[1].Allowed)
+	assert.False(t, result.Results[2].Allowed)
+	assert.Equal(t, "iam_policy_denied", result.Results[2].Reason)
+	assert.False(t, result.Results[3].Allowed)
+	assert.Equal(t, "no_permission", result.Results[3].Reason)
+
+	roleRepo.AssertNotCalled(t, "GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything)
+	iamRepo.AssertNotCalled(t, "ListEnabledAccessPolicies", mock.Anything, mock.Anything)
+	cacheRepo.AssertExpectations(t)
+	iamRepo.AssertExpectations(t)
+}
+
+func TestCheckBatch_SkipsPolicyLookupWhenNothingIsAllowed(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	eng.iamRepo = iamRepo
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityPublic),
+		Resources:      map[string]*repositories.CachedResourcePermission{},
+		ExpiresAt:      timeutils.NowUnix() + 3600,
+	}, nil).Once()
+
+	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Checks: []services.ResourceOperationCheck{
+			{Resource: "shipment", Operation: permission.OpRead},
+			{Resource: "customer", Operation: permission.OpCreate},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 2)
+	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
+	cacheRepo.AssertExpectations(t)
+}
+
+func TestCheck_UsesTenantPolicyLookup(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	eng.iamRepo = iamRepo
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityInternal),
+		Resources: map[string]*repositories.CachedResourcePermission{
+			"shipment": {
+				Operations: []string{"read"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+		},
+		ExpiresAt: timeutils.NowUnix() + 3600,
+	}, nil).Once()
+	iamRepo.EXPECT().
+		ListEnabledTenantAccessPolicies(ctx, repositories.IAMTenantPolicyLookupRequest{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+		}).
+		Return([]*iam.AccessPolicy{
+			{
+				ID:        pulid.MustNew("ap_"),
+				Resource:  "shipment",
+				Operation: string(permission.OpRead),
+				Effect:    iam.PolicyEffectDeny,
+				Enabled:   true,
+			},
+		}, nil).
+		Once()
+
+	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, result.Allowed)
+	assert.Equal(t, "iam_policy_denied", result.Reason)
+	iamRepo.AssertNotCalled(t, "ListEnabledAccessPolicies", mock.Anything, mock.Anything)
+	cacheRepo.AssertExpectations(t)
+	iamRepo.AssertExpectations(t)
+}
+
+func TestCheckBatch_APIKeyLoadsKeyOnce(t *testing.T) {
+	t.Parallel()
+
+	eng, _, _, _ := setupTestEngine(t)
+	apiKeyRepo := mocks.NewMockAPIKeyRepository(t)
+	eng.apiKeyRepo = apiKeyRepo
+	ctx := t.Context()
+	apiKeyID := pulid.MustNew("ak_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+
+	apiKeyRepo.EXPECT().
+		GetByID(ctx, pagination.TenantInfo{OrgID: orgID, BuID: buID}, apiKeyID).
+		Return(&apikey.Key{
+			ID: apiKeyID,
+			Permissions: []*apikey.Permission{
+				{
+					Resource:   "shipment",
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		}, nil).
+		Once()
+
+	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+		PrincipalType:  services.PrincipalTypeAPIKey,
+		PrincipalID:    apiKeyID,
+		APIKeyID:       apiKeyID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Checks: []services.ResourceOperationCheck{
+			{Resource: "shipment", Operation: permission.OpRead},
+			{Resource: "shipment", Operation: permission.OpCreate},
+			{Resource: "customer", Operation: permission.OpRead},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 3)
+	assert.True(t, result.Results[0].Allowed)
+	assert.False(t, result.Results[1].Allowed)
+	assert.False(t, result.Results[2].Allowed)
+	apiKeyRepo.AssertExpectations(t)
+}
+
+func TestCheckBatch_Empty(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+
+	result, err := eng.CheckBatch(t.Context(), &services.BatchPermissionCheckRequest{
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: pulid.MustNew("org_"),
+	})
+
+	require.NoError(t, err)
+	assert.Empty(t, result.Results)
+	assert.False(t, result.CacheHit)
+	cacheRepo.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
+}
+
+func policyCacheReadOnlyPerms() *repositories.CachedPermissions {
+	return &repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityInternal),
+		Resources: map[string]*repositories.CachedResourcePermission{
+			"shipment": {
+				Operations: []string{"read"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+		},
+		ExpiresAt: timeutils.NowUnix() + 3600,
+	}
+}
+
+func TestCheck_AccessPolicyCacheHitSkipsDatabase(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	policyCache := mocks.NewMockAccessPolicyCacheRepository(t)
+	eng.iamRepo = iamRepo
+	eng.policyCache = policyCache
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	lookup := repositories.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(policyCacheReadOnlyPerms(), nil).Once()
+	policyCache.EXPECT().GetEnabled(ctx, lookup).Return([]*iam.AccessPolicy{
+		{
+			ID:        pulid.MustNew("ap_"),
+			Resource:  "shipment",
+			Operation: string(permission.OpRead),
+			Effect:    iam.PolicyEffectDeny,
+			Enabled:   true,
+		},
+	}, true, nil).Once()
+
+	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, result.Allowed)
+	assert.Equal(t, "iam_policy_denied", result.Reason)
+	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
+	policyCache.AssertNotCalled(t, "SetEnabled", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestCheck_AccessPolicyCacheMissPopulatesCache(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	policyCache := mocks.NewMockAccessPolicyCacheRepository(t)
+	eng.iamRepo = iamRepo
+	eng.policyCache = policyCache
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	lookup := repositories.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
+	policies := []*iam.AccessPolicy{}
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(policyCacheReadOnlyPerms(), nil).Once()
+	policyCache.EXPECT().GetEnabled(ctx, lookup).Return(nil, false, nil).Once()
+	iamRepo.EXPECT().ListEnabledTenantAccessPolicies(ctx, lookup).Return(policies, nil).Once()
+	policyCache.EXPECT().SetEnabled(ctx, lookup, policies).Return(nil).Once()
+
+	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, result.Allowed)
+}
+
+func TestCheck_AccessPolicyCacheFailureFallsBackToDatabase(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	policyCache := mocks.NewMockAccessPolicyCacheRepository(t)
+	eng.iamRepo = iamRepo
+	eng.policyCache = policyCache
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	lookup := repositories.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
+	policies := []*iam.AccessPolicy{
+		{
+			ID:        pulid.MustNew("ap_"),
+			Resource:  "shipment",
+			Operation: string(permission.OpRead),
+			Effect:    iam.PolicyEffectDeny,
+			Enabled:   true,
+		},
+	}
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(policyCacheReadOnlyPerms(), nil).Once()
+	policyCache.EXPECT().GetEnabled(ctx, lookup).Return(nil, false, errors.New("redis down")).Once()
+	iamRepo.EXPECT().ListEnabledTenantAccessPolicies(ctx, lookup).Return(policies, nil).Once()
+	policyCache.EXPECT().SetEnabled(ctx, lookup, policies).Return(errors.New("redis down")).Once()
+
+	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Resource:       "shipment",
+		Operation:      permission.OpRead,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, result.Allowed)
+	assert.Equal(t, "iam_policy_denied", result.Reason)
+}
+
+func TestCheckBatch_AccessPolicyCacheReadOncePerBatch(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	iamRepo := mocks.NewMockIAMRepository(t)
+	policyCache := mocks.NewMockAccessPolicyCacheRepository(t)
+	eng.iamRepo = iamRepo
+	eng.policyCache = policyCache
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	lookup := repositories.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityInternal),
+		Resources: map[string]*repositories.CachedResourcePermission{
+			"shipment": {
+				Operations: []string{"read", "create", "update"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+		},
+		ExpiresAt: timeutils.NowUnix() + 3600,
+	}, nil).Once()
+	policyCache.EXPECT().GetEnabled(ctx, lookup).Return([]*iam.AccessPolicy{}, true, nil).Once()
+
+	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Checks: []services.ResourceOperationCheck{
+			{Resource: "shipment", Operation: permission.OpRead},
+			{Resource: "shipment", Operation: permission.OpCreate},
+			{Resource: "shipment", Operation: permission.OpUpdate},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 3)
+	for _, r := range result.Results {
+		assert.True(t, r.Allowed)
+	}
+	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
 }

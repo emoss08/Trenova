@@ -63,16 +63,6 @@ export function findActiveNavPath(
   return bestMatch;
 }
 
-export function generateBreadcrumbSegments(pathname: string) {
-  const segments = pathname.replace(/\/$/, "").split("/").filter(Boolean);
-
-  return segments.map((segment, index) => {
-    const path = "/" + segments.slice(0, index + 1).join("/");
-    const label = formatSegmentLabel(segment);
-    return { path, label };
-  });
-}
-
 export function normalizePath(path: string): string | null {
   if (!path || path === "#") {
     return null;
@@ -89,10 +79,47 @@ export function normalizePath(path: string): string | null {
   return normalized === "" ? "/" : normalized;
 }
 
-function collectNavItemEntries(entries: RouteTitleEntry[], items: (NavItem | NavGroup)[]): void {
+/**
+ * The directory every path in the list shares, or null when they share
+ * nothing beyond the root.
+ */
+function sharedDirectory(paths: readonly string[]): string | null {
+  if (paths.length === 0) {
+    return null;
+  }
+  let common = paths[0].split("/").slice(0, -1);
+  for (const path of paths.slice(1)) {
+    const parts = path.split("/").slice(0, -1);
+    let length = 0;
+    while (length < common.length && length < parts.length && common[length] === parts[length]) {
+      length += 1;
+    }
+    common = common.slice(0, length);
+  }
+  const directory = common.join("/");
+  return directory.length > 1 ? directory : null;
+}
+
+/**
+ * Pages label their own paths. A group labels the directory its pages share,
+ * so "/accounting/ar" reads as the group is named rather than as "Ar", but
+ * only when that directory belongs to the group alone: a group whose pages
+ * sit directly under the module has nothing of its own to name.
+ */
+function collectNavItemEntries(
+  entries: RouteTitleEntry[],
+  items: (NavItem | NavGroup)[],
+  moduleRoots: ReadonlySet<string>,
+): void {
   for (const item of items) {
     if ("items" in item) {
-      collectNavItemEntries(entries, item.items);
+      const before = entries.length;
+      collectNavItemEntries(entries, item.items, moduleRoots);
+      const groupPaths = entries.slice(before).map((entry) => entry.path);
+      const directory = sharedDirectory(groupPaths);
+      if (directory && !moduleRoots.has(directory) && !groupPaths.includes(directory)) {
+        entries.push({ path: directory, label: item.label });
+      }
       continue;
     }
 
@@ -107,12 +134,28 @@ function createRouteTitleIndex(): RouteTitleEntry[] {
   const collectedEntries: RouteTitleEntry[] = [];
 
   for (const module of navigationConfig.modules) {
+    // A module owns its base path and every prefix it declares; those are
+    // its roots, and no group underneath may claim them. The base path
+    // carries the full name; a declared prefix carries the short one, since
+    // the base path is often a page inside it whose crumb follows.
+    const moduleRoots = new Set<string>();
     const moduleBasePath = normalizePath(module.basePath);
     if (moduleBasePath) {
+      moduleRoots.add(moduleBasePath);
       collectedEntries.push({ path: moduleBasePath, label: module.label });
     }
+    for (const prefix of module.routePrefixes ?? []) {
+      const normalizedPrefix = normalizePath(prefix);
+      if (normalizedPrefix && !moduleRoots.has(normalizedPrefix)) {
+        moduleRoots.add(normalizedPrefix);
+        collectedEntries.push({
+          path: normalizedPrefix,
+          label: module.shortLabel ?? module.label,
+        });
+      }
+    }
 
-    collectNavItemEntries(collectedEntries, module.navigation);
+    collectNavItemEntries(collectedEntries, module.navigation, moduleRoots);
   }
 
   for (const link of adminLinks) {
@@ -141,6 +184,53 @@ function isPathMatch(pathname: string, candidatePath: string): boolean {
 }
 
 const routeTitleIndex = createRouteTitleIndex();
+const routeTitleByPath = new Map(routeTitleIndex.map((entry) => [entry.path, entry.label]));
+
+export interface BreadcrumbSegment {
+  path: string;
+  label: string;
+}
+
+/**
+ * Action verbs that describe what the page does to the record identified by
+ * the segment before them. They fold into the record's crumb rather than
+ * standing as one of their own, so "/things/<id>/edit" yields a single crumb
+ * for the record instead of "Details / Edit".
+ */
+const RECORD_ACTION_SEGMENTS: ReadonlySet<string> = new Set(["edit", "view"]);
+
+/**
+ * Splits a pathname into cumulative crumbs. Each crumb takes its label from,
+ * in order: a label a page published for that exact path, the navigation
+ * config's label for that exact path, or a Title Case rendering of the segment.
+ */
+export function generateBreadcrumbSegments(
+  pathname: string,
+  labelOverrides: Readonly<Record<string, string>> = {},
+): BreadcrumbSegment[] {
+  const parts = pathname.replace(/\/$/, "").split("/").filter(Boolean);
+  const crumbs: BreadcrumbSegment[] = [];
+
+  let index = 0;
+  while (index < parts.length) {
+    const segment = parts[index];
+    let end = index + 1;
+    if (
+      PULID_PATTERN.test(segment) &&
+      end < parts.length &&
+      RECORD_ACTION_SEGMENTS.has(parts[end])
+    ) {
+      end += 1;
+    }
+
+    const path = "/" + parts.slice(0, end).join("/");
+    const label = labelOverrides[path] ?? routeTitleByPath.get(path) ?? formatSegmentLabel(segment);
+    crumbs.push({ path, label });
+    index = end;
+  }
+
+  return crumbs;
+}
 
 function findMatchingRoute(pathname: string): RouteTitleEntry | null {
   const normalizedPath = normalizePath(pathname);
@@ -195,4 +285,13 @@ export function getPageTitle(pathname: string): string {
   }
 
   return generateFallbackTitle(pathname);
+}
+
+/**
+ * The link that opens a worker's record from anywhere in the app. The page
+ * reads the entity from the query string, so a tab can be named as well.
+ */
+export function workerRecordHref(workerId: string, tab?: string): string {
+  const base = `/hr/workers?entityId=${encodeURIComponent(workerId)}&modType=edit`;
+  return tab ? `${base}&tab=${encodeURIComponent(tab)}` : base;
 }

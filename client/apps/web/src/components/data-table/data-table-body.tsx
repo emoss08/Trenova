@@ -16,7 +16,6 @@ import { memo, useCallback, useRef } from "react";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { DataTableCellEditor } from "./data-table-cell-editor";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
-import { DataTableEmptyState } from "./data-table-empty-state";
 
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]';
@@ -170,13 +169,9 @@ export function DataTableBody<TData extends Record<string, any>>({
   contextMenuActions,
   onRowClick,
   getFormatClass,
-  hasActiveFilters,
-  onClearFilters,
 }: DataTableBodyProps<TData> & {
   isLoading?: boolean;
   getFormatClass?: CompiledFormatRules<TData> | null;
-  hasActiveFilters?: boolean;
-  onClearFilters?: () => void;
 }) {
   const rows = table.getRowModel().rows;
   const { columnVisibility, columnOrder, columnPinning, cellEditing } = table.state;
@@ -310,16 +305,7 @@ export function DataTableBody<TData extends Record<string, any>>({
             </div>
           </TableCell>
         </TableRow>
-      ) : (
-        <TableRow>
-          <TableCell colSpan={columns.length} className="h-[300px] p-0">
-            <DataTableEmptyState
-              hasActiveFilters={hasActiveFilters}
-              onClearFilters={onClearFilters}
-            />
-          </TableCell>
-        </TableRow>
-      )}
+      ) : null}
     </TableBody>
   );
 }

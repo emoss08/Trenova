@@ -65,6 +65,7 @@ func run(opts *generatorOptions) error {
 		return err
 	}
 
+	log := &declineLog{}
 	generated := make([]generatedType, 0, len(cfg.Models))
 	for _, binding := range domainBindings(cfg, modulePath) {
 		item, ok, buildErr := buildGeneratedType(
@@ -74,6 +75,7 @@ func run(opts *generatorOptions) error {
 			existing,
 			opts.DomainDir,
 			modulePath,
+			log,
 		)
 		if buildErr != nil {
 			return buildErr
@@ -86,6 +88,14 @@ func run(opts *generatorOptions) error {
 	sort.Slice(generated, func(i, j int) bool {
 		return generated[i].Name < generated[j].Name
 	})
+
+	report := renderDeclineReport(log, len(generated), opts.Verbose)
+	fmt.Fprint(os.Stderr, report)
+	if opts.ReportPath != "" {
+		if err = os.WriteFile(opts.ReportPath, []byte(report), 0o600); err != nil {
+			return fmt.Errorf("writing mapper report %q: %w", opts.ReportPath, err)
+		}
+	}
 
 	if opts.OutputPath != "" {
 		output, renderErr := renderGenerated(generated, modulePath)
@@ -202,9 +212,10 @@ func loadStructsFromFile(path string) (parsedPackage, error) {
 	}
 
 	pkg := parsedPackage{
-		Name:    file.Name.Name,
-		Files:   []*ast.File{file},
-		Structs: map[string]goStruct{},
+		Name:      file.Name.Name,
+		Files:     []*ast.File{file},
+		Structs:   map[string]goStruct{},
+		TypeNames: map[string]struct{}{},
 	}
 	collectStructs(&pkg)
 
@@ -237,9 +248,10 @@ func loadStructsFromDir(path string) (parsedPackage, error) {
 	}
 	sort.Strings(names)
 	pkg := parsedPackage{
-		Name:    names[0],
-		Files:   make([]*ast.File, 0, len(pkgs[names[0]].Files)),
-		Structs: map[string]goStruct{},
+		Name:      names[0],
+		Files:     make([]*ast.File, 0, len(pkgs[names[0]].Files)),
+		Structs:   map[string]goStruct{},
+		TypeNames: map[string]struct{}{},
 	}
 	for _, file := range pkgs[names[0]].Files {
 		pkg.Files = append(pkg.Files, file)
@@ -261,6 +273,7 @@ func collectStructs(pkg *parsedPackage) {
 				if !isTypeSpec {
 					continue
 				}
+				pkg.TypeNames[typeSpec.Name.Name] = struct{}{}
 				structType, isStructType := typeSpec.Type.(*ast.StructType)
 				if !isStructType {
 					continue
@@ -453,24 +466,44 @@ func buildGeneratedType(
 	existing map[string]struct{},
 	domainDir string,
 	modulePath string,
+	log *declineLog,
 ) (generatedType, bool, error) {
-	override := manifest.Types[binding.GraphQLName]
+	name := binding.GraphQLName
+	override := manifest.Types[name]
 	if override.Skip {
+		log.note(name, declineStageType, "", "mappers.yml sets skip: true")
 		return generatedType{}, false, nil
 	}
 
-	createName := lowerFirst(binding.GraphQLName) + "FromInput"
-	patchName := "apply" + binding.GraphQLName + "Patch"
+	createName := lowerFirst(name) + "FromInput"
+	patchName := "apply" + name + "Patch"
 	if _, ok := existing[createName]; ok {
+		log.note(
+			name,
+			declineStageType,
+			"",
+			"the resolver package already defines "+createName+"; delete it to let mappergen own this type",
+		)
+
 		return generatedType{}, false, nil
 	}
 	if _, ok := existing[patchName]; ok {
+		log.note(
+			name,
+			declineStageType,
+			"",
+			"the resolver package already defines "+patchName+"; delete it to let mappergen own this type",
+		)
+
 		return generatedType{}, false, nil
 	}
 
-	inputStruct, hasInput := inputs[binding.GraphQLName+"Input"]
-	patchStruct, hasPatch := inputs[binding.GraphQLName+"PatchInput"]
+	inputStruct, hasInput := inputs[name+"Input"]
+	patchStruct, hasPatch := inputs[name+"PatchInput"]
 	if !hasInput && !hasPatch {
+		log.noteRoutine(name, declineStageType,
+			"the schema declares neither "+name+"Input nor "+name+"PatchInput")
+
 		return generatedType{}, false, nil
 	}
 
@@ -480,9 +513,24 @@ func buildGeneratedType(
 	}
 	domainStruct, ok := domainPkg.Structs[binding.GoName]
 	if !ok {
+		if _, declared := domainPkg.TypeNames[binding.GoName]; declared {
+			log.noteRoutine(name, declineStageType,
+				binding.GoName+" is a non-struct domain type (enum or alias)")
+		} else {
+			log.note(name, declineStageType, "",
+				"domain package "+binding.PackageName+" has no type named "+binding.GoName)
+		}
+
 		return generatedType{}, false, nil
 	}
 	if !isStandardTenantedEntity(domainStruct) {
+		log.note(
+			name,
+			declineStageType,
+			"",
+			binding.GoName+" has no organizationId/businessUnitId field, so tenancy cannot be inferred",
+		)
+
 		return generatedType{}, false, nil
 	}
 	binding.PackageName = domainPkg.Name
@@ -495,7 +543,13 @@ func buildGeneratedType(
 		NeedsDomain: true,
 	}
 	if hasInput {
-		create, needsPulID, createOK := buildCreate(binding, inputStruct, domainStruct, override)
+		create, needsPulID, createOK := buildCreate(
+			binding,
+			inputStruct,
+			domainStruct,
+			override,
+			log,
+		)
 		if !createOK {
 			return generatedType{}, false, nil
 		}
@@ -504,7 +558,13 @@ func buildGeneratedType(
 		item.NeedsAuth = true
 	}
 	if hasPatch {
-		patch, needsPulID, patchOK := buildPatch(binding, patchStruct, domainStruct, override)
+		patch, needsPulID, patchOK := buildPatch(
+			binding,
+			patchStruct,
+			domainStruct,
+			override,
+			log,
+		)
 		if !patchOK {
 			return generatedType{}, false, nil
 		}
@@ -579,6 +639,7 @@ func buildCreate(
 	inputStruct goStruct,
 	domainStruct goStruct,
 	override typeOverride,
+	log *declineLog,
 ) (generatedCreate, bool, bool) {
 	create := generatedCreate{
 		InputName: binding.GraphQLName + "Input",
@@ -618,6 +679,10 @@ func buildCreate(
 		}
 		domainField, ok := domainStruct.Fields[domainJSON]
 		if !ok {
+			log.note(binding.GraphQLName, declineStageCreate, inputField.JSONName,
+				"no field with json tag "+strconv.Quote(domainJSON)+" on "+binding.GoName+
+					"; add an alias or exclude entry in mappers.yml")
+
 			return generatedCreate{}, false, false
 		}
 		defaultValue, hasDefault := override.Defaults[inputField.JSONName]
@@ -628,6 +693,10 @@ func buildCreate(
 			hasDefault,
 		)
 		if !ok {
+			log.note(binding.GraphQLName, declineStageCreate, inputField.JSONName,
+				"cannot assign input "+inputField.Type.String()+" to "+binding.GoName+"."+
+					domainField.GoName+" ("+domainField.Type.String()+")")
+
 			return generatedCreate{}, false, false
 		}
 		create.Parses = append(create.Parses, parses...)
@@ -649,6 +718,7 @@ func buildPatch(
 	patchStruct goStruct,
 	domainStruct goStruct,
 	override typeOverride,
+	log *declineLog,
 ) (generatedPatch, bool, bool) {
 	patch := generatedPatch{
 		InputName: binding.GraphQLName + "PatchInput",
@@ -667,10 +737,17 @@ func buildPatch(
 		}
 		domainField, ok := domainStruct.Fields[domainJSON]
 		if !ok {
+			log.note(binding.GraphQLName, declineStagePatch, inputField.JSONName,
+				"no field with json tag "+strconv.Quote(domainJSON)+" on "+binding.GoName+
+					"; add an alias or exclude entry in mappers.yml")
+
 			return generatedPatch{}, false, false
 		}
 		assignment, usesPulID, ok := patchExpression(inputField, domainField, override)
 		if !ok {
+			log.note(binding.GraphQLName, declineStagePatch, inputField.JSONName,
+				patchDeclineReason(binding, inputField, domainField, override))
+
 			return generatedPatch{}, false, false
 		}
 		patch.Fields = append(patch.Fields, assignment)
@@ -679,6 +756,103 @@ func buildPatch(
 	}
 
 	return patch, needsPulID, true
+}
+
+func patchDeclineReason(
+	binding modelBinding,
+	inputField, domainField goField,
+	override typeOverride,
+) string {
+	src := inputField.Type
+	target := binding.GoName + "." + domainField.GoName + " (" + domainField.Type.String() + ")"
+
+	if src.Omittable && src.OmittableType != nil {
+		inner := *src.OmittableType
+		if requiredOnEntity(inputField.JSONName, domainField, override) &&
+			!inner.Pointer && !inner.Map && !inner.Slice {
+			return "required on the entity but its omittable inner type " + inner.String() +
+				" cannot represent a cleared value; make the schema field nullable or list it " +
+				"under clearable: in mappers.yml"
+		}
+
+		return "cannot assign omittable " + inner.String() + " to " + target
+	}
+
+	if !src.Pointer && !src.Map && !src.Slice {
+		return "patch field is " + src.String() + ", which cannot express absence; mark it " +
+			"@goField(omittable: true) in the schema"
+	}
+
+	return "cannot assign patch input " + src.String() + " to " + target
+}
+
+func (r typeRef) String() string {
+	if r.Omittable {
+		if r.OmittableType == nil {
+			return "graphql.Omittable[?]"
+		}
+
+		return "graphql.Omittable[" + r.OmittableType.String() + "]"
+	}
+	if !r.Pointer {
+		return r.Name
+	}
+	if r.Slice {
+		return "[]*" + strings.TrimPrefix(r.Name, "[]")
+	}
+
+	return "*" + r.Name
+}
+
+func renderDeclineReport(log *declineLog, generatedCount int, verbose bool) string {
+	actionable := make([]decline, 0, len(log.entries))
+	routine := 0
+	for _, entry := range log.entries {
+		if entry.Routine && !verbose {
+			routine++
+			continue
+		}
+		actionable = append(actionable, entry)
+	}
+
+	var out strings.Builder
+	fmt.Fprintf(
+		&out,
+		"mappergen: generated %d mappers, declined %d types",
+		generatedCount,
+		len(actionable),
+	)
+	if routine > 0 {
+		fmt.Fprintf(
+			&out,
+			" (%d more are out of scope by construction; pass -verbose to list them)",
+			routine,
+		)
+	}
+	out.WriteString("\n")
+
+	sort.SliceStable(actionable, func(i, j int) bool {
+		if actionable[i].TypeName != actionable[j].TypeName {
+			return actionable[i].TypeName < actionable[j].TypeName
+		}
+
+		return actionable[i].Field < actionable[j].Field
+	})
+
+	lastType := ""
+	for _, entry := range actionable {
+		if entry.TypeName != lastType {
+			fmt.Fprintf(&out, "\n%s\n", entry.TypeName)
+			lastType = entry.TypeName
+		}
+		if entry.Field == "" {
+			fmt.Fprintf(&out, "  %-6s %s\n", entry.Stage, entry.Reason)
+			continue
+		}
+		fmt.Fprintf(&out, "  %-6s %s: %s\n", entry.Stage, entry.Field, entry.Reason)
+	}
+
+	return out.String()
 }
 
 func overrideImports(override typeOverride) []generatedImport {

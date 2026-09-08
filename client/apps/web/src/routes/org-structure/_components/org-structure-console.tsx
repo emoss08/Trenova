@@ -1,222 +1,184 @@
 import { usePermission } from "@/hooks/use-permission";
 import {
-  fetchHeadcount,
-  fetchJobPositions,
   HEADCOUNT_KEY,
   JOB_POSITIONS_KEY,
-  type HeadcountRow,
+  updateJobPosition,
   type JobPositionRow,
 } from "@/lib/graphql/org-structure";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { headcountShare, jobDepartmentLabel } from "@trenova/shared/lib/org-structure";
-import { cn } from "@trenova/shared/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { DelegationPanel } from "./delegation-panel";
+import { OrgAside } from "./org-aside";
+import { OrgOverview } from "./org-overview";
+import { OrgStructureEmpty } from "./org-structure-empty";
+import { OrgStructureSkeleton } from "./org-structure-skeleton";
 import { PositionDialog } from "./position-dialog";
+import { PositionHoldersSheet } from "./position-holders-sheet";
+import { PositionTree } from "./position-tree";
+import {
+  delegationsGivenQuery,
+  delegationsReceivedQuery,
+  headcountQuery,
+  jobPositionsQuery,
+} from "./queries";
+
+const EMPTY_POSITIONS: JobPositionRow[] = [];
+
+type DialogState = { position: JobPositionRow | null; reportsTo: string | null };
 
 export default function OrgStructureConsole() {
+  const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.JobPosition, Operation.Read);
   const { allowed: canCreate } = usePermission(Resource.JobPosition, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.JobPosition, Operation.Update);
-  const [dialog, setDialog] = useState<{ position: JobPositionRow | null } | null>(null);
+  const { allowed: canReadCover } = usePermission(Resource.ApprovalDelegation, Operation.Read);
+  const userId = useAuthStore((state) => state.user?.id);
+  const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [holders, setHolders] = useState<JobPositionRow | null>(null);
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
 
-  const headcountQuery = useQuery({
-    queryKey: [HEADCOUNT_KEY],
-    queryFn: ({ signal }) => fetchHeadcount({ signal }),
-    enabled: canRead,
+  const headcount = useQuery({ ...headcountQuery(), enabled: canRead });
+  const positionsResult = useQuery({ ...jobPositionsQuery(), enabled: canRead });
+  const coverEnabled = canRead && canReadCover && Boolean(userId);
+  const given = useQuery({ ...delegationsGivenQuery(userId ?? ""), enabled: coverEnabled });
+  const received = useQuery({ ...delegationsReceivedQuery(userId ?? ""), enabled: coverEnabled });
+
+  // Moving a position is an ordinary update carrying everything else as it
+  // was; there is no move mutation, and inventing one server-side for a
+  // single field would be a second path to keep the reporting-line check on.
+  const move = useMutation({
+    mutationFn: ({
+      position,
+      reportsToPositionId,
+    }: {
+      position: JobPositionRow;
+      reportsToPositionId: string | null;
+    }) =>
+      updateJobPosition({
+        id: position.id,
+        version: position.version,
+        code: position.code,
+        title: position.title,
+        description: position.description ?? undefined,
+        department: position.department,
+        flsaExempt: position.flsaExempt,
+        isDrivingPosition: position.isDrivingPosition,
+        reportsToPositionId: reportsToPositionId ?? undefined,
+        status: position.status === "Active" ? "Active" : "Inactive",
+      }),
+    onSuccess: (_data, { position, reportsToPositionId }) => {
+      const parent = reportsToPositionId
+        ? positionsResult.data?.find((row) => row.id === reportsToPositionId)?.title
+        : null;
+      toast.success(
+        parent
+          ? `${position.title} now reports to ${parent}`
+          : `${position.title} is now top level`,
+      );
+      void queryClient.invalidateQueries({ queryKey: [JOB_POSITIONS_KEY] });
+      void queryClient.invalidateQueries({ queryKey: [HEADCOUNT_KEY] });
+    },
+    onError: (error: Error) => toast.error("Could not move it", { description: error.message }),
   });
-  const positionsQuery = useQuery({
-    queryKey: [JOB_POSITIONS_KEY],
-    queryFn: ({ signal }) => fetchJobPositions(undefined, { signal }),
-    enabled: canRead,
-  });
+
+  const positions = positionsResult.data ?? EMPTY_POSITIONS;
+  // The overview counts cover the user is party to on either side; a
+  // delegation from the user to themselves would appear in both lists.
+  const delegations = useMemo(() => {
+    if (!given.data || !received.data) return undefined;
+    const seen = new Set<string>();
+    return [...given.data, ...received.data].filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    });
+  }, [given.data, received.data]);
 
   if (!canRead) return null;
 
-  if (headcountQuery.isLoading) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
+  if (headcount.isLoading || positionsResult.isLoading) {
+    return <OrgStructureSkeleton showCover={canReadCover} />;
   }
 
-  const headcount = headcountQuery.data;
-  const positions = positionsQuery.data ?? [];
+  const summary = headcount.data;
+  const noRoster = summary !== undefined && summary.activeTotal === 0 && positions.length === 0;
+  const openAdd = (reportsTo: string | null) => setDialog({ position: null, reportsTo });
+  const openEdit = (position: JobPositionRow) => setDialog({ position, reportsTo: null });
+  // The only way in without a chart to hang it on; absent for anybody who
+  // could not save what the dialog would ask for.
+  const addFirstPosition = canCreate ? () => openAdd(null) : undefined;
 
   return (
     <div className="flex flex-col gap-4">
-      {headcount ? (
-        <>
-          <section className="grid grid-cols-3 gap-3">
-            <Figure label="Active workers" value={String(headcount.activeTotal)} />
-            <Figure
-              label="Driving positions"
-              value={String(headcount.driverTotal)}
-              detail="Everyone who needs a CDL"
-            />
-            <Figure
-              label="Off the roster"
-              value={String(headcount.terminated)}
-              detail="Terminated or inactive"
-            />
-          </section>
+      <OrgOverview
+        headcount={summary}
+        positions={positionsResult.data}
+        delegations={delegations}
+        showCover={canReadCover}
+        now={now}
+      />
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <HeadcountBreakdown
-              title="By terminal"
-              rows={headcount.byFleet}
-              total={headcount.activeTotal}
-            />
-            <HeadcountBreakdown
-              title="By department"
-              rows={headcount.byDepartment}
-              total={headcount.activeTotal}
-              labelOf={(row) => jobDepartmentLabel(row.label)}
-            />
-            <HeadcountBreakdown
-              title="By position"
-              rows={headcount.byPosition}
-              total={headcount.activeTotal}
-            />
+      {noRoster ? (
+        <OrgStructureEmpty
+          title="Nothing to count yet"
+          description={
+            "Positions are the titles the roster is counted by. Add one, then give workers a " +
+            "position from their record and the chart fills in."
+          }
+          onAddPosition={addFirstPosition}
+        />
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="flex min-w-0 flex-col gap-4">
+            {positions.length === 0 ? (
+              <OrgStructureEmpty
+                title="No positions yet"
+                description={
+                  "Until there are, the roster can only be counted by terminal. Add one, then " +
+                  "give workers a position from their record and the chart fills in."
+                }
+                onAddPosition={addFirstPosition}
+              />
+            ) : (
+              <PositionTree
+                positions={positions}
+                byPosition={summary?.byPosition ?? []}
+                canCreate={canCreate}
+                canUpdate={canUpdate}
+                moving={move.isPending ? move.variables.position.id : null}
+                onAdd={openAdd}
+                onEdit={openEdit}
+                onMove={(position, reportsToPositionId) =>
+                  move.mutate({ position, reportsToPositionId })
+                }
+                onOpenHolders={setHolders}
+              />
+            )}
+            <DelegationPanel />
           </div>
-        </>
-      ) : null}
-
-      <section className="rounded-lg border p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-medium">Positions</h3>
-            <p className="text-muted-foreground text-xs">
-              What somebody does, as distinct from where they do it. A terminal is a fleet code;
-              this is the title the headcount is counted by.
-            </p>
-          </div>
-          {canCreate ? (
-            <Button size="sm" onClick={() => setDialog({ position: null })}>
-              <PlusIcon className="size-3.5" />
-              Add a position
-            </Button>
-          ) : null}
+          <OrgAside
+            byFleet={summary?.byFleet ?? []}
+            byDepartment={summary?.byDepartment ?? []}
+            total={summary?.activeTotal ?? 0}
+            positions={positions}
+            byPosition={summary?.byPosition ?? []}
+            canUpdate={canUpdate}
+            onEdit={openEdit}
+          />
         </div>
-
-        {positionsQuery.isLoading ? (
-          <Skeleton className="mt-3 h-24 w-full" />
-        ) : positions.length === 0 ? (
-          <p className="text-muted-foreground mt-3 rounded-md border border-dashed p-3 text-xs">
-            No positions yet. Until there are, the roster can only be counted by terminal.
-          </p>
-        ) : (
-          <ul className="mt-3 flex flex-col gap-1.5">
-            {positions.map((position) => (
-              <li
-                key={position.id}
-                className="flex flex-wrap items-center justify-between gap-2 border-t pt-1.5 text-xs first:border-t-0 first:pt-0"
-              >
-                <span className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span className="font-medium">{position.title}</span>
-                  <span className="text-muted-foreground tabular-nums">{position.code}</span>
-                  <Badge variant="secondary">{jobDepartmentLabel(position.department)}</Badge>
-                  {position.isDrivingPosition ? <Badge variant="info">Driving</Badge> : null}
-                  {position.flsaExempt ? <Badge variant="purple">Exempt</Badge> : null}
-                  {position.status !== "Active" ? <Badge variant="inactive">Archived</Badge> : null}
-                  {position.reportsTo ? (
-                    <span className="text-muted-foreground truncate">
-                      reports to {position.reportsTo.title}
-                    </span>
-                  ) : null}
-                </span>
-                {canUpdate ? (
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => setDialog({ position })}
-                    aria-label={`Edit ${position.title}`}
-                  >
-                    Edit
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <DelegationPanel />
+      )}
 
       <PositionDialog
         open={dialog !== null}
         onOpenChange={(open) => !open && setDialog(null)}
         position={dialog?.position ?? null}
         positions={positions}
+        defaultReportsToPositionId={dialog?.reportsTo ?? null}
       />
-    </div>
-  );
-}
-
-function HeadcountBreakdown({
-  title,
-  rows,
-  total,
-  labelOf,
-}: {
-  title: string;
-  rows: HeadcountRow[];
-  total: number;
-  labelOf?: (row: HeadcountRow) => string;
-}) {
-  return (
-    <section className="rounded-lg border p-4">
-      <h3 className="text-sm font-medium">{title}</h3>
-      {rows.length === 0 ? (
-        <p className="text-muted-foreground mt-3 rounded-md border border-dashed p-3 text-xs">
-          Nobody on the roster.
-        </p>
-      ) : (
-        <ul className="mt-3 flex flex-col gap-2">
-          {rows.map((row) => (
-            <li key={row.key || row.label} className="text-xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  {row.color ? (
-                    <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: row.color }}
-                    />
-                  ) : null}
-                  <span className="truncate">{labelOf ? labelOf(row) : row.label}</span>
-                </span>
-                <span className="text-muted-foreground shrink-0 tabular-nums">
-                  {row.workers}
-                  {row.terminated > 0 ? ` · ${row.terminated} left` : ""}
-                </span>
-              </div>
-              <div className="bg-muted mt-1 h-1.5 w-full overflow-hidden rounded-full">
-                <div
-                  className={cn("bg-primary/60 h-full rounded-full")}
-                  style={{ width: `${headcountShare(row.workers, total)}%` }}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function Figure({ label, value, detail }: { label: string; value: string; detail?: string }) {
-  return (
-    <div className="rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-[11px]">{label}</p>
-      <p className="text-lg font-semibold tabular-nums">{value}</p>
-      {detail ? <p className="text-muted-foreground text-[11px]">{detail}</p> : null}
+      <PositionHoldersSheet position={holders} onOpenChange={(open) => !open && setHolders(null)} />
     </div>
   );
 }

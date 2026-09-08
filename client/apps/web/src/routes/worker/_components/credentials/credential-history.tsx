@@ -1,9 +1,14 @@
 import type { WorkerCredentialRow } from "@/lib/graphql/worker-credential";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 
+/**
+ * Archived credentials, folded away. They stay because an auditor asks what
+ * was held and when, not because anybody reads them day to day.
+ */
 export function CredentialHistory({ archived }: { archived: readonly WorkerCredentialRow[] }) {
   const [open, setOpen] = useState(false);
   if (archived.length === 0) return null;
@@ -17,37 +22,37 @@ export function CredentialHistory({ archived }: { archived: readonly WorkerCrede
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <ChevronDownIcon className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDownIcon className={cn("size-3.5 transition-transform", open && "rotate-180")} />
         History ({archived.length})
       </Button>
       {open ? (
-        <ul className="divide-border border-border divide-y rounded-lg border">
+        <ul className="divide-border divide-y rounded-lg border">
           {archived.map((credential) => (
             <li
               key={credential.id}
               data-testid={`credential-history-${credential.id}`}
-              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs"
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-3 py-2.5 text-xs"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium">
+                <p className="truncate text-sm font-medium">
                   {credential.credentialType?.name ?? "Credential"}
-                  {credential.number ? (
-                    <span className="text-muted-foreground ml-1 font-normal tabular-nums">
-                      {credential.number}
-                    </span>
-                  ) : null}
                 </p>
-                <p className="text-muted-foreground">
-                  {credential.expiresAt
-                    ? `Expired ${formatUnixDateMedium(credential.expiresAt)}`
-                    : "No expiry"}
-                  {credential.archivedAt
-                    ? ` · Archived ${formatUnixDateMedium(credential.archivedAt)}`
-                    : ""}
+                <p className="text-muted-foreground truncate">
+                  {[
+                    credential.number,
+                    credential.expiresAt
+                      ? `Expired ${formatUnixDateMedium(credential.expiresAt)}`
+                      : "No expiry",
+                    credential.archivedAt
+                      ? `Archived ${formatUnixDateMedium(credential.archivedAt)}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               </div>
               {credential.archiveReason ? (
-                <span className="text-muted-foreground italic">{credential.archiveReason}</span>
+                <span className="text-muted-foreground text-right">{credential.archiveReason}</span>
               ) : null}
             </li>
           ))}

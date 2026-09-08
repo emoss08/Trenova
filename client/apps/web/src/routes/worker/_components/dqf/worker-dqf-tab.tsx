@@ -17,20 +17,35 @@ import {
   DQF_SECTION_ORDER,
   dqfItemStatusLabel,
   dqfItemTone,
+  dqfNextSteps,
   dqfSectionLabel,
-  verificationMethodLabel,
-  verificationSettled,
-  verificationStatusLabel,
-  verificationTone,
+  dqfSectionTab,
+  type DQFNextStep,
 } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { ArrowUpRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DQFFileHeader } from "./dqf-file-header";
+import { DQFNextSteps } from "./dqf-next-steps";
 import { EmployerDialog } from "./employer-dialog";
+import { EmployerRow } from "./employer-row";
 import { useDqfInvalidation } from "./use-dqf-invalidation";
 
-export default function WorkerDQFTab({ workerId }: { workerId: string }) {
+type WorkerDQFTabProps = {
+  workerId: string;
+  /** Hands the reader to the tab that fixes a gap. */
+  onOpenTab: (tab: string) => void;
+};
+
+/**
+ * The qualification file as a process. The header says whether the file
+ * stands, the spine says which part is short, the next steps say what to do
+ * about it in order, and the sections underneath are the evidence. Sending a
+ * request or chasing an employer happens from the step itself.
+ */
+export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps) {
   const { allowed: canCreate } = usePermission(Resource.Qualification, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.Qualification, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.Qualification, Operation.Delete);
@@ -38,13 +53,14 @@ export default function WorkerDQFTab({ workerId }: { workerId: string }) {
   const [dialog, setDialog] = useState<{ verification: EmploymentVerificationRow | null } | null>(
     null,
   );
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
 
   const fileQuery = useQuery({
     queryKey: [DRIVER_QUALIFICATION_FILE_KEY, workerId],
     queryFn: ({ signal }) => fetchDriverQualificationFile(workerId, { signal }),
   });
 
-  const requestedMutation = useMutation({
+  const requested = useMutation({
     mutationFn: (id: string) => markEmploymentVerificationRequested(id),
     onSuccess: () => {
       toast.success("Request recorded");
@@ -53,8 +69,7 @@ export default function WorkerDQFTab({ workerId }: { workerId: string }) {
     onError: (error: Error) =>
       toast.error("Could not record the request", { description: error.message }),
   });
-
-  const followUpMutation = useMutation({
+  const followUp = useMutation({
     mutationFn: (id: string) => recordEmploymentVerificationFollowUp(id),
     onSuccess: (updated) => {
       toast.success("Follow-up recorded", {
@@ -65,8 +80,7 @@ export default function WorkerDQFTab({ workerId }: { workerId: string }) {
     onError: (error: Error) =>
       toast.error("Could not record the follow-up", { description: error.message }),
   });
-
-  const deleteMutation = useMutation({
+  const remove = useMutation({
     mutationFn: (id: string) => deleteEmploymentVerification(id),
     onSuccess: () => {
       toast.success("Employer removed");
@@ -76,203 +90,132 @@ export default function WorkerDQFTab({ workerId }: { workerId: string }) {
       toast.error("Could not remove the employer", { description: error.message }),
   });
 
+  const file = fileQuery.data;
+  const steps = useMemo(() => (file ? dqfNextSteps(file, now) : []), [file, now]);
   const sections = useMemo(() => {
-    const items = fileQuery.data?.items ?? [];
+    const items = file?.items ?? [];
     return DQF_SECTION_ORDER.map((section) => ({
       section,
       items: items.filter((item) => item.section === section),
     })).filter((group) => group.items.length > 0);
-  }, [fileQuery.data?.items]);
+  }, [file?.items]);
+  const verificationsById = useMemo(
+    () => new Map((file?.verifications ?? []).map((row) => [row.id, row])),
+    [file?.verifications],
+  );
 
   if (fileQuery.isLoading) {
     return (
-      <div className="flex flex-col gap-3 p-4">
-        {[0, 1, 2].map((row) => (
-          <Skeleton key={row} className="h-24 w-full" />
-        ))}
+      <div className="flex flex-col gap-4 p-4">
+        <Skeleton className="h-16 w-full rounded-lg" />
+        <div className="grid grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((n) => (
+            <Skeleton key={n} className="h-16 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-40 w-full rounded-lg" />
       </div>
     );
   }
-
-  const file = fileQuery.data;
   if (!file) return null;
 
+  const busy = requested.isPending || followUp.isPending || remove.isPending;
+  const busyStepId = requested.isPending
+    ? `verification:${requested.variables}`
+    : followUp.isPending
+      ? `verification:${followUp.variables}`
+      : null;
+
+  function runStep(step: DQFNextStep) {
+    if (step.kind === "item" && step.tab) {
+      onOpenTab(step.tab);
+      return;
+    }
+    if (step.kind === "employers") {
+      setDialog({ verification: null });
+      return;
+    }
+    if (step.kind === "verification" && step.verificationId) {
+      const verification = verificationsById.get(step.verificationId);
+      if (!verification) return;
+      if (step.action === "request") {
+        requested.mutate(verification.id);
+      } else if (step.action === "chase") {
+        followUp.mutate(verification.id);
+      } else {
+        setDialog({ verification });
+      }
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <section
-        className={cn(
-          "rounded-lg border p-4",
-          !file.complete && "border-amber-500/60 bg-amber-500/5",
-        )}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Badge variant={file.complete ? "active" : "inactive"}>
-              {file.complete ? "Complete" : "Incomplete"}
-            </Badge>
-            <p className="text-muted-foreground mt-2 max-w-prose text-xs">
-              The file is assembled on read from the credentials, documents, previous-employer
-              investigations and testing record. Nothing here is a second copy, so it cannot drift
-              from what those areas say.
-            </p>
-          </div>
-          {canCreate ? (
-            <Button size="sm" onClick={() => setDialog({ verification: null })}>
-              Add previous employer
-            </Button>
-          ) : null}
+    <div className="flex flex-col gap-5 p-4">
+      <DQFFileHeader
+        file={file}
+        canCreate={canCreate}
+        onAddEmployer={() => setDialog({ verification: null })}
+        onOpenTab={onOpenTab}
+      />
+
+      <DQFNextSteps steps={steps} busyId={busyStepId} onStep={runStep} />
+
+      {sections.map((group) => {
+        const tab = dqfSectionTab(group.section);
+        return (
+          <section key={group.section} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+                {dqfSectionLabel(group.section)}
+              </h4>
+              {tab ? (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() => onOpenTab(tab)}
+                >
+                  Open {tab}
+                  <ArrowUpRightIcon className="size-3" />
+                </Button>
+              ) : null}
+            </div>
+            <ul className="divide-border divide-y rounded-lg border">
+              {group.items.map((item) => (
+                <ItemRow key={`${group.section}:${item.code}`} item={item} />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+
+      <section className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+            Previous employers
+          </h4>
+          <p className="text-muted-foreground truncate text-xs">
+            Three-year lookback · 49 CFR 391.23
+          </p>
         </div>
-
-        <dl className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-          <Figure
-            label="Missing"
-            value={String(file.missingRequired)}
-            warn={file.missingRequired > 0}
-          />
-          <Figure label="Expired" value={String(file.expired)} warn={file.expired > 0} />
-          <Figure
-            label="Outstanding"
-            value={String(file.outstanding)}
-            warn={file.outstanding > 0}
-          />
-          <Figure
-            label="Expiring soon"
-            value={String(file.expiringSoon)}
-            warn={file.expiringSoon > 0}
-          />
-        </dl>
-
-        {file.safetyHistoryDueAt > 0 ? (
-          <p
-            className={cn(
-              "mt-3 text-[11px]",
-              file.safetyHistoryLate ? "text-red-600 dark:text-red-400" : "text-muted-foreground",
-            )}
-          >
-            Previous-employer investigation was due {formatUnixDate(file.safetyHistoryDueAt)}
-            {file.safetyHistoryLate ? " — it is late (49 CFR 391.23(c)(1))." : "."}
-          </p>
-        ) : null}
-
-        {file.retentionExpiresAt ? (
-          <p className="text-muted-foreground mt-1 text-[11px]">
-            {file.purgeEligible
-              ? `Held past its retention window; eligible for purge since ${formatUnixDate(file.retentionExpiresAt)}.`
-              : `Hold until ${formatUnixDate(file.retentionExpiresAt)} (49 CFR 391.51(d)).`}
-          </p>
-        ) : null}
-      </section>
-
-      {sections.map((group) => (
-        <section key={group.section}>
-          <h3 className="cc-label text-foreground mb-2">{dqfSectionLabel(group.section)}</h3>
-          <ul className="flex flex-col gap-1.5">
-            {group.items.map((item) => (
-              <ItemRow key={`${group.section}:${item.code}`} item={item} />
-            ))}
-          </ul>
-        </section>
-      ))}
-
-      <section>
-        <h3 className="cc-label text-foreground mb-2">Previous employers</h3>
         {file.verifications.length === 0 ? (
-          <p className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
+          <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
             No previous employer has been recorded. Until one is, the three-year investigation has
             not been made.
           </p>
         ) : (
-          <ul className="flex flex-col gap-1.5">
+          <ul className="divide-border divide-y rounded-lg border">
             {file.verifications.map((verification) => (
-              <li key={verification.id} className="rounded-md border px-3 py-2 text-xs">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{verification.employerName}</span>
-                    <Badge variant={verificationTone(verification.status)}>
-                      {verificationStatusLabel(verification.status)}
-                    </Badge>
-                    {verification.wasDotRegulated ? null : (
-                      <Badge variant="secondary">Non-DOT</Badge>
-                    )}
-                    {verification.followUpCount > 0 ? (
-                      <span className="text-muted-foreground">
-                        {verification.followUpCount} follow-up
-                        {verification.followUpCount === 1 ? "" : "s"}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    {canUpdate && verification.status === "Pending" ? (
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        isLoading={requestedMutation.isPending}
-                        onClick={() => requestedMutation.mutate(verification.id)}
-                      >
-                        Mark requested
-                      </Button>
-                    ) : null}
-                    {canUpdate && verification.status === "Requested" ? (
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        isLoading={followUpMutation.isPending}
-                        onClick={() => followUpMutation.mutate(verification.id)}
-                      >
-                        Follow up
-                      </Button>
-                    ) : null}
-                    {canUpdate ? (
-                      <Button size="xs" variant="ghost" onClick={() => setDialog({ verification })}>
-                        Edit
-                      </Button>
-                    ) : null}
-                    {canDelete && !verificationSettled(verification.status) ? (
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        isLoading={deleteMutation.isPending}
-                        onClick={() => deleteMutation.mutate(verification.id)}
-                      >
-                        Remove
-                      </Button>
-                    ) : null}
-                  </span>
-                </div>
-                <p className="text-muted-foreground mt-1">
-                  {verification.employedFrom || verification.employedTo
-                    ? `${verification.employedFrom ? formatUnixDate(verification.employedFrom) : "?"} – ${
-                        verification.employedTo
-                          ? formatUnixDate(verification.employedTo)
-                          : "present"
-                      } · `
-                    : ""}
-                  requested by {verificationMethodLabel(verification.method).toLowerCase()}
-                  {verification.requestedAt
-                    ? ` on ${formatUnixDate(verification.requestedAt)}`
-                    : ""}
-                </p>
-                {verification.status === "Received" &&
-                verification.wasDotRegulated &&
-                !verification.drugAlcoholResponseReceivedAt ? (
-                  <p className="mt-1 text-amber-600 dark:text-amber-400">
-                    Answered without the drug and alcohol history (49 CFR 382.413).
-                  </p>
-                ) : null}
-                {verification.hadAccidents || verification.hadDrugAlcoholViolations ? (
-                  <p className="mt-1">
-                    {verification.hadAccidents
-                      ? `${verification.accidentCount} accident${verification.accidentCount === 1 ? "" : "s"} reported. `
-                      : ""}
-                    {verification.hadDrugAlcoholViolations
-                      ? "Drug or alcohol violations reported."
-                      : ""}
-                  </p>
-                ) : null}
-                {verification.findings ? (
-                  <p className="text-muted-foreground mt-1">{verification.findings}</p>
-                ) : null}
-              </li>
+              <EmployerRow
+                key={verification.id}
+                verification={verification}
+                permissions={{ canUpdate, canDelete }}
+                now={now}
+                busy={busy}
+                onRequest={(row) => requested.mutate(row.id)}
+                onFollowUp={(row) => followUp.mutate(row.id)}
+                onEdit={(row) => setDialog({ verification: row })}
+                onDelete={(row) => remove.mutate(row.id)}
+              />
             ))}
           </ul>
         )}
@@ -289,31 +232,25 @@ export default function WorkerDQFTab({ workerId }: { workerId: string }) {
 }
 
 function ItemRow({ item }: { item: DQFItem }) {
+  const settled = item.status === "Satisfied" || item.status === "NotApplicable";
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs">
-      <span className="min-w-0">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="font-medium">{item.name}</span>
-          <Badge variant={dqfItemTone(item.status)}>{dqfItemStatusLabel(item.status)}</Badge>
-        </span>
-        <span className="text-muted-foreground mt-0.5 block">{item.detail}</span>
-      </span>
-      <span className="text-muted-foreground shrink-0 tabular-nums">
-        {item.expiresAt ? formatUnixDate(item.expiresAt) : ""}
-      </span>
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 px-3 py-2.5 text-xs">
+      <div className="min-w-0">
+        <p className={cn("truncate text-sm font-medium", settled && "text-muted-foreground")}>
+          {item.name}
+        </p>
+        <p className="text-muted-foreground truncate">
+          {[item.detail, item.regulation].filter(Boolean).join(" · ")}
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        {item.expiresAt ? (
+          <span className="text-muted-foreground tabular-nums">
+            {formatUnixDate(item.expiresAt)}
+          </span>
+        ) : null}
+        <Badge variant={dqfItemTone(item.status)}>{dqfItemStatusLabel(item.status)}</Badge>
+      </div>
     </li>
-  );
-}
-
-function Figure({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
-  return (
-    <div>
-      <dt className="text-muted-foreground text-[11px]">{label}</dt>
-      <dd
-        className={cn("font-semibold tabular-nums", warn && "text-amber-600 dark:text-amber-400")}
-      >
-        {value}
-      </dd>
-    </div>
   );
 }

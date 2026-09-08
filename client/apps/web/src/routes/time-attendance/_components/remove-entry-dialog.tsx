@@ -2,6 +2,7 @@ import { InputField } from "@/components/fields/input-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { deleteTimeEntry } from "@/lib/graphql/timesheet";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -87,6 +88,12 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
               : ""}
           </DialogDescription>
         </DialogHeader>
+        <Alert variant="warning">
+          <AlertDescription>
+            The entry is deleted outright and cannot be restored; the week&apos;s totals are worked
+            out again from the punches that are left.
+          </AlertDescription>
+        </Alert>
         <FormProvider {...form}>
           <Form
             onSubmit={(submitEvent) => {
@@ -102,6 +109,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
                   name="reason"
                   label="Why"
                   placeholder="e.g. Duplicate punch"
+                  description="Kept in the audit trail so the missing hours can be explained later."
                   rules={{ required: true }}
                 />
               </FormControl>

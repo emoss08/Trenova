@@ -1,7 +1,7 @@
-import { PayCodeSelectField } from "@/components/fields/pay-code-select-field";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
+import { PayCodeSelectField } from "@/components/fields/pay-code-select-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/graphql/benefits";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -143,6 +144,14 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
             settlement, which is why it is required.
           </DialogDescription>
         </DialogHeader>
+        {isEdit ? (
+          <Alert variant="warning">
+            <AlertDescription>
+              Each enrolment keeps the price it was made at, so changing a cost here only affects
+              people enrolled from now on; existing deductions are not repriced.
+            </AlertDescription>
+          </Alert>
+        ) : null}
         <FormProvider {...form}>
           <Form
             onSubmit={(submitEvent) => {
@@ -159,6 +168,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label="Code"
                   placeholder="e.g. MED-PPO"
                   rules={{ required: true }}
+                  description="A short tag that identifies the plan on lists and enrolments, up to 20 characters."
                 />
               </FormControl>
               <FormControl>
@@ -168,6 +178,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label="Name"
                   placeholder="e.g. Medical PPO"
                   rules={{ required: true }}
+                  description="The plan name workers see when they are enrolled in it or decline it."
                 />
               </FormControl>
               <FormControl>
@@ -176,7 +187,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="planType"
                   label="Type"
                   options={TYPE_OPTIONS}
+                  placeholder="Pick a type"
                   rules={{ required: true }}
+                  description="The kind of cover this is; plans are grouped by it on the benefits page."
                 />
               </FormControl>
               <FormControl>
@@ -184,7 +197,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   control={control}
                   name="planYear"
                   label="Plan year"
+                  placeholder="e.g. 2026"
                   rules={{ required: true }}
+                  description="The year this pricing applies to; set up next year's plan as a new row instead of editing this one."
                 />
               </FormControl>
               <FormControl>
@@ -193,7 +208,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="payCodeId"
                   label="Pay code"
                   required
-                  description="What a contribution shows up as on a settlement."
+                  description="The line a contribution shows up as on a settlement, so every deduction can be explained."
                 />
               </FormControl>
               <FormControl>
@@ -202,7 +217,8 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="status"
                   label="Status"
                   options={STATUS_OPTIONS}
-                  description="Archiving is refused while anybody is still enrolled."
+                  placeholder="Pick a status"
+                  description="An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled."
                 />
               </FormControl>
               <FormControl>
@@ -210,7 +226,8 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   control={control}
                   name="employeeCostMinor"
                   label="Employee cost per period"
-                  description="Deducted from each settlement."
+                  placeholder="0.00"
+                  description="What the worker pays each pay period; it is deducted from every settlement while they are enrolled."
                 />
               </FormControl>
               <FormControl>
@@ -218,7 +235,8 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   control={control}
                   name="employerCostMinor"
                   label="Employer cost per period"
-                  description="Never deducted. Carried so a total-compensation statement can show what the job is worth."
+                  placeholder="0.00"
+                  description="What the company pays each pay period; never deducted, but carried so a total-compensation statement shows what the job is worth."
                 />
               </FormControl>
               <FormControl>
@@ -226,6 +244,8 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   control={control}
                   name="carrier"
                   label="Carrier"
+                  placeholder="e.g. Blue Shield"
+                  description="The insurer or provider that underwrites the plan, shown on the plan card."
                 />
               </FormControl>
               <FormControl>
@@ -233,14 +253,17 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   control={control}
                   name="policyNumber"
                   label="Policy number"
+                  placeholder="e.g. P-100"
+                  description="The carrier's policy or group number, so a query about cover can be matched to the right contract."
                 />
               </FormControl>
-              <FormControl>
+              <FormControl cols="full">
                 <NumberField<BenefitPlanFormValues>
                   control={control}
                   name="waitingPeriodDays"
                   label="Waiting period (days)"
-                  description="How long after hire somebody becomes eligible."
+                  placeholder="e.g. 30"
+                  description="How long after hire somebody becomes eligible, up to a year; it is shown on the plan card but not checked when enrolling."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -249,6 +272,8 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="description"
                   label="Description"
                   maxLength={2000}
+                  placeholder="e.g. PPO with a $500 deductible and a nationwide network"
+                  description="Anything an administrator should know about the plan that the fields above do not say."
                 />
               </FormControl>
             </FormGroup>

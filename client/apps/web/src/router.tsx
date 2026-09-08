@@ -1102,6 +1102,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.Worker),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/my-team/page"))),
             ),
             async lazy() {
               const { MyTeamPage } = await import("@/routes/my-team/page");
@@ -1114,6 +1115,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.BenefitPlan),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/benefits/page"))),
             ),
             async lazy() {
               const { BenefitsPage } = await import("@/routes/benefits/page");
@@ -1138,6 +1140,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.Timesheet),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/time-attendance/page"))),
             ),
             async lazy() {
               const { TimeAttendancePage } = await import("@/routes/time-attendance/page");
@@ -1150,6 +1153,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.WorkerSchedule),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/scheduling/page"))),
             ),
             async lazy() {
               const { SchedulingPage } = await import("@/routes/scheduling/page");
@@ -1162,6 +1166,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.JobPosition),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/org-structure/page"))),
             ),
             async lazy() {
               const { OrgStructurePage } = await import("@/routes/org-structure/page");
@@ -1174,6 +1179,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.WorkerSafetyEvent),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/fleet-safety/page"))),
             ),
             async lazy() {
               const { FleetSafetyPage } = await import("@/routes/fleet-safety/page");
@@ -1186,6 +1192,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.WorkerInjury),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/osha/page"))),
             ),
             async lazy() {
               const { OshaLogPage } = await import("@/routes/osha/page");
@@ -1198,6 +1205,7 @@ export const routes: RouteObject[] = [
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DOTRandomPool),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/random-testing/page"))),
             ),
             async lazy() {
               const { RandomTestingPage } = await import("@/routes/random-testing/page");

@@ -25,6 +25,7 @@ query Headcount {
     activeTotal
     driverTotal
     terminated
+    staffTotal
     byFleet {
       key
       label
@@ -33,6 +34,7 @@ query Headcount {
       workers
       drivers
       terminated
+      staff
     }
     byPosition {
       key
@@ -42,6 +44,7 @@ query Headcount {
       workers
       drivers
       terminated
+      staff
     }
     byDepartment {
       key
@@ -51,7 +54,18 @@ query Headcount {
       workers
       drivers
       terminated
+      staff
     }
+  }
+}
+
+query JobPositionHolders($id: ID!) {
+  jobPositionHolders(id: $id) {
+    kind
+    id
+    name
+    status
+    detail
   }
 }
 
@@ -66,6 +80,7 @@ query MyTeam($includeInactive: Boolean) {
     positionId
     positionTitle
     direct
+    managerId
     complianceStatus
     trainingHealth
     safetyRating
@@ -98,6 +113,14 @@ query ApprovalDelegations($delegatorId: ID, $delegateId: ID, $activeOnly: Boolea
       name
     }
   }
+}
+
+mutation AssignWorkerPosition($workerId: ID!, $positionId: ID) {
+  assignWorkerPosition(workerId: $workerId, positionId: $positionId)
+}
+
+mutation AssignUserPosition($userId: ID!, $positionId: ID) {
+  assignUserPosition(userId: $userId, positionId: $positionId)
 }
 
 mutation CreateJobPosition($input: JobPositionInput!) {

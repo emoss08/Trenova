@@ -1,4 +1,3 @@
-import { EmptyState } from "@/components/empty-state";
 import { KpiStat } from "@/components/kpi/kpi-stat";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -10,9 +9,11 @@ import {
   TIMESHEETS_KEY,
   type PayrollExportRow,
 } from "@/lib/graphql/timesheet";
+import { summarizeSheets } from "@/lib/time-attendance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { addRotaWeeks, formatShiftDate, startOfRotaWeek } from "@trenova/shared/lib/scheduling";
@@ -29,8 +30,9 @@ import {
   PlayIcon,
   TimerIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PayrollRunsEmpty } from "./time-attendance-empty";
 import { VoidExportDialog } from "./void-export-dialog";
 
 type PeriodValue = "1" | "2" | "4";
@@ -43,9 +45,21 @@ const PERIOD_ITEMS = [
 
 const SECONDS_IN_DAY = 86400;
 
+function hourSegments(totals: {
+  regularMinutes: number;
+  overtimeMinutes: number;
+  paidLeaveMinutes: number;
+}) {
+  return [
+    { key: "regular", label: "Regular", value: totals.regularMinutes },
+    { key: "overtime", label: "Overtime", value: totals.overtimeMinutes },
+    { key: "leave", label: "Paid leave", value: totals.paidLeaveMinutes },
+  ];
+}
+
 /**
  * Payroll runs. A run locks the weeks it carried, so a period cannot be sent
- * twice without somebody voiding the first one — nothing in a payroll system
+ * twice without somebody voiding the first one. Nothing in a payroll system
  * reads worse in an audit than a period somebody was paid for twice.
  */
 export function PayrollPanel() {
@@ -94,13 +108,11 @@ export function PayrollPanel() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const readySheets = useMemo(() => ready.data ?? [], [ready.data]);
+  const readySummary = useMemo(() => summarizeSheets(readySheets), [readySheets]);
+
   if (!canExport) return null;
 
-  const readySheets = ready.data ?? [];
-  const readyMinutes = readySheets.reduce(
-    (sum, sheet) => sum + sheet.regularMinutes + sheet.overtimeMinutes + sheet.paidLeaveMinutes,
-    0,
-  );
   const runs = exports.data ?? [];
   const live = runs.filter((run) => run.status !== "Voided");
 
@@ -112,13 +124,21 @@ export function PayrollPanel() {
           value={String(readySheets.length)}
           tone={readySheets.length > 0 ? "success" : "muted"}
           icon={<ClipboardCheckIcon className="size-[11px]" />}
-          sub="Approved weeks in the period not yet sent"
+          sub={
+            readySheets.length > 0
+              ? `${readySummary.workers} ${readySummary.workers === 1 ? "person" : "people"} in the period`
+              : "Approved weeks in the period not yet sent"
+          }
         />
         <KpiStat
           label="Hours in the run"
-          value={formatHours(readyMinutes)}
+          value={formatHours(readySummary.totalMinutes)}
           icon={<TimerIcon className="size-[11px]" />}
-          sub="Regular, overtime and paid leave together"
+          sub={
+            readySummary.overtimeMinutes > 0
+              ? `${formatHours(readySummary.overtimeMinutes)} of it overtime, on ${readySummary.overtimeWeeks} week${readySummary.overtimeWeeks === 1 ? "" : "s"}`
+              : "Regular, overtime and paid leave together"
+          }
         />
         <KpiStat
           label="Runs sent"
@@ -128,75 +148,150 @@ export function PayrollPanel() {
         />
       </div>
 
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">Run payroll</h3>
-          <div className="flex items-center gap-1">
+      <section
+        aria-labelledby="run-payroll-heading"
+        className="bg-card flex flex-col overflow-hidden rounded-lg border"
+      >
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h3 id="run-payroll-heading" className="text-sm font-medium">
+              Run payroll
+            </h3>
+            <p className="text-muted-foreground text-xs">
+              Every approved week in the period that has not gone out yet. The weeks lock to the
+              run, so the same period cannot be sent twice.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl<PeriodValue>
+              items={PERIOD_ITEMS}
+              value={period}
+              onValueChange={setPeriod}
+              aria-label="Payroll period length"
+            />
+            <div className="flex items-center gap-1">
+              <Button
+                size="icon-sm"
+                variant="outline"
+                onClick={() => setPeriodStart(addRotaWeeks(periodStart, -weeks))}
+                aria-label="Earlier period"
+              >
+                <ChevronLeftIcon className="size-3.5" />
+              </Button>
+              <span className="min-w-36 text-center text-sm font-medium tabular-nums">
+                {formatShiftDate(periodStart)} – {formatShiftDate(periodEnd - SECONDS_IN_DAY)}
+              </span>
+              <Button
+                size="icon-sm"
+                variant="outline"
+                onClick={() => setPeriodStart(addRotaWeeks(periodStart, weeks))}
+                aria-label="Later period"
+              >
+                <ChevronRightIcon className="size-3.5" />
+              </Button>
+            </div>
             <Button
               size="sm"
-              variant="outline"
-              onClick={() => setPeriodStart(addRotaWeeks(periodStart, -weeks))}
-              aria-label="Earlier period"
+              isLoading={generating}
+              disabled={readySheets.length === 0}
+              onClick={() => generate()}
             >
-              <ChevronLeftIcon className="size-3.5" />
-            </Button>
-            <span className="min-w-52 text-center text-sm font-medium tabular-nums">
-              {formatShiftDate(periodStart)} – {formatShiftDate(periodEnd - SECONDS_IN_DAY)}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPeriodStart(addRotaWeeks(periodStart, weeks))}
-              aria-label="Later period"
-            >
-              <ChevronRightIcon className="size-3.5" />
+              <PlayIcon className="size-3.5" />
+              {readySheets.length === 0
+                ? "Nothing to run"
+                : `Run ${readySheets.length} timesheet${readySheets.length === 1 ? "" : "s"}`}
             </Button>
           </div>
-          <p className="text-muted-foreground text-xs">
-            Every approved week in the period that has not gone out yet. The weeks are locked to the
-            run, so the same period cannot be sent twice.
+        </header>
+
+        {ready.isLoading ? (
+          <div className="flex flex-col gap-2 p-3">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-2/3" />
+          </div>
+        ) : readySheets.length === 0 ? (
+          <p className="text-muted-foreground px-4 py-3 text-xs">
+            No approved week in this period is waiting to be sent. Move the period, or approve some
+            weeks first.
           </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <SegmentedControl<PeriodValue>
-            items={PERIOD_ITEMS}
-            value={period}
-            onValueChange={setPeriod}
-            aria-label="Payroll period length"
-          />
-          <Button
-            size="sm"
-            isLoading={generating}
-            disabled={readySheets.length === 0}
-            onClick={() => generate()}
-          >
-            <PlayIcon className="size-3.5" />
-            {readySheets.length === 0
-              ? "Nothing to run"
-              : `Run ${readySheets.length} timesheet${readySheets.length === 1 ? "" : "s"}`}
-          </Button>
-        </div>
+        ) : (
+          <>
+            <ul
+              aria-label="Timesheets in the run"
+              className="max-h-72 divide-y overflow-y-auto text-xs"
+            >
+              {readySheets.map((sheet) => (
+                <li
+                  key={sheet.id}
+                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-4 px-4 py-2"
+                >
+                  <span className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="truncate font-medium">
+                      {sheet.worker
+                        ? `${sheet.worker.firstName} ${sheet.worker.lastName}`
+                        : sheet.workerId}
+                    </span>
+                    <span className="text-muted-foreground tabular-nums">
+                      Week of {formatShiftDate(sheet.periodStart)}
+                    </span>
+                  </span>
+                  <CompositionBar
+                    size="sm"
+                    showLegend={false}
+                    aria-label={`${sheet.worker ? `${sheet.worker.firstName} ${sheet.worker.lastName}` : sheet.workerId}'s hours`}
+                    formatValue={formatHours}
+                    segments={hourSegments(sheet)}
+                  />
+                  <span className="font-mono tabular-nums">
+                    {formatHours(sheet.totalMinutes)}
+                    {sheet.overtimeMinutes > 0 ? (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · {formatHours(sheet.overtimeMinutes)} OT
+                      </span>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <footer className="bg-muted/40 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-2 text-xs">
+              <CompositionBar
+                size="sm"
+                className="max-w-md min-w-0 flex-1"
+                aria-label="Hours in the run"
+                formatValue={formatHours}
+                segments={hourSegments(readySummary)}
+              />
+              <span className="font-mono text-sm font-semibold tabular-nums">
+                {formatHours(readySummary.totalMinutes)}
+              </span>
+            </footer>
+          </>
+        )}
       </section>
 
-      {exports.isLoading ? (
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-16 rounded-lg" />
-          <Skeleton className="h-16 rounded-lg" />
-        </div>
-      ) : runs.length === 0 ? (
-        <EmptyState
-          className="max-w-none"
-          title="No payroll runs yet"
-          description="Approve some weeks, pick the period, and run it. Each run is kept with the file it produced."
-          icons={[ClipboardCheckIcon, BanknoteIcon, FileSpreadsheetIcon]}
-        />
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {runs.map((run) => (
-            <ExportRow key={run.id} run={run} onVoid={() => setVoiding(run)} />
-          ))}
-        </ul>
-      )}
+      <section aria-labelledby="payroll-runs-heading" className="flex flex-col gap-2">
+        <h3 id="payroll-runs-heading" className="text-sm font-medium">
+          Runs
+        </h3>
+        {exports.isLoading ? (
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+          </div>
+        ) : runs.length === 0 ? (
+          <PayrollRunsEmpty
+            title="No payroll runs yet"
+            description="Approve some weeks, pick the period, and run it. Each run is kept with the file it produced."
+          />
+        ) : (
+          <ul className="bg-card divide-y overflow-hidden rounded-lg border">
+            {runs.map((run) => (
+              <ExportRow key={run.id} run={run} onVoid={() => setVoiding(run)} />
+            ))}
+          </ul>
+        )}
+      </section>
 
       <VoidExportDialog run={voiding} onOpenChange={(open) => !open && setVoiding(null)} />
     </div>
@@ -206,6 +301,7 @@ export function PayrollPanel() {
 function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void }) {
   const [downloading, setDownloading] = useState(false);
   const voided = run.status === "Voided";
+  const total = run.regularMinutes + run.overtimeMinutes + run.paidLeaveMinutes;
 
   async function download() {
     setDownloading(true);
@@ -229,35 +325,39 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
   return (
     <li
       className={cn(
-        "border-border/80 hover:border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs transition-colors",
+        "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 text-xs md:grid-cols-[auto_minmax(0,1.2fr)_minmax(0,1fr)_auto]",
         voided && "opacity-70",
       )}
     >
-      <div className="flex items-center gap-3">
-        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-          <FileSpreadsheetIcon className="size-4" />
+      <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
+        <FileSpreadsheetIcon className="size-4" />
+      </span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium tabular-nums">
+            {formatShiftDate(run.periodStart)} – {formatShiftDate(run.periodEnd - SECONDS_IN_DAY)}
+          </span>
+          <Badge variant={voided ? "inactive" : "active"}>{voided ? "Voided" : "Sent"}</Badge>
         </span>
-        <div className="flex flex-col">
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="font-medium tabular-nums">
-              {formatShiftDate(run.periodStart)} – {formatShiftDate(run.periodEnd - SECONDS_IN_DAY)}
-            </span>
-            <Badge variant={voided ? "inactive" : "active"}>{voided ? "Voided" : "Sent"}</Badge>
-          </span>
-          <span className="text-muted-foreground tabular-nums">
-            {run.timesheetCount} timesheet{run.timesheetCount === 1 ? "" : "s"} ·{" "}
-            {formatHours(run.regularMinutes)} regular · {formatHours(run.overtimeMinutes)} OT
-            {run.paidLeaveMinutes > 0 ? ` · ${formatHours(run.paidLeaveMinutes)} leave` : ""}
-            {run.generatedAt ? ` · ${formatShiftDate(run.generatedAt)}` : ""}
-          </span>
-          {run.voidReason ? (
-            <span className="text-muted-foreground">Voided: {run.voidReason}</span>
-          ) : null}
-        </div>
+        <span className="text-muted-foreground tabular-nums">
+          {run.timesheetCount} timesheet{run.timesheetCount === 1 ? "" : "s"}
+          {run.generatedAt ? `, sent ${formatShiftDate(run.generatedAt)}` : ""}
+          {run.voidReason ? `. Voided: ${run.voidReason}` : ""}
+        </span>
       </div>
-
+      <div className="col-span-3 flex min-w-0 items-center gap-3 md:col-span-1">
+        <CompositionBar
+          size="sm"
+          showLegend={false}
+          className="min-w-0 flex-1"
+          aria-label="Hours in the run"
+          formatValue={formatHours}
+          segments={hourSegments(run)}
+        />
+        <span className="font-mono text-sm font-semibold tabular-nums">{formatHours(total)}</span>
+      </div>
       {!voided ? (
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5 md:col-start-4">
           <Button
             size="sm"
             variant="outline"
@@ -271,7 +371,9 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
             Void
           </Button>
         </div>
-      ) : null}
+      ) : (
+        <span className="md:col-start-4" />
+      )}
     </li>
   );
 }

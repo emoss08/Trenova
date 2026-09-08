@@ -1,13 +1,17 @@
 import { usePermission } from "@/hooks/use-permission";
 import {
   APPROVAL_DELEGATIONS_KEY,
-  fetchApprovalDelegations,
   revokeApprovalDelegation,
+  type ApprovalDelegationRow,
 } from "@/lib/graphql/org-structure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  SegmentedControl,
+  type SegmentedControlItem,
+} from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import {
@@ -15,36 +19,45 @@ import {
   DELEGATION_STATE_LABELS,
   delegationState,
   delegationStateTone,
+  type DelegationState,
 } from "@trenova/shared/lib/org-structure";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { ArrowRightIcon, HandshakeIcon, PlusIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DelegationDialog } from "./delegation-dialog";
+import { delegationsGivenQuery, delegationsReceivedQuery } from "./queries";
+
+type View = "given" | "received";
+
+const STATE_ORDER: Record<DelegationState, number> = {
+  active: 0,
+  scheduled: 1,
+  ended: 2,
+  revoked: 3,
+};
+
+function inForce(source: readonly ApprovalDelegationRow[], today: number): number {
+  return source.filter((delegation) => delegationState(delegation, today) === "active").length;
+}
 
 /**
- * Who is approving in whose place. Unfiltered the list is what has been handed
- * to the signed-in user; the "handed out" tab is what they have given away.
+ * Who is approving in whose place. "Handed out" is what the signed-in user
+ * has given away; "covering for" is what has been handed to them. In force
+ * comes first in either list, because that is what somebody opens this for.
  */
 export function DelegationPanel() {
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.ApprovalDelegation, Operation.Read);
   const { allowed: canDelegate } = usePermission(Resource.ApprovalDelegation, Operation.Create);
   const userId = useAuthStore((state) => state.user?.id);
-  const [view, setView] = useState<"received" | "given">("given");
+  const [view, setView] = useState<View>("given");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const today = getTodayDate();
 
-  const delegationsQuery = useQuery({
-    queryKey: [APPROVAL_DELEGATIONS_KEY, view, userId],
-    // Naming one side and leaving the other open is what keeps the two views
-    // apart. The server refuses a pair that names neither side as the signed-in
-    // user, so neither view can read somebody else's arrangements by accident.
-    queryFn: ({ signal }) =>
-      view === "given"
-        ? fetchApprovalDelegations({ delegatorId: userId }, { signal })
-        : fetchApprovalDelegations({ delegateId: userId }, { signal }),
-    enabled: canRead && Boolean(userId),
-  });
+  const enabled = canRead && Boolean(userId);
+  const given = useQuery({ ...delegationsGivenQuery(userId ?? ""), enabled });
+  const received = useQuery({ ...delegationsReceivedQuery(userId ?? ""), enabled });
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeApprovalDelegation(id),
@@ -58,36 +71,60 @@ export function DelegationPanel() {
       toast.error("Could not call it back", { description: error.message }),
   });
 
+  const rows = useMemo(() => {
+    const source = view === "given" ? given.data : received.data;
+    return (source ?? [])
+      .map((delegation) => ({ delegation, state: delegationState(delegation, today) }))
+      .sort(
+        (a, b) =>
+          STATE_ORDER[a.state] - STATE_ORDER[b.state] ||
+          b.delegation.startsAt - a.delegation.startsAt,
+      );
+  }, [view, given.data, received.data, today]);
+
+  const viewItems = useMemo<SegmentedControlItem<View>[]>(
+    () => [
+      {
+        value: "given",
+        label: "Handed out",
+        caption: given.data ? `${inForce(given.data, today)} in force` : undefined,
+      },
+      {
+        value: "received",
+        label: "Covering for",
+        caption: received.data ? `${inForce(received.data, today)} in force` : undefined,
+      },
+    ],
+    [given.data, received.data, today],
+  );
+
   if (!canRead) return null;
 
-  const delegations = delegationsQuery.data ?? [];
-  const today = getTodayDate();
+  const loading = view === "given" ? given.isLoading : received.isLoading;
 
   return (
-    <section className="rounded-lg border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-medium">Approval cover</h3>
-          <p className="text-muted-foreground text-xs">
-            Handing approvals to somebody else while a manager is away. Cover widens what the
-            stand-in can act on; it never widens what the manager could approve themselves.
-          </p>
+    <section
+      aria-labelledby="delegation-heading"
+      className="bg-card overflow-hidden rounded-lg border"
+    >
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <HandshakeIcon className="text-muted-foreground size-3.5" aria-hidden />
+          <h3 id="delegation-heading" className="text-sm font-medium">
+            Approval cover
+          </h3>
+          <span className="text-muted-foreground hidden truncate text-xs md:inline">
+            Cover widens what the stand-in can act on; it never widens what the manager could
+            approve themselves.
+          </span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Button
-            size="xs"
-            variant={view === "given" ? "default" : "outline"}
-            onClick={() => setView("given")}
-          >
-            Handed out
-          </Button>
-          <Button
-            size="xs"
-            variant={view === "received" ? "default" : "outline"}
-            onClick={() => setView("received")}
-          >
-            Covering for
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedControl<View>
+            items={viewItems}
+            value={view}
+            onValueChange={setView}
+            aria-label="Which cover to show"
+          />
           {canDelegate ? (
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <PlusIcon className="size-3.5" />
@@ -95,58 +132,63 @@ export function DelegationPanel() {
             </Button>
           ) : null}
         </div>
-      </div>
+      </header>
 
-      {delegationsQuery.isLoading ? (
-        <Skeleton className="mt-3 h-16 w-full" />
-      ) : delegations.length === 0 ? (
-        <p className="text-muted-foreground mt-3 rounded-md border border-dashed p-3 text-xs">
+      {loading ? (
+        <div className="flex flex-col gap-2 p-3">
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-2/3" />
+        </div>
+      ) : rows.length === 0 ? (
+        <p className="text-muted-foreground px-3 py-3 text-sm">
           {view === "given"
             ? "You have not handed your approvals to anybody."
             : "Nobody has handed you their approvals."}
         </p>
       ) : (
-        <ul className="mt-3 flex flex-col gap-1.5">
-          {delegations.map((delegation) => {
-            const state = delegationState(delegation, today);
-            return (
-              <li
-                key={delegation.id}
-                className="flex flex-wrap items-center justify-between gap-2 border-t pt-1.5 text-xs first:border-t-0 first:pt-0"
-              >
-                <span className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span className="font-medium">
-                    {delegation.delegator?.name ?? "Someone"} →{" "}
-                    {delegation.delegate?.name ?? "someone"}
+        <ul className="divide-y" aria-label={view === "given" ? "Handed out" : "Covering for"}>
+          {rows.map(({ delegation, state }) => (
+            <li
+              key={delegation.id}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2"
+            >
+              <div className="flex min-w-0 flex-col gap-0.5 leading-tight">
+                <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                    <span className="truncate">{delegation.delegator?.name ?? "Someone"}</span>
+                    <ArrowRightIcon
+                      className="text-muted-foreground size-3.5 shrink-0"
+                      aria-hidden
+                    />
+                    <span className="truncate">{delegation.delegate?.name ?? "someone"}</span>
                   </span>
                   <Badge variant="secondary">{approvalScopeLabel(delegation.scope)}</Badge>
                   <Badge variant={delegationStateTone(state)}>
                     {DELEGATION_STATE_LABELS[state]}
                   </Badge>
-                  <span className="text-muted-foreground">
-                    {formatUnixDate(delegation.startsAt)}
-                    {delegation.endsAt
-                      ? ` – ${formatUnixDate(delegation.endsAt)}`
-                      : " – until called back"}
-                  </span>
-                  {delegation.reason ? (
-                    <span className="text-muted-foreground truncate">{delegation.reason}</span>
-                  ) : null}
                 </span>
-                {state !== "revoked" && state !== "ended" ? (
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    isLoading={revokeMutation.isPending}
-                    onClick={() => revokeMutation.mutate(delegation.id)}
-                    aria-label={`Call back the delegation to ${delegation.delegate?.name ?? "them"}`}
-                  >
-                    Call back
-                  </Button>
-                ) : null}
-              </li>
-            );
-          })}
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {formatUnixDate(delegation.startsAt)}
+                  {delegation.endsAt
+                    ? ` – ${formatUnixDate(delegation.endsAt)}`
+                    : " – until called back"}
+                  {delegation.reason ? ` · ${delegation.reason}` : ""}
+                </span>
+              </div>
+              {state === "active" || state === "scheduled" ? (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  isLoading={revokeMutation.isPending && revokeMutation.variables === delegation.id}
+                  disabled={revokeMutation.isPending}
+                  onClick={() => revokeMutation.mutate(delegation.id)}
+                  aria-label={`Call back the delegation to ${delegation.delegate?.name ?? "them"}`}
+                >
+                  Call back
+                </Button>
+              ) : null}
+            </li>
+          ))}
         </ul>
       )}
 

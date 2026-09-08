@@ -1,6 +1,6 @@
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import type { WorkerRecognitionRow } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { RECOGNITION_KIND_LABELS, type RecognitionKind } from "@trenova/shared/types/worker-safety";
 import { AwardIcon, EyeOffIcon, Trash2Icon } from "lucide-react";
@@ -12,60 +12,73 @@ type RecognitionListProps = {
   onDelete: (recognition: WorkerRecognitionRow) => void;
 };
 
+/**
+ * Praise as small cards rather than a list: each one is a moment somebody
+ * chose to write down, and a card reads as one. Visible entries reach the
+ * driver's Dash as kudos.
+ */
 export function RecognitionList({ recognitions, canDelete, busy, onDelete }: RecognitionListProps) {
   return (
     <section className="flex flex-col gap-2">
-      <div>
-        <h3 className="text-sm font-semibold">Recognition</h3>
-        <p className="text-muted-foreground text-xs">
-          Praise and milestones. Visible entries show up as kudos in the driver&apos;s Dash.
+      <div className="flex items-baseline justify-between gap-3">
+        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">Recognition</h4>
+        <p className="text-muted-foreground truncate text-xs">
+          Visible entries show up as kudos in the driver&apos;s Dash.
         </p>
       </div>
       {recognitions.length === 0 ? (
-        <p className="text-muted-foreground border-border rounded-lg border border-dashed px-3 py-4 text-center text-xs">
+        <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
           Nothing recorded yet
         </p>
       ) : (
-        <ul className="divide-border border-border divide-y rounded-lg border">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {recognitions.map((recognition) => (
             <li
               key={recognition.id}
               data-testid={`recognition-${recognition.id}`}
-              className="flex items-start gap-3 px-3 py-2.5"
+              className="border-border/80 hover:border-border flex flex-col gap-2 rounded-lg border p-3 transition-colors"
             >
-              <AwardIcon className="mt-0.5 size-4 shrink-0 text-amber-500" />
-              <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                  {recognition.title}
-                  <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-                    {RECOGNITION_KIND_LABELS[recognition.kind as RecognitionKind] ??
-                      recognition.kind}
-                  </Badge>
-                  {!recognition.visibleToWorker ? (
-                    <span className="text-muted-foreground flex items-center gap-1 text-[10px]">
-                      <EyeOffIcon className="size-3" />
-                      Internal
-                    </span>
-                  ) : null}
-                </p>
-                {recognition.message ? <p className="text-xs">{recognition.message}</p> : null}
-                <p className="text-muted-foreground text-[11px]">
-                  {formatUnixDate(recognition.occurredAt)}
-                  {recognition.awardedBy?.name ? ` · ${recognition.awardedBy.name}` : ""}
-                </p>
+              <div className="flex items-start gap-3">
+                <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
+                  <AwardIcon className="size-3.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{recognition.title}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {formatUnixDate(recognition.occurredAt)}
+                    {recognition.awardedBy?.name ? ` · ${recognition.awardedBy.name}` : ""}
+                  </p>
+                </div>
+                <RowActionsMenu
+                  label={`Actions for ${recognition.title}`}
+                  actions={
+                    canDelete
+                      ? [
+                          {
+                            id: "remove",
+                            label: `Remove ${recognition.title}`,
+                            icon: Trash2Icon,
+                            disabled: busy,
+                            destructive: true,
+                            onSelect: () => onDelete(recognition),
+                          },
+                        ]
+                      : []
+                  }
+                />
               </div>
-              {canDelete ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive size-7"
-                  disabled={busy}
-                  aria-label={`Remove ${recognition.title}`}
-                  onClick={() => onDelete(recognition)}
-                >
-                  <Trash2Icon className="size-3.5" />
-                </Button>
-              ) : null}
+              {recognition.message ? <p className="text-xs">{recognition.message}</p> : null}
+              <div className="mt-auto flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline">
+                  {RECOGNITION_KIND_LABELS[recognition.kind as RecognitionKind] ?? recognition.kind}
+                </Badge>
+                {!recognition.visibleToWorker ? (
+                  <Badge variant="secondary">
+                    <EyeOffIcon />
+                    Internal
+                  </Badge>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>

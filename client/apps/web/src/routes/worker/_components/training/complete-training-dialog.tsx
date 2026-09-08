@@ -162,6 +162,7 @@ export function CompleteTrainingDialog({
                   control={control}
                   name="courseId"
                   label="Course"
+                  placeholder="Select a course"
                   options={
                     record?.course
                       ? [{ value: record.course.id, label: record.course.name }]
@@ -169,6 +170,11 @@ export function CompleteTrainingDialog({
                   }
                   rules={{ required: true }}
                   isReadOnly={Boolean(record)}
+                  description={
+                    record
+                      ? "Locked to the assignment being closed."
+                      : "The course this result is for."
+                  }
                 />
               </FormControl>
               <FormControl>
@@ -176,7 +182,9 @@ export function CompleteTrainingDialog({
                   control={control}
                   name="completedAt"
                   label="Completed"
+                  placeholder="Today"
                   rules={{ required: true }}
+                  description="The day the course was finished; any expiry is counted from it."
                 />
               </FormControl>
               <FormControl>
@@ -192,7 +200,9 @@ export function CompleteTrainingDialog({
                       ? "Passes."
                       : projected === "fail"
                         ? "Below the passing mark — this will be recorded as a fail."
-                        : undefined
+                        : scored
+                          ? "Compared with the passing mark to decide pass or fail."
+                          : "Optional for a course without a passing mark."
                   }
                 />
               </FormControl>
@@ -203,6 +213,7 @@ export function CompleteTrainingDialog({
                   label="Notes"
                   placeholder="Instructor, session, certificate number"
                   maxLength={1000}
+                  description="Kept on the record with the result."
                 />
               </FormControl>
             </FormGroup>

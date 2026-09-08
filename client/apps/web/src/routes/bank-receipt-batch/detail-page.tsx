@@ -1,6 +1,6 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -8,15 +8,17 @@ import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceipt } from "@/types/bank-receipt";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeftIcon,
-  CheckCircle2Icon,
-  FileWarningIcon,
-  ReceiptTextIcon,
-  UploadCloudIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, CheckCircle2Icon, FileWarningIcon, UploadCloudIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+
+const RECEIPT_COLUMNS = [
+  { label: "Reference" },
+  { label: "Date" },
+  { label: "Amount", numeric: true },
+  { label: "Status" },
+  { label: "Memo" },
+] as const;
 
 function formatTimestamp(unix: number): string {
   return formatUnixDateTimeMedium(unix);
@@ -193,14 +195,11 @@ export function BankReceiptBatchDetailPage() {
           </div>
 
           {receipts.length === 0 ? (
-            <div className="flex justify-center py-12">
-              <EmptyState
-                title="No receipts"
-                description="This batch contains no receipts."
-                icons={[ReceiptTextIcon]}
-                className="max-w-none border-none shadow-none"
-              />
-            </div>
+            <EmptyTable
+              title="No receipts in this batch"
+              description="The file imported with nothing in it, or every line was rejected. Import it again once it has rows."
+              columns={RECEIPT_COLUMNS}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

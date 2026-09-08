@@ -104,8 +104,8 @@ func (_c *MockPermissionCacheRepository_Delete_Call) RunAndReturn(run func(ctx c
 }
 
 // Get provides a mock function for the type MockPermissionCacheRepository
-func (_mock *MockPermissionCacheRepository) Get(ctx context.Context, userID pulid.ID, orgID pulid.ID) (*repositories.CachedPermissions, error) {
-	ret := _mock.Called(ctx, userID, orgID)
+func (_mock *MockPermissionCacheRepository) Get(ctx context.Context, key repositories.PermissionCacheKey) (*repositories.CachedPermissions, error) {
+	ret := _mock.Called(ctx, key)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -113,18 +113,18 @@ func (_mock *MockPermissionCacheRepository) Get(ctx context.Context, userID puli
 
 	var r0 *repositories.CachedPermissions
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (*repositories.CachedPermissions, error)); ok {
-		return returnFunc(ctx, userID, orgID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.PermissionCacheKey) (*repositories.CachedPermissions, error)); ok {
+		return returnFunc(ctx, key)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) *repositories.CachedPermissions); ok {
-		r0 = returnFunc(ctx, userID, orgID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.PermissionCacheKey) *repositories.CachedPermissions); ok {
+		r0 = returnFunc(ctx, key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*repositories.CachedPermissions)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
-		r1 = returnFunc(ctx, userID, orgID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.PermissionCacheKey) error); ok {
+		r1 = returnFunc(ctx, key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -138,30 +138,24 @@ type MockPermissionCacheRepository_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID pulid.ID
-//   - orgID pulid.ID
-func (_e *MockPermissionCacheRepository_Expecter) Get(ctx any, userID any, orgID any) *MockPermissionCacheRepository_Get_Call {
-	return &MockPermissionCacheRepository_Get_Call{Call: _e.mock.On("Get", ctx, userID, orgID)}
+//   - key repositories.PermissionCacheKey
+func (_e *MockPermissionCacheRepository_Expecter) Get(ctx any, key any) *MockPermissionCacheRepository_Get_Call {
+	return &MockPermissionCacheRepository_Get_Call{Call: _e.mock.On("Get", ctx, key)}
 }
 
-func (_c *MockPermissionCacheRepository_Get_Call) Run(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID)) *MockPermissionCacheRepository_Get_Call {
+func (_c *MockPermissionCacheRepository_Get_Call) Run(run func(ctx context.Context, key repositories.PermissionCacheKey)) *MockPermissionCacheRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pulid.ID
+		var arg1 repositories.PermissionCacheKey
 		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
-		}
-		var arg2 pulid.ID
-		if args[2] != nil {
-			arg2 = args[2].(pulid.ID)
+			arg1 = args[1].(repositories.PermissionCacheKey)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -172,7 +166,7 @@ func (_c *MockPermissionCacheRepository_Get_Call) Return(cachedPermissions *repo
 	return _c
 }
 
-func (_c *MockPermissionCacheRepository_Get_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) (*repositories.CachedPermissions, error)) *MockPermissionCacheRepository_Get_Call {
+func (_c *MockPermissionCacheRepository_Get_Call) RunAndReturn(run func(ctx context.Context, key repositories.PermissionCacheKey) (*repositories.CachedPermissions, error)) *MockPermissionCacheRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -298,16 +292,16 @@ func (_c *MockPermissionCacheRepository_InvalidateOrganization_Call) RunAndRetur
 }
 
 // Set provides a mock function for the type MockPermissionCacheRepository
-func (_mock *MockPermissionCacheRepository) Set(ctx context.Context, userID pulid.ID, orgID pulid.ID, perms *repositories.CachedPermissions, ttl time.Duration) error {
-	ret := _mock.Called(ctx, userID, orgID, perms, ttl)
+func (_mock *MockPermissionCacheRepository) Set(ctx context.Context, key repositories.PermissionCacheKey, perms *repositories.CachedPermissions, ttl time.Duration) error {
+	ret := _mock.Called(ctx, key, perms, ttl)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Set")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID, *repositories.CachedPermissions, time.Duration) error); ok {
-		r0 = returnFunc(ctx, userID, orgID, perms, ttl)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.PermissionCacheKey, *repositories.CachedPermissions, time.Duration) error); ok {
+		r0 = returnFunc(ctx, key, perms, ttl)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -321,42 +315,36 @@ type MockPermissionCacheRepository_Set_Call struct {
 
 // Set is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID pulid.ID
-//   - orgID pulid.ID
+//   - key repositories.PermissionCacheKey
 //   - perms *repositories.CachedPermissions
 //   - ttl time.Duration
-func (_e *MockPermissionCacheRepository_Expecter) Set(ctx any, userID any, orgID any, perms any, ttl any) *MockPermissionCacheRepository_Set_Call {
-	return &MockPermissionCacheRepository_Set_Call{Call: _e.mock.On("Set", ctx, userID, orgID, perms, ttl)}
+func (_e *MockPermissionCacheRepository_Expecter) Set(ctx any, key any, perms any, ttl any) *MockPermissionCacheRepository_Set_Call {
+	return &MockPermissionCacheRepository_Set_Call{Call: _e.mock.On("Set", ctx, key, perms, ttl)}
 }
 
-func (_c *MockPermissionCacheRepository_Set_Call) Run(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID, perms *repositories.CachedPermissions, ttl time.Duration)) *MockPermissionCacheRepository_Set_Call {
+func (_c *MockPermissionCacheRepository_Set_Call) Run(run func(ctx context.Context, key repositories.PermissionCacheKey, perms *repositories.CachedPermissions, ttl time.Duration)) *MockPermissionCacheRepository_Set_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pulid.ID
+		var arg1 repositories.PermissionCacheKey
 		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
+			arg1 = args[1].(repositories.PermissionCacheKey)
 		}
-		var arg2 pulid.ID
+		var arg2 *repositories.CachedPermissions
 		if args[2] != nil {
-			arg2 = args[2].(pulid.ID)
+			arg2 = args[2].(*repositories.CachedPermissions)
 		}
-		var arg3 *repositories.CachedPermissions
+		var arg3 time.Duration
 		if args[3] != nil {
-			arg3 = args[3].(*repositories.CachedPermissions)
-		}
-		var arg4 time.Duration
-		if args[4] != nil {
-			arg4 = args[4].(time.Duration)
+			arg3 = args[3].(time.Duration)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
-			arg4,
 		)
 	})
 	return _c
@@ -367,7 +355,7 @@ func (_c *MockPermissionCacheRepository_Set_Call) Return(err error) *MockPermiss
 	return _c
 }
 
-func (_c *MockPermissionCacheRepository_Set_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID, perms *repositories.CachedPermissions, ttl time.Duration) error) *MockPermissionCacheRepository_Set_Call {
+func (_c *MockPermissionCacheRepository_Set_Call) RunAndReturn(run func(ctx context.Context, key repositories.PermissionCacheKey, perms *repositories.CachedPermissions, ttl time.Duration) error) *MockPermissionCacheRepository_Set_Call {
 	_c.Call.Return(run)
 	return _c
 }

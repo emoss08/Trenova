@@ -18,6 +18,7 @@ import { CircleCheckIcon, CircleDollarSignIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./settlement-columns";
+import { SettlementHistoryEmpty } from "./settlement-history-empty";
 import { SettlementPanel } from "./settlement-panel";
 
 export default function SettlementsTable() {
@@ -114,6 +115,7 @@ export default function SettlementsTable() {
         enableRowSelection
         TablePanel={SettlementPanel}
         enableCreateAction={false}
+        renderEmptyState={(state) => <SettlementHistoryEmpty {...state} />}
       />
       <BulkMarkPaidDialog
         open={payRows.length > 0}

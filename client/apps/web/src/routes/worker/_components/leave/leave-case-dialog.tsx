@@ -150,6 +150,8 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   label="Type of leave"
                   options={TYPE_OPTIONS}
                   rules={{ required: true }}
+                  placeholder="Pick a leave type"
+                  description="The law or policy the leave falls under."
                 />
               </FormControl>
               <FormControl>
@@ -159,6 +161,8 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   label="How it is taken"
                   options={FREQUENCY_OPTIONS}
                   rules={{ required: true }}
+                  placeholder="Pick a pattern"
+                  description="Continuous is one block of time; intermittent and reduced schedule are recorded day by day."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -167,6 +171,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="reason"
                   label="Qualifying reason"
                   placeholder="e.g. Serious health condition of a parent"
+                  description="The one qualifying reason this case covers; open another case for a different reason."
                 />
               </FormControl>
               <FormControl>
@@ -174,6 +179,8 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   control={control}
                   name="startsAt"
                   label="Leave begins"
+                  placeholder="First day of leave"
+                  description="The first day of the leave; the expected end cannot be before it."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -182,6 +189,8 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   control={control}
                   name="endsAt"
                   label="Expected to end"
+                  placeholder="Leave empty if not yet known"
+                  description="When the leave is expected to finish; closing the case fills it in if still blank."
                 />
               </FormControl>
               {isEdit ? null : (
@@ -190,6 +199,8 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                     control={control}
                     name="requestedAt"
                     label="Requested on"
+                    placeholder="Date the driver asked"
+                    description="When the driver asked for the leave; defaults to today."
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -199,6 +210,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   control={control}
                   name="eligibilityHoursWorked"
                   label="Hours worked in the prior year"
+                  placeholder="e.g. 1800"
                   description="For the 1,250-hour eligibility test. There is no timeclock here, so it is recorded by hand."
                 />
               </FormControl>
@@ -225,6 +237,8 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="e.g. Certification requested from the physician"
+                  description="Kept on the case and shown on the driver's leave record."
                   maxLength={2000}
                 />
               </FormControl>

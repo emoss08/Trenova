@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const PermissionCacheVariantAllRoles = "all"
+
 type CachedResourcePermission struct {
 	Operations []string `json:"operations"`
 	DataScope  string   `json:"dataScope"`
@@ -19,11 +21,17 @@ type CachedPermissions struct {
 	ExpiresAt      int64                                `json:"expiresAt"`
 }
 
+type PermissionCacheKey struct {
+	UserID  pulid.ID
+	OrgID   pulid.ID
+	Variant string
+}
+
 type PermissionCacheRepository interface {
-	Get(ctx context.Context, userID, orgID pulid.ID) (*CachedPermissions, error)
+	Get(ctx context.Context, key PermissionCacheKey) (*CachedPermissions, error)
 	Set(
 		ctx context.Context,
-		userID, orgID pulid.ID,
+		key PermissionCacheKey,
 		perms *CachedPermissions,
 		ttl time.Duration,
 	) error

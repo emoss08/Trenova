@@ -194,6 +194,8 @@ export function EmployerDialog({
                   control={control}
                   name="employerName"
                   label="Employer"
+                  placeholder="e.g. Swift Transportation"
+                  description="The carrier or company as it appeared on the driver's application."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -202,6 +204,8 @@ export function EmployerDialog({
                   control={control}
                   name="employerDotNumber"
                   label="USDOT number"
+                  placeholder="e.g. 1234567"
+                  description="Identifies the carrier when the safety history request is sent."
                 />
               </FormControl>
               <FormControl>
@@ -209,6 +213,8 @@ export function EmployerDialog({
                   control={control}
                   name="employerMcNumber"
                   label="MC number"
+                  placeholder="e.g. MC-123456"
+                  description="Recorded when the carrier has one, alongside the USDOT number."
                 />
               </FormControl>
               <FormControl>
@@ -216,6 +222,8 @@ export function EmployerDialog({
                   control={control}
                   name="employedFrom"
                   label="Employed from"
+                  placeholder="First day there"
+                  description="When the driver started with this employer."
                 />
               </FormControl>
               <FormControl>
@@ -223,6 +231,8 @@ export function EmployerDialog({
                   control={control}
                   name="employedTo"
                   label="Employed to"
+                  placeholder="Last day there"
+                  description="When the driver left; cannot be before the start date."
                 />
               </FormControl>
               <FormControl>
@@ -230,6 +240,8 @@ export function EmployerDialog({
                   control={control}
                   name="contactName"
                   label="Contact"
+                  placeholder="e.g. Jane Doe, Safety Manager"
+                  description="Who at the employer the request is addressed to."
                 />
               </FormControl>
               <FormControl>
@@ -237,6 +249,8 @@ export function EmployerDialog({
                   control={control}
                   name="contactEmail"
                   label="Contact email"
+                  placeholder="e.g. safety@carrier.com"
+                  description="Where the request goes when it is sent by email."
                 />
               </FormControl>
               <FormControl>
@@ -244,6 +258,8 @@ export function EmployerDialog({
                   control={control}
                   name="contactPhone"
                   label="Contact phone"
+                  placeholder="e.g. (555) 123-4567"
+                  description="Used when the request is made or chased by phone."
                 />
               </FormControl>
               <FormControl>
@@ -253,6 +269,8 @@ export function EmployerDialog({
                   label="Requested by"
                   options={METHOD_OPTIONS}
                   rules={{ required: true }}
+                  placeholder="Pick a method"
+                  description="How the request was, or will be, sent to the employer."
                 />
               </FormControl>
               <FormControl>
@@ -262,6 +280,8 @@ export function EmployerDialog({
                   label="Status"
                   options={STATUS_OPTIONS}
                   rules={{ required: true }}
+                  placeholder="Pick a status"
+                  description="Where the request stands; anything past Pending needs the date it was sent."
                 />
               </FormControl>
               <FormControl>
@@ -269,6 +289,8 @@ export function EmployerDialog({
                   control={control}
                   name="requestedAt"
                   label="Requested on"
+                  placeholder="Date the request went out"
+                  description="Required once the status moves past Pending; the response cannot pre-date it."
                 />
               </FormControl>
               <FormControl cols="full">
@@ -287,6 +309,8 @@ export function EmployerDialog({
                       control={control}
                       name="responseReceivedAt"
                       label="Response received"
+                      placeholder="Date the reply arrived"
+                      description="Required for a received response; cannot be earlier than the request."
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -296,6 +320,7 @@ export function EmployerDialog({
                         control={control}
                         name="drugAlcoholResponseReceivedAt"
                         label="Drug and alcohol history received"
+                        placeholder="Date the testing history arrived"
                         description="49 CFR 382.413 asks for this specifically."
                       />
                     </FormControl>
@@ -305,6 +330,7 @@ export function EmployerDialog({
                       control={control}
                       name="hadAccidents"
                       label="Accidents reported"
+                      description="Turn on if the employer reported any accidents; the count is asked next."
                     />
                   </FormControl>
                   {hadAccidents ? (
@@ -313,6 +339,8 @@ export function EmployerDialog({
                         control={control}
                         name="accidentCount"
                         label="How many"
+                        placeholder="e.g. 1"
+                        description="Accidents the employer reported for the driver's time there."
                         rules={{ required: true }}
                       />
                     </FormControl>
@@ -323,6 +351,7 @@ export function EmployerDialog({
                         control={control}
                         name="hadDrugAlcoholViolations"
                         label="Drug or alcohol violations reported"
+                        description="Turn on when the employer's testing history reports a violation."
                       />
                     </FormControl>
                   ) : null}
@@ -331,6 +360,8 @@ export function EmployerDialog({
                       control={control}
                       name="findings"
                       label="What the employer reported"
+                      placeholder="e.g. Company driver, no accidents, eligible for rehire"
+                      description="The employer's answer, kept as the record of the investigation."
                       maxLength={4000}
                     />
                   </FormControl>
@@ -342,6 +373,8 @@ export function EmployerDialog({
                   control={control}
                   name="notes"
                   label="Notes"
+                  placeholder="e.g. Left a voicemail with HR"
+                  description="Office notes about this employer; not part of the response itself."
                   maxLength={2000}
                 />
               </FormControl>

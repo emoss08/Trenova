@@ -115,6 +115,7 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   name="delegateId"
                   label="Who is covering"
                   placeholder="Select a colleague"
+                  description="The colleague who approves in your place while the cover runs."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -124,6 +125,8 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   name="scope"
                   label="What they can approve"
                   options={SCOPE_OPTIONS}
+                  placeholder="Pick what is covered"
+                  description="Limits the cover to one kind of approval, or hands over all of them."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -132,6 +135,8 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   control={control}
                   name="startsAt"
                   label="From"
+                  placeholder="e.g. Today"
+                  description="The first day they can approve on your behalf."
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -140,6 +145,8 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   control={control}
                   name="endsAt"
                   label="Until"
+                  placeholder="e.g. Next Friday"
+                  description="The last day of cover; approvals come back to you after it."
                 />
               </FormControl>
               {endsAt ? null : (

@@ -144,6 +144,9 @@ type Headcount struct {
 	ActiveTotal  int
 	DriverTotal  int
 	Terminated   int
+	// StaffTotal is the front office: active users holding a title in the
+	// organisation. Counted apart from the roster because they are not on it.
+	StaffTotal int
 }
 
 func (s *Service) Headcount(
@@ -163,10 +166,15 @@ func (s *Service) Headcount(
 		return nil, err
 	}
 
+	staff, err := s.repo.StaffByPosition(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	out := &Headcount{
 		ByFleet:      byFleet,
-		ByPosition:   byPosition,
-		ByDepartment: byDepartment,
+		ByPosition:   mergeStaffIntoPositions(byPosition, staff),
+		ByDepartment: mergeStaffIntoDepartments(byDepartment, staff),
 	}
 	// The totals come off the terminal grouping rather than being counted a
 	// fourth time: every worker has exactly one terminal slot, including the
@@ -176,8 +184,61 @@ func (s *Service) Headcount(
 		out.DriverTotal += row.Drivers
 		out.Terminated += row.Terminated
 	}
+	for _, row := range staff {
+		out.StaffTotal += row.Staff
+	}
 
 	return out, nil
+}
+
+// mergeStaffIntoPositions lays the front office over the worker grouping. A
+// title only users hold is absent from the worker rows, so it is added; a
+// title both hold gets its staff count beside its workers.
+func mergeStaffIntoPositions(
+	rows []repositories.HeadcountRow,
+	staff []repositories.StaffCountRow,
+) []repositories.HeadcountRow {
+	index := make(map[string]int, len(rows))
+	for i, row := range rows {
+		index[row.Key] = i
+	}
+	for _, count := range staff {
+		key := count.PositionID.String()
+		if i, ok := index[key]; ok {
+			rows[i].Staff += count.Staff
+			continue
+		}
+		rows = append(rows, repositories.HeadcountRow{
+			Key:   key,
+			Label: count.Title,
+			Code:  count.Code,
+			Staff: count.Staff,
+		})
+	}
+	return rows
+}
+
+func mergeStaffIntoDepartments(
+	rows []repositories.HeadcountRow,
+	staff []repositories.StaffCountRow,
+) []repositories.HeadcountRow {
+	index := make(map[string]int, len(rows))
+	for i, row := range rows {
+		index[row.Key] = i
+	}
+	for _, count := range staff {
+		if i, ok := index[count.Department]; ok {
+			rows[i].Staff += count.Staff
+			continue
+		}
+		rows = append(rows, repositories.HeadcountRow{
+			Key:   count.Department,
+			Label: count.Department,
+			Staff: count.Staff,
+		})
+		index[count.Department] = len(rows) - 1
+	}
+	return rows
 }
 
 // ListPositions reads the job catalog.

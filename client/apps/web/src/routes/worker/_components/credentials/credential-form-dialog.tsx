@@ -301,7 +301,7 @@ export function CredentialFormDialog({
                     selectedType?.description ??
                     (selectedType?.validityMonths
                       ? `Typically valid for ${selectedType.validityMonths} months.`
-                      : undefined)
+                      : "Decides what must be filled in and which profile field, if any, it backs.")
                   }
                 />
               </FormControl>
@@ -310,7 +310,8 @@ export function CredentialFormDialog({
                   control={control}
                   name="number"
                   label="Number"
-                  placeholder={selectedType?.requiresNumber ? "Required" : "Optional"}
+                  placeholder="e.g. 12345678"
+                  description="The number printed on the card or certificate."
                   rules={{ required: Boolean(selectedType?.requiresNumber) }}
                 />
               </FormControl>
@@ -320,6 +321,7 @@ export function CredentialFormDialog({
                   name="issuingAuthority"
                   label="Issuing authority"
                   placeholder="e.g. TX DPS, FMCSA examiner"
+                  description="Who issued it, so a verifier knows where to check."
                 />
               </FormControl>
               <FormControl>
@@ -327,7 +329,8 @@ export function CredentialFormDialog({
                   control={control}
                   name="issuedAt"
                   label="Issued"
-                  placeholder="Issue date"
+                  placeholder="Date on the card"
+                  description="Used with the type's validity to suggest an expiry."
                 />
               </FormControl>
               <FormControl>
@@ -336,6 +339,7 @@ export function CredentialFormDialog({
                   name="expiresAt"
                   label="Expires"
                   placeholder="Leave empty if it never expires"
+                  description="Drives the expiry warnings and the worker's compliance grade."
                   rules={{ required: selectedType?.profileField === "LicenseExpiry" }}
                 />
               </FormControl>
@@ -344,7 +348,8 @@ export function CredentialFormDialog({
                   control={control}
                   name="notes"
                   label="Notes"
-                  placeholder="Restrictions, class, anything the office should know"
+                  placeholder="e.g. Class A, no air-brake restriction"
+                  description="Kept on the credential and shown on the worker's file."
                   maxLength={2000}
                 />
               </FormControl>

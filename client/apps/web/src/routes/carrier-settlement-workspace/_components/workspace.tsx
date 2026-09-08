@@ -1,3 +1,5 @@
+import { BillingDetailUnselected } from "@/components/billing/billing-empty";
+import { SettlementPeriodEmpty } from "@/components/settlements/settlement-period-empty";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -178,9 +180,11 @@ export default function Workspace() {
                 scrollMaskVariant="card"
               />
             ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center p-8 text-center text-sm">
-                Select a settlement from the queue to work it here.
-              </div>
+              <BillingDetailUnselected
+                layout="tabs"
+                title="Nothing open"
+                description="Pick a settlement from the queue to review its cost lines, approve it and post it here."
+              />
             )}
           </div>
           <CarrierContextRail
@@ -190,45 +194,25 @@ export default function Workspace() {
           />
         </div>
       ) : (
-        <EmptyPeriodState
-          pendingEventCount={summary.pendingEventCount}
-          pendingCarrierCount={summary.pendingCarrierCount}
+        <SettlementPeriodEmpty
+          title="No settlements this period yet"
+          description={periodEmptyDescription(
+            summary.pendingEventCount,
+            summary.pendingCarrierCount,
+          )}
           generating={generateMutation.isPending}
-          onGenerate={() => generateMutation.mutate()}
+          onGenerate={summary.pendingEventCount > 0 ? () => generateMutation.mutate() : undefined}
         />
       )}
     </div>
   );
 }
 
-function EmptyPeriodState({
-  pendingEventCount,
-  pendingCarrierCount,
-  generating,
-  onGenerate,
-}: {
-  pendingEventCount: number;
-  pendingCarrierCount: number;
-  generating: boolean;
-  onGenerate: () => void;
-}) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 text-center">
-      <Sparkles className="text-muted-foreground size-8" />
-      <div>
-        <h3 className="text-sm font-semibold">No carrier settlements for this pay period yet</h3>
-        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-          {pendingEventCount > 0
-            ? `${pendingEventCount} cost event${pendingEventCount === 1 ? "" : "s"} across ${pendingCarrierCount} carrier${pendingCarrierCount === 1 ? "" : "s"} are waiting to be settled. Generating builds one draft statement per carrier — linehaul, fuel, and accessorial cost lines are pulled in automatically.`
-            : "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here."}
-        </p>
-      </div>
-      {pendingEventCount > 0 && (
-        <Button disabled={generating} onClick={onGenerate}>
-          <Sparkles className="size-4" />
-          Generate Settlements
-        </Button>
-      )}
-    </div>
-  );
+function periodEmptyDescription(pendingEventCount: number, pendingCarrierCount: number) {
+  if (pendingEventCount === 0) {
+    return "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here.";
+  }
+  const events = `${pendingEventCount} cost event${pendingEventCount === 1 ? "" : "s"}`;
+  const carriers = `${pendingCarrierCount} carrier${pendingCarrierCount === 1 ? "" : "s"}`;
+  return `${events} across ${carriers} are waiting to be settled. Generating builds one draft statement per carrier, with linehaul, fuel and accessorial cost lines pulled in on their own.`;
 }

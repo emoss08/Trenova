@@ -87,7 +87,7 @@ type JobPosition struct {
 	FLSAExempt bool `json:"flsaExempt" bun:"flsa_exempt,type:BOOLEAN,notnull"`
 	// IsDrivingPosition separates the roster that needs a CDL from the one that
 	// does not, which is the line most compliance rules are drawn along.
-	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull,default:true"`
+	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull"`
 	// ReportsToPositionID is the shape of the org chart. A person's own manager
 	// is on the worker, because two people in the same position can report to
 	// different managers.

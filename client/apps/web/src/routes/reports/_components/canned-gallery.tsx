@@ -6,7 +6,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { Resource } from "@trenova/shared/types/permission";
 import { parseReportIR, type ReportParameterDef } from "@/types/report";
-import { PackageIcon, PencilRulerIcon, PlayIcon, TableIcon } from "lucide-react";
+import { PencilRulerIcon, PlayIcon, TableIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import {
   normalizeReportCategory,
   type ReportSortOrder,
 } from "../reports-page-state";
-import { CategoryGroupHeader, ReportCard, ReportGridEmptyState } from "./report-card-chrome";
+import { CategoryGroupHeader, ReportCard, ReportGridEmpty } from "./report-card-chrome";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
 
 type RunDialogState = {
@@ -98,10 +98,12 @@ export function CannedGallery({
   search,
   sortBy,
   category,
+  onClearFilters,
 }: {
   search: string;
   sortBy: ReportSortOrder;
   category: string;
+  onClearFilters: () => void;
 }) {
   const navigate = useNavigate();
   const { data: cannedReports, isLoading } = useCannedReports();
@@ -163,10 +165,17 @@ export function CannedGallery({
     <>
       {filtered.length === 0 ? (
         <div className="grid p-4">
-          <ReportGridEmptyState
-            icon={PackageIcon}
-            title="No gallery reports match"
-            description="Try a different search term, or clear the filters."
+          <ReportGridEmpty
+            variant="reports"
+            title={
+              search.trim() || category !== "all" ? "Nothing matches" : "Nothing in the gallery"
+            }
+            description={
+              search.trim() || category !== "all"
+                ? "No gallery report fits the search and filters. Widen them, or clear them to see the whole gallery."
+                : "The gallery is where ready-made reports live. Once some are published, they appear here to run as they are or copy into your own."
+            }
+            onClearFilters={search.trim() || category !== "all" ? onClearFilters : undefined}
           />
         </div>
       ) : (

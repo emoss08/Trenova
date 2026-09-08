@@ -141,6 +141,7 @@ export function HolidayDialog({
                   name="name"
                   label="Name"
                   placeholder={kind === "Blackout" ? "e.g. Peak season freeze" : "e.g. Labor Day"}
+                  description="How the date is listed on the calendar."
                   rules={{ required: true }}
                   maxLength={100}
                 />
@@ -150,13 +151,14 @@ export function HolidayDialog({
                   control={control}
                   name="holidayDate"
                   label="Date"
+                  placeholder="e.g. Jul 4"
                   rules={{ required: true }}
                   description={
                     storedDate
                       ? recursAnnually
                         ? `Every ${formatUtcDate(storedDate, { year: undefined })}`
                         : formatUtcDate(storedDate, { weekday: "short" })
-                      : undefined
+                      : "The day the holiday or blackout falls on."
                   }
                 />
               </FormControl>
@@ -166,6 +168,7 @@ export function HolidayDialog({
                   name="kind"
                   label="Kind"
                   options={KIND_OPTIONS}
+                  placeholder="Choose a kind"
                   rules={{ required: true }}
                   description={ORG_HOLIDAY_KIND_HINTS[kind ?? "Holiday"]}
                 />
@@ -175,7 +178,7 @@ export function HolidayDialog({
                   control={control}
                   name="recursAnnually"
                   label="Repeats every year"
-                  description="Off for one-off dates such as a single-year freeze."
+                  description="On, the date is observed on the same day every year; off for one-off dates such as a single-year freeze."
                   position="left"
                   outlined
                 />
@@ -185,7 +188,8 @@ export function HolidayDialog({
                   control={control}
                   name="description"
                   label="Note"
-                  placeholder="Optional context shown beside the date"
+                  placeholder="e.g. Office closed; dispatch runs a skeleton crew"
+                  description="Optional context shown beside the date on the calendar."
                   maxLength={500}
                 />
               </FormControl>

@@ -1,24 +1,28 @@
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceiptBatch } from "@/types/bank-receipt-batch";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowRightIcon,
-  FileStackIcon,
-  ImportIcon,
-  ReceiptTextIcon,
-  UploadIcon,
-} from "lucide-react";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import { ArrowRightIcon, UploadIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ImportBatchDialog } from "./_components/import-batch-dialog";
-import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+
+const BATCH_COLUMNS = [
+  { label: "Reference" },
+  { label: "Source" },
+  { label: "Status" },
+  { label: "Imported", numeric: true },
+  { label: "Matched", numeric: true },
+  { label: "Exceptions", numeric: true },
+  { label: "Total", numeric: true },
+] as const;
 
 function formatTimestamp(unix: number): string {
   return formatUnixDateTimeMedium(unix);
@@ -68,6 +72,7 @@ export function BankReceiptBatchPage() {
         title: "Import Batches",
         description: "View and create bank receipt import batches.",
       }}
+      className="p-0"
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <div className="flex items-center justify-between">
@@ -103,18 +108,17 @@ export function BankReceiptBatchPage() {
         ) : null}
 
         {!isLoading && !isError && batches && batches.length === 0 ? (
-          <div className="flex justify-center pt-12">
-            <EmptyState
-              title="No import batches"
-              description="Import your first bank receipt batch to start reconciliation."
-              icons={[FileStackIcon, ReceiptTextIcon, ImportIcon]}
-              action={{
-                icon: UploadIcon,
-                label: "Import Batch",
-                onClick: () => setDialogOpen(true),
-              }}
-            />
-          </div>
+          <EmptyTable
+            title="No batches yet"
+            description="Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched."
+            columns={BATCH_COLUMNS}
+            action={
+              <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+                <UploadIcon className="size-3.5" />
+                Import a batch
+              </Button>
+            }
+          />
         ) : null}
 
         {!isLoading && !isError && batches && batches.length > 0 ? (

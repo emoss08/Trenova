@@ -1,6 +1,6 @@
 import type { WorkerChecklistItemRow } from "@/lib/graphql/worker-checklist";
+import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -57,6 +57,11 @@ function settledLine(item: WorkerChecklistItemRow): string | null {
   return `${verb} ${who}${when}`;
 }
 
+/**
+ * One item in the file. A settled row goes quiet rather than green; the badge
+ * says how it was settled, and the marker circle only ever carries the kind
+ * icon or a tick.
+ */
 export function ChecklistItemRow({
   item,
   checklistOpen,
@@ -72,8 +77,44 @@ export function ChecklistItemRow({
   const Icon = CHECKLIST_ITEM_KIND_ICONS[kind];
   const auto = isAutoSatisfied(kind);
   const pending = status === "Pending";
-  const showActions = checklistOpen && permissions.canUpdate;
   const line = settledLine(item);
+
+  const actions: RowAction[] = [];
+  if (checklistOpen && permissions.canUpdate) {
+    if (pending) {
+      if (!auto) {
+        actions.push({
+          id: "complete",
+          label: `Complete ${item.label}`,
+          icon: CheckIcon,
+          disabled: busy,
+          onSelect: () => onComplete(item),
+        });
+      }
+      actions.push({
+        id: "skip",
+        label: `Skip ${item.label}`,
+        icon: SkipForwardIcon,
+        disabled: busy,
+        onSelect: () => onSkip(item),
+      });
+      actions.push({
+        id: "not-applicable",
+        label: `Mark ${item.label} not applicable`,
+        icon: CircleSlashIcon,
+        disabled: busy,
+        onSelect: () => onNotApplicable(item),
+      });
+    } else {
+      actions.push({
+        id: "reopen",
+        label: `Reopen ${item.label}`,
+        icon: RotateCcwIcon,
+        disabled: busy,
+        onSelect: () => onReopen(item),
+      });
+    }
+  }
 
   return (
     <li
@@ -81,20 +122,14 @@ export function ChecklistItemRow({
       data-status={status}
       data-overdue={item.overdue ? "true" : "false"}
       className={cn(
-        "group flex items-start gap-3 px-3 py-2.5",
-        !pending && "opacity-80",
-        item.overdue && "bg-red-500/5",
+        "group hover:bg-muted/30 flex items-start gap-3 px-3 py-2.5 transition-colors",
+        !pending && "opacity-75",
       )}
     >
       <span
         className={cn(
-          "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border",
-          status === "Done" &&
-            "border-green-500/40 bg-green-500/15 text-green-700 dark:text-green-400",
-          status === "Skipped" &&
-            "border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-400",
-          status === "NotApplicable" && "border-border bg-muted text-muted-foreground",
-          pending && "border-border text-muted-foreground",
+          "mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md",
+          status === "Done" ? "bg-primary text-primary-foreground" : "bg-accent",
         )}
         aria-hidden
       >
@@ -120,22 +155,17 @@ export function ChecklistItemRow({
             {item.label}
           </span>
           {!item.required ? (
-            <span className="text-muted-foreground text-[10px] uppercase">Optional</span>
+            <span className="text-2xs text-muted-foreground uppercase">Optional</span>
           ) : null}
           {auto ? (
-            <Badge
-              variant="info"
-              className="px-1.5 py-0 text-[10px]"
-              title="Completes itself from evidence"
-            >
+            <Badge variant="outline" title="Completes itself from evidence">
               Auto
             </Badge>
           ) : null}
           {status !== "Pending" ? (
-            <Badge variant={STATUS_BADGE[status]} className="px-1.5 py-0 text-[10px]">
-              {CHECKLIST_ITEM_STATUS_LABELS[status]}
-            </Badge>
+            <Badge variant={STATUS_BADGE[status]}>{CHECKLIST_ITEM_STATUS_LABELS[status]}</Badge>
           ) : null}
+          {pending && item.overdue ? <Badge variant="inactive">Overdue</Badge> : null}
         </div>
         {item.description ? (
           <p className="text-muted-foreground text-xs">{item.description}</p>
@@ -143,70 +173,16 @@ export function ChecklistItemRow({
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
           <span>{CHECKLIST_ITEM_KIND_LABELS[kind]}</span>
           {pending && item.dueAt ? (
-            <span className={cn(item.overdue && "font-medium text-red-600 dark:text-red-400")}>
-              · {item.overdue ? "Overdue since" : "Due"} {formatUnixDateMedium(item.dueAt)}
+            <span>
+              · {item.overdue ? "Due since" : "Due"} {formatUnixDateMedium(item.dueAt)}
             </span>
           ) : null}
           {line ? <span>· {line}</span> : null}
         </p>
-        {item.note ? <p className="text-xs italic">{item.note}</p> : null}
+        {item.note ? <p className="text-muted-foreground text-xs">“{item.note}”</p> : null}
       </div>
 
-      {showActions ? (
-        <div className="flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100">
-          {pending && !auto ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7"
-              aria-label={`Complete ${item.label}`}
-              disabled={busy}
-              onClick={() => onComplete(item)}
-            >
-              <CheckIcon className="size-3.5" />
-              Done
-            </Button>
-          ) : null}
-          {pending ? (
-            <>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                aria-label={`Skip ${item.label}`}
-                title="Skip"
-                disabled={busy}
-                onClick={() => onSkip(item)}
-              >
-                <SkipForwardIcon className="size-3.5" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                aria-label={`Mark ${item.label} not applicable`}
-                title="Not applicable"
-                disabled={busy}
-                onClick={() => onNotApplicable(item)}
-              >
-                <CircleSlashIcon className="size-3.5" />
-              </Button>
-            </>
-          ) : (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-7"
-              aria-label={`Reopen ${item.label}`}
-              title="Reopen"
-              disabled={busy}
-              onClick={() => onReopen(item)}
-            >
-              <RotateCcwIcon className="size-3.5" />
-            </Button>
-          )}
-        </div>
-      ) : null}
+      <RowActionsMenu label={`Actions for ${item.label}`} actions={actions} />
     </li>
   );
 }

@@ -382,10 +382,11 @@ func TestCompleteItem_ClosesChecklistAndFlagsQualification(t *testing.T) {
 		},
 	}
 	checklist, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
-		TenantInfo: h.tenant,
-		WorkerID:   h.wrk.ID,
-		TemplateID: h.template.ID,
-		UserID:     h.userID,
+		TenantInfo:    h.tenant,
+		WorkerID:      h.wrk.ID,
+		TemplateID:    h.template.ID,
+		SourceEventID: pulid.MustNew("wee_"),
+		UserID:        h.userID,
 	})
 	require.NoError(t, err)
 	fuel := h.itemByLabel(checklist, "Fuel card")
@@ -416,7 +417,7 @@ func TestCompleteItem_ClosesChecklistAndFlagsQualification(t *testing.T) {
 func TestSkipItem_NeedsNoteAndEvidenceMustBelongToWorker(t *testing.T) {
 	h := newHarness(t)
 	checklist, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID, SourceEventID: pulid.MustNew("wee_"),
 	})
 	require.NoError(t, err)
 	fuel := h.itemByLabel(checklist, "Fuel card")
@@ -451,7 +452,7 @@ func TestReopenItem_ReopensCompletedChecklist(t *testing.T) {
 		},
 	}
 	checklist, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID, SourceEventID: pulid.MustNew("wee_"),
 	})
 	require.NoError(t, err)
 	fuel := h.itemByLabel(checklist, "Fuel card")
@@ -476,7 +477,7 @@ func TestReopenItem_ReopensCompletedChecklist(t *testing.T) {
 func TestCancel_LeavesItemsAndRefusesInactiveTemplate(t *testing.T) {
 	h := newHarness(t)
 	checklist, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID, SourceEventID: pulid.MustNew("wee_"),
 	})
 	require.NoError(t, err)
 
@@ -490,7 +491,7 @@ func TestCancel_LeavesItemsAndRefusesInactiveTemplate(t *testing.T) {
 
 	h.template.Status = domaintypes.StatusInactive
 	_, err = h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, TemplateID: h.template.ID, UserID: h.userID, SourceEventID: pulid.MustNew("wee_"),
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
@@ -505,4 +506,124 @@ func TestProgressWindow(t *testing.T) {
 	}
 	checklist := template.Instantiate(pulid.MustNew("wrk_"), 100, pulid.Nil, pulid.Nil)
 	assert.Equal(t, 1, checklist.Progress(100+2*day).Overdue)
+}
+
+// Onboarding is something that happens to a worker when they are hired, not
+// a button. Starting the hired-trigger template by hand is refused.
+func TestStart_RefusesTriggeredTemplateByHand(t *testing.T) {
+	h := newHarness(t)
+
+	_, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
+		TenantInfo: h.tenant,
+		WorkerID:   h.wrk.ID,
+		TemplateID: h.template.ID,
+		UserID:     h.userID,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "started by the employment event")
+	assert.Empty(t, h.repo.checklists)
+
+	manual := &worker.WorkerChecklistTemplate{
+		ID:             pulid.MustNew("wclt_"),
+		OrganizationID: h.tenant.OrgID,
+		BusinessUnitID: h.tenant.BuID,
+		Code:           "AUDIT",
+		Name:           "Annual file audit",
+		Kind:           worker.ChecklistKindCustom,
+		Trigger:        worker.ChecklistTriggerManual,
+		Status:         domaintypes.StatusActive,
+		Items: []*worker.WorkerChecklistTemplateItem{
+			{ID: pulid.MustNew("wclti_"), Label: "Review file", Kind: worker.ChecklistItemTask, Required: true, Owner: worker.ChecklistOwnerHR},
+		},
+	}
+	h.repo.templates[manual.ID] = manual
+
+	first, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
+		TenantInfo: h.tenant,
+		WorkerID:   h.wrk.ID,
+		TemplateID: manual.ID,
+		UserID:     h.userID,
+	})
+	require.NoError(t, err)
+	second, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
+		TenantInfo: h.tenant,
+		WorkerID:   h.wrk.ID,
+		TemplateID: manual.ID,
+		UserID:     h.userID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, first.ID, second.ID, "a hand-started template never runs twice at once")
+}
+
+// A rehire is a new employment, so it gets a new onboarding even though the
+// old one is on the record; the same event never spawns twice.
+func TestSpawnForEvent_OncePerEvent(t *testing.T) {
+	h := newHarness(t)
+	hired := &worker.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        worker.EmploymentEventHired,
+		EffectiveAt: 1_700_000_000,
+	}
+	first, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
+	require.NoError(t, err)
+	require.NotNil(t, first)
+
+	cancelled, err := h.svc.Cancel(context.Background(), &workerchecklistservice.CancelRequest{
+		ID:         first.ID,
+		TenantInfo: h.tenant,
+		Reason:     "left before starting",
+		UserID:     h.userID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, worker.ChecklistStatusCancelled, cancelled.Status)
+
+	again, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
+	require.NoError(t, err)
+	assert.Equal(t, first.ID, again.ID, "the same event returns the checklist it already spawned, closed or not")
+
+	rehired := &worker.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        worker.EmploymentEventRehired,
+		EffectiveAt: 1_800_000_000,
+	}
+	h.template.Trigger = worker.ChecklistTriggerRehired
+	fresh, err := h.svc.SpawnForEvent(context.Background(), rehired, h.wrk, h.userID)
+	require.NoError(t, err)
+	require.NotNil(t, fresh)
+	assert.NotEqual(t, first.ID, fresh.ID, "a new employment gets its own onboarding")
+	assert.Equal(t, rehired.ID, fresh.SourceEventID)
+	assert.Equal(t, worker.ChecklistStatusOpen, fresh.Status)
+}
+
+func TestCloseForEvent_CancelsWhatTheEventMakesMoot(t *testing.T) {
+	h := newHarness(t)
+	hired := &worker.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        worker.EmploymentEventHired,
+		EffectiveAt: 1_700_000_000,
+	}
+	onboarding, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
+	require.NoError(t, err)
+	require.Equal(t, worker.ChecklistStatusOpen, onboarding.Status)
+
+	promoted := &worker.WorkerEmploymentEvent{ID: pulid.MustNew("wee_"), Kind: worker.EmploymentEventPromoted}
+	closed, err := h.svc.CloseForEvent(context.Background(), promoted, h.wrk, h.userID)
+	require.NoError(t, err)
+	assert.Equal(t, 0, closed, "a promotion leaves onboarding running")
+
+	terminated := &worker.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        worker.EmploymentEventTerminated,
+		EffectiveAt: 1_750_000_000,
+	}
+	closed, err = h.svc.CloseForEvent(context.Background(), terminated, h.wrk, h.userID)
+	require.NoError(t, err)
+	assert.Equal(t, 1, closed)
+	stored := h.repo.checklists[onboarding.ID]
+	assert.Equal(t, worker.ChecklistStatusCancelled, stored.Status)
+	assert.Equal(t, "Superseded by terminated event", stored.CancelReason)
+
+	closed, err = h.svc.CloseForEvent(context.Background(), terminated, h.wrk, h.userID)
+	require.NoError(t, err)
+	assert.Equal(t, 0, closed, "closing is idempotent")
 }

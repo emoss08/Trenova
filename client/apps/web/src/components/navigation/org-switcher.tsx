@@ -13,6 +13,7 @@ import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import type { UserOrganization } from "@trenova/shared/types/organization";
 import { useQuery } from "@tanstack/react-query";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -56,7 +57,11 @@ function OrgLogo({
   );
 }
 
-export function OrgSwitcher() {
+/**
+ * `compact` shows only the logo, for a rail that has no room for a name; the
+ * name rides a tooltip instead.
+ */
+export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
   const { data: organizations, isLoading } = useQuery(queries.userOrganization.all());
   const switchMutation = useSwitchOrganization();
 
@@ -92,6 +97,9 @@ export function OrgSwitcher() {
   };
 
   if (isLoading) {
+    if (compact) {
+      return <Skeleton className="size-7 rounded-md" />;
+    }
     return (
       <div className="flex items-center gap-2 px-1 py-1">
         <Skeleton className="size-7 rounded-md" />
@@ -114,6 +122,75 @@ export function OrgSwitcher() {
       </span>
     </>
   );
+
+  const orgName = currentOrg?.name ?? "Trenova";
+
+  if (compact) {
+    const logo = (
+      <OrgLogo
+        key={logoURL ?? "no-logo"}
+        logoURL={logoURL}
+        orgName={currentOrg?.name}
+        initials={orgInitials}
+        isSwitching={switchMutation.isPending}
+      />
+    );
+
+    if (!hasMultipleOrgs) {
+      return (
+        <Tooltip>
+          <TooltipTrigger render={<span className="inline-flex select-none" />}>
+            {logo}
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={10}>
+            {orgName}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    disabled={switchMutation.isPending}
+                    aria-label={`Switch organization (current: ${orgName})`}
+                    className="hover:ring-ring/40 inline-flex rounded-md transition-shadow hover:ring-2 disabled:opacity-60"
+                  />
+                }
+              />
+            }
+          >
+            {logo}
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={10}>
+            {orgName}
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent side="right" align="start" sideOffset={10} className="w-60">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
+            {organizations?.map((org) => (
+              <DropdownMenuItem
+                key={org.id}
+                title={org.name}
+                description={org.isDefault ? "Default" : undefined}
+                onClick={() => handleSwitch(org)}
+                disabled={switchMutation.isPending || org.isCurrent}
+                className={cn(org.isCurrent && "bg-accent")}
+                endContent={org.isCurrent ? <Check className="text-primary size-4" /> : undefined}
+              />
+            ))}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   if (!hasMultipleOrgs) {
     return <div className="flex w-full items-center gap-2 px-1 py-1 select-none">{rowContent}</div>;

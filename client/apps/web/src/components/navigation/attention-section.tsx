@@ -1,14 +1,12 @@
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import {
-  ATTENTION_ROWS_BY_KEY,
   ATTENTION_TONE_DOT_CLASSES,
   type AttentionRowConfig,
   type AttentionTone,
 } from "@/config/attention-rows";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useAttentionSummary } from "@/hooks/use-attention";
-import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
+import { useAttentionRows } from "@/hooks/use-attention";
 import { isRouteActive } from "@/lib/route-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useLocation } from "react-router";
@@ -52,12 +50,7 @@ function AttentionRow({
 
 export function AttentionSection() {
   const { pathname } = useLocation();
-  const { data: summary, isLoading } = useAttentionSummary();
-  const { data: preferences } = useSidebarPreferences();
-
-  const rows = (preferences?.attentionMetrics ?? [])
-    .map((key) => ATTENTION_ROWS_BY_KEY.get(key))
-    .filter((row): row is AttentionRowConfig => row != null && summary?.[row.key] != null);
+  const { rows, isLoading } = useAttentionRows();
 
   if (!isLoading && rows.length === 0) {
     return null;
@@ -70,13 +63,8 @@ export function AttentionSection() {
         ? Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-7 w-full rounded-md" />
           ))
-        : rows.map((row) => (
-            <AttentionRow
-              key={row.key}
-              row={row}
-              count={summary?.[row.key] ?? 0}
-              currentPath={pathname}
-            />
+        : rows.map(({ row, count }) => (
+            <AttentionRow key={row.key} row={row} count={count} currentPath={pathname} />
           ))}
     </div>
   );

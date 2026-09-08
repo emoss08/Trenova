@@ -1,5 +1,5 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { EmptyState } from "@/components/empty-state";
+import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { CarrierInvoiceMatchStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -37,7 +37,6 @@ import {
   CheckCheckIcon,
   FileTextIcon,
   LinkIcon,
-  ReceiptTextIcon,
   ScaleIcon,
   SparklesIcon,
   XIcon,
@@ -169,6 +168,49 @@ export default function MatchingWorkspace() {
   const resolvedCount = allMatches.filter((match) => match.status === "Resolved").length;
 
   const settlementControl = controlQuery.data ?? null;
+  const searchTerm = search.trim();
+  const invoiceEmpty = searchTerm
+    ? {
+        title: "Nothing matches",
+        description: "No carrier invoice fits that search. Clear it to see the list again.",
+        clear: true,
+      }
+    : invoiceFilter === "attention"
+      ? {
+          title: "Nothing needs attention",
+          description:
+            "Every carrier invoice is linked to a carrier and matched. Clear the filter to see them anyway.",
+          clear: true,
+        }
+      : {
+          title: "No invoices yet",
+          description:
+            "A carrier freight invoice arrives here from EDI 210 or a parsed document. Until one does, there is nothing to match.",
+          clear: false,
+        };
+  const matchesFiltered = Boolean(searchTerm) || matchFilter !== "open" || matchViaFilter !== "all";
+  const matchEmpty = matchesFiltered
+    ? {
+        title: "Nothing matches",
+        description:
+          "No match fits the search and chips. Widen them, or clear them to see everything open.",
+        clear: true,
+      }
+    : {
+        title: "No matches yet",
+        description:
+          "A match is made when a carrier invoice is paired with its assignment, by the auto-match sweep or by hand from an invoice. Until one is, there is nothing to compare.",
+        clear: false,
+      };
+  const clearInvoiceFilters = () => {
+    setSearch("");
+    setInvoiceFilter("all");
+  };
+  const clearMatchFilters = () => {
+    setSearch("");
+    setMatchFilter("open");
+    setMatchViaFilter("all");
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -269,6 +311,8 @@ export default function MatchingWorkspace() {
                 loading={invoicesQuery.isLoading}
                 selectedId={selectedInvoice?.id ?? null}
                 onSelect={setSelectedInvoiceId}
+                empty={invoiceEmpty}
+                onClearFilters={clearInvoiceFilters}
               />
             ) : (
               <MatchList
@@ -276,6 +320,8 @@ export default function MatchingWorkspace() {
                 loading={matchesQuery.isLoading}
                 selectedId={selectedMatch?.id ?? null}
                 onSelect={setSelectedMatchId}
+                empty={matchEmpty}
+                onClearFilters={clearMatchFilters}
               />
             )}
           </ScrollArea>
@@ -289,9 +335,10 @@ export default function MatchingWorkspace() {
                 onChanged={refresh}
               />
             ) : (
-              <DetailEmptyState
-                title="No invoice selected"
-                description="Select a carrier freight invoice to link it to a carrier and create a match."
+              <BillingDetailUnselected
+                layout="cards"
+                title="Nothing open"
+                description="Pick a carrier invoice from the list to link it to a carrier and create a match."
               />
             )
           ) : selectedMatch ? (
@@ -301,9 +348,10 @@ export default function MatchingWorkspace() {
               onChanged={refresh}
             />
           ) : (
-            <DetailEmptyState
-              title="No match selected"
-              description="Select a match to compare the invoice against the negotiated buy rate."
+            <BillingDetailUnselected
+              layout="cards"
+              title="Nothing open"
+              description="Pick a match from the list to compare the invoice against the negotiated buy rate."
             />
           )}
         </ScrollArea>
@@ -369,29 +417,22 @@ function FilterChip({
   );
 }
 
-function DetailEmptyState({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex h-full items-center justify-center p-6">
-      <EmptyState
-        title={title}
-        description={description}
-        icons={[ReceiptTextIcon, ScaleIcon, Building2Icon]}
-        className="border-none shadow-none"
-      />
-    </div>
-  );
-}
+type ListEmpty = { title: string; description: string; clear: boolean };
 
 function InvoiceList({
   invoices,
   loading,
   selectedId,
   onSelect,
+  empty,
+  onClearFilters,
 }: {
   invoices: EdiCarrierInvoiceRow[];
   loading: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  empty: ListEmpty;
+  onClearFilters: () => void;
 }) {
   if (loading) {
     return (
@@ -405,9 +446,11 @@ function InvoiceList({
 
   if (invoices.length === 0) {
     return (
-      <p className="text-muted-foreground p-4 text-center text-xs">
-        No carrier invoices match this view.
-      </p>
+      <BillingListEmpty
+        title={empty.title}
+        description={empty.description}
+        onClearFilters={empty.clear ? onClearFilters : undefined}
+      />
     );
   }
 
@@ -464,11 +507,15 @@ function MatchList({
   loading,
   selectedId,
   onSelect,
+  empty,
+  onClearFilters,
 }: {
   matches: CarrierInvoiceMatchRow[];
   loading: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  empty: ListEmpty;
+  onClearFilters: () => void;
 }) {
   if (loading) {
     return (
@@ -482,9 +529,11 @@ function MatchList({
 
   if (matches.length === 0) {
     return (
-      <p className="text-muted-foreground p-4 text-center text-xs">
-        No matches in this view. Create one from an unmatched carrier invoice.
-      </p>
+      <BillingListEmpty
+        title={empty.title}
+        description={empty.description}
+        onClearFilters={empty.clear ? onClearFilters : undefined}
+      />
     );
   }
 

@@ -4,8 +4,9 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
-import { History, ListTree, Pencil, Plus } from "lucide-react";
+import { History, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
+import { FuelIndicesEmpty } from "./fuel-management-empty";
 import { IndexPanel } from "./index-panel";
 import { PriceHistoryDrawer } from "./price-history-drawer";
 
@@ -41,16 +42,14 @@ export default function IndexSection() {
       {isLoading ? (
         <Skeleton className="h-64" />
       ) : !entries || entries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-            <ListTree className="text-muted-foreground size-5" />
-          </div>
-          <p className="mt-3 text-sm font-medium">No fuel indices</p>
-          <p className="text-muted-foreground mt-1 max-w-md text-xs">
-            Enable the EIA Fuel Prices integration to auto-provision all 11 DOE diesel series, or
-            create a custom index for manual weekly entry.
-          </p>
-        </div>
+        <FuelIndicesEmpty
+          title="No indices yet"
+          description={
+            "Enable the EIA Fuel Prices integration and all eleven DOE diesel series are provisioned " +
+            "for you, or add a custom index and enter its weekly price by hand."
+          }
+          onCreate={openCreate}
+        />
       ) : (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">

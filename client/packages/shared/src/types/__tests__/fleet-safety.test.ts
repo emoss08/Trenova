@@ -57,6 +57,7 @@ function baseDashControl() {
     allowSettlementDisputes: true,
     allowProfileDocumentUpload: true,
     allowContactInfoEdit: true,
+    requireContactChangeApproval: false,
     allowPtoRequests: true,
     sendCredentialReminders: true,
     driverDigestCadence: "Immediate" as const,

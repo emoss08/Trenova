@@ -1,0 +1,14 @@
+[
+  { "name": "home-dashboard", "path": "/", "wait": 4000 },
+  { "name": "shipments", "path": "/shipment-management/shipments", "wait": 5000 },
+  { "name": "dispatch-console", "path": "/dispatch/console", "wait": 5000 },
+  { "name": "detention-desk", "path": "/detention/desk", "wait": 4500 },
+  { "name": "workers", "path": "/hr/workers", "wait": 5000 },
+  { "name": "hr-scheduling", "path": "/hr/scheduling", "wait": 4500 },
+  { "name": "payroll-workspace", "path": "/payroll/workspace", "wait": 4500 },
+  { "name": "accounting-dashboard", "path": "/accounting", "wait": 4500 },
+  { "name": "billing-queue", "path": "/billing/queue", "wait": 4000 },
+  { "name": "formula-templates", "path": "/billing/configuration-files/formula-templates", "wait": 4000 },
+  { "name": "edi-designer", "path": "/edi/designer", "wait": 5000 },
+  { "name": "reports", "path": "/reports", "wait": 4500 }
+]

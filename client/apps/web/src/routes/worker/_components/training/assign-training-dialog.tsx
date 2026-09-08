@@ -155,7 +155,7 @@ export function AssignTrainingDialog({
                     selected?.description ??
                     (courses.length === 0 && !coursesQuery.isLoading
                       ? "Every active course is already assigned to this worker."
-                      : undefined)
+                      : "Courses with an open assignment are not listed.")
                   }
                 />
               </FormControl>
@@ -168,7 +168,7 @@ export function AssignTrainingDialog({
                   description={
                     selected && selected.dueDaysAfterAssignment > 0
                       ? `Defaults to ${selected.dueDaysAfterAssignment} days from today.`
-                      : undefined
+                      : "Leave empty for no deadline; a date in the past is rejected."
                   }
                 />
               </FormControl>
@@ -179,6 +179,7 @@ export function AssignTrainingDialog({
                   label="Notes"
                   placeholder="Anything the driver or the recorder should know"
                   maxLength={1000}
+                  description="Saved on the training record."
                 />
               </FormControl>
             </FormGroup>
