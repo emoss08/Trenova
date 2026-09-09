@@ -113,6 +113,63 @@ func (_mock *MockSessionRepository) Delete(ctx context.Context, sessionID pulid.
 	return r0
 }
 
+// DeleteAllForUser provides a mock function for the type MockSessionRepository
+func (_mock *MockSessionRepository) DeleteAllForUser(ctx context.Context, userID pulid.ID) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllForUser")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepository_DeleteAllForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllForUser'
+type MockSessionRepository_DeleteAllForUser_Call struct {
+	*mock.Call
+}
+
+// DeleteAllForUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+func (_e *MockSessionRepository_Expecter) DeleteAllForUser(ctx any, userID any) *MockSessionRepository_DeleteAllForUser_Call {
+	return &MockSessionRepository_DeleteAllForUser_Call{Call: _e.mock.On("DeleteAllForUser", ctx, userID)}
+}
+
+func (_c *MockSessionRepository_DeleteAllForUser_Call) Run(run func(ctx context.Context, userID pulid.ID)) *MockSessionRepository_DeleteAllForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_DeleteAllForUser_Call) Return(err error) *MockSessionRepository_DeleteAllForUser_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepository_DeleteAllForUser_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID) error) *MockSessionRepository_DeleteAllForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MockSessionRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
 type MockSessionRepository_Delete_Call struct {
 	*mock.Call

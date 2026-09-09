@@ -52,6 +52,12 @@ const (
 	// KindDriverPortalInvitationEmail invites a driver to the portal.
 	KindDriverPortalInvitationEmail Kind = "driverportal.invitation.email"
 
+	// Account.
+
+	// KindPasswordResetEmail carries the single-use link that lets somebody who has
+	// lost their password choose a new one.
+	KindPasswordResetEmail Kind = "account.password_reset.email"
+
 	// Agent.
 
 	// KindAgentRequestMissingDocsEmail wraps agent-written prose in the
@@ -140,6 +146,7 @@ func AllKinds() []Kind {
 		KindReportDeliveryEmail,
 		KindTenderOfferEmail,
 		KindDriverPortalInvitationEmail,
+		KindPasswordResetEmail,
 		KindAgentRequestMissingDocsEmail,
 		KindNotificationLoadAssigned,
 		KindNotificationLoadUnassigned,

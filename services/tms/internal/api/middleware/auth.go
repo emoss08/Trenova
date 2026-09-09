@@ -100,6 +100,7 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		RiskDecision:           sess.RiskDecision,
 		RiskDecisionID:         sess.RiskDecisionID,
 		IsPortalUser:           sess.IsPortalUser,
+		MustChangePassword:     sess.MustChangePassword,
 	})
 
 	return nil

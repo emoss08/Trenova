@@ -13,26 +13,30 @@ import (
 const DefaultTTL = 30 * 24 * time.Hour
 
 type Session struct {
-	ID                    pulid.ID     `json:"id"`
-	UserID                pulid.ID     `json:"userId"`
-	BusinessUnitID        pulid.ID     `json:"businessUnitId"`
-	OrganizationID        pulid.ID     `json:"organizationId"`
-	ActiveRoleIDs         []pulid.ID   `json:"activeRoleIds"`
-	AuthProvider          string       `json:"authProvider,omitempty"`
-	ExternalIdentityID    string       `json:"externalIdentityId,omitempty"`
-	ExternalSubject       string       `json:"externalSubject,omitempty"`
-	AuthenticatorAAL      int          `json:"authenticatorAal"`
-	FederationFAL         int          `json:"federationFal"`
-	MFAAuthenticatedAt    int64        `json:"mfaAuthenticatedAt,omitempty"`
-	LastReauthenticatedAt int64        `json:"lastReauthenticatedAt,omitempty"`
-	RiskDecision          string       `json:"riskDecision,omitempty"`
-	RiskDecisionID        pulid.ID     `json:"riskDecisionId,omitempty"`
-	IsPortalUser          bool         `json:"isPortalUser"`
-	LastAccessedAt        int64        `json:"lastAccessedAt"`
-	ExpiresAt             int64        `json:"expiresAt"`
-	CreatedAt             int64        `json:"createdAt"`
-	UpdatedAt             int64        `json:"updatedAt"`
-	User                  *tenant.User `json:"user"`
+	ID                    pulid.ID   `json:"id"`
+	UserID                pulid.ID   `json:"userId"`
+	BusinessUnitID        pulid.ID   `json:"businessUnitId"`
+	OrganizationID        pulid.ID   `json:"organizationId"`
+	ActiveRoleIDs         []pulid.ID `json:"activeRoleIds"`
+	AuthProvider          string     `json:"authProvider,omitempty"`
+	ExternalIdentityID    string     `json:"externalIdentityId,omitempty"`
+	ExternalSubject       string     `json:"externalSubject,omitempty"`
+	AuthenticatorAAL      int        `json:"authenticatorAal"`
+	FederationFAL         int        `json:"federationFal"`
+	MFAAuthenticatedAt    int64      `json:"mfaAuthenticatedAt,omitempty"`
+	LastReauthenticatedAt int64      `json:"lastReauthenticatedAt,omitempty"`
+	RiskDecision          string     `json:"riskDecision,omitempty"`
+	RiskDecisionID        pulid.ID   `json:"riskDecisionId,omitempty"`
+	IsPortalUser          bool       `json:"isPortalUser"`
+	// MustChangePassword is copied off the user at login so every later request can be
+	// gated without another user lookup. It is refreshed on the next sign-in, which is
+	// the only moment it can change for a session that already exists.
+	MustChangePassword bool         `json:"mustChangePassword"`
+	LastAccessedAt     int64        `json:"lastAccessedAt"`
+	ExpiresAt          int64        `json:"expiresAt"`
+	CreatedAt          int64        `json:"createdAt"`
+	UpdatedAt          int64        `json:"updatedAt"`
+	User               *tenant.User `json:"user"`
 }
 
 type NewSessionRequest struct {
@@ -48,6 +52,7 @@ type NewSessionRequest struct {
 	RiskDecision          string
 	RiskDecisionID        pulid.ID
 	IsPortalUser          bool
+	MustChangePassword    bool
 }
 
 func NewSession(req *NewSessionRequest) *Session {
@@ -81,6 +86,7 @@ func NewSession(req *NewSessionRequest) *Session {
 		RiskDecision:          req.RiskDecision,
 		RiskDecisionID:        req.RiskDecisionID,
 		IsPortalUser:          req.IsPortalUser,
+		MustChangePassword:    req.MustChangePassword,
 		LastAccessedAt:        now,
 		ExpiresAt:             req.ExpiresAt,
 		CreatedAt:             now,

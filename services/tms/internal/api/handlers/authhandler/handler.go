@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/passwordresetservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,25 +25,28 @@ import (
 type Params struct {
 	fx.In
 
-	Service      services.AuthService
-	Logger       *zap.Logger
-	Config       *config.Config
-	ErrorHandler *helpers.ErrorHandler
+	Service       services.AuthService
+	PasswordReset *passwordresetservice.Service
+	Logger        *zap.Logger
+	Config        *config.Config
+	ErrorHandler  *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service services.AuthService
-	l       *zap.Logger
-	cfg     *config.Config
-	eh      *helpers.ErrorHandler
+	service       services.AuthService
+	passwordReset *passwordresetservice.Service
+	l             *zap.Logger
+	cfg           *config.Config
+	eh            *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		l:       p.Logger.With(zap.String("handler", "auth")),
-		cfg:     p.Config,
-		eh:      p.ErrorHandler,
+		service:       p.Service,
+		passwordReset: p.PasswordReset,
+		l:             p.Logger.With(zap.String("handler", "auth")),
+		cfg:           p.Config,
+		eh:            p.ErrorHandler,
 	}
 }
 
@@ -51,6 +55,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("login", h.login)
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
+	api.POST("forgot-password", h.forgotPassword)
+	api.POST("reset-password", h.resetPassword)
 	api.GET("session/roles", h.listAuthorizedSessionRoles)
 	api.POST("session/roles/activate", h.activateSessionRoles)
 	api.GET("csrf", h.csrfToken)

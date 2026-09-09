@@ -154,6 +154,41 @@ func (r *sessionRepository) Delete(ctx context.Context, sessionID pulid.ID) erro
 	return nil
 }
 
+func (r *sessionRepository) DeleteAllForUser(ctx context.Context, userID pulid.ID) error {
+	log := r.l.With(
+		zap.String("operation", "DeleteAllUserSessions"),
+		zap.String("userID", userID.String()),
+	)
+
+	userSessionsKey := r.getUserSessionsKey(userID)
+	members, err := r.client.ZRange(ctx, userSessionsKey, 0, -1).Result()
+	if err != nil {
+		log.Error("failed to list user sessions", zap.Error(err))
+		return err
+	}
+
+	pipe := r.client.Pipeline()
+	for _, member := range members {
+		sessionID, parseErr := pulid.Parse(member)
+		if parseErr != nil {
+			// A member that will not parse cannot be turned into a session key, but it
+			// also cannot authenticate anything. Drop it with the set below rather than
+			// abandoning the sessions that follow it.
+			log.Warn("skipping unparseable session id", zap.String("member", member))
+			continue
+		}
+		pipe.Del(ctx, r.getSessionKey(sessionID))
+	}
+	pipe.Del(ctx, userSessionsKey)
+
+	if _, err = pipe.Exec(ctx); err != nil {
+		log.Error("failed to delete user sessions", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
 func (r *sessionRepository) evictOldestSessions(
 	ctx context.Context,
 	userSessionsKey string,

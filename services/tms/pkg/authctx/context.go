@@ -32,6 +32,7 @@ const (
 	RiskDecisionKey           = Key("riskDecision")
 	RiskDecisionIDKey         = Key("riskDecisionId")
 	IsPortalUserKey           = Key("isPortalUser")
+	MustChangePasswordKey     = Key("mustChangePassword")
 )
 
 const (
@@ -107,6 +108,7 @@ type SessionAuthContextParams struct {
 	RiskDecision           string
 	RiskDecisionID         pulid.ID
 	IsPortalUser           bool
+	MustChangePassword     bool
 }
 
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
@@ -124,6 +126,7 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	c.Set(string(RiskDecisionKey), p.RiskDecision)
 	c.Set(string(RiskDecisionIDKey), p.RiskDecisionID)
 	c.Set(string(IsPortalUserKey), p.IsPortalUser)
+	c.Set(string(MustChangePasswordKey), p.MustChangePassword)
 	c.Request = c.Request.WithContext(WithSessionRoleActivation(
 		c.Request.Context(),
 		p.ActiveRoleIDs,
