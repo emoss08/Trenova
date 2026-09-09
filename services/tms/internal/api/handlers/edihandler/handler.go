@@ -78,6 +78,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerConnectionRoutes(api.Group("/connections"))
 	h.registerCommunicationProfileRoutes(api.Group("/communication-profiles"))
 	h.registerDocumentTypeRoutes(catalog.Group("/document-types"))
+	h.registerTransactionSetRoutes(catalog.Group("/transaction-sets"))
 	h.registerSourceContextRoutes(catalog.Group("/source-context"))
 	h.registerPartnerSettingsRoutes(catalog.Group("/partner-settings"))
 	h.registerTemplateRoutes(api.Group("/templates"))
@@ -293,6 +294,20 @@ func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.listDocumentTypes,
+	)
+}
+
+func (h *Handler) registerTransactionSetRoutes(transactionSets *gin.RouterGroup) {
+	selectOptions := transactionSets.Group("/select-options")
+	selectOptions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectTransactionSetOptions,
+	)
+	selectOptions.GET(
+		"/:transactionSetID",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getTransactionSetOption,
 	)
 }
 
@@ -1387,9 +1402,13 @@ func (h *Handler) selectDocumentTypeOptions(c *gin.Context) {
 }
 
 func (h *Handler) getDocumentTypeOption(c *gin.Context) {
-	documentTypeID, err := pulid.MustParse(c.Param("documentTypeID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
+	documentTypeID := helpers.ParamCatalogID(c, "documentTypeID")
+	if documentTypeID.IsNil() {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"documentTypeID",
+			errortypes.ErrRequired,
+			"Document type id is required",
+		))
 		return
 	}
 
@@ -1408,6 +1427,62 @@ func (h *Handler) getDocumentTypeOption(c *gin.Context) {
 		}
 	}
 	h.eh.HandleError(c, errortypes.NewNotFoundError("EDI document type not found"))
+}
+
+func (h *Handler) selectTransactionSetOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDITransactionSet], error) {
+			return h.service.SelectTransactionSetOptions(
+				c.Request.Context(),
+				&repositories.EDITransactionSetSelectOptionsRequest{
+					SelectQueryRequest: req,
+					Standard:           edi.EDIStandard(helpers.QueryString(c, "standard", "")),
+					Status:             edi.DocumentStatus(helpers.QueryString(c, "status", "")),
+				},
+			)
+		},
+	)
+}
+
+func (h *Handler) getTransactionSetOption(c *gin.Context) {
+	transactionSetID := helpers.ParamCatalogID(c, "transactionSetID")
+	if transactionSetID.IsNil() {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"transactionSetID",
+			errortypes.ErrRequired,
+			"Transaction set id is required",
+		))
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+	req.Query = ""
+	req.Pagination = pagination.Info{Limit: 1}
+
+	result, err := h.service.SelectTransactionSetOptions(
+		c.Request.Context(),
+		&repositories.EDITransactionSetSelectOptionsRequest{
+			SelectQueryRequest: req,
+			IDs:                []pulid.ID{transactionSetID},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if len(result.Items) == 0 {
+		h.eh.HandleError(c, errortypes.NewNotFoundError("EDI transaction set not found"))
+		return
+	}
+
+	c.JSON(http.StatusOK, result.Items[0])
 }
 
 func (h *Handler) listSourceContextSchemas(c *gin.Context) {
@@ -1561,7 +1636,7 @@ func (h *Handler) listPartnerSettingSchemas(c *gin.Context) {
 					),
 					Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
 					X12Version:     helpers.QueryString(c, "x12Version", ""),
-					DocumentTypeID: helpers.QueryPulid(c, "documentTypeId"),
+					DocumentTypeID: helpers.QueryCatalogID(c, "documentTypeId"),
 					SchemaVersion:  helpers.QueryInt64(c, "schemaVersion", 0),
 					Status:         edi.PartnerSettingStatus(helpers.QueryString(c, "status", "")),
 				},

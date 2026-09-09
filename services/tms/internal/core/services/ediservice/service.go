@@ -49,6 +49,7 @@ type Params struct {
 	ProfileRepo         repositories.EDICommunicationProfileRepository
 	TransferRepo        repositories.EDILoadTenderTransferRepository
 	DocumentTypeRepo    repositories.EDIDocumentTypeRepository
+	TransactionSetRepo  repositories.EDITransactionSetRepository
 	SourceContextRepo   repositories.EDISourceContextRepository
 	PartnerSettingRepo  repositories.EDIPartnerSettingRepository
 	TemplateRepo        repositories.EDITemplateRepository
@@ -93,6 +94,7 @@ type Service struct {
 	profileRepo         repositories.EDICommunicationProfileRepository
 	transferRepo        repositories.EDILoadTenderTransferRepository
 	documentTypeRepo    repositories.EDIDocumentTypeRepository
+	transactionSetRepo  repositories.EDITransactionSetRepository
 	sourceContextRepo   repositories.EDISourceContextRepository
 	partnerSettingRepo  repositories.EDIPartnerSettingRepository
 	templateRepo        repositories.EDITemplateRepository
@@ -144,6 +146,7 @@ func New(p Params) *Service {
 		profileRepo:         p.ProfileRepo,
 		transferRepo:        p.TransferRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
+		transactionSetRepo:  p.TransactionSetRepo,
 		sourceContextRepo:   p.SourceContextRepo,
 		partnerSettingRepo:  p.PartnerSettingRepo,
 		templateRepo:        p.TemplateRepo,

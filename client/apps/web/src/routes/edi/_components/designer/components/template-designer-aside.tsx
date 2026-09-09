@@ -4,6 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { useEDITransactionSetOptions } from "@/hooks/use-edi-transaction-set-options";
 import { useTemplateDesignerUrlActions } from "@/hooks/use-template-designer-state";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import { createTemplateFormSchema, type EDITemplate } from "@trenova/shared/types/edi";
@@ -169,6 +170,8 @@ function TemplateFilterPopover({
   onDirectionChange: (value: string) => void;
   onReset: () => void;
 }) {
+  const transactionSetFilterOptions = useEDITransactionSetOptions(transactionSetOptions);
+
   return (
     <Popover>
       <PopoverTrigger
@@ -201,7 +204,7 @@ function TemplateFilterPopover({
             label="Set"
             value={templateTransactionSet}
             onValueChange={onTransactionSetChange}
-            options={transactionSetOptions}
+            options={transactionSetFilterOptions}
             placeholder="All sets"
           />
           <ControlledSelectField

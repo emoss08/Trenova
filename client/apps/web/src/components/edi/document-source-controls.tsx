@@ -2,14 +2,14 @@ import {
   ControlledEDITransferAutocompleteField,
   ControlledShipmentAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { Input } from "@trenova/shared/components/ui/input";
-import { Label } from "@trenova/shared/components/ui/label";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   getEDIDocumentSourceInputs,
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 
 type DocumentSourceControlsLayout = "stack" | "toolbar";
 
@@ -130,7 +130,7 @@ function DocumentSourceTextarea({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 w-full">
       <Label className="text-muted-foreground text-xs">{label}</Label>
       <Textarea
         value={value}

@@ -2,6 +2,7 @@ package repositories
 
 type EDIDocumentRepository interface {
 	EDIDocumentTypeRepository
+	EDITransactionSetRepository
 	EDISourceContextRepository
 	EDIPartnerSettingRepository
 	EDITemplateRepository

@@ -5,6 +5,8 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { listEdiTemplatesGraphQL, type ListEdiTemplatesParams } from "@/lib/graphql/edi-templates";
+import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
+import { EDI_TRANSACTION_SET_OPTIONS_LIMIT } from "@/lib/edi-transaction-set-options";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -35,6 +37,18 @@ export const edi = createQueryKeys("edi", {
           status: filters.status,
           transactionSet: filters.transactionSet,
           direction: filters.direction,
+        },
+        { signal },
+      ),
+  }),
+  transactionSetOptions: () => ({
+    queryKey: ["transaction-set-options"],
+    queryFn: async ({ signal }) =>
+      fetchGraphQLSelectOptions(
+        {
+          resource: "EDI_TRANSACTION_SET",
+          initialLimit: EDI_TRANSACTION_SET_OPTIONS_LIMIT,
+          filters: { status: "Active" },
         },
         { signal },
       ),

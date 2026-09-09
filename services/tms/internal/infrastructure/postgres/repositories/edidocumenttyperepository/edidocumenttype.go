@@ -66,6 +66,7 @@ func (r *repository) SelectDocumentTypeOptions(
 			cols.Direction.Bare(),
 			cols.DefaultVersion.Bare(),
 			cols.Status.Bare(),
+			cols.CreatedAt.Bare(),
 		).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return filterDocumentTypesQuery(sq, repositories.ListEDIDocumentTypesRequest{

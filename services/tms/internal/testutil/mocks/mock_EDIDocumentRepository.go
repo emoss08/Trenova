@@ -4461,3 +4461,71 @@ func (_c *MockEDIDocumentRepository_UpdateTestCase_Call) RunAndReturn(run func(c
 	_c.Call.Return(run)
 	return _c
 }
+
+// SelectTransactionSetOptions provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) SelectTransactionSetOptions(ctx context.Context, req *repositories.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransactionSet], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectTransactionSetOptions")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDITransactionSet]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransactionSet], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDITransactionSetSelectOptionsRequest) *pagination.ListResult[*edi.EDITransactionSet]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDITransactionSet])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.EDITransactionSetSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_SelectTransactionSetOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectTransactionSetOptions'
+type MockEDIDocumentRepository_SelectTransactionSetOptions_Call struct {
+	*mock.Call
+}
+
+// SelectTransactionSetOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.EDITransactionSetSelectOptionsRequest
+func (_e *MockEDIDocumentRepository_Expecter) SelectTransactionSetOptions(ctx any, req any) *MockEDIDocumentRepository_SelectTransactionSetOptions_Call {
+	return &MockEDIDocumentRepository_SelectTransactionSetOptions_Call{Call: _e.mock.On("SelectTransactionSetOptions", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_SelectTransactionSetOptions_Call) Run(run func(ctx context.Context, req *repositories.EDITransactionSetSelectOptionsRequest)) *MockEDIDocumentRepository_SelectTransactionSetOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.EDITransactionSetSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.EDITransactionSetSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_SelectTransactionSetOptions_Call) Return(listResult *pagination.ListResult[*edi.EDITransactionSet], err error) *MockEDIDocumentRepository_SelectTransactionSetOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_SelectTransactionSetOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.EDITransactionSetSelectOptionsRequest) (*pagination.ListResult[*edi.EDITransactionSet], error)) *MockEDIDocumentRepository_SelectTransactionSetOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}

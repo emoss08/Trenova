@@ -4,6 +4,17 @@ import {
   ControlledEDITemplateAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useEDITransactionSetOptions } from "@/hooks/use-edi-transaction-set-options";
+import {
+  buildEDIDocumentResolutionRequest,
+  hasEDIDocumentSourceValue,
+  pruneEDIDocumentSourceValues,
+  resolveEDIDocumentSourceContext,
+  type EDIDocumentSourceField,
+  type EDIDocumentSourceValues,
+} from "@/lib/edi/document-source";
+import type { SelectOption } from "@/lib/graphql/select-options";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
@@ -17,22 +28,12 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import {
-  buildEDIDocumentResolutionRequest,
-  hasEDIDocumentSourceValue,
-  pruneEDIDocumentSourceValues,
-  resolveEDIDocumentSourceContext,
-  type EDIDocumentSourceField,
-  type EDIDocumentSourceValues,
-} from "@/lib/edi/document-source";
 import { downloadTextFile } from "@trenova/shared/lib/utils";
 import type {
   EDIMessage,
   EDIPartnerDocumentProfile,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@trenova/shared/types/edi";
-import type { SelectOption } from "@/lib/graphql/select-options";
 import {
   ClipboardCheckIcon,
   CopyIcon,
@@ -306,23 +307,6 @@ export function DocumentPreviewArchiveTab() {
               placeholder={partnerId ? "Select document profile" : "Select a partner first."}
               noResultsMessage="No document profiles match this partner and document context."
             />
-            {/* {selectedPartnerHasNoProfiles && (
-              <Alert variant="info" className="py-2 text-xs">
-                <InfoIcon className="size-4" />
-                <AlertDescription className="text-xs">
-                  No document profiles exist for this partner yet. Fill the profile details below
-                  and click Save Profile.
-                </AlertDescription>
-              </Alert>
-            )}
-            {isCreatingProfile && (
-              <Alert variant="info" className="py-2 text-xs">
-                <InfoIcon className="size-4" />
-                <AlertDescription className="text-xs">
-                  New profile for selected partner. Save Profile will create and select it.
-                </AlertDescription>
-              </Alert>
-            )} */}
             <InputBlock
               label="Profile Name"
               value={profileDraft.name}
@@ -714,6 +698,7 @@ function MessageArchive({
   onOpenMessage: (messageId: string) => void;
 }) {
   const { copy } = useCopyToClipboard();
+  const transactionSetFilterOptions = useEDITransactionSetOptions(transactionSetOptions);
   const copyControlNumbers = (message: EDIMessage) => {
     void copy(controlNumberText(message), { withToast: true });
   };
@@ -730,7 +715,7 @@ function MessageArchive({
           label="Transaction"
           value={filters.transactionSet}
           onValueChange={(transactionSet) => onFiltersChange({ transactionSet })}
-          options={transactionSetOptions}
+          options={transactionSetFilterOptions}
           placeholder="All sets"
         />
         <ControlledSelectField

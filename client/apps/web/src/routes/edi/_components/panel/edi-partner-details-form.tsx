@@ -8,14 +8,10 @@ import { JsonEditorField } from "@/components/fields/json-editor-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { statusChoices } from "@/lib/choices";
 import type { UseFormReturn } from "react-hook-form";
-import {
-  partnerCountryOptions,
-  partnerTimezoneOptions,
-  type EDIPartnerFormValues,
-} from "../edi-schemas";
+import { partnerCountryOptions, type EDIPartnerFormValues } from "../edi-schemas";
 
 type PartnerDetailsFormProps = {
   id: string;
@@ -109,7 +105,15 @@ export function PartnerDetailsForm({
               name="timezone"
               label="Timezone"
               description="Local timezone used when interpreting partner schedules, acknowledgments, and operational timestamps."
-              options={partnerTimezoneOptions}
+              groups={timezoneGroupedChoices}
+              renderOption={(option) => (
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span>{option.label}</span>
+                  {option.description && (
+                    <span className="text-muted-foreground text-xs">{option.description}</span>
+                  )}
+                </span>
+              )}
               isReadOnly={disabled}
               isClearable
               placeholder="Select timezone"

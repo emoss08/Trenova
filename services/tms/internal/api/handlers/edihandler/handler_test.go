@@ -42,6 +42,7 @@ func setupEDIHandler(
 	params := ediservice.Params{
 		Logger:              logger,
 		DocumentTypeRepo:    repo,
+		TransactionSetRepo:  repo,
 		SourceContextRepo:   repo,
 		PartnerSettingRepo:  repo,
 		TemplateRepo:        repo,
@@ -381,6 +382,130 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
+}
+
+func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
+	t.Parallel()
+
+	tender := &edi.EDITransactionSet{
+		ID:             pulid.ID("edits_x12_204"),
+		Standard:       edi.EDIStandardX12,
+		Code:           edi.TransactionSet204,
+		Name:           "Motor Carrier Load Tender",
+		Description:    "Outbound load tender document.",
+		DefaultVersion: edi.DefaultX12204Version,
+		Status:         edi.DocumentStatusActive,
+	}
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.On(
+		"SelectTransactionSetOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Query == "204" &&
+				req.Standard == edi.EDIStandardX12 &&
+				req.Status == edi.DocumentStatusActive &&
+				len(req.IDs) == 0
+		}),
+	).Return(&pagination.ListResult[*edi.EDITransactionSet]{
+		Items: []*edi.EDITransactionSet{tender},
+		Total: 1,
+	}, nil).Once()
+	repo.On(
+		"SelectTransactionSetOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+			return len(req.IDs) == 1 &&
+				req.IDs[0] == tender.ID &&
+				req.SelectQueryRequest.Query == "" &&
+				req.SelectQueryRequest.Pagination.Limit == 1
+		}),
+	).Return(&pagination.ListResult[*edi.EDITransactionSet]{
+		Items: []*edi.EDITransactionSet{tender},
+		Total: 1,
+	}, nil).Once()
+	repo.On(
+		"SelectTransactionSetOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+			return len(req.IDs) == 1 && req.IDs[0] == pulid.ID("edits_x12_000")
+		}),
+	).Return(&pagination.ListResult[*edi.EDITransactionSet]{}, nil).Once()
+
+	handler := setupEDIHandler(t, repo)
+
+	listRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/catalog/transaction-sets/select-options/",
+		map[string]string{"query": "204", "standard": "X12", "status": "Active"},
+		nil,
+		http.StatusOK,
+	)
+	var listResp pagination.Response[[]*edi.EDITransactionSet]
+	require.NoError(t, listRecorder.ResponseJSON(&listResp))
+	require.Len(t, listResp.Results, 1)
+	assert.Equal(t, 1, listResp.Count)
+	assert.Equal(t, tender.ID, listResp.Results[0].ID)
+	assert.Equal(t, edi.TransactionSet204, listResp.Results[0].Code)
+
+	oneRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/catalog/transaction-sets/select-options/edits_x12_204",
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var oneResp edi.EDITransactionSet
+	require.NoError(t, oneRecorder.ResponseJSON(&oneResp))
+	assert.Equal(t, tender.ID, oneResp.ID)
+	assert.Equal(t, "Motor Carrier Load Tender", oneResp.Name)
+
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/catalog/transaction-sets/select-options/edits_x12_000",
+		nil,
+		nil,
+		http.StatusNotFound,
+	)
+}
+
+func TestEDIHandler_DocumentTypeOptionAcceptsCatalogID(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{}).
+		Return([]*edi.EDIDocumentType{{
+			ID:             pulid.ID("edidt_x12_204_outbound"),
+			Code:           "X12-204-OUT",
+			Name:           "X12 204 Motor Carrier Load Tender",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+			DefaultVersion: edi.DefaultX12204Version,
+			Status:         edi.DocumentStatusActive,
+		}}, nil).
+		Once()
+
+	handler := setupEDIHandler(t, repo)
+
+	recorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/catalog/document-types/select-options/edidt_x12_204_outbound",
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var resp edi.EDIDocumentType
+	require.NoError(t, recorder.ResponseJSON(&resp))
+	assert.Equal(t, pulid.ID("edidt_x12_204_outbound"), resp.ID)
 }
 
 func TestEDIHandler_DocumentProfileSelectOptionsReturnsProfiles(t *testing.T) {
