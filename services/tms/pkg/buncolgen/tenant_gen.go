@@ -1405,6 +1405,7 @@ var DashControlColumns = struct {
 	AllowContactInfoEdit           Column // "allow_contact_info_edit" → qualified: "dashc.allow_contact_info_edit"
 	AllowPtoRequests               Column // "allow_pto_requests" → qualified: "dashc.allow_pto_requests"
 	SendCredentialReminders        Column // "send_credential_reminders" → qualified: "dashc.send_credential_reminders"
+	RequireContactChangeApproval   Column // "require_contact_change_approval" → qualified: "dashc.require_contact_change_approval"
 	DriverDigestCadence            Column // "driver_digest_cadence" → qualified: "dashc.driver_digest_cadence"
 	DriverDigestWeekday            Column // "driver_digest_weekday" → qualified: "dashc.driver_digest_weekday"
 	EnableDetentionAlerts          Column // "enable_detention_alerts" → qualified: "dashc.enable_detention_alerts"
@@ -1430,6 +1431,7 @@ var DashControlColumns = struct {
 	AllowContactInfoEdit:           NewColumn("allow_contact_info_edit", "dashc"),
 	AllowPtoRequests:               NewColumn("allow_pto_requests", "dashc"),
 	SendCredentialReminders:        NewColumn("send_credential_reminders", "dashc"),
+	RequireContactChangeApproval:   NewColumn("require_contact_change_approval", "dashc"),
 	DriverDigestCadence:            NewColumn("driver_digest_cadence", "dashc"),
 	DriverDigestWeekday:            NewColumn("driver_digest_weekday", "dashc"),
 	EnableDetentionAlerts:          NewColumn("enable_detention_alerts", "dashc"),
@@ -1461,6 +1463,7 @@ var DashControlFieldMap = map[string]string{
 	"allowContactInfoEdit":           "allow_contact_info_edit",
 	"allowPtoRequests":               "allow_pto_requests",
 	"sendCredentialReminders":        "send_credential_reminders",
+	"requireContactChangeApproval":   "require_contact_change_approval",
 	"driverDigestCadence":            "driver_digest_cadence",
 	"driverDigestWeekday":            "driver_digest_weekday",
 	"enableDetentionAlerts":          "enable_detention_alerts",
@@ -1490,6 +1493,7 @@ var DashControlInsertableColumns = []string{
 	"allow_contact_info_edit",
 	"allow_pto_requests",
 	"send_credential_reminders",
+	"require_contact_change_approval",
 	"driver_digest_cadence",
 	"driver_digest_weekday",
 	"enable_detention_alerts",
@@ -1579,6 +1583,7 @@ var DashControlFilter = struct {
 	AllowContactInfoEdit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowContactInfoEdit" → DB: "allow_contact_info_edit"
 	AllowPtoRequests               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPtoRequests" → DB: "allow_pto_requests"
 	SendCredentialReminders        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendCredentialReminders" → DB: "send_credential_reminders"
+	RequireContactChangeApproval   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireContactChangeApproval" → DB: "require_contact_change_approval"
 	DriverDigestCadence            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverDigestCadence" → DB: "driver_digest_cadence"
 	DriverDigestWeekday            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverDigestWeekday" → DB: "driver_digest_weekday"
 	EnableDetentionAlerts          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableDetentionAlerts" → DB: "enable_detention_alerts"
@@ -1637,6 +1642,9 @@ var DashControlFilter = struct {
 	},
 	SendCredentialReminders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sendCredentialReminders", op, value)
+	},
+	RequireContactChangeApproval: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requireContactChangeApproval", op, value)
 	},
 	DriverDigestCadence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("driverDigestCadence", op, value)
@@ -2615,6 +2623,7 @@ var OrganizationMembershipColumns = struct {
 	JoinedAt       Column // "joined_at" → qualified: "uom.joined_at"
 	GrantedByID    Column // "granted_by_id" → qualified: "uom.granted_by_id"
 	ExpiresAt      Column // "expires_at" → qualified: "uom.expires_at"
+	PositionID     Column // "position_id" → qualified: "uom.position_id"
 }{
 	ID:             NewColumn("id", "uom"),
 	IsDefault:      NewColumn("is_default", "uom"),
@@ -2624,6 +2633,7 @@ var OrganizationMembershipColumns = struct {
 	JoinedAt:       NewColumn("joined_at", "uom"),
 	GrantedByID:    NewColumn("granted_by_id", "uom"),
 	ExpiresAt:      NewColumn("expires_at", "uom"),
+	PositionID:     NewColumn("position_id", "uom"),
 }
 
 // OrganizationMembershipFieldMap maps JSON API field names to database column names.
@@ -2639,6 +2649,7 @@ var OrganizationMembershipFieldMap = map[string]string{
 	"joinedAt":       "joined_at",
 	"grantedByID":    "granted_by_id",
 	"expiresAt":      "expires_at",
+	"positionId":     "position_id",
 }
 
 // OrganizationMembershipInsertableColumns lists column names suitable for INSERT statements on the "user_organization_memberships" table.
@@ -2652,6 +2663,7 @@ var OrganizationMembershipInsertableColumns = []string{
 	"joined_at",
 	"granted_by_id",
 	"expires_at",
+	"position_id",
 }
 
 // OrganizationMembershipRelations provides type-safe names for Bun eager-loading.
@@ -2729,6 +2741,7 @@ var OrganizationMembershipFilter = struct {
 	JoinedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "joinedAt" → DB: "joined_at"
 	GrantedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grantedByID" → DB: "granted_by_id"
 	ExpiresAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	PositionID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "positionId" → DB: "position_id"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -2753,6 +2766,9 @@ var OrganizationMembershipFilter = struct {
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expiresAt", op, value)
+	},
+	PositionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("positionId", op, value)
 	},
 }
 

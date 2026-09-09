@@ -164,9 +164,17 @@ var FleetCodeSpec TypeSpec
 
 var FormulaTemplateSpec TypeSpec
 
+var FuelCardSpec TypeSpec
+
 var FuelIndexSpec TypeSpec
 
 var FuelIndexPriceSpec TypeSpec
+
+var FuelPurchaseSpec TypeSpec
+
+var FuelPurchaseImportBatchSpec TypeSpec
+
+var FuelPurchaseImportRowSpec TypeSpec
 
 var FuelSurchargeProgramSpec TypeSpec
 
@@ -179,6 +187,16 @@ var HazmatSegregationRuleSpec TypeSpec
 var HoldReasonSpec TypeSpec
 
 var HomeLayoutPresetSpec TypeSpec
+
+var IFTAJurisdictionSpec TypeSpec
+
+var IFTAJurisdictionMileageEntrySpec TypeSpec
+
+var IFTAReturnSpec TypeSpec
+
+var IFTAReturnLineSpec TypeSpec
+
+var IFTATaxRateSpec TypeSpec
 
 var InvoiceSpec TypeSpec
 
@@ -331,6 +349,8 @@ var ShipmentLifecycleEventSpec TypeSpec
 var ShipmentMoveSpec TypeSpec
 
 var ShipmentMoveEventSpec TypeSpec
+
+var ShipmentMoveJurisdictionMileSpec TypeSpec
 
 var ShipmentOwnershipEventSpec TypeSpec
 
@@ -3876,7 +3896,7 @@ func init() {
 
 	DashControlSpec = TypeSpec{
 		TypeName: "DashControl",
-		FieldMap: map[string]string{"allowContactInfoEdit": "allow_contact_info_edit", "allowExpenseSubmission": "allow_expense_submission", "allowLoadComments": "allow_load_comments", "allowLoadDocumentUpload": "allow_load_document_upload", "allowLoadRefusals": "allow_load_refusals", "allowProfileDocumentUpload": "allow_profile_document_upload", "allowPtoRequests": "allow_pto_requests", "allowSettlementDisputes": "allow_settlement_disputes", "allowStopActions": "allow_stop_actions", "businessUnitId": "business_unit_id", "createdAt": "created_at", "detentionAlertThresholdMinutes": "detention_alert_threshold_minutes", "driverDigestCadence": "driver_digest_cadence", "driverDigestWeekday": "driver_digest_weekday", "enableDetentionAlerts": "enable_detention_alerts", "id": "id", "organizationId": "organization_id", "requireContactChangeApproval": "require_contact_change_approval", "requireExpenseReceipt": "require_expense_receipt", "requireLoadAcknowledgment": "require_load_acknowledgment", "sendCredentialReminders": "send_credential_reminders", "showLoadPay": "show_load_pay", "showPayEstimates": "show_pay_estimates", "updatedAt": "updated_at", "version": "version"},
+		FieldMap: buncolgen.DashControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7502,6 +7522,99 @@ func init() {
 		},
 	}
 
+	FuelCardSpec = TypeSpec{
+		TypeName: "FuelCard",
+		FieldMap: buncolgen.FuelCardFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "lastFour",
+				FieldMapKey: "lastFour",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "externalCardId",
+				FieldMapKey: "externalCardId",
+			},
+			{
+				Name:        "assignedWorkerId",
+				FieldMapKey: "assignedWorkerId",
+			},
+			{
+				Name:        "assignedTractorId",
+				FieldMapKey: "assignedTractorId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "cancelledAt",
+				FieldMapKey: "cancelledAt",
+			},
+			{
+				Name:        "cancelReason",
+				FieldMapKey: "cancelReason",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "assignedWorker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "assignedTractor",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &TractorSpec,
+				},
+			},
+		},
+	}
+
 	FuelIndexSpec = TypeSpec{
 		TypeName: "FuelIndex",
 		FieldMap: buncolgen.FuelIndexFieldMap,
@@ -7623,6 +7736,366 @@ func init() {
 			{
 				Name:        "fetchedAt",
 				FieldMapKey: "fetchedAt",
+			},
+		},
+	}
+
+	FuelPurchaseSpec = TypeSpec{
+		TypeName: "FuelPurchase",
+		FieldMap: buncolgen.FuelPurchaseFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "tractorId",
+				FieldMapKey: "tractorId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "jurisdictionId",
+				FieldMapKey: "jurisdictionId",
+			},
+			{
+				Name:        "fuelCardId",
+				FieldMapKey: "fuelCardId",
+			},
+			{
+				Name:        "cardLastFour",
+				FieldMapKey: "cardLastFour",
+			},
+			{
+				Name:        "purchasedAt",
+				FieldMapKey: "purchasedAt",
+			},
+			{
+				Name:        "vendor",
+				FieldMapKey: "vendor",
+			},
+			{
+				Name:        "vendorCity",
+				FieldMapKey: "vendorCity",
+			},
+			{
+				Name:        "fuelType",
+				FieldMapKey: "fuelType",
+			},
+			{
+				Name:        "quantity",
+				FieldMapKey: "quantity",
+			},
+			{
+				Name:        "quantityUnit",
+				FieldMapKey: "quantityUnit",
+			},
+			{
+				Name:        "gallons",
+				FieldMapKey: "gallons",
+			},
+			{
+				Name:        "unitPrice",
+				FieldMapKey: "unitPrice",
+			},
+			{
+				Name:        "totalAmount",
+				FieldMapKey: "totalAmountMinor",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "odometer",
+				FieldMapKey: "odometer",
+			},
+			{
+				Name:        "transactionReference",
+				FieldMapKey: "transactionReference",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "importBatchId",
+				FieldMapKey: "importBatchId",
+			},
+			{
+				Name:        "taxPaid",
+				FieldMapKey: "taxPaid",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "tractor",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &TractorSpec,
+				},
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "jurisdiction",
+				FieldMapKey: "jurisdictionId",
+				Relation: &RelationSpec{
+					Target: &IFTAJurisdictionSpec,
+				},
+			},
+			{
+				Name:        "fuelCard",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FuelCardSpec,
+				},
+			},
+		},
+	}
+
+	FuelPurchaseImportBatchSpec = TypeSpec{
+		TypeName: "FuelPurchaseImportBatch",
+		FieldMap: buncolgen.ImportBatchFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "fileName",
+				FieldMapKey: "fileName",
+			},
+			{
+				Name:        "sourceFormat",
+				FieldMapKey: "sourceFormat",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "defaultFuelType",
+				FieldMapKey: "defaultFuelType",
+			},
+			{
+				Name:        "defaultFuelCardId",
+				FieldMapKey: "defaultFuelCardId",
+			},
+			{
+				Name:        "defaultCurrency",
+				FieldMapKey: "defaultCurrency",
+			},
+			{
+				Name:        "mapping",
+				FieldMapKey: "mapping",
+			},
+			{
+				Name:        "unmappedHeaders",
+				FieldMapKey: "unmappedHeaders",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "rowCount",
+				FieldMapKey: "rowCount",
+			},
+			{
+				Name:        "errorCount",
+				FieldMapKey: "errorCount",
+			},
+			{
+				Name:        "committedCount",
+				FieldMapKey: "committedCount",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "error",
+			},
+			{
+				Name:        "uploadedById",
+				FieldMapKey: "uploadedById",
+			},
+			{
+				Name:        "stagedAt",
+				FieldMapKey: "stagedAt",
+			},
+			{
+				Name:        "committedAt",
+				FieldMapKey: "committedAt",
+			},
+			{
+				Name:        "committedById",
+				FieldMapKey: "committedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "document",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerCredentialDocumentSpec,
+				},
+			},
+			{
+				Name:        "defaultFuelCard",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FuelCardSpec,
+				},
+			},
+			{
+				Name:    "rows",
+				Special: "rows",
+			},
+		},
+	}
+
+	FuelPurchaseImportRowSpec = TypeSpec{
+		TypeName: "FuelPurchaseImportRow",
+		FieldMap: buncolgen.ImportRowFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+			"resolved_tractor_id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "importBatchId",
+				FieldMapKey: "importBatchId",
+			},
+			{
+				Name:        "rowNumber",
+				FieldMapKey: "rowNumber",
+			},
+			{
+				Name:        "cells",
+				FieldMapKey: "cells",
+			},
+			{
+				Name:        "parsed",
+				FieldMapKey: "parsed",
+			},
+			{
+				Name:        "transactionReference",
+				FieldMapKey: "transactionReference",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "error",
+			},
+			{
+				Name:        "resolvedTractorId",
+				FieldMapKey: "resolvedTractorId",
+			},
+			{
+				Name:        "resolvedFuelCardId",
+				FieldMapKey: "resolvedFuelCardId",
+			},
+			{
+				Name:        "resolvedJurisdictionId",
+				FieldMapKey: "resolvedJurisdictionId",
+			},
+			{
+				Name:        "resolutionNotes",
+				FieldMapKey: "resolutionNotes",
+			},
+			{
+				Name:        "fuelPurchaseId",
+				FieldMapKey: "fuelPurchaseId",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:    "resolvedTractor",
+				Special: "resolvedTractor",
 			},
 		},
 	}
@@ -8227,6 +8700,547 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	IFTAJurisdictionSpec = TypeSpec{
+		TypeName: "IFTAJurisdiction",
+		FieldMap: buncolgen.JurisdictionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "countryCode",
+				FieldMapKey: "countryCode",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "usStateId",
+				FieldMapKey: "usStateId",
+			},
+			{
+				Name:        "isIftaMember",
+				FieldMapKey: "isIftaMember",
+			},
+			{
+				Name:        "hasSurcharge",
+				FieldMapKey: "hasSurcharge",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "usState",
+				FieldMapKey: "usStateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+		},
+	}
+
+	IFTAJurisdictionMileageEntrySpec = TypeSpec{
+		TypeName: "IFTAJurisdictionMileageEntry",
+		FieldMap: buncolgen.JurisdictionMileageEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "tractorId",
+				FieldMapKey: "tractorId",
+			},
+			{
+				Name:        "jurisdictionId",
+				FieldMapKey: "jurisdictionId",
+			},
+			{
+				Name:        "traveledAt",
+				FieldMapKey: "traveledAt",
+			},
+			{
+				Name:        "year",
+				FieldMapKey: "year",
+			},
+			{
+				Name:        "quarter",
+				FieldMapKey: "quarter",
+			},
+			{
+				Name:        "miles",
+				FieldMapKey: "miles",
+			},
+			{
+				Name:        "loaded",
+				FieldMapKey: "loaded",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "tractor",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &TractorSpec,
+				},
+			},
+			{
+				Name:        "jurisdiction",
+				FieldMapKey: "jurisdictionId",
+				Relation: &RelationSpec{
+					Target: &IFTAJurisdictionSpec,
+				},
+			},
+		},
+	}
+
+	IFTAReturnSpec = TypeSpec{
+		TypeName: "IFTAReturn",
+		FieldMap: buncolgen.ReturnFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "year",
+				FieldMapKey: "year",
+			},
+			{
+				Name:        "quarter",
+				FieldMapKey: "quarter",
+			},
+			{
+				Name:    "period",
+				Special: "period",
+			},
+			{
+				Name:        "amendmentNumber",
+				FieldMapKey: "amendmentNumber",
+			},
+			{
+				Name:        "amendsReturnId",
+				FieldMapKey: "amendsReturnId",
+			},
+			{
+				Name:        "amendsReturn",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &IFTAReturnSpec,
+				},
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "timezone",
+				FieldMapKey: "timezone",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "totalMiles",
+				FieldMapKey: "totalMiles",
+			},
+			{
+				Name:        "totalTaxableMiles",
+				FieldMapKey: "totalTaxableMiles",
+			},
+			{
+				Name:        "totalGallons",
+				FieldMapKey: "totalGallons",
+			},
+			{
+				Name:        "totalTaxPaidGallons",
+				FieldMapKey: "totalTaxPaidGallons",
+			},
+			{
+				Name:        "netTaxableGallons",
+				FieldMapKey: "netTaxableGallons",
+			},
+			{
+				Name:        "taxDue",
+				FieldMapKey: "taxDueMinor",
+			},
+			{
+				Name:        "surchargeDue",
+				FieldMapKey: "surchargeDueMinor",
+			},
+			{
+				Name:        "netDue",
+				FieldMapKey: "netDueMinor",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "fleetMpgByFuelType",
+				FieldMapKey: "fleetMpgByFuelType",
+			},
+			{
+				Name:        "unattributedMiles",
+				FieldMapKey: "unattributedMiles",
+			},
+			{
+				Name:        "unattributedMoveCount",
+				FieldMapKey: "unattributedMoveCount",
+			},
+			{
+				Name:        "noTractorMiles",
+				FieldMapKey: "noTractorMiles",
+			},
+			{
+				Name:        "noTractorMoveCount",
+				FieldMapKey: "noTractorMoveCount",
+			},
+			{
+				Name:        "problems",
+				FieldMapKey: "problems",
+			},
+			{
+				Name:        "computedAt",
+				FieldMapKey: "computedAt",
+			},
+			{
+				Name:        "finalizedAt",
+				FieldMapKey: "finalizedAt",
+			},
+			{
+				Name:        "finalizedById",
+				FieldMapKey: "finalizedById",
+			},
+			{
+				Name:        "finalizedBy",
+				FieldMapKey: "finalizedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "filedAt",
+				FieldMapKey: "filedAt",
+			},
+			{
+				Name:        "filedById",
+				FieldMapKey: "filedById",
+			},
+			{
+				Name:        "filedBy",
+				FieldMapKey: "filedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "filingReference",
+				FieldMapKey: "filingReference",
+			},
+			{
+				Name:        "reopenedAt",
+				FieldMapKey: "reopenedAt",
+			},
+			{
+				Name:        "reopenedById",
+				FieldMapKey: "reopenedById",
+			},
+			{
+				Name:        "reopenReason",
+				FieldMapKey: "reopenReason",
+			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &IFTAReturnLineSpec,
+				},
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	IFTAReturnLineSpec = TypeSpec{
+		TypeName: "IFTAReturnLine",
+		FieldMap: buncolgen.ReturnLineFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "returnId",
+				FieldMapKey: "returnId",
+			},
+			{
+				Name:        "jurisdictionId",
+				FieldMapKey: "jurisdictionId",
+			},
+			{
+				Name:        "fuelType",
+				FieldMapKey: "fuelType",
+			},
+			{
+				Name:        "isIftaMember",
+				FieldMapKey: "isIftaMember",
+			},
+			{
+				Name:        "totalMiles",
+				FieldMapKey: "totalMiles",
+			},
+			{
+				Name:        "taxableMiles",
+				FieldMapKey: "taxableMiles",
+			},
+			{
+				Name:        "routeMiles",
+				FieldMapKey: "routeMiles",
+			},
+			{
+				Name:        "manualMiles",
+				FieldMapKey: "manualMiles",
+			},
+			{
+				Name:        "loadedMiles",
+				FieldMapKey: "loadedMiles",
+			},
+			{
+				Name:        "emptyMiles",
+				FieldMapKey: "emptyMiles",
+			},
+			{
+				Name:        "taxPaidGallons",
+				FieldMapKey: "taxPaidGallons",
+			},
+			{
+				Name:        "taxPaidGallonsRaw",
+				FieldMapKey: "taxPaidGallonsRaw",
+			},
+			{
+				Name:        "purchaseCount",
+				FieldMapKey: "purchaseCount",
+			},
+			{
+				Name:        "taxableGallons",
+				FieldMapKey: "taxableGallons",
+			},
+			{
+				Name:        "netTaxableGallons",
+				FieldMapKey: "netTaxableGallons",
+			},
+			{
+				Name:        "ratePerGallon",
+				FieldMapKey: "ratePerGallon",
+			},
+			{
+				Name:        "surchargeRatePerGallon",
+				FieldMapKey: "surchargeRatePerGallon",
+			},
+			{
+				Name:        "rateMissing",
+				FieldMapKey: "rateMissing",
+			},
+			{
+				Name:        "taxDue",
+				FieldMapKey: "taxDueMinor",
+			},
+			{
+				Name:        "surchargeDue",
+				FieldMapKey: "surchargeDueMinor",
+			},
+			{
+				Name:        "lineTotal",
+				FieldMapKey: "lineTotalMinor",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "jurisdiction",
+				FieldMapKey: "jurisdictionId",
+				Relation: &RelationSpec{
+					Target: &IFTAJurisdictionSpec,
+				},
+			},
+		},
+	}
+
+	IFTATaxRateSpec = TypeSpec{
+		TypeName: "IFTATaxRate",
+		FieldMap: buncolgen.TaxRateFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "jurisdictionId",
+				FieldMapKey: "jurisdictionId",
+			},
+			{
+				Name:        "year",
+				FieldMapKey: "year",
+			},
+			{
+				Name:        "quarter",
+				FieldMapKey: "quarter",
+			},
+			{
+				Name:        "fuelType",
+				FieldMapKey: "fuelType",
+			},
+			{
+				Name:        "ratePerGallon",
+				FieldMapKey: "ratePerGallon",
+			},
+			{
+				Name:        "surchargeRatePerGallon",
+				FieldMapKey: "surchargeRatePerGallon",
+			},
+			{
+				Name:        "sourceNote",
+				FieldMapKey: "sourceNote",
+			},
+			{
+				Name:        "sourceUrl",
+				FieldMapKey: "sourceUrl",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "jurisdiction",
+				FieldMapKey: "jurisdictionId",
+				Relation: &RelationSpec{
+					Target: &IFTAJurisdictionSpec,
+				},
 			},
 		},
 	}
@@ -14555,6 +15569,12 @@ func init() {
 					Target: &CarrierAssignmentSpec,
 				},
 			},
+			{
+				Name: "jurisdictionMiles",
+				Relation: &RelationSpec{
+					Target: &ShipmentMoveJurisdictionMileSpec,
+				},
+			},
 		},
 	}
 
@@ -14644,6 +15664,77 @@ func init() {
 			{
 				Name:        "newStatus",
 				FieldMapKey: "metadata",
+			},
+		},
+	}
+
+	ShipmentMoveJurisdictionMileSpec = TypeSpec{
+		TypeName: "ShipmentMoveJurisdictionMile",
+		FieldMap: buncolgen.ShipmentMoveJurisdictionMileFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "countryCode",
+				FieldMapKey: "countryCode",
+			},
+			{
+				Name:        "jurisdictionCode",
+				FieldMapKey: "jurisdictionCode",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "distance",
+				FieldMapKey: "distance",
+			},
+			{
+				Name:        "distanceUnits",
+				FieldMapKey: "distanceUnits",
+			},
+			{
+				Name:        "tollDistance",
+				FieldMapKey: "tollDistance",
+			},
+			{
+				Name:        "ferryDistance",
+				FieldMapKey: "ferryDistance",
+			},
+			{
+				Name:        "loaded",
+				FieldMapKey: "loaded",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "dataVersion",
+				FieldMapKey: "dataVersion",
+			},
+			{
+				Name:        "calculatedAt",
+				FieldMapKey: "calculatedAt",
 			},
 		},
 	}
@@ -15818,6 +16909,14 @@ func init() {
 				Special: "lastKnownLocation",
 			},
 			{
+				Name:        "fuelType",
+				FieldMapKey: "fuelType",
+			},
+			{
+				Name:        "iftaQualified",
+				FieldMapKey: "iftaQualified",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -16474,6 +17573,10 @@ func init() {
 			{
 				Name:        "managerId",
 				FieldMapKey: "managerId",
+			},
+			{
+				Name:        "positionId",
+				FieldMapKey: "positionId",
 			},
 			{
 				Name:        "status",

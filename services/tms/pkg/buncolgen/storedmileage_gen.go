@@ -49,67 +49,69 @@ var StoredMileageTable = TableInfo{
 //	q.Where(StoredMileageColumns.ID.Eq(), id)           // WHERE smg.id = ?
 //	q.Order(StoredMileageColumns.CreatedAt.OrderDesc())  // ORDER BY smg.created_at DESC
 var StoredMileageColumns = struct {
-	ID                  Column // "id" → qualified: "smg.id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "smg.business_unit_id"
-	OrganizationID      Column // "organization_id" → qualified: "smg.organization_id"
-	Status              Column // "status" → qualified: "smg.status"
-	OriginKey           Column // "origin_key" → qualified: "smg.origin_key"
-	DestinationKey      Column // "destination_key" → qualified: "smg.destination_key"
-	IntermediateKeys    Column // "intermediate_keys" → qualified: "smg.intermediate_keys"
-	RouteSignature      Column // "route_signature" → qualified: "smg.route_signature"
-	RouteHash           Column // "route_hash" → qualified: "smg.route_hash"
-	Distance            Column // "distance" → qualified: "smg.distance"
-	DistanceUnits       Column // "distance_units" → qualified: "smg.distance_units"
-	Provider            Column // "provider" → qualified: "smg.provider"
-	Source              Column // "source" → qualified: "smg.source"
-	RoutingType         Column // "routing_type" → qualified: "smg.routing_type"
-	Method              Column // "method" → qualified: "smg.method"
-	LocationGranularity Column // "location_granularity" → qualified: "smg.location_granularity"
-	DataVersion         Column // "data_version" → qualified: "smg.data_version"
-	DistanceProfileID   Column // "distance_profile_id" → qualified: "smg.distance_profile_id"
-	DistanceProfileName Column // "distance_profile_name" → qualified: "smg.distance_profile_name"
-	Hazmat              Column // "hazmat" → qualified: "smg.hazmat"
-	HazmatTypes         Column // "hazmat_types" → qualified: "smg.hazmat_types"
-	HazmatSignature     Column // "hazmat_signature" → qualified: "smg.hazmat_signature"
-	ProviderMetadata    Column // "provider_metadata" → qualified: "smg.provider_metadata"
-	HitCount            Column // "hit_count" → qualified: "smg.hit_count"
-	LastUsedAt          Column // "last_used_at" → qualified: "smg.last_used_at"
-	LastCalculatedAt    Column // "last_calculated_at" → qualified: "smg.last_calculated_at"
-	Version             Column // "version" → qualified: "smg.version"
-	CreatedAt           Column // "created_at" → qualified: "smg.created_at"
-	UpdatedAt           Column // "updated_at" → qualified: "smg.updated_at"
-	SearchVector        Column // "search_vector" → qualified: "smg.search_vector"
+	ID                    Column // "id" → qualified: "smg.id"
+	BusinessUnitID        Column // "business_unit_id" → qualified: "smg.business_unit_id"
+	OrganizationID        Column // "organization_id" → qualified: "smg.organization_id"
+	Status                Column // "status" → qualified: "smg.status"
+	OriginKey             Column // "origin_key" → qualified: "smg.origin_key"
+	DestinationKey        Column // "destination_key" → qualified: "smg.destination_key"
+	IntermediateKeys      Column // "intermediate_keys" → qualified: "smg.intermediate_keys"
+	RouteSignature        Column // "route_signature" → qualified: "smg.route_signature"
+	RouteHash             Column // "route_hash" → qualified: "smg.route_hash"
+	Distance              Column // "distance" → qualified: "smg.distance"
+	DistanceUnits         Column // "distance_units" → qualified: "smg.distance_units"
+	Provider              Column // "provider" → qualified: "smg.provider"
+	Source                Column // "source" → qualified: "smg.source"
+	RoutingType           Column // "routing_type" → qualified: "smg.routing_type"
+	Method                Column // "method" → qualified: "smg.method"
+	LocationGranularity   Column // "location_granularity" → qualified: "smg.location_granularity"
+	DataVersion           Column // "data_version" → qualified: "smg.data_version"
+	DistanceProfileID     Column // "distance_profile_id" → qualified: "smg.distance_profile_id"
+	DistanceProfileName   Column // "distance_profile_name" → qualified: "smg.distance_profile_name"
+	Hazmat                Column // "hazmat" → qualified: "smg.hazmat"
+	HazmatTypes           Column // "hazmat_types" → qualified: "smg.hazmat_types"
+	HazmatSignature       Column // "hazmat_signature" → qualified: "smg.hazmat_signature"
+	ProviderMetadata      Column // "provider_metadata" → qualified: "smg.provider_metadata"
+	JurisdictionDistances Column // "jurisdiction_distances" → qualified: "smg.jurisdiction_distances"
+	HitCount              Column // "hit_count" → qualified: "smg.hit_count"
+	LastUsedAt            Column // "last_used_at" → qualified: "smg.last_used_at"
+	LastCalculatedAt      Column // "last_calculated_at" → qualified: "smg.last_calculated_at"
+	Version               Column // "version" → qualified: "smg.version"
+	CreatedAt             Column // "created_at" → qualified: "smg.created_at"
+	UpdatedAt             Column // "updated_at" → qualified: "smg.updated_at"
+	SearchVector          Column // "search_vector" → qualified: "smg.search_vector"
 }{
-	ID:                  NewColumn("id", "smg"),
-	BusinessUnitID:      NewColumn("business_unit_id", "smg"),
-	OrganizationID:      NewColumn("organization_id", "smg"),
-	Status:              NewColumn("status", "smg"),
-	OriginKey:           NewColumn("origin_key", "smg"),
-	DestinationKey:      NewColumn("destination_key", "smg"),
-	IntermediateKeys:    NewColumn("intermediate_keys", "smg"),
-	RouteSignature:      NewColumn("route_signature", "smg"),
-	RouteHash:           NewColumn("route_hash", "smg"),
-	Distance:            NewColumn("distance", "smg"),
-	DistanceUnits:       NewColumn("distance_units", "smg"),
-	Provider:            NewColumn("provider", "smg"),
-	Source:              NewColumn("source", "smg"),
-	RoutingType:         NewColumn("routing_type", "smg"),
-	Method:              NewColumn("method", "smg"),
-	LocationGranularity: NewColumn("location_granularity", "smg"),
-	DataVersion:         NewColumn("data_version", "smg"),
-	DistanceProfileID:   NewColumn("distance_profile_id", "smg"),
-	DistanceProfileName: NewColumn("distance_profile_name", "smg"),
-	Hazmat:              NewColumn("hazmat", "smg"),
-	HazmatTypes:         NewColumn("hazmat_types", "smg"),
-	HazmatSignature:     NewColumn("hazmat_signature", "smg"),
-	ProviderMetadata:    NewColumn("provider_metadata", "smg"),
-	HitCount:            NewColumn("hit_count", "smg"),
-	LastUsedAt:          NewColumn("last_used_at", "smg"),
-	LastCalculatedAt:    NewColumn("last_calculated_at", "smg"),
-	Version:             NewColumn("version", "smg"),
-	CreatedAt:           NewColumn("created_at", "smg"),
-	UpdatedAt:           NewColumn("updated_at", "smg"),
-	SearchVector:        NewColumn("search_vector", "smg"),
+	ID:                    NewColumn("id", "smg"),
+	BusinessUnitID:        NewColumn("business_unit_id", "smg"),
+	OrganizationID:        NewColumn("organization_id", "smg"),
+	Status:                NewColumn("status", "smg"),
+	OriginKey:             NewColumn("origin_key", "smg"),
+	DestinationKey:        NewColumn("destination_key", "smg"),
+	IntermediateKeys:      NewColumn("intermediate_keys", "smg"),
+	RouteSignature:        NewColumn("route_signature", "smg"),
+	RouteHash:             NewColumn("route_hash", "smg"),
+	Distance:              NewColumn("distance", "smg"),
+	DistanceUnits:         NewColumn("distance_units", "smg"),
+	Provider:              NewColumn("provider", "smg"),
+	Source:                NewColumn("source", "smg"),
+	RoutingType:           NewColumn("routing_type", "smg"),
+	Method:                NewColumn("method", "smg"),
+	LocationGranularity:   NewColumn("location_granularity", "smg"),
+	DataVersion:           NewColumn("data_version", "smg"),
+	DistanceProfileID:     NewColumn("distance_profile_id", "smg"),
+	DistanceProfileName:   NewColumn("distance_profile_name", "smg"),
+	Hazmat:                NewColumn("hazmat", "smg"),
+	HazmatTypes:           NewColumn("hazmat_types", "smg"),
+	HazmatSignature:       NewColumn("hazmat_signature", "smg"),
+	ProviderMetadata:      NewColumn("provider_metadata", "smg"),
+	JurisdictionDistances: NewColumn("jurisdiction_distances", "smg"),
+	HitCount:              NewColumn("hit_count", "smg"),
+	LastUsedAt:            NewColumn("last_used_at", "smg"),
+	LastCalculatedAt:      NewColumn("last_calculated_at", "smg"),
+	Version:               NewColumn("version", "smg"),
+	CreatedAt:             NewColumn("created_at", "smg"),
+	UpdatedAt:             NewColumn("updated_at", "smg"),
+	SearchVector:          NewColumn("search_vector", "smg"),
 }
 
 // StoredMileageFieldMap maps JSON API field names to database column names.
@@ -117,35 +119,36 @@ var StoredMileageColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by StoredMileage.GetStaticFieldMap().
 var StoredMileageFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"status":              "status",
-	"originKey":           "origin_key",
-	"destinationKey":      "destination_key",
-	"intermediateKeys":    "intermediate_keys",
-	"routeSignature":      "route_signature",
-	"routeHash":           "route_hash",
-	"distance":            "distance",
-	"distanceUnits":       "distance_units",
-	"provider":            "provider",
-	"source":              "source",
-	"routingType":         "routing_type",
-	"method":              "method",
-	"locationGranularity": "location_granularity",
-	"dataVersion":         "data_version",
-	"distanceProfileId":   "distance_profile_id",
-	"distanceProfileName": "distance_profile_name",
-	"hazmat":              "hazmat",
-	"hazmatTypes":         "hazmat_types",
-	"hazmatSignature":     "hazmat_signature",
-	"providerMetadata":    "provider_metadata",
-	"hitCount":            "hit_count",
-	"lastUsedAt":          "last_used_at",
-	"lastCalculatedAt":    "last_calculated_at",
-	"version":             "version",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                    "id",
+	"businessUnitId":        "business_unit_id",
+	"organizationId":        "organization_id",
+	"status":                "status",
+	"originKey":             "origin_key",
+	"destinationKey":        "destination_key",
+	"intermediateKeys":      "intermediate_keys",
+	"routeSignature":        "route_signature",
+	"routeHash":             "route_hash",
+	"distance":              "distance",
+	"distanceUnits":         "distance_units",
+	"provider":              "provider",
+	"source":                "source",
+	"routingType":           "routing_type",
+	"method":                "method",
+	"locationGranularity":   "location_granularity",
+	"dataVersion":           "data_version",
+	"distanceProfileId":     "distance_profile_id",
+	"distanceProfileName":   "distance_profile_name",
+	"hazmat":                "hazmat",
+	"hazmatTypes":           "hazmat_types",
+	"hazmatSignature":       "hazmat_signature",
+	"providerMetadata":      "provider_metadata",
+	"jurisdictionDistances": "jurisdiction_distances",
+	"hitCount":              "hit_count",
+	"lastUsedAt":            "last_used_at",
+	"lastCalculatedAt":      "last_calculated_at",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
 }
 
 // StoredMileageInsertableColumns lists column names suitable for INSERT statements on the "stored_mileages" table.
@@ -174,6 +177,7 @@ var StoredMileageInsertableColumns = []string{
 	"hazmat_types",
 	"hazmat_signature",
 	"provider_metadata",
+	"jurisdiction_distances",
 	"hit_count",
 	"last_used_at",
 	"last_calculated_at",
@@ -245,35 +249,36 @@ func StoredMileageApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	StoredMileageFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var StoredMileageFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	OriginKey           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originKey" → DB: "origin_key"
-	DestinationKey      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "destinationKey" → DB: "destination_key"
-	IntermediateKeys    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "intermediateKeys" → DB: "intermediate_keys"
-	RouteSignature      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "routeSignature" → DB: "route_signature"
-	RouteHash           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "routeHash" → DB: "route_hash"
-	Distance            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distance" → DB: "distance"
-	DistanceUnits       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceUnits" → DB: "distance_units"
-	Provider            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
-	Source              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
-	RoutingType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "routingType" → DB: "routing_type"
-	Method              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
-	LocationGranularity func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationGranularity" → DB: "location_granularity"
-	DataVersion         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataVersion" → DB: "data_version"
-	DistanceProfileID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceProfileId" → DB: "distance_profile_id"
-	DistanceProfileName func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceProfileName" → DB: "distance_profile_name"
-	Hazmat              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmat" → DB: "hazmat"
-	HazmatTypes         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmatTypes" → DB: "hazmat_types"
-	HazmatSignature     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmatSignature" → DB: "hazmat_signature"
-	ProviderMetadata    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMetadata" → DB: "provider_metadata"
-	HitCount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hitCount" → DB: "hit_count"
-	LastUsedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastUsedAt" → DB: "last_used_at"
-	LastCalculatedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastCalculatedAt" → DB: "last_calculated_at"
-	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	OriginKey             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originKey" → DB: "origin_key"
+	DestinationKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "destinationKey" → DB: "destination_key"
+	IntermediateKeys      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "intermediateKeys" → DB: "intermediate_keys"
+	RouteSignature        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "routeSignature" → DB: "route_signature"
+	RouteHash             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "routeHash" → DB: "route_hash"
+	Distance              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distance" → DB: "distance"
+	DistanceUnits         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceUnits" → DB: "distance_units"
+	Provider              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	Source                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	RoutingType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "routingType" → DB: "routing_type"
+	Method                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	LocationGranularity   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationGranularity" → DB: "location_granularity"
+	DataVersion           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataVersion" → DB: "data_version"
+	DistanceProfileID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceProfileId" → DB: "distance_profile_id"
+	DistanceProfileName   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceProfileName" → DB: "distance_profile_name"
+	Hazmat                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmat" → DB: "hazmat"
+	HazmatTypes           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmatTypes" → DB: "hazmat_types"
+	HazmatSignature       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmatSignature" → DB: "hazmat_signature"
+	ProviderMetadata      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMetadata" → DB: "provider_metadata"
+	JurisdictionDistances func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "jurisdictionDistances" → DB: "jurisdiction_distances"
+	HitCount              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hitCount" → DB: "hit_count"
+	LastUsedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastUsedAt" → DB: "last_used_at"
+	LastCalculatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastCalculatedAt" → DB: "last_calculated_at"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -343,6 +348,9 @@ var StoredMileageFilter = struct {
 	},
 	ProviderMetadata: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("providerMetadata", op, value)
+	},
+	JurisdictionDistances: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("jurisdictionDistances", op, value)
 	},
 	HitCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("hitCount", op, value)

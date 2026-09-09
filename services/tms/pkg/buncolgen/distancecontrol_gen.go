@@ -64,6 +64,7 @@ var DistanceControlColumns = struct {
 	EtaOutOfRouteDistanceProfileID               Column // "eta_out_of_route_distance_profile_id" → qualified: "dc.eta_out_of_route_distance_profile_id"
 	DistanceCalculatorShortestDistanceProfileID  Column // "distance_calculator_shortest_distance_profile_id" → qualified: "dc.distance_calculator_shortest_distance_profile_id"
 	DistanceCalculatorPracticalDistanceProfileID Column // "distance_calculator_practical_distance_profile_id" → qualified: "dc.distance_calculator_practical_distance_profile_id"
+	CaptureJurisdictionMiles                     Column // "capture_jurisdiction_miles" → qualified: "dc.capture_jurisdiction_miles"
 	Version                                      Column // "version" → qualified: "dc.version"
 	CreatedAt                                    Column // "created_at" → qualified: "dc.created_at"
 	UpdatedAt                                    Column // "updated_at" → qualified: "dc.updated_at"
@@ -84,10 +85,11 @@ var DistanceControlColumns = struct {
 	EtaOutOfRouteDistanceProfileID: NewColumn("eta_out_of_route_distance_profile_id", "dc"),
 	DistanceCalculatorShortestDistanceProfileID:  NewColumn("distance_calculator_shortest_distance_profile_id", "dc"),
 	DistanceCalculatorPracticalDistanceProfileID: NewColumn("distance_calculator_practical_distance_profile_id", "dc"),
-	Version:      NewColumn("version", "dc"),
-	CreatedAt:    NewColumn("created_at", "dc"),
-	UpdatedAt:    NewColumn("updated_at", "dc"),
-	SearchVector: NewColumn("search_vector", "dc"),
+	CaptureJurisdictionMiles:                     NewColumn("capture_jurisdiction_miles", "dc"),
+	Version:                                      NewColumn("version", "dc"),
+	CreatedAt:                                    NewColumn("created_at", "dc"),
+	UpdatedAt:                                    NewColumn("updated_at", "dc"),
+	SearchVector:                                 NewColumn("search_vector", "dc"),
 }
 
 // DistanceControlFieldMap maps JSON API field names to database column names.
@@ -110,6 +112,7 @@ var DistanceControlFieldMap = map[string]string{
 	"etaOutOfRouteDistanceProfileId":               "eta_out_of_route_distance_profile_id",
 	"distanceCalculatorShortestDistanceProfileId":  "distance_calculator_shortest_distance_profile_id",
 	"distanceCalculatorPracticalDistanceProfileId": "distance_calculator_practical_distance_profile_id",
+	"captureJurisdictionMiles":                     "capture_jurisdiction_miles",
 	"version":                                      "version",
 	"createdAt":                                    "created_at",
 	"updatedAt":                                    "updated_at",
@@ -133,6 +136,7 @@ var DistanceControlInsertableColumns = []string{
 	"eta_out_of_route_distance_profile_id",
 	"distance_calculator_shortest_distance_profile_id",
 	"distance_calculator_practical_distance_profile_id",
+	"capture_jurisdiction_miles",
 	"version",
 	"created_at",
 	"updated_at",
@@ -216,6 +220,7 @@ var DistanceControlFilter = struct {
 	EtaOutOfRouteDistanceProfileID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "etaOutOfRouteDistanceProfileId" → DB: "eta_out_of_route_distance_profile_id"
 	DistanceCalculatorShortestDistanceProfileID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceCalculatorShortestDistanceProfileId" → DB: "distance_calculator_shortest_distance_profile_id"
 	DistanceCalculatorPracticalDistanceProfileID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceCalculatorPracticalDistanceProfileId" → DB: "distance_calculator_practical_distance_profile_id"
+	CaptureJurisdictionMiles                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureJurisdictionMiles" → DB: "capture_jurisdiction_miles"
 	Version                                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -264,6 +269,9 @@ var DistanceControlFilter = struct {
 	},
 	DistanceCalculatorPracticalDistanceProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("distanceCalculatorPracticalDistanceProfileId", op, value)
+	},
+	CaptureJurisdictionMiles: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("captureJurisdictionMiles", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

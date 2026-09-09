@@ -1,4 +1,14 @@
 aliases:
+  FuelPurchase:
+    totalAmount: totalAmountMinor
+  IFTAReturn:
+    taxDue: taxDueMinor
+    surchargeDue: surchargeDueMinor
+    netDue: netDueMinor
+  IFTAReturnLine:
+    taxDue: taxDueMinor
+    surchargeDue: surchargeDueMinor
+    lineTotal: lineTotalMinor
   EquipmentContinuity:
     currentLocationName: currentLocationId
   ShipmentLifecycleEvent:
@@ -55,6 +65,12 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  FuelPurchaseImportBatch:
+    - rows
+  FuelPurchaseImportRow:
+    - resolvedTractor
+  IFTAReturn:
+    - period
   WorkerTrainingRecord:
     - daysUntilExpiry
     - daysUntilDue
@@ -224,6 +240,7 @@ gates:
     equipmentType: equipmentDetails
     fleetCode: fleetDetails
 
+
 modelOverrides:
   ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
   ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
@@ -235,6 +252,8 @@ modelOverrides:
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
 
 always:
+  FuelPurchaseImportRow:
+    - resolvedTractorId
   ShipmentLifecycleEvent:
     - occurredAt
   ShipmentOwnershipEvent:

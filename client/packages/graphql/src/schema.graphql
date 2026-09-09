@@ -786,6 +786,20 @@ enum AvailabilityPreference {
   Unavailable
 }
 
+input BackfillJurisdictionMilesInput {
+  """
+  Count the moves and miles that would be attributed without starting the workflow.
+  """
+  dryRun: Boolean = false
+  """
+  Upper bound on moves re-routed in one run; defaults to 2000. Every move is a
+  billable distance request.
+  """
+  maxMoves: Int
+  periodEnd: Timestamp!
+  periodStart: Timestamp!
+}
+
 """One plan's cost across the organisation."""
 type BenefitCostRow {
   employeeCostMinor: Int!
@@ -1067,6 +1081,13 @@ enum CSABasic {
   HazmatCompliance
   UnsafeDriving
   VehicleMaintenance
+}
+
+input CancelFuelCardInput {
+  id: ID!
+  """At least ten characters. Cancelling is permanent."""
+  reason: String!
+  version: Int!
 }
 
 input CancelWorkerChecklistInput {
@@ -1870,6 +1891,14 @@ input CreateDocumentTemplateVersionInput {
   """
   sourceVersionId: ID
   templateId: ID!
+}
+
+input CreateFuelPurchaseImportInput {
+  defaultCurrency: String = "USD"
+  defaultFuelCardId: ID
+  defaultFuelType: IFTAFuelType
+  mapping: JSON
+  provider: FuelCardProvider!
 }
 
 input CreateMyLoadCommentInput {
@@ -5598,12 +5627,102 @@ enum FreightClass {
   Class500
 }
 
+"""
+A fuel card issued by a provider. Only the last four digits are stored; the
+external id is the provider's masked token, never the card number.
+"""
+type FuelCard {
+  assignedTractor: Tractor
+  assignedTractorId: ID
+  assignedWorker: Worker
+  assignedWorkerId: ID
+  businessUnitId: ID!
+  cancelReason: String
+  cancelledAt: Timestamp
+  createdAt: Timestamp!
+  expiresAt: Timestamp
+  externalCardId: String
+  id: ID!
+  label: String!
+  lastFour: String!
+  notes: String
+  organizationId: ID!
+  provider: FuelCardProvider!
+  status: FuelCardStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type FuelCardConnection {
+  edges: [FuelCardEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelCardEdge {
+  cursor: String!
+  node: FuelCard!
+}
+
+input FuelCardInput {
+  assignedTractorId: ID
+  assignedWorkerId: ID
+  expiresAt: Timestamp
+  externalCardId: String
+  label: String!
+  lastFour: String!
+  notes: String
+  provider: FuelCardProvider!
+  """
+  Active or Suspended. Cancelling goes through cancelFuelCard, which needs a reason.
+  """
+  status: FuelCardStatus = Active
+}
+
+enum FuelCardProvider {
+  Comdata
+  EFS
+  Other
+  WEX
+}
+
+"""Active and Suspended move between each other; Cancelled is terminal."""
+enum FuelCardStatus {
+  Active
+  Cancelled
+  Suspended
+}
+
+input FuelCardsInput {
+  after: String
+  assignedTractorId: ID
+  assignedWorkerId: ID
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  provider: FuelCardProvider
+  query: String
+  sort: [SortFieldInput!]
+  status: FuelCardStatus
+}
+
 type FuelCostResolution {
   fuelIndexId: ID
   milesPerGallon: Decimal!
   priceDate: String!
   pricePerGallon: Decimal
   source: EffectiveRateSource!
+}
+
+enum FuelImportFormat {
+  CSV
+  XLSX
+}
+
+"""A CSV header row in the shape the import expects for a provider."""
+type FuelImportTemplate {
+  content: String!
+  fileName: String!
 }
 
 type FuelIndex {
@@ -5688,6 +5807,275 @@ type FuelProgramCurrentRate {
   program: FuelSurchargeProgram!
   ratePerMile: Decimal
   usedFallback: Boolean!
+}
+
+"""
+Fuel bought for a tractor. The purchase is a tax record: the tractor cannot be
+deleted while purchases reference it, and the transaction reference is unique
+within the organization so a statement imported twice cannot double-count.
+"""
+type FuelPurchase {
+  businessUnitId: ID!
+  cardLastFour: String
+  createdAt: Timestamp!
+  createdById: ID
+  currencyCode: String!
+  fuelCard: FuelCard
+  fuelCardId: ID
+  fuelType: IFTAFuelType!
+  """
+  Quantity normalised to US gallons (litres divided by 3.785411784, three places).
+  """
+  gallons: Decimal!
+  id: ID!
+  importBatchId: ID
+  jurisdiction: IFTAJurisdiction!
+  """
+  The IFTA jurisdiction the fuel was bought in, which decides which line of the
+  return the tax-paid gallons credit. It is not always the vendor's mailing state.
+  """
+  jurisdictionId: ID!
+  notes: String
+  odometer: Int
+  organizationId: ID!
+  purchasedAt: Timestamp!
+  """Quantity as entered, in quantityUnit."""
+  quantity: Decimal!
+  quantityUnit: FuelQuantityUnit!
+  source: FuelPurchaseSource!
+  """
+  Whether fuel tax was paid at the pump. Bulk or untaxed fuel still counts in the
+  fleet's MPG gallons but earns no tax-paid credit on the return.
+  """
+  taxPaid: Boolean!
+  totalAmount: Decimal!
+  tractor: Tractor
+  tractorId: ID!
+  transactionReference: String
+  """Price per entered unit."""
+  unitPrice: Decimal
+  updatedAt: Timestamp!
+  vendor: String
+  vendorCity: String
+  version: Int!
+  worker: Worker
+  workerId: ID
+}
+
+type FuelPurchaseConnection {
+  edges: [FuelPurchaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelPurchaseEdge {
+  cursor: String!
+  node: FuelPurchase!
+}
+
+"""
+A fuel card statement staged for review. The bytes live on a Document bound to
+the batch; staging reads that document, parses every row, resolves cards,
+tractors and jurisdictions, and reports what would commit.
+"""
+type FuelPurchaseImportBatch {
+  businessUnitId: ID!
+  committedAt: Timestamp
+  committedById: ID
+  committedCount: Int!
+  createdAt: Timestamp!
+  defaultCurrency: String!
+  defaultFuelCard: FuelCard
+  """
+  Card whose assigned tractor is used for rows the statement cannot match to a
+  card of its own.
+  """
+  defaultFuelCardId: ID
+  """Fuel type applied to rows when the statement has no product column."""
+  defaultFuelType: IFTAFuelType
+  document: WorkerCredentialDocument
+  documentId: ID
+  error: String
+  errorCount: Int!
+  fileName: String
+  id: ID!
+  """
+  Explicit column mapping keyed by field name, overriding the provider preset.
+  """
+  mapping: JSON
+  organizationId: ID!
+  provider: FuelCardProvider!
+  rowCount: Int!
+  rows(input: FuelPurchaseImportRowsInput): FuelPurchaseImportRowConnection!
+  sourceFormat: FuelImportFormat
+  stagedAt: Timestamp
+  status: FuelPurchaseImportStatus!
+  summary: FuelPurchaseImportSummary
+  unmappedHeaders: [String!]!
+  updatedAt: Timestamp!
+  uploadedById: ID
+  version: Int!
+}
+
+"""
+The purchase a statement row would become, as parsed and before any ids are
+assigned. Absent when the row could not be read at all.
+"""
+type FuelPurchaseImportParsed {
+  cardLastFour: String
+  currencyCode: String
+  fuelType: IFTAFuelType
+  gallons: Decimal
+  jurisdictionCode: String
+  odometer: Int
+  purchasedAt: Timestamp
+  quantity: Decimal
+  quantityUnit: FuelQuantityUnit
+  totalAmount: Decimal
+  tractorCode: String
+  transactionReference: String
+  unitPrice: Decimal
+  vendor: String
+  vendorCity: String
+}
+
+type FuelPurchaseImportRow {
+  businessUnitId: ID!
+  cells: [String!]!
+  createdAt: Timestamp!
+  error: String
+  """Set when the row has been committed as a purchase."""
+  fuelPurchaseId: ID
+  id: ID!
+  importBatchId: ID!
+  organizationId: ID!
+  parsed: FuelPurchaseImportParsed
+  """
+  How the tractor, card and jurisdiction were matched, one note per decision.
+  """
+  resolutionNotes: [String!]!
+  resolvedFuelCardId: ID
+  resolvedJurisdictionId: ID
+  resolvedTractor: Tractor
+  resolvedTractorId: ID
+  """One-based line number in the file, counting the header row."""
+  rowNumber: Int!
+  status: FuelPurchaseImportRowStatus!
+  transactionReference: String
+}
+
+type FuelPurchaseImportRowConnection {
+  edges: [FuelPurchaseImportRowEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelPurchaseImportRowEdge {
+  cursor: String!
+  node: FuelPurchaseImportRow!
+}
+
+"""
+Only New rows commit. DuplicateInFile is the second occurrence of a reference
+inside the statement; AlreadyImported matches a purchase already on file.
+"""
+enum FuelPurchaseImportRowStatus {
+  AlreadyImported
+  Committed
+  DuplicateInFile
+  Error
+  New
+  Skipped
+}
+
+input FuelPurchaseImportRowsInput {
+  after: String
+  first: Int = 50
+  statuses: [FuelPurchaseImportRowStatus!]
+}
+
+"""
+Pending until a statement is staged; Parsed once its rows have been read and
+resolved; Committed when the rows became purchases. Failed and Discarded batches
+can be staged again or left as a record of what was tried.
+"""
+enum FuelPurchaseImportStatus {
+  Committed
+  Discarded
+  Failed
+  Parsed
+  Pending
+}
+
+"""What staging found in a statement, before anything is committed."""
+type FuelPurchaseImportSummary {
+  alreadyImportedCount: Int!
+  """Gallons keyed by IFTA fuel type across the rows that will commit."""
+  byFuelType: JSON
+  """Gallons keyed by jurisdiction code across the rows that will commit."""
+  byJurisdiction: JSON
+  duplicateInFileCount: Int!
+  earliestPurchasedAt: Timestamp
+  errorCount: Int!
+  latestPurchasedAt: Timestamp
+  newCount: Int!
+  rowCount: Int!
+  """
+  Amount across the rows that will commit, in the batch's default currency.
+  """
+  totalAmount: Decimal!
+  """Gallons across the rows that will commit."""
+  totalGallons: Decimal!
+}
+
+input FuelPurchaseInput {
+  cardLastFour: String
+  currencyCode: String = "USD"
+  fuelCardId: ID
+  fuelType: IFTAFuelType!
+  jurisdictionId: ID!
+  notes: String
+  odometer: Int
+  purchasedAt: Timestamp!
+  quantity: Decimal!
+  quantityUnit: FuelQuantityUnit = Gallon
+  taxPaid: Boolean = true
+  totalAmount: Decimal!
+  tractorId: ID!
+  transactionReference: String
+  unitPrice: Decimal
+  vendor: String
+  vendorCity: String
+  workerId: ID
+}
+
+enum FuelPurchaseSource {
+  CardImport
+  Manual
+}
+
+input FuelPurchasesInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  """Inclusive lower bound on purchasedAt."""
+  from: Timestamp
+  fuelCardId: ID
+  fuelTypes: [IFTAFuelType!]
+  jurisdictionId: ID
+  query: String
+  sort: [SortFieldInput!]
+  sources: [FuelPurchaseSource!]
+  taxPaid: Boolean
+  """Exclusive upper bound on purchasedAt."""
+  to: Timestamp
+  tractorId: ID
+}
+
+enum FuelQuantityUnit {
+  Gallon
+  Litre
 }
 
 enum FuelSurchargeDateBasis {
@@ -6220,6 +6608,427 @@ type HosCertificationSummary {
   workerName: String!
 }
 
+"""
+Fleet average for one fuel type over the quarter: total miles run by tractors of
+that fuel type divided by every IFTA gallon bought for them, taxed or not.
+"""
+type IFTAFleetMPG {
+  fuelType: IFTAFuelType!
+  """
+  Null when no gallons were bought for the fuel type, which leaves its lines with
+  no taxable gallons.
+  """
+  mpg: Decimal
+  totalGallons: Decimal!
+  totalMiles: Decimal!
+}
+
+"""
+Fuel product as classified for the International Fuel Tax Agreement. The first
+fourteen are IFTA fuel types and enter the return; DEF, Reefer and Other are
+tracked as spend only and never earn or owe tax.
+"""
+enum IFTAFuelType {
+  A55
+  Biodiesel
+  CNG
+  DEF
+  Diesel
+  E85
+  Electricity
+  Ethanol
+  Gasohol
+  Gasoline
+  Hydrogen
+  LNG
+  M85
+  Methanol
+  Other
+  Propane
+  Reefer
+}
+
+"""
+A state, province or district as IFTA knows it. This table is global and shared
+by every organization; provinces have no usState.
+"""
+type IFTAJurisdiction {
+  """Two-letter postal code within the country."""
+  code: String!
+  """ISO 3166-1 alpha-2: US, CA or MX."""
+  countryCode: String!
+  createdAt: Timestamp!
+  """
+  Indiana, Kentucky and Virginia levy a surcharge on fuel consumed, on top of the
+  tax on fuel bought.
+  """
+  hasSurcharge: Boolean!
+  id: ID!
+  """
+  Members share fuel tax through IFTA. Miles in a non-member jurisdiction still
+  count toward the fleet's total but are never taxed on the return.
+  """
+  isIftaMember: Boolean!
+  name: String!
+  sortOrder: Int!
+  status: IFTAJurisdictionStatus!
+  updatedAt: Timestamp!
+  usState: UsState
+  usStateId: ID
+}
+
+"""
+Miles a tractor ran in a jurisdiction that routing did not capture, such as
+repositioning between shipments. Year and quarter are fixed from traveledAt in
+the organization's timezone when the entry is written.
+"""
+type IFTAJurisdictionMileageEntry {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID
+  id: ID!
+  jurisdiction: IFTAJurisdiction!
+  jurisdictionId: ID!
+  loaded: Boolean!
+  miles: Decimal!
+  notes: String
+  organizationId: ID!
+  quarter: Int!
+  """
+  When set, this entry replaces the move's routed jurisdiction rows in the return.
+  """
+  shipmentMoveId: ID
+  source: IFTAMileageSource!
+  tractor: Tractor
+  tractorId: ID!
+  traveledAt: Timestamp!
+  updatedAt: Timestamp!
+  version: Int!
+  year: Int!
+}
+
+type IFTAJurisdictionMileageEntryConnection {
+  edges: [IFTAJurisdictionMileageEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type IFTAJurisdictionMileageEntryEdge {
+  cursor: String!
+  node: IFTAJurisdictionMileageEntry!
+}
+
+enum IFTAJurisdictionStatus {
+  Active
+  Inactive
+}
+
+input IFTAMileageEntriesInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  """Inclusive lower bound on traveledAt."""
+  from: Timestamp
+  jurisdictionId: ID
+  period: IFTAPeriodInput
+  query: String
+  sort: [SortFieldInput!]
+  sources: [IFTAMileageSource!]
+  """Exclusive upper bound on traveledAt."""
+  to: Timestamp
+  tractorId: ID
+}
+
+input IFTAMileageEntryInput {
+  jurisdictionId: ID!
+  loaded: Boolean = true
+  miles: Decimal!
+  notes: String
+  """
+  Name the move when this entry corrects its routed miles; the entry then
+  replaces the move's jurisdiction rows on the return.
+  """
+  shipmentMoveId: ID
+  source: IFTAMileageSource = Manual
+  tractorId: ID!
+  traveledAt: Timestamp!
+}
+
+"""
+Where a jurisdiction's miles came from. RouteCalculation rows are written by the
+distance provider's state report; Manual entries are keyed by hand and, when they
+name a shipment move, replace that move's routed rows so nothing is counted twice.
+"""
+enum IFTAMileageSource {
+  Manual
+  RouteCalculation
+  Telematics
+}
+
+"""
+A calendar quarter as IFTA reports it. Bounds are local midnight in the
+organization's timezone, end exclusive; the due date is the last day of the
+month after the quarter ends.
+"""
+type IFTAPeriod {
+  dueDate: Timestamp!
+  end: Timestamp!
+  """For example "2026Q3"."""
+  key: String!
+  """For example "Q3 2026"."""
+  label: String!
+  quarter: Int!
+  start: Timestamp!
+  year: Int!
+}
+
+input IFTAPeriodInput {
+  quarter: Int!
+  year: Int!
+}
+
+"""
+MissingRate blocks finalizing. Every other code is a warning the return carries
+so the preparer can see what the figures leave out.
+"""
+enum IFTAProblemCode {
+  MileageMismatch
+  MissingRate
+  NoFuelForType
+  NoTractorMiles
+  NonMemberActivity
+  NonQualifiedActivity
+  UnattributedMiles
+}
+
+"""
+A quarterly IFTA return. Figures are recomputed from miles, fuel and rates while
+the return is a Draft and frozen once it is finalized.
+"""
+type IFTAReturn {
+  """
+  Zero for the original return; each amendment of a filed return increments it.
+  """
+  amendmentNumber: Int!
+  amendsReturn: IFTAReturn
+  amendsReturnId: ID
+  businessUnitId: ID!
+  computedAt: Timestamp
+  createdAt: Timestamp!
+  currencyCode: String!
+  filedAt: Timestamp
+  filedBy: User
+  filedById: ID
+  filingReference: String
+  finalizedAt: Timestamp
+  finalizedBy: User
+  finalizedById: ID
+  fleetMpgByFuelType: [IFTAFleetMPG!]!
+  id: ID!
+  lines: [IFTAReturnLine!]!
+  """Tax due plus surcharge due. Negative is a credit owed to the fleet."""
+  netDue: Decimal!
+  """
+  Sum of the member lines' net taxable gallons; negative means a net credit.
+  """
+  netTaxableGallons: Decimal!
+  """
+  Attributed miles on moves with no tractor assignment, which cannot be placed
+  on a fuel type.
+  """
+  noTractorMiles: Decimal!
+  noTractorMoveCount: Int!
+  organizationId: ID!
+  period: IFTAPeriod!
+  periodEnd: Timestamp!
+  periodStart: Timestamp!
+  problems: [IFTAReturnProblem!]!
+  quarter: Int!
+  reopenReason: String
+  reopenedAt: Timestamp
+  reopenedById: ID
+  status: IFTAReturnStatus!
+  surchargeDue: Decimal!
+  taxDue: Decimal!
+  """
+  The organization's timezone when the return was generated. Period bounds and
+  purchase placement use it, so a later timezone change does not move figures.
+  """
+  timezone: String!
+  totalGallons: Decimal!
+  totalMiles: Decimal!
+  totalTaxPaidGallons: Decimal!
+  totalTaxableMiles: Decimal!
+  """
+  Routed miles on completed moves in the period that have no jurisdiction
+  breakdown. They are not on any line; the return is understated by this much
+  until the moves are attributed.
+  """
+  unattributedMiles: Decimal!
+  unattributedMoveCount: Int!
+  updatedAt: Timestamp!
+  version: Int!
+  year: Int!
+}
+
+type IFTAReturnConnection {
+  edges: [IFTAReturnEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type IFTAReturnEdge {
+  cursor: String!
+  node: IFTAReturn!
+}
+
+"""
+One jurisdiction and fuel type on a return. Miles are broken down by how they
+were captured so the preparer can see what came from routing and what was
+entered by hand.
+"""
+type IFTAReturnLine {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  emptyMiles: Decimal!
+  fuelType: IFTAFuelType!
+  id: ID!
+  """Snapshot of the jurisdiction's membership when the line was computed."""
+  isIftaMember: Boolean!
+  jurisdiction: IFTAJurisdiction!
+  jurisdictionId: ID!
+  lineTotal: Decimal!
+  loadedMiles: Decimal!
+  manualMiles: Decimal!
+  """
+  Taxable gallons minus tax-paid gallons. Negative means the fleet bought more
+  fuel in the jurisdiction than it burned there and is owed a credit.
+  """
+  netTaxableGallons: Decimal!
+  organizationId: ID!
+  purchaseCount: Int!
+  """
+  True when no rate is published for the jurisdiction, quarter and fuel type.
+  The line's tax is zero, and the return cannot be finalized until a rate exists.
+  """
+  rateMissing: Boolean!
+  ratePerGallon: Decimal
+  returnId: ID!
+  routeMiles: Decimal!
+  sortOrder: Int!
+  """
+  Taxable gallons times the surcharge rate. Charged on fuel consumed, so it is
+  never a credit.
+  """
+  surchargeDue: Decimal!
+  surchargeRatePerGallon: Decimal
+  """Net taxable gallons times the rate. Negative is a credit."""
+  taxDue: Decimal!
+  """Tax-paid gallons rounded to whole gallons as the form requires."""
+  taxPaidGallons: Decimal!
+  """
+  Tax-paid gallons before rounding, for reconciliation against the purchases.
+  """
+  taxPaidGallonsRaw: Decimal!
+  """
+  Taxable miles divided by the fleet MPG for the fuel type, whole gallons.
+  """
+  taxableGallons: Decimal!
+  taxableMiles: Decimal!
+  totalMiles: Decimal!
+  updatedAt: Timestamp!
+}
+
+type IFTAReturnProblem {
+  """
+  The figure the problem is about: miles for mileage problems, gallons for fuel
+  problems. Absent for problems that are a count.
+  """
+  amount: Decimal
+  code: IFTAProblemCode!
+  fuelType: IFTAFuelType
+  jurisdictionCode: String
+  message: String!
+}
+
+"""
+Draft figures move with the data. Finalized locks them and can be reopened with
+a reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.
+"""
+enum IFTAReturnStatus {
+  Draft
+  Filed
+  Finalized
+}
+
+input IFTAReturnsInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  query: String
+  sort: [SortFieldInput!]
+  statuses: [IFTAReturnStatus!]
+  year: Int
+}
+
+"""
+A published per-gallon rate for one jurisdiction, quarter and fuel type. Global:
+every organization is taxed at the same rate, and a missing rate is flagged on
+the return rather than treated as zero.
+"""
+type IFTATaxRate {
+  createdAt: Timestamp!
+  fuelType: IFTAFuelType!
+  id: ID!
+  jurisdiction: IFTAJurisdiction!
+  jurisdictionId: ID!
+  quarter: Int!
+  """USD per US gallon as published in the IFTA rate matrix."""
+  ratePerGallon: Decimal!
+  sourceNote: String
+  sourceUrl: String
+  surchargeRatePerGallon: Decimal
+  updatedAt: Timestamp!
+  version: Int!
+  year: Int!
+}
+
+type IFTATaxRateConnection {
+  edges: [IFTATaxRateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type IFTATaxRateEdge {
+  cursor: String!
+  node: IFTATaxRate!
+}
+
+input IFTATaxRateInput {
+  fuelType: IFTAFuelType!
+  jurisdictionId: ID!
+  quarter: Int!
+  ratePerGallon: Decimal!
+  sourceNote: String
+  sourceUrl: String
+  surchargeRatePerGallon: Decimal
+  year: Int!
+}
+
+input IFTATaxRatesInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  fuelType: IFTAFuelType
+  jurisdictionId: ID
+  period: IFTAPeriodInput
+  query: String
+  sort: [SortFieldInput!]
+}
+
 enum InjuryCaseStatus {
   Closed
   Open
@@ -6552,6 +7361,18 @@ type JournalSourceInfo {
   sourceObjectId: String!
   sourceObjectType: String!
   status: String!
+}
+
+"""
+Started tells whether a backfill workflow was launched; on a dry run it is false
+and only the unattributed figures are returned.
+"""
+type JurisdictionMilesBackfillResult {
+  dryRun: Boolean!
+  started: Boolean!
+  unattributedMiles: Decimal!
+  unattributedMoves: Int!
+  workflowId: String
 }
 
 """
@@ -6919,6 +7740,14 @@ input MarkDriverSettlementPaidInput {
   settlementId: ID!
 }
 
+input MarkIFTAReturnFiledInput {
+  """Between the moment the return was finalized and now."""
+  filedAt: Timestamp!
+  filingReference: String
+  id: ID!
+  version: Int!
+}
+
 input MatchRoutingGuideInput {
   destinationCity: String
   destinationLocationId: ID
@@ -6965,6 +7794,11 @@ type Mutation {
   addOrderCharge(amount: Decimal!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
+  """
+  Opens a new Draft for the same quarter from a Filed return, with the amendment
+  number incremented. The filed return is left untouched.
+  """
+  amendIftaReturn(id: ID!, reason: String!): IFTAReturn!
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
@@ -7009,6 +7843,12 @@ type Mutation {
   method, base rate and contract accessorials.
   """
   autoRateShipment(id: ID!): ShipmentAutoRateResponse!
+  """
+  Starts a workflow that attributes completed moves in the period that have no
+  jurisdiction breakdown. Each move is a billable distance request; use dryRun
+  to size the job first.
+  """
+  backfillJurisdictionMiles(input: BackfillJurisdictionMilesInput!): JurisdictionMilesBackfillResult!
   bulkAssignTraining(input: BulkAssignTrainingInput!): BulkAssignTrainingPayload!
   """
   Run one lifecycle action across many settlements; per-settlement failures don't abort the rest.
@@ -7025,6 +7865,7 @@ type Mutation {
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
   cancelDotRandomDraw(id: ID!, reason: String!): DOTRandomDraw!
   cancelDotTest(id: ID!, reason: String!): WorkerDOTTest!
+  cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
   cancelMyExpense(id: ID!): DriverExpense!
   cancelMyPto(id: ID!): PortalPto!
   cancelOrder(cancelReason: String!, id: ID!): Order!
@@ -7043,6 +7884,11 @@ type Mutation {
   closeOrder(id: ID!): Order!
   closePerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   closeWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  """
+  Turns every New row into a purchase in one transaction. Rows whose reference
+  is already on file are marked AlreadyImported rather than duplicated.
+  """
+  commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
@@ -7054,9 +7900,13 @@ type Mutation {
   createDotRandomPool(input: DOTRandomPoolInput!): DOTRandomPool!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
+  createFuelCard(input: FuelCardInput!): FuelCard!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
+  createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
+  createFuelPurchaseImport(input: CreateFuelPurchaseImportInput!): FuelPurchaseImportBatch!
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
+  createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
   createInvoiceFromOrder(orderId: ID!): Invoice!
   createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
   createJobPosition(input: JobPositionInput!): JobPosition!
@@ -7105,8 +7955,16 @@ type Mutation {
   deleteEmploymentVerification(id: ID!): Boolean!
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
+  """
+  Removes the purchase outright. A return already generated for its quarter
+  keeps its figures until it is recomputed.
+  """
+  deleteFuelPurchase(id: ID!, version: Int!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
   deleteHomeLayoutPreset(id: ID!): Boolean!
+  deleteIftaMileageEntry(id: ID!, version: Int!): Boolean!
+  deleteIftaReturn(id: ID!, version: Int!): Boolean!
+  deleteIftaTaxRate(id: ID!, version: Int!): Boolean!
   deleteLeaveDay(id: ID!): Boolean!
   deleteOrgHoliday(id: ID!): Boolean!
   deletePerformanceReview(id: ID!): Boolean!
@@ -7128,6 +7986,7 @@ type Mutation {
   """
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
+  discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   dispatchAssignMoveToCarrier(input: DispatchAssignMoveToCarrierInput!): CarrierAssignment!
@@ -7143,9 +8002,18 @@ type Mutation {
   endWorkerShiftAssignment(effectiveTo: Timestamp!, id: ID!): WorkerShiftAssignment!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
   finalizeDotRandomDraw(id: ID!): DOTRandomDraw!
+  """
+  Recomputes, then locks the Draft. Refused while any member line is missing a rate.
+  """
+  finalizeIftaReturn(id: ID!, version: Int!): IFTAReturn!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
   generateCarrierSettlementBatch(input: GenerateCarrierSettlementBatchInput!): CarrierSettlementBatch!
   generateDriverSettlement(input: GenerateDriverSettlementInput!): DriverSettlement
+  """
+  Creates the Draft for a quarter and computes it. Refused while a Draft or
+  Finalized return exists for the period, and once one is Filed; amend that instead.
+  """
+  generateIftaReturn(period: IFTAPeriodInput!): IFTAReturn!
   generatePayrollExport(input: GeneratePayrollExportInput!): PayrollExport!
   generateSettlementBatch(input: GenerateSettlementBatchInput!): SettlementBatch!
   giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
@@ -7169,6 +8037,7 @@ type Mutation {
   markCarrierSettlementPaid(input: MarkCarrierSettlementPaidInput!): CarrierSettlement!
   markDriverSettlementPaid(input: MarkDriverSettlementPaidInput!): DriverSettlement!
   markEmploymentVerificationRequested(id: ID!): WorkerEmploymentVerification!
+  markIftaReturnFiled(input: MarkIFTAReturnFiledInput!): IFTAReturn!
   """
   Notification state changes for the signed-in driver. Each only ever touches
   notifications targeted at the driver; organization-wide notifications are
@@ -7210,7 +8079,13 @@ type Mutation {
   publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
   recalculateCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """
+  Asks the distance provider for the state-by-state report on one move and
+  replaces its jurisdiction rows. The move's distance is left as it was.
+  """
+  recalculateMoveJurisdictionMiles(shipmentMoveId: ID!): [ShipmentMoveJurisdictionMile!]!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
+  recomputeIftaReturn(id: ID!, version: Int!): IFTAReturn!
   recordClearinghouseQuery(input: RecordClearinghouseQueryInput!): WorkerClearinghouseQuery!
   recordDotTest(input: RecordDOTTestInput!): WorkerDOTTest!
   recordDotTestResult(input: RecordDOTTestResultInput!): WorkerDOTTest!
@@ -7238,6 +8113,10 @@ type Mutation {
   removeCarrierSettlementAdjustment(input: RemoveCarrierSettlementAdjustmentInput!): CarrierSettlement!
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
+  """
+  Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
+  """
+  reopenIftaReturn(id: ID!, reason: String!, version: Int!): IFTAReturn!
   reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
@@ -7300,6 +8179,12 @@ type Mutation {
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   """
+  Reads the uploaded statement and resolves every row without committing
+  anything. Can be run again on the same batch with a different document or
+  mapping until it is committed or discarded.
+  """
+  stageFuelPurchaseImport(input: StageFuelPurchaseImportInput!): FuelPurchaseImportBatch!
+  """
   Marks one of the signed-in driver's courses in progress and returns the link.
   """
   startMyTraining(id: ID!): PortalTraining!
@@ -7337,11 +8222,14 @@ type Mutation {
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
+  updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
+  updateFuelPurchase(id: ID!, input: FuelPurchaseInput!, version: Int!): FuelPurchase!
   updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
+  updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
@@ -7383,6 +8271,11 @@ type Mutation {
   updateWorkerPTO(input: UpdateWorkerPTOInput!): WorkerPTO!
   updateWorkerPolicy(id: ID!, input: WorkerPolicyInput!): WorkerPolicy!
   updateWorkerSafetyEvent(input: UpdateWorkerSafetyEventInput!): WorkerSafetyEvent!
+  """
+  Inserts or replaces rates keyed by jurisdiction, year, quarter and fuel type.
+  Rates are global, so this changes what every organization's return owes.
+  """
+  upsertIftaTaxRates(input: [IFTATaxRateInput!]!): [IFTATaxRate!]!
   verifyWorkerCredential(id: ID!, version: Int): WorkerCredential!
   voidCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   voidDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
@@ -9122,11 +10015,17 @@ type Query {
   fleetSafety(input: FleetSafetyInput): FleetSafety!
   formulaTemplate(id: ID!): FormulaTemplate
   formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
+  fuelCard(id: ID!): FuelCard!
+  fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelIndex(id: ID!): FuelIndex
   fuelIndexPriceHistory(from: String, indexId: ID!, limit: Int, to: String): [FuelIndexPrice!]!
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
+  fuelPurchase(id: ID!): FuelPurchase!
+  fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
+  fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
+  fuelPurchases(input: FuelPurchasesInput!): FuelPurchaseConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   generateFuelSurchargeTable(input: GenerateFuelTableInput!): [GeneratedFuelTableRow!]!
@@ -9147,6 +10046,23 @@ type Query {
   homeLayoutPreview(presetId: ID, roleId: ID): HomeLayout!
   homeWidgetCatalog: HomeWidgetCatalog!
   hosCertificationSummary(endDate: String!, startDate: String!): [HosCertificationSummary!]!
+  """The most recently completed quarter in the organization's timezone."""
+  iftaCurrentPeriod: IFTAPeriod!
+  """
+  The global jurisdiction list, about sixty rows. Fetched once and cached on the client.
+  """
+  iftaJurisdictions(membersOnly: Boolean = false): [IFTAJurisdiction!]!
+  iftaMileageEntries(input: IFTAMileageEntriesInput!): IFTAJurisdictionMileageEntryConnection!
+  iftaMileageEntry(id: ID!): IFTAJurisdictionMileageEntry!
+  iftaPeriod(quarter: Int!, year: Int!): IFTAPeriod!
+  iftaReturn(id: ID!): IFTAReturn!
+  """
+  The working copy for a quarter: the open Draft or Finalized return, else the
+  most recent Filed one. Null when nothing has been generated for the period.
+  """
+  iftaReturnForPeriod(period: IFTAPeriodInput!): IFTAReturn
+  iftaReturns(input: IFTAReturnsInput!): IFTAReturnConnection!
+  iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
   invoice(id: ID!): Invoice
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   jobPosition(id: ID!): JobPosition!
@@ -11041,6 +11957,7 @@ enum SelectOptionResource {
   EDI_PARTNER
   EDI_PARTNER_DOCUMENT_PROFILE
   EDI_TEMPLATE
+  EDI_TRANSACTION_SET
   EDI_TRANSFER
   EMAIL_PROFILE
   EQUIPMENT_MANUFACTURER
@@ -11049,10 +11966,12 @@ enum SelectOptionResource {
   FISCAL_YEAR
   FLEET_CODE
   FORMULA_TEMPLATE
+  FUEL_CARD
   FUEL_INDEX
   FUEL_SURCHARGE_PROGRAM
   GL_ACCOUNT
   HAZARDOUS_MATERIAL
+  IFTA_FUEL_TYPE
   JOB_POSITION
   LOCATION
   LOCATION_CATEGORY
@@ -12657,6 +13576,12 @@ type ShipmentMove {
   distanceSource: String
   distanceUnits: String
   id: ID
+  """
+  The move's distance split by jurisdiction from the distance provider's state
+  report. Empty until the distance control captures jurisdiction miles or the
+  move is recalculated; the whole distance is then unattributed on an IFTA return.
+  """
+  jurisdictionMiles: [ShipmentMoveJurisdictionMile!]!
   loaded: Boolean!
   organizationId: ID!
   sequence: Int!
@@ -12714,6 +13639,31 @@ input ShipmentMoveInput {
   status: MoveStatus = New
   stops: [ShipmentStopInput!] = []
   version: Int
+}
+
+"""
+One jurisdiction's share of a move's routed distance. Keyed by country and
+postal code as the provider reports them, so a code the IFTA table does not
+know is stored rather than dropped.
+"""
+type ShipmentMoveJurisdictionMile {
+  calculatedAt: Timestamp!
+  countryCode: String!
+  dataVersion: String
+  """In distanceUnits."""
+  distance: Float!
+  distanceUnits: String!
+  ferryDistance: Float
+  id: ID!
+  jurisdictionCode: String!
+  """Copied from the move when the row was written."""
+  loaded: Boolean!
+  provider: String
+  sequence: Int!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  source: String!
+  tollDistance: Float
 }
 
 type ShipmentOnTime {
@@ -13194,6 +14144,16 @@ input SidebarSectionPreferenceInput {
 input SortFieldInput {
   direction: String!
   field: String!
+}
+
+input StageFuelPurchaseImportInput {
+  """
+  The uploaded statement. The document must have been uploaded against this
+  batch (resource type fuel_purchase_import) or staging is refused.
+  """
+  documentId: ID!
+  id: ID!
+  mapping: JSON
 }
 
 input StartWorkerChecklistInput {
@@ -13691,7 +14651,14 @@ type Tractor {
   externalId: String!
   fleetCode: FleetCode
   fleetCodeId: ID
+  """
+  The fuel the tractor burns. Its miles land on this fuel type's lines of an
+  IFTA return.
+  """
+  fuelType: IFTAFuelType!
   id: ID!
+  """Whether the tractor's miles and fuel enter the IFTA return."""
+  iftaQualified: Boolean!
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
@@ -13733,6 +14700,8 @@ input TractorInput {
   equipmentTypeId: ID!
   externalId: String
   fleetCodeId: ID
+  fuelType: IFTAFuelType = Diesel
+  iftaQualified: Boolean = true
   licensePlateNumber: String
   make: String
   model: String
@@ -13760,6 +14729,10 @@ input TractorPatchInput {
   externalId: String @goField(omittable: true)
   """Omit to leave unchanged; pass null to clear."""
   fleetCodeId: ID @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  fuelType: IFTAFuelType @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  iftaQualified: Boolean @goField(omittable: true)
   """Omit to leave unchanged; pass null to clear."""
   licensePlateNumber: String @goField(omittable: true)
   """Omit to leave unchanged; pass null to clear."""

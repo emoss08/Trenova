@@ -244,6 +244,18 @@ export type AvailabilityPreference =
   | 'Preferred'
   | 'Unavailable';
 
+export type BackfillJurisdictionMilesInput = {
+  /** Count the moves and miles that would be attributed without starting the workflow. */
+  dryRun?: boolean | null | undefined;
+  /**
+   * Upper bound on moves re-routed in one run; defaults to 2000. Every move is a
+   * billable distance request.
+   */
+  maxMoves?: number | null | undefined;
+  periodEnd: number;
+  periodStart: number;
+};
+
 export type BenefitEnrollmentStatus =
   | 'Active'
   | 'Ended'
@@ -364,6 +376,13 @@ export type CsaBasic =
   | 'HazmatCompliance'
   | 'UnsafeDriving'
   | 'VehicleMaintenance';
+
+export type CancelFuelCardInput = {
+  id: string | number;
+  /** At least ten characters. Cancelling is permanent. */
+  reason: string;
+  version: number;
+};
 
 export type CancelWorkerChecklistInput = {
   id: string | number;
@@ -604,6 +623,14 @@ export type CreateCarrierInvoiceMatchInput = {
   proNumber?: string | null | undefined;
   /** Document AI sources only: the shipment used to locate the assignment. */
   shipmentId?: string | number | null | undefined;
+};
+
+export type CreateFuelPurchaseImportInput = {
+  defaultCurrency?: string | null | undefined;
+  defaultFuelCardId?: string | number | null | undefined;
+  defaultFuelType?: IftaFuelType | null | undefined;
+  mapping?: unknown;
+  provider: FuelCardProvider;
 };
 
 export type CreateMyLoadCommentInput = {
@@ -1625,6 +1652,48 @@ export type FreightClass =
   | 'Class400'
   | 'Class500';
 
+export type FuelCardInput = {
+  assignedTractorId?: string | number | null | undefined;
+  assignedWorkerId?: string | number | null | undefined;
+  expiresAt?: number | null | undefined;
+  externalCardId?: string | null | undefined;
+  label: string;
+  lastFour: string;
+  notes?: string | null | undefined;
+  provider: FuelCardProvider;
+  /** Active or Suspended. Cancelling goes through cancelFuelCard, which needs a reason. */
+  status?: FuelCardStatus | null | undefined;
+};
+
+export type FuelCardProvider =
+  | 'Comdata'
+  | 'EFS'
+  | 'Other'
+  | 'WEX';
+
+/** Active and Suspended move between each other; Cancelled is terminal. */
+export type FuelCardStatus =
+  | 'Active'
+  | 'Cancelled'
+  | 'Suspended';
+
+export type FuelCardsInput = {
+  after?: string | null | undefined;
+  assignedTractorId?: string | number | null | undefined;
+  assignedWorkerId?: string | number | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  provider?: FuelCardProvider | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+  status?: FuelCardStatus | null | undefined;
+};
+
+export type FuelImportFormat =
+  | 'CSV'
+  | 'XLSX';
+
 export type FuelIndexInput = {
   code: string;
   currency?: string | null | undefined;
@@ -1646,6 +1715,84 @@ export type FuelIndexPriceInput = {
 export type FuelIndexSource =
   | 'Custom'
   | 'EIA';
+
+/**
+ * Only New rows commit. DuplicateInFile is the second occurrence of a reference
+ * inside the statement; AlreadyImported matches a purchase already on file.
+ */
+export type FuelPurchaseImportRowStatus =
+  | 'AlreadyImported'
+  | 'Committed'
+  | 'DuplicateInFile'
+  | 'Error'
+  | 'New'
+  | 'Skipped';
+
+export type FuelPurchaseImportRowsInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  statuses?: Array<FuelPurchaseImportRowStatus> | null | undefined;
+};
+
+/**
+ * Pending until a statement is staged; Parsed once its rows have been read and
+ * resolved; Committed when the rows became purchases. Failed and Discarded batches
+ * can be staged again or left as a record of what was tried.
+ */
+export type FuelPurchaseImportStatus =
+  | 'Committed'
+  | 'Discarded'
+  | 'Failed'
+  | 'Parsed'
+  | 'Pending';
+
+export type FuelPurchaseInput = {
+  cardLastFour?: string | null | undefined;
+  currencyCode?: string | null | undefined;
+  fuelCardId?: string | number | null | undefined;
+  fuelType: IftaFuelType;
+  jurisdictionId: string | number;
+  notes?: string | null | undefined;
+  odometer?: number | null | undefined;
+  purchasedAt: number;
+  quantity: string;
+  quantityUnit?: FuelQuantityUnit | null | undefined;
+  taxPaid?: boolean | null | undefined;
+  totalAmount: string;
+  tractorId: string | number;
+  transactionReference?: string | null | undefined;
+  unitPrice?: string | null | undefined;
+  vendor?: string | null | undefined;
+  vendorCity?: string | null | undefined;
+  workerId?: string | number | null | undefined;
+};
+
+export type FuelPurchaseSource =
+  | 'CardImport'
+  | 'Manual';
+
+export type FuelPurchasesInput = {
+  after?: string | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  /** Inclusive lower bound on purchasedAt. */
+  from?: number | null | undefined;
+  fuelCardId?: string | number | null | undefined;
+  fuelTypes?: Array<IftaFuelType> | null | undefined;
+  jurisdictionId?: string | number | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+  sources?: Array<FuelPurchaseSource> | null | undefined;
+  taxPaid?: boolean | null | undefined;
+  /** Exclusive upper bound on purchasedAt. */
+  to?: number | null | undefined;
+  tractorId?: string | number | null | undefined;
+};
+
+export type FuelQuantityUnit =
+  | 'Gallon'
+  | 'Litre';
 
 export type FuelSurchargeDateBasis =
   | 'PickupDate'
@@ -1835,6 +1982,137 @@ export type HomeWidgetInput = {
   w: number;
 };
 
+/**
+ * Fuel product as classified for the International Fuel Tax Agreement. The first
+ * fourteen are IFTA fuel types and enter the return; DEF, Reefer and Other are
+ * tracked as spend only and never earn or owe tax.
+ */
+export type IftaFuelType =
+  | 'A55'
+  | 'Biodiesel'
+  | 'CNG'
+  | 'DEF'
+  | 'Diesel'
+  | 'E85'
+  | 'Electricity'
+  | 'Ethanol'
+  | 'Gasohol'
+  | 'Gasoline'
+  | 'Hydrogen'
+  | 'LNG'
+  | 'M85'
+  | 'Methanol'
+  | 'Other'
+  | 'Propane'
+  | 'Reefer';
+
+export type IftaJurisdictionStatus =
+  | 'Active'
+  | 'Inactive';
+
+export type IftaMileageEntriesInput = {
+  after?: string | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  /** Inclusive lower bound on traveledAt. */
+  from?: number | null | undefined;
+  jurisdictionId?: string | number | null | undefined;
+  period?: IftaPeriodInput | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+  sources?: Array<IftaMileageSource> | null | undefined;
+  /** Exclusive upper bound on traveledAt. */
+  to?: number | null | undefined;
+  tractorId?: string | number | null | undefined;
+};
+
+export type IftaMileageEntryInput = {
+  jurisdictionId: string | number;
+  loaded?: boolean | null | undefined;
+  miles: string;
+  notes?: string | null | undefined;
+  /**
+   * Name the move when this entry corrects its routed miles; the entry then
+   * replaces the move's jurisdiction rows on the return.
+   */
+  shipmentMoveId?: string | number | null | undefined;
+  source?: IftaMileageSource | null | undefined;
+  tractorId: string | number;
+  traveledAt: number;
+};
+
+/**
+ * Where a jurisdiction's miles came from. RouteCalculation rows are written by the
+ * distance provider's state report; Manual entries are keyed by hand and, when they
+ * name a shipment move, replace that move's routed rows so nothing is counted twice.
+ */
+export type IftaMileageSource =
+  | 'Manual'
+  | 'RouteCalculation'
+  | 'Telematics';
+
+export type IftaPeriodInput = {
+  quarter: number;
+  year: number;
+};
+
+/**
+ * MissingRate blocks finalizing. Every other code is a warning the return carries
+ * so the preparer can see what the figures leave out.
+ */
+export type IftaProblemCode =
+  | 'MileageMismatch'
+  | 'MissingRate'
+  | 'NoFuelForType'
+  | 'NoTractorMiles'
+  | 'NonMemberActivity'
+  | 'NonQualifiedActivity'
+  | 'UnattributedMiles';
+
+/**
+ * Draft figures move with the data. Finalized locks them and can be reopened with
+ * a reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.
+ */
+export type IftaReturnStatus =
+  | 'Draft'
+  | 'Filed'
+  | 'Finalized';
+
+export type IftaReturnsInput = {
+  after?: string | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+  statuses?: Array<IftaReturnStatus> | null | undefined;
+  year?: number | null | undefined;
+};
+
+export type IftaTaxRateInput = {
+  fuelType: IftaFuelType;
+  jurisdictionId: string | number;
+  quarter: number;
+  ratePerGallon: string;
+  sourceNote?: string | null | undefined;
+  sourceUrl?: string | null | undefined;
+  surchargeRatePerGallon?: string | null | undefined;
+  year: number;
+};
+
+export type IftaTaxRatesInput = {
+  after?: string | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  fuelType?: IftaFuelType | null | undefined;
+  jurisdictionId?: string | number | null | undefined;
+  period?: IftaPeriodInput | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+};
+
 export type InjuryCaseStatus =
   | 'Closed'
   | 'Open';
@@ -2013,6 +2291,14 @@ export type MarkDriverSettlementPaidInput = {
   paymentMethod: string;
   paymentReference?: string | null | undefined;
   settlementId: string | number;
+};
+
+export type MarkIftaReturnFiledInput = {
+  /** Between the moment the return was finalized and now. */
+  filedAt: number;
+  filingReference?: string | null | undefined;
+  id: string | number;
+  version: number;
 };
 
 export type MatchRoutingGuideInput = {
@@ -3226,6 +3512,7 @@ export type SelectOptionResource =
   | 'EDI_PARTNER'
   | 'EDI_PARTNER_DOCUMENT_PROFILE'
   | 'EDI_TEMPLATE'
+  | 'EDI_TRANSACTION_SET'
   | 'EDI_TRANSFER'
   | 'EMAIL_PROFILE'
   | 'EQUIPMENT_MANUFACTURER'
@@ -3234,10 +3521,12 @@ export type SelectOptionResource =
   | 'FISCAL_YEAR'
   | 'FLEET_CODE'
   | 'FORMULA_TEMPLATE'
+  | 'FUEL_CARD'
   | 'FUEL_INDEX'
   | 'FUEL_SURCHARGE_PROGRAM'
   | 'GL_ACCOUNT'
   | 'HAZARDOUS_MATERIAL'
+  | 'IFTA_FUEL_TYPE'
   | 'JOB_POSITION'
   | 'LOCATION'
   | 'LOCATION_CATEGORY'
@@ -3744,6 +4033,16 @@ export type SidebarSectionPreferenceInput = {
 export type SortFieldInput = {
   direction: string;
   field: string;
+};
+
+export type StageFuelPurchaseImportInput = {
+  /**
+   * The uploaded statement. The document must have been uploaded against this
+   * batch (resource type fuel_purchase_import) or staging is refused.
+   */
+  documentId: string | number;
+  id: string | number;
+  mapping?: unknown;
 };
 
 export type StartWorkerChecklistInput = {
@@ -6569,7 +6868,7 @@ export type WorkerTableReferenceFieldsFragment = { id: string, firstName: string
 
 export type DataTablePageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'DataTablePageInfoFieldsFragment' };
 
-export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, primaryWorkerId: string, equipmentTypeId: string, equipmentManufacturerId: string, stateId: string | null, fleetCodeId: string | null, secondaryWorkerId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, vin: string, externalId: string, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null } & { ' $fragmentName'?: 'TractorTableRowFieldsFragment' };
+export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, primaryWorkerId: string, equipmentTypeId: string, equipmentManufacturerId: string, stateId: string | null, fleetCodeId: string | null, secondaryWorkerId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, vin: string, externalId: string, lastKnownLocationId: string | null, lastKnownLocationName: string, fuelType: IftaFuelType, iftaQualified: boolean, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null } & { ' $fragmentName'?: 'TractorTableRowFieldsFragment' };
 
 export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, equipmentTypeId: string, equipmentManufacturerId: string, registrationStateId: string | null, fleetCodeId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, vin: string, externalId: string, registrationNumber: string, maxLoadWeight: number | null, lastInspectionDate: number | null, registrationExpiry: number | null, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, registrationState: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null } & { ' $fragmentName'?: 'TrailerTableRowFieldsFragment' };
 
@@ -6707,6 +7006,144 @@ export type FormulaTemplateTableQueryVariables = Exact<{
 
 
 export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FuelCardFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, lastFour: string, label: string, externalCardId: string | null, assignedWorkerId: string | null, assignedTractorId: string | null, status: FuelCardStatus, expiresAt: number | null, cancelledAt: number | null, cancelReason: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number, assignedWorker: { id: string, wholeName: string, firstName: string, lastName: string } | null, assignedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelCardFieldsFragment' };
+
+export type FuelCardTableQueryVariables = Exact<{
+  input: FuelCardsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FuelCardTableQuery = { fuelCards: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type FuelCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FuelCardQuery = { fuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } };
+
+export type CreateFuelCardMutationVariables = Exact<{
+  input: FuelCardInput;
+}>;
+
+
+export type CreateFuelCardMutation = { createFuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } };
+
+export type UpdateFuelCardMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: FuelCardInput;
+}>;
+
+
+export type UpdateFuelCardMutation = { updateFuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } };
+
+export type CancelFuelCardMutationVariables = Exact<{
+  input: CancelFuelCardInput;
+}>;
+
+
+export type CancelFuelCardMutation = { cancelFuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } };
+
+export type FuelPurchaseImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, documentId: string | null, fileName: string | null, sourceFormat: FuelImportFormat | null, status: FuelPurchaseImportStatus, defaultFuelType: IftaFuelType | null, defaultFuelCardId: string | null, defaultCurrency: string, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, committedCount: number, error: string | null, uploadedById: string | null, stagedAt: number | null, committedAt: number | null, committedById: string | null, version: number, createdAt: number, updatedAt: number, summary: { rowCount: number, newCount: number, duplicateInFileCount: number, alreadyImportedCount: number, errorCount: number, totalGallons: string, totalAmount: string, byFuelType: unknown, byJurisdiction: unknown, earliestPurchasedAt: number | null, latestPurchasedAt: number | null } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, defaultFuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportBatchFieldsFragment' };
+
+export type FuelPurchaseImportRowFieldsFragment = { id: string, importBatchId: string, rowNumber: number, cells: Array<string>, transactionReference: string | null, status: FuelPurchaseImportRowStatus, error: string | null, resolvedTractorId: string | null, resolvedFuelCardId: string | null, resolvedJurisdictionId: string | null, resolutionNotes: Array<string>, fuelPurchaseId: string | null, createdAt: number, parsed: { purchasedAt: number | null, vendor: string | null, vendorCity: string | null, jurisdictionCode: string | null, fuelType: IftaFuelType | null, quantity: string | null, quantityUnit: FuelQuantityUnit | null, gallons: string | null, unitPrice: string | null, totalAmount: string | null, currencyCode: string | null, transactionReference: string | null, cardLastFour: string | null, tractorCode: string | null, odometer: number | null } | null, resolvedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportRowFieldsFragment' };
+
+export type FuelPurchaseImportQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FuelPurchaseImportQuery = { fuelPurchaseImport: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } };
+
+export type FuelPurchaseImportRowsQueryVariables = Exact<{
+  id: string | number;
+  input?: FuelPurchaseImportRowsInput | null | undefined;
+}>;
+
+
+export type FuelPurchaseImportRowsQuery = { fuelPurchaseImport: { id: string, rows: { totalCount: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'FuelPurchaseImportRowFieldsFragment': FuelPurchaseImportRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } };
+
+export type FuelPurchaseImportTemplateQueryVariables = Exact<{
+  provider: FuelCardProvider;
+}>;
+
+
+export type FuelPurchaseImportTemplateQuery = { fuelPurchaseImportTemplate: { fileName: string, content: string } };
+
+export type CreateFuelPurchaseImportMutationVariables = Exact<{
+  input: CreateFuelPurchaseImportInput;
+}>;
+
+
+export type CreateFuelPurchaseImportMutation = { createFuelPurchaseImport: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } };
+
+export type StageFuelPurchaseImportMutationVariables = Exact<{
+  input: StageFuelPurchaseImportInput;
+}>;
+
+
+export type StageFuelPurchaseImportMutation = { stageFuelPurchaseImport: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } };
+
+export type CommitFuelPurchaseImportMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type CommitFuelPurchaseImportMutation = { commitFuelPurchaseImport: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } };
+
+export type DiscardFuelPurchaseImportMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  reason?: string | null | undefined;
+}>;
+
+
+export type DiscardFuelPurchaseImportMutation = { discardFuelPurchaseImport: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } };
+
+export type FuelPurchaseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, cardLastFour: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, unitPrice: string | null, totalAmount: string, currencyCode: string, odometer: number | null, transactionReference: string | null, source: FuelPurchaseSource, importBatchId: string | null, taxPaid: boolean, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string, firstName: string, lastName: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string }, fuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseFieldsFragment' };
+
+export type FuelPurchaseTableQueryVariables = Exact<{
+  input: FuelPurchasesInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FuelPurchaseTableQuery = { fuelPurchases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type FuelPurchaseQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FuelPurchaseQuery = { fuelPurchase: { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } } };
+
+export type CreateFuelPurchaseMutationVariables = Exact<{
+  input: FuelPurchaseInput;
+}>;
+
+
+export type CreateFuelPurchaseMutation = { createFuelPurchase: { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } } };
+
+export type UpdateFuelPurchaseMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: FuelPurchaseInput;
+}>;
+
+
+export type UpdateFuelPurchaseMutation = { updateFuelPurchase: { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } } };
+
+export type DeleteFuelPurchaseMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DeleteFuelPurchaseMutation = { deleteFuelPurchase: boolean };
 
 export type FuelIndexFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, source: FuelIndexSource, fuelType: FuelType, region: string, eiaSeriesId: string, currency: string, isActive: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FuelIndexFieldsFragment' };
 
@@ -6930,6 +7367,186 @@ export type HomeLayoutPreviewQueryVariables = Exact<{
 
 
 export type HomeLayoutPreviewQuery = { homeLayoutPreview: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
+
+export type IftaMileageEntryFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, jurisdictionId: string, traveledAt: number, year: number, quarter: number, miles: string, loaded: boolean, source: IftaMileageSource, shipmentMoveId: string | null, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string } } & { ' $fragmentName'?: 'IftaMileageEntryFieldsFragment' };
+
+export type IftaMileageEntryTableQueryVariables = Exact<{
+  input: IftaMileageEntriesInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type IftaMileageEntryTableQuery = { iftaMileageEntries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaMileageEntryFieldsFragment': IftaMileageEntryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type IftaMileageEntryQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type IftaMileageEntryQuery = { iftaMileageEntry: { ' $fragmentRefs'?: { 'IftaMileageEntryFieldsFragment': IftaMileageEntryFieldsFragment } } };
+
+export type CreateIftaMileageEntryMutationVariables = Exact<{
+  input: IftaMileageEntryInput;
+}>;
+
+
+export type CreateIftaMileageEntryMutation = { createIftaMileageEntry: { ' $fragmentRefs'?: { 'IftaMileageEntryFieldsFragment': IftaMileageEntryFieldsFragment } } };
+
+export type UpdateIftaMileageEntryMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: IftaMileageEntryInput;
+}>;
+
+
+export type UpdateIftaMileageEntryMutation = { updateIftaMileageEntry: { ' $fragmentRefs'?: { 'IftaMileageEntryFieldsFragment': IftaMileageEntryFieldsFragment } } };
+
+export type DeleteIftaMileageEntryMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DeleteIftaMileageEntryMutation = { deleteIftaMileageEntry: boolean };
+
+export type IftaJurisdictionFieldsFragment = { id: string, countryCode: string, code: string, name: string, usStateId: string | null, isIftaMember: boolean, hasSurcharge: boolean, sortOrder: number, status: IftaJurisdictionStatus } & { ' $fragmentName'?: 'IftaJurisdictionFieldsFragment' };
+
+export type IftaJurisdictionsQueryVariables = Exact<{
+  membersOnly?: boolean | null | undefined;
+}>;
+
+
+export type IftaJurisdictionsQuery = { iftaJurisdictions: Array<{ ' $fragmentRefs'?: { 'IftaJurisdictionFieldsFragment': IftaJurisdictionFieldsFragment } }> };
+
+export type IftaPeriodFieldsFragment = { year: number, quarter: number, key: string, label: string, start: number, end: number, dueDate: number } & { ' $fragmentName'?: 'IftaPeriodFieldsFragment' };
+
+export type IftaReturnLineFieldsFragment = { id: string, returnId: string, jurisdictionId: string, fuelType: IftaFuelType, isIftaMember: boolean, totalMiles: string, taxableMiles: string, routeMiles: string, manualMiles: string, loadedMiles: string, emptyMiles: string, taxPaidGallons: string, taxPaidGallonsRaw: string, purchaseCount: number, taxableGallons: string, netTaxableGallons: string, ratePerGallon: string | null, surchargeRatePerGallon: string | null, rateMissing: boolean, taxDue: string, surchargeDue: string, lineTotal: string, sortOrder: number, jurisdiction: { id: string, countryCode: string, code: string, name: string, isIftaMember: boolean, hasSurcharge: boolean } } & { ' $fragmentName'?: 'IftaReturnLineFieldsFragment' };
+
+export type IftaReturnFieldsFragment = { id: string, businessUnitId: string, organizationId: string, year: number, quarter: number, amendmentNumber: number, amendsReturnId: string | null, status: IftaReturnStatus, timezone: string, periodStart: number, periodEnd: number, totalMiles: string, totalTaxableMiles: string, totalGallons: string, totalTaxPaidGallons: string, netTaxableGallons: string, taxDue: string, surchargeDue: string, netDue: string, currencyCode: string, unattributedMiles: string, unattributedMoveCount: number, noTractorMiles: string, noTractorMoveCount: number, computedAt: number | null, finalizedAt: number | null, finalizedById: string | null, filedAt: number | null, filedById: string | null, filingReference: string | null, reopenedAt: number | null, reopenedById: string | null, reopenReason: string | null, version: number, createdAt: number, updatedAt: number, period: { ' $fragmentRefs'?: { 'IftaPeriodFieldsFragment': IftaPeriodFieldsFragment } }, amendsReturn: { id: string, amendmentNumber: number, status: IftaReturnStatus } | null, fleetMpgByFuelType: Array<{ fuelType: IftaFuelType, mpg: string | null, totalMiles: string, totalGallons: string }>, problems: Array<{ code: IftaProblemCode, message: string, jurisdictionCode: string | null, fuelType: IftaFuelType | null, amount: string | null }>, finalizedBy: { id: string, name: string } | null, filedBy: { id: string, name: string } | null, lines: Array<{ ' $fragmentRefs'?: { 'IftaReturnLineFieldsFragment': IftaReturnLineFieldsFragment } }> } & { ' $fragmentName'?: 'IftaReturnFieldsFragment' };
+
+export type IftaReturnSummaryFieldsFragment = { id: string, year: number, quarter: number, amendmentNumber: number, status: IftaReturnStatus, totalMiles: string, totalTaxPaidGallons: string, netDue: string, currencyCode: string, computedAt: number | null, finalizedAt: number | null, filedAt: number | null, filingReference: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'IftaReturnSummaryFieldsFragment' };
+
+export type IftaReturnForPeriodQueryVariables = Exact<{
+  input: IftaPeriodInput;
+}>;
+
+
+export type IftaReturnForPeriodQuery = { iftaReturnForPeriod: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } | null };
+
+export type IftaReturnQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type IftaReturnQuery = { iftaReturn: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type IftaReturnTableQueryVariables = Exact<{
+  input: IftaReturnsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type IftaReturnTableQuery = { iftaReturns: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaReturnSummaryFieldsFragment': IftaReturnSummaryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type IftaCurrentPeriodQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type IftaCurrentPeriodQuery = { iftaCurrentPeriod: { ' $fragmentRefs'?: { 'IftaPeriodFieldsFragment': IftaPeriodFieldsFragment } } };
+
+export type IftaPeriodQueryVariables = Exact<{
+  year: number;
+  quarter: number;
+}>;
+
+
+export type IftaPeriodQuery = { iftaPeriod: { ' $fragmentRefs'?: { 'IftaPeriodFieldsFragment': IftaPeriodFieldsFragment } } };
+
+export type GenerateIftaReturnMutationVariables = Exact<{
+  period: IftaPeriodInput;
+}>;
+
+
+export type GenerateIftaReturnMutation = { generateIftaReturn: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type RecomputeIftaReturnMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type RecomputeIftaReturnMutation = { recomputeIftaReturn: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type FinalizeIftaReturnMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type FinalizeIftaReturnMutation = { finalizeIftaReturn: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type ReopenIftaReturnMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  reason: string;
+}>;
+
+
+export type ReopenIftaReturnMutation = { reopenIftaReturn: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type MarkIftaReturnFiledMutationVariables = Exact<{
+  input: MarkIftaReturnFiledInput;
+}>;
+
+
+export type MarkIftaReturnFiledMutation = { markIftaReturnFiled: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type AmendIftaReturnMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type AmendIftaReturnMutation = { amendIftaReturn: { ' $fragmentRefs'?: { 'IftaReturnFieldsFragment': IftaReturnFieldsFragment } } };
+
+export type DeleteIftaReturnMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DeleteIftaReturnMutation = { deleteIftaReturn: boolean };
+
+export type BackfillJurisdictionMilesMutationVariables = Exact<{
+  input: BackfillJurisdictionMilesInput;
+}>;
+
+
+export type BackfillJurisdictionMilesMutation = { backfillJurisdictionMiles: { started: boolean, dryRun: boolean, unattributedMoves: number, unattributedMiles: string, workflowId: string | null } };
+
+export type IftaTaxRateFieldsFragment = { id: string, jurisdictionId: string, year: number, quarter: number, fuelType: IftaFuelType, ratePerGallon: string, surchargeRatePerGallon: string | null, sourceNote: string | null, sourceUrl: string | null, version: number, createdAt: number, updatedAt: number, jurisdiction: { id: string, countryCode: string, code: string, name: string, hasSurcharge: boolean, isIftaMember: boolean } } & { ' $fragmentName'?: 'IftaTaxRateFieldsFragment' };
+
+export type IftaTaxRateTableQueryVariables = Exact<{
+  input: IftaTaxRatesInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type IftaTaxRateTableQuery = { iftaTaxRates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaTaxRateFieldsFragment': IftaTaxRateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type UpsertIftaTaxRatesMutationVariables = Exact<{
+  input: Array<IftaTaxRateInput> | IftaTaxRateInput;
+}>;
+
+
+export type UpsertIftaTaxRatesMutation = { upsertIftaTaxRates: Array<{ ' $fragmentRefs'?: { 'IftaTaxRateFieldsFragment': IftaTaxRateFieldsFragment } }> };
+
+export type DeleteIftaTaxRateMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DeleteIftaTaxRateMutation = { deleteIftaTaxRate: boolean };
 
 export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, customerId: string, number: string, billType: BillType, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
 
@@ -11061,6 +11678,8 @@ export const TractorTableRowFieldsFragmentDoc = new TypedDocumentString(`
   externalId
   lastKnownLocationId
   lastKnownLocationName
+  fuelType
+  iftaQualified
   version
   createdAt
   updatedAt
@@ -11284,6 +11903,184 @@ export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(
   updatedAt
 }
     `, {"fragmentName":"FormulaTemplateTableRowFields"}) as unknown as TypedDocumentString<FormulaTemplateTableRowFieldsFragment, unknown>;
+export const FuelCardFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FuelCardFields on FuelCard {
+  id
+  businessUnitId
+  organizationId
+  provider
+  lastFour
+  label
+  externalCardId
+  assignedWorkerId
+  assignedTractorId
+  status
+  expiresAt
+  cancelledAt
+  cancelReason
+  notes
+  version
+  createdAt
+  updatedAt
+  assignedWorker {
+    id
+    wholeName
+    firstName
+    lastName
+  }
+  assignedTractor {
+    id
+    code
+  }
+}
+    `, {"fragmentName":"FuelCardFields"}) as unknown as TypedDocumentString<FuelCardFieldsFragment, unknown>;
+export const FuelPurchaseImportBatchFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {
+  id
+  businessUnitId
+  organizationId
+  provider
+  documentId
+  fileName
+  sourceFormat
+  status
+  defaultFuelType
+  defaultFuelCardId
+  defaultCurrency
+  mapping
+  unmappedHeaders
+  summary {
+    rowCount
+    newCount
+    duplicateInFileCount
+    alreadyImportedCount
+    errorCount
+    totalGallons
+    totalAmount
+    byFuelType
+    byJurisdiction
+    earliestPurchasedAt
+    latestPurchasedAt
+  }
+  rowCount
+  errorCount
+  committedCount
+  error
+  uploadedById
+  stagedAt
+  committedAt
+  committedById
+  version
+  createdAt
+  updatedAt
+  document {
+    id
+    fileName
+    originalName
+    fileType
+    fileSize
+    createdAt
+  }
+  defaultFuelCard {
+    id
+    provider
+    lastFour
+    label
+  }
+}
+    `, {"fragmentName":"FuelPurchaseImportBatchFields"}) as unknown as TypedDocumentString<FuelPurchaseImportBatchFieldsFragment, unknown>;
+export const FuelPurchaseImportRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FuelPurchaseImportRowFields on FuelPurchaseImportRow {
+  id
+  importBatchId
+  rowNumber
+  cells
+  parsed {
+    purchasedAt
+    vendor
+    vendorCity
+    jurisdictionCode
+    fuelType
+    quantity
+    quantityUnit
+    gallons
+    unitPrice
+    totalAmount
+    currencyCode
+    transactionReference
+    cardLastFour
+    tractorCode
+    odometer
+  }
+  transactionReference
+  status
+  error
+  resolvedTractorId
+  resolvedFuelCardId
+  resolvedJurisdictionId
+  resolutionNotes
+  fuelPurchaseId
+  createdAt
+  resolvedTractor {
+    id
+    code
+  }
+}
+    `, {"fragmentName":"FuelPurchaseImportRowFields"}) as unknown as TypedDocumentString<FuelPurchaseImportRowFieldsFragment, unknown>;
+export const FuelPurchaseFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FuelPurchaseFields on FuelPurchase {
+  id
+  businessUnitId
+  organizationId
+  tractorId
+  workerId
+  jurisdictionId
+  fuelCardId
+  cardLastFour
+  purchasedAt
+  vendor
+  vendorCity
+  fuelType
+  quantity
+  quantityUnit
+  gallons
+  unitPrice
+  totalAmount
+  currencyCode
+  odometer
+  transactionReference
+  source
+  importBatchId
+  taxPaid
+  notes
+  createdById
+  version
+  createdAt
+  updatedAt
+  tractor {
+    id
+    code
+  }
+  worker {
+    id
+    wholeName
+    firstName
+    lastName
+  }
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+  }
+  fuelCard {
+    id
+    provider
+    lastFour
+    label
+  }
+}
+    `, {"fragmentName":"FuelPurchaseFields"}) as unknown as TypedDocumentString<FuelPurchaseFieldsFragment, unknown>;
 export const FuelIndexFieldsFragmentDoc = new TypedDocumentString(`
     fragment FuelIndexFields on FuelIndex {
   id
@@ -11505,6 +12302,253 @@ export const HomeLayoutPresetFieldsFragmentDoc = new TypedDocumentString(`
     windowDays
   }
 }`, {"fragmentName":"HomeLayoutPresetFields"}) as unknown as TypedDocumentString<HomeLayoutPresetFieldsFragment, unknown>;
+export const IftaMileageEntryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {
+  id
+  businessUnitId
+  organizationId
+  tractorId
+  jurisdictionId
+  traveledAt
+  year
+  quarter
+  miles
+  loaded
+  source
+  shipmentMoveId
+  notes
+  createdById
+  version
+  createdAt
+  updatedAt
+  tractor {
+    id
+    code
+  }
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+  }
+}
+    `, {"fragmentName":"IftaMileageEntryFields"}) as unknown as TypedDocumentString<IftaMileageEntryFieldsFragment, unknown>;
+export const IftaJurisdictionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaJurisdictionFields on IFTAJurisdiction {
+  id
+  countryCode
+  code
+  name
+  usStateId
+  isIftaMember
+  hasSurcharge
+  sortOrder
+  status
+}
+    `, {"fragmentName":"IftaJurisdictionFields"}) as unknown as TypedDocumentString<IftaJurisdictionFieldsFragment, unknown>;
+export const IftaPeriodFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaPeriodFields on IFTAPeriod {
+  year
+  quarter
+  key
+  label
+  start
+  end
+  dueDate
+}
+    `, {"fragmentName":"IftaPeriodFields"}) as unknown as TypedDocumentString<IftaPeriodFieldsFragment, unknown>;
+export const IftaReturnLineFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaReturnLineFields on IFTAReturnLine {
+  id
+  returnId
+  jurisdictionId
+  fuelType
+  isIftaMember
+  totalMiles
+  taxableMiles
+  routeMiles
+  manualMiles
+  loadedMiles
+  emptyMiles
+  taxPaidGallons
+  taxPaidGallonsRaw
+  purchaseCount
+  taxableGallons
+  netTaxableGallons
+  ratePerGallon
+  surchargeRatePerGallon
+  rateMissing
+  taxDue
+  surchargeDue
+  lineTotal
+  sortOrder
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+    isIftaMember
+    hasSurcharge
+  }
+}
+    `, {"fragmentName":"IftaReturnLineFields"}) as unknown as TypedDocumentString<IftaReturnLineFieldsFragment, unknown>;
+export const IftaReturnFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaReturnFields on IFTAReturn {
+  id
+  businessUnitId
+  organizationId
+  year
+  quarter
+  period {
+    ...IftaPeriodFields
+  }
+  amendmentNumber
+  amendsReturnId
+  amendsReturn {
+    id
+    amendmentNumber
+    status
+  }
+  status
+  timezone
+  periodStart
+  periodEnd
+  totalMiles
+  totalTaxableMiles
+  totalGallons
+  totalTaxPaidGallons
+  netTaxableGallons
+  taxDue
+  surchargeDue
+  netDue
+  currencyCode
+  fleetMpgByFuelType {
+    fuelType
+    mpg
+    totalMiles
+    totalGallons
+  }
+  unattributedMiles
+  unattributedMoveCount
+  noTractorMiles
+  noTractorMoveCount
+  problems {
+    code
+    message
+    jurisdictionCode
+    fuelType
+    amount
+  }
+  computedAt
+  finalizedAt
+  finalizedById
+  finalizedBy {
+    id
+    name
+  }
+  filedAt
+  filedById
+  filedBy {
+    id
+    name
+  }
+  filingReference
+  reopenedAt
+  reopenedById
+  reopenReason
+  lines {
+    ...IftaReturnLineFields
+  }
+  version
+  createdAt
+  updatedAt
+}
+    fragment IftaPeriodFields on IFTAPeriod {
+  year
+  quarter
+  key
+  label
+  start
+  end
+  dueDate
+}
+fragment IftaReturnLineFields on IFTAReturnLine {
+  id
+  returnId
+  jurisdictionId
+  fuelType
+  isIftaMember
+  totalMiles
+  taxableMiles
+  routeMiles
+  manualMiles
+  loadedMiles
+  emptyMiles
+  taxPaidGallons
+  taxPaidGallonsRaw
+  purchaseCount
+  taxableGallons
+  netTaxableGallons
+  ratePerGallon
+  surchargeRatePerGallon
+  rateMissing
+  taxDue
+  surchargeDue
+  lineTotal
+  sortOrder
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+    isIftaMember
+    hasSurcharge
+  }
+}`, {"fragmentName":"IftaReturnFields"}) as unknown as TypedDocumentString<IftaReturnFieldsFragment, unknown>;
+export const IftaReturnSummaryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaReturnSummaryFields on IFTAReturn {
+  id
+  year
+  quarter
+  amendmentNumber
+  status
+  totalMiles
+  totalTaxPaidGallons
+  netDue
+  currencyCode
+  computedAt
+  finalizedAt
+  filedAt
+  filingReference
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"IftaReturnSummaryFields"}) as unknown as TypedDocumentString<IftaReturnSummaryFieldsFragment, unknown>;
+export const IftaTaxRateFieldsFragmentDoc = new TypedDocumentString(`
+    fragment IftaTaxRateFields on IFTATaxRate {
+  id
+  jurisdictionId
+  year
+  quarter
+  fuelType
+  ratePerGallon
+  surchargeRatePerGallon
+  sourceNote
+  sourceUrl
+  version
+  createdAt
+  updatedAt
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+    hasSurcharge
+    isIftaMember
+  }
+}
+    `, {"fragmentName":"IftaTaxRateFields"}) as unknown as TypedDocumentString<IftaTaxRateFieldsFragment, unknown>;
 export const InvoiceTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment InvoiceTableRowFields on Invoice {
   id
@@ -14867,7 +15911,7 @@ export const EdiMappingProfileTableDocument = {"__meta__":{"kind":"query","name"
 export const EdiTestCaseTableDocument = {"__meta__":{"kind":"query","name":"EdiTestCaseTable","hash":"sha256:d756c48e3126c301617365bb1e51392207be8ea5dfe5eb5edd98ee944fe9ae2e"}} as unknown as TypedDocumentString<EdiTestCaseTableQuery, EdiTestCaseTableQueryVariables>;
 export const EmailProfileTableDocument = {"__meta__":{"kind":"query","name":"EmailProfileTable","hash":"sha256:6715e7bbdbc8507f91814cf918ce342f71e29f1ff52f82d38056f843a8ffa79f"}} as unknown as TypedDocumentString<EmailProfileTableQuery, EmailProfileTableQueryVariables>;
 export const EquipmentManufacturerTableDocument = {"__meta__":{"kind":"query","name":"EquipmentManufacturerTable","hash":"sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7"}} as unknown as TypedDocumentString<EquipmentManufacturerTableQuery, EquipmentManufacturerTableQueryVariables>;
-export const TractorTableDocument = {"__meta__":{"kind":"query","name":"TractorTable","hash":"sha256:b08475fc76d198c7d5a35cc3d3690bda0fc2c06b1fb8b74fe350fd4168fa8c1a"}} as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
+export const TractorTableDocument = {"__meta__":{"kind":"query","name":"TractorTable","hash":"sha256:19329f9543d8714fd002b65bb9f04fcacc89b404bbb21d62cd6f42b21b4553e5"}} as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
 export const TrailerTableDocument = {"__meta__":{"kind":"query","name":"TrailerTable","hash":"sha256:f5ca58d5c5853b2e6ac5dab10cf884d1c5ccce29cda55b95957215797da21f42"}} as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
 export const EquipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"EquipmentTypeTable","hash":"sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05"}} as unknown as TypedDocumentString<EquipmentTypeTableQuery, EquipmentTypeTableQueryVariables>;
 export const EquipmentTypeDocument = {"__meta__":{"kind":"query","name":"EquipmentType","hash":"sha256:77492fa4f96133c985d9c81eff2aea6ca53852b002fa122718aeae37e4fd5b06"}} as unknown as TypedDocumentString<EquipmentTypeQuery, EquipmentTypeQueryVariables>;
@@ -14883,6 +15927,23 @@ export const RecordSafetyViolationDocument = {"__meta__":{"kind":"mutation","nam
 export const UpdateSafetyViolationDocument = {"__meta__":{"kind":"mutation","name":"UpdateSafetyViolation","hash":"sha256:cae84810be9706e503d19974a6e82eb84ad55f67779583dfcdce0eecb6087b19"}} as unknown as TypedDocumentString<UpdateSafetyViolationMutation, UpdateSafetyViolationMutationVariables>;
 export const DeleteSafetyViolationDocument = {"__meta__":{"kind":"mutation","name":"DeleteSafetyViolation","hash":"sha256:6799fc0a158227f6ff06996ab7ce4f2f8fc5386a8c20515dd973a0dc3ac1ead0"}} as unknown as TypedDocumentString<DeleteSafetyViolationMutation, DeleteSafetyViolationMutationVariables>;
 export const FormulaTemplateTableDocument = {"__meta__":{"kind":"query","name":"FormulaTemplateTable","hash":"sha256:9fe86d3e1a8ccdb28fd5932ef322980f9ce4605286640620ee0f98833cbda924"}} as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+export const FuelCardTableDocument = {"__meta__":{"kind":"query","name":"FuelCardTable","hash":"sha256:08bab34c0b22a68ef521d267fe0f3138a9288b3cfd19b48aa23c19710e77f5ef"}} as unknown as TypedDocumentString<FuelCardTableQuery, FuelCardTableQueryVariables>;
+export const FuelCardDocument = {"__meta__":{"kind":"query","name":"FuelCard","hash":"sha256:01fb3333e469ca988846cda5556e9e6b0dbfc125e4fa81f01739c0048d258759"}} as unknown as TypedDocumentString<FuelCardQuery, FuelCardQueryVariables>;
+export const CreateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelCard","hash":"sha256:31868851d191fb859a57778c4ac76e24dbdb82f75fee9620d93e8f4924954779"}} as unknown as TypedDocumentString<CreateFuelCardMutation, CreateFuelCardMutationVariables>;
+export const UpdateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"UpdateFuelCard","hash":"sha256:0d1814fc8247359cd021b69608a739da4b0b1d9b5107c474b55cbc969d836251"}} as unknown as TypedDocumentString<UpdateFuelCardMutation, UpdateFuelCardMutationVariables>;
+export const CancelFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CancelFuelCard","hash":"sha256:f93748bfecc5f07647f51fc9929ae94346009a0f0d17df3e835609e29741a176"}} as unknown as TypedDocumentString<CancelFuelCardMutation, CancelFuelCardMutationVariables>;
+export const FuelPurchaseImportDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImport","hash":"sha256:15bc80f50ada8bce5289481e607af6b019f1f0fce834365e1279e9a8a4153b80"}} as unknown as TypedDocumentString<FuelPurchaseImportQuery, FuelPurchaseImportQueryVariables>;
+export const FuelPurchaseImportRowsDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportRows","hash":"sha256:76069fcd08f48d67bd04dd94e0702df4d9971c03c2ff5959ba8d3706aa9d5384"}} as unknown as TypedDocumentString<FuelPurchaseImportRowsQuery, FuelPurchaseImportRowsQueryVariables>;
+export const FuelPurchaseImportTemplateDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportTemplate","hash":"sha256:31cc70334d73006c9b344e26682020d505d5893d2b8b8253be40add52cb77d4d"}} as unknown as TypedDocumentString<FuelPurchaseImportTemplateQuery, FuelPurchaseImportTemplateQueryVariables>;
+export const CreateFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelPurchaseImport","hash":"sha256:6b75ae1a80914d39cfe031c5957551966a9b17b94e355da4f8f8e9b7b148a39e"}} as unknown as TypedDocumentString<CreateFuelPurchaseImportMutation, CreateFuelPurchaseImportMutationVariables>;
+export const StageFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"StageFuelPurchaseImport","hash":"sha256:d5a302b371ad1652deff531b40d000743c0a10c098f88ce768d5663744ce9323"}} as unknown as TypedDocumentString<StageFuelPurchaseImportMutation, StageFuelPurchaseImportMutationVariables>;
+export const CommitFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"CommitFuelPurchaseImport","hash":"sha256:551ac231774a82195fa412c22bb7c7f9df7428e09e068ac6bd429f8d91852ce3"}} as unknown as TypedDocumentString<CommitFuelPurchaseImportMutation, CommitFuelPurchaseImportMutationVariables>;
+export const DiscardFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"DiscardFuelPurchaseImport","hash":"sha256:c5c58d1c52402aee117637775ee81dbabaf5b5abbc6a04275a4685acf58295ce"}} as unknown as TypedDocumentString<DiscardFuelPurchaseImportMutation, DiscardFuelPurchaseImportMutationVariables>;
+export const FuelPurchaseTableDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseTable","hash":"sha256:1b517bbfca7c783424cb89b37ff0e1b284c061714a3775c215929551249ca481"}} as unknown as TypedDocumentString<FuelPurchaseTableQuery, FuelPurchaseTableQueryVariables>;
+export const FuelPurchaseDocument = {"__meta__":{"kind":"query","name":"FuelPurchase","hash":"sha256:d42b03441fabf22f72b2a52b37d9e38d3667ece2aa8a8a2ca48b4eeac53665a8"}} as unknown as TypedDocumentString<FuelPurchaseQuery, FuelPurchaseQueryVariables>;
+export const CreateFuelPurchaseDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelPurchase","hash":"sha256:ef463f75895788d035e4a316c19e1a029c9cdac9c08aceb92d5d7adb9137fed7"}} as unknown as TypedDocumentString<CreateFuelPurchaseMutation, CreateFuelPurchaseMutationVariables>;
+export const UpdateFuelPurchaseDocument = {"__meta__":{"kind":"mutation","name":"UpdateFuelPurchase","hash":"sha256:9c66705e46769dae40d259e6a9ec6b70d50dad0ec0c2d96b4fd4d095a0d11ce3"}} as unknown as TypedDocumentString<UpdateFuelPurchaseMutation, UpdateFuelPurchaseMutationVariables>;
+export const DeleteFuelPurchaseDocument = {"__meta__":{"kind":"mutation","name":"DeleteFuelPurchase","hash":"sha256:92b48dc6aa4689d56ec42b7b5c698aa79081711032f51ce315819719f6534355"}} as unknown as TypedDocumentString<DeleteFuelPurchaseMutation, DeleteFuelPurchaseMutationVariables>;
 export const FuelIndexTableDocument = {"__meta__":{"kind":"query","name":"FuelIndexTable","hash":"sha256:a0b86e8015ebbd3614c2170d990849389d7542c3697779df9db1a33d99c5dc4f"}} as unknown as TypedDocumentString<FuelIndexTableQuery, FuelIndexTableQueryVariables>;
 export const FuelSurchargeProgramTableDocument = {"__meta__":{"kind":"query","name":"FuelSurchargeProgramTable","hash":"sha256:b5f34d25e9ba03e9f90cf0266c8c8d59bef2ac3dd81311e620a280bb7bc981ec"}} as unknown as TypedDocumentString<FuelSurchargeProgramTableQuery, FuelSurchargeProgramTableQueryVariables>;
 export const FuelSurchargeProgramDetailDocument = {"__meta__":{"kind":"query","name":"FuelSurchargeProgramDetail","hash":"sha256:668cfbb25c0bc4ff5599aa92de019bbabb47ff8af16e9eb7f9a53e59698287a9"}} as unknown as TypedDocumentString<FuelSurchargeProgramDetailQuery, FuelSurchargeProgramDetailQueryVariables>;
@@ -14913,6 +15974,28 @@ export const HomeWidgetCatalogDocument = {"__meta__":{"kind":"query","name":"Hom
 export const HomeLayoutPresetsDocument = {"__meta__":{"kind":"query","name":"HomeLayoutPresets","hash":"sha256:4e593b5900c91c160d041d71d66f1246ed5f1962ead7fe0e6f4f217c00427400"}} as unknown as TypedDocumentString<HomeLayoutPresetsQuery, HomeLayoutPresetsQueryVariables>;
 export const HomeLayoutPresetDocument = {"__meta__":{"kind":"query","name":"HomeLayoutPreset","hash":"sha256:6ab7e3b94462884c03c1835ebff74e5d06d7f94b1ae69512da5254714985fe63"}} as unknown as TypedDocumentString<HomeLayoutPresetQuery, HomeLayoutPresetQueryVariables>;
 export const HomeLayoutPreviewDocument = {"__meta__":{"kind":"query","name":"HomeLayoutPreview","hash":"sha256:1cf255a093a992d50b4a00e4b558a23190b43df72bb4ff298821a5b9180946df"}} as unknown as TypedDocumentString<HomeLayoutPreviewQuery, HomeLayoutPreviewQueryVariables>;
+export const IftaMileageEntryTableDocument = {"__meta__":{"kind":"query","name":"IftaMileageEntryTable","hash":"sha256:66058c6e3361c2a41ad513f392898d2614472a9a0c4155073ccb377c4b2668c5"}} as unknown as TypedDocumentString<IftaMileageEntryTableQuery, IftaMileageEntryTableQueryVariables>;
+export const IftaMileageEntryDocument = {"__meta__":{"kind":"query","name":"IftaMileageEntry","hash":"sha256:ae12f876fe7b51bb56cec67fb0992841b7d64b926e75a539ccdfdef1e594c4c7"}} as unknown as TypedDocumentString<IftaMileageEntryQuery, IftaMileageEntryQueryVariables>;
+export const CreateIftaMileageEntryDocument = {"__meta__":{"kind":"mutation","name":"CreateIftaMileageEntry","hash":"sha256:78ff7b8f4d3dfa83100e6d8bd140384bc601c69d7628004b9fc8bc90f20c1660"}} as unknown as TypedDocumentString<CreateIftaMileageEntryMutation, CreateIftaMileageEntryMutationVariables>;
+export const UpdateIftaMileageEntryDocument = {"__meta__":{"kind":"mutation","name":"UpdateIftaMileageEntry","hash":"sha256:db3417161c4d8d67d296d7d97e8ee8e50641e3e4399c022a38960338f4c41b8a"}} as unknown as TypedDocumentString<UpdateIftaMileageEntryMutation, UpdateIftaMileageEntryMutationVariables>;
+export const DeleteIftaMileageEntryDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaMileageEntry","hash":"sha256:a50349f07575b1af39b4754a08c6edb7785fc426ee1cf766eb11b225c68e4213"}} as unknown as TypedDocumentString<DeleteIftaMileageEntryMutation, DeleteIftaMileageEntryMutationVariables>;
+export const IftaJurisdictionsDocument = {"__meta__":{"kind":"query","name":"IftaJurisdictions","hash":"sha256:36e4d33c7597c2be3de87f817943565acf932a13cf8b63e8b31a81ab198d622d"}} as unknown as TypedDocumentString<IftaJurisdictionsQuery, IftaJurisdictionsQueryVariables>;
+export const IftaReturnForPeriodDocument = {"__meta__":{"kind":"query","name":"IftaReturnForPeriod","hash":"sha256:0eeba98dd4b248b1e1270a038d6ea8ebf0b6e9fc2c8eb0c383fd83f5467aa006"}} as unknown as TypedDocumentString<IftaReturnForPeriodQuery, IftaReturnForPeriodQueryVariables>;
+export const IftaReturnDocument = {"__meta__":{"kind":"query","name":"IftaReturn","hash":"sha256:13ccd49d841eeb5e6362844e3d0e6c5d242d1a8ad2f3b62b57366810d3663ac9"}} as unknown as TypedDocumentString<IftaReturnQuery, IftaReturnQueryVariables>;
+export const IftaReturnTableDocument = {"__meta__":{"kind":"query","name":"IftaReturnTable","hash":"sha256:8f9c89533e5ba9202016848c4002d479c483ecd941dd366ae23d9b3340514584"}} as unknown as TypedDocumentString<IftaReturnTableQuery, IftaReturnTableQueryVariables>;
+export const IftaCurrentPeriodDocument = {"__meta__":{"kind":"query","name":"IftaCurrentPeriod","hash":"sha256:65c7343838c2470ef9556bd4dd4020b769865da0d7f214079ca7573a5c9b80f3"}} as unknown as TypedDocumentString<IftaCurrentPeriodQuery, IftaCurrentPeriodQueryVariables>;
+export const IftaPeriodDocument = {"__meta__":{"kind":"query","name":"IftaPeriod","hash":"sha256:5233eec4be49a9b867ac2b5ba34c80d373cb002420627cd092080cec01da9057"}} as unknown as TypedDocumentString<IftaPeriodQuery, IftaPeriodQueryVariables>;
+export const GenerateIftaReturnDocument = {"__meta__":{"kind":"mutation","name":"GenerateIftaReturn","hash":"sha256:18a9184c4e27e604547100180762480fe5b3ddd0a3441ce483c2a823c12466f2"}} as unknown as TypedDocumentString<GenerateIftaReturnMutation, GenerateIftaReturnMutationVariables>;
+export const RecomputeIftaReturnDocument = {"__meta__":{"kind":"mutation","name":"RecomputeIftaReturn","hash":"sha256:5ad33bca01818ff7b9ea259638a7342923b673d0ab22ec9cecc849844edb189c"}} as unknown as TypedDocumentString<RecomputeIftaReturnMutation, RecomputeIftaReturnMutationVariables>;
+export const FinalizeIftaReturnDocument = {"__meta__":{"kind":"mutation","name":"FinalizeIftaReturn","hash":"sha256:8d0095fa44207f65499ba0e281e7dfb4cc21f972cd17339b5369bdfe8634833d"}} as unknown as TypedDocumentString<FinalizeIftaReturnMutation, FinalizeIftaReturnMutationVariables>;
+export const ReopenIftaReturnDocument = {"__meta__":{"kind":"mutation","name":"ReopenIftaReturn","hash":"sha256:dc138f18d68ef10805888857fb9537b772bfca78db588d2bbe00ccdb199dc7b8"}} as unknown as TypedDocumentString<ReopenIftaReturnMutation, ReopenIftaReturnMutationVariables>;
+export const MarkIftaReturnFiledDocument = {"__meta__":{"kind":"mutation","name":"MarkIftaReturnFiled","hash":"sha256:873c922d30e34be17ce51a19c034596c9b4077216fa99b7ffbf11961b30e728f"}} as unknown as TypedDocumentString<MarkIftaReturnFiledMutation, MarkIftaReturnFiledMutationVariables>;
+export const AmendIftaReturnDocument = {"__meta__":{"kind":"mutation","name":"AmendIftaReturn","hash":"sha256:12ba63b9267166c4c24236ed8793d38c7deb0dcf45f28a55544c007d275765b1"}} as unknown as TypedDocumentString<AmendIftaReturnMutation, AmendIftaReturnMutationVariables>;
+export const DeleteIftaReturnDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaReturn","hash":"sha256:7f7310c3528509f8c259bed8da8483f566528b3753f7700a2622038436c48885"}} as unknown as TypedDocumentString<DeleteIftaReturnMutation, DeleteIftaReturnMutationVariables>;
+export const BackfillJurisdictionMilesDocument = {"__meta__":{"kind":"mutation","name":"BackfillJurisdictionMiles","hash":"sha256:d0b29a09ad751cb2ea77772d7acc10cfc0ae1875f9b5cdfa70f4dd9991ca33e1"}} as unknown as TypedDocumentString<BackfillJurisdictionMilesMutation, BackfillJurisdictionMilesMutationVariables>;
+export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
+export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
+export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
 export const InvoiceTableDocument = {"__meta__":{"kind":"query","name":"InvoiceTable","hash":"sha256:63d68f9764990f48180ca1e6c938cec819f504ae13f959b9b1abd06dffdd4609"}} as unknown as TypedDocumentString<InvoiceTableQuery, InvoiceTableQueryVariables>;
 export const JournalEntryDetailDocument = {"__meta__":{"kind":"query","name":"JournalEntryDetail","hash":"sha256:9115c76311ea912a3c9abf400bf6fc66c811ec2227b1500769f88a829782a646"}} as unknown as TypedDocumentString<JournalEntryDetailQuery, JournalEntryDetailQueryVariables>;
 export const JournalSourceByObjectDocument = {"__meta__":{"kind":"query","name":"JournalSourceByObject","hash":"sha256:9fc6924e799999cbc0d1e413752b76e244eb6f3d8f0cef4eec55f1c5d2b785af"}} as unknown as TypedDocumentString<JournalSourceByObjectQuery, JournalSourceByObjectQueryVariables>;

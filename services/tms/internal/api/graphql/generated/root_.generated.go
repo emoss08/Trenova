@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
@@ -68,6 +69,19 @@ type ResolverRoot interface {
 	FleetSafetyRank() FleetSafetyRankResolver
 	FleetSafetyTerminal() FleetSafetyTerminalResolver
 	FormulaTemplate() FormulaTemplateResolver
+	FuelCard() FuelCardResolver
+	FuelPurchase() FuelPurchaseResolver
+	FuelPurchaseImportBatch() FuelPurchaseImportBatchResolver
+	FuelPurchaseImportRow() FuelPurchaseImportRowResolver
+	FuelPurchaseImportSummary() FuelPurchaseImportSummaryResolver
+	IFTAFleetMPG() IFTAFleetMPGResolver
+	IFTAJurisdiction() IFTAJurisdictionResolver
+	IFTAJurisdictionMileageEntry() IFTAJurisdictionMileageEntryResolver
+	IFTAPeriod() IFTAPeriodResolver
+	IFTAReturn() IFTAReturnResolver
+	IFTAReturnLine() IFTAReturnLineResolver
+	IFTAReturnProblem() IFTAReturnProblemResolver
+	IFTATaxRate() IFTATaxRateResolver
 	Invoice() InvoiceResolver
 	InvoiceLine() InvoiceLineResolver
 	JobPosition() JobPositionResolver
@@ -110,6 +124,8 @@ type ResolverRoot interface {
 	ShiftTemplate() ShiftTemplateResolver
 	Shipment() ShipmentResolver
 	ShipmentCustomer() ShipmentCustomerResolver
+	ShipmentMove() ShipmentMoveResolver
+	ShipmentMoveJurisdictionMile() ShipmentMoveJurisdictionMileResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
 	Tender() TenderResolver
@@ -3447,12 +3463,50 @@ type ComplexityRoot struct {
 		Type         func(childComplexity int) int
 	}
 
+	FuelCard struct {
+		AssignedTractor   func(childComplexity int) int
+		AssignedTractorID func(childComplexity int) int
+		AssignedWorker    func(childComplexity int) int
+		AssignedWorkerID  func(childComplexity int) int
+		BusinessUnitID    func(childComplexity int) int
+		CancelReason      func(childComplexity int) int
+		CancelledAt       func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		ExpiresAt         func(childComplexity int) int
+		ExternalCardID    func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Label             func(childComplexity int) int
+		LastFour          func(childComplexity int) int
+		Notes             func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		Provider          func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	FuelCardConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	FuelCardEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	FuelCostResolution struct {
 		FuelIndexID    func(childComplexity int) int
 		MilesPerGallon func(childComplexity int) int
 		PriceDate      func(childComplexity int) int
 		PricePerGallon func(childComplexity int) int
 		Source         func(childComplexity int) int
+	}
+
+	FuelImportTemplate struct {
+		Content  func(childComplexity int) int
+		FileName func(childComplexity int) int
 	}
 
 	FuelIndex struct {
@@ -3513,6 +3567,146 @@ type ComplexityRoot struct {
 		Program      func(childComplexity int) int
 		RatePerMile  func(childComplexity int) int
 		UsedFallback func(childComplexity int) int
+	}
+
+	FuelPurchase struct {
+		BusinessUnitID       func(childComplexity int) int
+		CardLastFour         func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		CreatedByID          func(childComplexity int) int
+		CurrencyCode         func(childComplexity int) int
+		FuelCard             func(childComplexity int) int
+		FuelCardID           func(childComplexity int) int
+		FuelType             func(childComplexity int) int
+		Gallons              func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		ImportBatchID        func(childComplexity int) int
+		Jurisdiction         func(childComplexity int) int
+		JurisdictionID       func(childComplexity int) int
+		Notes                func(childComplexity int) int
+		Odometer             func(childComplexity int) int
+		OrganizationID       func(childComplexity int) int
+		PurchasedAt          func(childComplexity int) int
+		Quantity             func(childComplexity int) int
+		QuantityUnit         func(childComplexity int) int
+		Source               func(childComplexity int) int
+		TaxPaid              func(childComplexity int) int
+		TotalAmount          func(childComplexity int) int
+		Tractor              func(childComplexity int) int
+		TractorID            func(childComplexity int) int
+		TransactionReference func(childComplexity int) int
+		UnitPrice            func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Vendor               func(childComplexity int) int
+		VendorCity           func(childComplexity int) int
+		Version              func(childComplexity int) int
+		Worker               func(childComplexity int) int
+		WorkerID             func(childComplexity int) int
+	}
+
+	FuelPurchaseConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	FuelPurchaseEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	FuelPurchaseImportBatch struct {
+		BusinessUnitID    func(childComplexity int) int
+		CommittedAt       func(childComplexity int) int
+		CommittedByID     func(childComplexity int) int
+		CommittedCount    func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		DefaultCurrency   func(childComplexity int) int
+		DefaultFuelCard   func(childComplexity int) int
+		DefaultFuelCardID func(childComplexity int) int
+		DefaultFuelType   func(childComplexity int) int
+		Document          func(childComplexity int) int
+		DocumentID        func(childComplexity int) int
+		Error             func(childComplexity int) int
+		ErrorCount        func(childComplexity int) int
+		FileName          func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Mapping           func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		Provider          func(childComplexity int) int
+		RowCount          func(childComplexity int) int
+		Rows              func(childComplexity int, input *gqlmodel.FuelPurchaseImportRowsInput) int
+		SourceFormat      func(childComplexity int) int
+		StagedAt          func(childComplexity int) int
+		Status            func(childComplexity int) int
+		Summary           func(childComplexity int) int
+		UnmappedHeaders   func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		UploadedByID      func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	FuelPurchaseImportParsed struct {
+		CardLastFour         func(childComplexity int) int
+		CurrencyCode         func(childComplexity int) int
+		FuelType             func(childComplexity int) int
+		Gallons              func(childComplexity int) int
+		JurisdictionCode     func(childComplexity int) int
+		Odometer             func(childComplexity int) int
+		PurchasedAt          func(childComplexity int) int
+		Quantity             func(childComplexity int) int
+		QuantityUnit         func(childComplexity int) int
+		TotalAmount          func(childComplexity int) int
+		TractorCode          func(childComplexity int) int
+		TransactionReference func(childComplexity int) int
+		UnitPrice            func(childComplexity int) int
+		Vendor               func(childComplexity int) int
+		VendorCity           func(childComplexity int) int
+	}
+
+	FuelPurchaseImportRow struct {
+		BusinessUnitID         func(childComplexity int) int
+		Cells                  func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		Error                  func(childComplexity int) int
+		FuelPurchaseID         func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		ImportBatchID          func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		Parsed                 func(childComplexity int) int
+		ResolutionNotes        func(childComplexity int) int
+		ResolvedFuelCardID     func(childComplexity int) int
+		ResolvedJurisdictionID func(childComplexity int) int
+		ResolvedTractor        func(childComplexity int) int
+		ResolvedTractorID      func(childComplexity int) int
+		RowNumber              func(childComplexity int) int
+		Status                 func(childComplexity int) int
+		TransactionReference   func(childComplexity int) int
+	}
+
+	FuelPurchaseImportRowConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	FuelPurchaseImportRowEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	FuelPurchaseImportSummary struct {
+		AlreadyImportedCount func(childComplexity int) int
+		ByFuelType           func(childComplexity int) int
+		ByJurisdiction       func(childComplexity int) int
+		DuplicateInFileCount func(childComplexity int) int
+		EarliestPurchasedAt  func(childComplexity int) int
+		ErrorCount           func(childComplexity int) int
+		LatestPurchasedAt    func(childComplexity int) int
+		NewCount             func(childComplexity int) int
+		RowCount             func(childComplexity int) int
+		TotalAmount          func(childComplexity int) int
+		TotalGallons         func(childComplexity int) int
 	}
 
 	FuelSurchargeProgram struct {
@@ -3820,6 +4014,194 @@ type ComplexityRoot struct {
 		WorkerName      func(childComplexity int) int
 	}
 
+	IFTAFleetMPG struct {
+		FuelType     func(childComplexity int) int
+		Mpg          func(childComplexity int) int
+		TotalGallons func(childComplexity int) int
+		TotalMiles   func(childComplexity int) int
+	}
+
+	IFTAJurisdiction struct {
+		Code         func(childComplexity int) int
+		CountryCode  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		HasSurcharge func(childComplexity int) int
+		ID           func(childComplexity int) int
+		IsIftaMember func(childComplexity int) int
+		Name         func(childComplexity int) int
+		SortOrder    func(childComplexity int) int
+		Status       func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		UsState      func(childComplexity int) int
+		UsStateID    func(childComplexity int) int
+	}
+
+	IFTAJurisdictionMileageEntry struct {
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		CreatedByID    func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Jurisdiction   func(childComplexity int) int
+		JurisdictionID func(childComplexity int) int
+		Loaded         func(childComplexity int) int
+		Miles          func(childComplexity int) int
+		Notes          func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Quarter        func(childComplexity int) int
+		ShipmentMoveID func(childComplexity int) int
+		Source         func(childComplexity int) int
+		Tractor        func(childComplexity int) int
+		TractorID      func(childComplexity int) int
+		TraveledAt     func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+		Year           func(childComplexity int) int
+	}
+
+	IFTAJurisdictionMileageEntryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	IFTAJurisdictionMileageEntryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	IFTAPeriod struct {
+		DueDate func(childComplexity int) int
+		End     func(childComplexity int) int
+		Key     func(childComplexity int) int
+		Label   func(childComplexity int) int
+		Quarter func(childComplexity int) int
+		Start   func(childComplexity int) int
+		Year    func(childComplexity int) int
+	}
+
+	IFTAReturn struct {
+		AmendmentNumber       func(childComplexity int) int
+		AmendsReturn          func(childComplexity int) int
+		AmendsReturnID        func(childComplexity int) int
+		BusinessUnitID        func(childComplexity int) int
+		ComputedAt            func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		CurrencyCode          func(childComplexity int) int
+		FiledAt               func(childComplexity int) int
+		FiledBy               func(childComplexity int) int
+		FiledByID             func(childComplexity int) int
+		FilingReference       func(childComplexity int) int
+		FinalizedAt           func(childComplexity int) int
+		FinalizedBy           func(childComplexity int) int
+		FinalizedByID         func(childComplexity int) int
+		FleetMpgByFuelType    func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Lines                 func(childComplexity int) int
+		NetDue                func(childComplexity int) int
+		NetTaxableGallons     func(childComplexity int) int
+		NoTractorMiles        func(childComplexity int) int
+		NoTractorMoveCount    func(childComplexity int) int
+		OrganizationID        func(childComplexity int) int
+		Period                func(childComplexity int) int
+		PeriodEnd             func(childComplexity int) int
+		PeriodStart           func(childComplexity int) int
+		Problems              func(childComplexity int) int
+		Quarter               func(childComplexity int) int
+		ReopenReason          func(childComplexity int) int
+		ReopenedAt            func(childComplexity int) int
+		ReopenedByID          func(childComplexity int) int
+		Status                func(childComplexity int) int
+		SurchargeDue          func(childComplexity int) int
+		TaxDue                func(childComplexity int) int
+		Timezone              func(childComplexity int) int
+		TotalGallons          func(childComplexity int) int
+		TotalMiles            func(childComplexity int) int
+		TotalTaxPaidGallons   func(childComplexity int) int
+		TotalTaxableMiles     func(childComplexity int) int
+		UnattributedMiles     func(childComplexity int) int
+		UnattributedMoveCount func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		Version               func(childComplexity int) int
+		Year                  func(childComplexity int) int
+	}
+
+	IFTAReturnConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	IFTAReturnEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	IFTAReturnLine struct {
+		BusinessUnitID         func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		EmptyMiles             func(childComplexity int) int
+		FuelType               func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		IsIftaMember           func(childComplexity int) int
+		Jurisdiction           func(childComplexity int) int
+		JurisdictionID         func(childComplexity int) int
+		LineTotal              func(childComplexity int) int
+		LoadedMiles            func(childComplexity int) int
+		ManualMiles            func(childComplexity int) int
+		NetTaxableGallons      func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		PurchaseCount          func(childComplexity int) int
+		RateMissing            func(childComplexity int) int
+		RatePerGallon          func(childComplexity int) int
+		ReturnID               func(childComplexity int) int
+		RouteMiles             func(childComplexity int) int
+		SortOrder              func(childComplexity int) int
+		SurchargeDue           func(childComplexity int) int
+		SurchargeRatePerGallon func(childComplexity int) int
+		TaxDue                 func(childComplexity int) int
+		TaxPaidGallons         func(childComplexity int) int
+		TaxPaidGallonsRaw      func(childComplexity int) int
+		TaxableGallons         func(childComplexity int) int
+		TaxableMiles           func(childComplexity int) int
+		TotalMiles             func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+	}
+
+	IFTAReturnProblem struct {
+		Amount           func(childComplexity int) int
+		Code             func(childComplexity int) int
+		FuelType         func(childComplexity int) int
+		JurisdictionCode func(childComplexity int) int
+		Message          func(childComplexity int) int
+	}
+
+	IFTATaxRate struct {
+		CreatedAt              func(childComplexity int) int
+		FuelType               func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		Jurisdiction           func(childComplexity int) int
+		JurisdictionID         func(childComplexity int) int
+		Quarter                func(childComplexity int) int
+		RatePerGallon          func(childComplexity int) int
+		SourceNote             func(childComplexity int) int
+		SourceURL              func(childComplexity int) int
+		SurchargeRatePerGallon func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+		Version                func(childComplexity int) int
+		Year                   func(childComplexity int) int
+	}
+
+	IFTATaxRateConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	IFTATaxRateEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	InviteWorkerToPortalResult struct {
 		EmailSent  func(childComplexity int) int
 		Invitation func(childComplexity int) int
@@ -4008,6 +4390,14 @@ type ComplexityRoot struct {
 		SourceObjectID       func(childComplexity int) int
 		SourceObjectType     func(childComplexity int) int
 		Status               func(childComplexity int) int
+	}
+
+	JurisdictionMilesBackfillResult struct {
+		DryRun            func(childComplexity int) int
+		Started           func(childComplexity int) int
+		UnattributedMiles func(childComplexity int) int
+		UnattributedMoves func(childComplexity int) int
+		WorkflowID        func(childComplexity int) int
 	}
 
 	JurisdictionRule struct {
@@ -4247,6 +4637,7 @@ type ComplexityRoot struct {
 		AddOrderCharge                        func(childComplexity int, orderID string, description string, amount string) int
 		AdjustEscrowAccount                   func(childComplexity int, input gqlmodel.AdjustEscrowAccountInput) int
 		AdjustWorkerPTOBalance                func(childComplexity int, input gqlmodel.AdjustWorkerPTOBalanceInput) int
+		AmendIFTAReturn                       func(childComplexity int, id string, reason string) int
 		AmendWorkerEmploymentEvent            func(childComplexity int, input gqlmodel.AmendWorkerEmploymentEventInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
 		ApproveCarrierSettlement              func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
@@ -4274,6 +4665,7 @@ type ComplexityRoot struct {
 		AttachWorkerCredentialDocument        func(childComplexity int, input gqlmodel.AttachWorkerCredentialDocumentInput) int
 		AttachWorkerTrainingDocument          func(childComplexity int, input gqlmodel.AttachWorkerTrainingDocumentInput) int
 		AutoRateShipment                      func(childComplexity int, id string) int
+		BackfillJurisdictionMiles             func(childComplexity int, input gqlmodel.BackfillJurisdictionMilesInput) int
 		BulkAssignTraining                    func(childComplexity int, input gqlmodel.BulkAssignTrainingInput) int
 		BulkDriverSettlementAction            func(childComplexity int, input gqlmodel.BulkSettlementActionInput) int
 		BulkTransferShipmentsToBilling        func(childComplexity int, input gqlmodel.ShipmentBulkTransferToBillingInput) int
@@ -4287,6 +4679,7 @@ type ComplexityRoot struct {
 		CalculateShipmentTotals               func(childComplexity int, input gqlmodel.ShipmentInput) int
 		CancelDOTRandomDraw                   func(childComplexity int, id string, reason string) int
 		CancelDOTTest                         func(childComplexity int, id string, reason string) int
+		CancelFuelCard                        func(childComplexity int, input gqlmodel.CancelFuelCardInput) int
 		CancelMyExpense                       func(childComplexity int, id string) int
 		CancelMyPTO                           func(childComplexity int, id string) int
 		CancelOrder                           func(childComplexity int, id string, cancelReason string) int
@@ -4305,6 +4698,7 @@ type ComplexityRoot struct {
 		CloseOrder                            func(childComplexity int, id string) int
 		ClosePerformanceReview                func(childComplexity int, input gqlmodel.PerformanceReviewStatusInput) int
 		CloseWorkerSafetyEvent                func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
+		CommitFuelPurchaseImport              func(childComplexity int, id string, version int) int
 		CompleteClearinghouseQuery            func(childComplexity int, input gqlmodel.CompleteClearinghouseQueryInput) int
 		CompleteWorkerChecklistItem           func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		CompleteWorkerTraining                func(childComplexity int, input gqlmodel.CompleteWorkerTrainingInput) int
@@ -4316,9 +4710,13 @@ type ComplexityRoot struct {
 		CreateDocumentTemplateVersion         func(childComplexity int, input gqlmodel.CreateDocumentTemplateVersionInput) int
 		CreateEquipmentManufacturer           func(childComplexity int, input gqlmodel.EquipmentManufacturerInput) int
 		CreateEquipmentType                   func(childComplexity int, input gqlmodel.EquipmentTypeInput) int
+		CreateFuelCard                        func(childComplexity int, input gqlmodel.FuelCardInput) int
 		CreateFuelIndex                       func(childComplexity int, input gqlmodel.FuelIndexInput) int
+		CreateFuelPurchase                    func(childComplexity int, input gqlmodel.FuelPurchaseInput) int
+		CreateFuelPurchaseImport              func(childComplexity int, input gqlmodel.CreateFuelPurchaseImportInput) int
 		CreateFuelSurchargeProgram            func(childComplexity int, input gqlmodel.FuelSurchargeProgramInput) int
 		CreateHomeLayoutPreset                func(childComplexity int, input gqlmodel.SaveHomeLayoutPresetInput) int
+		CreateIFTAMileageEntry                func(childComplexity int, input gqlmodel.IFTAMileageEntryInput) int
 		CreateInvoiceFromOrder                func(childComplexity int, orderID string) int
 		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string) int
 		CreateJobPosition                     func(childComplexity int, input gqlmodel.JobPositionInput) int
@@ -4360,8 +4758,12 @@ type ComplexityRoot struct {
 		DeleteEmploymentVerification          func(childComplexity int, id string) int
 		DeleteFuelIndex                       func(childComplexity int, id string) int
 		DeleteFuelIndexPrice                  func(childComplexity int, id string) int
+		DeleteFuelPurchase                    func(childComplexity int, id string, version int) int
 		DeleteFuelSurchargeProgram            func(childComplexity int, id string) int
 		DeleteHomeLayoutPreset                func(childComplexity int, id string) int
+		DeleteIFTAMileageEntry                func(childComplexity int, id string, version int) int
+		DeleteIFTAReturn                      func(childComplexity int, id string, version int) int
+		DeleteIFTATaxRate                     func(childComplexity int, id string, version int) int
 		DeleteLeaveDay                        func(childComplexity int, id string) int
 		DeleteOrgHoliday                      func(childComplexity int, id string) int
 		DeletePerformanceReview               func(childComplexity int, id string) int
@@ -4380,6 +4782,7 @@ type ComplexityRoot struct {
 		DetachOrderShipment                   func(childComplexity int, orderID string, shipmentID string) int
 		DetachPayEventFromSettlement          func(childComplexity int, input gqlmodel.DetachPayEventInput) int
 		DetentionBacktest                     func(childComplexity int, input gqlmodel.DetentionBacktestInput) int
+		DiscardFuelPurchaseImport             func(childComplexity int, id string, version int, reason *string) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
 		DispatchAssignMoveToCarrier           func(childComplexity int, input gqlmodel.DispatchAssignMoveToCarrierInput) int
@@ -4395,9 +4798,11 @@ type ComplexityRoot struct {
 		EndWorkerShiftAssignment              func(childComplexity int, id string, effectiveTo int) int
 		EnrollBenefit                         func(childComplexity int, input gqlmodel.EnrollBenefitInput) int
 		FinalizeDOTRandomDraw                 func(childComplexity int, id string) int
+		FinalizeIFTAReturn                    func(childComplexity int, id string, version int) int
 		ForkCannedReport                      func(childComplexity int, input gqlmodel.ForkCannedReportInput) int
 		GenerateCarrierSettlementBatch        func(childComplexity int, input gqlmodel.GenerateCarrierSettlementBatchInput) int
 		GenerateDriverSettlement              func(childComplexity int, input gqlmodel.GenerateDriverSettlementInput) int
+		GenerateIFTAReturn                    func(childComplexity int, period gqlmodel.IFTAPeriodInput) int
 		GeneratePayrollExport                 func(childComplexity int, input gqlmodel.GeneratePayrollExportInput) int
 		GenerateSettlementBatch               func(childComplexity int, input gqlmodel.GenerateSettlementBatchInput) int
 		GiveWorkerRecognition                 func(childComplexity int, input gqlmodel.WorkerRecognitionInput) int
@@ -4413,6 +4818,7 @@ type ComplexityRoot struct {
 		MarkCarrierSettlementPaid             func(childComplexity int, input gqlmodel.MarkCarrierSettlementPaidInput) int
 		MarkDriverSettlementPaid              func(childComplexity int, input gqlmodel.MarkDriverSettlementPaidInput) int
 		MarkEmploymentVerificationRequested   func(childComplexity int, id string) int
+		MarkIFTAReturnFiled                   func(childComplexity int, input gqlmodel.MarkIFTAReturnFiledInput) int
 		MarkMyNotificationsRead               func(childComplexity int, ids []string) int
 		MarkMyNotificationsUnread             func(childComplexity int, ids []string) int
 		MarkNotificationsRead                 func(childComplexity int, ids []string) int
@@ -4437,7 +4843,9 @@ type ComplexityRoot struct {
 		PublishDocumentTemplateVersion        func(childComplexity int, id string, notes *string) int
 		RecalculateCarrierSettlement          func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		RecalculateDriverSettlement           func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
+		RecalculateMoveJurisdictionMiles      func(childComplexity int, shipmentMoveID string) int
 		RecalculateShipmentDistance           func(childComplexity int, shipmentID string) int
+		RecomputeIFTAReturn                   func(childComplexity int, id string, version int) int
 		RecordClearinghouseQuery              func(childComplexity int, input gqlmodel.RecordClearinghouseQueryInput) int
 		RecordDOTTest                         func(childComplexity int, input gqlmodel.RecordDOTTestInput) int
 		RecordDOTTestResult                   func(childComplexity int, input gqlmodel.RecordDOTTestResultInput) int
@@ -4459,6 +4867,7 @@ type ComplexityRoot struct {
 		RemoveCarrierSettlementAdjustment     func(childComplexity int, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) int
 		RemoveDriverSettlementAdjustment      func(childComplexity int, input gqlmodel.RemoveSettlementAdjustmentInput) int
 		RemoveOrderCharge                     func(childComplexity int, input gqlmodel.RemoveOrderChargeInput) int
+		ReopenIFTAReturn                      func(childComplexity int, id string, version int, reason string) int
 		ReopenPerformanceReview               func(childComplexity int, input gqlmodel.PerformanceReviewStatusInput) int
 		ReopenWorkerChecklistItem             func(childComplexity int, id string, version *int) int
 		ReopenWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
@@ -4497,6 +4906,7 @@ type ComplexityRoot struct {
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
 		SetWorkerAvailabilityPreference       func(childComplexity int, input gqlmodel.SetAvailabilityPreferenceInput) int
 		SkipWorkerChecklistItem               func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
+		StageFuelPurchaseImport               func(childComplexity int, input gqlmodel.StageFuelPurchaseImportInput) int
 		StartMyTraining                       func(childComplexity int, id string) int
 		StartSettlementDisputeReview          func(childComplexity int, id string) int
 		StartWorkerChecklist                  func(childComplexity int, input gqlmodel.StartWorkerChecklistInput) int
@@ -4530,11 +4940,14 @@ type ComplexityRoot struct {
 		UpdateEquipmentManufacturer           func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerInput) int
 		UpdateEquipmentType                   func(childComplexity int, id string, input gqlmodel.EquipmentTypeInput) int
 		UpdateEscrowAccount                   func(childComplexity int, input gqlmodel.UpdateEscrowAccountInput) int
+		UpdateFuelCard                        func(childComplexity int, id string, version int, input gqlmodel.FuelCardInput) int
 		UpdateFuelIndex                       func(childComplexity int, id string, input gqlmodel.FuelIndexInput) int
 		UpdateFuelIndexPrice                  func(childComplexity int, input gqlmodel.UpdateFuelIndexPriceInput) int
+		UpdateFuelPurchase                    func(childComplexity int, id string, version int, input gqlmodel.FuelPurchaseInput) int
 		UpdateFuelSurchargeProgram            func(childComplexity int, id string, input gqlmodel.FuelSurchargeProgramInput) int
 		UpdateHomeLayout                      func(childComplexity int, input gqlmodel.HomeLayoutInput) int
 		UpdateHomeLayoutPreset                func(childComplexity int, input gqlmodel.UpdateHomeLayoutPresetInput) int
+		UpdateIFTAMileageEntry                func(childComplexity int, id string, version int, input gqlmodel.IFTAMileageEntryInput) int
 		UpdateJobPosition                     func(childComplexity int, input gqlmodel.UpdateJobPositionInput) int
 		UpdateLeaveCase                       func(childComplexity int, input gqlmodel.UpdateLeaveCaseInput) int
 		UpdateLeaveControl                    func(childComplexity int, input gqlmodel.UpdateLeaveControlInput) int
@@ -4572,6 +4985,7 @@ type ComplexityRoot struct {
 		UpdateWorkerPTO                       func(childComplexity int, input gqlmodel.UpdateWorkerPTOInput) int
 		UpdateWorkerPolicy                    func(childComplexity int, id string, input gqlmodel.WorkerPolicyInput) int
 		UpdateWorkerSafetyEvent               func(childComplexity int, input gqlmodel.UpdateWorkerSafetyEventInput) int
+		UpsertIFTATaxRates                    func(childComplexity int, input []*gqlmodel.IFTATaxRateInput) int
 		VerifyWorkerCredential                func(childComplexity int, id string, version *int) int
 		VoidCarrierSettlement                 func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		VoidDriverSettlement                  func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -5550,11 +5964,17 @@ type ComplexityRoot struct {
 		FleetSafety                         func(childComplexity int, input *gqlmodel.FleetSafetyInput) int
 		FormulaTemplate                     func(childComplexity int, id string) int
 		FormulaTemplates                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		FuelCard                            func(childComplexity int, id string) int
+		FuelCards                           func(childComplexity int, input gqlmodel.FuelCardsInput) int
 		FuelDashboard                       func(childComplexity int) int
 		FuelIndex                           func(childComplexity int, id string) int
 		FuelIndexPriceHistory               func(childComplexity int, indexID string, from *string, to *string, limit *int) int
 		FuelIndexes                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		FuelProgramCurrentRates             func(childComplexity int) int
+		FuelPurchase                        func(childComplexity int, id string) int
+		FuelPurchaseImport                  func(childComplexity int, id string) int
+		FuelPurchaseImportTemplate          func(childComplexity int, provider fuelpurchase.CardProvider) int
+		FuelPurchases                       func(childComplexity int, input gqlmodel.FuelPurchasesInput) int
 		FuelSurchargeProgram                func(childComplexity int, id string) int
 		FuelSurchargePrograms               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		GenerateFuelSurchargeTable          func(childComplexity int, input gqlmodel.GenerateFuelTableInput) int
@@ -5571,6 +5991,15 @@ type ComplexityRoot struct {
 		HomeLayoutPreview                   func(childComplexity int, presetID *string, roleID *string) int
 		HomeWidgetCatalog                   func(childComplexity int) int
 		HosCertificationSummary             func(childComplexity int, startDate string, endDate string) int
+		IFTACurrentPeriod                   func(childComplexity int) int
+		IFTAJurisdictions                   func(childComplexity int, membersOnly *bool) int
+		IFTAMileageEntries                  func(childComplexity int, input gqlmodel.IFTAMileageEntriesInput) int
+		IFTAMileageEntry                    func(childComplexity int, id string) int
+		IFTAPeriod                          func(childComplexity int, year int, quarter int) int
+		IFTAReturn                          func(childComplexity int, id string) int
+		IFTAReturnForPeriod                 func(childComplexity int, period gqlmodel.IFTAPeriodInput) int
+		IFTAReturns                         func(childComplexity int, input gqlmodel.IFTAReturnsInput) int
+		IFTATaxRates                        func(childComplexity int, input gqlmodel.IFTATaxRatesInput) int
 		Invoice                             func(childComplexity int, id string) int
 		Invoices                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JobPosition                         func(childComplexity int, id string) int
@@ -7539,6 +7968,7 @@ type ComplexityRoot struct {
 		DistanceSource         func(childComplexity int) int
 		DistanceUnits          func(childComplexity int) int
 		ID                     func(childComplexity int) int
+		JurisdictionMiles      func(childComplexity int) int
 		Loaded                 func(childComplexity int) int
 		OrganizationID         func(childComplexity int) int
 		Sequence               func(childComplexity int) int
@@ -7569,6 +7999,24 @@ type ComplexityRoot struct {
 		StopID         func(childComplexity int) int
 		Summary        func(childComplexity int) int
 		Type           func(childComplexity int) int
+	}
+
+	ShipmentMoveJurisdictionMile struct {
+		CalculatedAt     func(childComplexity int) int
+		CountryCode      func(childComplexity int) int
+		DataVersion      func(childComplexity int) int
+		Distance         func(childComplexity int) int
+		DistanceUnits    func(childComplexity int) int
+		FerryDistance    func(childComplexity int) int
+		ID               func(childComplexity int) int
+		JurisdictionCode func(childComplexity int) int
+		Loaded           func(childComplexity int) int
+		Provider         func(childComplexity int) int
+		Sequence         func(childComplexity int) int
+		ShipmentID       func(childComplexity int) int
+		ShipmentMoveID   func(childComplexity int) int
+		Source           func(childComplexity int) int
+		TollDistance     func(childComplexity int) int
 	}
 
 	ShipmentOnTime struct {
@@ -8209,7 +8657,9 @@ type ComplexityRoot struct {
 		ExternalID              func(childComplexity int) int
 		FleetCode               func(childComplexity int) int
 		FleetCodeID             func(childComplexity int) int
+		FuelType                func(childComplexity int) int
 		ID                      func(childComplexity int) int
+		IFTAQualified           func(childComplexity int) int
 		LastKnownLocation       func(childComplexity int) int
 		LastKnownLocationID     func(childComplexity int) int
 		LastKnownLocationName   func(childComplexity int) int
@@ -24765,6 +25215,153 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.FormulaTemplateVariableDefinition.Type(childComplexity), true
 
+	case "FuelCard.assignedTractor":
+		if e.ComplexityRoot.FuelCard.AssignedTractor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.AssignedTractor(childComplexity), true
+	case "FuelCard.assignedTractorId":
+		if e.ComplexityRoot.FuelCard.AssignedTractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.AssignedTractorID(childComplexity), true
+	case "FuelCard.assignedWorker":
+		if e.ComplexityRoot.FuelCard.AssignedWorker == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.AssignedWorker(childComplexity), true
+	case "FuelCard.assignedWorkerId":
+		if e.ComplexityRoot.FuelCard.AssignedWorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.AssignedWorkerID(childComplexity), true
+	case "FuelCard.businessUnitId":
+		if e.ComplexityRoot.FuelCard.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.BusinessUnitID(childComplexity), true
+	case "FuelCard.cancelReason":
+		if e.ComplexityRoot.FuelCard.CancelReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.CancelReason(childComplexity), true
+	case "FuelCard.cancelledAt":
+		if e.ComplexityRoot.FuelCard.CancelledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.CancelledAt(childComplexity), true
+	case "FuelCard.createdAt":
+		if e.ComplexityRoot.FuelCard.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.CreatedAt(childComplexity), true
+	case "FuelCard.expiresAt":
+		if e.ComplexityRoot.FuelCard.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.ExpiresAt(childComplexity), true
+	case "FuelCard.externalCardId":
+		if e.ComplexityRoot.FuelCard.ExternalCardID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.ExternalCardID(childComplexity), true
+	case "FuelCard.id":
+		if e.ComplexityRoot.FuelCard.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.ID(childComplexity), true
+	case "FuelCard.label":
+		if e.ComplexityRoot.FuelCard.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.Label(childComplexity), true
+	case "FuelCard.lastFour":
+		if e.ComplexityRoot.FuelCard.LastFour == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.LastFour(childComplexity), true
+	case "FuelCard.notes":
+		if e.ComplexityRoot.FuelCard.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.Notes(childComplexity), true
+	case "FuelCard.organizationId":
+		if e.ComplexityRoot.FuelCard.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.OrganizationID(childComplexity), true
+	case "FuelCard.provider":
+		if e.ComplexityRoot.FuelCard.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.Provider(childComplexity), true
+	case "FuelCard.status":
+		if e.ComplexityRoot.FuelCard.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.Status(childComplexity), true
+	case "FuelCard.updatedAt":
+		if e.ComplexityRoot.FuelCard.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.UpdatedAt(childComplexity), true
+	case "FuelCard.version":
+		if e.ComplexityRoot.FuelCard.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.Version(childComplexity), true
+
+	case "FuelCardConnection.edges":
+		if e.ComplexityRoot.FuelCardConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardConnection.Edges(childComplexity), true
+	case "FuelCardConnection.pageInfo":
+		if e.ComplexityRoot.FuelCardConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardConnection.PageInfo(childComplexity), true
+	case "FuelCardConnection.totalCount":
+		if e.ComplexityRoot.FuelCardConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardConnection.TotalCount(childComplexity), true
+
+	case "FuelCardEdge.cursor":
+		if e.ComplexityRoot.FuelCardEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardEdge.Cursor(childComplexity), true
+	case "FuelCardEdge.node":
+		if e.ComplexityRoot.FuelCardEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardEdge.Node(childComplexity), true
+
 	case "FuelCostResolution.fuelIndexId":
 		if e.ComplexityRoot.FuelCostResolution.FuelIndexID == nil {
 			break
@@ -24795,6 +25392,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelCostResolution.Source(childComplexity), true
+
+	case "FuelImportTemplate.content":
+		if e.ComplexityRoot.FuelImportTemplate.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelImportTemplate.Content(childComplexity), true
+	case "FuelImportTemplate.fileName":
+		if e.ComplexityRoot.FuelImportTemplate.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelImportTemplate.FileName(childComplexity), true
 
 	case "FuelIndex.businessUnitId":
 		if e.ComplexityRoot.FuelIndex.BusinessUnitID == nil {
@@ -25053,6 +25663,698 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelProgramCurrentRate.UsedFallback(childComplexity), true
+
+	case "FuelPurchase.businessUnitId":
+		if e.ComplexityRoot.FuelPurchase.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.BusinessUnitID(childComplexity), true
+	case "FuelPurchase.cardLastFour":
+		if e.ComplexityRoot.FuelPurchase.CardLastFour == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.CardLastFour(childComplexity), true
+	case "FuelPurchase.createdAt":
+		if e.ComplexityRoot.FuelPurchase.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.CreatedAt(childComplexity), true
+	case "FuelPurchase.createdById":
+		if e.ComplexityRoot.FuelPurchase.CreatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.CreatedByID(childComplexity), true
+	case "FuelPurchase.currencyCode":
+		if e.ComplexityRoot.FuelPurchase.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.CurrencyCode(childComplexity), true
+	case "FuelPurchase.fuelCard":
+		if e.ComplexityRoot.FuelPurchase.FuelCard == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.FuelCard(childComplexity), true
+	case "FuelPurchase.fuelCardId":
+		if e.ComplexityRoot.FuelPurchase.FuelCardID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.FuelCardID(childComplexity), true
+	case "FuelPurchase.fuelType":
+		if e.ComplexityRoot.FuelPurchase.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.FuelType(childComplexity), true
+	case "FuelPurchase.gallons":
+		if e.ComplexityRoot.FuelPurchase.Gallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Gallons(childComplexity), true
+	case "FuelPurchase.id":
+		if e.ComplexityRoot.FuelPurchase.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.ID(childComplexity), true
+	case "FuelPurchase.importBatchId":
+		if e.ComplexityRoot.FuelPurchase.ImportBatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.ImportBatchID(childComplexity), true
+	case "FuelPurchase.jurisdiction":
+		if e.ComplexityRoot.FuelPurchase.Jurisdiction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Jurisdiction(childComplexity), true
+	case "FuelPurchase.jurisdictionId":
+		if e.ComplexityRoot.FuelPurchase.JurisdictionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.JurisdictionID(childComplexity), true
+	case "FuelPurchase.notes":
+		if e.ComplexityRoot.FuelPurchase.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Notes(childComplexity), true
+	case "FuelPurchase.odometer":
+		if e.ComplexityRoot.FuelPurchase.Odometer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Odometer(childComplexity), true
+	case "FuelPurchase.organizationId":
+		if e.ComplexityRoot.FuelPurchase.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.OrganizationID(childComplexity), true
+	case "FuelPurchase.purchasedAt":
+		if e.ComplexityRoot.FuelPurchase.PurchasedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.PurchasedAt(childComplexity), true
+	case "FuelPurchase.quantity":
+		if e.ComplexityRoot.FuelPurchase.Quantity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Quantity(childComplexity), true
+	case "FuelPurchase.quantityUnit":
+		if e.ComplexityRoot.FuelPurchase.QuantityUnit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.QuantityUnit(childComplexity), true
+	case "FuelPurchase.source":
+		if e.ComplexityRoot.FuelPurchase.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Source(childComplexity), true
+	case "FuelPurchase.taxPaid":
+		if e.ComplexityRoot.FuelPurchase.TaxPaid == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.TaxPaid(childComplexity), true
+	case "FuelPurchase.totalAmount":
+		if e.ComplexityRoot.FuelPurchase.TotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.TotalAmount(childComplexity), true
+	case "FuelPurchase.tractor":
+		if e.ComplexityRoot.FuelPurchase.Tractor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Tractor(childComplexity), true
+	case "FuelPurchase.tractorId":
+		if e.ComplexityRoot.FuelPurchase.TractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.TractorID(childComplexity), true
+	case "FuelPurchase.transactionReference":
+		if e.ComplexityRoot.FuelPurchase.TransactionReference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.TransactionReference(childComplexity), true
+	case "FuelPurchase.unitPrice":
+		if e.ComplexityRoot.FuelPurchase.UnitPrice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.UnitPrice(childComplexity), true
+	case "FuelPurchase.updatedAt":
+		if e.ComplexityRoot.FuelPurchase.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.UpdatedAt(childComplexity), true
+	case "FuelPurchase.vendor":
+		if e.ComplexityRoot.FuelPurchase.Vendor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Vendor(childComplexity), true
+	case "FuelPurchase.vendorCity":
+		if e.ComplexityRoot.FuelPurchase.VendorCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.VendorCity(childComplexity), true
+	case "FuelPurchase.version":
+		if e.ComplexityRoot.FuelPurchase.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Version(childComplexity), true
+	case "FuelPurchase.worker":
+		if e.ComplexityRoot.FuelPurchase.Worker == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.Worker(childComplexity), true
+	case "FuelPurchase.workerId":
+		if e.ComplexityRoot.FuelPurchase.WorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchase.WorkerID(childComplexity), true
+
+	case "FuelPurchaseConnection.edges":
+		if e.ComplexityRoot.FuelPurchaseConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseConnection.Edges(childComplexity), true
+	case "FuelPurchaseConnection.pageInfo":
+		if e.ComplexityRoot.FuelPurchaseConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseConnection.PageInfo(childComplexity), true
+	case "FuelPurchaseConnection.totalCount":
+		if e.ComplexityRoot.FuelPurchaseConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseConnection.TotalCount(childComplexity), true
+
+	case "FuelPurchaseEdge.cursor":
+		if e.ComplexityRoot.FuelPurchaseEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseEdge.Cursor(childComplexity), true
+	case "FuelPurchaseEdge.node":
+		if e.ComplexityRoot.FuelPurchaseEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseEdge.Node(childComplexity), true
+
+	case "FuelPurchaseImportBatch.businessUnitId":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.BusinessUnitID(childComplexity), true
+	case "FuelPurchaseImportBatch.committedAt":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.CommittedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.CommittedAt(childComplexity), true
+	case "FuelPurchaseImportBatch.committedById":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.CommittedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.CommittedByID(childComplexity), true
+	case "FuelPurchaseImportBatch.committedCount":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.CommittedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.CommittedCount(childComplexity), true
+	case "FuelPurchaseImportBatch.createdAt":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.CreatedAt(childComplexity), true
+	case "FuelPurchaseImportBatch.defaultCurrency":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.DefaultCurrency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.DefaultCurrency(childComplexity), true
+	case "FuelPurchaseImportBatch.defaultFuelCard":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.DefaultFuelCard == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.DefaultFuelCard(childComplexity), true
+	case "FuelPurchaseImportBatch.defaultFuelCardId":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.DefaultFuelCardID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.DefaultFuelCardID(childComplexity), true
+	case "FuelPurchaseImportBatch.defaultFuelType":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.DefaultFuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.DefaultFuelType(childComplexity), true
+	case "FuelPurchaseImportBatch.document":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Document == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Document(childComplexity), true
+	case "FuelPurchaseImportBatch.documentId":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.DocumentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.DocumentID(childComplexity), true
+	case "FuelPurchaseImportBatch.error":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Error(childComplexity), true
+	case "FuelPurchaseImportBatch.errorCount":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.ErrorCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.ErrorCount(childComplexity), true
+	case "FuelPurchaseImportBatch.fileName":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.FileName(childComplexity), true
+	case "FuelPurchaseImportBatch.id":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.ID(childComplexity), true
+	case "FuelPurchaseImportBatch.mapping":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Mapping == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Mapping(childComplexity), true
+	case "FuelPurchaseImportBatch.organizationId":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.OrganizationID(childComplexity), true
+	case "FuelPurchaseImportBatch.provider":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Provider(childComplexity), true
+	case "FuelPurchaseImportBatch.rowCount":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.RowCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.RowCount(childComplexity), true
+	case "FuelPurchaseImportBatch.rows":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Rows == nil {
+			break
+		}
+
+		args, err := ec.field_FuelPurchaseImportBatch_rows_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Rows(childComplexity, args["input"].(*gqlmodel.FuelPurchaseImportRowsInput)), true
+	case "FuelPurchaseImportBatch.sourceFormat":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.SourceFormat == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.SourceFormat(childComplexity), true
+	case "FuelPurchaseImportBatch.stagedAt":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.StagedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.StagedAt(childComplexity), true
+	case "FuelPurchaseImportBatch.status":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Status(childComplexity), true
+	case "FuelPurchaseImportBatch.summary":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Summary(childComplexity), true
+	case "FuelPurchaseImportBatch.unmappedHeaders":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.UnmappedHeaders == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.UnmappedHeaders(childComplexity), true
+	case "FuelPurchaseImportBatch.updatedAt":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.UpdatedAt(childComplexity), true
+	case "FuelPurchaseImportBatch.uploadedById":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.UploadedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.UploadedByID(childComplexity), true
+	case "FuelPurchaseImportBatch.version":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Version(childComplexity), true
+
+	case "FuelPurchaseImportParsed.cardLastFour":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.CardLastFour == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.CardLastFour(childComplexity), true
+	case "FuelPurchaseImportParsed.currencyCode":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.CurrencyCode(childComplexity), true
+	case "FuelPurchaseImportParsed.fuelType":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.FuelType(childComplexity), true
+	case "FuelPurchaseImportParsed.gallons":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.Gallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.Gallons(childComplexity), true
+	case "FuelPurchaseImportParsed.jurisdictionCode":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.JurisdictionCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.JurisdictionCode(childComplexity), true
+	case "FuelPurchaseImportParsed.odometer":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.Odometer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.Odometer(childComplexity), true
+	case "FuelPurchaseImportParsed.purchasedAt":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.PurchasedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.PurchasedAt(childComplexity), true
+	case "FuelPurchaseImportParsed.quantity":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.Quantity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.Quantity(childComplexity), true
+	case "FuelPurchaseImportParsed.quantityUnit":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.QuantityUnit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.QuantityUnit(childComplexity), true
+	case "FuelPurchaseImportParsed.totalAmount":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.TotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.TotalAmount(childComplexity), true
+	case "FuelPurchaseImportParsed.tractorCode":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.TractorCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.TractorCode(childComplexity), true
+	case "FuelPurchaseImportParsed.transactionReference":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.TransactionReference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.TransactionReference(childComplexity), true
+	case "FuelPurchaseImportParsed.unitPrice":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.UnitPrice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.UnitPrice(childComplexity), true
+	case "FuelPurchaseImportParsed.vendor":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.Vendor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.Vendor(childComplexity), true
+	case "FuelPurchaseImportParsed.vendorCity":
+		if e.ComplexityRoot.FuelPurchaseImportParsed.VendorCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportParsed.VendorCity(childComplexity), true
+
+	case "FuelPurchaseImportRow.businessUnitId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.BusinessUnitID(childComplexity), true
+	case "FuelPurchaseImportRow.cells":
+		if e.ComplexityRoot.FuelPurchaseImportRow.Cells == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.Cells(childComplexity), true
+	case "FuelPurchaseImportRow.createdAt":
+		if e.ComplexityRoot.FuelPurchaseImportRow.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.CreatedAt(childComplexity), true
+	case "FuelPurchaseImportRow.error":
+		if e.ComplexityRoot.FuelPurchaseImportRow.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.Error(childComplexity), true
+	case "FuelPurchaseImportRow.fuelPurchaseId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.FuelPurchaseID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.FuelPurchaseID(childComplexity), true
+	case "FuelPurchaseImportRow.id":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ID(childComplexity), true
+	case "FuelPurchaseImportRow.importBatchId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ImportBatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ImportBatchID(childComplexity), true
+	case "FuelPurchaseImportRow.organizationId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.OrganizationID(childComplexity), true
+	case "FuelPurchaseImportRow.parsed":
+		if e.ComplexityRoot.FuelPurchaseImportRow.Parsed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.Parsed(childComplexity), true
+	case "FuelPurchaseImportRow.resolutionNotes":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ResolutionNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ResolutionNotes(childComplexity), true
+	case "FuelPurchaseImportRow.resolvedFuelCardId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ResolvedFuelCardID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ResolvedFuelCardID(childComplexity), true
+	case "FuelPurchaseImportRow.resolvedJurisdictionId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ResolvedJurisdictionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ResolvedJurisdictionID(childComplexity), true
+	case "FuelPurchaseImportRow.resolvedTractor":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ResolvedTractor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ResolvedTractor(childComplexity), true
+	case "FuelPurchaseImportRow.resolvedTractorId":
+		if e.ComplexityRoot.FuelPurchaseImportRow.ResolvedTractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.ResolvedTractorID(childComplexity), true
+	case "FuelPurchaseImportRow.rowNumber":
+		if e.ComplexityRoot.FuelPurchaseImportRow.RowNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.RowNumber(childComplexity), true
+	case "FuelPurchaseImportRow.status":
+		if e.ComplexityRoot.FuelPurchaseImportRow.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.Status(childComplexity), true
+	case "FuelPurchaseImportRow.transactionReference":
+		if e.ComplexityRoot.FuelPurchaseImportRow.TransactionReference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRow.TransactionReference(childComplexity), true
+
+	case "FuelPurchaseImportRowConnection.edges":
+		if e.ComplexityRoot.FuelPurchaseImportRowConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRowConnection.Edges(childComplexity), true
+	case "FuelPurchaseImportRowConnection.pageInfo":
+		if e.ComplexityRoot.FuelPurchaseImportRowConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRowConnection.PageInfo(childComplexity), true
+	case "FuelPurchaseImportRowConnection.totalCount":
+		if e.ComplexityRoot.FuelPurchaseImportRowConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRowConnection.TotalCount(childComplexity), true
+
+	case "FuelPurchaseImportRowEdge.cursor":
+		if e.ComplexityRoot.FuelPurchaseImportRowEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRowEdge.Cursor(childComplexity), true
+	case "FuelPurchaseImportRowEdge.node":
+		if e.ComplexityRoot.FuelPurchaseImportRowEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportRowEdge.Node(childComplexity), true
+
+	case "FuelPurchaseImportSummary.alreadyImportedCount":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.AlreadyImportedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.AlreadyImportedCount(childComplexity), true
+	case "FuelPurchaseImportSummary.byFuelType":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.ByFuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.ByFuelType(childComplexity), true
+	case "FuelPurchaseImportSummary.byJurisdiction":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.ByJurisdiction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.ByJurisdiction(childComplexity), true
+	case "FuelPurchaseImportSummary.duplicateInFileCount":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.DuplicateInFileCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.DuplicateInFileCount(childComplexity), true
+	case "FuelPurchaseImportSummary.earliestPurchasedAt":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.EarliestPurchasedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.EarliestPurchasedAt(childComplexity), true
+	case "FuelPurchaseImportSummary.errorCount":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.ErrorCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.ErrorCount(childComplexity), true
+	case "FuelPurchaseImportSummary.latestPurchasedAt":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.LatestPurchasedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.LatestPurchasedAt(childComplexity), true
+	case "FuelPurchaseImportSummary.newCount":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.NewCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.NewCount(childComplexity), true
+	case "FuelPurchaseImportSummary.rowCount":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.RowCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.RowCount(childComplexity), true
+	case "FuelPurchaseImportSummary.totalAmount":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.TotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.TotalAmount(childComplexity), true
+	case "FuelPurchaseImportSummary.totalGallons":
+		if e.ComplexityRoot.FuelPurchaseImportSummary.TotalGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportSummary.TotalGallons(childComplexity), true
 
 	case "FuelSurchargeProgram.accessorialCharge":
 		if e.ComplexityRoot.FuelSurchargeProgram.AccessorialCharge == nil {
@@ -26425,6 +27727,896 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.HosCertificationSummary.WorkerName(childComplexity), true
 
+	case "IFTAFleetMPG.fuelType":
+		if e.ComplexityRoot.IFTAFleetMPG.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAFleetMPG.FuelType(childComplexity), true
+	case "IFTAFleetMPG.mpg":
+		if e.ComplexityRoot.IFTAFleetMPG.Mpg == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAFleetMPG.Mpg(childComplexity), true
+	case "IFTAFleetMPG.totalGallons":
+		if e.ComplexityRoot.IFTAFleetMPG.TotalGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAFleetMPG.TotalGallons(childComplexity), true
+	case "IFTAFleetMPG.totalMiles":
+		if e.ComplexityRoot.IFTAFleetMPG.TotalMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAFleetMPG.TotalMiles(childComplexity), true
+
+	case "IFTAJurisdiction.code":
+		if e.ComplexityRoot.IFTAJurisdiction.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.Code(childComplexity), true
+	case "IFTAJurisdiction.countryCode":
+		if e.ComplexityRoot.IFTAJurisdiction.CountryCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.CountryCode(childComplexity), true
+	case "IFTAJurisdiction.createdAt":
+		if e.ComplexityRoot.IFTAJurisdiction.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.CreatedAt(childComplexity), true
+	case "IFTAJurisdiction.hasSurcharge":
+		if e.ComplexityRoot.IFTAJurisdiction.HasSurcharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.HasSurcharge(childComplexity), true
+	case "IFTAJurisdiction.id":
+		if e.ComplexityRoot.IFTAJurisdiction.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.ID(childComplexity), true
+	case "IFTAJurisdiction.isIftaMember":
+		if e.ComplexityRoot.IFTAJurisdiction.IsIftaMember == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.IsIftaMember(childComplexity), true
+	case "IFTAJurisdiction.name":
+		if e.ComplexityRoot.IFTAJurisdiction.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.Name(childComplexity), true
+	case "IFTAJurisdiction.sortOrder":
+		if e.ComplexityRoot.IFTAJurisdiction.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.SortOrder(childComplexity), true
+	case "IFTAJurisdiction.status":
+		if e.ComplexityRoot.IFTAJurisdiction.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.Status(childComplexity), true
+	case "IFTAJurisdiction.updatedAt":
+		if e.ComplexityRoot.IFTAJurisdiction.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.UpdatedAt(childComplexity), true
+	case "IFTAJurisdiction.usState":
+		if e.ComplexityRoot.IFTAJurisdiction.UsState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.UsState(childComplexity), true
+	case "IFTAJurisdiction.usStateId":
+		if e.ComplexityRoot.IFTAJurisdiction.UsStateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdiction.UsStateID(childComplexity), true
+
+	case "IFTAJurisdictionMileageEntry.businessUnitId":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.BusinessUnitID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.createdAt":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.CreatedAt(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.createdById":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.CreatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.CreatedByID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.id":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.ID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.jurisdiction":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Jurisdiction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Jurisdiction(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.jurisdictionId":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.JurisdictionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.JurisdictionID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.loaded":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Loaded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Loaded(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.miles":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Miles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Miles(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.notes":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Notes(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.organizationId":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.OrganizationID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.quarter":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Quarter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Quarter(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.shipmentMoveId":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.ShipmentMoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.ShipmentMoveID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.source":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Source(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.tractor":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Tractor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Tractor(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.tractorId":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.TractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.TractorID(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.traveledAt":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.TraveledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.TraveledAt(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.updatedAt":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.UpdatedAt(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.version":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Version(childComplexity), true
+	case "IFTAJurisdictionMileageEntry.year":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntry.Year == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntry.Year(childComplexity), true
+
+	case "IFTAJurisdictionMileageEntryConnection.edges":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntryConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntryConnection.Edges(childComplexity), true
+	case "IFTAJurisdictionMileageEntryConnection.pageInfo":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntryConnection.PageInfo(childComplexity), true
+	case "IFTAJurisdictionMileageEntryConnection.totalCount":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntryConnection.TotalCount(childComplexity), true
+
+	case "IFTAJurisdictionMileageEntryEdge.cursor":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntryEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntryEdge.Cursor(childComplexity), true
+	case "IFTAJurisdictionMileageEntryEdge.node":
+		if e.ComplexityRoot.IFTAJurisdictionMileageEntryEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAJurisdictionMileageEntryEdge.Node(childComplexity), true
+
+	case "IFTAPeriod.dueDate":
+		if e.ComplexityRoot.IFTAPeriod.DueDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.DueDate(childComplexity), true
+	case "IFTAPeriod.end":
+		if e.ComplexityRoot.IFTAPeriod.End == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.End(childComplexity), true
+	case "IFTAPeriod.key":
+		if e.ComplexityRoot.IFTAPeriod.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.Key(childComplexity), true
+	case "IFTAPeriod.label":
+		if e.ComplexityRoot.IFTAPeriod.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.Label(childComplexity), true
+	case "IFTAPeriod.quarter":
+		if e.ComplexityRoot.IFTAPeriod.Quarter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.Quarter(childComplexity), true
+	case "IFTAPeriod.start":
+		if e.ComplexityRoot.IFTAPeriod.Start == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.Start(childComplexity), true
+	case "IFTAPeriod.year":
+		if e.ComplexityRoot.IFTAPeriod.Year == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAPeriod.Year(childComplexity), true
+
+	case "IFTAReturn.amendmentNumber":
+		if e.ComplexityRoot.IFTAReturn.AmendmentNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.AmendmentNumber(childComplexity), true
+	case "IFTAReturn.amendsReturn":
+		if e.ComplexityRoot.IFTAReturn.AmendsReturn == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.AmendsReturn(childComplexity), true
+	case "IFTAReturn.amendsReturnId":
+		if e.ComplexityRoot.IFTAReturn.AmendsReturnID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.AmendsReturnID(childComplexity), true
+	case "IFTAReturn.businessUnitId":
+		if e.ComplexityRoot.IFTAReturn.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.BusinessUnitID(childComplexity), true
+	case "IFTAReturn.computedAt":
+		if e.ComplexityRoot.IFTAReturn.ComputedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.ComputedAt(childComplexity), true
+	case "IFTAReturn.createdAt":
+		if e.ComplexityRoot.IFTAReturn.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.CreatedAt(childComplexity), true
+	case "IFTAReturn.currencyCode":
+		if e.ComplexityRoot.IFTAReturn.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.CurrencyCode(childComplexity), true
+	case "IFTAReturn.filedAt":
+		if e.ComplexityRoot.IFTAReturn.FiledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FiledAt(childComplexity), true
+	case "IFTAReturn.filedBy":
+		if e.ComplexityRoot.IFTAReturn.FiledBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FiledBy(childComplexity), true
+	case "IFTAReturn.filedById":
+		if e.ComplexityRoot.IFTAReturn.FiledByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FiledByID(childComplexity), true
+	case "IFTAReturn.filingReference":
+		if e.ComplexityRoot.IFTAReturn.FilingReference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FilingReference(childComplexity), true
+	case "IFTAReturn.finalizedAt":
+		if e.ComplexityRoot.IFTAReturn.FinalizedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FinalizedAt(childComplexity), true
+	case "IFTAReturn.finalizedBy":
+		if e.ComplexityRoot.IFTAReturn.FinalizedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FinalizedBy(childComplexity), true
+	case "IFTAReturn.finalizedById":
+		if e.ComplexityRoot.IFTAReturn.FinalizedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FinalizedByID(childComplexity), true
+	case "IFTAReturn.fleetMpgByFuelType":
+		if e.ComplexityRoot.IFTAReturn.FleetMpgByFuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.FleetMpgByFuelType(childComplexity), true
+	case "IFTAReturn.id":
+		if e.ComplexityRoot.IFTAReturn.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.ID(childComplexity), true
+	case "IFTAReturn.lines":
+		if e.ComplexityRoot.IFTAReturn.Lines == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Lines(childComplexity), true
+	case "IFTAReturn.netDue":
+		if e.ComplexityRoot.IFTAReturn.NetDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.NetDue(childComplexity), true
+	case "IFTAReturn.netTaxableGallons":
+		if e.ComplexityRoot.IFTAReturn.NetTaxableGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.NetTaxableGallons(childComplexity), true
+	case "IFTAReturn.noTractorMiles":
+		if e.ComplexityRoot.IFTAReturn.NoTractorMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.NoTractorMiles(childComplexity), true
+	case "IFTAReturn.noTractorMoveCount":
+		if e.ComplexityRoot.IFTAReturn.NoTractorMoveCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.NoTractorMoveCount(childComplexity), true
+	case "IFTAReturn.organizationId":
+		if e.ComplexityRoot.IFTAReturn.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.OrganizationID(childComplexity), true
+	case "IFTAReturn.period":
+		if e.ComplexityRoot.IFTAReturn.Period == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Period(childComplexity), true
+	case "IFTAReturn.periodEnd":
+		if e.ComplexityRoot.IFTAReturn.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.PeriodEnd(childComplexity), true
+	case "IFTAReturn.periodStart":
+		if e.ComplexityRoot.IFTAReturn.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.PeriodStart(childComplexity), true
+	case "IFTAReturn.problems":
+		if e.ComplexityRoot.IFTAReturn.Problems == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Problems(childComplexity), true
+	case "IFTAReturn.quarter":
+		if e.ComplexityRoot.IFTAReturn.Quarter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Quarter(childComplexity), true
+	case "IFTAReturn.reopenReason":
+		if e.ComplexityRoot.IFTAReturn.ReopenReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.ReopenReason(childComplexity), true
+	case "IFTAReturn.reopenedAt":
+		if e.ComplexityRoot.IFTAReturn.ReopenedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.ReopenedAt(childComplexity), true
+	case "IFTAReturn.reopenedById":
+		if e.ComplexityRoot.IFTAReturn.ReopenedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.ReopenedByID(childComplexity), true
+	case "IFTAReturn.status":
+		if e.ComplexityRoot.IFTAReturn.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Status(childComplexity), true
+	case "IFTAReturn.surchargeDue":
+		if e.ComplexityRoot.IFTAReturn.SurchargeDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.SurchargeDue(childComplexity), true
+	case "IFTAReturn.taxDue":
+		if e.ComplexityRoot.IFTAReturn.TaxDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.TaxDue(childComplexity), true
+	case "IFTAReturn.timezone":
+		if e.ComplexityRoot.IFTAReturn.Timezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Timezone(childComplexity), true
+	case "IFTAReturn.totalGallons":
+		if e.ComplexityRoot.IFTAReturn.TotalGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.TotalGallons(childComplexity), true
+	case "IFTAReturn.totalMiles":
+		if e.ComplexityRoot.IFTAReturn.TotalMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.TotalMiles(childComplexity), true
+	case "IFTAReturn.totalTaxPaidGallons":
+		if e.ComplexityRoot.IFTAReturn.TotalTaxPaidGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.TotalTaxPaidGallons(childComplexity), true
+	case "IFTAReturn.totalTaxableMiles":
+		if e.ComplexityRoot.IFTAReturn.TotalTaxableMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.TotalTaxableMiles(childComplexity), true
+	case "IFTAReturn.unattributedMiles":
+		if e.ComplexityRoot.IFTAReturn.UnattributedMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.UnattributedMiles(childComplexity), true
+	case "IFTAReturn.unattributedMoveCount":
+		if e.ComplexityRoot.IFTAReturn.UnattributedMoveCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.UnattributedMoveCount(childComplexity), true
+	case "IFTAReturn.updatedAt":
+		if e.ComplexityRoot.IFTAReturn.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.UpdatedAt(childComplexity), true
+	case "IFTAReturn.version":
+		if e.ComplexityRoot.IFTAReturn.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Version(childComplexity), true
+	case "IFTAReturn.year":
+		if e.ComplexityRoot.IFTAReturn.Year == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturn.Year(childComplexity), true
+
+	case "IFTAReturnConnection.edges":
+		if e.ComplexityRoot.IFTAReturnConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnConnection.Edges(childComplexity), true
+	case "IFTAReturnConnection.pageInfo":
+		if e.ComplexityRoot.IFTAReturnConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnConnection.PageInfo(childComplexity), true
+	case "IFTAReturnConnection.totalCount":
+		if e.ComplexityRoot.IFTAReturnConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnConnection.TotalCount(childComplexity), true
+
+	case "IFTAReturnEdge.cursor":
+		if e.ComplexityRoot.IFTAReturnEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnEdge.Cursor(childComplexity), true
+	case "IFTAReturnEdge.node":
+		if e.ComplexityRoot.IFTAReturnEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnEdge.Node(childComplexity), true
+
+	case "IFTAReturnLine.businessUnitId":
+		if e.ComplexityRoot.IFTAReturnLine.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.BusinessUnitID(childComplexity), true
+	case "IFTAReturnLine.createdAt":
+		if e.ComplexityRoot.IFTAReturnLine.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.CreatedAt(childComplexity), true
+	case "IFTAReturnLine.emptyMiles":
+		if e.ComplexityRoot.IFTAReturnLine.EmptyMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.EmptyMiles(childComplexity), true
+	case "IFTAReturnLine.fuelType":
+		if e.ComplexityRoot.IFTAReturnLine.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.FuelType(childComplexity), true
+	case "IFTAReturnLine.id":
+		if e.ComplexityRoot.IFTAReturnLine.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.ID(childComplexity), true
+	case "IFTAReturnLine.isIftaMember":
+		if e.ComplexityRoot.IFTAReturnLine.IsIftaMember == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.IsIftaMember(childComplexity), true
+	case "IFTAReturnLine.jurisdiction":
+		if e.ComplexityRoot.IFTAReturnLine.Jurisdiction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.Jurisdiction(childComplexity), true
+	case "IFTAReturnLine.jurisdictionId":
+		if e.ComplexityRoot.IFTAReturnLine.JurisdictionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.JurisdictionID(childComplexity), true
+	case "IFTAReturnLine.lineTotal":
+		if e.ComplexityRoot.IFTAReturnLine.LineTotal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.LineTotal(childComplexity), true
+	case "IFTAReturnLine.loadedMiles":
+		if e.ComplexityRoot.IFTAReturnLine.LoadedMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.LoadedMiles(childComplexity), true
+	case "IFTAReturnLine.manualMiles":
+		if e.ComplexityRoot.IFTAReturnLine.ManualMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.ManualMiles(childComplexity), true
+	case "IFTAReturnLine.netTaxableGallons":
+		if e.ComplexityRoot.IFTAReturnLine.NetTaxableGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.NetTaxableGallons(childComplexity), true
+	case "IFTAReturnLine.organizationId":
+		if e.ComplexityRoot.IFTAReturnLine.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.OrganizationID(childComplexity), true
+	case "IFTAReturnLine.purchaseCount":
+		if e.ComplexityRoot.IFTAReturnLine.PurchaseCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.PurchaseCount(childComplexity), true
+	case "IFTAReturnLine.rateMissing":
+		if e.ComplexityRoot.IFTAReturnLine.RateMissing == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.RateMissing(childComplexity), true
+	case "IFTAReturnLine.ratePerGallon":
+		if e.ComplexityRoot.IFTAReturnLine.RatePerGallon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.RatePerGallon(childComplexity), true
+	case "IFTAReturnLine.returnId":
+		if e.ComplexityRoot.IFTAReturnLine.ReturnID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.ReturnID(childComplexity), true
+	case "IFTAReturnLine.routeMiles":
+		if e.ComplexityRoot.IFTAReturnLine.RouteMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.RouteMiles(childComplexity), true
+	case "IFTAReturnLine.sortOrder":
+		if e.ComplexityRoot.IFTAReturnLine.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.SortOrder(childComplexity), true
+	case "IFTAReturnLine.surchargeDue":
+		if e.ComplexityRoot.IFTAReturnLine.SurchargeDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.SurchargeDue(childComplexity), true
+	case "IFTAReturnLine.surchargeRatePerGallon":
+		if e.ComplexityRoot.IFTAReturnLine.SurchargeRatePerGallon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.SurchargeRatePerGallon(childComplexity), true
+	case "IFTAReturnLine.taxDue":
+		if e.ComplexityRoot.IFTAReturnLine.TaxDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.TaxDue(childComplexity), true
+	case "IFTAReturnLine.taxPaidGallons":
+		if e.ComplexityRoot.IFTAReturnLine.TaxPaidGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.TaxPaidGallons(childComplexity), true
+	case "IFTAReturnLine.taxPaidGallonsRaw":
+		if e.ComplexityRoot.IFTAReturnLine.TaxPaidGallonsRaw == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.TaxPaidGallonsRaw(childComplexity), true
+	case "IFTAReturnLine.taxableGallons":
+		if e.ComplexityRoot.IFTAReturnLine.TaxableGallons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.TaxableGallons(childComplexity), true
+	case "IFTAReturnLine.taxableMiles":
+		if e.ComplexityRoot.IFTAReturnLine.TaxableMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.TaxableMiles(childComplexity), true
+	case "IFTAReturnLine.totalMiles":
+		if e.ComplexityRoot.IFTAReturnLine.TotalMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.TotalMiles(childComplexity), true
+	case "IFTAReturnLine.updatedAt":
+		if e.ComplexityRoot.IFTAReturnLine.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnLine.UpdatedAt(childComplexity), true
+
+	case "IFTAReturnProblem.amount":
+		if e.ComplexityRoot.IFTAReturnProblem.Amount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnProblem.Amount(childComplexity), true
+	case "IFTAReturnProblem.code":
+		if e.ComplexityRoot.IFTAReturnProblem.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnProblem.Code(childComplexity), true
+	case "IFTAReturnProblem.fuelType":
+		if e.ComplexityRoot.IFTAReturnProblem.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnProblem.FuelType(childComplexity), true
+	case "IFTAReturnProblem.jurisdictionCode":
+		if e.ComplexityRoot.IFTAReturnProblem.JurisdictionCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnProblem.JurisdictionCode(childComplexity), true
+	case "IFTAReturnProblem.message":
+		if e.ComplexityRoot.IFTAReturnProblem.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTAReturnProblem.Message(childComplexity), true
+
+	case "IFTATaxRate.createdAt":
+		if e.ComplexityRoot.IFTATaxRate.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.CreatedAt(childComplexity), true
+	case "IFTATaxRate.fuelType":
+		if e.ComplexityRoot.IFTATaxRate.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.FuelType(childComplexity), true
+	case "IFTATaxRate.id":
+		if e.ComplexityRoot.IFTATaxRate.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.ID(childComplexity), true
+	case "IFTATaxRate.jurisdiction":
+		if e.ComplexityRoot.IFTATaxRate.Jurisdiction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.Jurisdiction(childComplexity), true
+	case "IFTATaxRate.jurisdictionId":
+		if e.ComplexityRoot.IFTATaxRate.JurisdictionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.JurisdictionID(childComplexity), true
+	case "IFTATaxRate.quarter":
+		if e.ComplexityRoot.IFTATaxRate.Quarter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.Quarter(childComplexity), true
+	case "IFTATaxRate.ratePerGallon":
+		if e.ComplexityRoot.IFTATaxRate.RatePerGallon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.RatePerGallon(childComplexity), true
+	case "IFTATaxRate.sourceNote":
+		if e.ComplexityRoot.IFTATaxRate.SourceNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.SourceNote(childComplexity), true
+	case "IFTATaxRate.sourceUrl":
+		if e.ComplexityRoot.IFTATaxRate.SourceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.SourceURL(childComplexity), true
+	case "IFTATaxRate.surchargeRatePerGallon":
+		if e.ComplexityRoot.IFTATaxRate.SurchargeRatePerGallon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.SurchargeRatePerGallon(childComplexity), true
+	case "IFTATaxRate.updatedAt":
+		if e.ComplexityRoot.IFTATaxRate.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.UpdatedAt(childComplexity), true
+	case "IFTATaxRate.version":
+		if e.ComplexityRoot.IFTATaxRate.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.Version(childComplexity), true
+	case "IFTATaxRate.year":
+		if e.ComplexityRoot.IFTATaxRate.Year == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRate.Year(childComplexity), true
+
+	case "IFTATaxRateConnection.edges":
+		if e.ComplexityRoot.IFTATaxRateConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRateConnection.Edges(childComplexity), true
+	case "IFTATaxRateConnection.pageInfo":
+		if e.ComplexityRoot.IFTATaxRateConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRateConnection.PageInfo(childComplexity), true
+	case "IFTATaxRateConnection.totalCount":
+		if e.ComplexityRoot.IFTATaxRateConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRateConnection.TotalCount(childComplexity), true
+
+	case "IFTATaxRateEdge.cursor":
+		if e.ComplexityRoot.IFTATaxRateEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRateEdge.Cursor(childComplexity), true
+	case "IFTATaxRateEdge.node":
+		if e.ComplexityRoot.IFTATaxRateEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.IFTATaxRateEdge.Node(childComplexity), true
+
 	case "InviteWorkerToPortalResult.emailSent":
 		if e.ComplexityRoot.InviteWorkerToPortalResult.EmailSent == nil {
 			break
@@ -27326,6 +29518,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.JournalSourceInfo.Status(childComplexity), true
+
+	case "JurisdictionMilesBackfillResult.dryRun":
+		if e.ComplexityRoot.JurisdictionMilesBackfillResult.DryRun == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionMilesBackfillResult.DryRun(childComplexity), true
+	case "JurisdictionMilesBackfillResult.started":
+		if e.ComplexityRoot.JurisdictionMilesBackfillResult.Started == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionMilesBackfillResult.Started(childComplexity), true
+	case "JurisdictionMilesBackfillResult.unattributedMiles":
+		if e.ComplexityRoot.JurisdictionMilesBackfillResult.UnattributedMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionMilesBackfillResult.UnattributedMiles(childComplexity), true
+	case "JurisdictionMilesBackfillResult.unattributedMoves":
+		if e.ComplexityRoot.JurisdictionMilesBackfillResult.UnattributedMoves == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionMilesBackfillResult.UnattributedMoves(childComplexity), true
+	case "JurisdictionMilesBackfillResult.workflowId":
+		if e.ComplexityRoot.JurisdictionMilesBackfillResult.WorkflowID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionMilesBackfillResult.WorkflowID(childComplexity), true
 
 	case "JurisdictionRule.createdAt":
 		if e.ComplexityRoot.JurisdictionRule.CreatedAt == nil {
@@ -28485,6 +30708,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AdjustWorkerPTOBalance(childComplexity, args["input"].(gqlmodel.AdjustWorkerPTOBalanceInput)), true
+	case "Mutation.amendIftaReturn":
+		if e.ComplexityRoot.Mutation.AmendIFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_amendIftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AmendIFTAReturn(childComplexity, args["id"].(string), args["reason"].(string)), true
 	case "Mutation.amendWorkerEmploymentEvent":
 		if e.ComplexityRoot.Mutation.AmendWorkerEmploymentEvent == nil {
 			break
@@ -28782,6 +31016,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AutoRateShipment(childComplexity, args["id"].(string)), true
+	case "Mutation.backfillJurisdictionMiles":
+		if e.ComplexityRoot.Mutation.BackfillJurisdictionMiles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_backfillJurisdictionMiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.BackfillJurisdictionMiles(childComplexity, args["input"].(gqlmodel.BackfillJurisdictionMilesInput)), true
 	case "Mutation.bulkAssignTraining":
 		if e.ComplexityRoot.Mutation.BulkAssignTraining == nil {
 			break
@@ -28925,6 +31170,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CancelDOTTest(childComplexity, args["id"].(string), args["reason"].(string)), true
+	case "Mutation.cancelFuelCard":
+		if e.ComplexityRoot.Mutation.CancelFuelCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_cancelFuelCard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CancelFuelCard(childComplexity, args["input"].(gqlmodel.CancelFuelCardInput)), true
 	case "Mutation.cancelMyExpense":
 		if e.ComplexityRoot.Mutation.CancelMyExpense == nil {
 			break
@@ -29123,6 +31379,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CloseWorkerSafetyEvent(childComplexity, args["input"].(gqlmodel.SafetyEventStatusInput)), true
+	case "Mutation.commitFuelPurchaseImport":
+		if e.ComplexityRoot.Mutation.CommitFuelPurchaseImport == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_commitFuelPurchaseImport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CommitFuelPurchaseImport(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.completeClearinghouseQuery":
 		if e.ComplexityRoot.Mutation.CompleteClearinghouseQuery == nil {
 			break
@@ -29244,6 +31511,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateEquipmentType(childComplexity, args["input"].(gqlmodel.EquipmentTypeInput)), true
+	case "Mutation.createFuelCard":
+		if e.ComplexityRoot.Mutation.CreateFuelCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createFuelCard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateFuelCard(childComplexity, args["input"].(gqlmodel.FuelCardInput)), true
 	case "Mutation.createFuelIndex":
 		if e.ComplexityRoot.Mutation.CreateFuelIndex == nil {
 			break
@@ -29255,6 +31533,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFuelIndex(childComplexity, args["input"].(gqlmodel.FuelIndexInput)), true
+	case "Mutation.createFuelPurchase":
+		if e.ComplexityRoot.Mutation.CreateFuelPurchase == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createFuelPurchase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateFuelPurchase(childComplexity, args["input"].(gqlmodel.FuelPurchaseInput)), true
+	case "Mutation.createFuelPurchaseImport":
+		if e.ComplexityRoot.Mutation.CreateFuelPurchaseImport == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createFuelPurchaseImport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateFuelPurchaseImport(childComplexity, args["input"].(gqlmodel.CreateFuelPurchaseImportInput)), true
 	case "Mutation.createFuelSurchargeProgram":
 		if e.ComplexityRoot.Mutation.CreateFuelSurchargeProgram == nil {
 			break
@@ -29277,6 +31577,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateHomeLayoutPreset(childComplexity, args["input"].(gqlmodel.SaveHomeLayoutPresetInput)), true
+	case "Mutation.createIftaMileageEntry":
+		if e.ComplexityRoot.Mutation.CreateIFTAMileageEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createIftaMileageEntry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateIFTAMileageEntry(childComplexity, args["input"].(gqlmodel.IFTAMileageEntryInput)), true
 	case "Mutation.createInvoiceFromOrder":
 		if e.ComplexityRoot.Mutation.CreateInvoiceFromOrder == nil {
 			break
@@ -29728,6 +32039,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteFuelIndexPrice(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteFuelPurchase":
+		if e.ComplexityRoot.Mutation.DeleteFuelPurchase == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteFuelPurchase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteFuelPurchase(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.deleteFuelSurchargeProgram":
 		if e.ComplexityRoot.Mutation.DeleteFuelSurchargeProgram == nil {
 			break
@@ -29750,6 +32072,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteHomeLayoutPreset(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteIftaMileageEntry":
+		if e.ComplexityRoot.Mutation.DeleteIFTAMileageEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteIftaMileageEntry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteIFTAMileageEntry(childComplexity, args["id"].(string), args["version"].(int)), true
+	case "Mutation.deleteIftaReturn":
+		if e.ComplexityRoot.Mutation.DeleteIFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteIftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteIFTAReturn(childComplexity, args["id"].(string), args["version"].(int)), true
+	case "Mutation.deleteIftaTaxRate":
+		if e.ComplexityRoot.Mutation.DeleteIFTATaxRate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteIftaTaxRate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteIFTATaxRate(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.deleteLeaveDay":
 		if e.ComplexityRoot.Mutation.DeleteLeaveDay == nil {
 			break
@@ -29948,6 +32303,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DetentionBacktest(childComplexity, args["input"].(gqlmodel.DetentionBacktestInput)), true
+	case "Mutation.discardFuelPurchaseImport":
+		if e.ComplexityRoot.Mutation.DiscardFuelPurchaseImport == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_discardFuelPurchaseImport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DiscardFuelPurchaseImport(childComplexity, args["id"].(string), args["version"].(int), args["reason"].(*string)), true
 	case "Mutation.dismissMyNotifications":
 		if e.ComplexityRoot.Mutation.DismissMyNotifications == nil {
 			break
@@ -30113,6 +32479,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.FinalizeDOTRandomDraw(childComplexity, args["id"].(string)), true
+	case "Mutation.finalizeIftaReturn":
+		if e.ComplexityRoot.Mutation.FinalizeIFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_finalizeIftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.FinalizeIFTAReturn(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.forkCannedReport":
 		if e.ComplexityRoot.Mutation.ForkCannedReport == nil {
 			break
@@ -30146,6 +32523,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.GenerateDriverSettlement(childComplexity, args["input"].(gqlmodel.GenerateDriverSettlementInput)), true
+	case "Mutation.generateIftaReturn":
+		if e.ComplexityRoot.Mutation.GenerateIFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_generateIftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.GenerateIFTAReturn(childComplexity, args["period"].(gqlmodel.IFTAPeriodInput)), true
 	case "Mutation.generatePayrollExport":
 		if e.ComplexityRoot.Mutation.GeneratePayrollExport == nil {
 			break
@@ -30301,6 +32689,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MarkEmploymentVerificationRequested(childComplexity, args["id"].(string)), true
+	case "Mutation.markIftaReturnFiled":
+		if e.ComplexityRoot.Mutation.MarkIFTAReturnFiled == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markIftaReturnFiled_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MarkIFTAReturnFiled(childComplexity, args["input"].(gqlmodel.MarkIFTAReturnFiledInput)), true
 	case "Mutation.markMyNotificationsRead":
 		if e.ComplexityRoot.Mutation.MarkMyNotificationsRead == nil {
 			break
@@ -30565,6 +32964,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecalculateDriverSettlement(childComplexity, args["input"].(gqlmodel.DriverSettlementActionInput)), true
+	case "Mutation.recalculateMoveJurisdictionMiles":
+		if e.ComplexityRoot.Mutation.RecalculateMoveJurisdictionMiles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_recalculateMoveJurisdictionMiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RecalculateMoveJurisdictionMiles(childComplexity, args["shipmentMoveId"].(string)), true
 	case "Mutation.recalculateShipmentDistance":
 		if e.ComplexityRoot.Mutation.RecalculateShipmentDistance == nil {
 			break
@@ -30576,6 +32986,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecalculateShipmentDistance(childComplexity, args["shipmentId"].(string)), true
+	case "Mutation.recomputeIftaReturn":
+		if e.ComplexityRoot.Mutation.RecomputeIFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_recomputeIftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RecomputeIFTAReturn(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.recordClearinghouseQuery":
 		if e.ComplexityRoot.Mutation.RecordClearinghouseQuery == nil {
 			break
@@ -30807,6 +33228,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RemoveOrderCharge(childComplexity, args["input"].(gqlmodel.RemoveOrderChargeInput)), true
+	case "Mutation.reopenIftaReturn":
+		if e.ComplexityRoot.Mutation.ReopenIFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_reopenIftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReopenIFTAReturn(childComplexity, args["id"].(string), args["version"].(int), args["reason"].(string)), true
 	case "Mutation.reopenPerformanceReview":
 		if e.ComplexityRoot.Mutation.ReopenPerformanceReview == nil {
 			break
@@ -31220,6 +33652,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SkipWorkerChecklistItem(childComplexity, args["input"].(gqlmodel.WorkerChecklistItemActionInput)), true
+	case "Mutation.stageFuelPurchaseImport":
+		if e.ComplexityRoot.Mutation.StageFuelPurchaseImport == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_stageFuelPurchaseImport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.StageFuelPurchaseImport(childComplexity, args["input"].(gqlmodel.StageFuelPurchaseImportInput)), true
 	case "Mutation.startMyTraining":
 		if e.ComplexityRoot.Mutation.StartMyTraining == nil {
 			break
@@ -31583,6 +34026,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateEscrowAccount(childComplexity, args["input"].(gqlmodel.UpdateEscrowAccountInput)), true
+	case "Mutation.updateFuelCard":
+		if e.ComplexityRoot.Mutation.UpdateFuelCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateFuelCard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateFuelCard(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.FuelCardInput)), true
 	case "Mutation.updateFuelIndex":
 		if e.ComplexityRoot.Mutation.UpdateFuelIndex == nil {
 			break
@@ -31605,6 +34059,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateFuelIndexPrice(childComplexity, args["input"].(gqlmodel.UpdateFuelIndexPriceInput)), true
+	case "Mutation.updateFuelPurchase":
+		if e.ComplexityRoot.Mutation.UpdateFuelPurchase == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateFuelPurchase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateFuelPurchase(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.FuelPurchaseInput)), true
 	case "Mutation.updateFuelSurchargeProgram":
 		if e.ComplexityRoot.Mutation.UpdateFuelSurchargeProgram == nil {
 			break
@@ -31638,6 +34103,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateHomeLayoutPreset(childComplexity, args["input"].(gqlmodel.UpdateHomeLayoutPresetInput)), true
+	case "Mutation.updateIftaMileageEntry":
+		if e.ComplexityRoot.Mutation.UpdateIFTAMileageEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateIftaMileageEntry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateIFTAMileageEntry(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.IFTAMileageEntryInput)), true
 	case "Mutation.updateJobPosition":
 		if e.ComplexityRoot.Mutation.UpdateJobPosition == nil {
 			break
@@ -32045,6 +34521,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateWorkerSafetyEvent(childComplexity, args["input"].(gqlmodel.UpdateWorkerSafetyEventInput)), true
+	case "Mutation.upsertIftaTaxRates":
+		if e.ComplexityRoot.Mutation.UpsertIFTATaxRates == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_upsertIftaTaxRates_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpsertIFTATaxRates(childComplexity, args["input"].([]*gqlmodel.IFTATaxRateInput)), true
 	case "Mutation.verifyWorkerCredential":
 		if e.ComplexityRoot.Mutation.VerifyWorkerCredential == nil {
 			break
@@ -37356,6 +39843,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.FormulaTemplates(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.fuelCard":
+		if e.ComplexityRoot.Query.FuelCard == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelCard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelCard(childComplexity, args["id"].(string)), true
+	case "Query.fuelCards":
+		if e.ComplexityRoot.Query.FuelCards == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelCards_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelCards(childComplexity, args["input"].(gqlmodel.FuelCardsInput)), true
 	case "Query.fuelDashboard":
 		if e.ComplexityRoot.Query.FuelDashboard == nil {
 			break
@@ -37401,6 +39910,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.FuelProgramCurrentRates(childComplexity), true
+	case "Query.fuelPurchase":
+		if e.ComplexityRoot.Query.FuelPurchase == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelPurchase_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelPurchase(childComplexity, args["id"].(string)), true
+	case "Query.fuelPurchaseImport":
+		if e.ComplexityRoot.Query.FuelPurchaseImport == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelPurchaseImport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelPurchaseImport(childComplexity, args["id"].(string)), true
+	case "Query.fuelPurchaseImportTemplate":
+		if e.ComplexityRoot.Query.FuelPurchaseImportTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelPurchaseImportTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelPurchaseImportTemplate(childComplexity, args["provider"].(fuelpurchase.CardProvider)), true
+	case "Query.fuelPurchases":
+		if e.ComplexityRoot.Query.FuelPurchases == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelPurchases_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelPurchases(childComplexity, args["input"].(gqlmodel.FuelPurchasesInput)), true
 	case "Query.fuelSurchargeProgram":
 		if e.ComplexityRoot.Query.FuelSurchargeProgram == nil {
 			break
@@ -37557,6 +40110,100 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.HosCertificationSummary(childComplexity, args["startDate"].(string), args["endDate"].(string)), true
+	case "Query.iftaCurrentPeriod":
+		if e.ComplexityRoot.Query.IFTACurrentPeriod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.IFTACurrentPeriod(childComplexity), true
+	case "Query.iftaJurisdictions":
+		if e.ComplexityRoot.Query.IFTAJurisdictions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaJurisdictions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAJurisdictions(childComplexity, args["membersOnly"].(*bool)), true
+	case "Query.iftaMileageEntries":
+		if e.ComplexityRoot.Query.IFTAMileageEntries == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaMileageEntries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAMileageEntries(childComplexity, args["input"].(gqlmodel.IFTAMileageEntriesInput)), true
+	case "Query.iftaMileageEntry":
+		if e.ComplexityRoot.Query.IFTAMileageEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaMileageEntry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAMileageEntry(childComplexity, args["id"].(string)), true
+	case "Query.iftaPeriod":
+		if e.ComplexityRoot.Query.IFTAPeriod == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaPeriod_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAPeriod(childComplexity, args["year"].(int), args["quarter"].(int)), true
+	case "Query.iftaReturn":
+		if e.ComplexityRoot.Query.IFTAReturn == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaReturn_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAReturn(childComplexity, args["id"].(string)), true
+	case "Query.iftaReturnForPeriod":
+		if e.ComplexityRoot.Query.IFTAReturnForPeriod == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaReturnForPeriod_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAReturnForPeriod(childComplexity, args["period"].(gqlmodel.IFTAPeriodInput)), true
+	case "Query.iftaReturns":
+		if e.ComplexityRoot.Query.IFTAReturns == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaReturns_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTAReturns(childComplexity, args["input"].(gqlmodel.IFTAReturnsInput)), true
+	case "Query.iftaTaxRates":
+		if e.ComplexityRoot.Query.IFTATaxRates == nil {
+			break
+		}
+
+		args, err := ec.field_Query_iftaTaxRates_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.IFTATaxRates(childComplexity, args["input"].(gqlmodel.IFTATaxRatesInput)), true
 
 	case "Query.invoice":
 		if e.ComplexityRoot.Query.Invoice == nil {
@@ -47951,6 +50598,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentMove.ID(childComplexity), true
+	case "ShipmentMove.jurisdictionMiles":
+		if e.ComplexityRoot.ShipmentMove.JurisdictionMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMove.JurisdictionMiles(childComplexity), true
 	case "ShipmentMove.loaded":
 		if e.ComplexityRoot.ShipmentMove.Loaded == nil {
 			break
@@ -48114,6 +50767,97 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentMoveEvent.Type(childComplexity), true
+
+	case "ShipmentMoveJurisdictionMile.calculatedAt":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.CalculatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.CalculatedAt(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.countryCode":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.CountryCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.CountryCode(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.dataVersion":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.DataVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.DataVersion(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.distance":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.Distance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.Distance(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.distanceUnits":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.DistanceUnits == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.DistanceUnits(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.ferryDistance":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.FerryDistance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.FerryDistance(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.id":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.ID(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.jurisdictionCode":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.JurisdictionCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.JurisdictionCode(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.loaded":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.Loaded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.Loaded(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.provider":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.Provider(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.sequence":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.Sequence(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.shipmentId":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.ShipmentID(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.shipmentMoveId":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.ShipmentMoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.ShipmentMoveID(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.source":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.Source(childComplexity), true
+	case "ShipmentMoveJurisdictionMile.tollDistance":
+		if e.ComplexityRoot.ShipmentMoveJurisdictionMile.TollDistance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentMoveJurisdictionMile.TollDistance(childComplexity), true
 
 	case "ShipmentOnTime.deltaPp":
 		if e.ComplexityRoot.ShipmentOnTime.DeltaPp == nil {
@@ -51002,12 +53746,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Tractor.FleetCodeID(childComplexity), true
+	case "Tractor.fuelType":
+		if e.ComplexityRoot.Tractor.FuelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tractor.FuelType(childComplexity), true
 	case "Tractor.id":
 		if e.ComplexityRoot.Tractor.ID == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Tractor.ID(childComplexity), true
+	case "Tractor.iftaQualified":
+		if e.ComplexityRoot.Tractor.IFTAQualified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tractor.IFTAQualified(childComplexity), true
 	case "Tractor.lastKnownLocation":
 		if e.ComplexityRoot.Tractor.LastKnownLocation == nil {
 			break
@@ -57250,6 +60006,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAttachPayEventsInput,
 		ec.unmarshalInputAttachWorkerCredentialDocumentInput,
 		ec.unmarshalInputAttachWorkerTrainingDocumentInput,
+		ec.unmarshalInputBackfillJurisdictionMilesInput,
 		ec.unmarshalInputBenefitPlanInput,
 		ec.unmarshalInputBillingQueueAssignInput,
 		ec.unmarshalInputBillingQueueUpdateStatusInput,
@@ -57260,6 +60017,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkUpdateTractorStatusInput,
 		ec.unmarshalInputBulkUpdateTrailerStatusInput,
 		ec.unmarshalInputBulkWorkerPTOActionInput,
+		ec.unmarshalInputCancelFuelCardInput,
 		ec.unmarshalInputCancelWorkerChecklistInput,
 		ec.unmarshalInputCancelWorkerTrainingInput,
 		ec.unmarshalInputCarrierInvoiceMatchActionInput,
@@ -57271,6 +60029,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCostingControlInput,
 		ec.unmarshalInputCreateCarrierInvoiceMatchInput,
 		ec.unmarshalInputCreateDocumentTemplateVersionInput,
+		ec.unmarshalInputCreateFuelPurchaseImportInput,
 		ec.unmarshalInputCreateMyLoadCommentInput,
 		ec.unmarshalInputCreatePayCodeInput,
 		ec.unmarshalInputCreatePayProfileInput,
@@ -57323,8 +60082,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputFilterGroupInput,
 		ec.unmarshalInputFleetSafetyInput,
 		ec.unmarshalInputForkCannedReportInput,
+		ec.unmarshalInputFuelCardInput,
+		ec.unmarshalInputFuelCardsInput,
 		ec.unmarshalInputFuelIndexInput,
 		ec.unmarshalInputFuelIndexPriceInput,
+		ec.unmarshalInputFuelPurchaseImportRowsInput,
+		ec.unmarshalInputFuelPurchaseInput,
+		ec.unmarshalInputFuelPurchasesInput,
 		ec.unmarshalInputFuelSurchargeProgramInput,
 		ec.unmarshalInputFuelSurchargeTableRowInput,
 		ec.unmarshalInputGenerateCarrierSettlementBatchInput,
@@ -57336,6 +60100,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputHomeLayoutInput,
 		ec.unmarshalInputHomeWidgetConfigInput,
 		ec.unmarshalInputHomeWidgetInput,
+		ec.unmarshalInputIFTAMileageEntriesInput,
+		ec.unmarshalInputIFTAMileageEntryInput,
+		ec.unmarshalInputIFTAPeriodInput,
+		ec.unmarshalInputIFTAReturnsInput,
+		ec.unmarshalInputIFTATaxRateInput,
+		ec.unmarshalInputIFTATaxRatesInput,
 		ec.unmarshalInputInviteWorkerToPortalInput,
 		ec.unmarshalInputIssueDisciplinaryActionInput,
 		ec.unmarshalInputIssuePayAdvanceInput,
@@ -57344,6 +60114,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputLocateTrailerInput,
 		ec.unmarshalInputMarkCarrierSettlementPaidInput,
 		ec.unmarshalInputMarkDriverSettlementPaidInput,
+		ec.unmarshalInputMarkIFTAReturnFiledInput,
 		ec.unmarshalInputMatchRoutingGuideInput,
 		ec.unmarshalInputNotificationFilterInput,
 		ec.unmarshalInputOpenEscrowAccountInput,
@@ -57456,6 +60227,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSidebarPreferencesInput,
 		ec.unmarshalInputSidebarSectionPreferenceInput,
 		ec.unmarshalInputSortFieldInput,
+		ec.unmarshalInputStageFuelPurchaseImportInput,
 		ec.unmarshalInputStartWorkerChecklistInput,
 		ec.unmarshalInputSubmitMyExpenseInput,
 		ec.unmarshalInputTableConfigurationInput,
@@ -64557,6 +67329,478 @@ extend type Query {
   formulaTemplate(id: ID!): FormulaTemplate
 }
 `, BuiltIn: false},
+	{Name: "../schema/fuel_purchase.graphqls", Input: `"""
+Fuel product as classified for the International Fuel Tax Agreement. The first
+fourteen are IFTA fuel types and enter the return; DEF, Reefer and Other are
+tracked as spend only and never earn or owe tax.
+"""
+enum IFTAFuelType {
+  Diesel
+  Gasoline
+  Gasohol
+  Propane
+  CNG
+  LNG
+  Ethanol
+  Methanol
+  E85
+  M85
+  A55
+  Biodiesel
+  Electricity
+  Hydrogen
+  DEF
+  Reefer
+  Other
+}
+
+enum FuelCardProvider {
+  Comdata
+  EFS
+  WEX
+  Other
+}
+
+"""
+Active and Suspended move between each other; Cancelled is terminal.
+"""
+enum FuelCardStatus {
+  Active
+  Suspended
+  Cancelled
+}
+
+enum FuelQuantityUnit {
+  Gallon
+  Litre
+}
+
+enum FuelPurchaseSource {
+  Manual
+  CardImport
+}
+
+"""
+Pending until a statement is staged; Parsed once its rows have been read and
+resolved; Committed when the rows became purchases. Failed and Discarded batches
+can be staged again or left as a record of what was tried.
+"""
+enum FuelPurchaseImportStatus {
+  Pending
+  Parsed
+  Committed
+  Failed
+  Discarded
+}
+
+"""
+Only New rows commit. DuplicateInFile is the second occurrence of a reference
+inside the statement; AlreadyImported matches a purchase already on file.
+"""
+enum FuelPurchaseImportRowStatus {
+  New
+  DuplicateInFile
+  AlreadyImported
+  Error
+  Committed
+  Skipped
+}
+
+enum FuelImportFormat {
+  CSV
+  XLSX
+}
+
+"""
+A fuel card issued by a provider. Only the last four digits are stored; the
+external id is the provider's masked token, never the card number.
+"""
+type FuelCard {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  provider: FuelCardProvider!
+  lastFour: String!
+  label: String!
+  externalCardId: String
+  assignedWorkerId: ID
+  assignedTractorId: ID
+  status: FuelCardStatus!
+  expiresAt: Timestamp
+  cancelledAt: Timestamp
+  cancelReason: String
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  assignedWorker: Worker
+  assignedTractor: Tractor
+}
+
+type FuelCardEdge {
+  node: FuelCard!
+  cursor: String!
+}
+
+type FuelCardConnection {
+  edges: [FuelCardEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Fuel bought for a tractor. The purchase is a tax record: the tractor cannot be
+deleted while purchases reference it, and the transaction reference is unique
+within the organization so a statement imported twice cannot double-count.
+"""
+type FuelPurchase {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  tractorId: ID!
+  workerId: ID
+  """
+  The IFTA jurisdiction the fuel was bought in, which decides which line of the
+  return the tax-paid gallons credit. It is not always the vendor's mailing state.
+  """
+  jurisdictionId: ID!
+  fuelCardId: ID
+  cardLastFour: String
+  purchasedAt: Timestamp!
+  vendor: String
+  vendorCity: String
+  fuelType: IFTAFuelType!
+  """
+  Quantity as entered, in quantityUnit.
+  """
+  quantity: Decimal!
+  quantityUnit: FuelQuantityUnit!
+  """
+  Quantity normalised to US gallons (litres divided by 3.785411784, three places).
+  """
+  gallons: Decimal!
+  """
+  Price per entered unit.
+  """
+  unitPrice: Decimal
+  totalAmount: Decimal!
+  currencyCode: String!
+  odometer: Int
+  transactionReference: String
+  source: FuelPurchaseSource!
+  importBatchId: ID
+  """
+  Whether fuel tax was paid at the pump. Bulk or untaxed fuel still counts in the
+  fleet's MPG gallons but earns no tax-paid credit on the return.
+  """
+  taxPaid: Boolean!
+  notes: String
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  tractor: Tractor
+  worker: Worker
+  jurisdiction: IFTAJurisdiction!
+  fuelCard: FuelCard
+}
+
+type FuelPurchaseEdge {
+  node: FuelPurchase!
+  cursor: String!
+}
+
+type FuelPurchaseConnection {
+  edges: [FuelPurchaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+What staging found in a statement, before anything is committed.
+"""
+type FuelPurchaseImportSummary {
+  rowCount: Int!
+  newCount: Int!
+  duplicateInFileCount: Int!
+  alreadyImportedCount: Int!
+  errorCount: Int!
+  """
+  Gallons across the rows that will commit.
+  """
+  totalGallons: Decimal!
+  """
+  Amount across the rows that will commit, in the batch's default currency.
+  """
+  totalAmount: Decimal!
+  """
+  Gallons keyed by IFTA fuel type across the rows that will commit.
+  """
+  byFuelType: JSON
+  """
+  Gallons keyed by jurisdiction code across the rows that will commit.
+  """
+  byJurisdiction: JSON
+  earliestPurchasedAt: Timestamp
+  latestPurchasedAt: Timestamp
+}
+
+"""
+A fuel card statement staged for review. The bytes live on a Document bound to
+the batch; staging reads that document, parses every row, resolves cards,
+tractors and jurisdictions, and reports what would commit.
+"""
+type FuelPurchaseImportBatch {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  provider: FuelCardProvider!
+  documentId: ID
+  fileName: String
+  sourceFormat: FuelImportFormat
+  status: FuelPurchaseImportStatus!
+  """
+  Fuel type applied to rows when the statement has no product column.
+  """
+  defaultFuelType: IFTAFuelType
+  """
+  Card whose assigned tractor is used for rows the statement cannot match to a
+  card of its own.
+  """
+  defaultFuelCardId: ID
+  defaultCurrency: String!
+  """
+  Explicit column mapping keyed by field name, overriding the provider preset.
+  """
+  mapping: JSON
+  unmappedHeaders: [String!]!
+  summary: FuelPurchaseImportSummary
+  rowCount: Int!
+  errorCount: Int!
+  committedCount: Int!
+  error: String
+  uploadedById: ID
+  stagedAt: Timestamp
+  committedAt: Timestamp
+  committedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  document: WorkerCredentialDocument
+  defaultFuelCard: FuelCard
+  rows(input: FuelPurchaseImportRowsInput): FuelPurchaseImportRowConnection!
+}
+
+"""
+The purchase a statement row would become, as parsed and before any ids are
+assigned. Absent when the row could not be read at all.
+"""
+type FuelPurchaseImportParsed {
+  purchasedAt: Timestamp
+  vendor: String
+  vendorCity: String
+  jurisdictionCode: String
+  fuelType: IFTAFuelType
+  quantity: Decimal
+  quantityUnit: FuelQuantityUnit
+  gallons: Decimal
+  unitPrice: Decimal
+  totalAmount: Decimal
+  currencyCode: String
+  transactionReference: String
+  cardLastFour: String
+  tractorCode: String
+  odometer: Int
+}
+
+type FuelPurchaseImportRow {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  importBatchId: ID!
+  """
+  One-based line number in the file, counting the header row.
+  """
+  rowNumber: Int!
+  cells: [String!]!
+  parsed: FuelPurchaseImportParsed
+  transactionReference: String
+  status: FuelPurchaseImportRowStatus!
+  error: String
+  resolvedTractorId: ID
+  resolvedFuelCardId: ID
+  resolvedJurisdictionId: ID
+  """
+  How the tractor, card and jurisdiction were matched, one note per decision.
+  """
+  resolutionNotes: [String!]!
+  """
+  Set when the row has been committed as a purchase.
+  """
+  fuelPurchaseId: ID
+  createdAt: Timestamp!
+  resolvedTractor: Tractor
+}
+
+type FuelPurchaseImportRowEdge {
+  node: FuelPurchaseImportRow!
+  cursor: String!
+}
+
+type FuelPurchaseImportRowConnection {
+  edges: [FuelPurchaseImportRowEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A CSV header row in the shape the import expects for a provider.
+"""
+type FuelImportTemplate {
+  fileName: String!
+  content: String!
+}
+
+input FuelCardInput {
+  provider: FuelCardProvider!
+  lastFour: String!
+  label: String!
+  externalCardId: String
+  assignedWorkerId: ID
+  assignedTractorId: ID
+  """
+  Active or Suspended. Cancelling goes through cancelFuelCard, which needs a reason.
+  """
+  status: FuelCardStatus = Active
+  expiresAt: Timestamp
+  notes: String
+}
+
+input FuelCardsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  provider: FuelCardProvider
+  status: FuelCardStatus
+  assignedWorkerId: ID
+  assignedTractorId: ID
+}
+
+input CancelFuelCardInput {
+  id: ID!
+  version: Int!
+  """
+  At least ten characters. Cancelling is permanent.
+  """
+  reason: String!
+}
+
+input FuelPurchaseInput {
+  tractorId: ID!
+  workerId: ID
+  jurisdictionId: ID!
+  purchasedAt: Timestamp!
+  vendor: String
+  vendorCity: String
+  fuelType: IFTAFuelType!
+  quantity: Decimal!
+  quantityUnit: FuelQuantityUnit = Gallon
+  unitPrice: Decimal
+  totalAmount: Decimal!
+  currencyCode: String = "USD"
+  odometer: Int
+  fuelCardId: ID
+  cardLastFour: String
+  transactionReference: String
+  taxPaid: Boolean = true
+  notes: String
+}
+
+input FuelPurchasesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  tractorId: ID
+  fuelCardId: ID
+  jurisdictionId: ID
+  fuelTypes: [IFTAFuelType!]
+  sources: [FuelPurchaseSource!]
+  taxPaid: Boolean
+  """
+  Inclusive lower bound on purchasedAt.
+  """
+  from: Timestamp
+  """
+  Exclusive upper bound on purchasedAt.
+  """
+  to: Timestamp
+}
+
+input CreateFuelPurchaseImportInput {
+  provider: FuelCardProvider!
+  defaultFuelType: IFTAFuelType
+  defaultFuelCardId: ID
+  defaultCurrency: String = "USD"
+  mapping: JSON
+}
+
+input StageFuelPurchaseImportInput {
+  id: ID!
+  """
+  The uploaded statement. The document must have been uploaded against this
+  batch (resource type fuel_purchase_import) or staging is refused.
+  """
+  documentId: ID!
+  mapping: JSON
+}
+
+input FuelPurchaseImportRowsInput {
+  first: Int = 50
+  after: String
+  statuses: [FuelPurchaseImportRowStatus!]
+}
+
+extend type Query {
+  fuelCards(input: FuelCardsInput!): FuelCardConnection!
+  fuelCard(id: ID!): FuelCard!
+  fuelPurchases(input: FuelPurchasesInput!): FuelPurchaseConnection!
+  fuelPurchase(id: ID!): FuelPurchase!
+  fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
+  fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
+}
+
+extend type Mutation {
+  createFuelCard(input: FuelCardInput!): FuelCard!
+  updateFuelCard(id: ID!, version: Int!, input: FuelCardInput!): FuelCard!
+  cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
+  createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
+  updateFuelPurchase(id: ID!, version: Int!, input: FuelPurchaseInput!): FuelPurchase!
+  """
+  Removes the purchase outright. A return already generated for its quarter
+  keeps its figures until it is recomputed.
+  """
+  deleteFuelPurchase(id: ID!, version: Int!): Boolean!
+  createFuelPurchaseImport(input: CreateFuelPurchaseImportInput!): FuelPurchaseImportBatch!
+  """
+  Reads the uploaded statement and resolves every row without committing
+  anything. Can be run again on the same batch with a different document or
+  mapping until it is committed or discarded.
+  """
+  stageFuelPurchaseImport(input: StageFuelPurchaseImportInput!): FuelPurchaseImportBatch!
+  """
+  Turns every New row into a purchase in one transaction. Rows whose reference
+  is already on file are marked AlreadyImported rather than duplicated.
+  """
+  commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
+  discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
+}
+`, BuiltIn: false},
 	{Name: "../schema/fuel_surcharge.graphqls", Input: `enum FuelIndexSource {
   EIA
   Custom
@@ -65192,6 +68436,518 @@ extend type Mutation {
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   deleteHomeLayoutPreset(id: ID!): Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/ifta.graphqls", Input: `enum IFTAJurisdictionStatus {
+  Active
+  Inactive
+}
+
+"""
+Where a jurisdiction's miles came from. RouteCalculation rows are written by the
+distance provider's state report; Manual entries are keyed by hand and, when they
+name a shipment move, replace that move's routed rows so nothing is counted twice.
+"""
+enum IFTAMileageSource {
+  Manual
+  RouteCalculation
+  Telematics
+}
+
+"""
+Draft figures move with the data. Finalized locks them and can be reopened with
+a reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.
+"""
+enum IFTAReturnStatus {
+  Draft
+  Finalized
+  Filed
+}
+
+"""
+MissingRate blocks finalizing. Every other code is a warning the return carries
+so the preparer can see what the figures leave out.
+"""
+enum IFTAProblemCode {
+  MissingRate
+  NoFuelForType
+  UnattributedMiles
+  NoTractorMiles
+  MileageMismatch
+  NonMemberActivity
+  NonQualifiedActivity
+}
+
+"""
+A state, province or district as IFTA knows it. This table is global and shared
+by every organization; provinces have no usState.
+"""
+type IFTAJurisdiction {
+  id: ID!
+  """
+  ISO 3166-1 alpha-2: US, CA or MX.
+  """
+  countryCode: String!
+  """
+  Two-letter postal code within the country.
+  """
+  code: String!
+  name: String!
+  usStateId: ID
+  """
+  Members share fuel tax through IFTA. Miles in a non-member jurisdiction still
+  count toward the fleet's total but are never taxed on the return.
+  """
+  isIftaMember: Boolean!
+  """
+  Indiana, Kentucky and Virginia levy a surcharge on fuel consumed, on top of the
+  tax on fuel bought.
+  """
+  hasSurcharge: Boolean!
+  sortOrder: Int!
+  status: IFTAJurisdictionStatus!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  usState: UsState
+}
+
+"""
+A published per-gallon rate for one jurisdiction, quarter and fuel type. Global:
+every organization is taxed at the same rate, and a missing rate is flagged on
+the return rather than treated as zero.
+"""
+type IFTATaxRate {
+  id: ID!
+  jurisdictionId: ID!
+  year: Int!
+  quarter: Int!
+  fuelType: IFTAFuelType!
+  """
+  USD per US gallon as published in the IFTA rate matrix.
+  """
+  ratePerGallon: Decimal!
+  surchargeRatePerGallon: Decimal
+  sourceNote: String
+  sourceUrl: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  jurisdiction: IFTAJurisdiction!
+}
+
+type IFTATaxRateEdge {
+  node: IFTATaxRate!
+  cursor: String!
+}
+
+type IFTATaxRateConnection {
+  edges: [IFTATaxRateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Miles a tractor ran in a jurisdiction that routing did not capture, such as
+repositioning between shipments. Year and quarter are fixed from traveledAt in
+the organization's timezone when the entry is written.
+"""
+type IFTAJurisdictionMileageEntry {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  tractorId: ID!
+  jurisdictionId: ID!
+  traveledAt: Timestamp!
+  year: Int!
+  quarter: Int!
+  miles: Decimal!
+  loaded: Boolean!
+  source: IFTAMileageSource!
+  """
+  When set, this entry replaces the move's routed jurisdiction rows in the return.
+  """
+  shipmentMoveId: ID
+  notes: String
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  tractor: Tractor
+  jurisdiction: IFTAJurisdiction!
+}
+
+type IFTAJurisdictionMileageEntryEdge {
+  node: IFTAJurisdictionMileageEntry!
+  cursor: String!
+}
+
+type IFTAJurisdictionMileageEntryConnection {
+  edges: [IFTAJurisdictionMileageEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Fleet average for one fuel type over the quarter: total miles run by tractors of
+that fuel type divided by every IFTA gallon bought for them, taxed or not.
+"""
+type IFTAFleetMPG {
+  fuelType: IFTAFuelType!
+  """
+  Null when no gallons were bought for the fuel type, which leaves its lines with
+  no taxable gallons.
+  """
+  mpg: Decimal
+  totalMiles: Decimal!
+  totalGallons: Decimal!
+}
+
+type IFTAReturnProblem {
+  code: IFTAProblemCode!
+  message: String!
+  jurisdictionCode: String
+  fuelType: IFTAFuelType
+  """
+  The figure the problem is about: miles for mileage problems, gallons for fuel
+  problems. Absent for problems that are a count.
+  """
+  amount: Decimal
+}
+
+"""
+One jurisdiction and fuel type on a return. Miles are broken down by how they
+were captured so the preparer can see what came from routing and what was
+entered by hand.
+"""
+type IFTAReturnLine {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  returnId: ID!
+  jurisdictionId: ID!
+  fuelType: IFTAFuelType!
+  """
+  Snapshot of the jurisdiction's membership when the line was computed.
+  """
+  isIftaMember: Boolean!
+  totalMiles: Decimal!
+  taxableMiles: Decimal!
+  routeMiles: Decimal!
+  manualMiles: Decimal!
+  loadedMiles: Decimal!
+  emptyMiles: Decimal!
+  """
+  Tax-paid gallons rounded to whole gallons as the form requires.
+  """
+  taxPaidGallons: Decimal!
+  """
+  Tax-paid gallons before rounding, for reconciliation against the purchases.
+  """
+  taxPaidGallonsRaw: Decimal!
+  purchaseCount: Int!
+  """
+  Taxable miles divided by the fleet MPG for the fuel type, whole gallons.
+  """
+  taxableGallons: Decimal!
+  """
+  Taxable gallons minus tax-paid gallons. Negative means the fleet bought more
+  fuel in the jurisdiction than it burned there and is owed a credit.
+  """
+  netTaxableGallons: Decimal!
+  ratePerGallon: Decimal
+  surchargeRatePerGallon: Decimal
+  """
+  True when no rate is published for the jurisdiction, quarter and fuel type.
+  The line's tax is zero, and the return cannot be finalized until a rate exists.
+  """
+  rateMissing: Boolean!
+  """
+  Net taxable gallons times the rate. Negative is a credit.
+  """
+  taxDue: Decimal!
+  """
+  Taxable gallons times the surcharge rate. Charged on fuel consumed, so it is
+  never a credit.
+  """
+  surchargeDue: Decimal!
+  lineTotal: Decimal!
+  sortOrder: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  jurisdiction: IFTAJurisdiction!
+}
+
+"""
+A quarterly IFTA return. Figures are recomputed from miles, fuel and rates while
+the return is a Draft and frozen once it is finalized.
+"""
+type IFTAReturn {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  year: Int!
+  quarter: Int!
+  period: IFTAPeriod!
+  """
+  Zero for the original return; each amendment of a filed return increments it.
+  """
+  amendmentNumber: Int!
+  amendsReturnId: ID
+  amendsReturn: IFTAReturn
+  status: IFTAReturnStatus!
+  """
+  The organization's timezone when the return was generated. Period bounds and
+  purchase placement use it, so a later timezone change does not move figures.
+  """
+  timezone: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  totalMiles: Decimal!
+  totalTaxableMiles: Decimal!
+  totalGallons: Decimal!
+  totalTaxPaidGallons: Decimal!
+  """
+  Sum of the member lines' net taxable gallons; negative means a net credit.
+  """
+  netTaxableGallons: Decimal!
+  taxDue: Decimal!
+  surchargeDue: Decimal!
+  """
+  Tax due plus surcharge due. Negative is a credit owed to the fleet.
+  """
+  netDue: Decimal!
+  currencyCode: String!
+  fleetMpgByFuelType: [IFTAFleetMPG!]!
+  """
+  Routed miles on completed moves in the period that have no jurisdiction
+  breakdown. They are not on any line; the return is understated by this much
+  until the moves are attributed.
+  """
+  unattributedMiles: Decimal!
+  unattributedMoveCount: Int!
+  """
+  Attributed miles on moves with no tractor assignment, which cannot be placed
+  on a fuel type.
+  """
+  noTractorMiles: Decimal!
+  noTractorMoveCount: Int!
+  problems: [IFTAReturnProblem!]!
+  computedAt: Timestamp
+  finalizedAt: Timestamp
+  finalizedById: ID
+  finalizedBy: User
+  filedAt: Timestamp
+  filedById: ID
+  filedBy: User
+  filingReference: String
+  reopenedAt: Timestamp
+  reopenedById: ID
+  reopenReason: String
+  lines: [IFTAReturnLine!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type IFTAReturnEdge {
+  node: IFTAReturn!
+  cursor: String!
+}
+
+type IFTAReturnConnection {
+  edges: [IFTAReturnEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A calendar quarter as IFTA reports it. Bounds are local midnight in the
+organization's timezone, end exclusive; the due date is the last day of the
+month after the quarter ends.
+"""
+type IFTAPeriod {
+  year: Int!
+  quarter: Int!
+  """
+  For example "2026Q3".
+  """
+  key: String!
+  """
+  For example "Q3 2026".
+  """
+  label: String!
+  start: Timestamp!
+  end: Timestamp!
+  dueDate: Timestamp!
+}
+
+input IFTAPeriodInput {
+  year: Int!
+  quarter: Int!
+}
+
+input IFTATaxRateInput {
+  jurisdictionId: ID!
+  year: Int!
+  quarter: Int!
+  fuelType: IFTAFuelType!
+  ratePerGallon: Decimal!
+  surchargeRatePerGallon: Decimal
+  sourceNote: String
+  sourceUrl: String
+}
+
+input IFTATaxRatesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  period: IFTAPeriodInput
+  jurisdictionId: ID
+  fuelType: IFTAFuelType
+}
+
+input IFTAMileageEntryInput {
+  tractorId: ID!
+  jurisdictionId: ID!
+  traveledAt: Timestamp!
+  miles: Decimal!
+  loaded: Boolean = true
+  source: IFTAMileageSource = Manual
+  """
+  Name the move when this entry corrects its routed miles; the entry then
+  replaces the move's jurisdiction rows on the return.
+  """
+  shipmentMoveId: ID
+  notes: String
+}
+
+input IFTAMileageEntriesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  period: IFTAPeriodInput
+  tractorId: ID
+  jurisdictionId: ID
+  sources: [IFTAMileageSource!]
+  """
+  Inclusive lower bound on traveledAt.
+  """
+  from: Timestamp
+  """
+  Exclusive upper bound on traveledAt.
+  """
+  to: Timestamp
+}
+
+input IFTAReturnsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  year: Int
+  statuses: [IFTAReturnStatus!]
+}
+
+input MarkIFTAReturnFiledInput {
+  id: ID!
+  version: Int!
+  """
+  Between the moment the return was finalized and now.
+  """
+  filedAt: Timestamp!
+  filingReference: String
+}
+
+input BackfillJurisdictionMilesInput {
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  """
+  Upper bound on moves re-routed in one run; defaults to 2000. Every move is a
+  billable distance request.
+  """
+  maxMoves: Int
+  """
+  Count the moves and miles that would be attributed without starting the workflow.
+  """
+  dryRun: Boolean = false
+}
+
+extend type Query {
+  """
+  The global jurisdiction list, about sixty rows. Fetched once and cached on the client.
+  """
+  iftaJurisdictions(membersOnly: Boolean = false): [IFTAJurisdiction!]!
+  iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
+  iftaMileageEntries(input: IFTAMileageEntriesInput!): IFTAJurisdictionMileageEntryConnection!
+  iftaMileageEntry(id: ID!): IFTAJurisdictionMileageEntry!
+  iftaReturns(input: IFTAReturnsInput!): IFTAReturnConnection!
+  iftaReturn(id: ID!): IFTAReturn!
+  """
+  The working copy for a quarter: the open Draft or Finalized return, else the
+  most recent Filed one. Null when nothing has been generated for the period.
+  """
+  iftaReturnForPeriod(period: IFTAPeriodInput!): IFTAReturn
+  iftaPeriod(year: Int!, quarter: Int!): IFTAPeriod!
+  """
+  The most recently completed quarter in the organization's timezone.
+  """
+  iftaCurrentPeriod: IFTAPeriod!
+}
+
+extend type Mutation {
+  """
+  Inserts or replaces rates keyed by jurisdiction, year, quarter and fuel type.
+  Rates are global, so this changes what every organization's return owes.
+  """
+  upsertIftaTaxRates(input: [IFTATaxRateInput!]!): [IFTATaxRate!]!
+  deleteIftaTaxRate(id: ID!, version: Int!): Boolean!
+  createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
+  updateIftaMileageEntry(
+    id: ID!
+    version: Int!
+    input: IFTAMileageEntryInput!
+  ): IFTAJurisdictionMileageEntry!
+  deleteIftaMileageEntry(id: ID!, version: Int!): Boolean!
+  """
+  Creates the Draft for a quarter and computes it. Refused while a Draft or
+  Finalized return exists for the period, and once one is Filed; amend that instead.
+  """
+  generateIftaReturn(period: IFTAPeriodInput!): IFTAReturn!
+  recomputeIftaReturn(id: ID!, version: Int!): IFTAReturn!
+  """
+  Recomputes, then locks the Draft. Refused while any member line is missing a rate.
+  """
+  finalizeIftaReturn(id: ID!, version: Int!): IFTAReturn!
+  """
+  Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
+  """
+  reopenIftaReturn(id: ID!, version: Int!, reason: String!): IFTAReturn!
+  markIftaReturnFiled(input: MarkIFTAReturnFiledInput!): IFTAReturn!
+  """
+  Opens a new Draft for the same quarter from a Filed return, with the amendment
+  number incremented. The filed return is left untouched.
+  """
+  amendIftaReturn(id: ID!, reason: String!): IFTAReturn!
+  deleteIftaReturn(id: ID!, version: Int!): Boolean!
+  """
+  Asks the distance provider for the state-by-state report on one move and
+  replaces its jurisdiction rows. The move's distance is left as it was.
+  """
+  recalculateMoveJurisdictionMiles(shipmentMoveId: ID!): [ShipmentMoveJurisdictionMile!]!
+  """
+  Starts a workflow that attributes completed moves in the period that have no
+  jurisdiction breakdown. Each move is a billable distance request; use dryRun
+  to size the job first.
+  """
+  backfillJurisdictionMiles(input: BackfillJurisdictionMilesInput!): JurisdictionMilesBackfillResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
@@ -68074,6 +71830,7 @@ extend type Query {
   FUEL_INDEX
   FUEL_SURCHARGE_PROGRAM
   GL_ACCOUNT
+  IFTA_FUEL_TYPE
   HAZARDOUS_MATERIAL
   LOCATION
   LOCATION_CATEGORY
@@ -68098,10 +71855,12 @@ extend type Query {
   EDI_PARTNER
   EDI_PARTNER_DOCUMENT_PROFILE
   EDI_TEMPLATE
+  EDI_TRANSACTION_SET
   EMAIL_PROFILE
   SHIFT_TEMPLATE
   WORKER_POLICY
   JOB_POSITION
+  FUEL_CARD
 }
 
 input SelectOptionsInput {
@@ -68985,6 +72744,49 @@ type ShipmentMove {
   stops: [ShipmentStop!]!
   assignment: ShipmentAssignment
   carrierAssignment: CarrierAssignment
+  """
+  The move's distance split by jurisdiction from the distance provider's state
+  report. Empty until the distance control captures jurisdiction miles or the
+  move is recalculated; the whole distance is then unattributed on an IFTA return.
+  """
+  jurisdictionMiles: [ShipmentMoveJurisdictionMile!]!
+}
+
+"""
+One jurisdiction's share of a move's routed distance. Keyed by country and
+postal code as the provider reports them, so a code the IFTA table does not
+know is stored rather than dropped.
+"""
+type ShipmentMoveJurisdictionMile {
+  id: ID!
+  shipmentMoveId: ID!
+  shipmentId: ID!
+  countryCode: String!
+  jurisdictionCode: String!
+  sequence: Int!
+  "In distanceUnits."
+  distance: Float!
+  distanceUnits: String!
+  tollDistance: Float
+  ferryDistance: Float
+  "Copied from the move when the row was written."
+  loaded: Boolean!
+  source: String!
+  provider: String
+  dataVersion: String
+  calculatedAt: Timestamp!
+}
+
+"""
+Started tells whether a backfill workflow was launched; on a dry run it is false
+and only the unattributed figures are returned.
+"""
+type JurisdictionMilesBackfillResult {
+  started: Boolean!
+  dryRun: Boolean!
+  unattributedMoves: Int!
+  unattributedMiles: Decimal!
+  workflowId: String
 }
 
 type ShipmentStop {
@@ -71174,6 +74976,15 @@ type Tractor {
   externalId: String!
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """
+  The fuel the tractor burns. Its miles land on this fuel type's lines of an
+  IFTA return.
+  """
+  fuelType: IFTAFuelType!
+  """
+  Whether the tractor's miles and fuel enter the IFTA return.
+  """
+  iftaQualified: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -71206,6 +75017,8 @@ input TractorInput {
   registrationExpiry: Timestamp
   vin: String
   externalId: String
+  fuelType: IFTAFuelType = Diesel
+  iftaQualified: Boolean = true
   version: Int
   customFields: JSON
 }
@@ -71243,6 +75056,10 @@ input TractorPatchInput {
   vin: String @goField(omittable: true)
   "Omit to leave unchanged; pass null to clear."
   externalId: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  fuelType: IFTAFuelType @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  iftaQualified: Boolean @goField(omittable: true)
   "Omit to leave unchanged; null is rejected."
   version: Int @goField(omittable: true)
   "Omit to leave unchanged; pass null to clear."
@@ -80899,6 +84716,72 @@ func (ec *executionContext) childFields_FormulaTemplateVariableDefinition(ctx co
 	return nil, fmt.Errorf("no field named %q was found under type FormulaTemplateVariableDefinition", field.Name)
 }
 
+func (ec *executionContext) childFields_FuelCard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_FuelCard_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_FuelCard_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_FuelCard_organizationId(ctx, field)
+	case "provider":
+		return ec.fieldContext_FuelCard_provider(ctx, field)
+	case "lastFour":
+		return ec.fieldContext_FuelCard_lastFour(ctx, field)
+	case "label":
+		return ec.fieldContext_FuelCard_label(ctx, field)
+	case "externalCardId":
+		return ec.fieldContext_FuelCard_externalCardId(ctx, field)
+	case "assignedWorkerId":
+		return ec.fieldContext_FuelCard_assignedWorkerId(ctx, field)
+	case "assignedTractorId":
+		return ec.fieldContext_FuelCard_assignedTractorId(ctx, field)
+	case "status":
+		return ec.fieldContext_FuelCard_status(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_FuelCard_expiresAt(ctx, field)
+	case "cancelledAt":
+		return ec.fieldContext_FuelCard_cancelledAt(ctx, field)
+	case "cancelReason":
+		return ec.fieldContext_FuelCard_cancelReason(ctx, field)
+	case "notes":
+		return ec.fieldContext_FuelCard_notes(ctx, field)
+	case "version":
+		return ec.fieldContext_FuelCard_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_FuelCard_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_FuelCard_updatedAt(ctx, field)
+	case "assignedWorker":
+		return ec.fieldContext_FuelCard_assignedWorker(ctx, field)
+	case "assignedTractor":
+		return ec.fieldContext_FuelCard_assignedTractor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelCard", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelCardConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_FuelCardConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_FuelCardConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_FuelCardConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelCardConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelCardEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_FuelCardEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_FuelCardEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelCardEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_FuelCostResolution(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "pricePerGallon":
@@ -80913,6 +84796,16 @@ func (ec *executionContext) childFields_FuelCostResolution(ctx context.Context, 
 		return ec.fieldContext_FuelCostResolution_source(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FuelCostResolution", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelImportTemplate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "fileName":
+		return ec.fieldContext_FuelImportTemplate_fileName(ctx, field)
+	case "content":
+		return ec.fieldContext_FuelImportTemplate_content(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelImportTemplate", field.Name)
 }
 
 func (ec *executionContext) childFields_FuelIndex(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -81033,6 +84926,286 @@ func (ec *executionContext) childFields_FuelProgramCurrentRate(ctx context.Conte
 		return ec.fieldContext_FuelProgramCurrentRate_matchedRow(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FuelProgramCurrentRate", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchase(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_FuelPurchase_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_FuelPurchase_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_FuelPurchase_organizationId(ctx, field)
+	case "tractorId":
+		return ec.fieldContext_FuelPurchase_tractorId(ctx, field)
+	case "workerId":
+		return ec.fieldContext_FuelPurchase_workerId(ctx, field)
+	case "jurisdictionId":
+		return ec.fieldContext_FuelPurchase_jurisdictionId(ctx, field)
+	case "fuelCardId":
+		return ec.fieldContext_FuelPurchase_fuelCardId(ctx, field)
+	case "cardLastFour":
+		return ec.fieldContext_FuelPurchase_cardLastFour(ctx, field)
+	case "purchasedAt":
+		return ec.fieldContext_FuelPurchase_purchasedAt(ctx, field)
+	case "vendor":
+		return ec.fieldContext_FuelPurchase_vendor(ctx, field)
+	case "vendorCity":
+		return ec.fieldContext_FuelPurchase_vendorCity(ctx, field)
+	case "fuelType":
+		return ec.fieldContext_FuelPurchase_fuelType(ctx, field)
+	case "quantity":
+		return ec.fieldContext_FuelPurchase_quantity(ctx, field)
+	case "quantityUnit":
+		return ec.fieldContext_FuelPurchase_quantityUnit(ctx, field)
+	case "gallons":
+		return ec.fieldContext_FuelPurchase_gallons(ctx, field)
+	case "unitPrice":
+		return ec.fieldContext_FuelPurchase_unitPrice(ctx, field)
+	case "totalAmount":
+		return ec.fieldContext_FuelPurchase_totalAmount(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_FuelPurchase_currencyCode(ctx, field)
+	case "odometer":
+		return ec.fieldContext_FuelPurchase_odometer(ctx, field)
+	case "transactionReference":
+		return ec.fieldContext_FuelPurchase_transactionReference(ctx, field)
+	case "source":
+		return ec.fieldContext_FuelPurchase_source(ctx, field)
+	case "importBatchId":
+		return ec.fieldContext_FuelPurchase_importBatchId(ctx, field)
+	case "taxPaid":
+		return ec.fieldContext_FuelPurchase_taxPaid(ctx, field)
+	case "notes":
+		return ec.fieldContext_FuelPurchase_notes(ctx, field)
+	case "createdById":
+		return ec.fieldContext_FuelPurchase_createdById(ctx, field)
+	case "version":
+		return ec.fieldContext_FuelPurchase_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_FuelPurchase_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_FuelPurchase_updatedAt(ctx, field)
+	case "tractor":
+		return ec.fieldContext_FuelPurchase_tractor(ctx, field)
+	case "worker":
+		return ec.fieldContext_FuelPurchase_worker(ctx, field)
+	case "jurisdiction":
+		return ec.fieldContext_FuelPurchase_jurisdiction(ctx, field)
+	case "fuelCard":
+		return ec.fieldContext_FuelPurchase_fuelCard(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchase", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_FuelPurchaseConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_FuelPurchaseConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_FuelPurchaseConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_FuelPurchaseEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_FuelPurchaseEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportBatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_FuelPurchaseImportBatch_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_FuelPurchaseImportBatch_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_FuelPurchaseImportBatch_organizationId(ctx, field)
+	case "provider":
+		return ec.fieldContext_FuelPurchaseImportBatch_provider(ctx, field)
+	case "documentId":
+		return ec.fieldContext_FuelPurchaseImportBatch_documentId(ctx, field)
+	case "fileName":
+		return ec.fieldContext_FuelPurchaseImportBatch_fileName(ctx, field)
+	case "sourceFormat":
+		return ec.fieldContext_FuelPurchaseImportBatch_sourceFormat(ctx, field)
+	case "status":
+		return ec.fieldContext_FuelPurchaseImportBatch_status(ctx, field)
+	case "defaultFuelType":
+		return ec.fieldContext_FuelPurchaseImportBatch_defaultFuelType(ctx, field)
+	case "defaultFuelCardId":
+		return ec.fieldContext_FuelPurchaseImportBatch_defaultFuelCardId(ctx, field)
+	case "defaultCurrency":
+		return ec.fieldContext_FuelPurchaseImportBatch_defaultCurrency(ctx, field)
+	case "mapping":
+		return ec.fieldContext_FuelPurchaseImportBatch_mapping(ctx, field)
+	case "unmappedHeaders":
+		return ec.fieldContext_FuelPurchaseImportBatch_unmappedHeaders(ctx, field)
+	case "summary":
+		return ec.fieldContext_FuelPurchaseImportBatch_summary(ctx, field)
+	case "rowCount":
+		return ec.fieldContext_FuelPurchaseImportBatch_rowCount(ctx, field)
+	case "errorCount":
+		return ec.fieldContext_FuelPurchaseImportBatch_errorCount(ctx, field)
+	case "committedCount":
+		return ec.fieldContext_FuelPurchaseImportBatch_committedCount(ctx, field)
+	case "error":
+		return ec.fieldContext_FuelPurchaseImportBatch_error(ctx, field)
+	case "uploadedById":
+		return ec.fieldContext_FuelPurchaseImportBatch_uploadedById(ctx, field)
+	case "stagedAt":
+		return ec.fieldContext_FuelPurchaseImportBatch_stagedAt(ctx, field)
+	case "committedAt":
+		return ec.fieldContext_FuelPurchaseImportBatch_committedAt(ctx, field)
+	case "committedById":
+		return ec.fieldContext_FuelPurchaseImportBatch_committedById(ctx, field)
+	case "version":
+		return ec.fieldContext_FuelPurchaseImportBatch_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_FuelPurchaseImportBatch_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_FuelPurchaseImportBatch_updatedAt(ctx, field)
+	case "document":
+		return ec.fieldContext_FuelPurchaseImportBatch_document(ctx, field)
+	case "defaultFuelCard":
+		return ec.fieldContext_FuelPurchaseImportBatch_defaultFuelCard(ctx, field)
+	case "rows":
+		return ec.fieldContext_FuelPurchaseImportBatch_rows(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportBatch", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportParsed(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "purchasedAt":
+		return ec.fieldContext_FuelPurchaseImportParsed_purchasedAt(ctx, field)
+	case "vendor":
+		return ec.fieldContext_FuelPurchaseImportParsed_vendor(ctx, field)
+	case "vendorCity":
+		return ec.fieldContext_FuelPurchaseImportParsed_vendorCity(ctx, field)
+	case "jurisdictionCode":
+		return ec.fieldContext_FuelPurchaseImportParsed_jurisdictionCode(ctx, field)
+	case "fuelType":
+		return ec.fieldContext_FuelPurchaseImportParsed_fuelType(ctx, field)
+	case "quantity":
+		return ec.fieldContext_FuelPurchaseImportParsed_quantity(ctx, field)
+	case "quantityUnit":
+		return ec.fieldContext_FuelPurchaseImportParsed_quantityUnit(ctx, field)
+	case "gallons":
+		return ec.fieldContext_FuelPurchaseImportParsed_gallons(ctx, field)
+	case "unitPrice":
+		return ec.fieldContext_FuelPurchaseImportParsed_unitPrice(ctx, field)
+	case "totalAmount":
+		return ec.fieldContext_FuelPurchaseImportParsed_totalAmount(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_FuelPurchaseImportParsed_currencyCode(ctx, field)
+	case "transactionReference":
+		return ec.fieldContext_FuelPurchaseImportParsed_transactionReference(ctx, field)
+	case "cardLastFour":
+		return ec.fieldContext_FuelPurchaseImportParsed_cardLastFour(ctx, field)
+	case "tractorCode":
+		return ec.fieldContext_FuelPurchaseImportParsed_tractorCode(ctx, field)
+	case "odometer":
+		return ec.fieldContext_FuelPurchaseImportParsed_odometer(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportParsed", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportRow(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_FuelPurchaseImportRow_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_FuelPurchaseImportRow_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_FuelPurchaseImportRow_organizationId(ctx, field)
+	case "importBatchId":
+		return ec.fieldContext_FuelPurchaseImportRow_importBatchId(ctx, field)
+	case "rowNumber":
+		return ec.fieldContext_FuelPurchaseImportRow_rowNumber(ctx, field)
+	case "cells":
+		return ec.fieldContext_FuelPurchaseImportRow_cells(ctx, field)
+	case "parsed":
+		return ec.fieldContext_FuelPurchaseImportRow_parsed(ctx, field)
+	case "transactionReference":
+		return ec.fieldContext_FuelPurchaseImportRow_transactionReference(ctx, field)
+	case "status":
+		return ec.fieldContext_FuelPurchaseImportRow_status(ctx, field)
+	case "error":
+		return ec.fieldContext_FuelPurchaseImportRow_error(ctx, field)
+	case "resolvedTractorId":
+		return ec.fieldContext_FuelPurchaseImportRow_resolvedTractorId(ctx, field)
+	case "resolvedFuelCardId":
+		return ec.fieldContext_FuelPurchaseImportRow_resolvedFuelCardId(ctx, field)
+	case "resolvedJurisdictionId":
+		return ec.fieldContext_FuelPurchaseImportRow_resolvedJurisdictionId(ctx, field)
+	case "resolutionNotes":
+		return ec.fieldContext_FuelPurchaseImportRow_resolutionNotes(ctx, field)
+	case "fuelPurchaseId":
+		return ec.fieldContext_FuelPurchaseImportRow_fuelPurchaseId(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_FuelPurchaseImportRow_createdAt(ctx, field)
+	case "resolvedTractor":
+		return ec.fieldContext_FuelPurchaseImportRow_resolvedTractor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportRow", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportRowConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_FuelPurchaseImportRowConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_FuelPurchaseImportRowConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_FuelPurchaseImportRowConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportRowConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportRowEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_FuelPurchaseImportRowEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_FuelPurchaseImportRowEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportRowEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "rowCount":
+		return ec.fieldContext_FuelPurchaseImportSummary_rowCount(ctx, field)
+	case "newCount":
+		return ec.fieldContext_FuelPurchaseImportSummary_newCount(ctx, field)
+	case "duplicateInFileCount":
+		return ec.fieldContext_FuelPurchaseImportSummary_duplicateInFileCount(ctx, field)
+	case "alreadyImportedCount":
+		return ec.fieldContext_FuelPurchaseImportSummary_alreadyImportedCount(ctx, field)
+	case "errorCount":
+		return ec.fieldContext_FuelPurchaseImportSummary_errorCount(ctx, field)
+	case "totalGallons":
+		return ec.fieldContext_FuelPurchaseImportSummary_totalGallons(ctx, field)
+	case "totalAmount":
+		return ec.fieldContext_FuelPurchaseImportSummary_totalAmount(ctx, field)
+	case "byFuelType":
+		return ec.fieldContext_FuelPurchaseImportSummary_byFuelType(ctx, field)
+	case "byJurisdiction":
+		return ec.fieldContext_FuelPurchaseImportSummary_byJurisdiction(ctx, field)
+	case "earliestPurchasedAt":
+		return ec.fieldContext_FuelPurchaseImportSummary_earliestPurchasedAt(ctx, field)
+	case "latestPurchasedAt":
+		return ec.fieldContext_FuelPurchaseImportSummary_latestPurchasedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_FuelSurchargeProgram(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -81645,6 +85818,382 @@ func (ec *executionContext) childFields_HosCertificationSummary(ctx context.Cont
 	return nil, fmt.Errorf("no field named %q was found under type HosCertificationSummary", field.Name)
 }
 
+func (ec *executionContext) childFields_IFTAFleetMPG(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "fuelType":
+		return ec.fieldContext_IFTAFleetMPG_fuelType(ctx, field)
+	case "mpg":
+		return ec.fieldContext_IFTAFleetMPG_mpg(ctx, field)
+	case "totalMiles":
+		return ec.fieldContext_IFTAFleetMPG_totalMiles(ctx, field)
+	case "totalGallons":
+		return ec.fieldContext_IFTAFleetMPG_totalGallons(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAFleetMPG", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAJurisdiction(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_IFTAJurisdiction_id(ctx, field)
+	case "countryCode":
+		return ec.fieldContext_IFTAJurisdiction_countryCode(ctx, field)
+	case "code":
+		return ec.fieldContext_IFTAJurisdiction_code(ctx, field)
+	case "name":
+		return ec.fieldContext_IFTAJurisdiction_name(ctx, field)
+	case "usStateId":
+		return ec.fieldContext_IFTAJurisdiction_usStateId(ctx, field)
+	case "isIftaMember":
+		return ec.fieldContext_IFTAJurisdiction_isIftaMember(ctx, field)
+	case "hasSurcharge":
+		return ec.fieldContext_IFTAJurisdiction_hasSurcharge(ctx, field)
+	case "sortOrder":
+		return ec.fieldContext_IFTAJurisdiction_sortOrder(ctx, field)
+	case "status":
+		return ec.fieldContext_IFTAJurisdiction_status(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_IFTAJurisdiction_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_IFTAJurisdiction_updatedAt(ctx, field)
+	case "usState":
+		return ec.fieldContext_IFTAJurisdiction_usState(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAJurisdiction", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAJurisdictionMileageEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_organizationId(ctx, field)
+	case "tractorId":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_tractorId(ctx, field)
+	case "jurisdictionId":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_jurisdictionId(ctx, field)
+	case "traveledAt":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_traveledAt(ctx, field)
+	case "year":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_year(ctx, field)
+	case "quarter":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_quarter(ctx, field)
+	case "miles":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_miles(ctx, field)
+	case "loaded":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_loaded(ctx, field)
+	case "source":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_source(ctx, field)
+	case "shipmentMoveId":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_shipmentMoveId(ctx, field)
+	case "notes":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_notes(ctx, field)
+	case "createdById":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_createdById(ctx, field)
+	case "version":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_updatedAt(ctx, field)
+	case "tractor":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_tractor(ctx, field)
+	case "jurisdiction":
+		return ec.fieldContext_IFTAJurisdictionMileageEntry_jurisdiction(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAJurisdictionMileageEntry", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAJurisdictionMileageEntryConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_IFTAJurisdictionMileageEntryConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_IFTAJurisdictionMileageEntryConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_IFTAJurisdictionMileageEntryConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAJurisdictionMileageEntryConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAJurisdictionMileageEntryEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_IFTAJurisdictionMileageEntryEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_IFTAJurisdictionMileageEntryEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAJurisdictionMileageEntryEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAPeriod(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "year":
+		return ec.fieldContext_IFTAPeriod_year(ctx, field)
+	case "quarter":
+		return ec.fieldContext_IFTAPeriod_quarter(ctx, field)
+	case "key":
+		return ec.fieldContext_IFTAPeriod_key(ctx, field)
+	case "label":
+		return ec.fieldContext_IFTAPeriod_label(ctx, field)
+	case "start":
+		return ec.fieldContext_IFTAPeriod_start(ctx, field)
+	case "end":
+		return ec.fieldContext_IFTAPeriod_end(ctx, field)
+	case "dueDate":
+		return ec.fieldContext_IFTAPeriod_dueDate(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAPeriod", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAReturn(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_IFTAReturn_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_IFTAReturn_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_IFTAReturn_organizationId(ctx, field)
+	case "year":
+		return ec.fieldContext_IFTAReturn_year(ctx, field)
+	case "quarter":
+		return ec.fieldContext_IFTAReturn_quarter(ctx, field)
+	case "period":
+		return ec.fieldContext_IFTAReturn_period(ctx, field)
+	case "amendmentNumber":
+		return ec.fieldContext_IFTAReturn_amendmentNumber(ctx, field)
+	case "amendsReturnId":
+		return ec.fieldContext_IFTAReturn_amendsReturnId(ctx, field)
+	case "amendsReturn":
+		return ec.fieldContext_IFTAReturn_amendsReturn(ctx, field)
+	case "status":
+		return ec.fieldContext_IFTAReturn_status(ctx, field)
+	case "timezone":
+		return ec.fieldContext_IFTAReturn_timezone(ctx, field)
+	case "periodStart":
+		return ec.fieldContext_IFTAReturn_periodStart(ctx, field)
+	case "periodEnd":
+		return ec.fieldContext_IFTAReturn_periodEnd(ctx, field)
+	case "totalMiles":
+		return ec.fieldContext_IFTAReturn_totalMiles(ctx, field)
+	case "totalTaxableMiles":
+		return ec.fieldContext_IFTAReturn_totalTaxableMiles(ctx, field)
+	case "totalGallons":
+		return ec.fieldContext_IFTAReturn_totalGallons(ctx, field)
+	case "totalTaxPaidGallons":
+		return ec.fieldContext_IFTAReturn_totalTaxPaidGallons(ctx, field)
+	case "netTaxableGallons":
+		return ec.fieldContext_IFTAReturn_netTaxableGallons(ctx, field)
+	case "taxDue":
+		return ec.fieldContext_IFTAReturn_taxDue(ctx, field)
+	case "surchargeDue":
+		return ec.fieldContext_IFTAReturn_surchargeDue(ctx, field)
+	case "netDue":
+		return ec.fieldContext_IFTAReturn_netDue(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_IFTAReturn_currencyCode(ctx, field)
+	case "fleetMpgByFuelType":
+		return ec.fieldContext_IFTAReturn_fleetMpgByFuelType(ctx, field)
+	case "unattributedMiles":
+		return ec.fieldContext_IFTAReturn_unattributedMiles(ctx, field)
+	case "unattributedMoveCount":
+		return ec.fieldContext_IFTAReturn_unattributedMoveCount(ctx, field)
+	case "noTractorMiles":
+		return ec.fieldContext_IFTAReturn_noTractorMiles(ctx, field)
+	case "noTractorMoveCount":
+		return ec.fieldContext_IFTAReturn_noTractorMoveCount(ctx, field)
+	case "problems":
+		return ec.fieldContext_IFTAReturn_problems(ctx, field)
+	case "computedAt":
+		return ec.fieldContext_IFTAReturn_computedAt(ctx, field)
+	case "finalizedAt":
+		return ec.fieldContext_IFTAReturn_finalizedAt(ctx, field)
+	case "finalizedById":
+		return ec.fieldContext_IFTAReturn_finalizedById(ctx, field)
+	case "finalizedBy":
+		return ec.fieldContext_IFTAReturn_finalizedBy(ctx, field)
+	case "filedAt":
+		return ec.fieldContext_IFTAReturn_filedAt(ctx, field)
+	case "filedById":
+		return ec.fieldContext_IFTAReturn_filedById(ctx, field)
+	case "filedBy":
+		return ec.fieldContext_IFTAReturn_filedBy(ctx, field)
+	case "filingReference":
+		return ec.fieldContext_IFTAReturn_filingReference(ctx, field)
+	case "reopenedAt":
+		return ec.fieldContext_IFTAReturn_reopenedAt(ctx, field)
+	case "reopenedById":
+		return ec.fieldContext_IFTAReturn_reopenedById(ctx, field)
+	case "reopenReason":
+		return ec.fieldContext_IFTAReturn_reopenReason(ctx, field)
+	case "lines":
+		return ec.fieldContext_IFTAReturn_lines(ctx, field)
+	case "version":
+		return ec.fieldContext_IFTAReturn_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_IFTAReturn_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_IFTAReturn_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAReturn", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAReturnConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_IFTAReturnConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_IFTAReturnConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_IFTAReturnConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAReturnConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAReturnEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_IFTAReturnEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_IFTAReturnEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAReturnEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAReturnLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_IFTAReturnLine_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_IFTAReturnLine_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_IFTAReturnLine_organizationId(ctx, field)
+	case "returnId":
+		return ec.fieldContext_IFTAReturnLine_returnId(ctx, field)
+	case "jurisdictionId":
+		return ec.fieldContext_IFTAReturnLine_jurisdictionId(ctx, field)
+	case "fuelType":
+		return ec.fieldContext_IFTAReturnLine_fuelType(ctx, field)
+	case "isIftaMember":
+		return ec.fieldContext_IFTAReturnLine_isIftaMember(ctx, field)
+	case "totalMiles":
+		return ec.fieldContext_IFTAReturnLine_totalMiles(ctx, field)
+	case "taxableMiles":
+		return ec.fieldContext_IFTAReturnLine_taxableMiles(ctx, field)
+	case "routeMiles":
+		return ec.fieldContext_IFTAReturnLine_routeMiles(ctx, field)
+	case "manualMiles":
+		return ec.fieldContext_IFTAReturnLine_manualMiles(ctx, field)
+	case "loadedMiles":
+		return ec.fieldContext_IFTAReturnLine_loadedMiles(ctx, field)
+	case "emptyMiles":
+		return ec.fieldContext_IFTAReturnLine_emptyMiles(ctx, field)
+	case "taxPaidGallons":
+		return ec.fieldContext_IFTAReturnLine_taxPaidGallons(ctx, field)
+	case "taxPaidGallonsRaw":
+		return ec.fieldContext_IFTAReturnLine_taxPaidGallonsRaw(ctx, field)
+	case "purchaseCount":
+		return ec.fieldContext_IFTAReturnLine_purchaseCount(ctx, field)
+	case "taxableGallons":
+		return ec.fieldContext_IFTAReturnLine_taxableGallons(ctx, field)
+	case "netTaxableGallons":
+		return ec.fieldContext_IFTAReturnLine_netTaxableGallons(ctx, field)
+	case "ratePerGallon":
+		return ec.fieldContext_IFTAReturnLine_ratePerGallon(ctx, field)
+	case "surchargeRatePerGallon":
+		return ec.fieldContext_IFTAReturnLine_surchargeRatePerGallon(ctx, field)
+	case "rateMissing":
+		return ec.fieldContext_IFTAReturnLine_rateMissing(ctx, field)
+	case "taxDue":
+		return ec.fieldContext_IFTAReturnLine_taxDue(ctx, field)
+	case "surchargeDue":
+		return ec.fieldContext_IFTAReturnLine_surchargeDue(ctx, field)
+	case "lineTotal":
+		return ec.fieldContext_IFTAReturnLine_lineTotal(ctx, field)
+	case "sortOrder":
+		return ec.fieldContext_IFTAReturnLine_sortOrder(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_IFTAReturnLine_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_IFTAReturnLine_updatedAt(ctx, field)
+	case "jurisdiction":
+		return ec.fieldContext_IFTAReturnLine_jurisdiction(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAReturnLine", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTAReturnProblem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_IFTAReturnProblem_code(ctx, field)
+	case "message":
+		return ec.fieldContext_IFTAReturnProblem_message(ctx, field)
+	case "jurisdictionCode":
+		return ec.fieldContext_IFTAReturnProblem_jurisdictionCode(ctx, field)
+	case "fuelType":
+		return ec.fieldContext_IFTAReturnProblem_fuelType(ctx, field)
+	case "amount":
+		return ec.fieldContext_IFTAReturnProblem_amount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTAReturnProblem", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTATaxRate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_IFTATaxRate_id(ctx, field)
+	case "jurisdictionId":
+		return ec.fieldContext_IFTATaxRate_jurisdictionId(ctx, field)
+	case "year":
+		return ec.fieldContext_IFTATaxRate_year(ctx, field)
+	case "quarter":
+		return ec.fieldContext_IFTATaxRate_quarter(ctx, field)
+	case "fuelType":
+		return ec.fieldContext_IFTATaxRate_fuelType(ctx, field)
+	case "ratePerGallon":
+		return ec.fieldContext_IFTATaxRate_ratePerGallon(ctx, field)
+	case "surchargeRatePerGallon":
+		return ec.fieldContext_IFTATaxRate_surchargeRatePerGallon(ctx, field)
+	case "sourceNote":
+		return ec.fieldContext_IFTATaxRate_sourceNote(ctx, field)
+	case "sourceUrl":
+		return ec.fieldContext_IFTATaxRate_sourceUrl(ctx, field)
+	case "version":
+		return ec.fieldContext_IFTATaxRate_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_IFTATaxRate_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_IFTATaxRate_updatedAt(ctx, field)
+	case "jurisdiction":
+		return ec.fieldContext_IFTATaxRate_jurisdiction(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTATaxRate", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTATaxRateConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_IFTATaxRateConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_IFTATaxRateConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_IFTATaxRateConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTATaxRateConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_IFTATaxRateEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_IFTATaxRateEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_IFTATaxRateEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IFTATaxRateEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_InviteWorkerToPortalResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "invitation":
@@ -82023,6 +86572,22 @@ func (ec *executionContext) childFields_JournalSourceInfo(ctx context.Context, f
 		return ec.fieldContext_JournalSourceInfo_status(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type JournalSourceInfo", field.Name)
+}
+
+func (ec *executionContext) childFields_JurisdictionMilesBackfillResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "started":
+		return ec.fieldContext_JurisdictionMilesBackfillResult_started(ctx, field)
+	case "dryRun":
+		return ec.fieldContext_JurisdictionMilesBackfillResult_dryRun(ctx, field)
+	case "unattributedMoves":
+		return ec.fieldContext_JurisdictionMilesBackfillResult_unattributedMoves(ctx, field)
+	case "unattributedMiles":
+		return ec.fieldContext_JurisdictionMilesBackfillResult_unattributedMiles(ctx, field)
+	case "workflowId":
+		return ec.fieldContext_JurisdictionMilesBackfillResult_workflowId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionMilesBackfillResult", field.Name)
 }
 
 func (ec *executionContext) childFields_JurisdictionRule(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -87337,8 +91902,46 @@ func (ec *executionContext) childFields_ShipmentMove(ctx context.Context, field 
 		return ec.fieldContext_ShipmentMove_assignment(ctx, field)
 	case "carrierAssignment":
 		return ec.fieldContext_ShipmentMove_carrierAssignment(ctx, field)
+	case "jurisdictionMiles":
+		return ec.fieldContext_ShipmentMove_jurisdictionMiles(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentMove", field.Name)
+}
+
+func (ec *executionContext) childFields_ShipmentMoveJurisdictionMile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_id(ctx, field)
+	case "shipmentMoveId":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_shipmentMoveId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_shipmentId(ctx, field)
+	case "countryCode":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_countryCode(ctx, field)
+	case "jurisdictionCode":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_jurisdictionCode(ctx, field)
+	case "sequence":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_sequence(ctx, field)
+	case "distance":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_distance(ctx, field)
+	case "distanceUnits":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_distanceUnits(ctx, field)
+	case "tollDistance":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_tollDistance(ctx, field)
+	case "ferryDistance":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_ferryDistance(ctx, field)
+	case "loaded":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_loaded(ctx, field)
+	case "source":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_source(ctx, field)
+	case "provider":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_provider(ctx, field)
+	case "dataVersion":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_dataVersion(ctx, field)
+	case "calculatedAt":
+		return ec.fieldContext_ShipmentMoveJurisdictionMile_calculatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentMoveJurisdictionMile", field.Name)
 }
 
 func (ec *executionContext) childFields_ShipmentOnTime(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -88531,6 +93134,10 @@ func (ec *executionContext) childFields_Tractor(ctx context.Context, field graph
 		return ec.fieldContext_Tractor_lastKnownLocationId(ctx, field)
 	case "lastKnownLocationName":
 		return ec.fieldContext_Tractor_lastKnownLocationName(ctx, field)
+	case "fuelType":
+		return ec.fieldContext_Tractor_fuelType(ctx, field)
+	case "iftaQualified":
+		return ec.fieldContext_Tractor_iftaQualified(ctx, field)
 	case "version":
 		return ec.fieldContext_Tractor_version(ctx, field)
 	case "createdAt":

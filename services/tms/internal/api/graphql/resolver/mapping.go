@@ -2,6 +2,8 @@ package resolver
 
 import (
 	"context"
+	"strings"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -18,6 +20,22 @@ func parseIDs(values []string) ([]pulid.ID, error) {
 		id, err := pulid.MustParse(value)
 		if err != nil {
 			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func parseCatalogIDs(values []string) ([]pulid.ID, error) {
+	ids := make([]pulid.ID, 0, len(values))
+	for _, value := range values {
+		id := pulid.ID(strings.TrimSpace(value))
+		if id.IsNil() {
+			return nil, errortypes.NewValidationError(
+				"ids",
+				errortypes.ErrInvalid,
+				"Catalog id is required",
+			)
 		}
 		ids = append(ids, id)
 	}

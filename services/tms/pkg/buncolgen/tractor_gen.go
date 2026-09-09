@@ -66,6 +66,8 @@ var TractorColumns = struct {
 	LicensePlateNumber      Column // "license_plate_number" → qualified: "trac.license_plate_number"
 	RegistrationNumber      Column // "registration_number" → qualified: "trac.registration_number"
 	RegistrationExpiry      Column // "registration_expiry" → qualified: "trac.registration_expiry"
+	FuelType                Column // "fuel_type" → qualified: "trac.fuel_type"
+	IFTAQualified           Column // "ifta_qualified" → qualified: "trac.ifta_qualified"
 	Vin                     Column // "vin" → qualified: "trac.vin"
 	ExternalID              Column // "external_id" → qualified: "trac.external_id"
 	OwnershipType           Column // "ownership_type" → qualified: "trac.ownership_type"
@@ -96,6 +98,8 @@ var TractorColumns = struct {
 	LicensePlateNumber:      NewColumn("license_plate_number", "trac"),
 	RegistrationNumber:      NewColumn("registration_number", "trac"),
 	RegistrationExpiry:      NewColumn("registration_expiry", "trac"),
+	FuelType:                NewColumn("fuel_type", "trac"),
+	IFTAQualified:           NewColumn("ifta_qualified", "trac"),
 	Vin:                     NewColumn("vin", "trac"),
 	ExternalID:              NewColumn("external_id", "trac"),
 	OwnershipType:           NewColumn("ownership_type", "trac"),
@@ -132,6 +136,8 @@ var TractorFieldMap = map[string]string{
 	"licensePlateNumber":      "license_plate_number",
 	"registrationNumber":      "registration_number",
 	"registrationExpiry":      "registration_expiry",
+	"fuelType":                "fuel_type",
+	"iftaQualified":           "ifta_qualified",
 	"vin":                     "vin",
 	"externalId":              "external_id",
 	"ownershipType":           "ownership_type",
@@ -166,6 +172,8 @@ var TractorInsertableColumns = []string{
 	"license_plate_number",
 	"registration_number",
 	"registration_expiry",
+	"fuel_type",
+	"ifta_qualified",
 	"vin",
 	"external_id",
 	"ownership_type",
@@ -272,6 +280,8 @@ var TractorFilter = struct {
 	LicensePlateNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "licensePlateNumber" → DB: "license_plate_number"
 	RegistrationNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationNumber" → DB: "registration_number"
 	RegistrationExpiry      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationExpiry" → DB: "registration_expiry"
+	FuelType                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelType" → DB: "fuel_type"
+	IFTAQualified           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "iftaQualified" → DB: "ifta_qualified"
 	Vin                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vin" → DB: "vin"
 	ExternalID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
 	OwnershipType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownershipType" → DB: "ownership_type"
@@ -333,6 +343,12 @@ var TractorFilter = struct {
 	},
 	RegistrationExpiry: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("registrationExpiry", op, value)
+	},
+	FuelType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelType", op, value)
+	},
+	IFTAQualified: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("iftaQualified", op, value)
 	},
 	Vin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("vin", op, value)

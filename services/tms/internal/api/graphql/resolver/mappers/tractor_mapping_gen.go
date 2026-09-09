@@ -54,6 +54,8 @@ func TractorFromInput(
 		EquipmentTypeID:         equipmentTypeID,
 		ExternalID:              StringValue(input.ExternalID),
 		FleetCodeID:             fleetCodeID,
+		FuelType:                *input.FuelType,
+		IFTAQualified:           *input.IFTAQualified,
 		LicensePlateNumber:      StringValue(input.LicensePlateNumber),
 		Make:                    StringValue(input.Make),
 		Model:                   StringValue(input.Model),
@@ -124,6 +126,26 @@ func ApplyTractorPatch(
 			return err
 		}
 		entity.FleetCodeID = fleetCodeID
+	}
+	if fuelTypeValue, ok := input.FuelType.ValueOK(); ok {
+		if fuelTypeValue == nil {
+			return errortypes.NewValidationError(
+				"fuelType",
+				errortypes.ErrRequired,
+				"Fuel Type cannot be cleared",
+			)
+		}
+		entity.FuelType = *fuelTypeValue
+	}
+	if iFTAQualifiedValue, ok := input.IFTAQualified.ValueOK(); ok {
+		if iFTAQualifiedValue == nil {
+			return errortypes.NewValidationError(
+				"iftaQualified",
+				errortypes.ErrRequired,
+				"IFTA Qualified cannot be cleared",
+			)
+		}
+		entity.IFTAQualified = *iFTAQualifiedValue
 	}
 	if licensePlateNumberValue, ok := input.LicensePlateNumber.ValueOK(); ok {
 		entity.LicensePlateNumber = StringValue(licensePlateNumberValue)

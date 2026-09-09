@@ -40,11 +40,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
+	"github.com/emoss08/trenova/internal/core/services/iftaservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
@@ -233,6 +235,9 @@ type Params struct {
 	CarrierSettlementRepo        repositories.CarrierSettlementRepository
 	CarrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
 	CarrierCostEventRepo         repositories.CarrierCostEventRepository
+	FuelPurchaseService          *fuelpurchaseservice.Service
+	IFTAService                  *iftaservice.Service
+	DistanceCalculationService   services.DistanceCalculationService `optional:"true"`
 }
 
 type Resolver struct {
@@ -365,6 +370,9 @@ type Resolver struct {
 	carrierSettlementRepo        repositories.CarrierSettlementRepository
 	carrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
 	carrierCostEventRepo         repositories.CarrierCostEventRepository
+	fuelPurchaseService          *fuelpurchaseservice.Service
+	iftaService                  *iftaservice.Service
+	distanceCalculationService   services.DistanceCalculationService
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
@@ -502,6 +510,9 @@ func New(p Params) *Resolver {
 		carrierSettlementRepo:        p.CarrierSettlementRepo,
 		carrierSettlementBatchRepo:   p.CarrierSettlementBatchRepo,
 		carrierCostEventRepo:         p.CarrierCostEventRepo,
+		fuelPurchaseService:          p.FuelPurchaseService,
+		iftaService:                  p.IFTAService,
+		distanceCalculationService:   p.DistanceCalculationService,
 	}
 }
 

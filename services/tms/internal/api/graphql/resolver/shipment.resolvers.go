@@ -1044,6 +1044,43 @@ func (r *shipmentCustomerResolver) EDIPartner(ctx context.Context, obj *gqlmodel
 	return partner, nil
 }
 
+func (r *shipmentMoveResolver) JurisdictionMiles(ctx context.Context, obj *gqlmodel.ShipmentMove) ([]*shipmentdomain.ShipmentMoveJurisdictionMile, error) {
+	if _, err := r.requireAuth(ctx); err != nil {
+		return nil, err
+	}
+
+	l, ok := loaders.FromContext(ctx)
+	if !ok || l == nil {
+		return []*shipmentdomain.ShipmentMoveJurisdictionMile{}, nil
+	}
+
+	if obj.ID == nil || *obj.ID == "" {
+		return []*shipmentdomain.ShipmentMoveJurisdictionMile{}, nil
+	}
+
+	rows, err := l.ShipmentMoveJurisdictionMilesByMoveID.Load(ctx, *obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		return []*shipmentdomain.ShipmentMoveJurisdictionMile{}, nil
+	}
+
+	return rows, nil
+}
+
+func (r *shipmentMoveJurisdictionMileResolver) TollDistance(ctx context.Context, obj *shipmentdomain.ShipmentMoveJurisdictionMile) (*float64, error) {
+	return obj.TollDistance, nil
+}
+
+func (r *shipmentMoveJurisdictionMileResolver) FerryDistance(ctx context.Context, obj *shipmentdomain.ShipmentMoveJurisdictionMile) (*float64, error) {
+	return obj.FerryDistance, nil
+}
+
+func (r *shipmentMoveJurisdictionMileResolver) Source(ctx context.Context, obj *shipmentdomain.ShipmentMoveJurisdictionMile) (string, error) {
+	return obj.Source.String(), nil
+}
+
 func (r *Resolver) CarrierAssignment() generated.CarrierAssignmentResolver {
 	return &carrierAssignmentResolver{r}
 }
@@ -1058,9 +1095,17 @@ func (r *Resolver) ShipmentCustomer() generated.ShipmentCustomerResolver {
 	return &shipmentCustomerResolver{r}
 }
 
+func (r *Resolver) ShipmentMove() generated.ShipmentMoveResolver { return &shipmentMoveResolver{r} }
+
+func (r *Resolver) ShipmentMoveJurisdictionMile() generated.ShipmentMoveJurisdictionMileResolver {
+	return &shipmentMoveJurisdictionMileResolver{r}
+}
+
 type (
 	carrierAssignmentResolver            struct{ *Resolver }
 	carrierAssignmentAccessorialResolver struct{ *Resolver }
 	shipmentResolver                     struct{ *Resolver }
 	shipmentCustomerResolver             struct{ *Resolver }
+	shipmentMoveResolver                 struct{ *Resolver }
+	shipmentMoveJurisdictionMileResolver struct{ *Resolver }
 )

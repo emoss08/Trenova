@@ -66,6 +66,7 @@ func TestSelectOptionsRequestFromInput_MapsPaginationFiltersAndIDs(t *testing.T)
 			Filters:  filters,
 		},
 		testGraphQLAuthContext(orgID, buID, userID),
+		selectOptionRegistryEntry{},
 	)
 	require.NoError(t, err)
 
@@ -385,6 +386,200 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 	assert.Equal(t, "Internal \u00b7 Active", *result.Edges[0].Node.Description)
 }
 
+func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	outbound := &edi.EDIDocumentType{
+		ID:             pulid.ID("edidt_x12_204_outbound"),
+		Code:           "X12-204-OUT",
+		Name:           "X12 204 Motor Carrier Load Tender",
+		TransactionSet: edi.TransactionSet204,
+		Direction:      edi.DocumentDirectionOutbound,
+		DefaultVersion: "004010",
+		CreatedAt:      1780415883,
+	}
+	inbound := &edi.EDIDocumentType{
+		ID:             pulid.ID("edidt_x12_990_inbound"),
+		Code:           "X12-990-IN",
+		Name:           "X12 990 Response to Load Tender",
+		TransactionSet: edi.TransactionSet990,
+		Direction:      edi.DocumentDirectionInbound,
+		DefaultVersion: "004010",
+		CreatedAt:      1780415884,
+	}
+	repo := mocks.NewMockEDIDocumentTypeRepository(t)
+	repo.EXPECT().
+		SelectDocumentTypeOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIDocumentTypeSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
+				req.SelectQueryRequest.TenantInfo.BuID == buID
+		})).
+		Return(&pagination.ListResult[*edi.EDIDocumentType]{
+			Items: []*edi.EDIDocumentType{outbound, inbound},
+			Total: 2,
+		}, nil).
+		Twice()
+
+	resolver := &queryResolver{&Resolver{
+		ediService: ediservice.New(ediservice.Params{
+			Logger:           zap.NewNop(),
+			DocumentTypeRepo: repo,
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	listed, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEDIDocumentType,
+	})
+	require.NoError(t, err)
+	require.Len(t, listed.Edges, 2)
+	assert.Equal(t, "edidt_x12_204_outbound", listed.Edges[0].Node.ID)
+	assert.Equal(t, "X12-204-OUT - X12 204 Motor Carrier Load Tender", listed.Edges[0].Node.Label)
+	assert.Equal(t, "204", listed.Edges[0].Node.Meta["transactionSet"])
+	assert.Equal(t, "Outbound", listed.Edges[0].Node.Meta["direction"])
+	assert.Equal(t, "004010", listed.Edges[0].Node.Meta["defaultVersion"])
+
+	cursor, err := pagination.DecodeCursor(listed.Edges[1].Cursor)
+	require.NoError(t, err)
+	assert.Equal(t, inbound.ID, cursor.ID)
+	assert.Equal(t, inbound.CreatedAt, cursor.CreatedAt)
+
+	hydrated, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEDIDocumentType,
+		Ids:      []string{"edidt_x12_990_inbound"},
+	})
+	require.NoError(t, err)
+	require.Len(t, hydrated.Edges, 1)
+	assert.Equal(t, "edidt_x12_990_inbound", hydrated.Edges[0].Node.ID)
+	assert.Equal(t, "X12-990-IN - X12 990 Response to Load Tender", hydrated.Edges[0].Node.Label)
+}
+
+func TestSelectOptions_EDIDocumentTypeRejectsBlankID(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	resolver := &queryResolver{&Resolver{
+		ediService: ediservice.New(ediservice.Params{
+			Logger:           zap.NewNop(),
+			DocumentTypeRepo: mocks.NewMockEDIDocumentTypeRepository(t),
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	_, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEDIDocumentType,
+		Ids:      []string{" "},
+	})
+	require.Error(t, err)
+}
+
+func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	tender := &edi.EDITransactionSet{
+		ID:             pulid.ID("edits_x12_204"),
+		Standard:       edi.EDIStandardX12,
+		Code:           edi.TransactionSet204,
+		Name:           "Motor Carrier Load Tender",
+		Description:    "Outbound load tender document.",
+		DefaultVersion: "004010",
+		Status:         edi.DocumentStatusActive,
+		CreatedAt:      1780415883,
+	}
+	response := &edi.EDITransactionSet{
+		ID:             pulid.ID("edits_x12_990"),
+		Standard:       edi.EDIStandardX12,
+		Code:           edi.TransactionSet990,
+		Name:           "Response to Load Tender",
+		DefaultVersion: "004010",
+		Status:         edi.DocumentStatusActive,
+		CreatedAt:      1780415884,
+	}
+	repo := mocks.NewMockEDITransactionSetRepository(t)
+	repo.EXPECT().
+		SelectTransactionSetOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
+				req.SelectQueryRequest.TenantInfo.BuID == buID &&
+				len(req.IDs) == 0 &&
+				req.Status == edi.DocumentStatusActive &&
+				req.Standard == ""
+		})).
+		Return(&pagination.ListResult[*edi.EDITransactionSet]{
+			Items: []*edi.EDITransactionSet{tender, response},
+			Total: 2,
+		}, nil).
+		Once()
+	repo.EXPECT().
+		SelectTransactionSetOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+			return len(req.IDs) == 2 &&
+				req.IDs[0] == response.ID &&
+				req.IDs[1] == tender.ID &&
+				req.SelectQueryRequest.Pagination.Limit >= 2
+		})).
+		Return(&pagination.ListResult[*edi.EDITransactionSet]{
+			Items: []*edi.EDITransactionSet{tender, response},
+			Total: 2,
+		}, nil).
+		Once()
+
+	resolver := &queryResolver{&Resolver{
+		ediService: ediservice.New(ediservice.Params{
+			Logger:             zap.NewNop(),
+			TransactionSetRepo: repo,
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	listed, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEDITransactionSet,
+		Filters:  map[string]any{"status": "Active"},
+	})
+	require.NoError(t, err)
+	require.Len(t, listed.Edges, 2)
+	assert.Equal(t, "edits_x12_204", listed.Edges[0].Node.ID)
+	assert.Equal(t, "204 - Motor Carrier Load Tender", listed.Edges[0].Node.Label)
+	require.NotNil(t, listed.Edges[0].Node.Description)
+	assert.Equal(t, "Outbound load tender document.", *listed.Edges[0].Node.Description)
+	assert.Equal(t, "204", listed.Edges[0].Node.Meta["code"])
+	assert.Equal(t, "X12", listed.Edges[0].Node.Meta["standard"])
+	assert.Equal(t, "004010", listed.Edges[0].Node.Meta["defaultVersion"])
+	assert.Equal(t, "Active", listed.Edges[0].Node.Meta["status"])
+	assert.Nil(t, listed.Edges[1].Node.Description)
+
+	cursor, err := pagination.DecodeCursor(listed.Edges[1].Cursor)
+	require.NoError(t, err)
+	assert.Equal(t, response.ID, cursor.ID)
+	assert.Equal(t, response.CreatedAt, cursor.CreatedAt)
+
+	first := 1
+	hydrated, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEDITransactionSet,
+		First:    &first,
+		Ids:      []string{"edits_x12_990", "edits_x12_204"},
+	})
+	require.NoError(t, err)
+	require.Len(t, hydrated.Edges, 2)
+	assert.Equal(t, "edits_x12_990", hydrated.Edges[0].Node.ID)
+	assert.Equal(t, "edits_x12_204", hydrated.Edges[1].Node.ID)
+	assert.False(t, hydrated.PageInfo.HasNextPage)
+}
+
 func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 	t.Parallel()
 
@@ -597,4 +792,195 @@ func TestSelectOptionMappers(t *testing.T) {
 		fallbackConnection.SourceOrganizationID.String()+" → "+fallbackConnection.TargetOrganizationID.String(),
 		fallbackOption.Label,
 	)
+}
+
+func iftaFuelTypeResolver() *queryResolver {
+	return &queryResolver{&Resolver{}}
+}
+
+func iftaFuelTypeSelectOptionIDs(connection *gqlmodel.SelectOptionConnection) []string {
+	ids := make([]string, 0, len(connection.Edges))
+	for _, edge := range connection.Edges {
+		ids = append(ids, edge.Node.ID)
+	}
+	return ids
+}
+
+func TestSelectOptions_IFTAFuelTypeListsEveryFuelWithReportingMeta(t *testing.T) {
+	t.Parallel()
+
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")),
+	)
+
+	result, err := iftaFuelTypeResolver().SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		[]string{
+			"Diesel", "Gasoline", "Gasohol", "Propane", "CNG", "LNG", "Ethanol", "Methanol",
+			"E85", "M85", "A55", "Biodiesel", "Electricity", "Hydrogen", "DEF", "Reefer", "Other",
+		},
+		iftaFuelTypeSelectOptionIDs(result),
+	)
+	require.NotNil(t, result.TotalCount)
+	assert.Equal(t, 17, *result.TotalCount)
+	assert.False(t, result.PageInfo.HasNextPage)
+
+	diesel := result.Edges[0].Node
+	assert.Equal(t, domaintypes.IFTAFuelTypeDiesel.Label(), diesel.Label)
+	assert.Equal(t, "Reported on the quarterly IFTA return", *diesel.Description)
+	assert.Equal(t, true, diesel.Meta["countsForIfta"])
+	assert.Equal(t, false, diesel.Meta["gaseous"])
+
+	cng := result.Edges[4].Node
+	assert.Equal(t, "CNG", cng.ID)
+	assert.Equal(t, "Reported on the quarterly IFTA return in gallon equivalents", *cng.Description)
+	assert.Equal(t, true, cng.Meta["gaseous"])
+
+	reefer := result.Edges[15].Node
+	assert.Equal(t, "Reefer", reefer.ID)
+	assert.Equal(t, "Not reported on the quarterly IFTA return", *reefer.Description)
+	assert.Equal(t, false, reefer.Meta["countsForIfta"])
+
+	cursor, err := pagination.DecodeCursor(result.Edges[0].Cursor)
+	require.NoError(t, err)
+	assert.Equal(t, pulid.ID("Diesel"), cursor.ID)
+}
+
+func TestSelectOptions_IFTAFuelTypeSearchesValueAndLabel(t *testing.T) {
+	t.Parallel()
+
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")),
+	)
+	resolver := iftaFuelTypeResolver()
+
+	tests := []struct {
+		query string
+		want  []string
+	}{
+		{query: "natural", want: []string{"CNG", "LNG"}},
+		{query: "cng", want: []string{"CNG"}},
+		{query: "e85", want: []string{"E85"}},
+		{query: "  DIESEL  ", want: []string{"Diesel", "Biodiesel", "DEF"}},
+		{query: "kerosene", want: []string{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.query, func(t *testing.T) {
+			t.Parallel()
+
+			query := tt.query
+			result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+				Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+				Query:    &query,
+			})
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.want, iftaFuelTypeSelectOptionIDs(result))
+			require.NotNil(t, result.TotalCount)
+			assert.Equal(t, len(tt.want), *result.TotalCount)
+		})
+	}
+}
+
+func TestSelectOptions_IFTAFuelTypePagesAgainstTheFullTotal(t *testing.T) {
+	t.Parallel()
+
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")),
+	)
+	resolver := iftaFuelTypeResolver()
+	first := 5
+
+	firstPageOffset := 0
+	firstPage, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+		First:    &first,
+		Offset:   &firstPageOffset,
+	})
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		[]string{"Diesel", "Gasoline", "Gasohol", "Propane", "CNG"},
+		iftaFuelTypeSelectOptionIDs(firstPage),
+	)
+	require.NotNil(t, firstPage.TotalCount)
+	assert.Equal(t, 17, *firstPage.TotalCount)
+	assert.True(t, firstPage.PageInfo.HasNextPage)
+
+	lastPageOffset := 15
+	lastPage, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+		First:    &first,
+		Offset:   &lastPageOffset,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Reefer", "Other"}, iftaFuelTypeSelectOptionIDs(lastPage))
+	assert.False(t, lastPage.PageInfo.HasNextPage)
+
+	pastEndOffset := 40
+	pastEnd, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+		First:    &first,
+		Offset:   &pastEndOffset,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, pastEnd.Edges)
+	assert.False(t, pastEnd.PageInfo.HasNextPage)
+}
+
+func TestSelectOptions_IFTAFuelTypeCountsForIftaFilterDropsNonReportedFuels(t *testing.T) {
+	t.Parallel()
+
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")),
+	)
+
+	result, err := iftaFuelTypeResolver().SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+		Filters:  map[string]any{"countsForIfta": true},
+	})
+	require.NoError(t, err)
+
+	ids := iftaFuelTypeSelectOptionIDs(result)
+	assert.Len(t, ids, 14)
+	assert.NotContains(t, ids, "DEF")
+	assert.NotContains(t, ids, "Reefer")
+	assert.NotContains(t, ids, "Other")
+	require.NotNil(t, result.TotalCount)
+	assert.Equal(t, 14, *result.TotalCount)
+}
+
+func TestSelectOptions_IFTAFuelTypeByIDsKeepsRequestOrderAndDropsUnknownFuels(t *testing.T) {
+	t.Parallel()
+
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")),
+	)
+	resolver := iftaFuelTypeResolver()
+
+	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+		Ids:      []string{"Reefer", "Kerosene", "Diesel"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Reefer", "Diesel"}, iftaFuelTypeSelectOptionIDs(result))
+	require.NotNil(t, result.TotalCount)
+	assert.Equal(t, 2, *result.TotalCount)
+
+	_, err = resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceIFTAFuelType,
+		Ids:      []string{"  "},
+	})
+	require.Error(t, err)
 }

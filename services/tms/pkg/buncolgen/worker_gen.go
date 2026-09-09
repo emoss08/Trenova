@@ -800,6 +800,8 @@ var DOTRandomPoolColumns = struct {
 	AlcoholRatePercent  Column // "alcohol_rate_percent" → qualified: "drpool.alcohol_rate_percent"
 	IncludedDriverTypes Column // "included_driver_types" → qualified: "drpool.included_driver_types"
 	IsDefault           Column // "is_default" → qualified: "drpool.is_default"
+	SearchVector        Column // "search_vector" → qualified: "drpool.search_vector"
+	Rank                Column // "rank" → qualified: "drpool.rank"
 	Version             Column // "version" → qualified: "drpool.version"
 	CreatedAt           Column // "created_at" → qualified: "drpool.created_at"
 	UpdatedAt           Column // "updated_at" → qualified: "drpool.updated_at"
@@ -816,6 +818,8 @@ var DOTRandomPoolColumns = struct {
 	AlcoholRatePercent:  NewColumn("alcohol_rate_percent", "drpool"),
 	IncludedDriverTypes: NewColumn("included_driver_types", "drpool"),
 	IsDefault:           NewColumn("is_default", "drpool"),
+	SearchVector:        NewColumn("search_vector", "drpool"),
+	Rank:                NewColumn("rank", "drpool"),
 	Version:             NewColumn("version", "drpool"),
 	CreatedAt:           NewColumn("created_at", "drpool"),
 	UpdatedAt:           NewColumn("updated_at", "drpool"),

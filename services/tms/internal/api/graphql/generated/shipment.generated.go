@@ -49,6 +49,15 @@ type ShipmentResolver interface {
 type ShipmentCustomerResolver interface {
 	EDIPartner(ctx context.Context, obj *gqlmodel.ShipmentCustomer) (*edi.EDIPartner, error)
 }
+type ShipmentMoveResolver interface {
+	JurisdictionMiles(ctx context.Context, obj *gqlmodel.ShipmentMove) ([]*shipment.ShipmentMoveJurisdictionMile, error)
+}
+type ShipmentMoveJurisdictionMileResolver interface {
+	TollDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
+	FerryDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
+
+	Source(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (string, error)
+}
 
 // endregion ************************** generated!.gotpl **************************
 
@@ -1688,6 +1697,121 @@ func (ec *executionContext) _CarrierAssignmentAccessorial_updatedAt(ctx context.
 }
 func (ec *executionContext) fieldContext_CarrierAssignmentAccessorial_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierAssignmentAccessorial", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionMilesBackfillResult_started(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionMilesBackfillResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionMilesBackfillResult_started(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Started, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionMilesBackfillResult_started(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionMilesBackfillResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionMilesBackfillResult_dryRun(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionMilesBackfillResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionMilesBackfillResult_dryRun(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DryRun, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionMilesBackfillResult_dryRun(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionMilesBackfillResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionMilesBackfillResult_unattributedMoves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionMilesBackfillResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionMilesBackfillResult_unattributedMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnattributedMoves, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionMilesBackfillResult_unattributedMoves(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionMilesBackfillResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionMilesBackfillResult_unattributedMiles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionMilesBackfillResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionMilesBackfillResult_unattributedMiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnattributedMiles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNDecimal2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionMilesBackfillResult_unattributedMiles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionMilesBackfillResult", field, false, false, errors.New("field of type Decimal does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionMilesBackfillResult_workflowId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionMilesBackfillResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionMilesBackfillResult_workflowId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkflowID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionMilesBackfillResult_workflowId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionMilesBackfillResult", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Shipment_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.Shipment) (ret graphql.Marshaler) {
@@ -15373,6 +15497,38 @@ func (ec *executionContext) fieldContext_ShipmentMove_carrierAssignment(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _ShipmentMove_jurisdictionMiles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMove_jurisdictionMiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.ShipmentMove().JurisdictionMiles(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+			return ec.marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMove_jurisdictionMiles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentMove",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentMoveJurisdictionMile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ShipmentMoveEvent_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentMoveEvent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -15826,6 +15982,351 @@ func (ec *executionContext) _ShipmentMoveEvent_newStatus(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_ShipmentMoveEvent_newStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ShipmentMoveEvent", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_id(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_shipmentMoveId(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_shipmentMoveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentMoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_shipmentMoveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_shipmentId(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_countryCode(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_countryCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CountryCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_countryCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_jurisdictionCode(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_jurisdictionCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.JurisdictionCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_jurisdictionCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_sequence(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_sequence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sequence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_sequence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_distance(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_distance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Distance, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_distance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_distanceUnits(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_distanceUnits(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DistanceUnits, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_distanceUnits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_tollDistance(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_tollDistance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.ShipmentMoveJurisdictionMile().TollDistance(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_tollDistance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, true, true, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_ferryDistance(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_ferryDistance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.ShipmentMoveJurisdictionMile().FerryDistance(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_ferryDistance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, true, true, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_loaded(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_loaded(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Loaded, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_loaded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_source(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.ShipmentMoveJurisdictionMile().Source(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_provider(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_provider(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Provider, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_dataVersion(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_dataVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DataVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_dataVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile_calculatedAt(ctx context.Context, field graphql.CollectedField, obj *shipment.ShipmentMoveJurisdictionMile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentMoveJurisdictionMile_calculatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CalculatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentMoveJurisdictionMile_calculatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentMoveJurisdictionMile", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
 func (ec *executionContext) _ShipmentOnTime_percent(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentOnTime) (ret graphql.Marshaler) {
@@ -22241,6 +22742,64 @@ func (ec *executionContext) _CarrierAssignmentAccessorial(ctx context.Context, s
 	return out
 }
 
+var jurisdictionMilesBackfillResultImplementors = []string{"JurisdictionMilesBackfillResult"}
+
+func (ec *executionContext) _JurisdictionMilesBackfillResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.JurisdictionMilesBackfillResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionMilesBackfillResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionMilesBackfillResult")
+		case "started":
+			out.Values[i] = ec._JurisdictionMilesBackfillResult_started(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dryRun":
+			out.Values[i] = ec._JurisdictionMilesBackfillResult_dryRun(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unattributedMoves":
+			out.Values[i] = ec._JurisdictionMilesBackfillResult_unattributedMoves(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unattributedMiles":
+			out.Values[i] = ec._JurisdictionMilesBackfillResult_unattributedMiles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workflowId":
+			out.Values[i] = ec._JurisdictionMilesBackfillResult_workflowId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var shipmentImplementors = []string{"Shipment"}
 
 func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.Shipment) graphql.Marshaler {
@@ -26908,118 +27467,156 @@ func (ec *executionContext) _ShipmentMove(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._ShipmentMove_id(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentMove_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizationId":
 			out.Values[i] = ec._ShipmentMove_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "shipmentId":
 			out.Values[i] = ec._ShipmentMove_shipmentId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._ShipmentMove_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "coverageType":
 			out.Values[i] = ec._ShipmentMove_coverageType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "loaded":
 			out.Values[i] = ec._ShipmentMove_loaded(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sequence":
 			out.Values[i] = ec._ShipmentMove_sequence(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distance":
 			out.Values[i] = ec._ShipmentMove_distance(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceSource":
 			out.Values[i] = ec._ShipmentMove_distanceSource(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceProvider":
 			out.Values[i] = ec._ShipmentMove_distanceProvider(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceCalculatedAt":
 			out.Values[i] = ec._ShipmentMove_distanceCalculatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceRouteSignature":
 			out.Values[i] = ec._ShipmentMove_distanceRouteSignature(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceDataVersion":
 			out.Values[i] = ec._ShipmentMove_distanceDataVersion(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceRoutingType":
 			out.Values[i] = ec._ShipmentMove_distanceRoutingType(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceUnits":
 			out.Values[i] = ec._ShipmentMove_distanceUnits(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "distanceMetadata":
 			out.Values[i] = ec._ShipmentMove_distanceMetadata(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
 			out.Values[i] = ec._ShipmentMove_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._ShipmentMove_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._ShipmentMove_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "stops":
 			out.Values[i] = ec._ShipmentMove_stops(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "assignment":
 			out.Values[i] = ec._ShipmentMove_assignment(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "carrierAssignment":
 			out.Values[i] = ec._ShipmentMove_carrierAssignment(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "jurisdictionMiles":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ShipmentMove_jurisdictionMiles(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -27147,6 +27744,213 @@ func (ec *executionContext) _ShipmentMoveEvent(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._ShipmentMoveEvent_newStatus(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var shipmentMoveJurisdictionMileImplementors = []string{"ShipmentMoveJurisdictionMile"}
+
+func (ec *executionContext) _ShipmentMoveJurisdictionMile(ctx context.Context, sel ast.SelectionSet, obj *shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentMoveJurisdictionMileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShipmentMoveJurisdictionMile")
+		case "id":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "shipmentMoveId":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_shipmentMoveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "shipmentId":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "countryCode":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_countryCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "jurisdictionCode":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_jurisdictionCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sequence":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_sequence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "distance":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_distance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "distanceUnits":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_distanceUnits(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tollDistance":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ShipmentMoveJurisdictionMile_tollDistance(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ferryDistance":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ShipmentMoveJurisdictionMile_ferryDistance(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "loaded":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_loaded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "source":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ShipmentMoveJurisdictionMile_source(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "provider":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_provider(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataVersion":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_dataVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "calculatedAt":
+			out.Values[i] = ec._ShipmentMoveJurisdictionMile_calculatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -28827,6 +29631,16 @@ func (ec *executionContext) marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋt
 	return res
 }
 
+func (ec *executionContext) marshalNJurisdictionMilesBackfillResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionMilesBackfillResult(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.JurisdictionMilesBackfillResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionMilesBackfillResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐMoveCoverageType(ctx context.Context, v any) (shipment.MoveCoverageType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := shipment.MoveCoverageType(tmp)
@@ -29737,6 +30551,32 @@ func (ec *executionContext) marshalNShipmentMove2ᚖgithubᚗcomᚋemoss08ᚋtre
 func (ec *executionContext) unmarshalNShipmentMoveInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentMoveInput(ctx context.Context, v any) (*gqlmodel.ShipmentMoveInput, error) {
 	res, err := ec.unmarshalInputShipmentMoveInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ(ctx context.Context, sel ast.SelectionSet, v []*shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile(ctx context.Context, sel ast.SelectionSet, v *shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ShipmentMoveJurisdictionMile(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNShipmentPreviousRateSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentPreviousRateSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.ShipmentPreviousRateSummary) graphql.Marshaler {

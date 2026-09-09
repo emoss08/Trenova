@@ -4,11 +4,17 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
+	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -48,6 +54,14 @@ type FactoryParams struct {
 	WorkerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
 	FiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	DocumentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
+	IFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
+	IFTAReturnByID                            *IFTAReturnByIDLoaderFactory
+	FuelCardByID                              *FuelCardByIDLoaderFactory
+	TractorByID                               *TractorByIDLoaderFactory
+	ShipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
+	UserByID                                  *UserByIDLoaderFactory
+	DocumentByID                              *DocumentByIDLoaderFactory
+	UsStateByID                               *UsStateByIDLoaderFactory
 }
 
 type Factory struct {
@@ -72,6 +86,14 @@ type Factory struct {
 	workerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
 	fiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	documentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
+	iFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
+	iFTAReturnByID                            *IFTAReturnByIDLoaderFactory
+	fuelCardByID                              *FuelCardByIDLoaderFactory
+	tractorByID                               *TractorByIDLoaderFactory
+	shipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
+	userByID                                  *UserByIDLoaderFactory
+	documentByID                              *DocumentByIDLoaderFactory
+	usStateByID                               *UsStateByIDLoaderFactory
 }
 
 type Loaders struct {
@@ -96,6 +118,14 @@ type Loaders struct {
 	WorkerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
 	FiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
 	DocumentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
+	IFTAJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
+	IFTAReturnByID                            *dataloadgen.Loader[string, *ifta.Return]
+	FuelCardByID                              *dataloadgen.Loader[string, *fuelpurchase.FuelCard]
+	TractorByID                               *dataloadgen.Loader[string, *tractor.Tractor]
+	ShipmentMoveJurisdictionMilesByMoveID     *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile]
+	UserByID                                  *dataloadgen.Loader[string, *tenant.User]
+	DocumentByID                              *dataloadgen.Loader[string, *document.Document]
+	UsStateByID                               *dataloadgen.Loader[string, *usstate.UsState]
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -121,6 +151,14 @@ func NewFactory(p FactoryParams) *Factory {
 		workerLeaveEntriesByCaseID:                p.WorkerLeaveEntriesByCaseID,
 		fiscalPeriodsByFiscalYearID:               p.FiscalPeriodsByFiscalYearID,
 		documentTemplateKindByTemplateID:          p.DocumentTemplateKindByTemplateID,
+		iFTAJurisdictionByID:                      p.IFTAJurisdictionByID,
+		iFTAReturnByID:                            p.IFTAReturnByID,
+		fuelCardByID:                              p.FuelCardByID,
+		tractorByID:                               p.TractorByID,
+		shipmentMoveJurisdictionMilesByMoveID:     p.ShipmentMoveJurisdictionMilesByMoveID,
+		userByID:                                  p.UserByID,
+		documentByID:                              p.DocumentByID,
+		usStateByID:                               p.UsStateByID,
 	}
 }
 
@@ -147,6 +185,14 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		WorkerLeaveEntriesByCaseID:                f.workerLeaveEntriesByCaseID.NewForTenant(tenantInfo),
 		FiscalPeriodsByFiscalYearID:               f.fiscalPeriodsByFiscalYearID.NewForTenant(tenantInfo),
 		DocumentTemplateKindByTemplateID:          f.documentTemplateKindByTemplateID.NewForTenant(tenantInfo),
+		IFTAJurisdictionByID:                      f.iFTAJurisdictionByID.NewForTenant(tenantInfo),
+		IFTAReturnByID:                            f.iFTAReturnByID.NewForTenant(tenantInfo),
+		FuelCardByID:                              f.fuelCardByID.NewForTenant(tenantInfo),
+		TractorByID:                               f.tractorByID.NewForTenant(tenantInfo),
+		ShipmentMoveJurisdictionMilesByMoveID:     f.shipmentMoveJurisdictionMilesByMoveID.NewForTenant(tenantInfo),
+		UserByID:                                  f.userByID.NewForTenant(tenantInfo),
+		DocumentByID:                              f.documentByID.NewForTenant(tenantInfo),
+		UsStateByID:                               f.usStateByID.NewForTenant(tenantInfo),
 	}
 }
 

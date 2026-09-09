@@ -1,6 +1,6 @@
 {
-  "operationCount": 653,
-  "fragmentCount": 156,
+  "operationCount": 692,
+  "fragmentCount": 167,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -588,6 +588,35 @@
       ],
       "usages": [],
       "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AmendIftaReturn",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:12ba63b9267166c4c24236ed8793d38c7deb0dcf45f28a55544c007d275765b1",
+      "rootFields": [
+        "amendIftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "mutation AmendIftaReturn($id: ID!, $reason: String!) {\n  amendIftaReturn(id: $id, reason: $reason) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
     },
     {
       "name": "AmendWorkerEmploymentEvent",
@@ -1552,6 +1581,26 @@
       "sdl": "mutation AutoRateShipment($id: ID!) {\n  autoRateShipment(id: $id) {\n    shipment {\n      ...ShipmentFields\n    }\n    contractRate {\n      ...ShipmentContractRateFields\n    }\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  detentionOccurrenceId\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCarrierAssignmentFields on CarrierAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  carrierId\n  status\n  rateMethod\n  baseRate\n  baseAmount\n  fuelSurcharge\n  accessorialTotal\n  totalCost\n  currencyCode\n  proNumber\n  externalDriverName\n  externalDriverPhone\n  externalTractorNumber\n  externalTrailerNumber\n  confirmedAt\n  canceledAt\n  cancellationReason\n  version\n  createdAt\n  updatedAt\n  carrier {\n    id\n    code\n    name\n    scac\n  }\n  accessorials {\n    id\n    carrierAssignmentId\n    accessorialChargeId\n    description\n    amount\n    version\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  lengthFeet\n  widthFeet\n  heightFeet\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentContractRateFields on ShipmentContractRate {\n  applied\n  outcome\n  agreementId\n  agreementName\n  ruleId\n  ruleLabel\n  formulaTemplateId\n  formulaTemplateName\n  baseRate\n  linehaulAmount\n  otherChargeAmount\n  totalChargeAmount\n  previousLinehaulAmount\n  explanation\n  accessorials {\n    accessorialChargeId\n    description\n    method\n    amount\n    unit\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  autoRated\n  autoRatedAt\n  rateAgreementId\n  rateAgreementRuleId\n  rateQuoteId\n  rateOverrideAmount\n  rateOverrideReason\n  rateOverrideAt\n  rateLocked\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n    ediPartner {\n      id\n      name\n      code\n    }\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  coverageType\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n  carrierAssignment {\n    ...ShipmentCarrierAssignmentFields\n  }\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n  versionNumber\n  breakdown {\n    name\n    label\n    amount\n    error\n  }\n  guardrail {\n    applied\n    bound\n    rawResult\n    minCharge\n    maxCharge\n  }\n  rateQuoteId\n  agreementId\n  agreementName\n  ruleId\n  ruleLabel\n  source\n  explanation\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "BackfillJurisdictionMiles",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:d0b29a09ad751cb2ea77772d7acc10cfc0ae1875f9b5cdfa70f4dd9991ca33e1",
+      "rootFields": [
+        "backfillJurisdictionMiles"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "BackfillJurisdictionMilesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation BackfillJurisdictionMiles($input: BackfillJurisdictionMilesInput!) {\n  backfillJurisdictionMiles(input: $input) {\n    started\n    dryRun\n    unattributedMoves\n    unattributedMiles\n    workflowId\n  }\n}"
+    },
+    {
       "name": "BenefitCosts",
       "kind": "query",
       "domain": "benefits",
@@ -1846,6 +1895,28 @@
       ],
       "usages": [],
       "sdl": "mutation CancelDotTest($id: ID!, $reason: String!) {\n  cancelDotTest(id: $id, reason: $reason) {\n    ...WorkerDotTestFields\n  }\n}\n\nfragment WorkerDotTestFields on WorkerDOTTest {\n  id\n  workerId\n  testType\n  substance\n  status\n  result\n  isDot\n  reason\n  scheduledAt\n  collectedAt\n  resultAt\n  collectionSite\n  collectorName\n  specimenId\n  labName\n  mroName\n  mroVerifiedAt\n  alcoholConcentration\n  safetyEventId\n  drawEntryId\n  documentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CancelFuelCard",
+      "kind": "mutation",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:f93748bfecc5f07647f51fc9929ae94346009a0f0d17df3e835609e29741a176",
+      "rootFields": [
+        "cancelFuelCard"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CancelFuelCardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelCardFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CancelFuelCard($input: CancelFuelCardInput!) {\n  cancelFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "CancelMyExpense",
@@ -2519,6 +2590,33 @@
       "sdl": "mutation CloseWorkerSafetyEvent($input: SafetyEventStatusInput!) {\n  closeWorkerSafetyEvent(input: $input) {\n    ...WorkerSafetyEventFields\n  }\n}\n\nfragment WorkerSafetyEventFields on WorkerSafetyEvent {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  kind\n  severity\n  status\n  occurredAt\n  location\n  description\n  preventable\n  points\n  pointsExpireAt\n  activePoints\n  referenceNumber\n  shipmentId\n  inspectionLevel\n  inspectionResult\n  outOfService\n  fineAmount\n  costAmount\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  closedById\n  closedBy {\n    id\n    name\n  }\n  closedAt\n  resolution\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "CommitFuelPurchaseImport",
+      "kind": "mutation",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:551ac231774a82195fa412c22bb7c7f9df7428e09e068ac6bd429f8d91852ce3",
+      "rootFields": [
+        "commitFuelPurchaseImport"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CommitFuelPurchaseImport($id: ID!, $version: Int!) {\n  commitFuelPurchaseImport(id: $id, version: $version) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
       "name": "CommodityTable",
       "kind": "query",
       "domain": "commodity",
@@ -2734,6 +2832,28 @@
       "sdl": "mutation CreateEquipmentType($input: EquipmentTypeInput!) {\n  createEquipmentType(input: $input) {\n    ...EquipmentTypeConfigurationRowFields\n  }\n}\n\nfragment EquipmentTypeConfigurationRowFields on EquipmentType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  class\n  color\n  interiorLength\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "CreateFuelCard",
+      "kind": "mutation",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:31868851d191fb859a57778c4ac76e24dbdb82f75fee9620d93e8f4924954779",
+      "rootFields": [
+        "createFuelCard"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "FuelCardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelCardFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateFuelCard($input: FuelCardInput!) {\n  createFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
       "name": "CreateFuelIndex",
       "kind": "mutation",
       "domain": "fuel-surcharge",
@@ -2752,6 +2872,50 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation CreateFuelIndex($input: FuelIndexInput!) {\n  createFuelIndex(input: $input) {\n    id\n    name\n    code\n  }\n}"
+    },
+    {
+      "name": "CreateFuelPurchase",
+      "kind": "mutation",
+      "domain": "fuel-purchase",
+      "sourceFile": "src/operations/fuel-purchase/operations.graphql",
+      "hash": "sha256:ef463f75895788d035e4a316c19e1a029c9cdac9c08aceb92d5d7adb9137fed7",
+      "rootFields": [
+        "createFuelPurchase"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "FuelPurchaseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateFuelPurchase($input: FuelPurchaseInput!) {\n  createFuelPurchase(input: $input) {\n    ...FuelPurchaseFields\n  }\n}\n\nfragment FuelPurchaseFields on FuelPurchase {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  workerId\n  jurisdictionId\n  fuelCardId\n  cardLastFour\n  purchasedAt\n  vendor\n  vendorCity\n  fuelType\n  quantity\n  quantityUnit\n  gallons\n  unitPrice\n  totalAmount\n  currencyCode\n  odometer\n  transactionReference\n  source\n  importBatchId\n  taxPaid\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  worker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n  fuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "CreateFuelPurchaseImport",
+      "kind": "mutation",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:6b75ae1a80914d39cfe031c5957551966a9b17b94e355da4f8f8e9b7b148a39e",
+      "rootFields": [
+        "createFuelPurchaseImport"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateFuelPurchaseImportInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateFuelPurchaseImport($input: CreateFuelPurchaseImportInput!) {\n  createFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "CreateFuelSurchargeProgram",
@@ -2795,6 +2959,28 @@
       ],
       "usages": [],
       "sdl": "mutation CreateHomeLayoutPreset($input: SaveHomeLayoutPresetInput!) {\n  createHomeLayoutPreset(input: $input) {\n    ...HomeLayoutPresetFields\n  }\n}\n\nfragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "CreateIftaMileageEntry",
+      "kind": "mutation",
+      "domain": "ifta-jurisdiction-mileage",
+      "sourceFile": "src/operations/ifta-jurisdiction-mileage/operations.graphql",
+      "hash": "sha256:78ff7b8f4d3dfa83100e6d8bd140384bc601c69d7628004b9fc8bc90f20c1660",
+      "rootFields": [
+        "createIftaMileageEntry"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "IFTAMileageEntryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaMileageEntryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateIftaMileageEntry($input: IFTAMileageEntryInput!) {\n  createIftaMileageEntry(input: $input) {\n    ...IftaMileageEntryFields\n  }\n}\n\nfragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
     },
     {
       "name": "CreateInvoiceFromOrder",
@@ -3808,6 +3994,31 @@
       "sdl": "mutation DeleteFuelIndexPrice($id: ID!) {\n  deleteFuelIndexPrice(id: $id)\n}"
     },
     {
+      "name": "DeleteFuelPurchase",
+      "kind": "mutation",
+      "domain": "fuel-purchase",
+      "sourceFile": "src/operations/fuel-purchase/operations.graphql",
+      "hash": "sha256:92b48dc6aa4689d56ec42b7b5c698aa79081711032f51ce315819719f6534355",
+      "rootFields": [
+        "deleteFuelPurchase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteFuelPurchase($id: ID!, $version: Int!) {\n  deleteFuelPurchase(id: $id, version: $version)\n}"
+    },
+    {
       "name": "DeleteFuelSurchargeProgram",
       "kind": "mutation",
       "domain": "fuel-surcharge",
@@ -3846,6 +4057,81 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation DeleteHomeLayoutPreset($id: ID!) {\n  deleteHomeLayoutPreset(id: $id)\n}"
+    },
+    {
+      "name": "DeleteIftaMileageEntry",
+      "kind": "mutation",
+      "domain": "ifta-jurisdiction-mileage",
+      "sourceFile": "src/operations/ifta-jurisdiction-mileage/operations.graphql",
+      "hash": "sha256:a50349f07575b1af39b4754a08c6edb7785fc426ee1cf766eb11b225c68e4213",
+      "rootFields": [
+        "deleteIftaMileageEntry"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteIftaMileageEntry($id: ID!, $version: Int!) {\n  deleteIftaMileageEntry(id: $id, version: $version)\n}"
+    },
+    {
+      "name": "DeleteIftaReturn",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:7f7310c3528509f8c259bed8da8483f566528b3753f7700a2622038436c48885",
+      "rootFields": [
+        "deleteIftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteIftaReturn($id: ID!, $version: Int!) {\n  deleteIftaReturn(id: $id, version: $version)\n}"
+    },
+    {
+      "name": "DeleteIftaTaxRate",
+      "kind": "mutation",
+      "domain": "ifta-tax-rate",
+      "sourceFile": "src/operations/ifta-tax-rate/operations.graphql",
+      "hash": "sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755",
+      "rootFields": [
+        "deleteIftaTaxRate"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteIftaTaxRate($id: ID!, $version: Int!) {\n  deleteIftaTaxRate(id: $id, version: $version)\n}"
     },
     {
       "name": "DeleteLeaveDay",
@@ -4421,6 +4707,38 @@
       "fragments": [],
       "usages": [],
       "sdl": "query DetentionWaiverStats($input: DetentionStatsInput!) {\n  detentionWaiverStats(input: $input) {\n    reason\n    waiverCount\n    approverCount\n    waivedAmount\n  }\n}"
+    },
+    {
+      "name": "DiscardFuelPurchaseImport",
+      "kind": "mutation",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:c5c58d1c52402aee117637775ee81dbabaf5b5abbc6a04275a4685acf58295ce",
+      "rootFields": [
+        "discardFuelPurchaseImport"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {\n  discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "DismissMyNotifications",
@@ -5810,6 +6128,35 @@
       "sdl": "mutation FinalizeDotRandomDraw($id: ID!) {\n  finalizeDotRandomDraw(id: $id) {\n    ...DotRandomDrawFields\n  }\n}\n\nfragment DotRandomDrawFields on DOTRandomDraw {\n  id\n  poolId\n  periodKey\n  periodStart\n  periodEnd\n  status\n  poolSize\n  drugTarget\n  alcoholTarget\n  drugSelected\n  alcoholSelected\n  seed\n  method\n  notes\n  drawnAt\n  finalizedAt\n  version\n}"
     },
     {
+      "name": "FinalizeIftaReturn",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:8d0095fa44207f65499ba0e281e7dfb4cc21f972cd17339b5369bdfe8634833d",
+      "rootFields": [
+        "finalizeIftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "mutation FinalizeIftaReturn($id: ID!, $version: Int!) {\n  finalizeIftaReturn(id: $id, version: $version) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
+    },
+    {
       "name": "FiscalYearTable",
       "kind": "query",
       "domain": "fiscal-year",
@@ -5937,6 +6284,55 @@
       "sdl": "query FormulaTemplateTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  formulaTemplates(input: $input) {\n    edges {\n      node {\n        ...FormulaTemplateTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  variableDefinitions {\n    name\n    type\n    description\n    required\n    defaultValue\n    source\n  }\n  breakdownDefinitions {\n    name\n    label\n    expression\n  }\n  minCharge\n  maxCharge\n  roundingMode\n  roundingPrecision\n  sourceTemplateId\n  sourceVersionNumber\n  version\n  currentVersionNumber\n  approvedAt\n  usageCount\n  scenarioCount\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "FuelCard",
+      "kind": "query",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:01fb3333e469ca988846cda5556e9e6b0dbfc125e4fa81f01739c0048d258759",
+      "rootFields": [
+        "fuelCard"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelCardFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelCard($id: ID!) {\n  fuelCard(id: $id) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
+      "name": "FuelCardTable",
+      "kind": "query",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:08bab34c0b22a68ef521d267fe0f3138a9288b3cfd19b48aa23c19710e77f5ef",
+      "rootFields": [
+        "fuelCards"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "FuelCardsInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "FuelCardFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelCardTable($input: FuelCardsInput!, $includeTotalCount: Boolean = true) {\n  fuelCards(input: $input) {\n    edges {\n      node {\n        ...FuelCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
       "name": "FuelDashboard",
       "kind": "query",
       "domain": "fuel-surcharge",
@@ -6026,6 +6422,124 @@
       "fragments": [],
       "usages": [],
       "sdl": "query FuelProgramCurrentRates {\n  fuelProgramCurrentRates {\n    program {\n      id\n      name\n      code\n      description\n      status\n      method\n      fuelIndexId\n      priceEffectiveDay\n      dateBasis\n      fuelIndex {\n        id\n        name\n        code\n        source\n        fuelType\n        region\n      }\n    }\n    price {\n      id\n      priceDate\n      price\n      currency\n    }\n    ratePerMile\n    percent\n    flatAmount\n    usedFallback\n    matchedRow {\n      id\n      priceMin\n      priceMax\n      value\n    }\n  }\n}"
+    },
+    {
+      "name": "FuelPurchase",
+      "kind": "query",
+      "domain": "fuel-purchase",
+      "sourceFile": "src/operations/fuel-purchase/operations.graphql",
+      "hash": "sha256:d42b03441fabf22f72b2a52b37d9e38d3667ece2aa8a8a2ca48b4eeac53665a8",
+      "rootFields": [
+        "fuelPurchase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelPurchase($id: ID!) {\n  fuelPurchase(id: $id) {\n    ...FuelPurchaseFields\n  }\n}\n\nfragment FuelPurchaseFields on FuelPurchase {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  workerId\n  jurisdictionId\n  fuelCardId\n  cardLastFour\n  purchasedAt\n  vendor\n  vendorCity\n  fuelType\n  quantity\n  quantityUnit\n  gallons\n  unitPrice\n  totalAmount\n  currencyCode\n  odometer\n  transactionReference\n  source\n  importBatchId\n  taxPaid\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  worker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n  fuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseImport",
+      "kind": "query",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:15bc80f50ada8bce5289481e607af6b019f1f0fce834365e1279e9a8a4153b80",
+      "rootFields": [
+        "fuelPurchaseImport"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelPurchaseImport($id: ID!) {\n  fuelPurchaseImport(id: $id) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseImportRows",
+      "kind": "query",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:76069fcd08f48d67bd04dd94e0702df4d9971c03c2ff5959ba8d3706aa9d5384",
+      "rootFields": [
+        "fuelPurchaseImport"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "FuelPurchaseImportRowsInput",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportRowFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelPurchaseImportRows($id: ID!, $input: FuelPurchaseImportRowsInput) {\n  fuelPurchaseImport(id: $id) {\n    id\n    rows(input: $input) {\n      edges {\n        node {\n          ...FuelPurchaseImportRowFields\n        }\n        cursor\n      }\n      totalCount\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n}\n\nfragment FuelPurchaseImportRowFields on FuelPurchaseImportRow {\n  id\n  importBatchId\n  rowNumber\n  cells\n  parsed {\n    purchasedAt\n    vendor\n    vendorCity\n    jurisdictionCode\n    fuelType\n    quantity\n    quantityUnit\n    gallons\n    unitPrice\n    totalAmount\n    currencyCode\n    transactionReference\n    cardLastFour\n    tractorCode\n    odometer\n  }\n  transactionReference\n  status\n  error\n  resolvedTractorId\n  resolvedFuelCardId\n  resolvedJurisdictionId\n  resolutionNotes\n  fuelPurchaseId\n  createdAt\n  resolvedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseImportTemplate",
+      "kind": "query",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:31cc70334d73006c9b344e26682020d505d5893d2b8b8253be40add52cb77d4d",
+      "rootFields": [
+        "fuelPurchaseImportTemplate"
+      ],
+      "variables": [
+        {
+          "name": "provider",
+          "type": "FuelCardProvider!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query FuelPurchaseImportTemplate($provider: FuelCardProvider!) {\n  fuelPurchaseImportTemplate(provider: $provider) {\n    fileName\n    content\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseTable",
+      "kind": "query",
+      "domain": "fuel-purchase",
+      "sourceFile": "src/operations/fuel-purchase/operations.graphql",
+      "hash": "sha256:1b517bbfca7c783424cb89b37ff0e1b284c061714a3775c215929551249ca481",
+      "rootFields": [
+        "fuelPurchases"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "FuelPurchasesInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelPurchaseTable($input: FuelPurchasesInput!, $includeTotalCount: Boolean = true) {\n  fuelPurchases(input: $input) {\n    edges {\n      node {\n        ...FuelPurchaseFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment FuelPurchaseFields on FuelPurchase {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  workerId\n  jurisdictionId\n  fuelCardId\n  cardLastFour\n  purchasedAt\n  vendor\n  vendorCity\n  fuelType\n  quantity\n  quantityUnit\n  gallons\n  unitPrice\n  totalAmount\n  currencyCode\n  odometer\n  transactionReference\n  source\n  importBatchId\n  taxPaid\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  worker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n  fuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "FuelSurchargeProgramDetail",
@@ -6134,6 +6648,30 @@
       "fragments": [],
       "usages": [],
       "sdl": "query GenerateFuelSurchargeTable($input: GenerateFuelTableInput!) {\n  generateFuelSurchargeTable(input: $input) {\n    priceMin\n    priceMax\n    value\n  }\n}"
+    },
+    {
+      "name": "GenerateIftaReturn",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:18a9184c4e27e604547100180762480fe5b3ddd0a3441ce483c2a823c12466f2",
+      "rootFields": [
+        "generateIftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "period",
+          "type": "IFTAPeriodInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "mutation GenerateIftaReturn($period: IFTAPeriodInput!) {\n  generateIftaReturn(period: $period) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
     },
     {
       "name": "GeneratePayrollExport",
@@ -6438,6 +6976,222 @@
       "fragments": [],
       "usages": [],
       "sdl": "query HosCertificationSummary($startDate: String!, $endDate: String!) {\n  hosCertificationSummary(startDate: $startDate, endDate: $endDate) {\n    workerId\n    workerName\n    uncertifiedDays\n    totalDays\n  }\n}"
+    },
+    {
+      "name": "IftaCurrentPeriod",
+      "kind": "query",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:65c7343838c2470ef9556bd4dd4020b769865da0d7f214079ca7573a5c9b80f3",
+      "rootFields": [
+        "iftaCurrentPeriod"
+      ],
+      "variables": [],
+      "fragments": [
+        "IftaPeriodFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaCurrentPeriod {\n  iftaCurrentPeriod {\n    ...IftaPeriodFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}"
+    },
+    {
+      "name": "IftaJurisdictions",
+      "kind": "query",
+      "domain": "ifta-jurisdiction",
+      "sourceFile": "src/operations/ifta-jurisdiction/operations.graphql",
+      "hash": "sha256:36e4d33c7597c2be3de87f817943565acf932a13cf8b63e8b31a81ab198d622d",
+      "rootFields": [
+        "iftaJurisdictions"
+      ],
+      "variables": [
+        {
+          "name": "membersOnly",
+          "type": "Boolean",
+          "defaultValue": "false"
+        }
+      ],
+      "fragments": [
+        "IftaJurisdictionFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaJurisdictions($membersOnly: Boolean = false) {\n  iftaJurisdictions(membersOnly: $membersOnly) {\n    ...IftaJurisdictionFields\n  }\n}\n\nfragment IftaJurisdictionFields on IFTAJurisdiction {\n  id\n  countryCode\n  code\n  name\n  usStateId\n  isIftaMember\n  hasSurcharge\n  sortOrder\n  status\n}"
+    },
+    {
+      "name": "IftaMileageEntry",
+      "kind": "query",
+      "domain": "ifta-jurisdiction-mileage",
+      "sourceFile": "src/operations/ifta-jurisdiction-mileage/operations.graphql",
+      "hash": "sha256:ae12f876fe7b51bb56cec67fb0992841b7d64b926e75a539ccdfdef1e594c4c7",
+      "rootFields": [
+        "iftaMileageEntry"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaMileageEntryFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaMileageEntry($id: ID!) {\n  iftaMileageEntry(id: $id) {\n    ...IftaMileageEntryFields\n  }\n}\n\nfragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
+    },
+    {
+      "name": "IftaMileageEntryTable",
+      "kind": "query",
+      "domain": "ifta-jurisdiction-mileage",
+      "sourceFile": "src/operations/ifta-jurisdiction-mileage/operations.graphql",
+      "hash": "sha256:66058c6e3361c2a41ad513f392898d2614472a9a0c4155073ccb377c4b2668c5",
+      "rootFields": [
+        "iftaMileageEntries"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "IFTAMileageEntriesInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "IftaMileageEntryFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaMileageEntryTable($input: IFTAMileageEntriesInput!, $includeTotalCount: Boolean = true) {\n  iftaMileageEntries(input: $input) {\n    edges {\n      node {\n        ...IftaMileageEntryFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
+    },
+    {
+      "name": "IftaPeriod",
+      "kind": "query",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:5233eec4be49a9b867ac2b5ba34c80d373cb002420627cd092080cec01da9057",
+      "rootFields": [
+        "iftaPeriod"
+      ],
+      "variables": [
+        {
+          "name": "year",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "quarter",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaPeriod($year: Int!, $quarter: Int!) {\n  iftaPeriod(year: $year, quarter: $quarter) {\n    ...IftaPeriodFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}"
+    },
+    {
+      "name": "IftaReturn",
+      "kind": "query",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:13ccd49d841eeb5e6362844e3d0e6c5d242d1a8ad2f3b62b57366810d3663ac9",
+      "rootFields": [
+        "iftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaReturn($id: ID!) {\n  iftaReturn(id: $id) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
+    },
+    {
+      "name": "IftaReturnForPeriod",
+      "kind": "query",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:0eeba98dd4b248b1e1270a038d6ea8ebf0b6e9fc2c8eb0c383fd83f5467aa006",
+      "rootFields": [
+        "iftaReturnForPeriod"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "IFTAPeriodInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaReturnForPeriod($input: IFTAPeriodInput!) {\n  iftaReturnForPeriod(period: $input) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
+    },
+    {
+      "name": "IftaReturnTable",
+      "kind": "query",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:8f9c89533e5ba9202016848c4002d479c483ecd941dd366ae23d9b3340514584",
+      "rootFields": [
+        "iftaReturns"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "IFTAReturnsInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "IftaReturnSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaReturnTable($input: IFTAReturnsInput!, $includeTotalCount: Boolean = true) {\n  iftaReturns(input: $input) {\n    edges {\n      node {\n        ...IftaReturnSummaryFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment IftaReturnSummaryFields on IFTAReturn {\n  id\n  year\n  quarter\n  amendmentNumber\n  status\n  totalMiles\n  totalTaxPaidGallons\n  netDue\n  currencyCode\n  computedAt\n  finalizedAt\n  filedAt\n  filingReference\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "IftaTaxRateTable",
+      "kind": "query",
+      "domain": "ifta-tax-rate",
+      "sourceFile": "src/operations/ifta-tax-rate/operations.graphql",
+      "hash": "sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3",
+      "rootFields": [
+        "iftaTaxRates"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "IFTATaxRatesInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "IftaTaxRateFields"
+      ],
+      "usages": [],
+      "sdl": "query IftaTaxRateTable($input: IFTATaxRatesInput!, $includeTotalCount: Boolean = true) {\n  iftaTaxRates(input: $input) {\n    edges {\n      node {\n        ...IftaTaxRateFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment IftaTaxRateFields on IFTATaxRate {\n  id\n  jurisdictionId\n  year\n  quarter\n  fuelType\n  ratePerGallon\n  surchargeRatePerGallon\n  sourceNote\n  sourceUrl\n  version\n  createdAt\n  updatedAt\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    hasSurcharge\n    isIftaMember\n  }\n}"
     },
     {
       "name": "InviteWorkerToPortal",
@@ -6993,6 +7747,30 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation MarkEmploymentVerificationRequested($id: ID!) {\n  markEmploymentVerificationRequested(id: $id) {\n    id\n    status\n    requestedAt\n    version\n  }\n}"
+    },
+    {
+      "name": "MarkIftaReturnFiled",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:873c922d30e34be17ce51a19c034596c9b4077216fa99b7ffbf11961b30e728f",
+      "rootFields": [
+        "markIftaReturnFiled"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "MarkIFTAReturnFiledInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "mutation MarkIftaReturnFiled($input: MarkIFTAReturnFiledInput!) {\n  markIftaReturnFiled(input: $input) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
     },
     {
       "name": "MarkMyNotificationsRead",
@@ -8944,6 +9722,35 @@
       "sdl": "query RecentActivity($first: Int!, $after: String) {\n  auditEntries(input: { first: $first, after: $after }) {\n    edges {\n      node {\n        id\n        resource\n        operation\n        resourceId\n        timestamp\n        comment\n        entityRef\n        user {\n          id\n          name\n          username\n          profilePicUrl\n          thumbnailUrl\n        }\n      }\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}"
     },
     {
+      "name": "RecomputeIftaReturn",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:5ad33bca01818ff7b9ea259638a7342923b673d0ab22ec9cecc849844edb189c",
+      "rootFields": [
+        "recomputeIftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RecomputeIftaReturn($id: ID!, $version: Int!) {\n  recomputeIftaReturn(id: $id, version: $version) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
+    },
+    {
       "name": "RecordClearinghouseQuery",
       "kind": "mutation",
       "domain": "worker-drug-alcohol",
@@ -9465,6 +10272,40 @@
       ],
       "usages": [],
       "sdl": "mutation RemoveOrderCharge($input: RemoveOrderChargeInput!) {\n  removeOrderCharge(input: $input) {\n    ...OrderMutationResult\n  }\n}\n\nfragment OrderMutationResult on Order {\n  id\n  orderNumber\n  status\n  totalAmount\n  version\n}"
+    },
+    {
+      "name": "ReopenIftaReturn",
+      "kind": "mutation",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "hash": "sha256:dc138f18d68ef10805888857fb9537b772bfca78db588d2bbe00ccdb199dc7b8",
+      "rootFields": [
+        "reopenIftaReturn"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnFields",
+        "IftaReturnLineFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ReopenIftaReturn($id: ID!, $version: Int!, $reason: String!) {\n  reopenIftaReturn(id: $id, version: $version, reason: $reason) {\n    ...IftaReturnFields\n  }\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
     },
     {
       "name": "ReopenPerformanceReview",
@@ -11422,6 +12263,28 @@
       "sdl": "mutation SkipWorkerChecklistItem($input: WorkerChecklistItemActionInput!) {\n  skipWorkerChecklistItem(input: $input) {\n    ...WorkerChecklistFields\n  }\n}\n\nfragment WorkerChecklistFields on WorkerChecklist {\n  id\n  workerId\n  templateId\n  name\n  kind\n  status\n  startedAt\n  dueAt\n  completedAt\n  cancelledAt\n  cancelReason\n  sourceEventId\n  startedById\n  version\n  createdAt\n  updatedAt\n  startedBy {\n    id\n    name\n  }\n  progress {\n    total\n    settled\n    requiredTotal\n    requiredDone\n    overdue\n    percent\n    complete\n  }\n  items {\n    id\n    checklistId\n    label\n    description\n    kind\n    required\n    owner\n    dueAt\n    overdue\n    credentialTypeId\n    documentTypeId\n    status\n    completedById\n    completedAt\n    autoCompleted\n    note\n    evidenceDocumentId\n    evidenceCredentialId\n    sortOrder\n    version\n    completedBy {\n      id\n      name\n    }\n    evidenceDocument {\n      id\n      originalName\n      fileType\n    }\n    evidenceCredential {\n      id\n      number\n      expiresAt\n    }\n    credentialType {\n      id\n      code\n      name\n    }\n  }\n}"
     },
     {
+      "name": "StageFuelPurchaseImport",
+      "kind": "mutation",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:d5a302b371ad1652deff531b40d000743c0a10c098f88ce768d5663744ce9323",
+      "rootFields": [
+        "stageFuelPurchaseImport"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "StageFuelPurchaseImportInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "mutation StageFuelPurchaseImport($input: StageFuelPurchaseImportInput!) {\n  stageFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
       "name": "StartMyTraining",
       "kind": "mutation",
       "domain": "driver-portal",
@@ -11832,7 +12695,7 @@
       "kind": "query",
       "domain": "equipment",
       "sourceFile": "src/operations/equipment/table.graphql",
-      "hash": "sha256:b08475fc76d198c7d5a35cc3d3690bda0fc2c06b1fb8b74fe350fd4168fa8c1a",
+      "hash": "sha256:19329f9543d8714fd002b65bb9f04fcacc89b404bbb21d62cd6f42b21b4553e5",
       "rootFields": [
         "tractors"
       ],
@@ -11873,7 +12736,7 @@
         "WorkerTableReferenceFields"
       ],
       "usages": [],
-      "sdl": "query TractorTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true, $includeTotalCount: Boolean = true) {\n  tractors(\n    input: $input\n    includeEquipmentDetails: $includeEquipmentDetails\n    includeFleetDetails: $includeFleetDetails\n    includeWorkerDetails: $includeWorkerDetails\n  ) {\n    edges {\n      node {\n        ...TractorTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment EquipmentManufacturerTableFields on EquipmentManufacturer {\n  id\n  name\n}\n\nfragment EquipmentTypeTableFields on EquipmentType {\n  id\n  code\n  color\n}\n\nfragment FleetCodeTableFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment TractorTableRowFields on Tractor {\n  id\n  businessUnitId\n  organizationId\n  primaryWorkerId\n  equipmentTypeId\n  equipmentManufacturerId\n  stateId\n  fleetCodeId\n  secondaryWorkerId\n  status\n  code\n  model\n  make\n  year\n  licensePlateNumber\n  registrationNumber\n  registrationExpiry\n  vin\n  externalId\n  lastKnownLocationId\n  lastKnownLocationName\n  version\n  createdAt\n  updatedAt\n  customFields\n  equipmentType {\n    ...EquipmentTypeTableFields\n  }\n  equipmentManufacturer {\n    ...EquipmentManufacturerTableFields\n  }\n  fleetCode {\n    ...FleetCodeTableFields\n  }\n  state {\n    ...UsStateTableFields\n  }\n  primaryWorker {\n    ...WorkerTableReferenceFields\n  }\n  secondaryWorker {\n    ...WorkerTableReferenceFields\n  }\n}\n\nfragment UsStateTableFields on UsState {\n  id\n  name\n  abbreviation\n}\n\nfragment WorkerTableReferenceFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n}"
+      "sdl": "query TractorTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true, $includeTotalCount: Boolean = true) {\n  tractors(\n    input: $input\n    includeEquipmentDetails: $includeEquipmentDetails\n    includeFleetDetails: $includeFleetDetails\n    includeWorkerDetails: $includeWorkerDetails\n  ) {\n    edges {\n      node {\n        ...TractorTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment EquipmentManufacturerTableFields on EquipmentManufacturer {\n  id\n  name\n}\n\nfragment EquipmentTypeTableFields on EquipmentType {\n  id\n  code\n  color\n}\n\nfragment FleetCodeTableFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment TractorTableRowFields on Tractor {\n  id\n  businessUnitId\n  organizationId\n  primaryWorkerId\n  equipmentTypeId\n  equipmentManufacturerId\n  stateId\n  fleetCodeId\n  secondaryWorkerId\n  status\n  code\n  model\n  make\n  year\n  licensePlateNumber\n  registrationNumber\n  registrationExpiry\n  vin\n  externalId\n  lastKnownLocationId\n  lastKnownLocationName\n  fuelType\n  iftaQualified\n  version\n  createdAt\n  updatedAt\n  customFields\n  equipmentType {\n    ...EquipmentTypeTableFields\n  }\n  equipmentManufacturer {\n    ...EquipmentManufacturerTableFields\n  }\n  fleetCode {\n    ...FleetCodeTableFields\n  }\n  state {\n    ...UsStateTableFields\n  }\n  primaryWorker {\n    ...WorkerTableReferenceFields\n  }\n  secondaryWorker {\n    ...WorkerTableReferenceFields\n  }\n}\n\nfragment UsStateTableFields on UsState {\n  id\n  name\n  abbreviation\n}\n\nfragment WorkerTableReferenceFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n}"
     },
     {
       "name": "TrailerTable",
@@ -12590,6 +13453,38 @@
       "sdl": "mutation UpdateEscrowAccount($input: UpdateEscrowAccountInput!) {\n  updateEscrowAccount(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
+      "name": "UpdateFuelCard",
+      "kind": "mutation",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:0d1814fc8247359cd021b69608a739da4b0b1d9b5107c474b55cbc969d836251",
+      "rootFields": [
+        "updateFuelCard"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "FuelCardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelCardFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateFuelCard($id: ID!, $version: Int!, $input: FuelCardInput!) {\n  updateFuelCard(id: $id, version: $version, input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
       "name": "UpdateFuelIndex",
       "kind": "mutation",
       "domain": "fuel-surcharge",
@@ -12633,6 +13528,38 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation UpdateFuelIndexPrice($input: UpdateFuelIndexPriceInput!) {\n  updateFuelIndexPrice(input: $input) {\n    id\n    fuelIndexId\n    priceDate\n    price\n  }\n}"
+    },
+    {
+      "name": "UpdateFuelPurchase",
+      "kind": "mutation",
+      "domain": "fuel-purchase",
+      "sourceFile": "src/operations/fuel-purchase/operations.graphql",
+      "hash": "sha256:9c66705e46769dae40d259e6a9ec6b70d50dad0ec0c2d96b4fd4d095a0d11ce3",
+      "rootFields": [
+        "updateFuelPurchase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "FuelPurchaseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateFuelPurchase($id: ID!, $version: Int!, $input: FuelPurchaseInput!) {\n  updateFuelPurchase(id: $id, version: $version, input: $input) {\n    ...FuelPurchaseFields\n  }\n}\n\nfragment FuelPurchaseFields on FuelPurchase {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  workerId\n  jurisdictionId\n  fuelCardId\n  cardLastFour\n  purchasedAt\n  vendor\n  vendorCity\n  fuelType\n  quantity\n  quantityUnit\n  gallons\n  unitPrice\n  totalAmount\n  currencyCode\n  odometer\n  transactionReference\n  source\n  importBatchId\n  taxPaid\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  worker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n  fuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "UpdateFuelSurchargeProgram",
@@ -12704,6 +13631,38 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateHomeLayoutPreset($input: UpdateHomeLayoutPresetInput!) {\n  updateHomeLayoutPreset(input: $input) {\n    ...HomeLayoutPresetFields\n  }\n}\n\nfragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "UpdateIftaMileageEntry",
+      "kind": "mutation",
+      "domain": "ifta-jurisdiction-mileage",
+      "sourceFile": "src/operations/ifta-jurisdiction-mileage/operations.graphql",
+      "hash": "sha256:db3417161c4d8d67d296d7d97e8ee8e50641e3e4399c022a38960338f4c41b8a",
+      "rootFields": [
+        "updateIftaMileageEntry"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "IFTAMileageEntryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaMileageEntryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateIftaMileageEntry($id: ID!, $version: Int!, $input: IFTAMileageEntryInput!) {\n  updateIftaMileageEntry(id: $id, version: $version, input: $input) {\n    ...IftaMileageEntryFields\n  }\n}\n\nfragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
     },
     {
       "name": "UpdateJobPosition",
@@ -13511,6 +14470,28 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateWorkerSafetyEvent($input: UpdateWorkerSafetyEventInput!) {\n  updateWorkerSafetyEvent(input: $input) {\n    ...WorkerSafetyEventFields\n  }\n}\n\nfragment WorkerSafetyEventFields on WorkerSafetyEvent {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  kind\n  severity\n  status\n  occurredAt\n  location\n  description\n  preventable\n  points\n  pointsExpireAt\n  activePoints\n  referenceNumber\n  shipmentId\n  inspectionLevel\n  inspectionResult\n  outOfService\n  fineAmount\n  costAmount\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  closedById\n  closedBy {\n    id\n    name\n  }\n  closedAt\n  resolution\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpsertIftaTaxRates",
+      "kind": "mutation",
+      "domain": "ifta-tax-rate",
+      "sourceFile": "src/operations/ifta-tax-rate/operations.graphql",
+      "hash": "sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b",
+      "rootFields": [
+        "upsertIftaTaxRates"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "[IFTATaxRateInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "IftaTaxRateFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpsertIftaTaxRates($input: [IFTATaxRateInput!]!) {\n  upsertIftaTaxRates(input: $input) {\n    ...IftaTaxRateFields\n  }\n}\n\nfragment IftaTaxRateFields on IFTATaxRate {\n  id\n  jurisdictionId\n  year\n  quarter\n  fuelType\n  ratePerGallon\n  surchargeRatePerGallon\n  sourceNote\n  sourceUrl\n  version\n  createdAt\n  updatedAt\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    hasSurcharge\n    isIftaMember\n  }\n}"
     },
     {
       "name": "UserTable",
@@ -15615,6 +16596,22 @@
       "sdl": "fragment FormulaTemplateTableRowFields on FormulaTemplate {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  type\n  expression\n  status\n  schemaId\n  variableDefinitions {\n    name\n    type\n    description\n    required\n    defaultValue\n    source\n  }\n  breakdownDefinitions {\n    name\n    label\n    expression\n  }\n  minCharge\n  maxCharge\n  roundingMode\n  roundingPrecision\n  sourceTemplateId\n  sourceVersionNumber\n  version\n  currentVersionNumber\n  approvedAt\n  usageCount\n  scenarioCount\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "FuelCardFields",
+      "typeCondition": "FuelCard",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CancelFuelCard",
+        "CreateFuelCard",
+        "FuelCard",
+        "FuelCardTable",
+        "UpdateFuelCard"
+      ],
+      "usages": [],
+      "sdl": "fragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
       "name": "FuelIndexFields",
       "typeCondition": "FuelIndex",
       "domain": "fuel-surcharge",
@@ -15625,6 +16622,49 @@
       ],
       "usages": [],
       "sdl": "fragment FuelIndexFields on FuelIndex {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  source\n  fuelType\n  region\n  eiaSeriesId\n  currency\n  isActive\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "FuelPurchaseFields",
+      "typeCondition": "FuelPurchase",
+      "domain": "fuel-purchase",
+      "sourceFile": "src/operations/fuel-purchase/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateFuelPurchase",
+        "FuelPurchase",
+        "FuelPurchaseTable",
+        "UpdateFuelPurchase"
+      ],
+      "usages": [],
+      "sdl": "fragment FuelPurchaseFields on FuelPurchase {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  workerId\n  jurisdictionId\n  fuelCardId\n  cardLastFour\n  purchasedAt\n  vendor\n  vendorCity\n  fuelType\n  quantity\n  quantityUnit\n  gallons\n  unitPrice\n  totalAmount\n  currencyCode\n  odometer\n  transactionReference\n  source\n  importBatchId\n  taxPaid\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  worker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n  fuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseImportBatchFields",
+      "typeCondition": "FuelPurchaseImportBatch",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CommitFuelPurchaseImport",
+        "CreateFuelPurchaseImport",
+        "DiscardFuelPurchaseImport",
+        "FuelPurchaseImport",
+        "StageFuelPurchaseImport"
+      ],
+      "usages": [],
+      "sdl": "fragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseImportRowFields",
+      "typeCondition": "FuelPurchaseImportRow",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "FuelPurchaseImportRows"
+      ],
+      "usages": [],
+      "sdl": "fragment FuelPurchaseImportRowFields on FuelPurchaseImportRow {\n  id\n  importBatchId\n  rowNumber\n  cells\n  parsed {\n    purchasedAt\n    vendor\n    vendorCity\n    jurisdictionCode\n    fuelType\n    quantity\n    quantityUnit\n    gallons\n    unitPrice\n    totalAmount\n    currencyCode\n    transactionReference\n    cardLastFour\n    tractorCode\n    odometer\n  }\n  transactionReference\n  status\n  error\n  resolvedTractorId\n  resolvedFuelCardId\n  resolvedJurisdictionId\n  resolutionNotes\n  fuelPurchaseId\n  createdAt\n  resolvedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "FuelSurchargeProgramFields",
@@ -15726,6 +16766,120 @@
       ],
       "usages": [],
       "sdl": "fragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "IftaJurisdictionFields",
+      "typeCondition": "IFTAJurisdiction",
+      "domain": "ifta-jurisdiction",
+      "sourceFile": "src/operations/ifta-jurisdiction/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "IftaJurisdictions"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaJurisdictionFields on IFTAJurisdiction {\n  id\n  countryCode\n  code\n  name\n  usStateId\n  isIftaMember\n  hasSurcharge\n  sortOrder\n  status\n}"
+    },
+    {
+      "name": "IftaMileageEntryFields",
+      "typeCondition": "IFTAJurisdictionMileageEntry",
+      "domain": "ifta-jurisdiction-mileage",
+      "sourceFile": "src/operations/ifta-jurisdiction-mileage/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateIftaMileageEntry",
+        "IftaMileageEntry",
+        "IftaMileageEntryTable",
+        "UpdateIftaMileageEntry"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {\n  id\n  businessUnitId\n  organizationId\n  tractorId\n  jurisdictionId\n  traveledAt\n  year\n  quarter\n  miles\n  loaded\n  source\n  shipmentMoveId\n  notes\n  createdById\n  version\n  createdAt\n  updatedAt\n  tractor {\n    id\n    code\n  }\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n  }\n}"
+    },
+    {
+      "name": "IftaPeriodFields",
+      "typeCondition": "IFTAPeriod",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AmendIftaReturn",
+        "FinalizeIftaReturn",
+        "GenerateIftaReturn",
+        "IftaCurrentPeriod",
+        "IftaPeriod",
+        "IftaReturn",
+        "IftaReturnForPeriod",
+        "MarkIftaReturnFiled",
+        "RecomputeIftaReturn",
+        "ReopenIftaReturn"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}"
+    },
+    {
+      "name": "IftaReturnFields",
+      "typeCondition": "IFTAReturn",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "fragments": [
+        "IftaPeriodFields",
+        "IftaReturnLineFields"
+      ],
+      "usedByOperations": [
+        "AmendIftaReturn",
+        "FinalizeIftaReturn",
+        "GenerateIftaReturn",
+        "IftaReturn",
+        "IftaReturnForPeriod",
+        "MarkIftaReturnFiled",
+        "RecomputeIftaReturn",
+        "ReopenIftaReturn"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaReturnFields on IFTAReturn {\n  id\n  businessUnitId\n  organizationId\n  year\n  quarter\n  period {\n    ...IftaPeriodFields\n  }\n  amendmentNumber\n  amendsReturnId\n  amendsReturn {\n    id\n    amendmentNumber\n    status\n  }\n  status\n  timezone\n  periodStart\n  periodEnd\n  totalMiles\n  totalTaxableMiles\n  totalGallons\n  totalTaxPaidGallons\n  netTaxableGallons\n  taxDue\n  surchargeDue\n  netDue\n  currencyCode\n  fleetMpgByFuelType {\n    fuelType\n    mpg\n    totalMiles\n    totalGallons\n  }\n  unattributedMiles\n  unattributedMoveCount\n  noTractorMiles\n  noTractorMoveCount\n  problems {\n    code\n    message\n    jurisdictionCode\n    fuelType\n    amount\n  }\n  computedAt\n  finalizedAt\n  finalizedById\n  finalizedBy {\n    id\n    name\n  }\n  filedAt\n  filedById\n  filedBy {\n    id\n    name\n  }\n  filingReference\n  reopenedAt\n  reopenedById\n  reopenReason\n  lines {\n    ...IftaReturnLineFields\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment IftaPeriodFields on IFTAPeriod {\n  year\n  quarter\n  key\n  label\n  start\n  end\n  dueDate\n}\n\nfragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
+    },
+    {
+      "name": "IftaReturnLineFields",
+      "typeCondition": "IFTAReturnLine",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AmendIftaReturn",
+        "FinalizeIftaReturn",
+        "GenerateIftaReturn",
+        "IftaReturn",
+        "IftaReturnForPeriod",
+        "MarkIftaReturnFiled",
+        "RecomputeIftaReturn",
+        "ReopenIftaReturn"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaReturnLineFields on IFTAReturnLine {\n  id\n  returnId\n  jurisdictionId\n  fuelType\n  isIftaMember\n  totalMiles\n  taxableMiles\n  routeMiles\n  manualMiles\n  loadedMiles\n  emptyMiles\n  taxPaidGallons\n  taxPaidGallonsRaw\n  purchaseCount\n  taxableGallons\n  netTaxableGallons\n  ratePerGallon\n  surchargeRatePerGallon\n  rateMissing\n  taxDue\n  surchargeDue\n  lineTotal\n  sortOrder\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    isIftaMember\n    hasSurcharge\n  }\n}"
+    },
+    {
+      "name": "IftaReturnSummaryFields",
+      "typeCondition": "IFTAReturn",
+      "domain": "ifta-return",
+      "sourceFile": "src/operations/ifta-return/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "IftaReturnTable"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaReturnSummaryFields on IFTAReturn {\n  id\n  year\n  quarter\n  amendmentNumber\n  status\n  totalMiles\n  totalTaxPaidGallons\n  netDue\n  currencyCode\n  computedAt\n  finalizedAt\n  filedAt\n  filingReference\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "IftaTaxRateFields",
+      "typeCondition": "IFTATaxRate",
+      "domain": "ifta-tax-rate",
+      "sourceFile": "src/operations/ifta-tax-rate/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "IftaTaxRateTable",
+        "UpsertIftaTaxRates"
+      ],
+      "usages": [],
+      "sdl": "fragment IftaTaxRateFields on IFTATaxRate {\n  id\n  jurisdictionId\n  year\n  quarter\n  fuelType\n  ratePerGallon\n  surchargeRatePerGallon\n  sourceNote\n  sourceUrl\n  version\n  createdAt\n  updatedAt\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    hasSurcharge\n    isIftaMember\n  }\n}"
     },
     {
       "name": "InvoiceTableRowFields",
@@ -16780,7 +17934,7 @@
         "TractorTable"
       ],
       "usages": [],
-      "sdl": "fragment TractorTableRowFields on Tractor {\n  id\n  businessUnitId\n  organizationId\n  primaryWorkerId\n  equipmentTypeId\n  equipmentManufacturerId\n  stateId\n  fleetCodeId\n  secondaryWorkerId\n  status\n  code\n  model\n  make\n  year\n  licensePlateNumber\n  registrationNumber\n  registrationExpiry\n  vin\n  externalId\n  lastKnownLocationId\n  lastKnownLocationName\n  version\n  createdAt\n  updatedAt\n  customFields\n  equipmentType {\n    ...EquipmentTypeTableFields\n  }\n  equipmentManufacturer {\n    ...EquipmentManufacturerTableFields\n  }\n  fleetCode {\n    ...FleetCodeTableFields\n  }\n  state {\n    ...UsStateTableFields\n  }\n  primaryWorker {\n    ...WorkerTableReferenceFields\n  }\n  secondaryWorker {\n    ...WorkerTableReferenceFields\n  }\n}\n\nfragment EquipmentManufacturerTableFields on EquipmentManufacturer {\n  id\n  name\n}\n\nfragment EquipmentTypeTableFields on EquipmentType {\n  id\n  code\n  color\n}\n\nfragment FleetCodeTableFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment UsStateTableFields on UsState {\n  id\n  name\n  abbreviation\n}\n\nfragment WorkerTableReferenceFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n}"
+      "sdl": "fragment TractorTableRowFields on Tractor {\n  id\n  businessUnitId\n  organizationId\n  primaryWorkerId\n  equipmentTypeId\n  equipmentManufacturerId\n  stateId\n  fleetCodeId\n  secondaryWorkerId\n  status\n  code\n  model\n  make\n  year\n  licensePlateNumber\n  registrationNumber\n  registrationExpiry\n  vin\n  externalId\n  lastKnownLocationId\n  lastKnownLocationName\n  fuelType\n  iftaQualified\n  version\n  createdAt\n  updatedAt\n  customFields\n  equipmentType {\n    ...EquipmentTypeTableFields\n  }\n  equipmentManufacturer {\n    ...EquipmentManufacturerTableFields\n  }\n  fleetCode {\n    ...FleetCodeTableFields\n  }\n  state {\n    ...UsStateTableFields\n  }\n  primaryWorker {\n    ...WorkerTableReferenceFields\n  }\n  secondaryWorker {\n    ...WorkerTableReferenceFields\n  }\n}\n\nfragment EquipmentManufacturerTableFields on EquipmentManufacturer {\n  id\n  name\n}\n\nfragment EquipmentTypeTableFields on EquipmentType {\n  id\n  code\n  color\n}\n\nfragment FleetCodeTableFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment UsStateTableFields on UsState {\n  id\n  name\n  abbreviation\n}\n\nfragment WorkerTableReferenceFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n}"
     },
     {
       "name": "TrailerTableRowFields",
@@ -17656,6 +18810,33 @@
       ],
       "sdl": "input AttachWorkerTrainingDocumentInput {\n  documentId: ID!\n  id: ID!\n}"
     },
+    "BackfillJurisdictionMilesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "dryRun",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "maxMoves",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Timestamp!",
+          "defaultValue": null
+        },
+        {
+          "name": "periodStart",
+          "type": "Timestamp!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input BackfillJurisdictionMilesInput {\n  \"\"\"\n  Count the moves and miles that would be attributed without starting the workflow.\n  \"\"\"\n  dryRun: Boolean = false\n  \"\"\"\n  Upper bound on moves re-routed in one run; defaults to 2000. Every move is a\n  billable distance request.\n  \"\"\"\n  maxMoves: Int\n  periodEnd: Timestamp!\n  periodStart: Timestamp!\n}"
+    },
     "BenefitEnrollmentStatus": {
       "kind": "enum",
       "values": [
@@ -17862,6 +19043,27 @@
         }
       ],
       "sdl": "input BulkWorkerPTOActionInput {\n  action: WorkerPTOBulkAction!\n  ptoIds: [ID!]!\n  reason: String\n}"
+    },
+    "CancelFuelCardInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CancelFuelCardInput {\n  id: ID!\n  \"\"\"At least ten characters. Cancelling is permanent.\"\"\"\n  reason: String!\n  version: Int!\n}"
     },
     "CancelWorkerChecklistInput": {
       "kind": "input",
@@ -18207,6 +19409,38 @@
         }
       ],
       "sdl": "input CreateCarrierInvoiceMatchInput {\n  \"\"\"\n  Optional explicit assignment; otherwise resolved by pro number or shipment reference.\n  \"\"\"\n  carrierAssignmentId: ID\n  \"\"\"\n  Required for document AI sources; EDI sources take the carrier from the linked invoice.\n  \"\"\"\n  carrierId: ID\n  documentAiExtractionId: ID\n  \"\"\"\n  Exactly one source is required: an EDI carrier invoice or a document AI extraction.\n  \"\"\"\n  ediCarrierInvoiceId: ID\n  \"\"\"Document AI sources only: the extracted invoice number.\"\"\"\n  invoiceNumber: String\n  \"\"\"Document AI sources only: the extracted invoice total in minor units.\"\"\"\n  invoiceTotalMinor: Int\n  \"\"\"\n  Document AI sources only: the pro number used to locate the assignment.\n  \"\"\"\n  proNumber: String\n  \"\"\"Document AI sources only: the shipment used to locate the assignment.\"\"\"\n  shipmentId: ID\n}"
+    },
+    "CreateFuelPurchaseImportInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "defaultCurrency",
+          "type": "String",
+          "defaultValue": "\"USD\"",
+          "defaultJson": "USD"
+        },
+        {
+          "name": "defaultFuelCardId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultFuelType",
+          "type": "IFTAFuelType",
+          "defaultValue": null
+        },
+        {
+          "name": "mapping",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "provider",
+          "type": "FuelCardProvider!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateFuelPurchaseImportInput {\n  defaultCurrency: String = \"USD\"\n  defaultFuelCardId: ID\n  defaultFuelType: IFTAFuelType\n  mapping: JSON\n  provider: FuelCardProvider!\n}"
     },
     "CreateMyLoadCommentInput": {
       "kind": "input",
@@ -19830,6 +21064,125 @@
       ],
       "sdl": "input ForkCannedReportInput {\n  cannedKey: String!\n  name: String\n}"
     },
+    "FuelCardInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "assignedTractorId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "assignedWorkerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "externalCardId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "label",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "lastFour",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "provider",
+          "type": "FuelCardProvider!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "FuelCardStatus",
+          "defaultValue": "Active",
+          "defaultJson": "Active"
+        }
+      ],
+      "sdl": "input FuelCardInput {\n  assignedTractorId: ID\n  assignedWorkerId: ID\n  expiresAt: Timestamp\n  externalCardId: String\n  label: String!\n  lastFour: String!\n  notes: String\n  provider: FuelCardProvider!\n  \"\"\"\n  Active or Suspended. Cancelling goes through cancelFuelCard, which needs a reason.\n  \"\"\"\n  status: FuelCardStatus = Active\n}"
+    },
+    "FuelCardProvider": {
+      "kind": "enum",
+      "values": [
+        "Comdata",
+        "EFS",
+        "Other",
+        "WEX"
+      ],
+      "sdl": "enum FuelCardProvider {\n  Comdata\n  EFS\n  Other\n  WEX\n}"
+    },
+    "FuelCardsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "assignedTractorId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "assignedWorkerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "provider",
+          "type": "FuelCardProvider",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "FuelCardStatus",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelCardsInput {\n  after: String\n  assignedTractorId: ID\n  assignedWorkerId: ID\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  provider: FuelCardProvider\n  query: String\n  sort: [SortFieldInput!]\n  status: FuelCardStatus\n}"
+    },
     "FuelIndexInput": {
       "kind": "input",
       "fields": [
@@ -19901,6 +21254,204 @@
         }
       ],
       "sdl": "input FuelIndexPriceInput {\n  fuelIndexId: ID!\n  price: Decimal!\n  priceDate: String!\n}"
+    },
+    "FuelPurchaseImportRowsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "50",
+          "defaultJson": 50
+        },
+        {
+          "name": "statuses",
+          "type": "[FuelPurchaseImportRowStatus!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelPurchaseImportRowsInput {\n  after: String\n  first: Int = 50\n  statuses: [FuelPurchaseImportRowStatus!]\n}"
+    },
+    "FuelPurchaseInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cardLastFour",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": "\"USD\"",
+          "defaultJson": "USD"
+        },
+        {
+          "name": "fuelCardId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "fuelType",
+          "type": "IFTAFuelType!",
+          "defaultValue": null
+        },
+        {
+          "name": "jurisdictionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "odometer",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "purchasedAt",
+          "type": "Timestamp!",
+          "defaultValue": null
+        },
+        {
+          "name": "quantity",
+          "type": "Decimal!",
+          "defaultValue": null
+        },
+        {
+          "name": "quantityUnit",
+          "type": "FuelQuantityUnit",
+          "defaultValue": "Gallon",
+          "defaultJson": "Gallon"
+        },
+        {
+          "name": "taxPaid",
+          "type": "Boolean",
+          "defaultValue": "true",
+          "defaultJson": true
+        },
+        {
+          "name": "totalAmount",
+          "type": "Decimal!",
+          "defaultValue": null
+        },
+        {
+          "name": "tractorId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "transactionReference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "unitPrice",
+          "type": "Decimal",
+          "defaultValue": null
+        },
+        {
+          "name": "vendor",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "vendorCity",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelPurchaseInput {\n  cardLastFour: String\n  currencyCode: String = \"USD\"\n  fuelCardId: ID\n  fuelType: IFTAFuelType!\n  jurisdictionId: ID!\n  notes: String\n  odometer: Int\n  purchasedAt: Timestamp!\n  quantity: Decimal!\n  quantityUnit: FuelQuantityUnit = Gallon\n  taxPaid: Boolean = true\n  totalAmount: Decimal!\n  tractorId: ID!\n  transactionReference: String\n  unitPrice: Decimal\n  vendor: String\n  vendorCity: String\n  workerId: ID\n}"
+    },
+    "FuelPurchasesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "from",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "fuelCardId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "fuelTypes",
+          "type": "[IFTAFuelType!]",
+          "defaultValue": null
+        },
+        {
+          "name": "jurisdictionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "sources",
+          "type": "[FuelPurchaseSource!]",
+          "defaultValue": null
+        },
+        {
+          "name": "taxPaid",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "to",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "tractorId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelPurchasesInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  \"\"\"Inclusive lower bound on purchasedAt.\"\"\"\n  from: Timestamp\n  fuelCardId: ID\n  fuelTypes: [IFTAFuelType!]\n  jurisdictionId: ID\n  query: String\n  sort: [SortFieldInput!]\n  sources: [FuelPurchaseSource!]\n  taxPaid: Boolean\n  \"\"\"Exclusive upper bound on purchasedAt.\"\"\"\n  to: Timestamp\n  tractorId: ID\n}"
     },
     "FuelSurchargeProgramInput": {
       "kind": "input",
@@ -20225,6 +21776,282 @@
       ],
       "sdl": "input HomeLayoutInput {\n  \"\"\"\n  When false the viewer follows their assigned preset and widgets is ignored.\n  \"\"\"\n  customized: Boolean!\n  density: String!\n  version: Int!\n  widgets: [HomeWidgetInput!]!\n}"
     },
+    "IFTAMileageEntriesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "from",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "jurisdictionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "period",
+          "type": "IFTAPeriodInput",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "sources",
+          "type": "[IFTAMileageSource!]",
+          "defaultValue": null
+        },
+        {
+          "name": "to",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "tractorId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IFTAMileageEntriesInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  \"\"\"Inclusive lower bound on traveledAt.\"\"\"\n  from: Timestamp\n  jurisdictionId: ID\n  period: IFTAPeriodInput\n  query: String\n  sort: [SortFieldInput!]\n  sources: [IFTAMileageSource!]\n  \"\"\"Exclusive upper bound on traveledAt.\"\"\"\n  to: Timestamp\n  tractorId: ID\n}"
+    },
+    "IFTAMileageEntryInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "jurisdictionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "loaded",
+          "type": "Boolean",
+          "defaultValue": "true",
+          "defaultJson": true
+        },
+        {
+          "name": "miles",
+          "type": "Decimal!",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentMoveId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "source",
+          "type": "IFTAMileageSource",
+          "defaultValue": "Manual",
+          "defaultJson": "Manual"
+        },
+        {
+          "name": "tractorId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "traveledAt",
+          "type": "Timestamp!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IFTAMileageEntryInput {\n  jurisdictionId: ID!\n  loaded: Boolean = true\n  miles: Decimal!\n  notes: String\n  \"\"\"\n  Name the move when this entry corrects its routed miles; the entry then\n  replaces the move's jurisdiction rows on the return.\n  \"\"\"\n  shipmentMoveId: ID\n  source: IFTAMileageSource = Manual\n  tractorId: ID!\n  traveledAt: Timestamp!\n}"
+    },
+    "IFTAPeriodInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "quarter",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "year",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IFTAPeriodInput {\n  quarter: Int!\n  year: Int!\n}"
+    },
+    "IFTAReturnsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[IFTAReturnStatus!]",
+          "defaultValue": null
+        },
+        {
+          "name": "year",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IFTAReturnsInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  query: String\n  sort: [SortFieldInput!]\n  statuses: [IFTAReturnStatus!]\n  year: Int\n}"
+    },
+    "IFTATaxRateInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "fuelType",
+          "type": "IFTAFuelType!",
+          "defaultValue": null
+        },
+        {
+          "name": "jurisdictionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "quarter",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "ratePerGallon",
+          "type": "Decimal!",
+          "defaultValue": null
+        },
+        {
+          "name": "sourceNote",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sourceUrl",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "surchargeRatePerGallon",
+          "type": "Decimal",
+          "defaultValue": null
+        },
+        {
+          "name": "year",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IFTATaxRateInput {\n  fuelType: IFTAFuelType!\n  jurisdictionId: ID!\n  quarter: Int!\n  ratePerGallon: Decimal!\n  sourceNote: String\n  sourceUrl: String\n  surchargeRatePerGallon: Decimal\n  year: Int!\n}"
+    },
+    "IFTATaxRatesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "fuelType",
+          "type": "IFTAFuelType",
+          "defaultValue": null
+        },
+        {
+          "name": "jurisdictionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "period",
+          "type": "IFTAPeriodInput",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IFTATaxRatesInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  fuelType: IFTAFuelType\n  jurisdictionId: ID\n  period: IFTAPeriodInput\n  query: String\n  sort: [SortFieldInput!]\n}"
+    },
     "InspectionResult": {
       "kind": "enum",
       "values": [
@@ -20438,6 +22265,32 @@
         }
       ],
       "sdl": "input MarkDriverSettlementPaidInput {\n  paymentMethod: String!\n  paymentReference: String\n  settlementId: ID!\n}"
+    },
+    "MarkIFTAReturnFiledInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "filedAt",
+          "type": "Timestamp!",
+          "defaultValue": null
+        },
+        {
+          "name": "filingReference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input MarkIFTAReturnFiledInput {\n  \"\"\"Between the moment the return was finalized and now.\"\"\"\n  filedAt: Timestamp!\n  filingReference: String\n  id: ID!\n  version: Int!\n}"
     },
     "MatchRoutingGuideInput": {
       "kind": "input",
@@ -23436,6 +25289,27 @@
       ],
       "sdl": "input SidebarPreferencesInput {\n  activity: SidebarActivityPreferenceInput!\n  attentionMetrics: [String!]!\n  quickActionIds: [String!]!\n  sections: [SidebarSectionPreferenceInput!]!\n  version: Int!\n}"
     },
+    "StageFuelPurchaseImportInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "documentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "mapping",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input StageFuelPurchaseImportInput {\n  \"\"\"\n  The uploaded statement. The document must have been uploaded against this\n  batch (resource type fuel_purchase_import) or staging is refused.\n  \"\"\"\n  documentId: ID!\n  id: ID!\n  mapping: JSON\n}"
+    },
     "StartWorkerChecklistInput": {
       "kind": "input",
       "fields": [
@@ -26424,6 +28298,29 @@
       ],
       "sdl": "enum CostRateSource {\n  Benchmark\n  GLActual\n  Override\n}"
     },
+    "IFTAFuelType": {
+      "kind": "enum",
+      "values": [
+        "A55",
+        "Biodiesel",
+        "CNG",
+        "DEF",
+        "Diesel",
+        "E85",
+        "Electricity",
+        "Ethanol",
+        "Gasohol",
+        "Gasoline",
+        "Hydrogen",
+        "LNG",
+        "M85",
+        "Methanol",
+        "Other",
+        "Propane",
+        "Reefer"
+      ],
+      "sdl": "\"\"\"\nFuel product as classified for the International Fuel Tax Agreement. The first\nfourteen are IFTA fuel types and enter the return; DEF, Reefer and Other are\ntracked as spend only and never earn or owe tax.\n\"\"\"\nenum IFTAFuelType {\n  A55\n  Biodiesel\n  CNG\n  DEF\n  Diesel\n  E85\n  Electricity\n  Ethanol\n  Gasohol\n  Gasoline\n  Hydrogen\n  LNG\n  M85\n  Methanol\n  Other\n  Propane\n  Reefer\n}"
+    },
     "PayProfileComponentInput": {
       "kind": "input",
       "fields": [
@@ -26787,6 +28684,15 @@
       ],
       "sdl": "\"\"\"\nWho the cover extends to. It is on the enrollment rather than the plan because\nthe same plan costs different amounts depending on how many people it covers.\n\"\"\"\nenum CoverageTier {\n  Employee\n  EmployeeChildren\n  EmployeeSpouse\n  Family\n}"
     },
+    "FuelCardStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Cancelled",
+        "Suspended"
+      ],
+      "sdl": "\"\"\"Active and Suspended move between each other; Cancelled is terminal.\"\"\"\nenum FuelCardStatus {\n  Active\n  Cancelled\n  Suspended\n}"
+    },
     "FuelType": {
       "kind": "enum",
       "values": [
@@ -26802,6 +28708,34 @@
         "EIA"
       ],
       "sdl": "enum FuelIndexSource {\n  Custom\n  EIA\n}"
+    },
+    "FuelPurchaseImportRowStatus": {
+      "kind": "enum",
+      "values": [
+        "AlreadyImported",
+        "Committed",
+        "DuplicateInFile",
+        "Error",
+        "New",
+        "Skipped"
+      ],
+      "sdl": "\"\"\"\nOnly New rows commit. DuplicateInFile is the second occurrence of a reference\ninside the statement; AlreadyImported matches a purchase already on file.\n\"\"\"\nenum FuelPurchaseImportRowStatus {\n  AlreadyImported\n  Committed\n  DuplicateInFile\n  Error\n  New\n  Skipped\n}"
+    },
+    "FuelQuantityUnit": {
+      "kind": "enum",
+      "values": [
+        "Gallon",
+        "Litre"
+      ],
+      "sdl": "enum FuelQuantityUnit {\n  Gallon\n  Litre\n}"
+    },
+    "FuelPurchaseSource": {
+      "kind": "enum",
+      "values": [
+        "CardImport",
+        "Manual"
+      ],
+      "sdl": "enum FuelPurchaseSource {\n  CardImport\n  Manual\n}"
     },
     "FuelSurchargeDateBasis": {
       "kind": "enum",
@@ -26925,6 +28859,24 @@
         }
       ],
       "sdl": "input HomeWidgetInput {\n  config: HomeWidgetConfigInput\n  h: Int!\n  id: String!\n  key: String!\n  title: String\n  w: Int!\n}"
+    },
+    "IFTAMileageSource": {
+      "kind": "enum",
+      "values": [
+        "Manual",
+        "RouteCalculation",
+        "Telematics"
+      ],
+      "sdl": "\"\"\"\nWhere a jurisdiction's miles came from. RouteCalculation rows are written by the\ndistance provider's state report; Manual entries are keyed by hand and, when they\nname a shipment move, replace that move's routed rows so nothing is counted twice.\n\"\"\"\nenum IFTAMileageSource {\n  Manual\n  RouteCalculation\n  Telematics\n}"
+    },
+    "IFTAReturnStatus": {
+      "kind": "enum",
+      "values": [
+        "Draft",
+        "Filed",
+        "Finalized"
+      ],
+      "sdl": "\"\"\"\nDraft figures move with the data. Finalized locks them and can be reopened with\na reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.\n\"\"\"\nenum IFTAReturnStatus {\n  Draft\n  Filed\n  Finalized\n}"
     },
     "DisciplinaryLevel": {
       "kind": "enum",
@@ -27681,6 +29633,7 @@
         "EDI_PARTNER",
         "EDI_PARTNER_DOCUMENT_PROFILE",
         "EDI_TEMPLATE",
+        "EDI_TRANSACTION_SET",
         "EDI_TRANSFER",
         "EMAIL_PROFILE",
         "EQUIPMENT_MANUFACTURER",
@@ -27689,10 +29642,12 @@
         "FISCAL_YEAR",
         "FLEET_CODE",
         "FORMULA_TEMPLATE",
+        "FUEL_CARD",
         "FUEL_INDEX",
         "FUEL_SURCHARGE_PROGRAM",
         "GL_ACCOUNT",
         "HAZARDOUS_MATERIAL",
+        "IFTA_FUEL_TYPE",
         "JOB_POSITION",
         "LOCATION",
         "LOCATION_CATEGORY",
@@ -27714,7 +29669,7 @@
         "WORKER",
         "WORKER_POLICY"
       ],
-      "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  USER\n  US_STATE\n  WORKER\n  WORKER_POLICY\n}"
+      "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSACTION_SET\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_CARD\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  IFTA_FUEL_TYPE\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  USER\n  US_STATE\n  WORKER\n  WORKER_POLICY\n}"
     },
     "AvailabilityPreference": {
       "kind": "enum",

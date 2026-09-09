@@ -29,6 +29,7 @@ go_initialisms:
     - DOT
     - EDI
     - ELD
+    - IFTA
     - MVR
     - NPI
     - PTO
@@ -71,6 +72,10 @@ models:
   ShipmentCustomer:
     fields:
       ediPartner:
+        resolver: true
+  ShipmentMove:
+    fields:
+      jurisdictionMiles:
         resolver: true
   JSON:
     model:
@@ -1444,6 +1449,312 @@ models:
   FuelSurchargeProgramStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.ProgramStatus
+  IFTAFuelType:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.IFTAFuelType
+  FuelCardProvider:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.CardProvider
+  FuelCardStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.CardStatus
+  FuelQuantityUnit:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.QuantityUnit
+  FuelPurchaseSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.PurchaseSource
+  FuelPurchaseImportStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.ImportStatus
+  FuelPurchaseImportRowStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.ImportRowStatus
+  FuelImportFormat:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.SourceFormat
+  FuelCard:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.FuelCard
+    fields:
+      assignedWorkerId:
+        resolver: true
+      assignedTractorId:
+        resolver: true
+      expiresAt:
+        resolver: true
+      cancelledAt:
+        resolver: true
+      assignedWorker:
+        resolver: true
+      assignedTractor:
+        resolver: true
+  FuelPurchase:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.FuelPurchase
+    fields:
+      workerId:
+        resolver: true
+      fuelCardId:
+        resolver: true
+      quantity:
+        resolver: true
+      gallons:
+        resolver: true
+      unitPrice:
+        resolver: true
+      totalAmount:
+        resolver: true
+      odometer:
+        resolver: true
+      importBatchId:
+        resolver: true
+      createdById:
+        resolver: true
+      tractor:
+        resolver: true
+      worker:
+        resolver: true
+      jurisdiction:
+        resolver: true
+      fuelCard:
+        resolver: true
+  FuelPurchaseImportSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.ImportSummary
+    fields:
+      totalGallons:
+        resolver: true
+      totalAmount:
+        resolver: true
+      byFuelType:
+        resolver: true
+      byJurisdiction:
+        resolver: true
+      earliestPurchasedAt:
+        resolver: true
+      latestPurchasedAt:
+        resolver: true
+  FuelPurchaseImportBatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.ImportBatch
+    fields:
+      documentId:
+        resolver: true
+      sourceFormat:
+        resolver: true
+      defaultFuelType:
+        resolver: true
+      defaultFuelCardId:
+        resolver: true
+      mapping:
+        resolver: true
+      summary:
+        resolver: true
+      uploadedById:
+        resolver: true
+      stagedAt:
+        resolver: true
+      committedAt:
+        resolver: true
+      committedById:
+        resolver: true
+      document:
+        resolver: true
+      defaultFuelCard:
+        resolver: true
+      rows:
+        resolver: true
+  FuelPurchaseImportRow:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.ImportRow
+    fields:
+      parsed:
+        resolver: true
+      resolvedTractorId:
+        resolver: true
+      resolvedFuelCardId:
+        resolver: true
+      resolvedJurisdictionId:
+        resolver: true
+      fuelPurchaseId:
+        resolver: true
+      resolvedTractor:
+        resolver: true
+  IFTAJurisdictionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.JurisdictionStatus
+  IFTAMileageSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.MileageSource
+  IFTAReturnStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.ReturnStatus
+  IFTAProblemCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.ProblemCode
+  IFTAJurisdiction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.Jurisdiction
+    fields:
+      usStateId:
+        resolver: true
+      usState:
+        resolver: true
+  IFTATaxRate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.TaxRate
+    fields:
+      ratePerGallon:
+        resolver: true
+      surchargeRatePerGallon:
+        resolver: true
+      jurisdiction:
+        resolver: true
+  IFTAJurisdictionMileageEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.JurisdictionMileageEntry
+    fields:
+      miles:
+        resolver: true
+      shipmentMoveId:
+        resolver: true
+      createdById:
+        resolver: true
+      tractor:
+        resolver: true
+      jurisdiction:
+        resolver: true
+  IFTAFleetMPG:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.FleetMPG
+    fields:
+      mpg:
+        resolver: true
+      totalMiles:
+        resolver: true
+      totalGallons:
+        resolver: true
+  IFTAReturnProblem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.Problem
+    fields:
+      fuelType:
+        resolver: true
+      amount:
+        resolver: true
+  IFTAReturnLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.ReturnLine
+    fields:
+      totalMiles:
+        resolver: true
+      taxableMiles:
+        resolver: true
+      routeMiles:
+        resolver: true
+      manualMiles:
+        resolver: true
+      loadedMiles:
+        resolver: true
+      emptyMiles:
+        resolver: true
+      taxPaidGallons:
+        resolver: true
+      taxPaidGallonsRaw:
+        resolver: true
+      taxableGallons:
+        resolver: true
+      netTaxableGallons:
+        resolver: true
+      ratePerGallon:
+        resolver: true
+      surchargeRatePerGallon:
+        resolver: true
+      taxDue:
+        resolver: true
+      surchargeDue:
+        resolver: true
+      lineTotal:
+        resolver: true
+      jurisdiction:
+        resolver: true
+  IFTAReturn:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.Return
+    fields:
+      period:
+        resolver: true
+      amendsReturnId:
+        resolver: true
+      amendsReturn:
+        resolver: true
+      totalMiles:
+        resolver: true
+      totalTaxableMiles:
+        resolver: true
+      totalGallons:
+        resolver: true
+      totalTaxPaidGallons:
+        resolver: true
+      netTaxableGallons:
+        resolver: true
+      taxDue:
+        resolver: true
+      surchargeDue:
+        resolver: true
+      netDue:
+        resolver: true
+      fleetMpgByFuelType:
+        resolver: true
+      unattributedMiles:
+        resolver: true
+      noTractorMiles:
+        resolver: true
+      problems:
+        resolver: true
+      computedAt:
+        resolver: true
+      finalizedAt:
+        resolver: true
+      finalizedById:
+        resolver: true
+      finalizedBy:
+        resolver: true
+      filedAt:
+        resolver: true
+      filedById:
+        resolver: true
+      filedBy:
+        resolver: true
+      reopenedAt:
+        resolver: true
+      reopenedById:
+        resolver: true
+      lines:
+        resolver: true
+  IFTAPeriod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ifta.Period
+    fields:
+      key:
+        resolver: true
+      label:
+        resolver: true
+      start:
+        resolver: true
+      end:
+        resolver: true
+      dueDate:
+        resolver: true
+  ShipmentMoveJurisdictionMile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.ShipmentMoveJurisdictionMile
+    fields:
+      tollDistance:
+        resolver: true
+      ferryDistance:
+        resolver: true
   DetentionPolicyStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/detention.PolicyStatus

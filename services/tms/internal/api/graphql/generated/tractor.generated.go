@@ -551,6 +551,52 @@ func (ec *executionContext) fieldContext_Tractor_lastKnownLocationName(_ context
 	return graphql.NewScalarFieldContext("Tractor", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _Tractor_fuelType(ctx context.Context, field graphql.CollectedField, obj *tractor.Tractor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tractor_fuelType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FuelType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v domaintypes.IFTAFuelType) graphql.Marshaler {
+			return ec.marshalNIFTAFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐIFTAFuelType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tractor_fuelType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tractor", field, false, false, errors.New("field of type IFTAFuelType does not have child fields"))
+}
+
+func (ec *executionContext) _Tractor_iftaQualified(ctx context.Context, field graphql.CollectedField, obj *tractor.Tractor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tractor_iftaQualified(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IFTAQualified, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tractor_iftaQualified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tractor", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Tractor_version(ctx context.Context, field graphql.CollectedField, obj *tractor.Tractor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1165,8 +1211,14 @@ func (ec *executionContext) unmarshalInputTractorInput(ctx context.Context, obj 
 	if _, present := asMap["status"]; !present {
 		asMap["status"] = "Available"
 	}
+	if _, present := asMap["fuelType"]; !present {
+		asMap["fuelType"] = "Diesel"
+	}
+	if _, present := asMap["iftaQualified"]; !present {
+		asMap["iftaQualified"] = true
+	}
 
-	fieldsInOrder := [...]string{"primaryWorkerId", "equipmentTypeId", "equipmentManufacturerId", "stateId", "fleetCodeId", "secondaryWorkerId", "status", "code", "model", "make", "year", "licensePlateNumber", "registrationNumber", "registrationExpiry", "vin", "externalId", "version", "customFields"}
+	fieldsInOrder := [...]string{"primaryWorkerId", "equipmentTypeId", "equipmentManufacturerId", "stateId", "fleetCodeId", "secondaryWorkerId", "status", "code", "model", "make", "year", "licensePlateNumber", "registrationNumber", "registrationExpiry", "vin", "externalId", "fuelType", "iftaQualified", "version", "customFields"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1285,6 +1337,20 @@ func (ec *executionContext) unmarshalInputTractorInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.ExternalID = data
+		case "fuelType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelType"))
+			data, err := ec.unmarshalOIFTAFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐIFTAFuelType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FuelType = data
+		case "iftaQualified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iftaQualified"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IFTAQualified = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -1315,7 +1381,7 @@ func (ec *executionContext) unmarshalInputTractorPatchInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"primaryWorkerId", "equipmentTypeId", "equipmentManufacturerId", "stateId", "fleetCodeId", "secondaryWorkerId", "status", "code", "model", "make", "year", "licensePlateNumber", "registrationNumber", "registrationExpiry", "vin", "externalId", "version", "customFields"}
+	fieldsInOrder := [...]string{"primaryWorkerId", "equipmentTypeId", "equipmentManufacturerId", "stateId", "fleetCodeId", "secondaryWorkerId", "status", "code", "model", "make", "year", "licensePlateNumber", "registrationNumber", "registrationExpiry", "vin", "externalId", "fuelType", "iftaQualified", "version", "customFields"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1434,6 +1500,20 @@ func (ec *executionContext) unmarshalInputTractorPatchInput(ctx context.Context,
 				return it, err
 			}
 			it.ExternalID = graphql.OmittableOf(data)
+		case "fuelType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelType"))
+			data, err := ec.unmarshalOIFTAFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐIFTAFuelType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FuelType = graphql.OmittableOf(data)
+		case "iftaQualified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iftaQualified"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IFTAQualified = graphql.OmittableOf(data)
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -1745,6 +1825,16 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastKnownLocationName":
 			out.Values[i] = ec._Tractor_lastKnownLocationName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fuelType":
+			out.Values[i] = ec._Tractor_fuelType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "iftaQualified":
+			out.Values[i] = ec._Tractor_iftaQualified(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

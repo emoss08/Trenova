@@ -442,6 +442,49 @@ type ShipmentMove {
   stops: [ShipmentStop!]!
   assignment: ShipmentAssignment
   carrierAssignment: CarrierAssignment
+  """
+  The move's distance split by jurisdiction from the distance provider's state
+  report. Empty until the distance control captures jurisdiction miles or the
+  move is recalculated; the whole distance is then unattributed on an IFTA return.
+  """
+  jurisdictionMiles: [ShipmentMoveJurisdictionMile!]!
+}
+
+"""
+One jurisdiction's share of a move's routed distance. Keyed by country and
+postal code as the provider reports them, so a code the IFTA table does not
+know is stored rather than dropped.
+"""
+type ShipmentMoveJurisdictionMile {
+  id: ID!
+  shipmentMoveId: ID!
+  shipmentId: ID!
+  countryCode: String!
+  jurisdictionCode: String!
+  sequence: Int!
+  "In distanceUnits."
+  distance: Float!
+  distanceUnits: String!
+  tollDistance: Float
+  ferryDistance: Float
+  "Copied from the move when the row was written."
+  loaded: Boolean!
+  source: String!
+  provider: String
+  dataVersion: String
+  calculatedAt: Timestamp!
+}
+
+"""
+Started tells whether a backfill workflow was launched; on a dry run it is false
+and only the unattributed figures are returned.
+"""
+type JurisdictionMilesBackfillResult {
+  started: Boolean!
+  dryRun: Boolean!
+  unattributedMoves: Int!
+  unattributedMiles: Decimal!
+  workflowId: String
 }
 
 type ShipmentStop {

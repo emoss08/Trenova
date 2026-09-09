@@ -2853,11 +2853,13 @@ var ShipmentMoveRelations = struct {
 	Assignment        string
 	CarrierAssignment string
 	Shipment          string
+	JurisdictionMiles string
 }{
 	Stops:             "Stops",
 	Assignment:        "Assignment",
 	CarrierAssignment: "CarrierAssignment",
 	Shipment:          "Shipment",
+	JurisdictionMiles: "JurisdictionMiles",
 }
 
 // ShipmentMoveScopeTenant restricts a query to a single tenant by adding:
@@ -2981,6 +2983,268 @@ var ShipmentMoveFilter = struct {
 	},
 	DistanceMetadata: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("distanceMetadata", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ShipmentMoveJurisdictionMile — table "shipment_move_jurisdiction_miles", alias "smjm"
+// ---------------------------------------------------------------------------
+
+// ShipmentMoveJurisdictionMileTable holds the table name, alias, and primary key columns
+// for the "shipment_move_jurisdiction_miles" table. The alias "smjm" is used in all generated
+// SQL fragments (e.g. "smjm.id = ?").
+var ShipmentMoveJurisdictionMileTable = TableInfo{
+	Name:       "shipment_move_jurisdiction_miles",
+	Alias:      "smjm",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ShipmentMoveJurisdictionMileColumns provides type-safe column references for the "shipment_move_jurisdiction_miles" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ShipmentMoveJurisdictionMileColumns.ID.String())
+//	// SELECT smjm.id FROM shipment_move_jurisdiction_miles AS smjm
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ShipmentMoveJurisdictionMileColumns.ID.Eq(), id)           // WHERE smjm.id = ?
+//	q.Order(ShipmentMoveJurisdictionMileColumns.CreatedAt.OrderDesc())  // ORDER BY smjm.created_at DESC
+var ShipmentMoveJurisdictionMileColumns = struct {
+	ID                Column // "id" → qualified: "smjm.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "smjm.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "smjm.organization_id"
+	ShipmentMoveID    Column // "shipment_move_id" → qualified: "smjm.shipment_move_id"
+	ShipmentID        Column // "shipment_id" → qualified: "smjm.shipment_id"
+	CountryCode       Column // "country_code" → qualified: "smjm.country_code"
+	JurisdictionCode  Column // "jurisdiction_code" → qualified: "smjm.jurisdiction_code"
+	Sequence          Column // "sequence" → qualified: "smjm.sequence"
+	Distance          Column // "distance" → qualified: "smjm.distance"
+	DistanceUnits     Column // "distance_units" → qualified: "smjm.distance_units"
+	TollDistance      Column // "toll_distance" → qualified: "smjm.toll_distance"
+	FerryDistance     Column // "ferry_distance" → qualified: "smjm.ferry_distance"
+	Loaded            Column // "loaded" → qualified: "smjm.loaded"
+	Source            Column // "source" → qualified: "smjm.source"
+	Provider          Column // "provider" → qualified: "smjm.provider"
+	DataVersion       Column // "data_version" → qualified: "smjm.data_version"
+	DistanceProfileID Column // "distance_profile_id" → qualified: "smjm.distance_profile_id"
+	CalculatedAt      Column // "calculated_at" → qualified: "smjm.calculated_at"
+	Version           Column // "version" → qualified: "smjm.version"
+	CreatedAt         Column // "created_at" → qualified: "smjm.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "smjm.updated_at"
+}{
+	ID:                NewColumn("id", "smjm"),
+	BusinessUnitID:    NewColumn("business_unit_id", "smjm"),
+	OrganizationID:    NewColumn("organization_id", "smjm"),
+	ShipmentMoveID:    NewColumn("shipment_move_id", "smjm"),
+	ShipmentID:        NewColumn("shipment_id", "smjm"),
+	CountryCode:       NewColumn("country_code", "smjm"),
+	JurisdictionCode:  NewColumn("jurisdiction_code", "smjm"),
+	Sequence:          NewColumn("sequence", "smjm"),
+	Distance:          NewColumn("distance", "smjm"),
+	DistanceUnits:     NewColumn("distance_units", "smjm"),
+	TollDistance:      NewColumn("toll_distance", "smjm"),
+	FerryDistance:     NewColumn("ferry_distance", "smjm"),
+	Loaded:            NewColumn("loaded", "smjm"),
+	Source:            NewColumn("source", "smjm"),
+	Provider:          NewColumn("provider", "smjm"),
+	DataVersion:       NewColumn("data_version", "smjm"),
+	DistanceProfileID: NewColumn("distance_profile_id", "smjm"),
+	CalculatedAt:      NewColumn("calculated_at", "smjm"),
+	Version:           NewColumn("version", "smjm"),
+	CreatedAt:         NewColumn("created_at", "smjm"),
+	UpdatedAt:         NewColumn("updated_at", "smjm"),
+}
+
+// ShipmentMoveJurisdictionMileFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ShipmentMoveJurisdictionMile.GetStaticFieldMap().
+var ShipmentMoveJurisdictionMileFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"shipmentMoveId":    "shipment_move_id",
+	"shipmentId":        "shipment_id",
+	"countryCode":       "country_code",
+	"jurisdictionCode":  "jurisdiction_code",
+	"sequence":          "sequence",
+	"distance":          "distance",
+	"distanceUnits":     "distance_units",
+	"tollDistance":      "toll_distance",
+	"ferryDistance":     "ferry_distance",
+	"loaded":            "loaded",
+	"source":            "source",
+	"provider":          "provider",
+	"dataVersion":       "data_version",
+	"distanceProfileId": "distance_profile_id",
+	"calculatedAt":      "calculated_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// ShipmentMoveJurisdictionMileInsertableColumns lists column names suitable for INSERT statements on the "shipment_move_jurisdiction_miles" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ShipmentMoveJurisdictionMileInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"shipment_move_id",
+	"shipment_id",
+	"country_code",
+	"jurisdiction_code",
+	"sequence",
+	"distance",
+	"distance_units",
+	"toll_distance",
+	"ferry_distance",
+	"loaded",
+	"source",
+	"provider",
+	"data_version",
+	"distance_profile_id",
+	"calculated_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ShipmentMoveJurisdictionMileScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE smjm.organization_id = ? AND smjm.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ShipmentMoveJurisdictionMileScopeTenant(sq, ti).
+//		Where(buncolgen.ShipmentMoveJurisdictionMileColumns.ID.Eq(), id)
+func ShipmentMoveJurisdictionMileScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ShipmentMoveJurisdictionMileColumns.OrganizationID, ShipmentMoveJurisdictionMileColumns.BusinessUnitID, ti)
+}
+
+// ShipmentMoveJurisdictionMileScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ShipmentMoveJurisdictionMileScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ShipmentMoveJurisdictionMileColumns.ID.In(), bun.List(ids))
+//	})
+func ShipmentMoveJurisdictionMileScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ShipmentMoveJurisdictionMileColumns.OrganizationID, ShipmentMoveJurisdictionMileColumns.BusinessUnitID, ti)
+}
+
+// ShipmentMoveJurisdictionMileScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ShipmentMoveJurisdictionMileScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ShipmentMoveJurisdictionMileColumns.ID.Eq(), id)
+//	})
+func ShipmentMoveJurisdictionMileScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ShipmentMoveJurisdictionMileColumns.OrganizationID, ShipmentMoveJurisdictionMileColumns.BusinessUnitID, ti)
+}
+
+// ShipmentMoveJurisdictionMileApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ShipmentMoveJurisdictionMileApplyTenant(tenantInfo))
+func ShipmentMoveJurisdictionMileApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ShipmentMoveJurisdictionMileColumns.OrganizationID, ShipmentMoveJurisdictionMileColumns.BusinessUnitID, ti)
+}
+
+// ShipmentMoveJurisdictionMileFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "shipment_move_jurisdiction_miles" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ShipmentMoveJurisdictionMileFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ShipmentMoveJurisdictionMileFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShipmentMoveID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentMoveId" → DB: "shipment_move_id"
+	ShipmentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	CountryCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countryCode" → DB: "country_code"
+	JurisdictionCode  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "jurisdictionCode" → DB: "jurisdiction_code"
+	Sequence          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	Distance          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distance" → DB: "distance"
+	DistanceUnits     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceUnits" → DB: "distance_units"
+	TollDistance      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tollDistance" → DB: "toll_distance"
+	FerryDistance     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ferryDistance" → DB: "ferry_distance"
+	Loaded            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loaded" → DB: "loaded"
+	Source            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	Provider          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	DataVersion       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataVersion" → DB: "data_version"
+	DistanceProfileID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceProfileId" → DB: "distance_profile_id"
+	CalculatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "calculatedAt" → DB: "calculated_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ShipmentMoveID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentMoveId", op, value)
+	},
+	ShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentId", op, value)
+	},
+	CountryCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("countryCode", op, value)
+	},
+	JurisdictionCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("jurisdictionCode", op, value)
+	},
+	Sequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sequence", op, value)
+	},
+	Distance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distance", op, value)
+	},
+	DistanceUnits: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceUnits", op, value)
+	},
+	TollDistance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tollDistance", op, value)
+	},
+	FerryDistance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ferryDistance", op, value)
+	},
+	Loaded: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("loaded", op, value)
+	},
+	Source: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("source", op, value)
+	},
+	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("provider", op, value)
+	},
+	DataVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dataVersion", op, value)
+	},
+	DistanceProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceProfileId", op, value)
+	},
+	CalculatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("calculatedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

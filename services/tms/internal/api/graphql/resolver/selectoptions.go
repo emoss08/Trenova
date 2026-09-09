@@ -43,7 +43,15 @@ import (
 )
 
 type selectOptionRegistryEntry struct {
-	resolve func(context.Context, selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
+	resolve  func(context.Context, selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
+	parseIDs func([]string) ([]pulid.ID, error)
+}
+
+func (e selectOptionRegistryEntry) ids(values []string) ([]pulid.ID, error) {
+	if e.parseIDs != nil {
+		return e.parseIDs(values)
+	}
+	return parseIDs(values)
 }
 
 type selectOptionsRequest struct {
@@ -86,7 +94,7 @@ func (r *queryResolver) resolveSelectOptions(
 		return nil, err
 	}
 
-	req, err := selectOptionsRequestFromInput(input, authCtx)
+	req, err := selectOptionsRequestFromInput(input, authCtx, entry)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +125,9 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceTractor: {
 			resolve: r.resolveTractorSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceFuelCard: {
+			resolve: r.resolveFuelCardSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceWorker: {
 			resolve: r.resolveWorkerSelectOptions,
 		},
@@ -146,6 +157,10 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceGlAccount: {
 			resolve: r.resolveGLAccountSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceIFTAFuelType: {
+			resolve:  r.resolveIFTAFuelTypeSelectOptions,
+			parseIDs: parseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceLocation: {
 			resolve: r.resolveLocationSelectOptions,
@@ -220,7 +235,8 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 			resolve: r.resolveEDICommunicationProfileSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceEDIDocumentType: {
-			resolve: r.resolveEDIDocumentTypeSelectOptions,
+			resolve:  r.resolveEDIDocumentTypeSelectOptions,
+			parseIDs: parseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceEDIMappingProfile: {
 			resolve: r.resolveEDIMappingProfileSelectOptions,
@@ -234,6 +250,10 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceEDITemplate: {
 			resolve: r.resolveEDITemplateSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceEDITransactionSet: {
+			resolve:  r.resolveEDITransactionSetSelectOptions,
+			parseIDs: parseCatalogIDs,
+		},
 		gqlmodel.SelectOptionResourceEmailProfile: {
 			resolve: r.resolveEmailProfileSelectOptions,
 		},
@@ -243,8 +263,9 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 func selectOptionsRequestFromInput(
 	input gqlmodel.SelectOptionsInput,
 	authCtx *authctx.AuthContext,
+	entry selectOptionRegistryEntry,
 ) (selectOptionsRequest, error) {
-	ids, err := parseIDs(input.Ids)
+	ids, err := entry.ids(input.Ids)
 	if err != nil {
 		return selectOptionsRequest{}, err
 	}
@@ -1332,6 +1353,47 @@ func (r *Resolver) resolveEDIDocumentTypeSelectOptions(
 		result,
 		req.selectQuery.Pagination.SafeOffset(),
 		ediDocumentTypeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDITransactionSetSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	selectQuery := req.selectQuery
+	if len(req.ids) > 0 {
+		byIDs := *req.selectQuery
+		byIDs.Pagination = pagination.Info{Limit: pagination.ClampLimit(len(req.ids))}
+		selectQuery = &byIDs
+	}
+
+	result, err := r.ediService.SelectTransactionSetOptions(
+		ctx,
+		&repositories.EDITransactionSetSelectOptionsRequest{
+			SelectQueryRequest: selectQuery,
+			IDs:                req.ids,
+			Standard:           edi.EDIStandard(selectOptionStringFilter(req.filters, "standard")),
+			Status:             edi.DocumentStatus(selectOptionStringFilter(req.filters, "status")),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(req.ids) > 0 {
+		items := orderedSelectOptionItems(
+			req.ids,
+			result.Items,
+			func(e *edi.EDITransactionSet) pulid.ID { return e.ID },
+			ediTransactionSetSelectOptionItem,
+		)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediTransactionSetSelectOptionItem,
 	)
 }
 
@@ -2451,6 +2513,28 @@ func ediDocumentTypeSelectOption(entity *edi.EDIDocumentType) *gqlmodel.SelectOp
 			"transactionSet": string(entity.TransactionSet),
 			"direction":      string(entity.Direction),
 			"defaultVersion": entity.DefaultVersion,
+		},
+	}
+}
+
+func ediTransactionSetSelectOptionItem(entity *edi.EDITransactionSet) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediTransactionSetSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediTransactionSetSelectOption(entity *edi.EDITransactionSet) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       string(entity.Code) + " - " + entity.Name,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"code":           string(entity.Code),
+			"standard":       string(entity.Standard),
+			"defaultVersion": entity.DefaultVersion,
+			"status":         string(entity.Status),
 		},
 	}
 }

@@ -77,6 +77,18 @@ var nonProjectionObjects = map[string]string{
 	"TelematicsFormSubmission":  "GraphQL telematics form DTO without Bun projection metadata",
 	"TelematicsFormMapping":     "GraphQL telematics form DTO without Bun projection metadata",
 	"TelematicsFormMappingItem": "GraphQL telematics form DTO without Bun projection metadata",
+	// Assembled in Go by unioning the worker and user rosters, so it maps to no
+	// single table and fuzzy matching would otherwise bind it to an unrelated one.
+	"PositionHolder": "GraphQL org structure DTO without Bun projection metadata",
+	// Fuel and IFTA value objects: stored as JSONB on their parent, assembled in
+	// Go, or served straight from the domain, so none of them own a table.
+	"FuelPurchaseImportParsed":        "GraphQL fuel import DTO without Bun projection metadata",
+	"FuelPurchaseImportSummary":       "GraphQL fuel import DTO stored as JSONB without Bun projection metadata",
+	"FuelImportTemplate":              "GraphQL fuel import template DTO",
+	"IFTAPeriod":                      "GraphQL IFTA period value object without Bun projection metadata",
+	"IFTAFleetMPG":                    "GraphQL IFTA value object stored as JSONB without Bun projection metadata",
+	"IFTAReturnProblem":               "GraphQL IFTA value object stored as JSONB without Bun projection metadata",
+	"JurisdictionMilesBackfillResult": "GraphQL jurisdiction mileage backfill DTO",
 }
 
 func run(opts generatorOptions) error {

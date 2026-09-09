@@ -44,6 +44,14 @@ export const Resource = {
   Tractor: "tractor",
   FleetCode: "fleet_code",
 
+  // Fuel & IFTA
+  FuelCard: "fuel_card",
+  FuelPurchase: "fuel_purchase",
+  FuelPurchaseImport: "fuel_purchase_import",
+  IFTAJurisdictionMileage: "ifta_jurisdiction_mileage",
+  IFTAReturn: "ifta_return",
+  IFTATaxRate: "ifta_tax_rate",
+
   // Workers
   Worker: "worker",
   WorkerPTO: "worker_pto",
