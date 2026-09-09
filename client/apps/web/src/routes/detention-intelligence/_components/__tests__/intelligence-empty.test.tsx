@@ -76,9 +76,12 @@ describe("detention intelligence empty state", () => {
     await user.click(await screen.findByRole("button", { name: "Look back 180 days" }));
 
     await waitFor(() => {
-      const spans = mocks.facilities.mock.calls.map(
-        ([args]: [{ from: number; to: number }]) => (args.to - args.from) / DAY,
-      );
+      // mock.calls is any[][], so a destructured tuple annotation does not describe it.
+      // Reading the first argument and naming its shape does.
+      const spans = mocks.facilities.mock.calls.map((call) => {
+        const args = call[0] as { from: number; to: number };
+        return (args.to - args.from) / DAY;
+      });
       expect(spans).toContain(180);
     });
   });

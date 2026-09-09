@@ -144,12 +144,19 @@ function renderConsole(fixtures: {
 }
 
 beforeEach(() => {
-  vi.spyOn(Date, "now").mockReturnValue(NOW * 1000);
+  // Faking the Date class rather than spying on Date.now(): the console reads today
+  // through `new Date()`, which a Date.now spy does not touch. With only the spy the
+  // fixture's "today" was whatever day the suite happened to run on, so the cover and
+  // conflict counts below only lined up on 2026-09-07. `toFake` is limited to Date so
+  // setTimeout stays real and waitFor still works.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW * 1000);
   window.localStorage.clear();
 });
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.clearAllMocks();
 });

@@ -4,6 +4,25 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import {
+  useCreateReportSchedule,
+  useDeleteReportSchedule,
+  useReportSchedules,
+  useUpdateReportSchedule,
+} from "@/hooks/use-reports";
+import { timezoneChoices, timezoneGroupedChoices } from "@/lib/choices";
+import {
+  buildCron,
+  DEFAULT_CRON_PARTS,
+  describeCron,
+  formatTimeOfDay,
+  ordinalDay,
+  parseCron,
+  type CronFrequency,
+  type CronParts,
+} from "@/lib/cron";
+import type { ReportDefinition, ReportSchedule } from "@/lib/graphql/reports";
+import { REPORT_FORMAT_CHOICES, type ReportIR } from "@/types/report";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -23,27 +42,8 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import {
-  useCreateReportSchedule,
-  useDeleteReportSchedule,
-  useReportSchedules,
-  useUpdateReportSchedule,
-} from "@/hooks/use-reports";
-import { timezoneChoices } from "@/lib/choices";
-import {
-  buildCron,
-  DEFAULT_CRON_PARTS,
-  describeCron,
-  formatTimeOfDay,
-  ordinalDay,
-  parseCron,
-  type CronFrequency,
-  type CronParts,
-} from "@/lib/cron";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import type { ReportDefinition, ReportSchedule } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
-import { REPORT_FORMAT_CHOICES, type ReportIR } from "@/types/report";
 import {
   BellIcon,
   CalendarClockIcon,
@@ -187,15 +187,6 @@ function alertFromForm(values: ScheduleFormValues) {
 function timezoneLabel(value: string): string {
   if (!value) return "Organization default";
   return timezoneChoices.find((choice) => choice.value === value)?.label ?? value;
-}
-
-function useTimezoneOptions(current: string) {
-  return useMemo(() => {
-    if (!current || timezoneChoices.some((choice) => choice.value === current)) {
-      return [...timezoneChoices];
-    }
-    return [...timezoneChoices, { value: current, label: current }];
-  }, [current]);
 }
 
 function CadenceSentence({
@@ -607,8 +598,6 @@ function ScheduleForm({
   const timezone = useWatch({ control, name: "timezone" });
   const emailRecipients = useWatch({ control, name: "emailRecipients" });
 
-  const timezoneOptions = useTimezoneOptions(timezone);
-
   return (
     <m.form
       initial={{ opacity: 0, y: 6 }}
@@ -620,16 +609,22 @@ function ScheduleForm({
       <div className="flex flex-col gap-2.5">
         <SectionLabel>Cadence</SectionLabel>
         <CadenceBuilder control={control} />
-        <div className="max-w-xs">
-          <SelectField
-            control={control}
-            name="timezone"
-            label="Timezone"
-            options={timezoneOptions}
-            placeholder="Organization default"
-            isClearable
-          />
-        </div>
+        <SelectField
+          control={control}
+          name="timezone"
+          label="Timezone"
+          groups={timezoneGroupedChoices}
+          renderOption={(option) => (
+            <span className="flex w-full items-center justify-between gap-3">
+              <span>{option.label}</span>
+              {option.description && (
+                <span className="text-muted-foreground text-xs">{option.description}</span>
+              )}
+            </span>
+          )}
+          placeholder="Organization default"
+          isClearable
+        />
         <CadenceSentence cronExpression={cronExpression} timezone={timezone} />
       </div>
 

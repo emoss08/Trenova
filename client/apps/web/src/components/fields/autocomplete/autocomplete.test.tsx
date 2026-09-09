@@ -6,6 +6,17 @@ import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { Autocomplete, buildSelectedValueLookupCandidates } from "./autocomplete";
 
+// Every assertion below is written against the "/api/v1" base. That is the value
+// API_BASE_URL takes only when VITE_API_URL is unset, and vite reads it from
+// apps/web/.env — a gitignored file that exists on some machines and not others, so
+// this suite passed or failed on where it ran. Pinning the constant keeps the subject
+// under test (candidate construction and trailing-slash fallback) and drops the
+// dependency on the developer's environment.
+vi.mock("@trenova/shared/lib/constants", async (importActual) => {
+  const actual = await importActual<typeof import("@trenova/shared/lib/constants")>();
+  return { ...actual, API_BASE_URL: "/api/v1" };
+});
+
 const selectOptionCursor =
   "eyJjcmVhdGVkQXQiOjE3ODA0MTU4ODMsImlkIjoidHJhY18wMUtUNEdXVDlNS1EwRjZCQ0NHQTBWUjJZNSJ9";
 

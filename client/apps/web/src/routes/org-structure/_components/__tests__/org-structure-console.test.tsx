@@ -3,7 +3,12 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { useController, type Control, type FieldValues, type Path } from "react-hook-form";
 import { MemoryRouter } from "react-router";
-import { Operation, Resource } from "@trenova/shared/types/permission";
+import {
+  Operation,
+  Resource,
+  type OperationType,
+  type ResourceType,
+} from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OrgStructureConsole from "../org-structure-console";
 
@@ -62,7 +67,9 @@ vi.mock("@/hooks/use-permission", () => ({
     isLoading: false,
   }),
 }));
-function deny(resource: Resource, operation: Operation) {
+// Resource and Operation are const objects, not types; the type of a member is
+// ResourceType / OperationType.
+function deny(resource: ResourceType, operation: OperationType) {
   permissions.denied.add(`${resource}:${operation}`);
 }
 

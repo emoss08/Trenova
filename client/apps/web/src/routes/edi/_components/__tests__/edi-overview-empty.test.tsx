@@ -24,10 +24,12 @@ const BUSY = {
   },
 };
 
-type Loaded = ReturnType<typeof summaryHook.useEDISummary>;
-
-function loaded(data: unknown): Loaded {
-  return { data, isLoading: false, isError: false } as unknown as Loaded;
+// One helper stands in for three hooks whose return types differ in the shape of their
+// `data`. Generic over the hook's own result so each spy is handed what it expects;
+// pinning it to useEDISummary's result made the scorecards and volume-series spies
+// reject it.
+function loaded<T>(data: unknown): T {
+  return { data, isLoading: false, isError: false } as unknown as T;
 }
 
 function renderOverview() {
