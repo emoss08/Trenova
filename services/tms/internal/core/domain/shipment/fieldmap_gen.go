@@ -81,6 +81,13 @@ func (e *ShipmentMove) GetStaticFieldMap() map[string]string {
 	return buncolgen.ShipmentMoveFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShipmentMoveJurisdictionMile].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ShipmentMoveJurisdictionMileFieldMap] instead of parsing struct tags via reflection.
+func (e *ShipmentMoveJurisdictionMile) GetStaticFieldMap() map[string]string {
+	return buncolgen.ShipmentMoveJurisdictionMileFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Stop].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.StopFieldMap] instead of parsing struct tags via reflection.

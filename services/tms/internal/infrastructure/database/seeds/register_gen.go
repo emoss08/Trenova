@@ -22,6 +22,7 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(base.NewServiceFailureReasonCodeSeed())
 	r.MustRegister(base.NewDocumentTemplateStartersSeed())
 	r.MustRegister(base.NewJurisdictionRulesBaselineSeed())
+	r.MustRegister(base.NewIFTAJurisdictionsSeed())
 	r.MustRegister(development.NewTestOrganizationsSeed())
 	r.MustRegister(development.NewFormulaTemplateSeed())
 	r.MustRegister(development.NewNormalAccountSeed())
@@ -46,4 +47,5 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewOrgHolidaySeed())
 	r.MustRegister(development.NewWorkerTrainingSeed())
 	r.MustRegister(development.NewWorkerSafetySeed())
+	r.MustRegister(development.NewFuelSpendIFTASeed())
 }

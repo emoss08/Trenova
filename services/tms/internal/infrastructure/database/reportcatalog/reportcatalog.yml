@@ -534,3 +534,113 @@ entities:
       defaultFormat: { label: "Default Format" }
       currentRevision: { label: "Revision", format: count }
       lastRunAt: { label: "Last Run At", type: epoch }
+
+  fuel_card:
+    struct: fuelpurchase.FuelCard
+    resource: fuel_card
+    label: Fuel Card
+    pluralLabel: Fuel Cards
+    description: Fuel cards issued to drivers and units
+    category: Equipment
+    fields:
+      label: { label: "Card Label" }
+      provider: { label: Provider }
+      lastFour: { label: "Last Four" }
+      status: { label: Status }
+      expiresAt: { label: "Expires At" }
+      cancelledAt: { label: "Cancelled At" }
+    edges:
+      assignedWorker: { label: "Assigned Driver" }
+      assignedTractor: { label: "Assigned Tractor" }
+
+  fuel_purchase:
+    struct: fuelpurchase.FuelPurchase
+    resource: fuel_purchase
+    label: Fuel Purchase
+    pluralLabel: Fuel Purchases
+    description: Fuel bought at the pump or on a fuel card
+    category: Equipment
+    fields:
+      purchasedAt: { label: "Purchased At" }
+      vendor: { label: Vendor }
+      vendorCity: { label: "Vendor City" }
+      fuelType: { label: "Fuel Type" }
+      quantity: { label: Quantity }
+      quantityUnit: { label: "Quantity Unit" }
+      gallons: { label: Gallons }
+      unitPrice: { label: "Unit Price" }
+      totalAmountMinor: { label: "Total Amount (Minor)" }
+      currencyCode: { label: Currency }
+      odometer: { label: Odometer, format: distance }
+      transactionReference: { label: "Transaction Reference" }
+      source: { label: Source }
+      taxPaid: { label: "Tax Paid" }
+    edges:
+      tractor: { label: Tractor }
+      worker: { label: Driver }
+      fuelCard: { label: "Fuel Card" }
+
+  ifta_jurisdiction_mileage_entry:
+    struct: ifta.JurisdictionMileageEntry
+    resource: ifta_jurisdiction_mileage
+    label: Jurisdiction Mileage Entry
+    pluralLabel: Jurisdiction Mileage Entries
+    description: Miles by state or province recorded outside routed shipment moves
+    category: Equipment
+    fields:
+      traveledAt: { label: "Traveled At" }
+      year: { label: Year }
+      quarter: { label: Quarter }
+      miles: { label: Miles, format: distance }
+      loaded: { label: Loaded }
+      source: { label: Source }
+    edges:
+      tractor: { label: Tractor }
+
+  ifta_return:
+    struct: ifta.Return
+    resource: ifta_return
+    label: IFTA Return
+    pluralLabel: IFTA Returns
+    description: Quarterly fuel tax returns
+    category: Equipment
+    fields:
+      year: { label: Year }
+      quarter: { label: Quarter }
+      amendmentNumber: { label: "Amendment Number" }
+      status: { label: Status }
+      totalMiles: { label: "Total Miles", format: distance }
+      totalTaxableMiles: { label: "Taxable Miles", format: distance }
+      totalGallons: { label: "Total Gallons" }
+      totalTaxPaidGallons: { label: "Tax-Paid Gallons" }
+      netTaxableGallons: { label: "Net Taxable Gallons" }
+      taxDueMinor: { label: "Tax Due (Minor)" }
+      surchargeDueMinor: { label: "Surcharge Due (Minor)" }
+      netDueMinor: { label: "Net Due (Minor)" }
+      computedAt: { label: "Computed At" }
+      finalizedAt: { label: "Finalized At" }
+      filedAt: { label: "Filed At" }
+    edges:
+      lines: { label: Lines }
+
+  ifta_return_line:
+    struct: ifta.ReturnLine
+    resource: ifta_return
+    label: IFTA Return Line
+    pluralLabel: IFTA Return Lines
+    description: One return line per jurisdiction and fuel type
+    category: Equipment
+    fields:
+      fuelType: { label: "Fuel Type" }
+      isIftaMember: { label: "IFTA Member" }
+      totalMiles: { label: "Total Miles", format: distance }
+      taxableMiles: { label: "Taxable Miles", format: distance }
+      taxPaidGallons: { label: "Tax-Paid Gallons" }
+      taxableGallons: { label: "Taxable Gallons" }
+      netTaxableGallons: { label: "Net Taxable Gallons" }
+      ratePerGallon: { label: "Rate per Gallon" }
+      surchargeRatePerGallon: { label: "Surcharge Rate per Gallon" }
+      rateMissing: { label: "Rate Missing" }
+      taxDueMinor: { label: "Tax Due (Minor)" }
+      surchargeDueMinor: { label: "Surcharge Due (Minor)" }
+      lineTotalMinor: { label: "Line Total (Minor)" }

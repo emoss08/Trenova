@@ -20,8 +20,10 @@ const (
 	SeedDriverPay SeedID = "DriverPay" // from 11_driverpay.go
 	SeedDriverPayLedger SeedID = "DriverPayLedger" // from 12_driverpay_ledger.go
 	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
+	SeedFuelSpendIFTA SeedID = "FuelSpendIFTA" // from 24_fuel_spend_ifta.go
 	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
+	SeedIFTAJurisdictions SeedID = "IFTAJurisdictions" // from 12_ifta_jurisdictions.go
 	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
@@ -59,8 +61,10 @@ var AllSeedIDs = []SeedID{
 	SeedDriverPay,
 	SeedDriverPayLedger,
 	SeedFormulaTemplate,
+	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
 	SeedGLAccount,
+	SeedIFTAJurisdictions,
 	SeedJurisdictionRulesBaseline,
 	SeedLocation,
 	SeedLocationCategory,
@@ -93,6 +97,7 @@ var BaseSeedIDs = []SeedID{
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedGLAccount,
+	SeedIFTAJurisdictions,
 	SeedJurisdictionRulesBaseline,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
@@ -109,6 +114,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedDriverPay,
 	SeedDriverPayLedger,
 	SeedFormulaTemplate,
+	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
 	SeedLocation,
 	SeedLocationCategory,

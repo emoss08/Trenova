@@ -792,6 +792,10 @@ func (s *TestDataSeed) createTestTractors(
 		},
 	}
 
+	for i := range tractors {
+		tractors[i].IFTAQualified = true
+	}
+
 	_, err = tx.NewInsert().
 		Model(&tractors).
 		Exec(ctx)

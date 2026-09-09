@@ -36,11 +36,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
@@ -313,6 +315,16 @@ type AuditEntryEdge struct {
 	Cursor string       `json:"cursor"`
 }
 
+type BackfillJurisdictionMilesInput struct {
+	PeriodStart int `json:"periodStart"`
+	PeriodEnd   int `json:"periodEnd"`
+	// Upper bound on moves re-routed in one run; defaults to 2000. Every move is a
+	// billable distance request.
+	MaxMoves *int `json:"maxMoves,omitempty"`
+	// Count the moves and miles that would be attributed without starting the workflow.
+	DryRun *bool `json:"dryRun,omitempty"`
+}
+
 type BenefitPlanInput struct {
 	Code              string                    `json:"code"`
 	Name              string                    `json:"name"`
@@ -416,6 +428,13 @@ type BulkWorkerPTOActionInput struct {
 	PTOIds []string                   `json:"ptoIds"`
 	Action services.PTOBulkActionType `json:"action"`
 	Reason *string                    `json:"reason,omitempty"`
+}
+
+type CancelFuelCardInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// At least ten characters. Cancelling is permanent.
+	Reason string `json:"reason"`
 }
 
 type CancelWorkerChecklistInput struct {
@@ -637,6 +656,14 @@ type CreateDocumentTemplateVersionInput struct {
 	// is live" and rollback are expressed — history is never edited in place.
 	SourceVersionID *string                       `json:"sourceVersionId,omitempty"`
 	Content         *DocumentTemplateVersionInput `json:"content,omitempty"`
+}
+
+type CreateFuelPurchaseImportInput struct {
+	Provider          fuelpurchase.CardProvider `json:"provider"`
+	DefaultFuelType   *domaintypes.IFTAFuelType `json:"defaultFuelType,omitempty"`
+	DefaultFuelCardID *string                   `json:"defaultFuelCardId,omitempty"`
+	DefaultCurrency   *string                   `json:"defaultCurrency,omitempty"`
+	Mapping           map[string]any            `json:"mapping,omitempty"`
 }
 
 type CreateMyLoadCommentInput struct {
@@ -2256,12 +2283,55 @@ type FormulaTemplateVariableDefinition struct {
 	Source       *string `json:"source,omitempty"`
 }
 
+type FuelCardConnection struct {
+	Edges      []*FuelCardEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type FuelCardEdge struct {
+	Node   *fuelpurchase.FuelCard `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type FuelCardInput struct {
+	Provider          fuelpurchase.CardProvider `json:"provider"`
+	LastFour          string                    `json:"lastFour"`
+	Label             string                    `json:"label"`
+	ExternalCardID    *string                   `json:"externalCardId,omitempty"`
+	AssignedWorkerID  *string                   `json:"assignedWorkerId,omitempty"`
+	AssignedTractorID *string                   `json:"assignedTractorId,omitempty"`
+	// Active or Suspended. Cancelling goes through cancelFuelCard, which needs a reason.
+	Status    *fuelpurchase.CardStatus `json:"status,omitempty"`
+	ExpiresAt *int                     `json:"expiresAt,omitempty"`
+	Notes     *string                  `json:"notes,omitempty"`
+}
+
+type FuelCardsInput struct {
+	First             *int                       `json:"first,omitempty"`
+	After             *string                    `json:"after,omitempty"`
+	Query             *string                    `json:"query,omitempty"`
+	FieldFilters      []*FieldFilterInput        `json:"fieldFilters,omitempty"`
+	FilterGroups      []*FilterGroupInput        `json:"filterGroups,omitempty"`
+	Sort              []*SortFieldInput          `json:"sort,omitempty"`
+	Provider          *fuelpurchase.CardProvider `json:"provider,omitempty"`
+	Status            *fuelpurchase.CardStatus   `json:"status,omitempty"`
+	AssignedWorkerID  *string                    `json:"assignedWorkerId,omitempty"`
+	AssignedTractorID *string                    `json:"assignedTractorId,omitempty"`
+}
+
 type FuelCostResolution struct {
 	PricePerGallon *string             `json:"pricePerGallon,omitempty"`
 	PriceDate      string              `json:"priceDate"`
 	FuelIndexID    *string             `json:"fuelIndexId,omitempty"`
 	MilesPerGallon string              `json:"milesPerGallon"`
 	Source         EffectiveRateSource `json:"source"`
+}
+
+// A CSV header row in the shape the import expects for a provider.
+type FuelImportTemplate struct {
+	FileName string `json:"fileName"`
+	Content  string `json:"content"`
 }
 
 type FuelIndex struct {
@@ -2341,6 +2411,94 @@ type FuelProgramCurrentRate struct {
 	FlatAmount   *string                `json:"flatAmount,omitempty"`
 	UsedFallback bool                   `json:"usedFallback"`
 	MatchedRow   *FuelSurchargeTableRow `json:"matchedRow,omitempty"`
+}
+
+type FuelPurchaseConnection struct {
+	Edges      []*FuelPurchaseEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type FuelPurchaseEdge struct {
+	Node   *fuelpurchase.FuelPurchase `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
+// The purchase a statement row would become, as parsed and before any ids are
+// assigned. Absent when the row could not be read at all.
+type FuelPurchaseImportParsed struct {
+	PurchasedAt          *int                       `json:"purchasedAt,omitempty"`
+	Vendor               *string                    `json:"vendor,omitempty"`
+	VendorCity           *string                    `json:"vendorCity,omitempty"`
+	JurisdictionCode     *string                    `json:"jurisdictionCode,omitempty"`
+	FuelType             *domaintypes.IFTAFuelType  `json:"fuelType,omitempty"`
+	Quantity             *string                    `json:"quantity,omitempty"`
+	QuantityUnit         *fuelpurchase.QuantityUnit `json:"quantityUnit,omitempty"`
+	Gallons              *string                    `json:"gallons,omitempty"`
+	UnitPrice            *string                    `json:"unitPrice,omitempty"`
+	TotalAmount          *string                    `json:"totalAmount,omitempty"`
+	CurrencyCode         *string                    `json:"currencyCode,omitempty"`
+	TransactionReference *string                    `json:"transactionReference,omitempty"`
+	CardLastFour         *string                    `json:"cardLastFour,omitempty"`
+	TractorCode          *string                    `json:"tractorCode,omitempty"`
+	Odometer             *int                       `json:"odometer,omitempty"`
+}
+
+type FuelPurchaseImportRowConnection struct {
+	Edges      []*FuelPurchaseImportRowEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+}
+
+type FuelPurchaseImportRowEdge struct {
+	Node   *fuelpurchase.ImportRow `json:"node"`
+	Cursor string                  `json:"cursor"`
+}
+
+type FuelPurchaseImportRowsInput struct {
+	First    *int                           `json:"first,omitempty"`
+	After    *string                        `json:"after,omitempty"`
+	Statuses []fuelpurchase.ImportRowStatus `json:"statuses,omitempty"`
+}
+
+type FuelPurchaseInput struct {
+	TractorID            string                     `json:"tractorId"`
+	WorkerID             *string                    `json:"workerId,omitempty"`
+	JurisdictionID       string                     `json:"jurisdictionId"`
+	PurchasedAt          int                        `json:"purchasedAt"`
+	Vendor               *string                    `json:"vendor,omitempty"`
+	VendorCity           *string                    `json:"vendorCity,omitempty"`
+	FuelType             domaintypes.IFTAFuelType   `json:"fuelType"`
+	Quantity             string                     `json:"quantity"`
+	QuantityUnit         *fuelpurchase.QuantityUnit `json:"quantityUnit,omitempty"`
+	UnitPrice            *string                    `json:"unitPrice,omitempty"`
+	TotalAmount          string                     `json:"totalAmount"`
+	CurrencyCode         *string                    `json:"currencyCode,omitempty"`
+	Odometer             *int                       `json:"odometer,omitempty"`
+	FuelCardID           *string                    `json:"fuelCardId,omitempty"`
+	CardLastFour         *string                    `json:"cardLastFour,omitempty"`
+	TransactionReference *string                    `json:"transactionReference,omitempty"`
+	TaxPaid              *bool                      `json:"taxPaid,omitempty"`
+	Notes                *string                    `json:"notes,omitempty"`
+}
+
+type FuelPurchasesInput struct {
+	First          *int                          `json:"first,omitempty"`
+	After          *string                       `json:"after,omitempty"`
+	Query          *string                       `json:"query,omitempty"`
+	FieldFilters   []*FieldFilterInput           `json:"fieldFilters,omitempty"`
+	FilterGroups   []*FilterGroupInput           `json:"filterGroups,omitempty"`
+	Sort           []*SortFieldInput             `json:"sort,omitempty"`
+	TractorID      *string                       `json:"tractorId,omitempty"`
+	FuelCardID     *string                       `json:"fuelCardId,omitempty"`
+	JurisdictionID *string                       `json:"jurisdictionId,omitempty"`
+	FuelTypes      []domaintypes.IFTAFuelType    `json:"fuelTypes,omitempty"`
+	Sources        []fuelpurchase.PurchaseSource `json:"sources,omitempty"`
+	TaxPaid        *bool                         `json:"taxPaid,omitempty"`
+	// Inclusive lower bound on purchasedAt.
+	From *int `json:"from,omitempty"`
+	// Exclusive upper bound on purchasedAt.
+	To *int `json:"to,omitempty"`
 }
 
 type FuelSurchargeProgram struct {
@@ -2657,6 +2815,108 @@ type HosCertificationSummary struct {
 	TotalDays       int    `json:"totalDays"`
 }
 
+type IFTAJurisdictionMileageEntryConnection struct {
+	Edges      []*IFTAJurisdictionMileageEntryEdge `json:"edges"`
+	PageInfo   *PageInfo                           `json:"pageInfo"`
+	TotalCount *int                                `json:"totalCount,omitempty"`
+}
+
+type IFTAJurisdictionMileageEntryEdge struct {
+	Node   *ifta.JurisdictionMileageEntry `json:"node"`
+	Cursor string                         `json:"cursor"`
+}
+
+type IFTAMileageEntriesInput struct {
+	First          *int                 `json:"first,omitempty"`
+	After          *string              `json:"after,omitempty"`
+	Query          *string              `json:"query,omitempty"`
+	FieldFilters   []*FieldFilterInput  `json:"fieldFilters,omitempty"`
+	FilterGroups   []*FilterGroupInput  `json:"filterGroups,omitempty"`
+	Sort           []*SortFieldInput    `json:"sort,omitempty"`
+	Period         *IFTAPeriodInput     `json:"period,omitempty"`
+	TractorID      *string              `json:"tractorId,omitempty"`
+	JurisdictionID *string              `json:"jurisdictionId,omitempty"`
+	Sources        []ifta.MileageSource `json:"sources,omitempty"`
+	// Inclusive lower bound on traveledAt.
+	From *int `json:"from,omitempty"`
+	// Exclusive upper bound on traveledAt.
+	To *int `json:"to,omitempty"`
+}
+
+type IFTAMileageEntryInput struct {
+	TractorID      string              `json:"tractorId"`
+	JurisdictionID string              `json:"jurisdictionId"`
+	TraveledAt     int                 `json:"traveledAt"`
+	Miles          string              `json:"miles"`
+	Loaded         *bool               `json:"loaded,omitempty"`
+	Source         *ifta.MileageSource `json:"source,omitempty"`
+	// Name the move when this entry corrects its routed miles; the entry then
+	// replaces the move's jurisdiction rows on the return.
+	ShipmentMoveID *string `json:"shipmentMoveId,omitempty"`
+	Notes          *string `json:"notes,omitempty"`
+}
+
+type IFTAPeriodInput struct {
+	Year    int `json:"year"`
+	Quarter int `json:"quarter"`
+}
+
+type IFTAReturnConnection struct {
+	Edges      []*IFTAReturnEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type IFTAReturnEdge struct {
+	Node   *ifta.Return `json:"node"`
+	Cursor string       `json:"cursor"`
+}
+
+type IFTAReturnsInput struct {
+	First        *int                `json:"first,omitempty"`
+	After        *string             `json:"after,omitempty"`
+	Query        *string             `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
+	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+	Year         *int                `json:"year,omitempty"`
+	Statuses     []ifta.ReturnStatus `json:"statuses,omitempty"`
+}
+
+type IFTATaxRateConnection struct {
+	Edges      []*IFTATaxRateEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type IFTATaxRateEdge struct {
+	Node   *ifta.TaxRate `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
+type IFTATaxRateInput struct {
+	JurisdictionID         string                   `json:"jurisdictionId"`
+	Year                   int                      `json:"year"`
+	Quarter                int                      `json:"quarter"`
+	FuelType               domaintypes.IFTAFuelType `json:"fuelType"`
+	RatePerGallon          string                   `json:"ratePerGallon"`
+	SurchargeRatePerGallon *string                  `json:"surchargeRatePerGallon,omitempty"`
+	SourceNote             *string                  `json:"sourceNote,omitempty"`
+	SourceURL              *string                  `json:"sourceUrl,omitempty"`
+}
+
+type IFTATaxRatesInput struct {
+	First          *int                      `json:"first,omitempty"`
+	After          *string                   `json:"after,omitempty"`
+	Query          *string                   `json:"query,omitempty"`
+	FieldFilters   []*FieldFilterInput       `json:"fieldFilters,omitempty"`
+	FilterGroups   []*FilterGroupInput       `json:"filterGroups,omitempty"`
+	Sort           []*SortFieldInput         `json:"sort,omitempty"`
+	Period         *IFTAPeriodInput          `json:"period,omitempty"`
+	JurisdictionID *string                   `json:"jurisdictionId,omitempty"`
+	FuelType       *domaintypes.IFTAFuelType `json:"fuelType,omitempty"`
+}
+
 type InviteWorkerToPortalInput struct {
 	WorkerID string `json:"workerId"`
 	// Overrides the email on the worker record when provided.
@@ -2724,6 +2984,16 @@ type JournalReversalConnection struct {
 type JournalReversalEdge struct {
 	Node   *journalreversal.Reversal `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+// Started tells whether a backfill workflow was launched; on a dry run it is false
+// and only the unattributed figures are returned.
+type JurisdictionMilesBackfillResult struct {
+	Started           bool    `json:"started"`
+	DryRun            bool    `json:"dryRun"`
+	UnattributedMoves int     `json:"unattributedMoves"`
+	UnattributedMiles string  `json:"unattributedMiles"`
+	WorkflowID        *string `json:"workflowId,omitempty"`
 }
 
 type JurisdictionRuleConnection struct {
@@ -2806,6 +3076,14 @@ type MarkDriverSettlementPaidInput struct {
 	SettlementID     string  `json:"settlementId"`
 	PaymentMethod    string  `json:"paymentMethod"`
 	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
+type MarkIFTAReturnFiledInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// Between the moment the return was finalized and now.
+	FiledAt         int     `json:"filedAt"`
+	FilingReference *string `json:"filingReference,omitempty"`
 }
 
 type MatchRoutingGuideInput struct {
@@ -5446,6 +5724,10 @@ type ShipmentMove struct {
 	Stops             []*ShipmentStop             `json:"stops"`
 	Assignment        *ShipmentAssignment         `json:"assignment,omitempty"`
 	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty"`
+	// The move's distance split by jurisdiction from the distance provider's state
+	// report. Empty until the distance control captures jurisdiction miles or the
+	// move is recalculated; the whole distance is then unattributed on an IFTA return.
+	JurisdictionMiles []*shipment.ShipmentMoveJurisdictionMile `json:"jurisdictionMiles"`
 }
 
 // Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
@@ -5985,6 +6267,14 @@ type SortFieldInput struct {
 	Direction string `json:"direction"`
 }
 
+type StageFuelPurchaseImportInput struct {
+	ID string `json:"id"`
+	// The uploaded statement. The document must have been uploaded against this
+	// batch (resource type fuel_purchase_import) or staging is refused.
+	DocumentID string         `json:"documentId"`
+	Mapping    map[string]any `json:"mapping,omitempty"`
+}
+
 type StartWorkerChecklistInput struct {
 	WorkerID   string `json:"workerId"`
 	TemplateID string `json:"templateId"`
@@ -6182,6 +6472,8 @@ type TractorInput struct {
 	RegistrationExpiry      *int                         `json:"registrationExpiry,omitempty"`
 	Vin                     *string                      `json:"vin,omitempty"`
 	ExternalID              *string                      `json:"externalId,omitempty"`
+	FuelType                *domaintypes.IFTAFuelType    `json:"fuelType,omitempty"`
+	IFTAQualified           *bool                        `json:"iftaQualified,omitempty"`
 	Version                 *int                         `json:"version,omitempty"`
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
 }
@@ -6219,6 +6511,10 @@ type TractorPatchInput struct {
 	Vin graphql.Omittable[*string] `json:"vin,omitempty"`
 	// Omit to leave unchanged; pass null to clear.
 	ExternalID graphql.Omittable[*string] `json:"externalId,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	FuelType graphql.Omittable[*domaintypes.IFTAFuelType] `json:"fuelType,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	IFTAQualified graphql.Omittable[*bool] `json:"iftaQualified,omitempty"`
 	// Omit to leave unchanged; null is rejected.
 	Version graphql.Omittable[*int] `json:"version,omitempty"`
 	// Omit to leave unchanged; pass null to clear.
@@ -8232,6 +8528,7 @@ const (
 	SelectOptionResourceFuelIndex                 SelectOptionResource = "FUEL_INDEX"
 	SelectOptionResourceFuelSurchargeProgram      SelectOptionResource = "FUEL_SURCHARGE_PROGRAM"
 	SelectOptionResourceGlAccount                 SelectOptionResource = "GL_ACCOUNT"
+	SelectOptionResourceIFTAFuelType              SelectOptionResource = "IFTA_FUEL_TYPE"
 	SelectOptionResourceHazardousMaterial         SelectOptionResource = "HAZARDOUS_MATERIAL"
 	SelectOptionResourceLocation                  SelectOptionResource = "LOCATION"
 	SelectOptionResourceLocationCategory          SelectOptionResource = "LOCATION_CATEGORY"
@@ -8256,10 +8553,12 @@ const (
 	SelectOptionResourceEDIPartner                SelectOptionResource = "EDI_PARTNER"
 	SelectOptionResourceEDIPartnerDocumentProfile SelectOptionResource = "EDI_PARTNER_DOCUMENT_PROFILE"
 	SelectOptionResourceEDITemplate               SelectOptionResource = "EDI_TEMPLATE"
+	SelectOptionResourceEDITransactionSet         SelectOptionResource = "EDI_TRANSACTION_SET"
 	SelectOptionResourceEmailProfile              SelectOptionResource = "EMAIL_PROFILE"
 	SelectOptionResourceShiftTemplate             SelectOptionResource = "SHIFT_TEMPLATE"
 	SelectOptionResourceWorkerPolicy              SelectOptionResource = "WORKER_POLICY"
 	SelectOptionResourceJobPosition               SelectOptionResource = "JOB_POSITION"
+	SelectOptionResourceFuelCard                  SelectOptionResource = "FUEL_CARD"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
@@ -8282,6 +8581,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceFuelIndex,
 	SelectOptionResourceFuelSurchargeProgram,
 	SelectOptionResourceGlAccount,
+	SelectOptionResourceIFTAFuelType,
 	SelectOptionResourceHazardousMaterial,
 	SelectOptionResourceLocation,
 	SelectOptionResourceLocationCategory,
@@ -8306,15 +8606,17 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceEDIPartner,
 	SelectOptionResourceEDIPartnerDocumentProfile,
 	SelectOptionResourceEDITemplate,
+	SelectOptionResourceEDITransactionSet,
 	SelectOptionResourceEmailProfile,
 	SelectOptionResourceShiftTemplate,
 	SelectOptionResourceWorkerPolicy,
 	SelectOptionResourceJobPosition,
+	SelectOptionResourceFuelCard,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard:
 		return true
 	}
 	return false

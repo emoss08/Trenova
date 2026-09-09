@@ -41,6 +41,14 @@ const (
 	ResourceTractor               Resource = "tractor"
 	ResourceFleetCode             Resource = "fleet_code"
 
+	// Fuel & IFTA
+	ResourceFuelCard                Resource = "fuel_card"
+	ResourceFuelPurchase            Resource = "fuel_purchase"
+	ResourceFuelPurchaseImport      Resource = "fuel_purchase_import"
+	ResourceIFTAJurisdictionMileage Resource = "ifta_jurisdiction_mileage"
+	ResourceIFTAReturn              Resource = "ifta_return"
+	ResourceIFTATaxRate             Resource = "ifta_tax_rate"
+
 	// Workers
 	ResourceWorker                    Resource = "worker"
 	ResourceWorkerPTO                 Resource = "worker_pto"

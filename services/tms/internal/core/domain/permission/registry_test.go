@@ -406,7 +406,7 @@ func TestRegistry_RegisterAll_CategoriesExist(t *testing.T) {
 	reg := NewRegistry()
 
 	expectedCategories := []string{
-		"Administration", "Equipment", "Workers", "Operations",
+		"Administration", "Equipment", "Fuel & IFTA", "Workers", "Operations",
 		"Billing", "Customers", "Locations", "Commodities",
 		"Accounting", "Compliance", "Reference Data", "Reporting",
 	}
