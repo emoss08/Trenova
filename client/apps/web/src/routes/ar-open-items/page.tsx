@@ -1,4 +1,3 @@
-import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import {
   AgingDistributionBar,
   type AgingBucketTotals,
@@ -12,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent } from "@trenova/shared/components/ui/card";
+import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getEndOfDay } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -135,7 +135,7 @@ export function AROpenItemsPage() {
           </Button>
         ) : undefined,
       }}
-      className="p-2"
+      className="p-0 px-4 pt-2"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-3">

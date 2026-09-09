@@ -23,6 +23,9 @@ import { CheckIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 
+export const MISSING_OPTION_SOURCE_ERROR =
+  "Autocomplete needs either a GraphQL select-options resource or a REST link";
+
 export async function fetchOptions<T>(
   link: string,
   inputValue: string,
@@ -104,7 +107,7 @@ export function AutocompleteCommandContent<TOption>({
   filterOption,
 }: {
   open: boolean;
-  link: string;
+  link?: string;
   preload: boolean;
   label?: string;
   clearable: boolean;
@@ -161,6 +164,10 @@ export function AutocompleteCommandContent<TOption>({
           },
           { signal },
         )) as GenericLimitOffsetResponse<TOption>;
+      }
+
+      if (!link) {
+        throw new Error(MISSING_OPTION_SOURCE_ERROR);
       }
 
       return fetchOptions<TOption>(

@@ -11,13 +11,13 @@ import type { ModuleId } from "@/config/navigation.types";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { SIDEBAR_SECTION_KEYS } from "@/lib/graphql/sidebar-preferences";
 import { queries } from "@/lib/queries";
+import { useRecentPages } from "@/stores/recent-pages-store";
+import { useQuery } from "@tanstack/react-query";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
-import { useRecentPages } from "@/stores/recent-pages-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useQuery } from "@tanstack/react-query";
 import { ClockIcon, HomeIcon, SettingsIcon, SlidersHorizontalIcon, StarIcon } from "lucide-react";
 import { useState, type ReactElement } from "react";
 import { Link, useLocation } from "react-router";
@@ -74,7 +74,7 @@ function DomainColumn({
 }) {
   return (
     <div className="border-border flex min-w-0 flex-col gap-0.5 px-2 pt-3 pb-2.5 first:pl-3 not-first:border-l">
-      <span className="text-muted-foreground px-1.5 pb-1.5 text-2xs font-semibold tracking-wide select-none">
+      <span className="text-muted-foreground px-1.5 pb-1.5 text-xs font-medium tracking-wide select-none uppercase">
         {domain.label}
       </span>
       {domain.modules.map((module) => {
@@ -232,7 +232,7 @@ export function ModulesMenu({
         side={side}
         align={align}
         sideOffset={sideOffset}
-        className="w-[min(52rem,calc(100vw-1.5rem))] gap-0 overflow-hidden rounded-lg p-0"
+        className="w-[min(60rem,calc(100vw-1.5rem))] gap-0 overflow-hidden rounded-lg p-0"
       >
         <nav
           aria-label="Modules"

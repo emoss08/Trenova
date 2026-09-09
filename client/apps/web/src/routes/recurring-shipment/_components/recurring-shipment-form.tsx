@@ -10,10 +10,11 @@ import {
   recurringShipmentExceptionPolicyChoices,
   recurringShipmentStatusChoices,
   timezoneChoices,
+  timezoneGroupedChoices,
 } from "@/lib/choices";
 import { describeCron } from "@/lib/cron";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { RecurringShipment } from "@/types/recurring-shipment";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { CalendarClockIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -154,7 +155,15 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               label="Timezone"
               placeholder="Select timezone"
               rules={{ required: true }}
-              options={timezoneChoices}
+              groups={timezoneGroupedChoices}
+              renderOption={(option) => (
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span>{option.label}</span>
+                  {option.description && (
+                    <span className="text-muted-foreground text-xs">{option.description}</span>
+                  )}
+                </span>
+              )}
               description="Occurrence times are interpreted here, so the schedule holds across daylight saving shifts."
             />
           </FormControl>

@@ -6,6 +6,8 @@ import { RecommendedBadge } from "../recommended-badge";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { InfoIcon } from "lucide-react";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;
@@ -84,6 +86,22 @@ export function SwitchField<T extends FieldValues>({
             <div className="flex items-center gap-2">
               <Label htmlFor={inputId}>{label}</Label>
               {recommended && <RecommendedBadge size="sm" variant="warning" tooltip={tooltip} />}
+              {!recommended && tooltip && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        aria-label={`About ${label}`}
+                        className="text-muted-foreground/70 hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden"
+                      >
+                        <InfoIcon className="size-3" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
+                </Tooltip>
+              )}
             </div>
             {description && (
               <p

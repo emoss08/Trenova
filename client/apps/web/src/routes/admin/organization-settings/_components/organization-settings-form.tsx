@@ -4,6 +4,19 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
+import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import {
+  organizationSettingsTabParser,
+  type OrganizationSettingsTabValue,
+} from "@/hooks/use-organization-setting-state";
+import { timezoneGroupedChoices } from "@/lib/choices";
+import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
+import { validateCroppableImage } from "@/lib/images/crop-image";
+import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
@@ -18,30 +31,17 @@ import {
   type SegmentedControlItem,
 } from "@trenova/shared/components/ui/segmented-control";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import {
-  organizationSettingsTabParser,
-  type OrganizationSettingsTabValue,
-} from "@/hooks/use-organization-setting-state";
-import { timezoneGroupedChoices } from "@/lib/choices";
-import { validateCroppableImage } from "@/lib/images/crop-image";
-import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
-import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
-import { queries } from "@/lib/queries";
 import { isAbsoluteUrl } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import {
+  organizationSettingsSchema,
+  type OrganizationSettings,
+} from "@trenova/shared/types/organization";
 import {
   organizationCapabilityPresetValues,
   resolveOrganizationCapabilityPreset,
   type OrganizationCapabilityPreset,
 } from "@trenova/shared/types/organization-capability";
-import {
-  organizationSettingsSchema,
-  type OrganizationSettings,
-} from "@trenova/shared/types/organization";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
@@ -395,7 +395,6 @@ function GeneralForm() {
               label="Timezone"
               placeholder="Select timezone"
               groups={timezoneGroupedChoices}
-              // isReadOnly={isDisabled}
               renderOption={(option) => (
                 <span className="flex w-full items-center justify-between gap-3">
                   <span>{option.label}</span>

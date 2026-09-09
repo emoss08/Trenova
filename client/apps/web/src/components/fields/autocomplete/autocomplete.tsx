@@ -12,7 +12,7 @@ import React, { useCallback, useId, useMemo, useState } from "react";
 import type { Control, Path, RegisterOptions } from "react-hook-form";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
-import { AutocompleteCommandContent } from "./autocomplete-content";
+import { AutocompleteCommandContent, MISSING_OPTION_SOURCE_ERROR } from "./autocomplete-content";
 import { AutocompleteTrigger } from "./autocomplete-input";
 
 const optionRequestQueueByLink = new Map<string, Promise<void>>();
@@ -163,8 +163,15 @@ export interface BaseAutocompleteFieldProps<
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _TForm extends FieldValues,
 > {
-  /** Link to fetch options */
-  link: SELECT_OPTIONS_ENDPOINTS;
+  /**
+   * Link to fetch options over REST. Optional only because a select-option
+   * resource that exists solely behind GraphQL has no REST route to name; every
+   * picker must pass either this or `graphql`, or the queries throw
+   * MISSING_OPTION_SOURCE_ERROR.
+   */
+  link?: SELECT_OPTIONS_ENDPOINTS;
+  /** Optional GraphQL select-options resource. REST link remains the compatibility fallback. */
+  graphql?: GraphQLSelectOptionsConfig;
   /** Optional link to fetch selected value details by id */
   selectedValueLink?: API_ENDPOINTS;
   /** Preload all data ahead of time */
@@ -209,8 +216,6 @@ export interface BaseAutocompleteFieldProps<
   onOptionChange?: (option: TOption | null) => void;
   /** Extra search params to append to the query */
   extraSearchParams?: Record<string, string | string[]>;
-  /** Optional GraphQL select-options resource. REST link remains the compatibility fallback. */
-  graphql?: GraphQLSelectOptionsConfig;
   /** Popout link to open in a new window */
   popoutLink?: string;
 
@@ -309,6 +314,10 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
           normalizedGraphQLFilters,
           { signal },
         )) as TOption | null;
+      }
+
+      if (!valueLookupLink) {
+        throw new Error(MISSING_OPTION_SOURCE_ERROR);
       }
 
       const candidates = buildSelectedValueLookupCandidates(valueLookupLink, value);

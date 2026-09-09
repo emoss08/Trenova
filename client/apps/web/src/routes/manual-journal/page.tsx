@@ -18,6 +18,7 @@ export function ManualJournalsPage() {
         title: "Manual Journals",
         description: "Create and manage manual journal entries.",
       }}
+      className="p-0"
     >
       <div className="mx-4 mt-3 mb-4">
         <DataTable<ManualJournalRow>

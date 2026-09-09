@@ -3,11 +3,11 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { fieldTypeChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { CustomFieldDefinition } from "@/types/custom-field";
 import { useQuery } from "@tanstack/react-query";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useFormContext, useWatch } from "react-hook-form";
 import { SelectOptionsField } from "./select-options-field";
 
@@ -87,6 +87,7 @@ export function CustomFieldDefinitionForm() {
           control={control}
           name="isRequired"
           label="Required"
+          outlined
           description="Users must provide a value"
         />
       </FormControl>
@@ -95,6 +96,7 @@ export function CustomFieldDefinitionForm() {
           control={control}
           name="isActive"
           label="Active"
+          outlined
           description="Field is visible and usable"
         />
       </FormControl>

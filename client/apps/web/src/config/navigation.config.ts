@@ -6,6 +6,7 @@ import {
   CalculatorIcon,
   ContainerIcon,
   FileSlidersIcon,
+  FuelIcon,
   HandshakeIcon,
   HomeIcon,
   Package,
@@ -363,6 +364,66 @@ const equipmentModule: NavModule = {
   ],
 };
 
+const fuelModule: NavModule = {
+  id: "fuel",
+  label: "Fuel & Tax",
+  shortLabel: "Fuel",
+  icon: FuelIcon,
+  description: "Fuel spend, surcharge pricing, and IFTA",
+  basePath: "/fuel",
+  navigation: [
+    {
+      id: "fuel-purchases",
+      label: "Fuel Purchases",
+      path: "/fuel/purchases",
+      resource: Resource.FuelPurchase,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "jurisdiction-mileage",
+      label: "Jurisdiction Mileage",
+      path: "/fuel/jurisdiction-mileage",
+      resource: Resource.IFTAJurisdictionMileage,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "ifta-returns",
+      label: "IFTA Returns",
+      path: "/fuel/ifta-returns",
+      resource: Resource.IFTAReturn,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "fuel-config-group",
+      label: "Configuration Files",
+      kind: "configuration",
+      defaultOpen: false,
+      items: [
+        {
+          id: "fuel-cards",
+          label: "Fuel Cards",
+          path: "/fuel/configuration-files/fuel-cards",
+          resource: Resource.FuelCard,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "ifta-tax-rates",
+          label: "IFTA Tax Rates",
+          path: "/fuel/configuration-files/ifta-tax-rates",
+          resource: Resource.IFTATaxRate,
+          capability: OrganizationCapability.AssetOperations,
+        },
+        {
+          id: "fuel-surcharge",
+          label: "Fuel Surcharge",
+          path: "/fuel/configuration-files/surcharge",
+          resource: Resource.FuelSurchargeProgram,
+        },
+      ],
+    },
+  ],
+};
+
 const billingModule: NavModule = {
   id: "billing",
   label: "Billing Management",
@@ -400,12 +461,6 @@ const billingModule: NavModule = {
       label: "Batch Monitor",
       path: "/billing/adjustment-batches",
       resource: Resource.Invoice,
-    },
-    {
-      id: "fuel-management",
-      label: "Fuel Management",
-      path: "/billing/fuel-management",
-      resource: Resource.FuelSurchargeProgram,
     },
     {
       id: "rate-agreements",
@@ -879,6 +934,7 @@ export const navigationConfig: NavigationConfig = {
     dispatchModule,
     humanResourcesModule,
     equipmentModule,
+    fuelModule,
     billingModule,
     detentionModule,
     payrollModule,
@@ -1022,7 +1078,7 @@ export const navigationConfig: NavigationConfig = {
       id: "create-fuel-surcharge-program",
       label: "Create Fuel Surcharge Program",
       description: "Add a new fuel surcharge program",
-      path: "/billing/fuel-management",
+      path: "/fuel/configuration-files/surcharge",
       resource: Resource.FuelSurchargeProgram,
       requiredOperation: Operation.Create,
       query: { tab: "programs" },
@@ -1057,6 +1113,28 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["tractor", "equipment"],
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "record-fuel-purchase",
+      label: "Record Fuel Purchase",
+      description: "Key a fuel receipt against a tractor",
+      path: "/fuel/purchases",
+      resource: Resource.FuelPurchase,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["fuel", "purchase", "diesel", "ifta", "receipt"],
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "import-fuel-card-statement",
+      label: "Import Fuel Card Statement",
+      description: "Stage a Comdata, EFS or WEX statement for review",
+      path: "/fuel/purchases",
+      resource: Resource.FuelPurchaseImport,
+      requiredOperation: Operation.Create,
+      query: { import: "fuel-card" },
+      keywords: ["fuel", "card", "statement", "import", "comdata", "efs", "wex"],
       capability: OrganizationCapability.AssetOperations,
     },
     {
@@ -1263,7 +1341,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "operations",
     label: "Operations",
-    moduleIds: ["shipment", "dispatch", "fleet", "edi"],
+    moduleIds: ["shipment", "dispatch", "fleet", "fuel", "edi"],
   },
   {
     id: "people",

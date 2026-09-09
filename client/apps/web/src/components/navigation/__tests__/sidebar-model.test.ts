@@ -160,6 +160,7 @@ describe("groupModulesByDomain", () => {
       "shipment",
       "dispatch",
       "fleet",
+      "fuel",
       "edi",
     ]);
     expect(domains[1].modules.map((module) => module.id)).toEqual(["hr", "payroll"]);

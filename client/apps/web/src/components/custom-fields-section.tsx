@@ -53,9 +53,11 @@ function CustomFieldRenderer<T extends FieldValues>({
       );
 
     case "number":
+      // A custom field's kind lives in its definition, not in the form's static
+      // shape, so the field settles number vs decimal string from the value.
       return (
-        <NumberField
-          control={control}
+        <NumberField<FieldValues>
+          control={control as Control<FieldValues>}
           name={fieldName}
           label={definition.label}
           description={definition.description}

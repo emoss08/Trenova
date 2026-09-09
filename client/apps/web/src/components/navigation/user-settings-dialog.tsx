@@ -1,7 +1,14 @@
-import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
-import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
+import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
+import { validateCroppableImage } from "@/lib/images/crop-image";
+import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -13,15 +20,8 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { timeFormatChoices, timezoneChoices } from "@/lib/choices";
-import { validateCroppableImage } from "@/lib/images/crop-image";
-import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
-import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ChangeMyPassword, UpdateMySettings, User } from "@trenova/shared/types/user";
-import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Globe, KeyRound, Mail, Trash2 } from "lucide-react";
 import type { ChangeEvent, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -283,10 +283,22 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                 <FormControl>
                   <SelectField
                     control={settingsForm.control}
+                    rules={{ required: true }}
                     name="timezone"
                     label="Timezone"
-                    options={timezoneChoices}
-                    rules={{ required: "Timezone is required" }}
+                    placeholder="Select timezone"
+                    groups={timezoneGroupedChoices}
+                    // isReadOnly={isDisabled}
+                    renderOption={(option) => (
+                      <span className="flex w-full items-center justify-between gap-3">
+                        <span>{option.label}</span>
+                        {option.description && (
+                          <span className="text-muted-foreground text-xs">
+                            {option.description}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   />
                 </FormControl>
                 <FormControl>

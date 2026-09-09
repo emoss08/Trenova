@@ -1,12 +1,18 @@
 import { cn } from "@trenova/shared/lib/utils";
+import {
+  addDecimalStrings,
+  compareDecimalStrings,
+  formatDecimalString,
+  isDecimalString,
+} from "@trenova/shared/types/decimal";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { Controller, type FieldValues } from "react-hook-form";
+import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { FieldWrapper } from "./field-components";
 
 type BaseNumberFieldProps = {
-  label?: string;
+  label?: React.ReactNode;
   description?: string;
   className?: string;
   placeholder?: string;
@@ -27,9 +33,59 @@ type BaseNumberFieldProps = {
   step?: number;
 };
 
-export type NumberFieldProps<T extends FieldValues> = BaseNumberFieldProps & FormControlProps<T>;
+/**
+ * How the field writes back into form state.
+ *
+ * Money and other exact quantities are decimal strings end to end — the schema
+ * validates a string, the GraphQL `Decimal` scalar carries a string — so a
+ * field bound to one has to hand back the digits it was given rather than a
+ * float that has already lost them.
+ */
+export type NumberFieldValueType = "number" | "string";
 
-export function NumberField<T extends FieldValues>({
+/**
+ * Fields whose value can only be a string must say so; the choice is optional
+ * only where the bound value could be either (a dynamic or untyped control).
+ */
+type ValueTypeProps<TValue> = [Extract<TValue, string>] extends [never]
+  ? { valueType?: "number" }
+  : [Extract<TValue, number>] extends [never]
+    ? { valueType: "string" }
+    : { valueType?: NumberFieldValueType };
+
+export type NumberFieldProps<
+  T extends FieldValues,
+  TName extends Path<T> = Path<T>,
+> = BaseNumberFieldProps &
+  Omit<FormControlProps<T>, "name"> & { name: TName } & ValueTypeProps<FieldPathValue<T, TName>>;
+
+type NumberFieldImplProps<T extends FieldValues> = BaseNumberFieldProps &
+  FormControlProps<T> & { valueType?: NumberFieldValueType };
+
+function textOf(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return "";
+}
+
+function stepDecimalString(current: string, delta: number, scale: number): string {
+  const base = isDecimalString(current) ? current : "0";
+  return addDecimalStrings([base, delta.toString()], scale);
+}
+
+function clampDecimalString(
+  value: string,
+  bound: number,
+  direction: "min" | "max",
+  scale: number,
+): string {
+  const limit = bound.toString();
+  const comparison = compareDecimalStrings(value, limit);
+  const outside = direction === "max" ? comparison > 0 : comparison < 0;
+  return outside ? formatDecimalString(limit, scale) : value;
+}
+
+function NumberFieldImpl<T extends FieldValues>({
   name,
   control,
   description,
@@ -48,8 +104,9 @@ export function NumberField<T extends FieldValues>({
   min,
   max,
   step = 1,
+  valueType,
   ...props
-}: NumberFieldProps<T>) {
+}: NumberFieldImplProps<T>) {
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -60,7 +117,27 @@ export function NumberField<T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field, fieldState }) => {
+        // An untyped control (custom fields, dynamic rows) declares nothing, so
+        // fall back to the kind the value already has and keep it that kind.
+        const asString = valueType ? valueType === "string" : typeof field.value === "string";
         const currentValue = typeof field.value === "number" ? field.value : 0;
+
+        const stepBy = (delta: number, bound: number | undefined, direction: "min" | "max") => {
+          if (asString) {
+            const next = stepDecimalString(textOf(field.value), delta, decimalScale);
+            field.onChange(
+              bound === undefined ? next : clampDecimalString(next, bound, direction, decimalScale),
+            );
+            return;
+          }
+
+          const next = currentValue + delta;
+          if (bound === undefined) {
+            field.onChange(next);
+            return;
+          }
+          field.onChange(direction === "max" ? Math.min(next, bound) : Math.max(next, bound));
+        };
 
         return (
           <FieldWrapper
@@ -74,7 +151,7 @@ export function NumberField<T extends FieldValues>({
               <NumericFormat
                 value={field.value ?? ""}
                 onValueChange={(values) => {
-                  field.onChange(values.floatValue ?? null);
+                  field.onChange(asString ? values.value : (values.floatValue ?? null));
                 }}
                 onBlur={field.onBlur}
                 getInputRef={field.ref}
@@ -90,7 +167,7 @@ export function NumberField<T extends FieldValues>({
                 id={inputId}
                 disabled={props.disabled}
                 readOnly={props.readOnly}
-                aria-label={props["aria-label"] || label}
+                aria-label={props["aria-label"]}
                 aria-describedby={cn(
                   description && descriptionId,
                   fieldState.error && errorId,
@@ -124,11 +201,7 @@ export function NumberField<T extends FieldValues>({
                     aria-label="Increment"
                     className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
-                    onClick={() => {
-                      let next = currentValue + step;
-                      if (max !== undefined) next = Math.min(next, max);
-                      field.onChange(next);
-                    }}
+                    onClick={() => stepBy(step, max, "max")}
                   >
                     <ChevronUpIcon className="h-3 w-3" />
                   </button>
@@ -137,11 +210,7 @@ export function NumberField<T extends FieldValues>({
                     aria-label="Decrement"
                     className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
-                    onClick={() => {
-                      let next = currentValue - step;
-                      if (min !== undefined) next = Math.max(next, min);
-                      field.onChange(next);
-                    }}
+                    onClick={() => stepBy(-step, min, "min")}
                   >
                     <ChevronDownIcon className="h-3 w-3" />
                   </button>
@@ -154,3 +223,10 @@ export function NumberField<T extends FieldValues>({
     />
   );
 }
+
+export const NumberField = NumberFieldImpl as <
+  T extends FieldValues,
+  TName extends Path<T> = Path<T>,
+>(
+  props: NumberFieldProps<T, TName>,
+) => React.ReactElement;

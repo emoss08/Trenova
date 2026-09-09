@@ -1,4 +1,3 @@
-import type { AccessorialChargeMethod, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { AccountCategory } from "@/types/account-type";
 import type {
   AccountingBasis,
@@ -17,20 +16,6 @@ import type {
   RevenueRecognitionPolicy,
 } from "@/types/accounting-control";
 import type { BankReceiptStatus } from "@/types/bank-receipt";
-import type {
-  PayAdvanceSource,
-  PayCalcMethod,
-  PayComponentKind,
-  PayPeriodFrequency,
-  PayRevenueBasis,
-  PayeeClassification,
-  PayCodeDirection,
-  RecurringDeductionFrequency,
-  RecurringDeductionStatus,
-  RecurringEarningFrequency,
-  RecurringEarningStatus,
-  SettlementPayTrigger,
-} from "@trenova/shared/types/driver-pay";
 import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
 import type { ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
 import type {
@@ -45,6 +30,63 @@ import type {
   TransferSchedule,
   UnratedShipmentDisposition,
 } from "@/types/billing-control";
+import type { FieldType } from "@/types/custom-field";
+import type { CaseFormat } from "@/types/data-entry-control";
+import type {
+  AutoAssignmentStrategy,
+  ComplianceEnforcementLevel,
+  ServiceIncidentType,
+} from "@/types/dispatch-control";
+import type { DistanceProfile } from "@/types/distance-profile";
+import type { ResourceType } from "@/types/document-packet-rule";
+import type { DocumentKind } from "@/types/document-parsing-rule";
+import type { EquipmentClass } from "@/types/equipment-type";
+import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
+import type { FiscalYearStatus } from "@/types/fiscal-year";
+import type {
+  FuelIndexSource,
+  FuelSurchargeDateBasis,
+  FuelSurchargeFallback,
+  FuelSurchargePercentBasis,
+  FuelSurchargeProgramMethod,
+  FuelSurchargeProgramStatus,
+  FuelSurchargeRateRounding,
+  FuelSurchargeStepRounding,
+  FuelType,
+} from "@/types/fuel-surcharge";
+import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
+import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
+import type { HoldSeverity, HoldType } from "@/types/hold-reason";
+import type {
+  AdjustmentAccountingDatePolicy,
+  AdjustmentAttachmentPolicy,
+  AdjustmentEligibilityPolicy,
+  ApprovalPolicy,
+  ClosedPeriodAdjustmentPolicy,
+  CustomerCreditBalancePolicy,
+  OverCreditPolicy,
+  ReplacementInvoiceReviewPolicy,
+  RequirementPolicy,
+  SupersededInvoiceVisibilityPolicy,
+  WriteOffApprovalPolicy,
+} from "@/types/invoice-adjustment-control";
+import type { JournalReversalStatus } from "@/types/journal-reversal";
+import type { FacilityType, LocationCategoryType } from "@/types/location-category";
+import type { ManualJournalStatus } from "@/types/manual-journal";
+import type {
+  RecurringShipmentExceptionPolicy,
+  RecurringShipmentStatus,
+} from "@/types/recurring-shipment";
+import type {
+  ServiceFailureSource,
+  ServiceFailureStatus,
+  ServiceFailureType,
+} from "@/types/service-failure";
+import type {
+  ServiceFailureReasonCategory,
+  ServiceFailureReasonCodeAppliesTo,
+} from "@/types/service-failure-reason-code";
+import type { AccessorialChargeMethod, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import type {
   CarrierComplianceStatus,
@@ -63,9 +105,7 @@ import type {
   CarrierSettlementBatchStatus,
   CarrierSettlementStatus,
 } from "@trenova/shared/types/carrier-settlement";
-import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type { FreightClass } from "@trenova/shared/types/commodity";
-import type { FieldType } from "@/types/custom-field";
 import type {
   BillingCycleType,
   ConsolidationGroupBy,
@@ -77,87 +117,73 @@ import type {
   InvoiceNumberFormat,
 } from "@trenova/shared/types/customer";
 import type { PaymentMethod } from "@trenova/shared/types/customer-payment";
-import type { CaseFormat } from "@/types/data-entry-control";
-import type {
-  AutoAssignmentStrategy,
-  ComplianceEnforcementLevel,
-  ServiceIncidentType,
-} from "@/types/dispatch-control";
-import type { DistanceProfile } from "@/types/distance-profile";
-import type { ResourceType } from "@/types/document-packet-rule";
-import type { DocumentKind } from "@/types/document-parsing-rule";
 import type { DocumentCategory, DocumentClassification } from "@trenova/shared/types/document-type";
+import type {
+  PayAdvanceSource,
+  PayCalcMethod,
+  PayCodeDirection,
+  PayComponentKind,
+  PayPeriodFrequency,
+  PayRevenueBasis,
+  PayeeClassification,
+  RecurringDeductionFrequency,
+  RecurringDeductionStatus,
+  RecurringEarningFrequency,
+  RecurringEarningStatus,
+  SettlementPayTrigger,
+} from "@trenova/shared/types/driver-pay";
 import type {
   EDIInboundFileStatus,
   EDIMessageAcknowledgmentStatus,
   EDIMessageDeliveryStatus,
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
-import type { EquipmentClass } from "@/types/equipment-type";
 import type {
   GenericSelectOption,
   SelectOption,
   SelectOptionGroup,
 } from "@trenova/shared/types/fields";
-import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
-import type { FiscalYearStatus } from "@/types/fiscal-year";
 import type {
   FormulaTemplateStatus,
   FormulaTemplateType,
 } from "@trenova/shared/types/formula-template";
-import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
-import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
+import {
+  FUEL_CARD_PROVIDER_LABELS,
+  FUEL_CARD_STATUS_LABELS,
+  FUEL_PURCHASE_IMPORT_STATUS_LABELS,
+  FUEL_PURCHASE_SOURCE_LABELS,
+  FUEL_QUANTITY_UNIT_LABELS,
+  IFTA_FUEL_TYPE_LABELS,
+  IFTA_MILEAGE_SOURCE_LABELS,
+  IFTA_QUARTER_LABELS,
+  IFTA_RETURN_STATUS_LABELS,
+  fuelCardProviderSchema,
+  fuelPurchaseSourceSchema,
+  fuelQuantityUnitSchema,
+  iftaFuelTypeSchema,
+  iftaMileageSourceSchema,
+  iftaQuarterSchema,
+  type FuelCardProvider,
+  type FuelCardStatus,
+  type FuelPurchaseImportStatus,
+  type FuelPurchaseSource,
+  type FuelQuantityUnit,
+  type IftaFuelType,
+  type IftaMileageSource,
+  type IftaQuarter,
+  type IftaReturnStatus,
+} from "@trenova/shared/types/fuel-ifta-enums";
 import type { EquipmentStatus, Status } from "@trenova/shared/types/helpers";
-import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type { InvoiceStatus } from "@trenova/shared/types/invoice";
-import type { OrderStatus } from "@trenova/shared/types/order";
-import type {
-  AdjustmentAccountingDatePolicy,
-  AdjustmentAttachmentPolicy,
-  AdjustmentEligibilityPolicy,
-  ApprovalPolicy,
-  ClosedPeriodAdjustmentPolicy,
-  CustomerCreditBalancePolicy,
-  OverCreditPolicy,
-  ReplacementInvoiceReviewPolicy,
-  RequirementPolicy,
-  SupersededInvoiceVisibilityPolicy,
-  WriteOffApprovalPolicy,
-} from "@/types/invoice-adjustment-control";
-import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { LocationGeofenceType } from "@trenova/shared/types/location";
-import type { FacilityType, LocationCategoryType } from "@/types/location-category";
-import type { ManualJournalStatus } from "@/types/manual-journal";
-import type {
-  FuelIndexSource,
-  FuelSurchargeDateBasis,
-  FuelType,
-  FuelSurchargeFallback,
-  FuelSurchargePercentBasis,
-  FuelSurchargeProgramMethod,
-  FuelSurchargeProgramStatus,
-  FuelSurchargeRateRounding,
-  FuelSurchargeStepRounding,
-} from "@/types/fuel-surcharge";
-import type {
-  RecurringShipmentExceptionPolicy,
-  RecurringShipmentStatus,
-} from "@/types/recurring-shipment";
+import type { OrderStatus } from "@trenova/shared/types/order";
+import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type {
   CoreResponsibility,
   DataScope,
   FieldSensitivity,
   Operation,
 } from "@trenova/shared/types/role";
-import type {
-  ServiceFailureSource,
-  ServiceFailureStatus,
-  ServiceFailureType,
-} from "@/types/service-failure";
-import type {
-  ServiceFailureReasonCategory,
-  ServiceFailureReasonCodeAppliesTo,
-} from "@/types/service-failure-reason-code";
 import type {
   CarrierAssignmentStatus,
   CarrierRateMethod,
@@ -2273,3 +2299,53 @@ export const rateMatrixRangeOverflowChoices = [
   { label: "Clamp to top band", value: "ClampToTopBand" },
   { label: "Nearest band", value: "Nearest" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const fuelCardProviderChoices = fuelCardProviderSchema.options.map((value) => ({
+  label: FUEL_CARD_PROVIDER_LABELS[value],
+  value,
+})) satisfies ReadonlyArray<GenericSelectOption<FuelCardProvider>>;
+
+export const fuelCardStatusChoices = [
+  { label: FUEL_CARD_STATUS_LABELS.Active, value: "Active", color: "#15803d" },
+  { label: FUEL_CARD_STATUS_LABELS.Suspended, value: "Suspended", color: "#b45309" },
+  { label: FUEL_CARD_STATUS_LABELS.Cancelled, value: "Cancelled", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelCardStatus>>;
+
+export const fuelPurchaseSourceChoices = fuelPurchaseSourceSchema.options.map((value) => ({
+  label: FUEL_PURCHASE_SOURCE_LABELS[value],
+  value,
+})) satisfies ReadonlyArray<GenericSelectOption<FuelPurchaseSource>>;
+
+export const iftaFuelTypeChoices = iftaFuelTypeSchema.options.map((value) => ({
+  label: IFTA_FUEL_TYPE_LABELS[value],
+  value,
+})) satisfies ReadonlyArray<GenericSelectOption<IftaFuelType>>;
+
+export const fuelQuantityUnitChoices = fuelQuantityUnitSchema.options.map((value) => ({
+  label: FUEL_QUANTITY_UNIT_LABELS[value],
+  value,
+})) satisfies ReadonlyArray<GenericSelectOption<FuelQuantityUnit>>;
+
+export const iftaReturnStatusChoices = [
+  { label: IFTA_RETURN_STATUS_LABELS.Draft, value: "Draft", color: "#6b7280" },
+  { label: IFTA_RETURN_STATUS_LABELS.Finalized, value: "Finalized", color: "#1d4ed8" },
+  { label: IFTA_RETURN_STATUS_LABELS.Filed, value: "Filed", color: "#15803d" },
+] satisfies ReadonlyArray<GenericSelectOption<IftaReturnStatus>>;
+
+export const iftaQuarterChoices = iftaQuarterSchema.options.map((value) => ({
+  label: IFTA_QUARTER_LABELS[value],
+  value,
+})) satisfies ReadonlyArray<GenericSelectOption<IftaQuarter>>;
+
+export const iftaMileageSourceChoices = iftaMileageSourceSchema.options.map((value) => ({
+  label: IFTA_MILEAGE_SOURCE_LABELS[value],
+  value,
+})) satisfies ReadonlyArray<GenericSelectOption<IftaMileageSource>>;
+
+export const fuelPurchaseImportStatusChoices = [
+  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Pending, value: "Pending", color: "#b45309" },
+  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Parsed, value: "Parsed", color: "#1d4ed8" },
+  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Committed, value: "Committed", color: "#15803d" },
+  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Failed, value: "Failed", color: "#dc2626" },
+  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Discarded, value: "Discarded", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelPurchaseImportStatus>>;

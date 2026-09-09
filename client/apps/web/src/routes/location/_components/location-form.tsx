@@ -6,11 +6,11 @@ import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { statusChoices, timezoneChoices } from "@/lib/choices";
+import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import type { Location } from "@trenova/shared/types/location";
 import { useQuery } from "@tanstack/react-query";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import type { Location } from "@trenova/shared/types/location";
 import { useFormContext } from "react-hook-form";
 import { LocationGeofenceControls } from "./location-geofence-editor";
 
@@ -122,7 +122,15 @@ export function LocationForm() {
                 placeholder="Not set (UTC)"
                 isClearable
                 description="Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC."
-                options={timezoneChoices}
+                groups={timezoneGroupedChoices}
+                renderOption={(option) => (
+                  <span className="flex w-full items-center justify-between gap-3">
+                    <span>{option.label}</span>
+                    {option.description && (
+                      <span className="text-muted-foreground text-xs">{option.description}</span>
+                    )}
+                  </span>
+                )}
               />
             </FormControl>
           </FormGroup>

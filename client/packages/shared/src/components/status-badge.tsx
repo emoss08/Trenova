@@ -35,6 +35,11 @@ import type {
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
 import type { TenderOfferStatus, TenderStatus } from "@trenova/shared/types/tender";
+import type {
+  FuelCardStatus,
+  FuelPurchaseImportStatus,
+  IftaReturnStatus,
+} from "@trenova/shared/types/fuel-ifta-enums";
 import { ptoTypeMeta } from "../lib/pto";
 import type { PTOStatus, PTOType } from "@trenova/shared/types/worker";
 import type { VariantProps } from "class-variance-authority";
@@ -1494,6 +1499,128 @@ export function RateConfirmationStatusBadge({
       variant: "inactive",
       text: "Voided",
       description: "Superseded by a newer revision or voided manually.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function IftaReturnStatusBadge({
+  status,
+  className,
+}: {
+  status: IftaReturnStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<IftaReturnStatus, BadgeAttrProps> = {
+    Draft: {
+      variant: "secondary",
+      text: "Draft",
+      description: "Worksheet can still change",
+      icon: <ClockIcon />,
+    },
+    Finalized: {
+      variant: "info",
+      text: "Finalized",
+      description: "Locked; reopen with a reason to change",
+      icon: <LockIcon />,
+    },
+    Filed: {
+      variant: "active",
+      text: "Filed",
+      description: "Submitted to the base jurisdiction",
+      icon: <CheckCheckIcon />,
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].icon}
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function FuelPurchaseImportStatusBadge({
+  status,
+  className,
+}: {
+  status: FuelPurchaseImportStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<FuelPurchaseImportStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "warning",
+      text: "Pending",
+      description: "Statement received; waiting to be parsed.",
+    },
+    Parsed: {
+      variant: "info",
+      text: "Parsed",
+      description: "Rows are ready for review; nothing is imported until you commit.",
+    },
+    Committed: {
+      variant: "active",
+      text: "Committed",
+      description: "New rows became fuel purchases.",
+    },
+    Discarded: {
+      variant: "outline",
+      text: "Discarded",
+      description: "Thrown away without importing anything.",
+    },
+    Failed: {
+      variant: "inactive",
+      text: "Failed",
+      description: "The statement could not be parsed; fix the file and stage it again.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function FuelCardStatusBadge({
+  status,
+  className,
+}: {
+  status: FuelCardStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<FuelCardStatus, BadgeAttrProps> = {
+    Active: {
+      variant: "active",
+      text: "Active",
+      description: "Purchases on this card import and record normally.",
+    },
+    Suspended: {
+      variant: "warning",
+      text: "Suspended",
+      description: "Temporarily on hold; imported purchases are flagged until it is reactivated.",
+    },
+    Cancelled: {
+      variant: "inactive",
+      text: "Cancelled",
+      description: "Closed with the provider; it cannot be reactivated.",
     },
   };
 

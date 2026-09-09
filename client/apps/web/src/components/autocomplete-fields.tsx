@@ -299,6 +299,10 @@ const ediDocumentTypeSelectOptionsGraphQL = {
   resource: "EDI_DOCUMENT_TYPE",
 } satisfies GraphQLSelectOptionsConfig;
 
+const ediTransactionSetSelectOptionsGraphQL = {
+  resource: "EDI_TRANSACTION_SET",
+} satisfies GraphQLSelectOptionsConfig;
+
 const ediMappingProfileSelectOptionsGraphQL = {
   resource: "EDI_MAPPING_PROFILE",
 } satisfies GraphQLSelectOptionsConfig;
@@ -1056,6 +1060,23 @@ export function EDIDocumentTypeAutocompleteField<T extends FieldValues>({
   );
 }
 
+export function EDITransactionSetAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/edi/catalog/transaction-sets/select-options/"
+      graphql={ediTransactionSetSelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
+      )}
+      {...props}
+    />
+  );
+}
+
 export function EDITemplateAutocompleteField<T extends FieldValues>({
   transactionSet,
   direction,
@@ -1717,7 +1738,7 @@ export function FuelIndexAutocompleteField<T extends FieldValues>({
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fuel-indices/select-options/"
       graphql={fuelIndexSelectOptionsGraphQL}
-      popoutLink="/billing/fuel-management"
+      popoutLink="/fuel/configuration-files/surcharge"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => {
         const region = selectOptionMetaString(option, "region");
@@ -1757,7 +1778,7 @@ export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fuel-surcharge-programs/select-options/"
       graphql={fuelSurchargeProgramSelectOptionsGraphQL}
-      popoutLink="/billing/fuel-management"
+      popoutLink="/fuel/configuration-files/surcharge"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
@@ -2060,6 +2081,63 @@ export function WorkerPolicyAutocompleteField<T extends FieldValues>({
             {selectOptionMetaString(option, "code")} · v
             {selectOptionMetaString(option, "versionLabel")}
           </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+const fuelCardSelectOptionsGraphQL = {
+  resource: "FUEL_CARD",
+} satisfies GraphQLSelectOptionsConfig;
+
+export function FuelCardAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/fuel-cards/select-options/"
+      graphql={fuelCardSelectOptionsGraphQL}
+      popoutLink="/fuel/configuration-files/fuel-cards"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "provider")}
+            {selectOptionMetaString(option, "lastFour")
+              ? ` · •••• ${selectOptionMetaString(option, "lastFour")}`
+              : ""}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+const iftaFuelTypeSelectOptionsGraphQL = {
+  resource: "IFTA_FUEL_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+export function IftaFuelTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={iftaFuelTypeSelectOptionsGraphQL}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          {option.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
         </div>
       )}
       {...props}
