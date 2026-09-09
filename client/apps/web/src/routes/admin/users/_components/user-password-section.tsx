@@ -1,5 +1,6 @@
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { Button } from "@trenova/shared/components/ui/button";
+import { handleMutationError } from "@/hooks/use-api-mutation";
 import { resetUserPassword } from "@/lib/user-api";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,17 +17,17 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
 
   const handleResetPassword = async () => {
     setIsResetting(true);
-    await resetUserPassword(userId)
-      .then(async () => {
-        await queryClient.invalidateQueries({ queryKey: ["user", userId] });
-        toast.success("Password reset email sent");
-      })
-      .catch(() => {
-        toast.error("Failed to send password reset email");
-      })
-      .finally(() => {
-        setIsResetting(false);
-      });
+    try {
+      await resetUserPassword(userId);
+      await queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      toast.success("Password reset link sent");
+    } catch (error) {
+      // Surfaces what the server actually said. The previous fixed string hid the fact
+      // that this button was calling a route that did not exist.
+      handleMutationError({ error, resourceName: "Password reset" });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -48,6 +49,10 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
           <Button type="button" onClick={handleResetPassword} disabled={isResetting}>
             {isResetting ? "Sending..." : "Send Reset Email"}
           </Button>
+          <p className="text-muted-foreground text-2xs">
+            Emails this user a single-use link to choose their own password. Their current password
+            keeps working until they use it, and you never see the new one.
+          </p>
           <Button
             type="button"
             variant="outline"

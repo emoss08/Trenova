@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/passwordresetservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -26,6 +27,7 @@ type Params struct {
 
 	Service              *userservice.Service
 	RoleService          *roleservice.Service
+	PasswordReset        *passwordresetservice.Service
 	Config               *config.Config
 	PermissionEngine     services.PermissionEngine
 	ErrorHandler         *helpers.ErrorHandler
@@ -33,22 +35,24 @@ type Params struct {
 }
 
 type Handler struct {
-	service     *userservice.Service
-	roleService *roleservice.Service
-	cfg         *config.Config
-	permEngine  services.PermissionEngine
-	eh          *helpers.ErrorHandler
-	pm          *middleware.PermissionMiddleware
+	service       *userservice.Service
+	roleService   *roleservice.Service
+	passwordReset *passwordresetservice.Service
+	cfg           *config.Config
+	permEngine    services.PermissionEngine
+	eh            *helpers.ErrorHandler
+	pm            *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:     p.Service,
-		roleService: p.RoleService,
-		cfg:         p.Config,
-		permEngine:  p.PermissionEngine,
-		eh:          p.ErrorHandler,
-		pm:          p.PermissionMiddleware,
+		service:       p.Service,
+		roleService:   p.RoleService,
+		passwordReset: p.PasswordReset,
+		cfg:           p.Config,
+		permEngine:    p.PermissionEngine,
+		eh:            p.ErrorHandler,
+		pm:            p.PermissionMiddleware,
 	}
 }
 
@@ -88,6 +92,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/bulk-update-status/",
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
 		h.bulkUpdateStatus,
+	)
+	api.POST(
+		"/:userID/reset-password/",
+		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
+		h.sendPasswordReset,
 	)
 	api.GET(
 		"/:userID/organization-memberships/",

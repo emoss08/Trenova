@@ -1,35 +1,7 @@
-import type { User } from "@trenova/shared/types/user";
 import { api } from "@trenova/shared/lib/api";
 
-export type ListUsersParams = {
-  limit?: number;
-  offset?: number;
-  query?: string;
-};
-
-export async function getUser(id: string): Promise<User> {
-  return api.get<User>(`/users/${id}`);
-}
-
-export type UserActivity = {
-  id: string;
-  userId: string;
-  activityType: string;
-  description: string;
-  metadata?: Record<string, unknown>;
-  ipAddress?: string;
-  userAgent?: string;
-  timestamp: number;
-};
-
-export async function resetUserPassword(userId: string): Promise<void> {
-  return api.post(`/users/${userId}/reset-password`, {});
-}
-
-export async function unlockUser(userId: string): Promise<User> {
-  return api.post<User>(`/users/${userId}/unlock`, {});
-}
-
-export async function lockUser(userId: string): Promise<User> {
-  return api.post<User>(`/users/${userId}/lock`, {});
+// Trailing slash matters: the user routes are registered with one, and a POST that
+// relies on Gin's redirect is a 307 the browser may or may not replay with its body.
+export async function resetUserPassword(userId: string): Promise<{ message: string }> {
+  return api.post<{ message: string }>(`/users/${userId}/reset-password/`, {});
 }
