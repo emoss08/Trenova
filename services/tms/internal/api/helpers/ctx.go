@@ -200,6 +200,14 @@ func QueryOrDefault(c *gin.Context, key, defaultValue string) string {
 	return defaultValue
 }
 
+func QueryCatalogID(c *gin.Context, key string) pulid.ID {
+	return pulid.ID(strings.TrimSpace(c.Query(key)))
+}
+
+func ParamCatalogID(c *gin.Context, key string) pulid.ID {
+	return pulid.ID(strings.TrimSpace(c.Param(key)))
+}
+
 func QueryPulid(c *gin.Context, key string) pulid.ID {
 	value := strings.TrimSpace(c.Query(key))
 	if value == "" {

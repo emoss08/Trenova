@@ -16,9 +16,8 @@ import (
 var _ domaintypes.PostgresSearchable = (*Request)(nil)
 
 type Request struct {
-	bun.BaseModel `bun:"table:manual_journal_requests,alias:mjr" json:"-"`
-
-	CursorValueSet pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel             `bun:"table:manual_journal_requests,alias:mjr" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
 	ID                      pulid.ID `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID          pulid.ID `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -44,15 +43,19 @@ type Request struct {
 	PostedBatchID           pulid.ID `json:"postedBatchId"           bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
 	CreatedByID             pulid.ID `json:"createdById"             bun:"created_by_id,type:VARCHAR(100),notnull"`
 	UpdatedByID             pulid.ID `json:"updatedById"             bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull"`
-	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT,notnull"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Lines []*Line `json:"lines,omitempty" bun:"rel:has-many,join:id=manual_journal_request_id"`
 }
 
 type Line struct {
-	bun.BaseModel `bun:"table:manual_journal_request_lines,alias:mjrl" json:"-"`
+	bun.BaseModel             `bun:"table:manual_journal_request_lines,alias:mjrl" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
 
 	ID                     pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID         pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`

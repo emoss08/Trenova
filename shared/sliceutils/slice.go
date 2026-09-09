@@ -29,6 +29,24 @@ func Difference[T comparable](items, exclude []T) []T {
 	return result
 }
 
+func Page[T any](items []T, offset, limit int) []T {
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= len(items) {
+		return []T{}
+	}
+
+	end := len(items)
+	if limit > 0 && offset+limit < end {
+		end = offset + limit
+	}
+
+	out := make([]T, end-offset)
+	copy(out, items[offset:end])
+	return out
+}
+
 func GroupBy[K comparable, T any](items []T, key func(T) K) map[K][]T {
 	groups := make(map[K][]T)
 	for _, item := range items {

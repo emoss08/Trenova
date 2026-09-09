@@ -17,6 +17,10 @@ var (
 	// inside a stored expression — rate table keys, rate matrix codes. They end
 	// up as bare identifiers in a formula, so they have to look like one.
 	IdentifierPattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
+
+	CurrencyCodeRegex     = regexp.MustCompile(`^[A-Z]{3}$`)
+	CardLastFourRegex     = regexp.MustCompile(`^[0-9]{4}$`)
+	JurisdictionCodeRegex = regexp.MustCompile(`^[A-Z]{2}$`)
 )
 
 func ValidateVin(value any) error {

@@ -106,6 +106,16 @@ export const nullableIntegerSchema = z
 export type NullableInteger = z.infer<typeof nullableIntegerSchema>;
 
 /**
+ * Custom field values ride the wire as a nullable JSON object: a record with no
+ * values set comes back as `null` from GraphQL and is absent over REST, so the
+ * schema has to accept both. Every entity that supports custom fields shares
+ * this so the two spellings cannot drift apart again.
+ */
+export const customFieldsSchema = z.record(z.string(), z.any()).nullish();
+
+export type CustomFields = z.infer<typeof customFieldsSchema>;
+
+/**
  * A relation hanging off another record is a display projection, not an
  * editable subform: a query selects the columns it renders and leaves the rest
  * out. Validating such a relation against the owning entity's full schema fails

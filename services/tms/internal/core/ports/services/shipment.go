@@ -73,19 +73,51 @@ type ShipmentBillingReadiness struct {
 	ShouldAutoTransferToBilling  bool                                 `json:"shouldAutoTransferToBilling"`
 }
 
+type JurisdictionMileResult struct {
+	CountryCode      string  `json:"countryCode"`
+	JurisdictionCode string  `json:"jurisdictionCode"`
+	Distance         float64 `json:"distance"`
+	DistanceUnits    string  `json:"distanceUnits"`
+	Loaded           bool    `json:"loaded"`
+}
+
 type DistanceMoveResult struct {
-	MoveID              pulid.ID `json:"moveId,omitempty"`
-	MoveIndex           int      `json:"moveIndex"`
-	Distance            float64  `json:"distance"`
-	Source              string   `json:"source"`
-	Provider            string   `json:"provider,omitempty"`
-	RoutingType         string   `json:"routingType,omitempty"`
-	DataVersion         string   `json:"dataVersion,omitempty"`
-	DistanceUnits       string   `json:"distanceUnits,omitempty"`
-	DistanceProfileID   string   `json:"distanceProfileId,omitempty"`
-	DistanceProfileName string   `json:"distanceProfileName,omitempty"`
-	Warnings            []string `json:"warnings,omitempty"`
-	CalculatedAt        int64    `json:"calculatedAt"`
+	MoveID              pulid.ID                 `json:"moveId,omitempty"`
+	MoveIndex           int                      `json:"moveIndex"`
+	Distance            float64                  `json:"distance"`
+	Source              string                   `json:"source"`
+	Provider            string                   `json:"provider,omitempty"`
+	RoutingType         string                   `json:"routingType,omitempty"`
+	DataVersion         string                   `json:"dataVersion,omitempty"`
+	DistanceUnits       string                   `json:"distanceUnits,omitempty"`
+	DistanceProfileID   string                   `json:"distanceProfileId,omitempty"`
+	DistanceProfileName string                   `json:"distanceProfileName,omitempty"`
+	Warnings            []string                 `json:"warnings,omitempty"`
+	JurisdictionMiles   []JurisdictionMileResult `json:"jurisdictionMiles,omitempty"`
+	CalculatedAt        int64                    `json:"calculatedAt"`
+}
+
+type RecalculateMoveJurisdictionMilesRequest struct {
+	TenantInfo     pagination.TenantInfo `json:"-"`
+	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
+	UserID         pulid.ID              `json:"userId"`
+}
+
+type BackfillJurisdictionMilesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Start      int64                 `json:"start"`
+	End        int64                 `json:"end"`
+	MaxMoves   int                   `json:"maxMoves"`
+	DryRun     bool                  `json:"dryRun"`
+	UserID     pulid.ID              `json:"userId"`
+}
+
+type BackfillJurisdictionMilesResult struct {
+	Started           bool            `json:"started"`
+	DryRun            bool            `json:"dryRun"`
+	UnattributedMoves int             `json:"unattributedMoves"`
+	UnattributedMiles decimal.Decimal `json:"unattributedMiles"`
+	WorkflowID        string          `json:"workflowId,omitempty"`
 }
 
 type DistanceCalculationResponse struct {
@@ -104,6 +136,14 @@ type DistanceCalculationService interface {
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
 	) (*DistanceCalculationResponse, error)
+	RecalculateMoveJurisdictionMiles(
+		ctx context.Context,
+		req RecalculateMoveJurisdictionMilesRequest,
+	) ([]*shipment.ShipmentMoveJurisdictionMile, error)
+	BackfillJurisdictionMiles(
+		ctx context.Context,
+		req BackfillJurisdictionMilesRequest,
+	) (*BackfillJurisdictionMilesResult, error)
 }
 
 type TransferShipmentToBillingRequest struct {

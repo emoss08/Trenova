@@ -31,6 +31,14 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewWorkerLeaveEntriesByCaseIDLoaderFactory,
 	loaders.NewFiscalPeriodsByFiscalYearIDLoaderFactory,
 	loaders.NewDocumentTemplateKindByTemplateIDLoaderFactory,
+	loaders.NewIFTAJurisdictionByIDLoaderFactory,
+	loaders.NewIFTAReturnByIDLoaderFactory,
+	loaders.NewFuelCardByIDLoaderFactory,
+	loaders.NewTractorByIDLoaderFactory,
+	loaders.NewShipmentMoveJurisdictionMilesByMoveIDLoaderFactory,
+	loaders.NewUserByIDLoaderFactory,
+	loaders.NewDocumentByIDLoaderFactory,
+	loaders.NewUsStateByIDLoaderFactory,
 ))
 
 var graphQLResolverModule = fx.Module("api-graphql-resolvers", fx.Provide(

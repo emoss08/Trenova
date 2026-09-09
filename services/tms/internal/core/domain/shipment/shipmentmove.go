@@ -40,6 +40,9 @@ type ShipmentMove struct {
 	Assignment             *Assignment        `json:"assignment,omitempty"        bun:"rel:has-one,join:id=shipment_move_id"`
 	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:has-one,join:id=shipment_move_id"`
 	Shipment               *Shipment          `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id"`
+
+	JurisdictionMiles      []*ShipmentMoveJurisdictionMile `json:"jurisdictionMiles,omitempty" bun:"rel:has-many,join:id=shipment_move_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	JurisdictionMilesDirty bool                            `json:"-"                           bun:"-"`
 }
 
 func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
@@ -154,4 +157,18 @@ func (m *ShipmentMove) IsNew() bool {
 
 func (m *ShipmentMove) IsCanceled() bool {
 	return m.Status == MoveStatusCanceled
+}
+
+func (m *ShipmentMove) JurisdictionMilesSumMiles() float64 {
+	if m == nil {
+		return 0
+	}
+	var total float64
+	for _, row := range m.JurisdictionMiles {
+		if row == nil {
+			continue
+		}
+		total += row.DistanceInMiles()
+	}
+	return total
 }

@@ -5,9 +5,53 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestQueryCatalogID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("keeps readable catalog ids that are shorter than a pulid", func(t *testing.T) {
+		t.Parallel()
+		ctx := testutil.NewGinTestContext().
+			WithQuery(map[string]string{"documentTypeId": " edidt_x12_204_outbound "})
+		assert.Equal(
+			t,
+			pulid.ID("edidt_x12_204_outbound"),
+			helpers.QueryCatalogID(ctx.Context, "documentTypeId"),
+		)
+	})
+
+	t.Run("is nil when the key is missing or blank", func(t *testing.T) {
+		t.Parallel()
+		assert.True(t, helpers.QueryCatalogID(testutil.NewGinTestContext().Context, "id").IsNil())
+		blank := testutil.NewGinTestContext().WithQuery(map[string]string{"id": "  "})
+		assert.True(t, helpers.QueryCatalogID(blank.Context, "id").IsNil())
+	})
+}
+
+func TestParamCatalogID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("keeps readable catalog ids from the path", func(t *testing.T) {
+		t.Parallel()
+		ctx := testutil.NewGinTestContext().WithParam("transactionSetID", "edits_x12_204")
+		assert.Equal(
+			t,
+			pulid.ID("edits_x12_204"),
+			helpers.ParamCatalogID(ctx.Context, "transactionSetID"),
+		)
+	})
+
+	t.Run("is nil when the param is missing or blank", func(t *testing.T) {
+		t.Parallel()
+		assert.True(t, helpers.ParamCatalogID(testutil.NewGinTestContext().Context, "id").IsNil())
+		blank := testutil.NewGinTestContext().WithParam("id", " ")
+		assert.True(t, helpers.ParamCatalogID(blank.Context, "id").IsNil())
+	})
+}
 
 func TestQueryString(t *testing.T) {
 	t.Parallel()

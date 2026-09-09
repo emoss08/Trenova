@@ -87,6 +87,12 @@ func (r *repository) SyncForShipment(
 		if err = r.syncStopsForMove(ctx, tx, move, existingStops[moveID]); err != nil {
 			return err
 		}
+
+		if move.JurisdictionMilesDirty {
+			if err = r.replaceJurisdictionMilesForMove(ctx, tx, move); err != nil {
+				return err
+			}
+		}
 	}
 
 	for moveID, move := range existingMoves {
@@ -713,6 +719,49 @@ func (r *repository) syncStopsForMove(
 		return fmt.Errorf("delete shipment stops for move %s: %w", move.ID, err)
 	}
 
+	return nil
+}
+
+func (r *repository) replaceJurisdictionMilesForMove(
+	ctx context.Context,
+	tx bun.IDB,
+	move *shipment.ShipmentMove,
+) error {
+	cols := buncolgen.ShipmentMoveJurisdictionMileColumns
+	tenantInfo := pagination.TenantInfo{
+		OrgID: move.OrganizationID,
+		BuID:  move.BusinessUnitID,
+	}
+
+	if _, err := tx.NewDelete().
+		Model((*shipment.ShipmentMoveJurisdictionMile)(nil)).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.ShipmentMoveJurisdictionMileScopeTenantDelete(dq, tenantInfo).
+				Where(cols.ShipmentMoveID.Eq(), move.ID)
+		}).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete jurisdiction miles for move %s: %w", move.ID, err)
+	}
+
+	rows := make([]*shipment.ShipmentMoveJurisdictionMile, 0, len(move.JurisdictionMiles))
+	for _, row := range move.JurisdictionMiles {
+		if row == nil {
+			continue
+		}
+		row.OrganizationID = move.OrganizationID
+		row.BusinessUnitID = move.BusinessUnitID
+		row.ShipmentMoveID = move.ID
+		row.ShipmentID = move.ShipmentID
+		rows = append(rows, row)
+	}
+	if len(rows) > 0 {
+		if _, err := tx.NewInsert().Model(&rows).Exec(ctx); err != nil {
+			return fmt.Errorf("insert jurisdiction miles for move %s: %w", move.ID, err)
+		}
+	}
+
+	move.JurisdictionMiles = rows
+	move.JurisdictionMilesDirty = false
 	return nil
 }
 

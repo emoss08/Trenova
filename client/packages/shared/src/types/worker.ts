@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { fleetCodeRelationSchema } from "./fleet-code";
 import {
+  customFieldsSchema,
   nullableEnumSchema,
   nullableIntegerSchema,
   nullableStringSchema,
@@ -251,7 +252,7 @@ export const workerSchema = z.object({
   fleetCode: fleetCodeRelationSchema,
   profile: workerProfileSchema.nullish(),
   pto: z.array(workerPtoSchema).nullish(),
-  customFields: z.record(z.string(), z.any()).nullish(),
+  customFields: customFieldsSchema,
 });
 
 export type Worker = z.infer<typeof workerSchema>;

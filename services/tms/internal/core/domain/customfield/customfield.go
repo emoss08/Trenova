@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	_ pagination.CursorEntity        = (*CustomFieldDefinition)(nil)
 	_ bun.BeforeAppendModelHook      = (*CustomFieldDefinition)(nil)
 	_ domaintypes.PostgresSearchable = (*CustomFieldDefinition)(nil)
 )
@@ -22,9 +23,8 @@ var (
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 
 type CustomFieldDefinition struct {
-	bun.BaseModel `bun:"table:custom_field_definitions,alias:cfd" json:"-"`
-
-	CursorValueSet pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel             `bun:"table:custom_field_definitions,alias:cfd" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                   json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -44,9 +44,11 @@ type CustomFieldDefinition struct {
 	DefaultValue    any              `json:"defaultValue"    bun:"default_value,type:JSONB"`
 	UIAttributes    *UIAttributes    `json:"uiAttributes"    bun:"ui_attributes,type:JSONB"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
@@ -60,15 +62,18 @@ func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
 			validation.Match(namePattern).
 				Error("Name must start with a lowercase letter and contain only lowercase letters, numbers, and underscores"),
 		),
-		validation.Field(&c.Label,
+		validation.Field(
+			&c.Label,
 			validation.Required.Error("Label is required"),
 			validation.Length(1, 150).Error("Label must be between 1 and 150 characters"),
 		),
-		validation.Field(&c.FieldType,
+		validation.Field(
+			&c.FieldType,
 			validation.Required.Error("Field type is required"),
 			domainvalidation.ValidEnum[FieldType]("invalid field type"),
 		),
-		validation.Field(&c.Color,
+		validation.Field(
+			&c.Color,
 			validation.Length(0, 20).Error("Color must be at most 20 characters"),
 		),
 	))

@@ -82,9 +82,6 @@ func EncodeCursor(cursor Cursor) (string, error) {
 	if cursor.ID.IsNil() {
 		return "", errors.New("cursor id is required")
 	}
-	if _, err := pulid.MustParse(cursor.ID.String()); err != nil {
-		return "", fmt.Errorf("cursor id is invalid: %w", err)
-	}
 	if len(cursor.Sort) > 0 && len(cursor.Sort) != len(cursor.Values) {
 		return "", errors.New("cursor sort values do not match cursor sort shape")
 	}
@@ -109,9 +106,6 @@ func DecodeCursor(encoded string) (Cursor, error) {
 	}
 	if cursor.ID.IsNil() {
 		return Cursor{}, errors.New("cursor id is required")
-	}
-	if _, err = pulid.MustParse(cursor.ID.String()); err != nil {
-		return Cursor{}, fmt.Errorf("cursor id is invalid: %w", err)
 	}
 	if len(cursor.Sort) > 0 && len(cursor.Sort) != len(cursor.Values) {
 		return Cursor{}, errors.New("cursor sort values do not match cursor sort shape")
@@ -325,9 +319,9 @@ func cursorIDFromSortValues(sort []CursorSortField, values []any) (pulid.ID, err
 			}
 			return typed, nil
 		case string:
-			id, err := pulid.MustParse(typed)
-			if err != nil {
-				return pulid.Nil, fmt.Errorf("cursor id is invalid: %w", err)
+			id := pulid.ID(typed)
+			if id.IsNil() {
+				return pulid.Nil, errors.New("cursor id is required")
 			}
 			return id, nil
 		default:
@@ -378,9 +372,9 @@ func cursorEntityID(item any) (pulid.ID, error) {
 	case pulid.ID:
 		return typed, nil
 	case string:
-		id, parseErr := pulid.MustParse(typed)
-		if parseErr != nil {
-			return pulid.Nil, fmt.Errorf("cursor id is invalid: %w", parseErr)
+		id := pulid.ID(typed)
+		if id.IsNil() {
+			return pulid.Nil, errors.New("cursor id is required")
 		}
 		return id, nil
 	default:

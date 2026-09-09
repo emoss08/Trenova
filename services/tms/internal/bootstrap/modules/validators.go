@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
+	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/services/glaccountservice"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
@@ -125,6 +126,7 @@ var ValidatorModule = fx.Module(
 		equipmentmanufacturerservice.NewValidator,
 		equipmenttypeservice.NewValidator,
 		fleetcodeservice.NewValidator,
+		fuelpurchaseservice.NewValidator,
 		tractorservice.NewValidator,
 		trailerservice.NewValidator,
 		userservice.NewValidator,
