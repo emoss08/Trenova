@@ -726,6 +726,13 @@ func (e *engine) getAuthorizedRoleSummaries(
 			summaries = append(summaries, services.NewRoleSummary(role))
 		}
 	}
+
+	counts, err := e.rbacRepo.CountRolePermissions(ctx, roleSummaryIDs(summaries))
+	if err != nil {
+		return nil, err
+	}
+	services.ApplyRolePermissionCounts(summaries, counts)
+
 	return summaries, nil
 }
 

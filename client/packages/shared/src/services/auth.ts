@@ -2,7 +2,11 @@ import { api, clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { authProviderSummariesSchema } from "@trenova/shared/types/iam";
 import type { RoleSummary } from "@trenova/shared/types/role";
-import { loginResponseSchema, type LoginRequest, type LoginResponse } from "@trenova/shared/types/user";
+import {
+  loginResponseSchema,
+  type LoginRequest,
+  type LoginResponse,
+} from "@trenova/shared/types/user";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 
 export const authService = {
@@ -37,6 +41,17 @@ export const authService = {
       authorizedRoles: RoleSummary[];
       requiresRoleActivation: boolean;
     }>("/auth/session/roles/activate", { roleIds });
+  },
+
+  // Always resolves for a well-formed address, whether or not it belongs to anyone.
+  // The server answers identically in every case on purpose, so the caller must not
+  // read anything into success.
+  forgotPassword: async (emailAddress: string) => {
+    return api.post<{ message: string }>("/auth/forgot-password", { emailAddress });
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    return api.post<{ message: string }>("/auth/reset-password", { token, newPassword });
   },
 
   listProviders: async (organizationSlug: string) => {

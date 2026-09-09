@@ -1,116 +1,74 @@
+import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
-import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { handleMutationError } from "@/hooks/use-api-mutation";
+import { apiService } from "@/services/api";
 import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
+import { authService } from "@trenova/shared/services/auth";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { PermissionManifest } from "@trenova/shared/types/permission";
+import type { RoleSummary } from "@trenova/shared/types/role";
 import type { TenantLoginMetadata, UserOrganization } from "@trenova/shared/types/organization";
+import type { LoginResponse } from "@trenova/shared/types/user";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { ArrowRightIcon, BuildingIcon, TruckIcon } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
-import { useState } from "react";
-import { Link } from "react-router";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router";
+import { AuthCard, AuthCardBody } from "./auth-card";
+import { AuthHandoff } from "./auth-handoff";
+import type { CredentialReceipt } from "./auth-panel";
+import { AuthShell, type AuthStep } from "./auth-shell";
+import { ForgotPasswordForm } from "./forgot-password-form";
 import { LoginForm } from "./login-form";
 import { OrganizationSelection } from "./organization-selection";
+import { RoleSelection, resolveAuthorizedRoles } from "./role-selection";
 
-type AuthFormType = "LOGIN" | "FORGOT_PASSWORD";
-type AuthStep = "LOGIN" | "ORGANIZATION";
-type AuthAudience = "office" | "driver";
-
-const audienceOptions = [
-  { value: "office", label: "Office", icon: BuildingIcon },
-  { value: "driver", label: "Driver", icon: TruckIcon },
-] as const;
-
-function AudienceToggle({
-  audience,
-  onChange,
-}: {
-  audience: AuthAudience;
-  onChange: (audience: AuthAudience) => void;
-}) {
-  return (
-    <Tabs
-      value={audience}
-      onValueChange={(value) => onChange(value as AuthAudience)}
-      className="border-border border-b"
-    >
-      <TabsList variant="underline" className="w-full justify-start py-0">
-        {audienceOptions.map((option) => (
-          <TabsTab key={option.value} value={option.value}>
-            <option.icon className="size-4" />
-            {option.label}
-          </TabsTab>
-        ))}
-      </TabsList>
-    </Tabs>
-  );
+function stepLabel(index: number, total: number) {
+  return `${String(index).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
 }
 
-function DriverGateway() {
-  return (
-    <div className="flex flex-col gap-4">
-      <p className="text-muted-foreground text-sm">
-        Drivers sign in to <span className="text-foreground font-medium">Dash</span> — your loads,
-        settlement statements, and pay, built for your phone.
-      </p>
-      <Button className="h-11 w-full" render={<a href="/dash/login" />}>
-        Continue to Dash
-        <ArrowRightIcon className="size-4" />
-      </Button>
-      <p className="text-muted-foreground text-xs">
-        First time here? Use the invitation link your carrier sent you to set up your account.
-      </p>
-    </div>
-  );
+function manifestOrganizationName(manifest: PermissionManifest): string | undefined {
+  return manifest.availableOrgs.find((org) => org.id === manifest.organizationId)?.name;
 }
 
-function renderForm({
-  authStep,
-  formType,
-  organizationSlug,
-  tenantMetadata,
-  selectableOrganizations,
-  onOrganizationSelectionRequired,
-}: {
-  authStep: AuthStep;
-  formType: AuthFormType;
-  organizationSlug?: string;
-  tenantMetadata?: TenantLoginMetadata;
-  selectableOrganizations: UserOrganization[];
-  onOrganizationSelectionRequired: (organizations: UserOrganization[]) => void;
-}) {
-  if (authStep === "ORGANIZATION") {
-    return <OrganizationSelection organizations={selectableOrganizations} />;
+// Undefined is not zero: a manifest rehydrated from localStorage, or one from a server
+// that predates the count, carries no permissionCount at all. Summing those as zero
+// would report "0 permissions" for a role that has hundreds, so an unknown count
+// suppresses the clause instead (see AuthHandoff).
+function countPermissions(roles: RoleSummary[]): number | undefined {
+  if (roles.some((role) => role.permissionCount === undefined)) {
+    return undefined;
+  }
+  return roles.reduce((total, role) => total + (role.permissionCount ?? 0), 0);
+}
+
+const SESSION_ID_BODY_LENGTH = 8;
+
+/**
+ * A session id is a PULID — a short prefix and a 26-character ULID — which is far wider
+ * than the receipt row it sits in, and the AUTHORIZED stamp lands on top of that row's
+ * right edge. Keeping the prefix and the leading body characters stays enough to match
+ * a session against a log line without running under the stamp.
+ */
+export function formatSessionId(sessionId?: string): string | undefined {
+  if (!sessionId) {
+    return undefined;
   }
 
-  switch (formType) {
-    case "LOGIN":
-      return (
-        <LoginForm
-          organizationSlug={organizationSlug}
-          tenantMetadata={tenantMetadata}
-          onOrganizationSelectionRequired={onOrganizationSelectionRequired}
-        />
-      );
-    case "FORGOT_PASSWORD":
-      return <div>Coming soon</div>;
-    default:
-      return (
-        <LoginForm
-          organizationSlug={organizationSlug}
-          tenantMetadata={tenantMetadata}
-          onOrganizationSelectionRequired={onOrganizationSelectionRequired}
-        />
-      );
+  const separator = sessionId.indexOf("_");
+  if (separator === -1) {
+    return sessionId.slice(0, SESSION_ID_BODY_LENGTH);
   }
+
+  return sessionId.slice(0, separator + 1 + SESSION_ID_BODY_LENGTH);
 }
 
+/**
+ * Owns the sign-in flow: login → organization → active roles → handoff.
+ *
+ * The two middle steps are conditional and the flow only learns which apply once the
+ * server has answered — how many organizations the user belongs to, and whether the
+ * session still needs roles activated — so the step counter is refined as it goes
+ * rather than guessed up front.
+ */
 export function AuthForm({
   tenantQuery,
   organizationSlug,
@@ -118,108 +76,221 @@ export function AuthForm({
   tenantQuery?: UseQueryResult<TenantLoginMetadata>;
   organizationSlug?: string;
 }) {
-  const [formType] = useState<AuthFormType>("LOGIN");
-  const [authStep, setAuthStep] = useState<AuthStep>("LOGIN");
-  const [audience, setAudience] = useState<AuthAudience>("office");
-  const [selectableOrganizations, setSelectableOrganizations] = useState<UserOrganization[]>([]);
+  const navigate = useNavigate();
+  const fetchManifest = usePermissionStore((state) => state.fetchManifest);
+  const clearPermissions = usePermissionStore((state) => state.clearPermissions);
   const tenantMetadata = tenantQuery?.data;
-  const isOrganizationStep = authStep === "ORGANIZATION";
-  const showAudienceToggle = !tenantMetadata && !isOrganizationStep && formType === "LOGIN";
-  const isDriverAudience = showAudienceToggle && audience === "driver";
-  const title = isOrganizationStep
-    ? "Select organization"
-    : formType === "FORGOT_PASSWORD"
-      ? "Reset Password"
-      : isDriverAudience
-        ? "Driver sign-in"
-        : tenantMetadata
-          ? tenantMetadata.organizationName
-          : "Welcome back!";
-  const subtitle = isOrganizationStep
-    ? "Choose the workspace for this session."
-    : isDriverAudience
-      ? "Dash is where drivers see their loads and pay."
-      : tenantMetadata
-        ? `Sign in to ${tenantMetadata.organizationName}`
-        : "Don't have an account yet?";
 
-  const handleOrganizationSelectionRequired = (organizations: UserOrganization[]) => {
-    setSelectableOrganizations(organizations);
-    setAuthStep("ORGANIZATION");
+  const [step, setStep] = useState<AuthStep>("login");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [sessionId, setSessionId] = useState<string>();
+  const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
+  const [organizationName, setOrganizationName] = useState<string>();
+  const [authorizedRoles, setAuthorizedRoles] = useState<RoleSummary[]>([]);
+  const [activeRoles, setActiveRoles] = useState<RoleSummary[]>([]);
+  const [orgStepUsed, setOrgStepUsed] = useState(false);
+  // A tenant login page is already scoped to one organization, so that step can never
+  // appear; everywhere else three is the honest upper bound until the server answers.
+  const [totalSteps, setTotalSteps] = useState(organizationSlug ? 2 : 3);
+
+  const resetToLogin = useCallback(async () => {
+    // Stepping back past the organization choice means abandoning the session that was
+    // just issued — leaving it alive would put a signed-in user in front of a sign-in
+    // form. The reset runs whether or not the server acknowledges the logout.
+    try {
+      await authService.logout();
+    } catch (error) {
+      handleMutationError({ error, resourceName: "Session" });
+    }
+    clearPermissions();
+    setSessionId(undefined);
+    setOrganizations([]);
+    setOrganizationName(undefined);
+    setAuthorizedRoles([]);
+    setActiveRoles([]);
+    setOrgStepUsed(false);
+    setTotalSteps(organizationSlug ? 2 : 3);
+    setStep("login");
+  }, [clearPermissions, organizationSlug]);
+
+  /**
+   * Runs once the session is pointed at its final organization. The manifest is the
+   * one source that knows both which organization the session landed in and whether
+   * roles still need activating, so the branch is taken from it rather than inferred.
+   */
+  const enterWorkspace = useCallback(
+    async (fallbackName: string | undefined, usedOrgStep: boolean) => {
+      const manifest = await fetchManifest();
+      setOrganizationName(manifestOrganizationName(manifest) ?? fallbackName);
+
+      if (manifest.requiresRoleActivation) {
+        setAuthorizedRoles(resolveAuthorizedRoles(manifest));
+        setTotalSteps(usedOrgStep ? 3 : 2);
+        setStep("role");
+        return;
+      }
+
+      setActiveRoles(manifest.activeRoles);
+      setStep("done");
+    },
+    [fetchManifest],
+  );
+
+  const handleAuthenticated = useCallback(
+    async (response: LoginResponse) => {
+      setEmailAddress(response.user.emailAddress);
+      setSessionId(response.sessionId);
+
+      if (organizationSlug) {
+        await enterWorkspace(tenantMetadata?.organizationName, false);
+        return;
+      }
+
+      const availableOrganizations = await apiService.userService.getUserOrganizations();
+      setOrganizations(availableOrganizations);
+
+      if (availableOrganizations.length > 1) {
+        // The manifest for the organization the user happens to be pointed at is not
+        // the one they are about to choose; dropping it keeps a stale scope from
+        // briefly answering permission checks.
+        clearPermissions();
+        setOrgStepUsed(true);
+        setTotalSteps(3);
+        setStep("org");
+        return;
+      }
+
+      await enterWorkspace(
+        availableOrganizations[0]?.name ?? tenantMetadata?.organizationName,
+        false,
+      );
+    },
+    [clearPermissions, enterWorkspace, organizationSlug, tenantMetadata?.organizationName],
+  );
+
+  const handleOrganizationSelected = useCallback(
+    async (organization: UserOrganization) => {
+      setOrganizationName(organization.name);
+      await enterWorkspace(organization.name, true);
+    },
+    [enterWorkspace],
+  );
+
+  const handleRolesActivated = useCallback(async (activated: RoleSummary[]) => {
+    setActiveRoles(activated);
+    setStep("done");
+  }, []);
+
+  const handleForgotPassword = useCallback((address: string) => {
+    // Carry the address across so recovery starts pre-filled with what was typed.
+    setEmailAddress(address);
+    setStep("forgot");
+  }, []);
+
+  const handleHandoff = useCallback(() => {
+    void navigate("/", { replace: true });
+  }, [navigate]);
+
+  const receipt: CredentialReceipt = {
+    issued: step === "done",
+    rows: [
+      {
+        key: "Identity",
+        // Typing an address into the recovery form is not authentication, so the row
+        // stays pending on both pre-session steps.
+        value: step === "login" || step === "forgot" ? undefined : emailAddress,
+      },
+      {
+        key: "Workspace",
+        value: step === "role" || step === "done" ? organizationName : undefined,
+      },
+      {
+        key: "Roles",
+        value: step === "done" ? activeRoles.map((role) => role.name).join(", ") : undefined,
+      },
+      { key: "Session", value: step === "done" ? formatSessionId(sessionId) : undefined },
+    ],
   };
 
   return (
     <>
       <Metadata title="Sign In" description="Sign in to your Trenova account" />
-      <div className="flex max-w-[400px] flex-col gap-6">
-        <Card className="border-border bg-background gap-0 rounded-2xl backdrop-blur-md">
-          <CardHeader className="text-left">
-            <m.div
-              key={`${authStep}-${formType}-${audience}`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <CardTitle>{title}</CardTitle>
-              <CardDescription className="mt-1 flex space-x-1 text-sm">
-                <span className="text-muted-foreground">{subtitle}</span>
-                {!tenantMetadata && !isOrganizationStep && !isDriverAudience && (
-                  <Link className="text-primary underline" to="#">
-                    Create an Account
-                  </Link>
-                )}
-              </CardDescription>
-            </m.div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {showAudienceToggle ? (
-              <AudienceToggle audience={audience} onChange={setAudience} />
-            ) : null}
-            {tenantQuery?.isLoading ? (
-              <div className="text-muted-foreground text-sm">Loading organization sign-in...</div>
-            ) : tenantQuery?.isError ? (
-              <div className="text-destructive text-sm">
+      <AuthShell step={step} receipt={receipt}>
+        <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
+          <img src={logoRainbow} alt="" className="size-6 object-contain" />
+          <span className="text-[14px] font-semibold tracking-[-0.02em]">Trenova</span>
+        </div>
+
+        <AuthCard stepKey={step}>
+          {tenantQuery?.isLoading ? (
+            <AuthCardBody>
+              <p className="text-muted-foreground m-0 text-[12.5px]">
+                Loading organization sign-in…
+              </p>
+            </AuthCardBody>
+          ) : tenantQuery?.isError ? (
+            <AuthCardBody>
+              <p className="text-auth-danger m-0 text-[12.5px]">
                 We couldn&apos;t load this tenant login page.
-              </div>
-            ) : (
-              <AnimatePresence mode="wait">
-                <m.div
-                  key={`${authStep}-${formType}-${audience}`}
-                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                  transition={{ duration: 0.22, ease: "easeOut" }}
-                >
-                  {isDriverAudience ? (
-                    <DriverGateway />
-                  ) : (
-                    renderForm({
-                      authStep,
-                      formType,
-                      organizationSlug,
-                      tenantMetadata,
-                      selectableOrganizations,
-                      onOrganizationSelectionRequired: handleOrganizationSelectionRequired,
-                    })
-                  )}
-                </m.div>
-              </AnimatePresence>
-            )}
-          </CardContent>
-        </Card>
-        <div className="text-muted-foreground [&_a]:hover:text-primary text-center text-xs text-balance [&_a]:underline [&_a]:underline-offset-4">
-          By clicking continue, you agree to our{" "}
-          <a href={TERMS_URL} target="_blank" rel="noreferrer">
+              </p>
+            </AuthCardBody>
+          ) : step === "forgot" ? (
+            <ForgotPasswordForm defaultEmail={emailAddress} onBack={() => setStep("login")} />
+          ) : step === "login" ? (
+            <LoginForm
+              organizationSlug={organizationSlug}
+              tenantMetadata={tenantMetadata}
+              stepLabel={stepLabel(1, totalSteps)}
+              onAuthenticated={handleAuthenticated}
+              onForgotPassword={handleForgotPassword}
+            />
+          ) : step === "org" ? (
+            <OrganizationSelection
+              organizations={organizations}
+              stepLabel={stepLabel(2, totalSteps)}
+              onBack={() => void resetToLogin()}
+              onSelected={handleOrganizationSelected}
+            />
+          ) : step === "role" ? (
+            <RoleSelection
+              roles={authorizedRoles}
+              organizationName={organizationName}
+              stepLabel={stepLabel(orgStepUsed ? 3 : 2, totalSteps)}
+              onBack={() => (orgStepUsed ? setStep("org") : void resetToLogin())}
+              onActivated={handleRolesActivated}
+            />
+          ) : (
+            <AuthHandoff
+              organizationName={organizationName}
+              roleCount={activeRoles.length}
+              permissionCount={countPermissions(activeRoles)}
+              onComplete={handleHandoff}
+            />
+          )}
+        </AuthCard>
+
+        <p className="text-subtle-foreground m-0 text-center text-[11.5px] text-balance">
+          By continuing you agree to our{" "}
+          <a
+            href={TERMS_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
+          >
             Terms of Service
           </a>{" "}
           and{" "}
-          <a href={PRIVACY_URL} target="_blank" rel="noreferrer">
+          <a
+            href={PRIVACY_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
+          >
             Privacy Policy
           </a>
           .
-        </div>
-      </div>
+        </p>
+      </AuthShell>
     </>
   );
 }

@@ -109,10 +109,11 @@ type EffectivePermissions struct {
 }
 
 type RoleSummary struct {
-	ID          pulid.ID `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	IsSystem    bool     `json:"isSystem"`
+	ID              pulid.ID `json:"id"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	IsSystem        bool     `json:"isSystem"`
+	PermissionCount int      `json:"permissionCount"`
 }
 
 func NewRoleSummary(role *permission.Role) RoleSummary {
@@ -121,6 +122,12 @@ func NewRoleSummary(role *permission.Role) RoleSummary {
 		Name:        role.Name,
 		Description: role.Description,
 		IsSystem:    role.IsSystem,
+	}
+}
+
+func ApplyRolePermissionCounts(summaries []RoleSummary, counts map[pulid.ID]int) {
+	for i := range summaries {
+		summaries[i].PermissionCount = counts[summaries[i].ID]
 	}
 }
 

@@ -1,21 +1,41 @@
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
+import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { UserOrganization } from "@trenova/shared/types/organization";
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useCallback, useRef, useState } from "react";
+import { AuthCardBody } from "./auth-card";
+import { AuthSubmit } from "./auth-field";
+import {
+  AuthOption,
+  AuthTray,
+  KeyHint,
+  StepCrumbs,
+  StepHeading,
+  useOptionListKeyboard,
+} from "./auth-primitives";
 
-export function OrganizationSelection({ organizations }: { organizations: UserOrganization[] }) {
-  const navigate = useNavigate();
+export function OrganizationSelection({
+  organizations,
+  stepLabel,
+  onBack,
+  onSelected,
+}: {
+  organizations: UserOrganization[];
+  stepLabel: string;
+  onBack: () => void;
+  onSelected: (organization: UserOrganization) => Promise<void> | void;
+}) {
   const setUser = useAuthStore((state) => state.setUser);
-  const fetchManifest = usePermissionStore((state) => state.fetchManifest);
   const clearPermissions = usePermissionStore((state) => state.clearPermissions);
+  const listRef = useRef<HTMLDivElement>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(
-    organizations.find((organization) => organization.isCurrent)?.id ?? organizations[0]?.id ?? "",
+    () =>
+      organizations.find((organization) => organization.isCurrent)?.id ??
+      organizations[0]?.id ??
+      "",
   );
   const [isContinuing, setIsContinuing] = useState(false);
 
@@ -23,13 +43,15 @@ export function OrganizationSelection({ organizations }: { organizations: UserOr
     (organization) => organization.id === selectedOrganizationId,
   );
 
-  const continueWithOrganization = async () => {
-    if (!selectedOrganization) {
+  const continueWithOrganization = useCallback(async () => {
+    if (!selectedOrganization || isContinuing) {
       return;
     }
 
     setIsContinuing(true);
     try {
+      // Staying put still needs a round trip: currentUser refreshes memberships that the
+      // login response predates, and switching resets the session's active roles.
       const user = selectedOrganization.isCurrent
         ? await apiService.userService.currentUser()
         : await apiService.userService.switchOrganization({
@@ -37,58 +59,70 @@ export function OrganizationSelection({ organizations }: { organizations: UserOr
           });
       setUser(user);
       clearPermissions();
-      await fetchManifest();
-      void navigate("/", { replace: true });
+      await onSelected(selectedOrganization);
     } catch (error) {
       handleMutationError({ error, resourceName: "Organization" });
     } finally {
       setIsContinuing(false);
     }
-  };
+  }, [clearPermissions, isContinuing, onSelected, selectedOrganization, setUser]);
+
+  useOptionListKeyboard({
+    listRef,
+    enabled: !isContinuing,
+    onSelectIndex: (index) => {
+      const organization = organizations[index];
+      if (organization) {
+        setSelectedOrganizationId(organization.id);
+      }
+    },
+    onAdvance: () => void continueWithOrganization(),
+  });
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        {organizations.map((organization) => {
-          const isSelected = organization.id === selectedOrganizationId;
-          const location = [organization.city, organization.state].filter(Boolean).join(", ");
+    <AuthCardBody>
+      <StepCrumbs left={stepLabel} right={`${organizations.length} available`} />
+      <StepHeading title="Select organization">Choose the workspace for this session.</StepHeading>
 
-          return (
-            <button
-              key={organization.id}
-              type="button"
-              aria-pressed={isSelected}
-              className={cn(
-                "hover:bg-muted flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors",
-                isSelected ? "border-primary bg-primary/5" : "border-border bg-background",
-              )}
-              disabled={isContinuing}
-              onClick={() => setSelectedOrganizationId(organization.id)}
-            >
-              <span className="bg-muted grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold">
-                {organization.name.slice(0, 2).toUpperCase()}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">{organization.name}</span>
-                {location && (
-                  <span className="text-muted-foreground block truncate text-xs">{location}</span>
-                )}
-              </span>
-              {organization.isCurrent && <Badge variant="outline">Current</Badge>}
-            </button>
-          );
-        })}
+      <div
+        ref={listRef}
+        role="radiogroup"
+        aria-label="Organizations"
+        className="mt-4 mb-3.5 flex flex-col gap-2"
+      >
+        {organizations.map((organization, index) => (
+          <AuthOption
+            key={organization.id}
+            role="radio"
+            selected={organization.id === selectedOrganizationId}
+            disabled={isContinuing}
+            onSelect={() => setSelectedOrganizationId(organization.id)}
+            leading={getNameInitials(organization.name, "ORG", { maxLength: 3, pad: true })}
+            name={organization.name}
+            meta={[organization.city, organization.state].filter(Boolean).join(", ")}
+            chip={organization.isCurrent ? "Current" : undefined}
+            shortcut={index < 9 ? formatShortcut(String(index + 1)) : undefined}
+          />
+        ))}
       </div>
-      <Button
-        type="button"
-        className="w-full"
+
+      <AuthSubmit
         disabled={!selectedOrganization}
         isLoading={isContinuing}
-        loadingText="Continuing..."
+        loadingText="Opening workspace"
         onClick={() => void continueWithOrganization()}
       >
         Continue
-      </Button>
-    </div>
+      </AuthSubmit>
+
+      <AuthTray
+        onBack={onBack}
+        hints={
+          <>
+            <KeyHint>↑↓</KeyHint> move <KeyHint>{formatShortcut("↵")}</KeyHint> continue
+          </>
+        }
+      />
+    </AuthCardBody>
   );
 }

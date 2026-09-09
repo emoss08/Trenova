@@ -6,21 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OrganizationSelection } from "./organization-selection";
 
 const mocks = vi.hoisted(() => ({
-  navigate: vi.fn(),
   switchOrganization: vi.fn(),
   currentUser: vi.fn(),
   setUser: vi.fn(),
-  fetchManifest: vi.fn(),
   clearPermissions: vi.fn(),
+  onSelected: vi.fn(),
+  onBack: vi.fn(),
 }));
-
-vi.mock("react-router", async (importActual) => {
-  const actual = await importActual<typeof import("react-router")>();
-  return {
-    ...actual,
-    useNavigate: () => mocks.navigate,
-  };
-});
 
 vi.mock("@/services/api", () => ({
   apiService: {
@@ -38,16 +30,30 @@ vi.mock("@trenova/shared/stores/auth-store", () => ({
 
 vi.mock("@trenova/shared/stores/permission-store", () => ({
   usePermissionStore: (
-    selector: (state: {
-      fetchManifest: typeof mocks.fetchManifest;
-      clearPermissions: typeof mocks.clearPermissions;
-    }) => unknown,
-  ) =>
-    selector({
-      fetchManifest: mocks.fetchManifest,
-      clearPermissions: mocks.clearPermissions,
-    }),
+    selector: (state: { clearPermissions: typeof mocks.clearPermissions }) => unknown,
+  ) => selector({ clearPermissions: mocks.clearPermissions }),
 }));
+
+const organizations = [
+  {
+    id: "org_1",
+    name: "Alpha Logistics",
+    city: "Austin",
+    state: "TX",
+    logoUrl: null,
+    isDefault: true,
+    isCurrent: true,
+  },
+  {
+    id: "org_2",
+    name: "Bravo Freight",
+    city: "Denver",
+    state: "CO",
+    logoUrl: null,
+    isDefault: false,
+    isCurrent: false,
+  },
+];
 
 function renderOrganizationSelection() {
   const queryClient = new QueryClient({
@@ -58,26 +64,10 @@ function renderOrganizationSelection() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <OrganizationSelection
-          organizations={[
-            {
-              id: "org_1",
-              name: "Alpha Logistics",
-              city: "Austin",
-              state: "TX",
-              logoUrl: null,
-              isDefault: true,
-              isCurrent: true,
-            },
-            {
-              id: "org_2",
-              name: "Bravo Freight",
-              city: "Denver",
-              state: "CO",
-              logoUrl: null,
-              isDefault: false,
-              isCurrent: false,
-            },
-          ]}
+          organizations={organizations}
+          stepLabel="02 / 03"
+          onBack={mocks.onBack}
+          onSelected={mocks.onSelected}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -95,20 +85,21 @@ describe("OrganizationSelection", () => {
       id: "usr_1",
       currentOrganizationId: "org_2",
     });
-    mocks.fetchManifest.mockResolvedValue(undefined);
+    mocks.currentUser.mockResolvedValue({ id: "usr_1", currentOrganizationId: "org_1" });
+    mocks.onSelected.mockResolvedValue(undefined);
   });
 
-  it("switches the selected organization and fetches permissions", async () => {
+  it("switches the selected organization and hands control back to the flow", async () => {
     const user = userEvent.setup();
     renderOrganizationSelection();
 
-    expect(screen.getByText("Alpha Logistics")).toBeInTheDocument();
-    expect(screen.getByText("Bravo Freight")).toBeInTheDocument();
+    expect(screen.getByText("02 / 03")).toBeInTheDocument();
+    expect(screen.getByText("2 available")).toBeInTheDocument();
     expect(screen.getByText("Current")).toBeInTheDocument();
 
-    const bravoButton = screen.getByRole("button", { name: /bravo freight/i });
-    await user.click(bravoButton);
-    expect(bravoButton).toHaveAttribute("aria-pressed", "true");
+    const bravo = screen.getByRole("radio", { name: /bravo freight/i });
+    await user.click(bravo);
+    expect(bravo).toHaveAttribute("aria-checked", "true");
     expect(mocks.switchOrganization).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -120,7 +111,26 @@ describe("OrganizationSelection", () => {
       expect.objectContaining({ currentOrganizationId: "org_2" }),
     );
     expect(mocks.clearPermissions).toHaveBeenCalled();
-    expect(mocks.fetchManifest).toHaveBeenCalledTimes(1);
-    expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true });
+    expect(mocks.onSelected).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "org_2", name: "Bravo Freight" }),
+    );
+  });
+
+  it("refreshes the user rather than switching when the current organization is kept", async () => {
+    const user = userEvent.setup();
+    renderOrganizationSelection();
+
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() => expect(mocks.currentUser).toHaveBeenCalledTimes(1));
+    expect(mocks.switchOrganization).not.toHaveBeenCalled();
+    expect(mocks.onSelected).toHaveBeenCalledWith(expect.objectContaining({ id: "org_1" }));
+  });
+
+  it("shows a three-letter code for each organization", () => {
+    renderOrganizationSelection();
+
+    expect(screen.getByText("ALL")).toBeInTheDocument();
+    expect(screen.getByText("BRF")).toBeInTheDocument();
   });
 });

@@ -61,6 +61,7 @@ type RBACRepository interface {
 	DeleteRoleHierarchyEdge(ctx context.Context, req DeleteRoleHierarchyEdgeRequest) error
 	GetRoleClosure(ctx context.Context, roleIDs []pulid.ID) ([]pulid.ID, error)
 	GetAuthorizedRoles(ctx context.Context, userID, orgID pulid.ID) ([]*permission.Role, error)
+	CountRolePermissions(ctx context.Context, roleIDs []pulid.ID) (map[pulid.ID]int, error)
 	ListRoleConstraints(
 		ctx context.Context,
 		req ListRoleConstraintsRequest,

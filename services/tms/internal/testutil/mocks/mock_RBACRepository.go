@@ -160,6 +160,74 @@ func (_c *MockRBACRepository_DeleteRoleHierarchyEdge_Call) RunAndReturn(run func
 	return _c
 }
 
+// CountRolePermissions provides a mock function for the type MockRBACRepository
+func (_mock *MockRBACRepository) CountRolePermissions(ctx context.Context, roleIDs []pulid.ID) (map[pulid.ID]int, error) {
+	ret := _mock.Called(ctx, roleIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountRolePermissions")
+	}
+
+	var r0 map[pulid.ID]int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) (map[pulid.ID]int, error)); ok {
+		return returnFunc(ctx, roleIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) map[pulid.ID]int); ok {
+		r0 = returnFunc(ctx, roleIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID]int)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []pulid.ID) error); ok {
+		r1 = returnFunc(ctx, roleIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRBACRepository_CountRolePermissions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountRolePermissions'
+type MockRBACRepository_CountRolePermissions_Call struct {
+	*mock.Call
+}
+
+// CountRolePermissions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleIDs []pulid.ID
+func (_e *MockRBACRepository_Expecter) CountRolePermissions(ctx any, roleIDs any) *MockRBACRepository_CountRolePermissions_Call {
+	return &MockRBACRepository_CountRolePermissions_Call{Call: _e.mock.On("CountRolePermissions", ctx, roleIDs)}
+}
+
+func (_c *MockRBACRepository_CountRolePermissions_Call) Run(run func(ctx context.Context, roleIDs []pulid.ID)) *MockRBACRepository_CountRolePermissions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].([]pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRBACRepository_CountRolePermissions_Call) Return(intsByRoleID map[pulid.ID]int, err error) *MockRBACRepository_CountRolePermissions_Call {
+	_c.Call.Return(intsByRoleID, err)
+	return _c
+}
+
+func (_c *MockRBACRepository_CountRolePermissions_Call) RunAndReturn(run func(ctx context.Context, roleIDs []pulid.ID) (map[pulid.ID]int, error)) *MockRBACRepository_CountRolePermissions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAuthorizedRoles provides a mock function for the type MockRBACRepository
 func (_mock *MockRBACRepository) GetAuthorizedRoles(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.Role, error) {
 	ret := _mock.Called(ctx, userID, orgID)

@@ -174,6 +174,53 @@ func (r *repository) GetAuthorizedRoles(
 	return roles, err
 }
 
+// rolePermissionCountQuery counts the distinct resource/operation grants a role carries,
+// following the same inheritance edge the permission engine follows when it merges a
+// role's permissions: parent_role_ids, walked transitively. Counting only a role's own
+// resource_permissions rows would report 0 for a role that exists purely to inherit.
+const rolePermissionCountQuery = `
+WITH RECURSIVE role_closure AS (
+	SELECT r.id AS root_id, r.id AS role_id, r.parent_role_ids
+	FROM roles r
+	WHERE r.id IN (?)
+	UNION
+	SELECT c.root_id, p.id, p.parent_role_ids
+	FROM role_closure c
+	JOIN roles p ON p.id = ANY(c.parent_role_ids)
+)
+SELECT c.root_id AS role_id,
+	COUNT(DISTINCT rp.resource || ':' || op) AS permission_count
+FROM role_closure c
+LEFT JOIN resource_permissions rp ON rp.role_id = c.role_id
+LEFT JOIN LATERAL unnest(rp.operations) AS op ON TRUE
+GROUP BY c.root_id`
+
+func (r *repository) CountRolePermissions(
+	ctx context.Context,
+	roleIDs []pulid.ID,
+) (map[pulid.ID]int, error) {
+	counts := make(map[pulid.ID]int, len(roleIDs))
+	if len(roleIDs) == 0 {
+		return counts, nil
+	}
+
+	rows := make([]struct {
+		RoleID          pulid.ID `bun:"role_id"`
+		PermissionCount int      `bun:"permission_count"`
+	}, 0, len(roleIDs))
+
+	if err := r.db.DB().
+		NewRaw(rolePermissionCountQuery, bun.List(roleIDs)).
+		Scan(ctx, &rows); err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		counts[row.RoleID] = row.PermissionCount
+	}
+	return counts, nil
+}
+
 func (r *repository) ListRoleConstraints(
 	ctx context.Context,
 	req repositories.ListRoleConstraintsRequest,

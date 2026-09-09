@@ -29,6 +29,8 @@ type Repository struct {
 	DeleteHierarchyErr    error
 	PreflightReport       *repositories.RBACPreflightReport
 	PreflightErr          error
+	RolePermissionCounts  map[pulid.ID]int
+	RolePermissionCntErr  error
 }
 
 func (r *Repository) ListRoleHierarchyEdges(
@@ -80,6 +82,19 @@ func (r *Repository) GetAuthorizedRoles(
 		return []*permission.Role{}, nil
 	}
 	return r.AuthorizedRoles, nil
+}
+
+func (r *Repository) CountRolePermissions(
+	context.Context,
+	[]pulid.ID,
+) (map[pulid.ID]int, error) {
+	if r.RolePermissionCntErr != nil {
+		return nil, r.RolePermissionCntErr
+	}
+	if r.RolePermissionCounts == nil {
+		return map[pulid.ID]int{}, nil
+	}
+	return r.RolePermissionCounts, nil
 }
 
 func (r *Repository) ListRoleConstraints(

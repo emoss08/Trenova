@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -31,7 +32,7 @@ const mocks = vi.hoisted(() => ({
     maxSensitivity: "internal",
     permissions: {},
     routeAccess: {},
-    availableOrgs: [],
+    availableOrgs: [{ id: "org_1", name: "Alpha Logistics" }],
     checksum: "abc123",
     expiresAt: 1782403304,
   },
@@ -43,6 +44,25 @@ vi.mock("@/hooks/use-permission-polling", () => ({
 
 vi.mock("@/hooks/use-realtime-connection", () => ({
   useRealtimeConnection: vi.fn(),
+}));
+
+vi.mock("@/services/update", () => ({
+  updateService: {
+    getVersion: vi.fn().mockResolvedValue({ version: "4.12.0", environment: "development" }),
+    getNetworkPulse: vi.fn().mockRejectedValue(new Error("disabled")),
+  },
+}));
+
+vi.mock("@trenova/shared/stores/auth-store", () => ({
+  // Metadata reads the whole store while the gate uses a selector, so both call shapes
+  // have to work.
+  useAuthStore: (selector?: (state: Record<string, unknown>) => unknown) => {
+    const state = {
+      user: { emailAddress: "test@example.com", memberships: [] },
+      isLoading: false,
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock("@trenova/shared/services/auth", () => ({
@@ -59,6 +79,18 @@ vi.mock("@trenova/shared/stores/permission-store", () => ({
     }) => unknown,
   ) => selector({ manifest: mocks.manifest, fetchManifest: mocks.fetchManifest }),
 }));
+
+function renderAppLayout() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AppLayout />
+    </QueryClientProvider>,
+  );
+}
 
 describe("AppLayout role activation", () => {
   beforeEach(() => {
@@ -77,7 +109,7 @@ describe("AppLayout role activation", () => {
   it("renders role names and submits selected role IDs", async () => {
     const user = userEvent.setup();
 
-    render(<AppLayout />);
+    renderAppLayout();
 
     expect(screen.getByText("Dispatcher")).toBeInTheDocument();
     expect(screen.getByText("Coordinates dispatch activity")).toBeInTheDocument();
@@ -89,5 +121,17 @@ describe("AppLayout role activation", () => {
 
     await waitFor(() => expect(mocks.activateSessionRoles).toHaveBeenCalledWith(["rol_dispatch"]));
     expect(mocks.fetchManifest).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the credential receipt without a session row", async () => {
+    renderAppLayout();
+
+    expect(screen.getByText("Identity")).toBeInTheDocument();
+    expect(screen.getByText("test@example.com")).toBeInTheDocument();
+    expect(screen.getByText("Workspace")).toBeInTheDocument();
+    expect(screen.getByText("Alpha Logistics")).toBeInTheDocument();
+    // The browser only ever sees a session id at login, so the gate omits that row
+    // rather than leaving one that can never fill.
+    expect(screen.queryByText("Session")).not.toBeInTheDocument();
   });
 });

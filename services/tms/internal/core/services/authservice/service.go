@@ -677,6 +677,7 @@ func (s *Service) createSession(
 	sess := session.NewSession(&session.NewSessionRequest{
 		TenantInfo:            tenantInfo,
 		IsPortalUser:          isPortalUser,
+		MustChangePassword:    user.MustChangePassword,
 		ExpiresAt:             expiresAt,
 		AuthProvider:          authn.AuthProvider,
 		ExternalIdentityID:    authn.ExternalIdentityID,
@@ -751,6 +752,13 @@ func (s *Service) authorizedRoleSummaries(
 			summaries = append(summaries, services.NewRoleSummary(role))
 		}
 	}
+
+	counts, err := s.rbacRepo.CountRolePermissions(ctx, roleSummaryIDs(summaries))
+	if err != nil {
+		return nil, err
+	}
+	services.ApplyRolePermissionCounts(summaries, counts)
+
 	return summaries, nil
 }
 
