@@ -1,0 +1,36 @@
+[
+  {
+    "__type": "StateReport:http://pcmiler.alk.com/APIs/v1.0",
+    "RouteID": "route-2",
+    "StateReportLines": [
+      { "StCntry": "US_PA", "Total": "212.7", "Toll": "150.4", "Free": "62.3", "Ferry": "0.0", "Loaded": "212.7", "Empty": "0.0" },
+      { "StCntry": "US_NY", "Total": 88.15, "Toll": 0, "Free": 88.15, "Ferry": null, "Loaded": 88.15, "Empty": 0 },
+      { "StCntry": "CA_ON", "Total": "1,043.9", "Toll": "", "Free": "1,043.9", "Ferry": "2.5", "Loaded": "1,043.9", "Empty": "0.0" },
+      { "StCntry": "TOTAL", "Total": "1344.75", "Toll": "150.4", "Free": "1194.35", "Ferry": "2.5", "Loaded": "1344.75", "Empty": "0.0" }
+    ]
+  },
+  {
+    "__type": "MileageReport:http://pcmiler.alk.com/APIs/v1.0",
+    "RouteID": "route-1",
+    "ReportLines": [
+      { "TMiles": "0.0", "LMiles": "0.0", "Dist": "0.0", "Warn": "" },
+      { "TMiles": "97.3", "LMiles": "97.3", "Dist": "97.3", "Warn": "" }
+    ]
+  },
+  {
+    "__type": "StateReport:http://pcmiler.alk.com/APIs/v1.0",
+    "RouteID": "route-1",
+    "StateReportLines": [
+      { "StCntry": "US_NJ", "Total": "40.1", "Toll": "12.0", "Free": "28.1", "Ferry": "0.0", "Loaded": "40.1", "Empty": "0.0" },
+      { "StCntry": "PA", "Total": 57.2, "Toll": 0, "Free": 57.2, "Ferry": 0, "Loaded": 57.2, "Empty": 0 },
+      { "StCntry": "Total", "Total": "97.3", "Toll": "12.0", "Free": "85.3", "Ferry": "0.0", "Loaded": "97.3", "Empty": "0.0" }
+    ]
+  },
+  {
+    "__type": "MileageReport:http://pcmiler.alk.com/APIs/v1.0",
+    "RouteID": "route-2",
+    "ReportLines": [
+      { "TMiles": "1344.75", "LMiles": "1344.75", "Dist": "1344.75", "Warn": "Border crossing on route" }
+    ]
+  }
+]

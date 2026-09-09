@@ -3,6 +3,7 @@ import { equipmentManufacturerSchema } from "./equipment-manufacturer";
 import { equipmentTypeSchema } from "./equipment-type";
 import { fleetCodeRelationSchema } from "@trenova/shared/types/fleet-code";
 import {
+  customFieldsSchema,
   equipmentStatusSchema,
   nullableIntegerSchema,
   nullableStringSchema,
@@ -11,6 +12,7 @@ import {
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
 import { usStateRelationSchema } from "@trenova/shared/types/us-state";
+import { iftaFuelTypeSchema } from "@trenova/shared/types/fuel-ifta-enums";
 import { workerSchema } from "@trenova/shared/types/worker";
 
 export const tractorSchema = z.object({
@@ -39,6 +41,8 @@ export const tractorSchema = z.object({
   registrationNumber: optionalStringSchema,
   registrationExpiry: nullableIntegerSchema,
   externalId: optionalStringSchema.default(""),
+  fuelType: iftaFuelTypeSchema.default("Diesel"),
+  iftaQualified: z.boolean().default(true),
 
   equipmentType: relationSchema(equipmentTypeSchema),
   equipmentManufacturer: relationSchema(equipmentManufacturerSchema),
@@ -46,7 +50,7 @@ export const tractorSchema = z.object({
   state: usStateRelationSchema,
   primaryWorker: relationSchema(workerSchema),
   secondaryWorker: relationSchema(workerSchema),
-  customFields: z.record(z.string(), z.any()).nullish(),
+  customFields: customFieldsSchema,
 });
 
 export type Tractor = z.infer<typeof tractorSchema>;

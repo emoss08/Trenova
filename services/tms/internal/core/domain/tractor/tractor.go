@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -49,6 +50,8 @@ type Tractor struct {
 	LicensePlateNumber      string                      `json:"licensePlateNumber"      bun:"license_plate_number,type:VARCHAR(50),nullzero"`
 	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
 	RegistrationExpiry      *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
+	FuelType                domaintypes.IFTAFuelType    `json:"fuelType"                bun:"fuel_type,type:ifta_fuel_type_enum,notnull"`
+	IFTAQualified           bool                        `json:"iftaQualified"           bun:"ifta_qualified,type:BOOLEAN,notnull"`
 	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
 	ExternalID              string                      `json:"externalId"              bun:"external_id,type:TEXT,nullzero"`
 	OwnershipType           domaintypes.OwnershipType   `json:"ownershipType"           bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`
@@ -112,6 +115,10 @@ func (t *Tractor) Validate(multiErr *errortypes.MultiError) {
 			&t.Vin,
 			validation.By(domaintypes.ValidateVin),
 		),
+		validation.Field(
+			&t.FuelType,
+			domainvalidation.ValidEnum[domaintypes.IFTAFuelType]("Fuel type is invalid"),
+		),
 	))
 
 	if t.OwnershipType != "" && !t.OwnershipType.IsValid() {
@@ -144,6 +151,10 @@ func (t *Tractor) Validate(multiErr *errortypes.MultiError) {
 
 func (t *Tractor) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+
+	if t.FuelType == "" {
+		t.FuelType = domaintypes.IFTAFuelTypeDiesel
+	}
 
 	switch query.(type) {
 	case *bun.InsertQuery:

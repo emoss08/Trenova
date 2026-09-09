@@ -2,6 +2,7 @@ import {
   EquipmentManufacturerAutocompleteField,
   EquipmentTypeAutocompleteField,
   FleetCodeAutocompleteField,
+  IftaFuelTypeAutocompleteField,
   UsStateAutocompleteField,
   WorkerAutocompleteField,
 } from "@/components/autocomplete-fields";
@@ -10,11 +11,12 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { SwitchField } from "@/components/fields/switch-field";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { equipmentClassSchema } from "@/types/equipment-type";
-import { statusSchema } from "@trenova/shared/types/helpers";
 import type { Tractor } from "@/types/tractor";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { statusSchema } from "@trenova/shared/types/helpers";
 import { type Control, useFormContext } from "react-hook-form";
 
 function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
@@ -187,6 +189,36 @@ function TelematicsSection({ control }: { control: Control<Tractor> }) {
   );
 }
 
+function FuelTaxSection({ control }: { control: Control<Tractor> }) {
+  return (
+    <FormSection title="Fuel & IFTA" className="border-t py-2">
+      <FormGroup cols={1}>
+        <FormControl>
+          <IftaFuelTypeAutocompleteField<Tractor>
+            control={control}
+            name="fuelType"
+            label="Fuel Type"
+            rules={{ required: true }}
+            placeholder="Select a fuel type"
+            description="The fuel this unit burns. Its miles land on this fuel type's lines of the quarterly IFTA return."
+          />
+        </FormControl>
+        <FormControl>
+          <SwitchField
+            control={control}
+            name="iftaQualified"
+            label="IFTA qualified"
+            description="Count this unit's miles and fuel on the quarterly return."
+            tooltip="Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction."
+            position="left"
+            outlined
+          />
+        </FormControl>
+      </FormGroup>
+    </FormSection>
+  );
+}
+
 function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
   return (
     <FormSection title="Worker Assignment" className="border-t py-2">
@@ -229,6 +261,7 @@ export function TractorForm() {
       <GeneralInformationSection control={control} />
       <RegistrationInformationSection control={control} />
       <TelematicsSection control={control} />
+      <FuelTaxSection control={control} />
       <WorkerAssignmentSection control={control} />
       <CustomFieldsSection resourceType="tractor" control={control} />
     </>

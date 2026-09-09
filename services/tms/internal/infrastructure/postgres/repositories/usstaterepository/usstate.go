@@ -2,14 +2,17 @@ package usstaterepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -122,4 +125,23 @@ func (r *repository) GetByAbbreviation(
 	}
 
 	return nil, errortypes.NewNotFoundError("us state not found")
+}
+
+func (r *repository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error) {
+	entities := make([]*usstate.UsState, 0, len(ids))
+	if len(ids) == 0 {
+		return entities, nil
+	}
+
+	err := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		Where(buncolgen.UsStateColumns.ID.In(), bun.List(ids)).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to get us states by ids", zap.Error(err))
+		return nil, fmt.Errorf("get us states by ids: %w", err)
+	}
+
+	return entities, nil
 }

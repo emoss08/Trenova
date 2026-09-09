@@ -7,6 +7,7 @@ export const distanceControlSchema = z.object({
   storedDistanceUnits: z.enum(["Miles", "Kilometers"]),
   postalCodeFallbackToCity: z.boolean(),
   autoCreateStoredMileage: z.boolean(),
+  captureJurisdictionMiles: z.boolean().default(false),
   loadedMoveDistanceProfileId: z.string().min(1),
   emptyMoveDistanceProfileId: z.string().min(1),
   payDistanceProfileId: z.string().min(1),
@@ -18,3 +19,4 @@ export const distanceControlSchema = z.object({
 });
 
 export type DistanceControl = z.infer<typeof distanceControlSchema>;
+export type DistanceControlInput = z.input<typeof distanceControlSchema>;

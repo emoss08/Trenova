@@ -2,11 +2,13 @@ package distancecalculationservice
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
@@ -19,18 +21,39 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/countryutils"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const distancePrecision = 100
+const (
+	distancePrecision = 100
+
+	jurisdictionAbsoluteTolerance = 0.5
+	jurisdictionRelativeTolerance = 0.005
+	jurisdictionRunPurpose        = "JurisdictionMiles"
+	runStatusSuccess              = "Success"
+	runStatusFailed               = "Failed"
+
+	JurisdictionAttributionAttributed   = "Attributed"
+	JurisdictionAttributionUnattributed = "Unattributed"
+	JurisdictionAttributionMismatch     = "Mismatch"
+)
+
+type mileageClient interface {
+	Mileage(ctx context.Context, routes []pcmiler.RouteRequest) ([]pcmiler.RouteMileage, error)
+}
 
 type Params struct {
 	fx.In
@@ -43,6 +66,9 @@ type Params struct {
 	DistanceCalcRepo     repositories.DistanceCalculationRepository
 	StoredMileageRepo    repositories.StoredMileageRepository
 	StoredMileageBuffer  repositories.StoredMileageBufferRepository
+	JurisdictionMileRepo repositories.ShipmentMoveJurisdictionMileRepository
+	ShipmentMoveRepo     repositories.ShipmentMoveRepository
+	WorkflowStarter      services.WorkflowStarter
 	IntegrationService   *integrationservice.Service
 }
 
@@ -55,6 +81,9 @@ type Service struct {
 	distanceCalcRepo     repositories.DistanceCalculationRepository
 	storedMileageRepo    repositories.StoredMileageRepository
 	storedMileageBuffer  repositories.StoredMileageBufferRepository
+	jurisdictionMileRepo repositories.ShipmentMoveJurisdictionMileRepository
+	shipmentMoveRepo     repositories.ShipmentMoveRepository
+	workflowStarter      services.WorkflowStarter
 	integrationService   *integrationservice.Service
 }
 
@@ -68,6 +97,9 @@ func New(p Params) services.DistanceCalculationService {
 		distanceCalcRepo:     p.DistanceCalcRepo,
 		storedMileageRepo:    p.StoredMileageRepo,
 		storedMileageBuffer:  p.StoredMileageBuffer,
+		jurisdictionMileRepo: p.JurisdictionMileRepo,
+		shipmentMoveRepo:     p.ShipmentMoveRepo,
+		workflowStarter:      p.WorkflowStarter,
 		integrationService:   p.IntegrationService,
 	}
 }
@@ -75,6 +107,14 @@ func New(p Params) services.DistanceCalculationService {
 func (s *Service) ResolveForShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
+) (*services.DistanceCalculationResponse, error) {
+	return s.resolveForShipment(ctx, entity, make(map[string]pcmilerRuntime, 2))
+}
+
+func (s *Service) resolveForShipment(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	pcRuntimeByPurpose map[string]pcmilerRuntime,
 ) (*services.DistanceCalculationResponse, error) {
 	if entity == nil {
 		return nil, errortypes.NewBusinessError("shipment is required")
@@ -85,7 +125,6 @@ func (s *Service) ResolveForShipment(
 		Moves:      make([]services.DistanceMoveResult, 0, len(entity.Moves)),
 	}
 
-	pcRuntimeByPurpose := make(map[string]pcmilerRuntime, 2)
 	control, controlErr := s.distanceControlRepo.EnsureDefault(ctx, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -135,7 +174,7 @@ func (s *Service) ResolveForShipment(
 			hazmatTypes,
 			pcRuntimeByPurpose,
 		)
-		if runtime.ready {
+		if runtime.profile != nil {
 			storedDistance, storedOK, storedErr := s.storedMileage(
 				ctx,
 				entity,
@@ -148,8 +187,8 @@ func (s *Service) ResolveForShipment(
 			if storedErr != nil {
 				return nil, storedErr
 			}
-			if storedOK {
-				applyMoveDistance(moveDistanceParams{
+			if storedOK && useStoredMileage(storedDistance, runtime) {
+				warnings := applyMoveDistance(moveDistanceParams{
 					move:         move,
 					distance:     storedDistance.Distance,
 					source:       distancecalculation.SourceStoredMileage,
@@ -166,23 +205,26 @@ func (s *Service) ResolveForShipment(
 						"distanceProfileName": storedDistance.DistanceProfileName,
 						"storedDistanceUnits": storedDistance.DistanceUnits,
 					},
-					calculatedAt: now,
+					calculatedAt:  now,
+					jurisdictions: pcmilerJurisdictionsFromStored(storedDistance.JurisdictionDistances),
 				})
-				resp.Moves = append(resp.Moves, moveResult(move, idx, nil))
+				resp.Moves = append(resp.Moves, moveResult(move, idx, warnings))
 				resp.TotalDistance = addDistance(resp.TotalDistance, storedDistance.Distance)
 				s.incrementStoredMileageHit(entity, storedDistance.ID)
 				continue
 			}
-			route, ok := buildPCMilerRoute(move, runtime.options, signature)
-			if ok {
-				pcTargets[route.RouteID] = pcmilerMoveTarget{
-					move:    move,
-					index:   idx,
-					profile: runtime.profile,
-					options: runtime.options,
+			if runtime.ready {
+				route, routeOK := buildPCMilerRoute(move, runtime.options, signature)
+				if routeOK {
+					pcTargets[route.RouteID] = pcmilerMoveTarget{
+						move:    move,
+						index:   idx,
+						profile: runtime.profile,
+						options: runtime.options,
+					}
+					pcRequests = append(pcRequests, route)
+					continue
 				}
-				pcRequests = append(pcRequests, route)
-				continue
 			}
 		}
 
@@ -218,7 +260,7 @@ func (s *Service) ResolveForShipment(
 			continue
 		}
 		resolvedRoutes[result.RouteID] = struct{}{}
-		applyMoveDistance(moveDistanceParams{
+		warnings := applyMoveDistance(moveDistanceParams{
 			move:         target.move,
 			distance:     result.Distance,
 			source:       distancecalculation.SourcePCMiler,
@@ -234,9 +276,13 @@ func (s *Service) ResolveForShipment(
 				"distanceProfileId":   target.profile.ID.String(),
 				"distanceProfileName": target.profile.Name,
 			},
-			calculatedAt: timeutils.NowUnix(),
+			calculatedAt:  timeutils.NowUnix(),
+			jurisdictions: result.JurisdictionDistances,
 		})
-		resp.Moves = append(resp.Moves, moveResult(target.move, target.index, result.Warnings))
+		resp.Moves = append(
+			resp.Moves,
+			moveResult(target.move, target.index, mergeWarnings(result.Warnings, warnings)),
+		)
 		resp.TotalDistance = addDistance(resp.TotalDistance, result.Distance)
 		s.enqueueStoredMileageCandidate(
 			ctx,
@@ -277,10 +323,20 @@ type pcmilerMoveTarget struct {
 }
 
 type pcmilerRuntime struct {
-	client  *pcmiler.Client
+	client  mileageClient
 	options pcmiler.RouteOptions
 	profile *distanceprofile.DistanceProfile
 	ready   bool
+}
+
+func useStoredMileage(stored *storedmileage.StoredMileage, runtime pcmilerRuntime) bool {
+	if stored == nil {
+		return false
+	}
+	if stored.HasJurisdictionBreakdown() {
+		return true
+	}
+	return !(runtime.ready && runtime.options.StateReport)
 }
 
 func (s *Service) RecalculateShipment(
@@ -310,12 +366,290 @@ func (s *Service) RecalculateShipment(
 	return resp, nil
 }
 
+func (s *Service) RecalculateMoveJurisdictionMiles(
+	ctx context.Context,
+	req services.RecalculateMoveJurisdictionMilesRequest,
+) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+	if req.ShipmentMoveID.IsNil() {
+		return nil, errortypes.NewBusinessError("Shipment move is required")
+	}
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		MoveID:            req.ShipmentMoveID,
+		TenantInfo:        req.TenantInfo,
+		ExpandMoveDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !canResolveMoveDistance(move) {
+		return nil, errortypes.NewBusinessError(
+			"Jurisdiction miles need a move with at least two located stops",
+		).WithParam("moveId", move.ID.String())
+	}
+	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         move.ShipmentID,
+		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	control, err := s.distanceControlRepo.EnsureDefault(ctx, pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	hazmatTypes := hazmatTypesForShipment(entity)
+	runtime := s.runtimeForPurpose(
+		ctx,
+		entity,
+		control,
+		movePurpose(move),
+		hazmatTypes,
+		make(map[string]pcmilerRuntime, 1),
+	)
+	if !runtime.ready {
+		return nil, errortypes.NewBusinessError(
+			"PC*Miler is not ready; configure the integration before requesting jurisdiction miles",
+		)
+	}
+	runtime.options.StateReport = true
+	route, ok := buildPCMilerRoute(
+		move,
+		runtime.options,
+		buildRouteSignature(entity.CustomerID, move),
+	)
+	if !ok {
+		return nil, errortypes.NewBusinessError(
+			"Every stop on the move needs a location before jurisdiction miles can be requested",
+		).WithParam("moveId", move.ID.String())
+	}
+
+	started := time.Now()
+	results, err := runtime.client.Mileage(ctx, []pcmiler.RouteRequest{route})
+	latency := time.Since(started).Milliseconds()
+	if err != nil {
+		s.logJurisdictionRun(ctx, jurisdictionRunParams{
+			move:    move,
+			profile: runtime.profile,
+			latency: latency,
+			err:     err,
+		})
+		return nil, fmt.Errorf("request jurisdiction miles for move %s: %w", move.ID, err)
+	}
+	result, found := findRouteResult(results, route.RouteID)
+	if !found {
+		err = errortypes.NewBusinessError("PC*Miler returned no route for the move").
+			WithParam("moveId", move.ID.String())
+		s.logJurisdictionRun(ctx, jurisdictionRunParams{
+			move:    move,
+			profile: runtime.profile,
+			latency: latency,
+			err:     err,
+		})
+		return nil, err
+	}
+
+	rows := buildJurisdictionMiles(moveDistanceParams{
+		move:          move,
+		distance:      result.Distance,
+		source:        distancecalculation.SourcePCMiler,
+		provider:      string(integration.TypePCMiler),
+		dataVersion:   runtime.options.DataVersion,
+		distanceUnit:  runtime.options.DistanceUnits,
+		profileID:     runtime.profile.ID.String(),
+		calculatedAt:  timeutils.NowUnix(),
+		jurisdictions: result.JurisdictionDistances,
+	})
+	move.JurisdictionMiles = rows
+	move.JurisdictionMilesDirty = true
+	if err = s.jurisdictionMileRepo.ReplaceForMove(ctx, move); err != nil {
+		return nil, err
+	}
+	s.enqueueStoredMileageCandidate(
+		ctx,
+		entity,
+		move,
+		runtime.profile,
+		runtime.options,
+		result,
+		control,
+		hazmatTypes,
+	)
+	s.logJurisdictionRun(ctx, jurisdictionRunParams{
+		move:    move,
+		profile: runtime.profile,
+		result:  &result,
+		rows:    rows,
+		latency: latency,
+	})
+	return rows, nil
+}
+
+func (s *Service) BackfillJurisdictionMiles(
+	ctx context.Context,
+	req services.BackfillJurisdictionMilesRequest,
+) (*services.BackfillJurisdictionMilesResult, error) {
+	if req.Start <= 0 || req.End <= req.Start {
+		return nil, errortypes.NewBusinessError("Period start must be before period end")
+	}
+	page, err := s.jurisdictionMileRepo.ListUnattributedMoves(
+		ctx,
+		repositories.UnattributedMovesRequest{
+			TenantInfo: req.TenantInfo,
+			Start:      req.Start,
+			End:        req.End,
+			Limit:      1,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	result := &services.BackfillJurisdictionMilesResult{
+		DryRun:            req.DryRun,
+		UnattributedMoves: page.TotalMoves,
+		UnattributedMiles: page.TotalMiles,
+	}
+	if req.DryRun || page.TotalMoves == 0 {
+		return result, nil
+	}
+	if !s.workflowStarter.Enabled() {
+		return nil, errortypes.NewBusinessError(
+			"Background jobs are unavailable, so the jurisdiction backfill cannot be started",
+		)
+	}
+
+	maxMoves := req.MaxMoves
+	if maxMoves <= 0 {
+		maxMoves = iftajobs.DefaultBackfillMaxMoves
+	}
+	tenantInfo := req.TenantInfo
+	if !req.UserID.IsNil() {
+		tenantInfo.UserID = req.UserID
+	}
+	workflowID := fmt.Sprintf(
+		"ifta-jurisdiction-backfill-%s-%d-%d",
+		req.TenantInfo.OrgID.String(),
+		req.Start,
+		req.End,
+	)
+	run, err := s.workflowStarter.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:                                       workflowID,
+			TaskQueue:                                temporaltype.TaskQueueSystem.String(),
+			WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			StaticSummary: fmt.Sprintf(
+				"Backfilling jurisdiction miles for up to %d of %d unattributed moves",
+				maxMoves,
+				page.TotalMoves,
+			),
+		},
+		iftajobs.BackfillJurisdictionMilesWorkflowName,
+		iftajobs.BackfillInput{
+			TenantInfo: tenantInfo,
+			Start:      req.Start,
+			End:        req.End,
+			MaxMoves:   maxMoves,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("start jurisdiction backfill workflow: %w", err)
+	}
+	result.Started = true
+	result.WorkflowID = run.GetID()
+	return result, nil
+}
+
+type jurisdictionRunParams struct {
+	move    *shipment.ShipmentMove
+	profile *distanceprofile.DistanceProfile
+	result  *pcmiler.RouteMileage
+	rows    []*shipment.ShipmentMoveJurisdictionMile
+	latency int64
+	err     error
+}
+
+func (s *Service) logJurisdictionRun(ctx context.Context, params jurisdictionRunParams) {
+	move := params.move
+	request := map[string]any{
+		"purpose":     jurisdictionRunPurpose,
+		"stateReport": true,
+	}
+	if params.profile != nil {
+		request["distance_profile_id"] = params.profile.ID.String()
+		request["distance_profile_name"] = params.profile.Name
+	}
+	run := &distancecalculation.Run{
+		OrganizationID: move.OrganizationID,
+		BusinessUnitID: move.BusinessUnitID,
+		ShipmentID:     move.ShipmentID,
+		ShipmentMoveID: move.ID,
+		Provider:       string(integration.TypePCMiler),
+		Source:         distancecalculation.SourcePCMiler,
+		RequestSummary: request,
+		Status:         runStatusSuccess,
+		LatencyMillis:  params.latency,
+	}
+	if params.err != nil {
+		run.Status = runStatusFailed
+		run.ErrorMessage = params.err.Error()
+		run.ResponseSummary = map[string]any{
+			"jurisdictionCount":       0,
+			"jurisdictionSum":         0.0,
+			"jurisdictionAttribution": JurisdictionAttributionUnattributed,
+		}
+	} else if params.result != nil {
+		comparison := params.result.Distance
+		if move.Distance != nil {
+			comparison = *move.Distance
+		}
+		attribution, sum := jurisdictionAttribution(comparison, move.DistanceUnits, params.rows)
+		run.ResponseSummary = map[string]any{
+			"distance":                params.result.Distance,
+			"moveDistance":            manualDistance(move),
+			"dataVersion":             params.result.DataVersion,
+			"warnings":                params.result.Warnings,
+			"jurisdictionCount":       len(params.rows),
+			"jurisdictionSum":         sum,
+			"jurisdictionAttribution": attribution,
+		}
+	}
+	if err := s.distanceCalcRepo.CreateRun(ctx, run); err != nil {
+		s.l.Warn("failed to write jurisdiction miles run", zap.Error(err))
+	}
+}
+
+func findRouteResult(results []pcmiler.RouteMileage, routeID string) (pcmiler.RouteMileage, bool) {
+	for _, result := range results {
+		if result.RouteID == routeID {
+			return result, true
+		}
+	}
+	if len(results) == 1 && routeID == "" {
+		return results[0], true
+	}
+	return pcmiler.RouteMileage{}, false
+}
+
 func (s *Service) persistMoveDistances(ctx context.Context, moves []*shipment.ShipmentMove) error {
 	for _, move := range moves {
 		if move == nil || move.ID.IsNil() {
 			continue
 		}
 		if err := s.distanceCalcRepo.UpdateMoveDistance(ctx, move); err != nil {
+			return err
+		}
+		if !move.JurisdictionMilesDirty {
+			continue
+		}
+		if err := s.jurisdictionMileRepo.ReplaceForMove(ctx, move); err != nil {
 			return err
 		}
 	}
@@ -331,7 +665,22 @@ func (s *Service) logRuns(
 	if resp == nil {
 		return
 	}
+	movesByID := make(map[pulid.ID]*shipment.ShipmentMove, len(entity.Moves))
+	for _, move := range entity.Moves {
+		if move != nil && !move.ID.IsNil() {
+			movesByID[move.ID] = move
+		}
+	}
 	for _, result := range resp.Moves {
+		var rows []*shipment.ShipmentMoveJurisdictionMile
+		if move := movesByID[result.MoveID]; move != nil {
+			rows = move.JurisdictionMiles
+		}
+		attribution, jurisdictionSum := jurisdictionAttribution(
+			result.Distance,
+			result.DistanceUnits,
+			rows,
+		)
 		run := &distancecalculation.Run{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
@@ -345,14 +694,17 @@ func (s *Service) logRuns(
 				"distance_profile_name": result.DistanceProfileName,
 			},
 			ResponseSummary: map[string]any{
-				"distance":              result.Distance,
-				"routingType":           result.RoutingType,
-				"dataVersion":           result.DataVersion,
-				"distance_profile_id":   result.DistanceProfileID,
-				"distance_profile_name": result.DistanceProfileName,
-				"warnings":              result.Warnings,
+				"distance":                result.Distance,
+				"routingType":             result.RoutingType,
+				"dataVersion":             result.DataVersion,
+				"distance_profile_id":     result.DistanceProfileID,
+				"distance_profile_name":   result.DistanceProfileName,
+				"warnings":                result.Warnings,
+				"jurisdictionCount":       len(rows),
+				"jurisdictionSum":         jurisdictionSum,
+				"jurisdictionAttribution": attribution,
 			},
-			Status: "Success",
+			Status: runStatusSuccess,
 		}
 		if err := s.distanceCalcRepo.CreateRun(ctx, run); err != nil {
 			s.l.Warn("failed to write distance calculation run", zap.Error(err))
@@ -393,18 +745,18 @@ func (s *Service) pcmilerRuntime(
 		BuID:  entity.BusinessUnitID,
 	}, integration.TypePCMiler)
 	if err != nil || !cfg.Ready {
-		return nil, pcmiler.RouteOptions{}, nil, false
+		return nil, profile.RouteOptions(), profile, false
 	}
 
-	client, err := pcmiler.New(pcmiler.Config{
+	pcClient, err := pcmiler.New(pcmiler.Config{
 		APIKey:  cfg.Config["apiKey"],
 		BaseURL: cfg.Config["baseUrl"],
 	})
 	if err != nil {
-		return nil, pcmiler.RouteOptions{}, nil, false
+		return nil, profile.RouteOptions(), profile, false
 	}
 
-	return client, profile.RouteOptions(), profile, true
+	return pcClient, profile.RouteOptions(), profile, true
 }
 
 func (s *Service) runtimeForPurpose(
@@ -418,16 +770,26 @@ func (s *Service) runtimeForPurpose(
 	if runtime, ok := cache[purpose]; ok {
 		return runtime
 	}
-	client, options, profile, ready := s.pcmilerRuntime(ctx, entity, control, purpose)
+	pcClient, options, profile, ready := s.pcmilerRuntime(ctx, entity, control, purpose)
 	options.Hazmat = hazmatTypes
+	if purposeCapturesJurisdictions(purpose) {
+		options.StateReport = control != nil && control.CaptureJurisdictionMiles
+	}
 	runtime := pcmilerRuntime{
-		client:  client,
 		options: options,
 		profile: profile,
 		ready:   ready,
 	}
+	if ready {
+		runtime.client = pcClient
+	}
 	cache[purpose] = runtime
 	return runtime
+}
+
+func purposeCapturesJurisdictions(purpose string) bool {
+	return purpose == distancecontrol.PurposeLoadedMove ||
+		purpose == distancecontrol.PurposeEmptyMove
 }
 
 func firstReadyRuntime(cache map[string]pcmilerRuntime) pcmilerRuntime {
@@ -514,7 +876,51 @@ func (s *Service) storedMileage(
 	found.Distance = roundDistance(
 		storedmileage.ConvertDistance(found.Distance, found.DistanceUnits, options.DistanceUnits),
 	)
+	if found.HasJurisdictionBreakdown() {
+		found.JurisdictionDistances = convertStoredJurisdictions(
+			found.JurisdictionDistances,
+			found.DistanceUnits,
+			options.DistanceUnits,
+		)
+	}
 	return found, true, nil
+}
+
+func convertStoredJurisdictions(
+	items []storedmileage.JurisdictionDistance,
+	fromUnits, toUnits string,
+) []storedmileage.JurisdictionDistance {
+	converted := make([]storedmileage.JurisdictionDistance, 0, len(items))
+	for _, item := range items {
+		converted = append(converted, storedmileage.JurisdictionDistance{
+			Country:  item.Country,
+			Code:     item.Code,
+			Distance: roundDistance(storedmileage.ConvertDistance(item.Distance, fromUnits, toUnits)),
+			Toll:     roundDistance(storedmileage.ConvertDistance(item.Toll, fromUnits, toUnits)),
+			Ferry:    roundDistance(storedmileage.ConvertDistance(item.Ferry, fromUnits, toUnits)),
+		})
+	}
+	return converted
+}
+
+func pcmilerJurisdictionsFromStored(
+	items []storedmileage.JurisdictionDistance,
+) []pcmiler.JurisdictionDistance {
+	converted := make([]pcmiler.JurisdictionDistance, 0, len(items))
+	for _, item := range items {
+		converted = append(converted, pcmiler.JurisdictionDistance(item))
+	}
+	return converted
+}
+
+func storedJurisdictionsFromPCMiler(
+	items []pcmiler.JurisdictionDistance,
+) []storedmileage.JurisdictionDistance {
+	converted := make([]storedmileage.JurisdictionDistance, 0, len(items))
+	for _, item := range items {
+		converted = append(converted, storedmileage.JurisdictionDistance(item))
+	}
+	return converted
 }
 
 func (s *Service) incrementStoredMileageHit(entity *shipment.Shipment, storedMileageID pulid.ID) {
@@ -558,6 +964,7 @@ func (s *Service) enqueueStoredMileageCandidate(
 	if !ok {
 		return
 	}
+	candidate.JurisdictionDistances = storedJurisdictionsFromPCMiler(result.JurisdictionDistances)
 	if err := s.storedMileageBuffer.Push(ctx, candidate); err != nil {
 		s.l.Warn("failed to buffer stored mileage candidate", zap.Error(err))
 	}
@@ -728,11 +1135,21 @@ func buildPCMilerRoute(
 
 func locationToPCMilerStop(loc *location.Location, options pcmiler.RouteOptions) pcmiler.Stop {
 	state := ""
+	country := countryutils.ISO2UnitedStates
 	if loc.State != nil {
 		state = loc.State.Abbreviation
+		country = countryutils.ISO3ToISO2OrDefault(
+			loc.State.CountryIso3,
+			countryutils.ISO2UnitedStates,
+		)
 	}
 
-	stop := pcmiler.Stop{City: loc.City, State: state, PostalCode: loc.PostalCode}
+	stop := pcmiler.Stop{
+		City:       loc.City,
+		State:      state,
+		PostalCode: loc.PostalCode,
+		Country:    country,
+	}
 	switch optionsGranularity(options) {
 	case "StreetAddress":
 		stop.AddressLine = loc.AddressLine1
@@ -760,22 +1177,33 @@ func optionsGranularity(options pcmiler.RouteOptions) string {
 }
 
 type moveDistanceParams struct {
-	move         *shipment.ShipmentMove
-	distance     float64
-	source       string
-	provider     string
-	signature    string
-	dataVersion  string
-	routingType  string
-	distanceUnit string
-	profileID    string
-	profileName  string
-	metadata     map[string]any
-	calculatedAt int64
+	move          *shipment.ShipmentMove
+	distance      float64
+	source        string
+	provider      string
+	signature     string
+	dataVersion   string
+	routingType   string
+	distanceUnit  string
+	profileID     string
+	profileName   string
+	metadata      map[string]any
+	calculatedAt  int64
+	jurisdictions []pcmiler.JurisdictionDistance
 }
 
-func applyMoveDistance(params moveDistanceParams) {
+func applyMoveDistance(params moveDistanceParams) []string {
 	params.distance = roundDistance(params.distance)
+	rows := buildJurisdictionMiles(params)
+	var warnings []string
+	if warning, mismatch := jurisdictionMismatchWarning(
+		params.distance,
+		params.distanceUnit,
+		rows,
+	); mismatch {
+		warnings = []string{warning}
+		params.metadata = appendMetadataWarning(params.metadata, warning)
+	}
 	params.move.Distance = &params.distance
 	params.move.DistanceSource = params.source
 	params.move.DistanceProvider = params.provider
@@ -785,6 +1213,163 @@ func applyMoveDistance(params moveDistanceParams) {
 	params.move.DistanceUnits = params.distanceUnit
 	params.move.DistanceCalculatedAt = &params.calculatedAt
 	params.move.DistanceMetadata = params.metadata
+	params.move.JurisdictionMiles = rows
+	params.move.JurisdictionMilesDirty = true
+	return warnings
+}
+
+func buildJurisdictionMiles(params moveDistanceParams) []*shipment.ShipmentMoveJurisdictionMile {
+	rows := make([]*shipment.ShipmentMoveJurisdictionMile, 0, len(params.jurisdictions))
+	if params.move == nil ||
+		params.source == distancecalculation.SourceManual ||
+		params.source == distancecalculation.SourceOverride {
+		return rows
+	}
+	units := normalizeJurisdictionUnits(params.distanceUnit)
+	for _, item := range params.jurisdictions {
+		code := strings.ToUpper(strings.TrimSpace(item.Code))
+		if code == "" || item.Distance < 0 {
+			continue
+		}
+		row := &shipment.ShipmentMoveJurisdictionMile{
+			BusinessUnitID:    params.move.BusinessUnitID,
+			OrganizationID:    params.move.OrganizationID,
+			ShipmentMoveID:    params.move.ID,
+			ShipmentID:        params.move.ShipmentID,
+			CountryCode:       normalizeJurisdictionCountry(item.Country),
+			JurisdictionCode:  code,
+			Sequence:          len(rows),
+			Distance:          roundDistance(item.Distance),
+			DistanceUnits:     units,
+			Loaded:            params.move.Loaded,
+			Source:            shipment.JurisdictionMileSourceRouteCalculation,
+			Provider:          params.provider,
+			DataVersion:       params.dataVersion,
+			DistanceProfileID: pulid.ID(params.profileID),
+			CalculatedAt:      params.calculatedAt,
+		}
+		if item.Toll > 0 {
+			toll := roundDistance(item.Toll)
+			row.TollDistance = &toll
+		}
+		if item.Ferry > 0 {
+			ferry := roundDistance(item.Ferry)
+			row.FerryDistance = &ferry
+		}
+		rows = append(rows, row)
+	}
+	return rows
+}
+
+func normalizeJurisdictionUnits(units string) string {
+	if strings.EqualFold(strings.TrimSpace(units), shipment.JurisdictionDistanceUnitsKilometers) {
+		return shipment.JurisdictionDistanceUnitsKilometers
+	}
+	return shipment.JurisdictionDistanceUnitsMiles
+}
+
+func normalizeJurisdictionCountry(country string) string {
+	code := strings.ToUpper(strings.TrimSpace(country))
+	if len(code) == 3 {
+		return countryutils.ISO3ToISO2OrDefault(code, countryutils.ISO2UnitedStates)
+	}
+	if len(code) != 2 {
+		return countryutils.ISO2UnitedStates
+	}
+	return code
+}
+
+func jurisdictionSumIn(rows []*shipment.ShipmentMoveJurisdictionMile, units string) float64 {
+	target := normalizeJurisdictionUnits(units)
+	sum := 0.0
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		sum += storedmileage.ConvertDistance(row.Distance, row.DistanceUnits, target)
+	}
+	return roundDistance(sum)
+}
+
+func withinJurisdictionTolerance(distance, sum float64) bool {
+	tolerance := math.Max(
+		jurisdictionAbsoluteTolerance,
+		math.Abs(distance)*jurisdictionRelativeTolerance,
+	)
+	return math.Abs(sum-distance) <= tolerance
+}
+
+func jurisdictionAttribution(
+	distance float64,
+	units string,
+	rows []*shipment.ShipmentMoveJurisdictionMile,
+) (string, float64) {
+	if len(rows) == 0 {
+		return JurisdictionAttributionUnattributed, 0
+	}
+	sum := jurisdictionSumIn(rows, units)
+	if withinJurisdictionTolerance(distance, sum) {
+		return JurisdictionAttributionAttributed, sum
+	}
+	return JurisdictionAttributionMismatch, sum
+}
+
+func jurisdictionMismatchWarning(
+	distance float64,
+	units string,
+	rows []*shipment.ShipmentMoveJurisdictionMile,
+) (string, bool) {
+	attribution, sum := jurisdictionAttribution(distance, units, rows)
+	if attribution != JurisdictionAttributionMismatch {
+		return "", false
+	}
+	return fmt.Sprintf(
+		"Jurisdiction breakdown totals %.2f %s but the route distance is %.2f %s",
+		sum,
+		normalizeJurisdictionUnits(units),
+		roundDistance(distance),
+		normalizeJurisdictionUnits(units),
+	), true
+}
+
+func appendMetadataWarning(metadata map[string]any, warning string) map[string]any {
+	if metadata == nil {
+		metadata = make(map[string]any, 1)
+	}
+	existing, _ := metadata["warnings"].([]string)
+	metadata["warnings"] = mergeWarnings(existing, []string{warning})
+	return metadata
+}
+
+func mergeWarnings(base, extra []string) []string {
+	if len(extra) == 0 {
+		return base
+	}
+	merged := make([]string, 0, len(base)+len(extra))
+	merged = append(merged, base...)
+	return append(merged, extra...)
+}
+
+func jurisdictionMileResults(
+	rows []*shipment.ShipmentMoveJurisdictionMile,
+) []services.JurisdictionMileResult {
+	if len(rows) == 0 {
+		return nil
+	}
+	results := make([]services.JurisdictionMileResult, 0, len(rows))
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		results = append(results, services.JurisdictionMileResult{
+			CountryCode:      row.CountryCode,
+			JurisdictionCode: row.JurisdictionCode,
+			Distance:         row.Distance,
+			DistanceUnits:    row.DistanceUnits,
+			Loaded:           row.Loaded,
+		})
+	}
+	return results
 }
 
 func applyManualDistance(
@@ -829,6 +1414,7 @@ func moveResult(
 		DistanceProfileID:   profileIDFromMetadata(move.DistanceMetadata),
 		DistanceProfileName: profileNameFromMetadata(move.DistanceMetadata),
 		Warnings:            warnings,
+		JurisdictionMiles:   jurisdictionMileResults(move.JurisdictionMiles),
 		CalculatedAt:        calculatedAt,
 	}
 }

@@ -1,0 +1,222 @@
+fragment IftaPeriodFields on IFTAPeriod {
+  year
+  quarter
+  key
+  label
+  start
+  end
+  dueDate
+}
+
+fragment IftaReturnLineFields on IFTAReturnLine {
+  id
+  returnId
+  jurisdictionId
+  fuelType
+  isIftaMember
+  totalMiles
+  taxableMiles
+  routeMiles
+  manualMiles
+  loadedMiles
+  emptyMiles
+  taxPaidGallons
+  taxPaidGallonsRaw
+  purchaseCount
+  taxableGallons
+  netTaxableGallons
+  ratePerGallon
+  surchargeRatePerGallon
+  rateMissing
+  taxDue
+  surchargeDue
+  lineTotal
+  sortOrder
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+    isIftaMember
+    hasSurcharge
+  }
+}
+
+fragment IftaReturnFields on IFTAReturn {
+  id
+  businessUnitId
+  organizationId
+  year
+  quarter
+  period {
+    ...IftaPeriodFields
+  }
+  amendmentNumber
+  amendsReturnId
+  amendsReturn {
+    id
+    amendmentNumber
+    status
+  }
+  status
+  timezone
+  periodStart
+  periodEnd
+  totalMiles
+  totalTaxableMiles
+  totalGallons
+  totalTaxPaidGallons
+  netTaxableGallons
+  taxDue
+  surchargeDue
+  netDue
+  currencyCode
+  fleetMpgByFuelType {
+    fuelType
+    mpg
+    totalMiles
+    totalGallons
+  }
+  unattributedMiles
+  unattributedMoveCount
+  noTractorMiles
+  noTractorMoveCount
+  problems {
+    code
+    message
+    jurisdictionCode
+    fuelType
+    amount
+  }
+  computedAt
+  finalizedAt
+  finalizedById
+  finalizedBy {
+    id
+    name
+  }
+  filedAt
+  filedById
+  filedBy {
+    id
+    name
+  }
+  filingReference
+  reopenedAt
+  reopenedById
+  reopenReason
+  lines {
+    ...IftaReturnLineFields
+  }
+  version
+  createdAt
+  updatedAt
+}
+
+fragment IftaReturnSummaryFields on IFTAReturn {
+  id
+  year
+  quarter
+  amendmentNumber
+  status
+  totalMiles
+  totalTaxPaidGallons
+  netDue
+  currencyCode
+  computedAt
+  finalizedAt
+  filedAt
+  filingReference
+  version
+  createdAt
+  updatedAt
+}
+
+query IftaReturnForPeriod($input: IFTAPeriodInput!) {
+  iftaReturnForPeriod(period: $input) {
+    ...IftaReturnFields
+  }
+}
+
+query IftaReturn($id: ID!) {
+  iftaReturn(id: $id) {
+    ...IftaReturnFields
+  }
+}
+
+query IftaReturnTable($input: IFTAReturnsInput!, $includeTotalCount: Boolean = true) {
+  iftaReturns(input: $input) {
+    edges {
+      node {
+        ...IftaReturnSummaryFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query IftaCurrentPeriod {
+  iftaCurrentPeriod {
+    ...IftaPeriodFields
+  }
+}
+
+query IftaPeriod($year: Int!, $quarter: Int!) {
+  iftaPeriod(year: $year, quarter: $quarter) {
+    ...IftaPeriodFields
+  }
+}
+
+mutation GenerateIftaReturn($period: IFTAPeriodInput!) {
+  generateIftaReturn(period: $period) {
+    ...IftaReturnFields
+  }
+}
+
+mutation RecomputeIftaReturn($id: ID!, $version: Int!) {
+  recomputeIftaReturn(id: $id, version: $version) {
+    ...IftaReturnFields
+  }
+}
+
+mutation FinalizeIftaReturn($id: ID!, $version: Int!) {
+  finalizeIftaReturn(id: $id, version: $version) {
+    ...IftaReturnFields
+  }
+}
+
+mutation ReopenIftaReturn($id: ID!, $version: Int!, $reason: String!) {
+  reopenIftaReturn(id: $id, version: $version, reason: $reason) {
+    ...IftaReturnFields
+  }
+}
+
+mutation MarkIftaReturnFiled($input: MarkIFTAReturnFiledInput!) {
+  markIftaReturnFiled(input: $input) {
+    ...IftaReturnFields
+  }
+}
+
+mutation AmendIftaReturn($id: ID!, $reason: String!) {
+  amendIftaReturn(id: $id, reason: $reason) {
+    ...IftaReturnFields
+  }
+}
+
+mutation DeleteIftaReturn($id: ID!, $version: Int!) {
+  deleteIftaReturn(id: $id, version: $version)
+}
+
+mutation BackfillJurisdictionMiles($input: BackfillJurisdictionMilesInput!) {
+  backfillJurisdictionMiles(input: $input) {
+    started
+    dryRun
+    unattributedMoves
+    unattributedMiles
+    workflowId
+  }
+}

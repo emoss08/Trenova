@@ -833,7 +833,7 @@ export const routes: RouteObject[] = [
             },
           },
           {
-            path: "/billing/fuel-management",
+            path: "/fuel/configuration-files/surcharge",
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FuelSurchargeProgram),
@@ -865,6 +865,68 @@ export const routes: RouteObject[] = [
             async lazy() {
               const { TrailersPage } = await import("@/routes/trailer/page");
               return { Component: TrailersPage };
+            },
+          },
+          {
+            path: "/fuel/purchases",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.FuelPurchase),
+            ),
+            async lazy() {
+              const { FuelPurchasesPage } = await import("@/routes/fuel-purchase/page");
+              return { Component: FuelPurchasesPage };
+            },
+          },
+          {
+            path: "/fuel/jurisdiction-mileage",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.IFTAJurisdictionMileage),
+            ),
+            async lazy() {
+              const { JurisdictionMileagePage } =
+                await import("@/routes/ifta-jurisdiction-mileage/page");
+              return { Component: JurisdictionMileagePage };
+            },
+          },
+          {
+            path: "/fuel/ifta-returns",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.IFTAReturn),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/ifta-return/page"))),
+            ),
+            async lazy() {
+              const { IftaReturnsPage } = await import("@/routes/ifta-return/page");
+              return { Component: IftaReturnsPage };
+            },
+          },
+          {
+            path: "/fuel/configuration-files/fuel-cards",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.FuelCard),
+            ),
+            async lazy() {
+              const { FuelCardsPage } = await import("@/routes/fuel-card/page");
+              return { Component: FuelCardsPage };
+            },
+          },
+          {
+            path: "/fuel/configuration-files/ifta-tax-rates",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.IFTATaxRate),
+            ),
+            async lazy() {
+              const { IftaTaxRatesPage } = await import("@/routes/ifta-tax-rate/page");
+              return { Component: IftaTaxRatesPage };
             },
           },
           {
@@ -1238,6 +1300,34 @@ export const routes: RouteObject[] = [
           {
             path: "/dispatch/configuration-files/review-templates",
             loader: ({ request }) => redirect(`/hr/review-templates${new URL(request.url).search}`),
+          },
+          {
+            path: "/equipment/fuel-purchases",
+            loader: ({ request }) => redirect(`/fuel/purchases${new URL(request.url).search}`),
+          },
+          {
+            path: "/equipment/jurisdiction-mileage",
+            loader: ({ request }) =>
+              redirect(`/fuel/jurisdiction-mileage${new URL(request.url).search}`),
+          },
+          {
+            path: "/equipment/ifta/returns",
+            loader: ({ request }) => redirect(`/fuel/ifta-returns${new URL(request.url).search}`),
+          },
+          {
+            path: "/equipment/configuration-files/fuel-cards",
+            loader: ({ request }) =>
+              redirect(`/fuel/configuration-files/fuel-cards${new URL(request.url).search}`),
+          },
+          {
+            path: "/equipment/configuration-files/ifta-tax-rates",
+            loader: ({ request }) =>
+              redirect(`/fuel/configuration-files/ifta-tax-rates${new URL(request.url).search}`),
+          },
+          {
+            path: "/billing/fuel-management",
+            loader: ({ request }) =>
+              redirect(`/fuel/configuration-files/surcharge${new URL(request.url).search}`),
           },
           {
             path: "/dispatch/configuration-files/training-courses",
@@ -1706,6 +1796,15 @@ export const routes: RouteObject[] = [
             async lazy() {
               const { AuthPage } = await import("@/routes/auth/page");
               return { Component: AuthPage };
+            },
+          },
+          {
+            // Opened from the emailed reset link. Guest-only, like the sign-in page:
+            // somebody already signed in has no use for it.
+            path: "/auth/reset",
+            async lazy() {
+              const { ResetPasswordPage } = await import("@/routes/auth/reset-page");
+              return { Component: ResetPasswordPage };
             },
           },
         ],

@@ -1,0 +1,471 @@
+"""
+Fuel product as classified for the International Fuel Tax Agreement. The first
+fourteen are IFTA fuel types and enter the return; DEF, Reefer and Other are
+tracked as spend only and never earn or owe tax.
+"""
+enum IFTAFuelType {
+  Diesel
+  Gasoline
+  Gasohol
+  Propane
+  CNG
+  LNG
+  Ethanol
+  Methanol
+  E85
+  M85
+  A55
+  Biodiesel
+  Electricity
+  Hydrogen
+  DEF
+  Reefer
+  Other
+}
+
+enum FuelCardProvider {
+  Comdata
+  EFS
+  WEX
+  Other
+}
+
+"""
+Active and Suspended move between each other; Cancelled is terminal.
+"""
+enum FuelCardStatus {
+  Active
+  Suspended
+  Cancelled
+}
+
+enum FuelQuantityUnit {
+  Gallon
+  Litre
+}
+
+enum FuelPurchaseSource {
+  Manual
+  CardImport
+}
+
+"""
+Pending until a statement is staged; Parsed once its rows have been read and
+resolved; Committed when the rows became purchases. Failed and Discarded batches
+can be staged again or left as a record of what was tried.
+"""
+enum FuelPurchaseImportStatus {
+  Pending
+  Parsed
+  Committed
+  Failed
+  Discarded
+}
+
+"""
+Only New rows commit. DuplicateInFile is the second occurrence of a reference
+inside the statement; AlreadyImported matches a purchase already on file.
+"""
+enum FuelPurchaseImportRowStatus {
+  New
+  DuplicateInFile
+  AlreadyImported
+  Error
+  Committed
+  Skipped
+}
+
+enum FuelImportFormat {
+  CSV
+  XLSX
+}
+
+"""
+A fuel card issued by a provider. Only the last four digits are stored; the
+external id is the provider's masked token, never the card number.
+"""
+type FuelCard {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  provider: FuelCardProvider!
+  lastFour: String!
+  label: String!
+  externalCardId: String
+  assignedWorkerId: ID
+  assignedTractorId: ID
+  status: FuelCardStatus!
+  expiresAt: Timestamp
+  cancelledAt: Timestamp
+  cancelReason: String
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  assignedWorker: Worker
+  assignedTractor: Tractor
+}
+
+type FuelCardEdge {
+  node: FuelCard!
+  cursor: String!
+}
+
+type FuelCardConnection {
+  edges: [FuelCardEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Fuel bought for a tractor. The purchase is a tax record: the tractor cannot be
+deleted while purchases reference it, and the transaction reference is unique
+within the organization so a statement imported twice cannot double-count.
+"""
+type FuelPurchase {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  tractorId: ID!
+  workerId: ID
+  """
+  The IFTA jurisdiction the fuel was bought in, which decides which line of the
+  return the tax-paid gallons credit. It is not always the vendor's mailing state.
+  """
+  jurisdictionId: ID!
+  fuelCardId: ID
+  cardLastFour: String
+  purchasedAt: Timestamp!
+  vendor: String
+  vendorCity: String
+  fuelType: IFTAFuelType!
+  """
+  Quantity as entered, in quantityUnit.
+  """
+  quantity: Decimal!
+  quantityUnit: FuelQuantityUnit!
+  """
+  Quantity normalised to US gallons (litres divided by 3.785411784, three places).
+  """
+  gallons: Decimal!
+  """
+  Price per entered unit.
+  """
+  unitPrice: Decimal
+  totalAmount: Decimal!
+  currencyCode: String!
+  odometer: Int
+  transactionReference: String
+  source: FuelPurchaseSource!
+  importBatchId: ID
+  """
+  Whether fuel tax was paid at the pump. Bulk or untaxed fuel still counts in the
+  fleet's MPG gallons but earns no tax-paid credit on the return.
+  """
+  taxPaid: Boolean!
+  notes: String
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  tractor: Tractor
+  worker: Worker
+  jurisdiction: IFTAJurisdiction!
+  fuelCard: FuelCard
+}
+
+type FuelPurchaseEdge {
+  node: FuelPurchase!
+  cursor: String!
+}
+
+type FuelPurchaseConnection {
+  edges: [FuelPurchaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+What staging found in a statement, before anything is committed.
+"""
+type FuelPurchaseImportSummary {
+  rowCount: Int!
+  newCount: Int!
+  duplicateInFileCount: Int!
+  alreadyImportedCount: Int!
+  errorCount: Int!
+  """
+  Gallons across the rows that will commit.
+  """
+  totalGallons: Decimal!
+  """
+  Amount across the rows that will commit, in the batch's default currency.
+  """
+  totalAmount: Decimal!
+  """
+  Gallons keyed by IFTA fuel type across the rows that will commit.
+  """
+  byFuelType: JSON
+  """
+  Gallons keyed by jurisdiction code across the rows that will commit.
+  """
+  byJurisdiction: JSON
+  earliestPurchasedAt: Timestamp
+  latestPurchasedAt: Timestamp
+}
+
+"""
+A fuel card statement staged for review. The bytes live on a Document bound to
+the batch; staging reads that document, parses every row, resolves cards,
+tractors and jurisdictions, and reports what would commit.
+"""
+type FuelPurchaseImportBatch {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  provider: FuelCardProvider!
+  documentId: ID
+  fileName: String
+  sourceFormat: FuelImportFormat
+  status: FuelPurchaseImportStatus!
+  """
+  Fuel type applied to rows when the statement has no product column.
+  """
+  defaultFuelType: IFTAFuelType
+  """
+  Card whose assigned tractor is used for rows the statement cannot match to a
+  card of its own.
+  """
+  defaultFuelCardId: ID
+  defaultCurrency: String!
+  """
+  Explicit column mapping keyed by field name, overriding the provider preset.
+  """
+  mapping: JSON
+  unmappedHeaders: [String!]!
+  summary: FuelPurchaseImportSummary
+  rowCount: Int!
+  errorCount: Int!
+  committedCount: Int!
+  error: String
+  uploadedById: ID
+  stagedAt: Timestamp
+  committedAt: Timestamp
+  committedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  document: WorkerCredentialDocument
+  defaultFuelCard: FuelCard
+  rows(input: FuelPurchaseImportRowsInput): FuelPurchaseImportRowConnection!
+}
+
+"""
+The purchase a statement row would become, as parsed and before any ids are
+assigned. Absent when the row could not be read at all.
+"""
+type FuelPurchaseImportParsed {
+  purchasedAt: Timestamp
+  vendor: String
+  vendorCity: String
+  jurisdictionCode: String
+  fuelType: IFTAFuelType
+  quantity: Decimal
+  quantityUnit: FuelQuantityUnit
+  gallons: Decimal
+  unitPrice: Decimal
+  totalAmount: Decimal
+  currencyCode: String
+  transactionReference: String
+  cardLastFour: String
+  tractorCode: String
+  odometer: Int
+}
+
+type FuelPurchaseImportRow {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  importBatchId: ID!
+  """
+  One-based line number in the file, counting the header row.
+  """
+  rowNumber: Int!
+  cells: [String!]!
+  parsed: FuelPurchaseImportParsed
+  transactionReference: String
+  status: FuelPurchaseImportRowStatus!
+  error: String
+  resolvedTractorId: ID
+  resolvedFuelCardId: ID
+  resolvedJurisdictionId: ID
+  """
+  How the tractor, card and jurisdiction were matched, one note per decision.
+  """
+  resolutionNotes: [String!]!
+  """
+  Set when the row has been committed as a purchase.
+  """
+  fuelPurchaseId: ID
+  createdAt: Timestamp!
+  resolvedTractor: Tractor
+}
+
+type FuelPurchaseImportRowEdge {
+  node: FuelPurchaseImportRow!
+  cursor: String!
+}
+
+type FuelPurchaseImportRowConnection {
+  edges: [FuelPurchaseImportRowEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A CSV header row in the shape the import expects for a provider.
+"""
+type FuelImportTemplate {
+  fileName: String!
+  content: String!
+}
+
+input FuelCardInput {
+  provider: FuelCardProvider!
+  lastFour: String!
+  label: String!
+  externalCardId: String
+  assignedWorkerId: ID
+  assignedTractorId: ID
+  """
+  Active or Suspended. Cancelling goes through cancelFuelCard, which needs a reason.
+  """
+  status: FuelCardStatus = Active
+  expiresAt: Timestamp
+  notes: String
+}
+
+input FuelCardsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  provider: FuelCardProvider
+  status: FuelCardStatus
+  assignedWorkerId: ID
+  assignedTractorId: ID
+}
+
+input CancelFuelCardInput {
+  id: ID!
+  version: Int!
+  """
+  At least ten characters. Cancelling is permanent.
+  """
+  reason: String!
+}
+
+input FuelPurchaseInput {
+  tractorId: ID!
+  workerId: ID
+  jurisdictionId: ID!
+  purchasedAt: Timestamp!
+  vendor: String
+  vendorCity: String
+  fuelType: IFTAFuelType!
+  quantity: Decimal!
+  quantityUnit: FuelQuantityUnit = Gallon
+  unitPrice: Decimal
+  totalAmount: Decimal!
+  currencyCode: String = "USD"
+  odometer: Int
+  fuelCardId: ID
+  cardLastFour: String
+  transactionReference: String
+  taxPaid: Boolean = true
+  notes: String
+}
+
+input FuelPurchasesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  tractorId: ID
+  fuelCardId: ID
+  jurisdictionId: ID
+  fuelTypes: [IFTAFuelType!]
+  sources: [FuelPurchaseSource!]
+  taxPaid: Boolean
+  """
+  Inclusive lower bound on purchasedAt.
+  """
+  from: Timestamp
+  """
+  Exclusive upper bound on purchasedAt.
+  """
+  to: Timestamp
+}
+
+input CreateFuelPurchaseImportInput {
+  provider: FuelCardProvider!
+  defaultFuelType: IFTAFuelType
+  defaultFuelCardId: ID
+  defaultCurrency: String = "USD"
+  mapping: JSON
+}
+
+input StageFuelPurchaseImportInput {
+  id: ID!
+  """
+  The uploaded statement. The document must have been uploaded against this
+  batch (resource type fuel_purchase_import) or staging is refused.
+  """
+  documentId: ID!
+  mapping: JSON
+}
+
+input FuelPurchaseImportRowsInput {
+  first: Int = 50
+  after: String
+  statuses: [FuelPurchaseImportRowStatus!]
+}
+
+extend type Query {
+  fuelCards(input: FuelCardsInput!): FuelCardConnection!
+  fuelCard(id: ID!): FuelCard!
+  fuelPurchases(input: FuelPurchasesInput!): FuelPurchaseConnection!
+  fuelPurchase(id: ID!): FuelPurchase!
+  fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
+  fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
+}
+
+extend type Mutation {
+  createFuelCard(input: FuelCardInput!): FuelCard!
+  updateFuelCard(id: ID!, version: Int!, input: FuelCardInput!): FuelCard!
+  cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
+  createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
+  updateFuelPurchase(id: ID!, version: Int!, input: FuelPurchaseInput!): FuelPurchase!
+  """
+  Removes the purchase outright. A return already generated for its quarter
+  keeps its figures until it is recomputed.
+  """
+  deleteFuelPurchase(id: ID!, version: Int!): Boolean!
+  createFuelPurchaseImport(input: CreateFuelPurchaseImportInput!): FuelPurchaseImportBatch!
+  """
+  Reads the uploaded statement and resolves every row without committing
+  anything. Can be run again on the same batch with a different document or
+  mapping until it is committed or discarded.
+  """
+  stageFuelPurchaseImport(input: StageFuelPurchaseImportInput!): FuelPurchaseImportBatch!
+  """
+  Turns every New row into a purchase in one transaction. Rows whose reference
+  is already on file are marked AlreadyImported rather than duplicated.
+  """
+  commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
+  discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
+}

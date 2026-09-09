@@ -1,0 +1,47 @@
+fragment IftaTaxRateFields on IFTATaxRate {
+  id
+  jurisdictionId
+  year
+  quarter
+  fuelType
+  ratePerGallon
+  surchargeRatePerGallon
+  sourceNote
+  sourceUrl
+  version
+  createdAt
+  updatedAt
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+    hasSurcharge
+    isIftaMember
+  }
+}
+
+query IftaTaxRateTable($input: IFTATaxRatesInput!, $includeTotalCount: Boolean = true) {
+  iftaTaxRates(input: $input) {
+    edges {
+      node {
+        ...IftaTaxRateFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation UpsertIftaTaxRates($input: [IFTATaxRateInput!]!) {
+  upsertIftaTaxRates(input: $input) {
+    ...IftaTaxRateFields
+  }
+}
+
+mutation DeleteIftaTaxRate($id: ID!, $version: Int!) {
+  deleteIftaTaxRate(id: $id, version: $version)
+}

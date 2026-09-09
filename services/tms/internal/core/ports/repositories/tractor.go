@@ -89,6 +89,12 @@ type GetTractorsByIDsRequest struct {
 	TractorRelationIncludes
 }
 
+type GetTractorsByCodesRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"-"`
+	Codes         []string              `json:"codes"`
+	LicensePlates []string              `json:"licensePlates"`
+}
+
 type TractorSelectOptionsRequest struct {
 	SelectOptionsRequest *pagination.SelectQueryRequest `json:"-"`
 }
@@ -155,4 +161,8 @@ type TractorRepository interface {
 		ctx context.Context,
 		req GetTractorsByIDsRequest,
 	) ([]*tractor.Tractor, error)
+	GetByCodes(
+		ctx context.Context,
+		req GetTractorsByCodesRequest,
+	) (map[string]*tractor.Tractor, error)
 }

@@ -221,6 +221,10 @@ func (r *repository) BulkUpsert(
 		Set(cols.DataVersion.SetExcluded()).
 		Set(cols.DistanceProfileName.SetExcluded()).
 		Set(cols.ProviderMetadata.SetExcluded()).
+		Set(cols.JurisdictionDistances.SetExpr(
+			"COALESCE(EXCLUDED." + cols.JurisdictionDistances.Bare() + ", " +
+				cols.JurisdictionDistances.Qualified() + ")",
+		)).
 		Set(cols.LastCalculatedAt.SetExcluded()).
 		Set(cols.Version.SetExpr(cols.Version.Qualified() + " + 1")).
 		Set(cols.UpdatedAt.SetExcluded()).

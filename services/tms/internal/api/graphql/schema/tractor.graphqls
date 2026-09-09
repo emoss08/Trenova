@@ -32,6 +32,15 @@ type Tractor {
   externalId: String!
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """
+  The fuel the tractor burns. Its miles land on this fuel type's lines of an
+  IFTA return.
+  """
+  fuelType: IFTAFuelType!
+  """
+  Whether the tractor's miles and fuel enter the IFTA return.
+  """
+  iftaQualified: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -64,6 +73,8 @@ input TractorInput {
   registrationExpiry: Timestamp
   vin: String
   externalId: String
+  fuelType: IFTAFuelType = Diesel
+  iftaQualified: Boolean = true
   version: Int
   customFields: JSON
 }
@@ -101,6 +112,10 @@ input TractorPatchInput {
   vin: String @goField(omittable: true)
   "Omit to leave unchanged; pass null to clear."
   externalId: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  fuelType: IFTAFuelType @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  iftaQualified: Boolean @goField(omittable: true)
   "Omit to leave unchanged; null is rejected."
   version: Int @goField(omittable: true)
   "Omit to leave unchanged; pass null to clear."

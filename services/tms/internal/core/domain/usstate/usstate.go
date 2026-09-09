@@ -109,6 +109,8 @@ var stateAbbreviationRegions = map[string]Region{
 	"WA": RegionWest,
 }
 
+func (s *UsState) GetID() pulid.ID { return s.ID }
+
 func (s *UsState) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(s,
 		validation.Field(&s.Name, validation.Required.Error("Name is required")),

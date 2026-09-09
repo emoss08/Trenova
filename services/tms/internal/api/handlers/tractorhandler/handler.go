@@ -255,6 +255,7 @@ func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(tractor.Tractor)
+	entity.IFTAQualified = true
 	authctx.AddContextToRequest(authCtx, entity)
 
 	if err := c.ShouldBindJSON(entity); err != nil {

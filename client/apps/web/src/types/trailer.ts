@@ -3,6 +3,7 @@ import { equipmentManufacturerSchema } from "./equipment-manufacturer";
 import { equipmentTypeSchema } from "./equipment-type";
 import { fleetCodeRelationSchema } from "@trenova/shared/types/fleet-code";
 import {
+  customFieldsSchema,
   equipmentStatusSchema,
   nullableIntegerSchema,
   nullableStringSchema,
@@ -58,7 +59,7 @@ export const trailerSchema = z.object({
   equipmentManufacturer: relationSchema(equipmentManufacturerSchema),
   fleetCode: fleetCodeRelationSchema,
   registrationState: usStateRelationSchema,
-  customFields: z.record(z.string(), z.any()).optional(),
+  customFields: customFieldsSchema,
 });
 
 export type Trailer = z.infer<typeof trailerSchema>;

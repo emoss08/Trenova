@@ -2,13 +2,24 @@ package pcmiler
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/bytedance/sonic"
+)
+
+const (
+	defaultStopCountry     = "US"
+	stateReportTotalLine   = "TOTAL"
+	mileageReportTypeValue = "MileageReportType:http://pcmiler.alk.com/APIs/v1.0"
+	stateReportTypeValue   = "StateReportType:http://pcmiler.alk.com/APIs/v1.0"
 )
 
 type routeReport struct {
-	Type        string       `json:"__type"`
-	RouteID     string       `json:"RouteID"`
-	ReportLines []reportLine `json:"ReportLines"`
+	Type             string            `json:"__type"`
+	RouteID          string            `json:"RouteID"`
+	ReportLines      []reportLine      `json:"ReportLines"`
+	StateReportLines []stateReportLine `json:"StateReportLines"`
 }
 
 type reportLine struct {
@@ -16,6 +27,43 @@ type reportLine struct {
 	LMiles string `json:"LMiles"`
 	Dist   string `json:"Dist"`
 	Warn   string `json:"Warn"`
+}
+
+type stateReportLine struct {
+	StCntry string    `json:"StCntry"`
+	Total   flexFloat `json:"Total"`
+	Toll    flexFloat `json:"Toll"`
+	Free    flexFloat `json:"Free"`
+	Ferry   flexFloat `json:"Ferry"`
+	Loaded  flexFloat `json:"Loaded"`
+	Empty   flexFloat `json:"Empty"`
+}
+
+type flexFloat float64
+
+func (f *flexFloat) UnmarshalJSON(data []byte) error {
+	text := strings.TrimSpace(string(data))
+	if text == "" || text == "null" {
+		*f = 0
+		return nil
+	}
+	if strings.HasPrefix(text, "\"") {
+		var quoted string
+		if err := sonic.Unmarshal(data, &quoted); err != nil {
+			return fmt.Errorf("parse PC*Miler state report value %s: %w", text, err)
+		}
+		text = strings.ReplaceAll(strings.TrimSpace(quoted), ",", "")
+		if text == "" {
+			*f = 0
+			return nil
+		}
+	}
+	parsed, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return fmt.Errorf("parse PC*Miler state report value %s: %w", text, err)
+	}
+	*f = flexFloat(parsed)
+	return nil
 }
 
 func buildRouteReportsPayload(routes []RouteRequest) map[string]any {
@@ -33,18 +81,31 @@ func buildRouteReportsPayload(routes []RouteRequest) map[string]any {
 			"VehicleType":      vehicleTypeCode(route.Options.VehicleType),
 			"RoutingType":      routingTypeCode(route.Options.RoutingType),
 			"ReportingOptions": buildReportingOptions(route.Options),
-			"ReportTypes": []map[string]any{
-				{
-					"__type":        "MileageReportType:http://pcmiler.alk.com/APIs/v1.0",
-					"TimeInSeconds": false,
-				},
-			},
+			"ReportTypes":      buildReportTypes(route.Options),
 		})
 	}
 
 	return map[string]any{
 		"ReportRoutes": payloadRoutes,
 	}
+}
+
+func buildReportTypes(opts RouteOptions) []map[string]any {
+	size := 1
+	if opts.StateReport {
+		size = 2
+	}
+	reportTypes := make([]map[string]any, 0, size)
+	reportTypes = append(reportTypes, map[string]any{
+		"__type":        mileageReportTypeValue,
+		"TimeInSeconds": false,
+	})
+	if opts.StateReport {
+		reportTypes = append(reportTypes, map[string]any{
+			"__type": stateReportTypeValue,
+		})
+	}
+	return reportTypes
 }
 
 func buildStop(stop Stop, region string, index int, totalStops int) map[string]any {
@@ -74,7 +135,7 @@ func buildStop(stop Stop, region string, index int, totalStops int) map[string]a
 	}
 
 	address := map[string]any{
-		"Country": "US",
+		"Country": stopCountry(stop.Country),
 	}
 	if stop.AddressLine != "" {
 		address["StreetAddress"] = stop.AddressLine
@@ -128,20 +189,72 @@ func buildReportingOptions(opts RouteOptions) map[string]any {
 	}
 }
 
+func stopCountry(value string) string {
+	country := strings.ToUpper(strings.TrimSpace(value))
+	if country == "" {
+		return defaultStopCountry
+	}
+	return country
+}
+
 func parseMileageResponse(reports []routeReport) []RouteMileage {
 	results := make([]RouteMileage, 0, len(reports))
+	indexByRoute := make(map[string]int, len(reports))
 	for _, report := range reports {
-		if !strings.Contains(report.Type, "MileageReport") {
+		isMileage := strings.Contains(report.Type, "MileageReport")
+		isState := strings.Contains(report.Type, "StateReport")
+		if !isMileage && !isState {
 			continue
 		}
-		distance, warnings := mileageFromLines(report.ReportLines)
-		results = append(results, RouteMileage{
-			RouteID:  report.RouteID,
-			Distance: distance,
-			Warnings: warnings,
-		})
+		idx, ok := indexByRoute[report.RouteID]
+		if !ok {
+			idx = len(results)
+			indexByRoute[report.RouteID] = idx
+			results = append(results, RouteMileage{RouteID: report.RouteID})
+		}
+		if isMileage {
+			results[idx].Distance, results[idx].Warnings = mileageFromLines(report.ReportLines)
+		}
+		if isState {
+			results[idx].JurisdictionDistances = jurisdictionsFromLines(report.StateReportLines)
+		}
 	}
 	return results
+}
+
+func jurisdictionsFromLines(lines []stateReportLine) []JurisdictionDistance {
+	jurisdictions := make([]JurisdictionDistance, 0, len(lines))
+	for _, line := range lines {
+		country, code, ok := parseStCntry(line.StCntry)
+		if !ok {
+			continue
+		}
+		jurisdictions = append(jurisdictions, JurisdictionDistance{
+			Country:  country,
+			Code:     code,
+			Distance: float64(line.Total),
+			Toll:     float64(line.Toll),
+			Ferry:    float64(line.Ferry),
+		})
+	}
+	return jurisdictions
+}
+
+func parseStCntry(value string) (string, string, bool) {
+	trimmed := strings.ToUpper(strings.TrimSpace(value))
+	if trimmed == "" || trimmed == stateReportTotalLine {
+		return "", "", false
+	}
+	country, code, found := strings.Cut(trimmed, "_")
+	if !found {
+		return defaultStopCountry, trimmed, true
+	}
+	country = strings.TrimSpace(country)
+	code = strings.TrimSpace(code)
+	if country == "" || code == "" {
+		return "", "", false
+	}
+	return country, code, true
 }
 
 func mileageFromLines(lines []reportLine) (float64, []string) {

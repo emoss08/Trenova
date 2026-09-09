@@ -21,6 +21,7 @@ func TestNewDefaultMapsPurposes(t *testing.T) {
 	require.True(t, control.AutoCreateStoredMileage)
 	require.True(t, control.PostalCodeFallbackToCity)
 	require.Equal(t, distanceprofile.DefaultDistanceUnits, control.StoredDistanceUnits)
+	require.False(t, control.CaptureJurisdictionMiles)
 	require.Equal(t, practicalID, control.ProfileIDForPurpose(PurposeLoadedMove))
 	require.Equal(t, practicalID, control.ProfileIDForPurpose(PurposeEmptyMove))
 	require.Equal(t, practicalID, control.ProfileIDForPurpose(PurposeDistanceCalculatorPractical))

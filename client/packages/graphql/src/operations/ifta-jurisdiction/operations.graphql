@@ -1,0 +1,17 @@
+fragment IftaJurisdictionFields on IFTAJurisdiction {
+  id
+  countryCode
+  code
+  name
+  usStateId
+  isIftaMember
+  hasSurcharge
+  sortOrder
+  status
+}
+
+query IftaJurisdictions($membersOnly: Boolean = false) {
+  iftaJurisdictions(membersOnly: $membersOnly) {
+    ...IftaJurisdictionFields
+  }
+}

@@ -12,37 +12,43 @@ import { TractorForm } from "./tractor-form";
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const InspectionsTab = lazy(() => import("./tractor-inspections-tab"));
 
+export function buildTractorDefaults() {
+  return {
+    status: "Available" as const,
+    code: "",
+    model: "",
+    make: "",
+    year: undefined,
+    licensePlateNumber: "",
+    vin: "",
+    registrationNumber: "",
+    registrationExpiry: undefined,
+    externalId: "",
+    fuelType: "Diesel" as const,
+    iftaQualified: true,
+    equipmentTypeId: "",
+    equipmentManufacturerId: "",
+    fleetCodeId: "",
+    stateId: "",
+    primaryWorkerId: "",
+    secondaryWorkerId: "",
+    createdAt: undefined,
+    updatedAt: undefined,
+    id: undefined,
+    version: undefined,
+    equipmentManufacturer: undefined,
+    equipmentType: undefined,
+    fleetCode: undefined,
+    state: undefined,
+    primaryWorker: undefined,
+    secondaryWorker: undefined,
+  };
+}
+
 export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<TractorRow>) {
   const form = useForm({
     resolver: zodResolver(tractorSchema),
-    defaultValues: {
-      status: "Available",
-      code: "",
-      model: "",
-      make: "",
-      year: undefined,
-      licensePlateNumber: "",
-      vin: "",
-      registrationNumber: "",
-      registrationExpiry: undefined,
-      externalId: "",
-      equipmentTypeId: "",
-      equipmentManufacturerId: "",
-      fleetCodeId: "",
-      stateId: "",
-      primaryWorkerId: "",
-      secondaryWorkerId: "",
-      createdAt: undefined,
-      updatedAt: undefined,
-      id: undefined,
-      version: undefined,
-      equipmentManufacturer: undefined,
-      equipmentType: undefined,
-      fleetCode: undefined,
-      state: undefined,
-      primaryWorker: undefined,
-      secondaryWorker: undefined,
-    },
+    defaultValues: buildTractorDefaults(),
   });
 
   const documentsTabs = useMemo(

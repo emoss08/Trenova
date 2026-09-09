@@ -1,0 +1,500 @@
+jurisdictions:
+  - id: "ifj_01KDVDNA00YREPMM0K4QT2TNCE"
+    country_code: "US"
+    code: "AL"
+    name: "Alabama"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 1
+    us_state_abbreviation: "AL"
+  - id: "ifj_01KDVDNA006J5BZHS8NWXP3VPA"
+    country_code: "US"
+    code: "AK"
+    name: "Alaska"
+    is_ifta_member: false
+    has_surcharge: false
+    sort_order: 2
+    us_state_abbreviation: "AK"
+  - id: "ifj_01KDVDNA00NX7VG5052WZNWESX"
+    country_code: "US"
+    code: "AZ"
+    name: "Arizona"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 3
+    us_state_abbreviation: "AZ"
+  - id: "ifj_01KDVDNA00THFV72D6XTSGJYA4"
+    country_code: "US"
+    code: "AR"
+    name: "Arkansas"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 4
+    us_state_abbreviation: "AR"
+  - id: "ifj_01KDVDNA00XF4S8CQ3A6P3GQ69"
+    country_code: "US"
+    code: "CA"
+    name: "California"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 5
+    us_state_abbreviation: "CA"
+  - id: "ifj_01KDVDNA00EWK4STNX7VNM485Q"
+    country_code: "US"
+    code: "CO"
+    name: "Colorado"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 6
+    us_state_abbreviation: "CO"
+  - id: "ifj_01KDVDNA00CS0D1P920AACZE7V"
+    country_code: "US"
+    code: "CT"
+    name: "Connecticut"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 7
+    us_state_abbreviation: "CT"
+  - id: "ifj_01KDVDNA00CH7AMG7YBANFS0ZB"
+    country_code: "US"
+    code: "DE"
+    name: "Delaware"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 8
+    us_state_abbreviation: "DE"
+  - id: "ifj_01KDVDNA00PKAE6J4B7C5PMMBQ"
+    country_code: "US"
+    code: "DC"
+    name: "District of Columbia"
+    is_ifta_member: false
+    has_surcharge: false
+    sort_order: 9
+    us_state_abbreviation: "DC"
+  - id: "ifj_01KDVDNA0042PH5MEQ68ST1DF5"
+    country_code: "US"
+    code: "FL"
+    name: "Florida"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 10
+    us_state_abbreviation: "FL"
+  - id: "ifj_01KDVDNA00XDAMVVTDQ7T1SQFC"
+    country_code: "US"
+    code: "GA"
+    name: "Georgia"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 11
+    us_state_abbreviation: "GA"
+  - id: "ifj_01KDVDNA00RQWEGKN5B36DAMSK"
+    country_code: "US"
+    code: "HI"
+    name: "Hawaii"
+    is_ifta_member: false
+    has_surcharge: false
+    sort_order: 12
+    us_state_abbreviation: "HI"
+  - id: "ifj_01KDVDNA00FMXBDZGCA2MEPX2G"
+    country_code: "US"
+    code: "ID"
+    name: "Idaho"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 13
+    us_state_abbreviation: "ID"
+  - id: "ifj_01KDVDNA00RBAB2H842YC8E5ST"
+    country_code: "US"
+    code: "IL"
+    name: "Illinois"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 14
+    us_state_abbreviation: "IL"
+  - id: "ifj_01KDVDNA00NW5KKTHGF00FBG1H"
+    country_code: "US"
+    code: "IN"
+    name: "Indiana"
+    is_ifta_member: true
+    has_surcharge: true
+    sort_order: 15
+    us_state_abbreviation: "IN"
+  - id: "ifj_01KDVDNA00N6XE2JAZRP2397FQ"
+    country_code: "US"
+    code: "IA"
+    name: "Iowa"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 16
+    us_state_abbreviation: "IA"
+  - id: "ifj_01KDVDNA00BDA7KST3AHNR0HD9"
+    country_code: "US"
+    code: "KS"
+    name: "Kansas"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 17
+    us_state_abbreviation: "KS"
+  - id: "ifj_01KDVDNA009MRX5WVXK2GRPRGE"
+    country_code: "US"
+    code: "KY"
+    name: "Kentucky"
+    is_ifta_member: true
+    has_surcharge: true
+    sort_order: 18
+    us_state_abbreviation: "KY"
+  - id: "ifj_01KDVDNA0067KZSWGMCT5SX2SR"
+    country_code: "US"
+    code: "LA"
+    name: "Louisiana"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 19
+    us_state_abbreviation: "LA"
+  - id: "ifj_01KDVDNA00RFC84NTPW23JG7ZH"
+    country_code: "US"
+    code: "ME"
+    name: "Maine"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 20
+    us_state_abbreviation: "ME"
+  - id: "ifj_01KDVDNA000290RE4PNHH9MJ17"
+    country_code: "US"
+    code: "MD"
+    name: "Maryland"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 21
+    us_state_abbreviation: "MD"
+  - id: "ifj_01KDVDNA00EDKWFMJ3K3VQFSMQ"
+    country_code: "US"
+    code: "MA"
+    name: "Massachusetts"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 22
+    us_state_abbreviation: "MA"
+  - id: "ifj_01KDVDNA003G707G4SG5CP5PR6"
+    country_code: "US"
+    code: "MI"
+    name: "Michigan"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 23
+    us_state_abbreviation: "MI"
+  - id: "ifj_01KDVDNA00X5E519J7ZTXE7TG0"
+    country_code: "US"
+    code: "MN"
+    name: "Minnesota"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 24
+    us_state_abbreviation: "MN"
+  - id: "ifj_01KDVDNA00X9DEJD9PP75V4BG4"
+    country_code: "US"
+    code: "MS"
+    name: "Mississippi"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 25
+    us_state_abbreviation: "MS"
+  - id: "ifj_01KDVDNA004CKARHP8DN29JW01"
+    country_code: "US"
+    code: "MO"
+    name: "Missouri"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 26
+    us_state_abbreviation: "MO"
+  - id: "ifj_01KDVDNA00QVD9WAVH3RDYHZYG"
+    country_code: "US"
+    code: "MT"
+    name: "Montana"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 27
+    us_state_abbreviation: "MT"
+  - id: "ifj_01KDVDNA0098H0XP5MFA62VTSA"
+    country_code: "US"
+    code: "NE"
+    name: "Nebraska"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 28
+    us_state_abbreviation: "NE"
+  - id: "ifj_01KDVDNA00RYG3XY4JY58NHNK6"
+    country_code: "US"
+    code: "NV"
+    name: "Nevada"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 29
+    us_state_abbreviation: "NV"
+  - id: "ifj_01KDVDNA00DY1DMA9G2QZEW4XC"
+    country_code: "US"
+    code: "NH"
+    name: "New Hampshire"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 30
+    us_state_abbreviation: "NH"
+  - id: "ifj_01KDVDNA00XEZJ582AKQ9HEM3V"
+    country_code: "US"
+    code: "NJ"
+    name: "New Jersey"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 31
+    us_state_abbreviation: "NJ"
+  - id: "ifj_01KDVDNA00ADAB8YQPTESTSK74"
+    country_code: "US"
+    code: "NM"
+    name: "New Mexico"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 32
+    us_state_abbreviation: "NM"
+  - id: "ifj_01KDVDNA00EMBAYE6J5PSXARER"
+    country_code: "US"
+    code: "NY"
+    name: "New York"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 33
+    us_state_abbreviation: "NY"
+  - id: "ifj_01KDVDNA00M2ZCVK09E86J1P1C"
+    country_code: "US"
+    code: "NC"
+    name: "North Carolina"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 34
+    us_state_abbreviation: "NC"
+  - id: "ifj_01KDVDNA00KYM0EBQJ12HCKW6P"
+    country_code: "US"
+    code: "ND"
+    name: "North Dakota"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 35
+    us_state_abbreviation: "ND"
+  - id: "ifj_01KDVDNA008B1ZD5FP297EX2KP"
+    country_code: "US"
+    code: "OH"
+    name: "Ohio"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 36
+    us_state_abbreviation: "OH"
+  - id: "ifj_01KDVDNA00N8F9PGHAKZK05Y0Y"
+    country_code: "US"
+    code: "OK"
+    name: "Oklahoma"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 37
+    us_state_abbreviation: "OK"
+  - id: "ifj_01KDVDNA009HCSEYB52MXA6FSX"
+    country_code: "US"
+    code: "OR"
+    name: "Oregon"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 38
+    us_state_abbreviation: "OR"
+  - id: "ifj_01KDVDNA00V0772R897R5R0KZ9"
+    country_code: "US"
+    code: "PA"
+    name: "Pennsylvania"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 39
+    us_state_abbreviation: "PA"
+  - id: "ifj_01KDVDNA00X12TFNZNWKXNN39N"
+    country_code: "US"
+    code: "RI"
+    name: "Rhode Island"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 40
+    us_state_abbreviation: "RI"
+  - id: "ifj_01KDVDNA00Y8R9E9Y01H1R8DGF"
+    country_code: "US"
+    code: "SC"
+    name: "South Carolina"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 41
+    us_state_abbreviation: "SC"
+  - id: "ifj_01KDVDNA00WPGK06PDH8C9Z05E"
+    country_code: "US"
+    code: "SD"
+    name: "South Dakota"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 42
+    us_state_abbreviation: "SD"
+  - id: "ifj_01KDVDNA00DBGD9RCZACAA1V89"
+    country_code: "US"
+    code: "TN"
+    name: "Tennessee"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 43
+    us_state_abbreviation: "TN"
+  - id: "ifj_01KDVDNA00DT6SBG7RS4F0CJHC"
+    country_code: "US"
+    code: "TX"
+    name: "Texas"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 44
+    us_state_abbreviation: "TX"
+  - id: "ifj_01KDVDNA0066PQ5BQD5SGGT9XW"
+    country_code: "US"
+    code: "UT"
+    name: "Utah"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 45
+    us_state_abbreviation: "UT"
+  - id: "ifj_01KDVDNA00WKJ96MDXA2ZCTTWD"
+    country_code: "US"
+    code: "VT"
+    name: "Vermont"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 46
+    us_state_abbreviation: "VT"
+  - id: "ifj_01KDVDNA00K4SGZ0GCZ05YWPDF"
+    country_code: "US"
+    code: "VA"
+    name: "Virginia"
+    is_ifta_member: true
+    has_surcharge: true
+    sort_order: 47
+    us_state_abbreviation: "VA"
+  - id: "ifj_01KDVDNA00EAVAYWXJCA2KMJSD"
+    country_code: "US"
+    code: "WA"
+    name: "Washington"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 48
+    us_state_abbreviation: "WA"
+  - id: "ifj_01KDVDNA00AF7AMEAMM3ABQNW9"
+    country_code: "US"
+    code: "WV"
+    name: "West Virginia"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 49
+    us_state_abbreviation: "WV"
+  - id: "ifj_01KDVDNA00NGCSXTT2H8PWKR0Z"
+    country_code: "US"
+    code: "WI"
+    name: "Wisconsin"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 50
+    us_state_abbreviation: "WI"
+  - id: "ifj_01KDVDNA00D1XJYTMJ6N8CA9YA"
+    country_code: "US"
+    code: "WY"
+    name: "Wyoming"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 51
+    us_state_abbreviation: "WY"
+  - id: "ifj_01KDVDNA00MV3W0AJ0890J6ENR"
+    country_code: "CA"
+    code: "AB"
+    name: "Alberta"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 52
+  - id: "ifj_01KDVDNA0006YMY359J2M850W4"
+    country_code: "CA"
+    code: "BC"
+    name: "British Columbia"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 53
+  - id: "ifj_01KDVDNA00S3RG83AYQ9C1PEQX"
+    country_code: "CA"
+    code: "MB"
+    name: "Manitoba"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 54
+  - id: "ifj_01KDVDNA008SGNXFXNFW6GK2K8"
+    country_code: "CA"
+    code: "NB"
+    name: "New Brunswick"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 55
+  - id: "ifj_01KDVDNA00TJZ35S3BV39W4WEG"
+    country_code: "CA"
+    code: "NL"
+    name: "Newfoundland and Labrador"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 56
+  - id: "ifj_01KDVDNA00APPWGW6N10WYKQ3S"
+    country_code: "CA"
+    code: "NT"
+    name: "Northwest Territories"
+    is_ifta_member: false
+    has_surcharge: false
+    sort_order: 57
+  - id: "ifj_01KDVDNA00WS88VMCFSWTDY9ZW"
+    country_code: "CA"
+    code: "NS"
+    name: "Nova Scotia"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 58
+  - id: "ifj_01KDVDNA00549HPAT96WBF3JQ8"
+    country_code: "CA"
+    code: "NU"
+    name: "Nunavut"
+    is_ifta_member: false
+    has_surcharge: false
+    sort_order: 59
+  - id: "ifj_01KDVDNA00Y4DRCC3J3J537FA1"
+    country_code: "CA"
+    code: "ON"
+    name: "Ontario"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 60
+  - id: "ifj_01KDVDNA00D1JSEDG8XWTFP4CG"
+    country_code: "CA"
+    code: "PE"
+    name: "Prince Edward Island"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 61
+  - id: "ifj_01KDVDNA007B2W4P1G7Z4792FR"
+    country_code: "CA"
+    code: "QC"
+    name: "Quebec"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 62
+  - id: "ifj_01KDVDNA00CHSEY9YP1CFFQSCD"
+    country_code: "CA"
+    code: "SK"
+    name: "Saskatchewan"
+    is_ifta_member: true
+    has_surcharge: false
+    sort_order: 63
+  - id: "ifj_01KDVDNA004NAHJGA1NEG2YD5T"
+    country_code: "CA"
+    code: "YT"
+    name: "Yukon"
+    is_ifta_member: false
+    has_surcharge: false
+    sort_order: 64

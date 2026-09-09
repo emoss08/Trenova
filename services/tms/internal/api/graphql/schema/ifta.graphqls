@@ -1,0 +1,511 @@
+enum IFTAJurisdictionStatus {
+  Active
+  Inactive
+}
+
+"""
+Where a jurisdiction's miles came from. RouteCalculation rows are written by the
+distance provider's state report; Manual entries are keyed by hand and, when they
+name a shipment move, replace that move's routed rows so nothing is counted twice.
+"""
+enum IFTAMileageSource {
+  Manual
+  RouteCalculation
+  Telematics
+}
+
+"""
+Draft figures move with the data. Finalized locks them and can be reopened with
+a reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.
+"""
+enum IFTAReturnStatus {
+  Draft
+  Finalized
+  Filed
+}
+
+"""
+MissingRate blocks finalizing. Every other code is a warning the return carries
+so the preparer can see what the figures leave out.
+"""
+enum IFTAProblemCode {
+  MissingRate
+  NoFuelForType
+  UnattributedMiles
+  NoTractorMiles
+  MileageMismatch
+  NonMemberActivity
+  NonQualifiedActivity
+}
+
+"""
+A state, province or district as IFTA knows it. This table is global and shared
+by every organization; provinces have no usState.
+"""
+type IFTAJurisdiction {
+  id: ID!
+  """
+  ISO 3166-1 alpha-2: US, CA or MX.
+  """
+  countryCode: String!
+  """
+  Two-letter postal code within the country.
+  """
+  code: String!
+  name: String!
+  usStateId: ID
+  """
+  Members share fuel tax through IFTA. Miles in a non-member jurisdiction still
+  count toward the fleet's total but are never taxed on the return.
+  """
+  isIftaMember: Boolean!
+  """
+  Indiana, Kentucky and Virginia levy a surcharge on fuel consumed, on top of the
+  tax on fuel bought.
+  """
+  hasSurcharge: Boolean!
+  sortOrder: Int!
+  status: IFTAJurisdictionStatus!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  usState: UsState
+}
+
+"""
+A published per-gallon rate for one jurisdiction, quarter and fuel type. Global:
+every organization is taxed at the same rate, and a missing rate is flagged on
+the return rather than treated as zero.
+"""
+type IFTATaxRate {
+  id: ID!
+  jurisdictionId: ID!
+  year: Int!
+  quarter: Int!
+  fuelType: IFTAFuelType!
+  """
+  USD per US gallon as published in the IFTA rate matrix.
+  """
+  ratePerGallon: Decimal!
+  surchargeRatePerGallon: Decimal
+  sourceNote: String
+  sourceUrl: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  jurisdiction: IFTAJurisdiction!
+}
+
+type IFTATaxRateEdge {
+  node: IFTATaxRate!
+  cursor: String!
+}
+
+type IFTATaxRateConnection {
+  edges: [IFTATaxRateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Miles a tractor ran in a jurisdiction that routing did not capture, such as
+repositioning between shipments. Year and quarter are fixed from traveledAt in
+the organization's timezone when the entry is written.
+"""
+type IFTAJurisdictionMileageEntry {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  tractorId: ID!
+  jurisdictionId: ID!
+  traveledAt: Timestamp!
+  year: Int!
+  quarter: Int!
+  miles: Decimal!
+  loaded: Boolean!
+  source: IFTAMileageSource!
+  """
+  When set, this entry replaces the move's routed jurisdiction rows in the return.
+  """
+  shipmentMoveId: ID
+  notes: String
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  tractor: Tractor
+  jurisdiction: IFTAJurisdiction!
+}
+
+type IFTAJurisdictionMileageEntryEdge {
+  node: IFTAJurisdictionMileageEntry!
+  cursor: String!
+}
+
+type IFTAJurisdictionMileageEntryConnection {
+  edges: [IFTAJurisdictionMileageEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Fleet average for one fuel type over the quarter: total miles run by tractors of
+that fuel type divided by every IFTA gallon bought for them, taxed or not.
+"""
+type IFTAFleetMPG {
+  fuelType: IFTAFuelType!
+  """
+  Null when no gallons were bought for the fuel type, which leaves its lines with
+  no taxable gallons.
+  """
+  mpg: Decimal
+  totalMiles: Decimal!
+  totalGallons: Decimal!
+}
+
+type IFTAReturnProblem {
+  code: IFTAProblemCode!
+  message: String!
+  jurisdictionCode: String
+  fuelType: IFTAFuelType
+  """
+  The figure the problem is about: miles for mileage problems, gallons for fuel
+  problems. Absent for problems that are a count.
+  """
+  amount: Decimal
+}
+
+"""
+One jurisdiction and fuel type on a return. Miles are broken down by how they
+were captured so the preparer can see what came from routing and what was
+entered by hand.
+"""
+type IFTAReturnLine {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  returnId: ID!
+  jurisdictionId: ID!
+  fuelType: IFTAFuelType!
+  """
+  Snapshot of the jurisdiction's membership when the line was computed.
+  """
+  isIftaMember: Boolean!
+  totalMiles: Decimal!
+  taxableMiles: Decimal!
+  routeMiles: Decimal!
+  manualMiles: Decimal!
+  loadedMiles: Decimal!
+  emptyMiles: Decimal!
+  """
+  Tax-paid gallons rounded to whole gallons as the form requires.
+  """
+  taxPaidGallons: Decimal!
+  """
+  Tax-paid gallons before rounding, for reconciliation against the purchases.
+  """
+  taxPaidGallonsRaw: Decimal!
+  purchaseCount: Int!
+  """
+  Taxable miles divided by the fleet MPG for the fuel type, whole gallons.
+  """
+  taxableGallons: Decimal!
+  """
+  Taxable gallons minus tax-paid gallons. Negative means the fleet bought more
+  fuel in the jurisdiction than it burned there and is owed a credit.
+  """
+  netTaxableGallons: Decimal!
+  ratePerGallon: Decimal
+  surchargeRatePerGallon: Decimal
+  """
+  True when no rate is published for the jurisdiction, quarter and fuel type.
+  The line's tax is zero, and the return cannot be finalized until a rate exists.
+  """
+  rateMissing: Boolean!
+  """
+  Net taxable gallons times the rate. Negative is a credit.
+  """
+  taxDue: Decimal!
+  """
+  Taxable gallons times the surcharge rate. Charged on fuel consumed, so it is
+  never a credit.
+  """
+  surchargeDue: Decimal!
+  lineTotal: Decimal!
+  sortOrder: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  jurisdiction: IFTAJurisdiction!
+}
+
+"""
+A quarterly IFTA return. Figures are recomputed from miles, fuel and rates while
+the return is a Draft and frozen once it is finalized.
+"""
+type IFTAReturn {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  year: Int!
+  quarter: Int!
+  period: IFTAPeriod!
+  """
+  Zero for the original return; each amendment of a filed return increments it.
+  """
+  amendmentNumber: Int!
+  amendsReturnId: ID
+  amendsReturn: IFTAReturn
+  status: IFTAReturnStatus!
+  """
+  The organization's timezone when the return was generated. Period bounds and
+  purchase placement use it, so a later timezone change does not move figures.
+  """
+  timezone: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  totalMiles: Decimal!
+  totalTaxableMiles: Decimal!
+  totalGallons: Decimal!
+  totalTaxPaidGallons: Decimal!
+  """
+  Sum of the member lines' net taxable gallons; negative means a net credit.
+  """
+  netTaxableGallons: Decimal!
+  taxDue: Decimal!
+  surchargeDue: Decimal!
+  """
+  Tax due plus surcharge due. Negative is a credit owed to the fleet.
+  """
+  netDue: Decimal!
+  currencyCode: String!
+  fleetMpgByFuelType: [IFTAFleetMPG!]!
+  """
+  Routed miles on completed moves in the period that have no jurisdiction
+  breakdown. They are not on any line; the return is understated by this much
+  until the moves are attributed.
+  """
+  unattributedMiles: Decimal!
+  unattributedMoveCount: Int!
+  """
+  Attributed miles on moves with no tractor assignment, which cannot be placed
+  on a fuel type.
+  """
+  noTractorMiles: Decimal!
+  noTractorMoveCount: Int!
+  problems: [IFTAReturnProblem!]!
+  computedAt: Timestamp
+  finalizedAt: Timestamp
+  finalizedById: ID
+  finalizedBy: User
+  filedAt: Timestamp
+  filedById: ID
+  filedBy: User
+  filingReference: String
+  reopenedAt: Timestamp
+  reopenedById: ID
+  reopenReason: String
+  lines: [IFTAReturnLine!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type IFTAReturnEdge {
+  node: IFTAReturn!
+  cursor: String!
+}
+
+type IFTAReturnConnection {
+  edges: [IFTAReturnEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A calendar quarter as IFTA reports it. Bounds are local midnight in the
+organization's timezone, end exclusive; the due date is the last day of the
+month after the quarter ends.
+"""
+type IFTAPeriod {
+  year: Int!
+  quarter: Int!
+  """
+  For example "2026Q3".
+  """
+  key: String!
+  """
+  For example "Q3 2026".
+  """
+  label: String!
+  start: Timestamp!
+  end: Timestamp!
+  dueDate: Timestamp!
+}
+
+input IFTAPeriodInput {
+  year: Int!
+  quarter: Int!
+}
+
+input IFTATaxRateInput {
+  jurisdictionId: ID!
+  year: Int!
+  quarter: Int!
+  fuelType: IFTAFuelType!
+  ratePerGallon: Decimal!
+  surchargeRatePerGallon: Decimal
+  sourceNote: String
+  sourceUrl: String
+}
+
+input IFTATaxRatesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  period: IFTAPeriodInput
+  jurisdictionId: ID
+  fuelType: IFTAFuelType
+}
+
+input IFTAMileageEntryInput {
+  tractorId: ID!
+  jurisdictionId: ID!
+  traveledAt: Timestamp!
+  miles: Decimal!
+  loaded: Boolean = true
+  source: IFTAMileageSource = Manual
+  """
+  Name the move when this entry corrects its routed miles; the entry then
+  replaces the move's jurisdiction rows on the return.
+  """
+  shipmentMoveId: ID
+  notes: String
+}
+
+input IFTAMileageEntriesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  period: IFTAPeriodInput
+  tractorId: ID
+  jurisdictionId: ID
+  sources: [IFTAMileageSource!]
+  """
+  Inclusive lower bound on traveledAt.
+  """
+  from: Timestamp
+  """
+  Exclusive upper bound on traveledAt.
+  """
+  to: Timestamp
+}
+
+input IFTAReturnsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  year: Int
+  statuses: [IFTAReturnStatus!]
+}
+
+input MarkIFTAReturnFiledInput {
+  id: ID!
+  version: Int!
+  """
+  Between the moment the return was finalized and now.
+  """
+  filedAt: Timestamp!
+  filingReference: String
+}
+
+input BackfillJurisdictionMilesInput {
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  """
+  Upper bound on moves re-routed in one run; defaults to 2000. Every move is a
+  billable distance request.
+  """
+  maxMoves: Int
+  """
+  Count the moves and miles that would be attributed without starting the workflow.
+  """
+  dryRun: Boolean = false
+}
+
+extend type Query {
+  """
+  The global jurisdiction list, about sixty rows. Fetched once and cached on the client.
+  """
+  iftaJurisdictions(membersOnly: Boolean = false): [IFTAJurisdiction!]!
+  iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
+  iftaMileageEntries(input: IFTAMileageEntriesInput!): IFTAJurisdictionMileageEntryConnection!
+  iftaMileageEntry(id: ID!): IFTAJurisdictionMileageEntry!
+  iftaReturns(input: IFTAReturnsInput!): IFTAReturnConnection!
+  iftaReturn(id: ID!): IFTAReturn!
+  """
+  The working copy for a quarter: the open Draft or Finalized return, else the
+  most recent Filed one. Null when nothing has been generated for the period.
+  """
+  iftaReturnForPeriod(period: IFTAPeriodInput!): IFTAReturn
+  iftaPeriod(year: Int!, quarter: Int!): IFTAPeriod!
+  """
+  The most recently completed quarter in the organization's timezone.
+  """
+  iftaCurrentPeriod: IFTAPeriod!
+}
+
+extend type Mutation {
+  """
+  Inserts or replaces rates keyed by jurisdiction, year, quarter and fuel type.
+  Rates are global, so this changes what every organization's return owes.
+  """
+  upsertIftaTaxRates(input: [IFTATaxRateInput!]!): [IFTATaxRate!]!
+  deleteIftaTaxRate(id: ID!, version: Int!): Boolean!
+  createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
+  updateIftaMileageEntry(
+    id: ID!
+    version: Int!
+    input: IFTAMileageEntryInput!
+  ): IFTAJurisdictionMileageEntry!
+  deleteIftaMileageEntry(id: ID!, version: Int!): Boolean!
+  """
+  Creates the Draft for a quarter and computes it. Refused while a Draft or
+  Finalized return exists for the period, and once one is Filed; amend that instead.
+  """
+  generateIftaReturn(period: IFTAPeriodInput!): IFTAReturn!
+  recomputeIftaReturn(id: ID!, version: Int!): IFTAReturn!
+  """
+  Recomputes, then locks the Draft. Refused while any member line is missing a rate.
+  """
+  finalizeIftaReturn(id: ID!, version: Int!): IFTAReturn!
+  """
+  Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
+  """
+  reopenIftaReturn(id: ID!, version: Int!, reason: String!): IFTAReturn!
+  markIftaReturnFiled(input: MarkIFTAReturnFiledInput!): IFTAReturn!
+  """
+  Opens a new Draft for the same quarter from a Filed return, with the amendment
+  number incremented. The filed return is left untouched.
+  """
+  amendIftaReturn(id: ID!, reason: String!): IFTAReturn!
+  deleteIftaReturn(id: ID!, version: Int!): Boolean!
+  """
+  Asks the distance provider for the state-by-state report on one move and
+  replaces its jurisdiction rows. The move's distance is left as it was.
+  """
+  recalculateMoveJurisdictionMiles(shipmentMoveId: ID!): [ShipmentMoveJurisdictionMile!]!
+  """
+  Starts a workflow that attributes completed moves in the period that have no
+  jurisdiction breakdown. Each move is a billable distance request; use dryRun
+  to size the job first.
+  """
+  backfillJurisdictionMiles(input: BackfillJurisdictionMilesInput!): JurisdictionMilesBackfillResult!
+}

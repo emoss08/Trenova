@@ -1,0 +1,68 @@
+fragment FuelCardFields on FuelCard {
+  id
+  businessUnitId
+  organizationId
+  provider
+  lastFour
+  label
+  externalCardId
+  assignedWorkerId
+  assignedTractorId
+  status
+  expiresAt
+  cancelledAt
+  cancelReason
+  notes
+  version
+  createdAt
+  updatedAt
+  assignedWorker {
+    id
+    wholeName
+    firstName
+    lastName
+  }
+  assignedTractor {
+    id
+    code
+  }
+}
+
+query FuelCardTable($input: FuelCardsInput!, $includeTotalCount: Boolean = true) {
+  fuelCards(input: $input) {
+    edges {
+      node {
+        ...FuelCardFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query FuelCard($id: ID!) {
+  fuelCard(id: $id) {
+    ...FuelCardFields
+  }
+}
+
+mutation CreateFuelCard($input: FuelCardInput!) {
+  createFuelCard(input: $input) {
+    ...FuelCardFields
+  }
+}
+
+mutation UpdateFuelCard($id: ID!, $version: Int!, $input: FuelCardInput!) {
+  updateFuelCard(id: $id, version: $version, input: $input) {
+    ...FuelCardFields
+  }
+}
+
+mutation CancelFuelCard($input: CancelFuelCardInput!) {
+  cancelFuelCard(input: $input) {
+    ...FuelCardFields
+  }
+}

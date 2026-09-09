@@ -25,6 +25,7 @@ type UsStateRepository interface {
 		ctx context.Context,
 		abbreviation string,
 	) (*usstate.UsState, error)
+	GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error)
 }
 
 type UsStateCacheRepository interface {

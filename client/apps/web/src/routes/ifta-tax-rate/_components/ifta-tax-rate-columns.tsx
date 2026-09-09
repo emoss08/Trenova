@@ -1,0 +1,168 @@
+import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
+import { iftaFuelTypeChoices, iftaQuarterChoices } from "@/lib/choices";
+import type { IftaTaxRateRow } from "@/lib/graphql/ifta-tax-rate";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { formatDecimalString } from "@trenova/shared/types/decimal";
+import type { GenericSelectOption } from "@trenova/shared/types/fields";
+import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
+import { IFTA_RATE_SCALE } from "@trenova/shared/types/ifta-tax-rate";
+
+export function periodLabel(year: number, quarter: number): string {
+  return `Q${quarter} ${year}`;
+}
+
+function rate(value: string | null | undefined): string {
+  return value ? formatDecimalString(value, IFTA_RATE_SCALE) : "—";
+}
+
+export function getColumns(
+  jurisdictionOptions: readonly GenericSelectOption<string>[],
+): ColumnDef<IftaTaxRateRow>[] {
+  return [
+    {
+      accessorKey: "year",
+      header: "Year",
+      cell: ({ row }) => <span className="font-table tabular-nums">{row.original.year}</span>,
+      size: 90,
+      meta: {
+        apiField: "year",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+        defaultFilterOperator: "eq",
+      },
+    },
+    {
+      accessorKey: "quarter",
+      header: "Quarter",
+      cell: ({ row }) => <span className="font-table tabular-nums">Q{row.original.quarter}</span>,
+      size: 100,
+      meta: {
+        apiField: "quarter",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: iftaQuarterChoices,
+        defaultFilterOperator: "eq",
+        exportValue: (row: IftaTaxRateRow) => `Q${row.quarter}`,
+      },
+    },
+    {
+      accessorKey: "jurisdictionId",
+      header: "Jurisdiction",
+      cell: ({ row }) => (
+        <span className="flex items-center gap-2 font-medium">
+          {jurisdictionLabel(row.original.jurisdiction)}
+          {row.original.jurisdiction.hasSurcharge ? (
+            <Badge variant="orange" className="px-1.5 py-0 text-[10px]">
+              Surcharge
+            </Badge>
+          ) : null}
+          {row.original.jurisdiction.isIftaMember ? null : (
+            <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+              Non-member
+            </Badge>
+          )}
+        </span>
+      ),
+      enableSorting: false,
+      meta: {
+        apiField: "jurisdictionId",
+        filterable: true,
+        sortable: false,
+        filterType: "select",
+        filterOptions: [...jurisdictionOptions],
+        defaultFilterOperator: "eq",
+        exportValue: (row: IftaTaxRateRow) => jurisdictionLabel(row.jurisdiction),
+      },
+    },
+    {
+      accessorKey: "fuelType",
+      header: "Fuel",
+      cell: ({ row }) => IFTA_FUEL_TYPE_LABELS[row.original.fuelType],
+      size: 140,
+      meta: {
+        apiField: "fuelType",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: iftaFuelTypeChoices,
+        defaultFilterOperator: "eq",
+      },
+    },
+    {
+      accessorKey: "ratePerGallon",
+      header: "Rate / gal",
+      cell: ({ row }) => (
+        <span className="font-table block text-right tabular-nums">
+          {rate(row.original.ratePerGallon)}
+        </span>
+      ),
+      size: 110,
+      meta: {
+        apiField: "ratePerGallon",
+        filterable: false,
+        sortable: true,
+      },
+    },
+    {
+      accessorKey: "surchargeRatePerGallon",
+      header: "Surcharge / gal",
+      cell: ({ row }) => (
+        <span className="font-table block text-right tabular-nums">
+          {rate(row.original.surchargeRatePerGallon)}
+        </span>
+      ),
+      size: 130,
+      meta: {
+        apiField: "surchargeRatePerGallon",
+        filterable: false,
+        sortable: true,
+      },
+    },
+    {
+      accessorKey: "sourceNote",
+      header: "Source",
+      cell: ({ row }) =>
+        row.original.sourceUrl ? (
+          <a
+            href={row.original.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs underline-offset-2 hover:underline"
+          >
+            {row.original.sourceNote || row.original.sourceUrl}
+          </a>
+        ) : (
+          <span className="text-xs">{row.original.sourceNote || "—"}</span>
+        ),
+      enableSorting: false,
+      meta: {
+        apiField: "sourceNote",
+        filterable: true,
+        sortable: false,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated",
+      cell: ({ row }) => (
+        <HoverCardTimestamp
+          className="font-table tracking-tight"
+          timestamp={row.original.updatedAt}
+        />
+      ),
+      meta: {
+        apiField: "updatedAt",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+    },
+  ];
+}

@@ -515,3 +515,71 @@ func (_c *MockTractorRepository_Update_Call) RunAndReturn(run func(ctx context.C
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetByCodes provides a mock function for the type MockTractorRepository
+func (_mock *MockTractorRepository) GetByCodes(ctx context.Context, req repositories.GetTractorsByCodesRequest) (map[string]*tractor.Tractor, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByCodes")
+	}
+
+	var r0 map[string]*tractor.Tractor
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetTractorsByCodesRequest) (map[string]*tractor.Tractor, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetTractorsByCodesRequest) map[string]*tractor.Tractor); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]*tractor.Tractor)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetTractorsByCodesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockTractorRepository_GetByCodes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByCodes'
+type MockTractorRepository_GetByCodes_Call struct {
+	*mock.Call
+}
+
+// GetByCodes is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetTractorsByCodesRequest
+func (_e *MockTractorRepository_Expecter) GetByCodes(ctx any, req any) *MockTractorRepository_GetByCodes_Call {
+	return &MockTractorRepository_GetByCodes_Call{Call: _e.mock.On("GetByCodes", ctx, req)}
+}
+
+func (_c *MockTractorRepository_GetByCodes_Call) Run(run func(ctx context.Context, req repositories.GetTractorsByCodesRequest)) *MockTractorRepository_GetByCodes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetTractorsByCodesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetTractorsByCodesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTractorRepository_GetByCodes_Call) Return(tractorMap map[string]*tractor.Tractor, err error) *MockTractorRepository_GetByCodes_Call {
+	_c.Call.Return(tractorMap, err)
+	return _c
+}
+
+func (_c *MockTractorRepository_GetByCodes_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetTractorsByCodesRequest) (map[string]*tractor.Tractor, error)) *MockTractorRepository_GetByCodes_Call {
+	_c.Call.Return(run)
+	return _c
+}

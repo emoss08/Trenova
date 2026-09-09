@@ -1,0 +1,89 @@
+fragment FuelPurchaseFields on FuelPurchase {
+  id
+  businessUnitId
+  organizationId
+  tractorId
+  workerId
+  jurisdictionId
+  fuelCardId
+  cardLastFour
+  purchasedAt
+  vendor
+  vendorCity
+  fuelType
+  quantity
+  quantityUnit
+  gallons
+  unitPrice
+  totalAmount
+  currencyCode
+  odometer
+  transactionReference
+  source
+  importBatchId
+  taxPaid
+  notes
+  createdById
+  version
+  createdAt
+  updatedAt
+  tractor {
+    id
+    code
+  }
+  worker {
+    id
+    wholeName
+    firstName
+    lastName
+  }
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+  }
+  fuelCard {
+    id
+    provider
+    lastFour
+    label
+  }
+}
+
+query FuelPurchaseTable($input: FuelPurchasesInput!, $includeTotalCount: Boolean = true) {
+  fuelPurchases(input: $input) {
+    edges {
+      node {
+        ...FuelPurchaseFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query FuelPurchase($id: ID!) {
+  fuelPurchase(id: $id) {
+    ...FuelPurchaseFields
+  }
+}
+
+mutation CreateFuelPurchase($input: FuelPurchaseInput!) {
+  createFuelPurchase(input: $input) {
+    ...FuelPurchaseFields
+  }
+}
+
+mutation UpdateFuelPurchase($id: ID!, $version: Int!, $input: FuelPurchaseInput!) {
+  updateFuelPurchase(id: $id, version: $version, input: $input) {
+    ...FuelPurchaseFields
+  }
+}
+
+mutation DeleteFuelPurchase($id: ID!, $version: Int!) {
+  deleteFuelPurchase(id: $id, version: $version)
+}

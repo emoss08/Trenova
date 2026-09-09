@@ -28,6 +28,7 @@ type RouteOptions struct {
 	Axles               int
 	Hazmat              []string
 	IncludeTollData     bool
+	StateReport         bool
 }
 
 type Stop struct {
@@ -38,6 +39,7 @@ type Stop struct {
 	Latitude       *float64
 	Longitude      *float64
 	TrimblePlaceID string
+	Country        string
 }
 
 type RouteRequest struct {
@@ -46,12 +48,21 @@ type RouteRequest struct {
 	Options RouteOptions
 }
 
+type JurisdictionDistance struct {
+	Country  string
+	Code     string
+	Distance float64
+	Toll     float64
+	Ferry    float64
+}
+
 type RouteMileage struct {
-	RouteID     string
-	Distance    float64
-	DataVersion string
-	Warnings    []string
-	RawSummary  map[string]any
+	RouteID               string
+	Distance              float64
+	DataVersion           string
+	Warnings              []string
+	RawSummary            map[string]any
+	JurisdictionDistances []JurisdictionDistance
 }
 
 type Version struct {

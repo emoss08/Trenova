@@ -1,0 +1,146 @@
+fragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {
+  id
+  businessUnitId
+  organizationId
+  provider
+  documentId
+  fileName
+  sourceFormat
+  status
+  defaultFuelType
+  defaultFuelCardId
+  defaultCurrency
+  mapping
+  unmappedHeaders
+  summary {
+    rowCount
+    newCount
+    duplicateInFileCount
+    alreadyImportedCount
+    errorCount
+    totalGallons
+    totalAmount
+    byFuelType
+    byJurisdiction
+    earliestPurchasedAt
+    latestPurchasedAt
+  }
+  rowCount
+  errorCount
+  committedCount
+  error
+  uploadedById
+  stagedAt
+  committedAt
+  committedById
+  version
+  createdAt
+  updatedAt
+  document {
+    id
+    fileName
+    originalName
+    fileType
+    fileSize
+    createdAt
+  }
+  defaultFuelCard {
+    id
+    provider
+    lastFour
+    label
+  }
+}
+
+fragment FuelPurchaseImportRowFields on FuelPurchaseImportRow {
+  id
+  importBatchId
+  rowNumber
+  cells
+  parsed {
+    purchasedAt
+    vendor
+    vendorCity
+    jurisdictionCode
+    fuelType
+    quantity
+    quantityUnit
+    gallons
+    unitPrice
+    totalAmount
+    currencyCode
+    transactionReference
+    cardLastFour
+    tractorCode
+    odometer
+  }
+  transactionReference
+  status
+  error
+  resolvedTractorId
+  resolvedFuelCardId
+  resolvedJurisdictionId
+  resolutionNotes
+  fuelPurchaseId
+  createdAt
+  resolvedTractor {
+    id
+    code
+  }
+}
+
+query FuelPurchaseImport($id: ID!) {
+  fuelPurchaseImport(id: $id) {
+    ...FuelPurchaseImportBatchFields
+  }
+}
+
+query FuelPurchaseImportRows($id: ID!, $input: FuelPurchaseImportRowsInput) {
+  fuelPurchaseImport(id: $id) {
+    id
+    rows(input: $input) {
+      edges {
+        node {
+          ...FuelPurchaseImportRowFields
+        }
+        cursor
+      }
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query FuelPurchaseImportTemplate($provider: FuelCardProvider!) {
+  fuelPurchaseImportTemplate(provider: $provider) {
+    fileName
+    content
+  }
+}
+
+mutation CreateFuelPurchaseImport($input: CreateFuelPurchaseImportInput!) {
+  createFuelPurchaseImport(input: $input) {
+    ...FuelPurchaseImportBatchFields
+  }
+}
+
+mutation StageFuelPurchaseImport($input: StageFuelPurchaseImportInput!) {
+  stageFuelPurchaseImport(input: $input) {
+    ...FuelPurchaseImportBatchFields
+  }
+}
+
+mutation CommitFuelPurchaseImport($id: ID!, $version: Int!) {
+  commitFuelPurchaseImport(id: $id, version: $version) {
+    ...FuelPurchaseImportBatchFields
+  }
+}
+
+mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {
+  discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {
+    ...FuelPurchaseImportBatchFields
+  }
+}

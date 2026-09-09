@@ -1,0 +1,66 @@
+fragment IftaMileageEntryFields on IFTAJurisdictionMileageEntry {
+  id
+  businessUnitId
+  organizationId
+  tractorId
+  jurisdictionId
+  traveledAt
+  year
+  quarter
+  miles
+  loaded
+  source
+  shipmentMoveId
+  notes
+  createdById
+  version
+  createdAt
+  updatedAt
+  tractor {
+    id
+    code
+  }
+  jurisdiction {
+    id
+    countryCode
+    code
+    name
+  }
+}
+
+query IftaMileageEntryTable($input: IFTAMileageEntriesInput!, $includeTotalCount: Boolean = true) {
+  iftaMileageEntries(input: $input) {
+    edges {
+      node {
+        ...IftaMileageEntryFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query IftaMileageEntry($id: ID!) {
+  iftaMileageEntry(id: $id) {
+    ...IftaMileageEntryFields
+  }
+}
+
+mutation CreateIftaMileageEntry($input: IFTAMileageEntryInput!) {
+  createIftaMileageEntry(input: $input) {
+    ...IftaMileageEntryFields
+  }
+}
+
+mutation UpdateIftaMileageEntry($id: ID!, $version: Int!, $input: IFTAMileageEntryInput!) {
+  updateIftaMileageEntry(id: $id, version: $version, input: $input) {
+    ...IftaMileageEntryFields
+  }
+}
+
+mutation DeleteIftaMileageEntry($id: ID!, $version: Int!) {
+  deleteIftaMileageEntry(id: $id, version: $version)
+}

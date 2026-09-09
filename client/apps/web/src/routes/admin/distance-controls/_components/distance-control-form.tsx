@@ -14,7 +14,11 @@ import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { distanceProfileDistanceUnitChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { distanceControlSchema, type DistanceControl } from "@/types/distance-control";
+import {
+  distanceControlSchema,
+  type DistanceControl,
+  type DistanceControlInput,
+} from "@/types/distance-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -68,7 +72,7 @@ export default function DistanceControlForm() {
     ...queries.distanceControl.get(),
   });
 
-  const form = useForm<DistanceControl>({
+  const form = useForm<DistanceControlInput, unknown, DistanceControl>({
     resolver: zodResolver(distanceControlSchema),
     defaultValues: data,
   });
@@ -79,7 +83,7 @@ export default function DistanceControlForm() {
     DistanceControl,
     DistanceControl,
     unknown,
-    DistanceControl
+    DistanceControlInput
   >({
     queryKey: queries.distanceControl.get._def,
     mutationFn: async (values: DistanceControl) => apiService.distanceControlService.patch(values),
@@ -101,6 +105,7 @@ export default function DistanceControlForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <StoredMileageCard />
+          <JurisdictionMileageCard />
           <ProfileAssignmentsCard />
           <FormSaveDock saveButtonContent="Save Changes" />
         </div>
@@ -110,7 +115,7 @@ export default function DistanceControlForm() {
 }
 
 function StoredMileageCard() {
-  const { control } = useFormContext<DistanceControl>();
+  const { control } = useFormContext<DistanceControlInput>();
 
   return (
     <Card>
@@ -166,8 +171,38 @@ function StoredMileageCard() {
   );
 }
 
+function JurisdictionMileageCard() {
+  const { control } = useFormContext<DistanceControlInput>();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Jurisdiction Mileage</CardTitle>
+        <CardDescription>
+          Break each move&apos;s routed distance down by state or province so IFTA returns can
+          attribute miles to the jurisdictions they were driven in.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em]">
+            <SwitchField
+              control={control}
+              name="captureJurisdictionMiles"
+              label="Capture jurisdiction miles"
+              description="Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns."
+              tooltip="May be billed by PC*Miler as an additional transaction per route. Routes calculated before this is on have no jurisdiction breakdown until they are recalculated."
+              position="left"
+            />
+          </FormControl>
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ProfileAssignmentsCard() {
-  const { control } = useFormContext<DistanceControl>();
+  const { control } = useFormContext<DistanceControlInput>();
 
   return (
     <Card>
@@ -182,7 +217,7 @@ function ProfileAssignmentsCard() {
         <FormGroup cols={2}>
           {profileFields.map((field) => (
             <FormControl key={field.name} className="min-h-[3em]">
-              <DistanceProfileAutocompleteField<DistanceControl>
+              <DistanceProfileAutocompleteField<DistanceControlInput>
                 control={control}
                 name={field.name}
                 label={field.label}

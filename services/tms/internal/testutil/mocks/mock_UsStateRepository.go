@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -240,6 +241,74 @@ func (_c *MockUsStateRepository_SelectOptions_Call) Return(listResult *paginatio
 }
 
 func (_c *MockUsStateRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*usstate.UsState], error)) *MockUsStateRepository_SelectOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByIDs provides a mock function for the type MockUsStateRepository
+func (_mock *MockUsStateRepository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error) {
+	ret := _mock.Called(ctx, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*usstate.UsState
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) ([]*usstate.UsState, error)); ok {
+		return returnFunc(ctx, ids)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) []*usstate.UsState); ok {
+		r0 = returnFunc(ctx, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*usstate.UsState)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []pulid.ID) error); ok {
+		r1 = returnFunc(ctx, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUsStateRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockUsStateRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids []pulid.ID
+func (_e *MockUsStateRepository_Expecter) GetByIDs(ctx any, ids any) *MockUsStateRepository_GetByIDs_Call {
+	return &MockUsStateRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, ids)}
+}
+
+func (_c *MockUsStateRepository_GetByIDs_Call) Run(run func(ctx context.Context, ids []pulid.ID)) *MockUsStateRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].([]pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUsStateRepository_GetByIDs_Call) Return(usStates []*usstate.UsState, err error) *MockUsStateRepository_GetByIDs_Call {
+	_c.Call.Return(usStates, err)
+	return _c
+}
+
+func (_c *MockUsStateRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error)) *MockUsStateRepository_GetByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
