@@ -244,6 +244,17 @@ jobs:
             exit 1
           fi
 
+      - name: GraphQL projections
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go generate ./internal/api/graphql/projection/...
+          if ! git diff --quiet -- internal/api/graphql/projection/specs_gen.go; then
+            echo "::error::GraphQL projection specs are stale - run 'go generate ./internal/api/graphql/projection/...' and commit"
+            git diff --stat -- internal/api/graphql/projection/specs_gen.go
+            exit 1
+          fi
+
       - name: Report catalog
         working-directory: ./services/tms
         run: |
