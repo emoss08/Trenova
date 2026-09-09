@@ -8,7 +8,7 @@ interface PermissionState {
   isLoading: boolean;
   lastFetched: number | null;
 
-  fetchManifest: () => Promise<void>;
+  fetchManifest: () => Promise<PermissionManifest>;
   checkForUpdates: (expectedOrgId?: string) => Promise<boolean>;
   hasPermission: (resource: string, operation: OperationType) => boolean;
   hasAnyPermission: (resource: string, operations: OperationType[]) => boolean;
@@ -35,6 +35,10 @@ export const usePermissionStore = create<PermissionState>()(
             isLoading: false,
             lastFetched: Date.now(),
           });
+          // Returned as well as stored: callers that act on the freshly loaded manifest
+          // (the auth flow decides between the role step and the dashboard on it) would
+          // otherwise read the store before React has re-rendered them with the new value.
+          return manifest;
         } catch (error) {
           set({ isLoading: false });
           throw error;

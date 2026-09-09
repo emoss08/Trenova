@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getNameInitials,
   downloadJsonFile,
   downloadTextFile,
   toTitleCase,
@@ -318,5 +319,38 @@ describe("download helpers", () => {
 
     expect(blob?.type).toBe("application/json");
     await expect(blob?.text()).resolves.toBe(JSON.stringify({ ok: true }, null, 2));
+  });
+});
+
+describe("getNameInitials", () => {
+  it("takes one letter per word by default", () => {
+    expect(getNameInitials("Alpha Logistics")).toBe("AL");
+    expect(getNameInitials("Meridian Freight Group")).toBe("MF");
+  });
+
+  it("leaves a one-word name as a single letter by default", () => {
+    expect(getNameInitials("Trenova")).toBe("T");
+  });
+
+  it("falls back when there is no name", () => {
+    expect(getNameInitials(undefined)).toBe("U");
+    expect(getNameInitials("", "ORG")).toBe("ORG");
+  });
+
+  // The sign-in screen's organization tile is a fixed-width three-letter code, so a
+  // short name is padded out of the first word rather than rendered half empty.
+  it("pads a short result from the first word when asked", () => {
+    expect(getNameInitials("Meridian Freight Group", "ORG", { maxLength: 3, pad: true })).toBe(
+      "MFG",
+    );
+    expect(getNameInitials("Trenova Logistics", "ORG", { maxLength: 3, pad: true })).toBe("TRL");
+    expect(getNameInitials("Trenova Transportation", "ORG", { maxLength: 3, pad: true })).toBe(
+      "TRT",
+    );
+    expect(getNameInitials("Trenova", "ORG", { maxLength: 3, pad: true })).toBe("TRE");
+  });
+
+  it("collapses runs of whitespace rather than emitting a blank initial", () => {
+    expect(getNameInitials("Alpha   Beta Gamma", "ORG", { maxLength: 3, pad: true })).toBe("ABG");
   });
 });

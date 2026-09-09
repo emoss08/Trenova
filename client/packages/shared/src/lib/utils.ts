@@ -180,20 +180,28 @@ export function formatLocation(location?: FormattableLocation) {
 export const initials = (first?: string, last?: string) =>
   `${(first?.[0] ?? "").toUpperCase()}${(last?.[0] ?? "").toUpperCase()}`.trim() || "•";
 
-export function getNameInitials(name?: string, fallback = "U") {
+export function getNameInitials(
+  name?: string,
+  fallback = "U",
+  // `pad` fills a short result out of the first word's remaining letters, so a
+  // fixed-width code tile ("TRL" for Trenova Logistics) never renders half empty.
+  // Off by default: avatars elsewhere show one letter for a one-word name.
+  { maxLength = 2, pad = false }: { maxLength?: number; pad?: boolean } = {},
+) {
   if (!name) {
     return fallback;
   }
 
-  const letters = name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const words = name.split(/\s+/).filter(Boolean);
+  const wordInitials = words.map((part) => part[0]).slice(0, maxLength);
 
-  return letters || fallback;
+  let letters = wordInitials.join("");
+  if (pad && letters.length < maxLength && words[0]) {
+    const filler = words[0].slice(1, 1 + (maxLength - letters.length));
+    letters = wordInitials[0] + filler + wordInitials.slice(1).join("");
+  }
+
+  return letters.toUpperCase().slice(0, maxLength) || fallback;
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -275,4 +283,9 @@ export function downloadBlob(blob: Blob, fileName: string): void {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "" ? null : trimmed;
 }

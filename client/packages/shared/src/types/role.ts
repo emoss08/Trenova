@@ -63,6 +63,15 @@ export const roleSummarySchema = z.object({
     .nullish()
     .transform((value) => value ?? ""),
   isSystem: z.boolean().optional().default(false),
+  // Left as `number | undefined` rather than defaulted to 0: the permission manifest is
+  // returned unparsed by permission-api and is also rehydrated from localStorage, so a
+  // summary can genuinely reach the UI without this field. Callers must distinguish
+  // "no permissions" from "the server did not say".
+  permissionCount: z
+    .number()
+    .nullish()
+    .transform((value) => value ?? undefined)
+    .optional(),
 });
 export type RoleSummary = z.infer<typeof roleSummarySchema>;
 
