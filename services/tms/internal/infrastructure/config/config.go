@@ -143,6 +143,50 @@ type SecurityConfig struct {
 	CSRF       CSRFConfig            `mapstructure:"csrf"`
 	Encryption EncryptionConfig      `mapstructure:"encryption"`
 	GraphQL    GraphQLSecurityConfig `mapstructure:"graphql"`
+
+	PasswordReset PasswordResetConfig `mapstructure:"passwordReset"`
+}
+
+const (
+	defaultPasswordResetTokenTTL           = 30 * time.Minute
+	defaultPasswordResetMaxRequestsPerHour = 5
+)
+
+// PasswordResetConfig governs the unauthenticated "forgot password" flow.
+//
+// There is no enable switch: being able to recover an account is not optional. What
+// is configurable is where the link points and how hard the endpoint can be leaned
+// on, because both depend on the deployment.
+type PasswordResetConfig struct {
+	// BaseURL is the origin the reset link is built against, e.g.
+	// https://app.example.com. The server cannot infer it from the request without
+	// trusting a Host header an attacker controls, which is how reset links end up
+	// pointing at somebody else's domain.
+	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
+	// TokenTTL is how long a link stays redeemable. Short by default: a reset link is
+	// a bearer credential sitting in a mailbox.
+	TokenTTL time.Duration `mapstructure:"tokenTtl" validate:"omitempty,min=0"`
+	// MaxRequestsPerHour caps how many links one account can be sent in an hour, so
+	// the endpoint cannot be used to flood somebody's inbox.
+	MaxRequestsPerHour int `mapstructure:"maxRequestsPerHour" validate:"omitempty,min=1"`
+}
+
+func (c PasswordResetConfig) GetBaseURL() string {
+	return strings.TrimSuffix(c.BaseURL, "/")
+}
+
+func (c PasswordResetConfig) GetTokenTTL() time.Duration {
+	if c.TokenTTL <= 0 {
+		return defaultPasswordResetTokenTTL
+	}
+	return c.TokenTTL
+}
+
+func (c PasswordResetConfig) GetMaxRequestsPerHour() int {
+	if c.MaxRequestsPerHour <= 0 {
+		return defaultPasswordResetMaxRequestsPerHour
+	}
+	return c.MaxRequestsPerHour
 }
 
 const (
@@ -1274,7 +1318,29 @@ func (c *PlatformControlPlaneConfig) GetTenantSyncInterval() time.Duration {
 }
 
 type SystemConfig struct {
-	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
+	SystemUserPassword string             `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
+	NetworkPulse       NetworkPulseConfig `mapstructure:"networkPulse"`
+}
+
+// NetworkPulseConfig gates the instance-wide figures the sign-in screen shows beside
+// the credential receipt. It is disabled by default and must be turned on deliberately:
+// the endpoint answers before any session exists, so on an internet-facing deployment
+// anyone who can load the login page can read the shipment volume and service level of
+// every organization on the instance.
+type NetworkPulseConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+	// CacheTTL bounds how often an anonymous caller can make the database aggregate.
+	// Zero falls back to DefaultNetworkPulseCacheTTL rather than to no caching.
+	CacheTTL time.Duration `mapstructure:"cacheTtl" validate:"omitempty,min=0"`
+}
+
+const DefaultNetworkPulseCacheTTL = time.Minute
+
+func (c NetworkPulseConfig) GetCacheTTL() time.Duration {
+	if c.CacheTTL <= 0 {
+		return DefaultNetworkPulseCacheTTL
+	}
+	return c.CacheTTL
 }
 
 type Config struct {

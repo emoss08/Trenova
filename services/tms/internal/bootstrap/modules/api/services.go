@@ -76,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
+	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/glaccountservice"
 	"github.com/emoss08/trenova/internal/core/services/glbalanceservice"
@@ -86,6 +87,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
+	"github.com/emoss08/trenova/internal/core/services/iftaservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
@@ -98,6 +100,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
+	"github.com/emoss08/trenova/internal/core/services/networkpulseservice"
+	"github.com/emoss08/trenova/internal/core/services/passwordresetservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
@@ -271,6 +275,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	bankreceiptservice.New,
 	func(s *bankreceiptservice.Service) services.BankReceiptService { return s },
 	bankreceiptworkitemservice.New,
+	networkpulseservice.New,
+	passwordresetservice.New,
 	versionservice.New,
 	servicetypeservice.New,
 	orderservice.New,
@@ -447,6 +453,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	workertrainingservice.New,
 	workerdqfservice.New,
 	workerdrugalcoholservice.New,
+	fuelpurchaseservice.New,
+	iftaservice.New,
 	workerinjuryservice.New,
 	workerleaveservice.New,
 	orgstructureservice.New,

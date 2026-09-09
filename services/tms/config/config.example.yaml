@@ -153,6 +153,10 @@ security:
   rateLimit:
     enabled: true # Enable rate limiting
     requestsPerMinute: 60 # Requests per minute per IP
+  passwordReset:
+    baseUrl: https://app.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
+    tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
+    maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
   graphql:
     maxRequestBodyBytes: 1048576 # Max /graphql request body (bytes); bounds the variables payload
     persistedDocumentsPath: internal/api/graphql/persisted-documents.json # Dev/test only: safelist file re-read on unknown hash
@@ -228,3 +232,11 @@ push:
     vapidPublicKey: ""
     vapidPrivateKey: ""
     subject: mailto:admin@example.com
+
+system:
+  # Instance-wide figures on the sign-in screen, served without a session. Off by
+  # default: enabling it lets anyone who can load the login page read the shipment
+  # volume and service level of every organization on this instance.
+  networkPulse:
+    enabled: false
+    cacheTtl: 60s

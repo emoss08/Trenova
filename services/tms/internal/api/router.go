@@ -74,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/networkpulsehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
@@ -181,6 +182,7 @@ type RouterParams struct {
 	AgentControlHandler             *agentcontrolhandler.Handler
 	AgentRunHandler                 *agentrunhandler.Handler
 	VersionHandler                  *versionhandler.Handler
+	NetworkPulseHandler             *networkpulsehandler.Handler
 	ControlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
@@ -316,6 +318,7 @@ type Router struct {
 	agentControlHandler             *agentcontrolhandler.Handler
 	agentRunHandler                 *agentrunhandler.Handler
 	versionHandler                  *versionhandler.Handler
+	networkPulseHandler             *networkpulsehandler.Handler
 	controlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	weatherAlertHandler             *weatheralerthandler.Handler
 	shipmentTypeHandler             *shipmenttypehandler.Handler
@@ -442,6 +445,7 @@ func NewRouter(p RouterParams) *Router {
 		agentControlHandler:             p.AgentControlHandler,
 		agentRunHandler:                 p.AgentRunHandler,
 		versionHandler:                  p.VersionHandler,
+		networkPulseHandler:             p.NetworkPulseHandler,
 		controlPlaneProvisioningHandler: p.ControlPlaneProvisioningHandler,
 		weatherAlertHandler:             p.WeatherAlertHandler,
 		shipmentTypeHandler:             p.ShipmentTypeHandler,
@@ -581,6 +585,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.authHandler.RegisterRoutes(rg)
 	r.driverPortalHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
+	r.networkPulseHandler.RegisterPublicRoutes(rg)
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.telematicsHandler.RegisterPublicRoutes(rg)
@@ -705,6 +710,10 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
 	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
+	// After RequireAuth, which is what puts the flag in the context, and before any
+	// handler: a session that owes a password change may only reach the endpoints that
+	// let it resolve one.
+	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
 	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
 	return protected
 }
