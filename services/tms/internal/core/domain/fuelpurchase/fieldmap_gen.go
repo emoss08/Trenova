@@ -4,6 +4,13 @@ package fuelpurchase
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CardFeedState].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.CardFeedStateFieldMap] instead of parsing struct tags via reflection.
+func (e *CardFeedState) GetStaticFieldMap() map[string]string {
+	return buncolgen.CardFeedStateFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelCard].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.FuelCardFieldMap] instead of parsing struct tags via reflection.

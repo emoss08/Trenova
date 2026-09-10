@@ -241,3 +241,85 @@ func validateEntity(entity interface {
 	}
 	return nil
 }
+
+type AssignCardRequest struct {
+	TenantInfo        pagination.TenantInfo
+	ID                pulid.ID
+	Version           int64
+	AssignedTractorID *pulid.ID
+	AssignedWorkerID  *pulid.ID
+	UserID            pulid.ID
+}
+
+// AssignCard ties a card to the equipment or driver that carries it. It is the
+// step that makes a card a feed discovered usable: until a card resolves to a
+// tractor, transactions on it can only be matched by the unit number printed on
+// the receipt, and rows without one wait in the review queue.
+//
+// Assigning a suspended card also activates it. A discovered card is created
+// suspended so that one nobody has looked at is visibly not yet in use;
+// assigning it is that act of looking.
+func (s *Service) AssignCard(
+	ctx context.Context,
+	req *AssignCardRequest,
+) (*fuelpurchase.FuelCard, error) {
+	stored, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if stored.Version != req.Version {
+		return nil, dberror.CreateVersionMismatchError("FuelCard", stored.ID.String())
+	}
+	if stored.IsCancelled() {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"A cancelled card cannot be assigned",
+		)
+	}
+
+	previous := *stored
+	card := *stored
+	card.AssignedTractorID = req.AssignedTractorID
+	card.AssignedWorkerID = req.AssignedWorkerID
+
+	if !card.IsUnassigned() && card.Status == fuelpurchase.CardStatusSuspended {
+		card.Status = fuelpurchase.CardStatusActive
+	}
+	card.Normalize()
+
+	if vErr := validateEntity(&card); vErr != nil {
+		return nil, vErr
+	}
+
+	updated, err := s.repo.UpdateCard(ctx, &card)
+	if err != nil {
+		return nil, err
+	}
+
+	s.audit(&auditParams{
+		resource:   permission.ResourceFuelCard,
+		resourceID: updated.ID.String(),
+		operation:  permission.OpUpdate,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    updated,
+		previous:   &previous,
+		comment:    assignmentComment(updated),
+	})
+	s.publish(ctx, req.TenantInfo, realtimeCard, permission.OpUpdate, updated.ID, req.UserID)
+
+	return updated, nil
+}
+
+func assignmentComment(card *fuelpurchase.FuelCard) string {
+	if card.IsUnassigned() {
+		return "Cleared the assignment on card ending " + card.LastFour
+	}
+
+	return "Assigned card ending " + card.LastFour
+}

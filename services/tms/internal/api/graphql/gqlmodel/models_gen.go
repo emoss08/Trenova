@@ -243,6 +243,15 @@ type AssignDocumentTemplateInput struct {
 	CustomerID string `json:"customerId"`
 }
 
+// Ties a discovered card to the equipment or driver that carries it. Passing null
+// for either clears it, and a card with neither can still not match a purchase.
+type AssignFuelCardInput struct {
+	ID                string  `json:"id"`
+	Version           int     `json:"version"`
+	AssignedTractorID *string `json:"assignedTractorId,omitempty"`
+	AssignedWorkerID  *string `json:"assignedWorkerId,omitempty"`
+}
+
 // Assigns a pay profile to a worker. Any currently-open assignment for the worker
 // is automatically ended on the new effective date — no manual cleanup needed.
 type AssignPayProfileInput struct {
@@ -2307,6 +2316,19 @@ type FuelCardInput struct {
 	Notes     *string                  `json:"notes,omitempty"`
 }
 
+// What one run of a card feed did.
+type FuelCardSyncResult struct {
+	Provider fuelpurchase.CardProvider `json:"provider"`
+	// The batch the run opened, absent when the feed had nothing new.
+	BatchID   *string `json:"batchId,omitempty"`
+	Fetched   int     `json:"fetched"`
+	Committed int     `json:"committed"`
+	// Rows the run could not resolve. They stay in the batch for somebody to fix.
+	Queued          int `json:"queued"`
+	AlreadyImported int `json:"alreadyImported"`
+	CardsDiscovered int `json:"cardsDiscovered"`
+}
+
 type FuelCardsInput struct {
 	First             *int                       `json:"first,omitempty"`
 	After             *string                    `json:"after,omitempty"`
@@ -2318,6 +2340,11 @@ type FuelCardsInput struct {
 	Status            *fuelpurchase.CardStatus   `json:"status,omitempty"`
 	AssignedWorkerID  *string                    `json:"assignedWorkerId,omitempty"`
 	AssignedTractorID *string                    `json:"assignedTractorId,omitempty"`
+	// Only cards with neither a tractor nor a driver on them. A feed creates cards
+	// in this state the first time it sees a transaction on one.
+	UnassignedOnly *bool `json:"unassignedOnly,omitempty"`
+	// Only cards a feed created rather than a person.
+	DiscoveredOnly *bool `json:"discoveredOnly,omitempty"`
 }
 
 type FuelCostResolution struct {

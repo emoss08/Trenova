@@ -23,7 +23,7 @@ type builder struct {
 	warnings          []string
 }
 
-func newBuilder(manifest *Manifest, domainDir, domaintypesDir string) (*builder, error) {
+func newBuilder(manifest *Manifest, domainDir string, enumPkgDirs []string) (*builder, error) {
 	b := &builder{
 		manifest:          manifest,
 		models:            make(map[string]*structparse.Model),
@@ -47,8 +47,8 @@ func newBuilder(manifest *Manifest, domainDir, domaintypesDir string) (*builder,
 		}
 	}
 
-	if domaintypesDir != "" {
-		if err = b.indexPackage(domaintypesDir); err != nil {
+	for _, dir := range enumPkgDirs {
+		if err = b.indexPackage(dir); err != nil {
 			return nil, err
 		}
 	}

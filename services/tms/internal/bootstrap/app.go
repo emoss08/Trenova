@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/formulatemplatejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
@@ -48,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/anthropiccompletionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
@@ -72,6 +75,10 @@ func Options() fx.Option {
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
 		fx.Provide(integrationservice.New),
+		fx.Provide(fx.Annotate(
+			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
+		)),
+		fuelcard.Module,
 		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,
@@ -90,6 +97,7 @@ func Options() fx.Option {
 		edijobs.Module,
 		emailjobs.Module,
 		exchangeratejobs.Module,
+		fuelcardjobs.Module,
 		fuelpricejobs.Module,
 		formulatemplatejobs.Module,
 		ratesimjobs.Module,

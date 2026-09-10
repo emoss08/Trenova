@@ -8,6 +8,7 @@ const (
 	CardProviderComdata = CardProvider("Comdata")
 	CardProviderEFS     = CardProvider("EFS")
 	CardProviderWEX     = CardProvider("WEX")
+	CardProviderRamp    = CardProvider("Ramp")
 	CardProviderOther   = CardProvider("Other")
 )
 
@@ -15,7 +16,11 @@ func (p CardProvider) String() string { return string(p) }
 
 func (p CardProvider) IsValid() bool {
 	switch p {
-	case CardProviderComdata, CardProviderEFS, CardProviderWEX, CardProviderOther:
+	case CardProviderComdata,
+		CardProviderEFS,
+		CardProviderWEX,
+		CardProviderRamp,
+		CardProviderOther:
 		return true
 	default:
 		return false
@@ -30,6 +35,8 @@ func (p CardProvider) Label() string {
 		return "EFS"
 	case CardProviderWEX:
 		return "WEX"
+	case CardProviderRamp:
+		return "Ramp"
 	case CardProviderOther:
 		return "Other"
 	default:
@@ -241,14 +248,21 @@ func (s ImportRowStatus) WillCommit() bool { return s == ImportRowStatusNew }
 type SourceFormat string
 
 const (
-	SourceFormatCSV  = SourceFormat("CSV")
-	SourceFormatXLSX = SourceFormat("XLSX")
+	SourceFormatCSV        = SourceFormat("CSV")
+	SourceFormatXLSX       = SourceFormat("XLSX")
+	SourceFormatFixedWidth = SourceFormat("FixedWidth")
+	SourceFormatAPI        = SourceFormat("API")
 )
 
 func (f SourceFormat) String() string { return string(f) }
 
 func (f SourceFormat) IsValid() bool {
-	return f == SourceFormatCSV || f == SourceFormatXLSX
+	switch f {
+	case SourceFormatCSV, SourceFormatXLSX, SourceFormatFixedWidth, SourceFormatAPI:
+		return true
+	default:
+		return false
+	}
 }
 
 func (f SourceFormat) Label() string {
@@ -257,7 +271,40 @@ func (f SourceFormat) Label() string {
 		return "CSV"
 	case SourceFormatXLSX:
 		return "Excel workbook"
+	case SourceFormatFixedWidth:
+		return "Fixed-width file"
+	case SourceFormatAPI:
+		return "Provider API"
 	default:
 		return string(f)
+	}
+}
+
+// ImportOrigin separates a batch a person opened by choosing a file from one a
+// scheduled sync opened on its own. A feed batch has no uploader and no stored
+// document, so the lifecycle rules that require those only apply to uploads.
+type ImportOrigin string
+
+const (
+	ImportOriginUpload = ImportOrigin("Upload")
+	ImportOriginFeed   = ImportOrigin("Feed")
+)
+
+func (o ImportOrigin) String() string { return string(o) }
+
+func (o ImportOrigin) IsValid() bool {
+	return o == ImportOriginUpload || o == ImportOriginFeed
+}
+
+func (o ImportOrigin) IsFeed() bool { return o == ImportOriginFeed }
+
+func (o ImportOrigin) Label() string {
+	switch o {
+	case ImportOriginUpload:
+		return "Uploaded"
+	case ImportOriginFeed:
+		return "Synced"
+	default:
+		return string(o)
 	}
 }

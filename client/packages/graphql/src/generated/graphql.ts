@@ -170,6 +170,17 @@ export type ArchiveWorkerCredentialInput = {
 };
 
 /**
+ * Ties a discovered card to the equipment or driver that carries it. Passing null
+ * for either clears it, and a card with neither can still not match a purchase.
+ */
+export type AssignFuelCardInput = {
+  assignedTractorId?: string | number | null | undefined;
+  assignedWorkerId?: string | number | null | undefined;
+  id: string | number;
+  version: number;
+};
+
+/**
  * Assigns a pay profile to a worker. Any currently-open assignment for the worker
  * is automatically ended on the new effective date — no manual cleanup needed.
  */
@@ -1681,6 +1692,8 @@ export type FuelCardsInput = {
   after?: string | null | undefined;
   assignedTractorId?: string | number | null | undefined;
   assignedWorkerId?: string | number | null | undefined;
+  /** Only cards a feed created rather than a person. */
+  discoveredOnly?: boolean | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
   filterGroups?: Array<FilterGroupInput> | null | undefined;
   first?: number | null | undefined;
@@ -1688,10 +1701,23 @@ export type FuelCardsInput = {
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   status?: FuelCardStatus | null | undefined;
+  /**
+   * Only cards with neither a tractor nor a driver on them. A feed creates cards
+   * in this state the first time it sees a transaction on one.
+   */
+  unassignedOnly?: boolean | null | undefined;
 };
 
 export type FuelImportFormat =
+  /** Rows read from a provider's API rather than a file. */
+  | 'API'
   | 'CSV'
+  /**
+   * A file whose fields are at fixed column positions, per the provider's record
+   * layout. The layout is configured on the connection, because the networks
+   * publish theirs under their own agreements and they differ by account.
+   */
+  | 'FixedWidth'
   | 'XLSX';
 
 export type FuelIndexInput = {
@@ -7007,7 +7033,7 @@ export type FormulaTemplateTableQueryVariables = Exact<{
 
 export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FuelCardFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, lastFour: string, label: string, externalCardId: string | null, assignedWorkerId: string | null, assignedTractorId: string | null, status: FuelCardStatus, expiresAt: number | null, cancelledAt: number | null, cancelReason: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number, assignedWorker: { id: string, wholeName: string, firstName: string, lastName: string } | null, assignedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelCardFieldsFragment' };
+export type FuelCardFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, lastFour: string, label: string, externalCardId: string | null, assignedWorkerId: string | null, assignedTractorId: string | null, status: FuelCardStatus, expiresAt: number | null, cancelledAt: number | null, cancelReason: string | null, notes: string | null, discoveredAt: number | null, version: number, createdAt: number, updatedAt: number, assignedWorker: { id: string, wholeName: string, firstName: string, lastName: string } | null, assignedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelCardFieldsFragment' };
 
 export type FuelCardTableQueryVariables = Exact<{
   input: FuelCardsInput;
@@ -7046,6 +7072,20 @@ export type CancelFuelCardMutationVariables = Exact<{
 
 
 export type CancelFuelCardMutation = { cancelFuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } };
+
+export type AssignFuelCardMutationVariables = Exact<{
+  input: AssignFuelCardInput;
+}>;
+
+
+export type AssignFuelCardMutation = { assignFuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } };
+
+export type SyncFuelCardFeedMutationVariables = Exact<{
+  provider: FuelCardProvider;
+}>;
+
+
+export type SyncFuelCardFeedMutation = { syncFuelCardFeed: { provider: FuelCardProvider, batchId: string | null, fetched: number, committed: number, queued: number, alreadyImported: number, cardsDiscovered: number } };
 
 export type FuelPurchaseImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, documentId: string | null, fileName: string | null, sourceFormat: FuelImportFormat | null, status: FuelPurchaseImportStatus, defaultFuelType: IftaFuelType | null, defaultFuelCardId: string | null, defaultCurrency: string, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, committedCount: number, error: string | null, uploadedById: string | null, stagedAt: number | null, committedAt: number | null, committedById: string | null, version: number, createdAt: number, updatedAt: number, summary: { rowCount: number, newCount: number, duplicateInFileCount: number, alreadyImportedCount: number, errorCount: number, totalGallons: string, totalAmount: string, byFuelType: unknown, byJurisdiction: unknown, earliestPurchasedAt: number | null, latestPurchasedAt: number | null } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, defaultFuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportBatchFieldsFragment' };
 
@@ -11919,6 +11959,7 @@ export const FuelCardFieldsFragmentDoc = new TypedDocumentString(`
   cancelledAt
   cancelReason
   notes
+  discoveredAt
   version
   createdAt
   updatedAt
@@ -15927,11 +15968,13 @@ export const RecordSafetyViolationDocument = {"__meta__":{"kind":"mutation","nam
 export const UpdateSafetyViolationDocument = {"__meta__":{"kind":"mutation","name":"UpdateSafetyViolation","hash":"sha256:cae84810be9706e503d19974a6e82eb84ad55f67779583dfcdce0eecb6087b19"}} as unknown as TypedDocumentString<UpdateSafetyViolationMutation, UpdateSafetyViolationMutationVariables>;
 export const DeleteSafetyViolationDocument = {"__meta__":{"kind":"mutation","name":"DeleteSafetyViolation","hash":"sha256:6799fc0a158227f6ff06996ab7ce4f2f8fc5386a8c20515dd973a0dc3ac1ead0"}} as unknown as TypedDocumentString<DeleteSafetyViolationMutation, DeleteSafetyViolationMutationVariables>;
 export const FormulaTemplateTableDocument = {"__meta__":{"kind":"query","name":"FormulaTemplateTable","hash":"sha256:9fe86d3e1a8ccdb28fd5932ef322980f9ce4605286640620ee0f98833cbda924"}} as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
-export const FuelCardTableDocument = {"__meta__":{"kind":"query","name":"FuelCardTable","hash":"sha256:08bab34c0b22a68ef521d267fe0f3138a9288b3cfd19b48aa23c19710e77f5ef"}} as unknown as TypedDocumentString<FuelCardTableQuery, FuelCardTableQueryVariables>;
-export const FuelCardDocument = {"__meta__":{"kind":"query","name":"FuelCard","hash":"sha256:01fb3333e469ca988846cda5556e9e6b0dbfc125e4fa81f01739c0048d258759"}} as unknown as TypedDocumentString<FuelCardQuery, FuelCardQueryVariables>;
-export const CreateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelCard","hash":"sha256:31868851d191fb859a57778c4ac76e24dbdb82f75fee9620d93e8f4924954779"}} as unknown as TypedDocumentString<CreateFuelCardMutation, CreateFuelCardMutationVariables>;
-export const UpdateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"UpdateFuelCard","hash":"sha256:0d1814fc8247359cd021b69608a739da4b0b1d9b5107c474b55cbc969d836251"}} as unknown as TypedDocumentString<UpdateFuelCardMutation, UpdateFuelCardMutationVariables>;
-export const CancelFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CancelFuelCard","hash":"sha256:f93748bfecc5f07647f51fc9929ae94346009a0f0d17df3e835609e29741a176"}} as unknown as TypedDocumentString<CancelFuelCardMutation, CancelFuelCardMutationVariables>;
+export const FuelCardTableDocument = {"__meta__":{"kind":"query","name":"FuelCardTable","hash":"sha256:fe01c96e14012ea096b5fb1f250fc042b4171ee9ab1264f1bd7d84c8a8f9c52b"}} as unknown as TypedDocumentString<FuelCardTableQuery, FuelCardTableQueryVariables>;
+export const FuelCardDocument = {"__meta__":{"kind":"query","name":"FuelCard","hash":"sha256:b6577686f4d8e00dd0fd4f4a9ba529b2b9874da0e842888cbe96ad80334c0dfb"}} as unknown as TypedDocumentString<FuelCardQuery, FuelCardQueryVariables>;
+export const CreateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelCard","hash":"sha256:2403b71f501d02a0850060a7cad83dbae2bb9b2a0fb75ee686a03eeff90cf2a1"}} as unknown as TypedDocumentString<CreateFuelCardMutation, CreateFuelCardMutationVariables>;
+export const UpdateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"UpdateFuelCard","hash":"sha256:7b988de6a70d1106cd0aa908f5d9c95e0984a9f8193b669e7d3028db10f18a46"}} as unknown as TypedDocumentString<UpdateFuelCardMutation, UpdateFuelCardMutationVariables>;
+export const CancelFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CancelFuelCard","hash":"sha256:57ea8939185a798d8b009ea00c709e301b26e00a3630c851edd91af69c3e0ce2"}} as unknown as TypedDocumentString<CancelFuelCardMutation, CancelFuelCardMutationVariables>;
+export const AssignFuelCardDocument = {"__meta__":{"kind":"mutation","name":"AssignFuelCard","hash":"sha256:4294d48aa2abbc1b3d399f93288d3259fd57d03440f6baf1c6288c30ffa7df7f"}} as unknown as TypedDocumentString<AssignFuelCardMutation, AssignFuelCardMutationVariables>;
+export const SyncFuelCardFeedDocument = {"__meta__":{"kind":"mutation","name":"SyncFuelCardFeed","hash":"sha256:4ae581acc39b91d46ed28d1f27902d16277724e2bb9b983d6750fa2fc19e1134"}} as unknown as TypedDocumentString<SyncFuelCardFeedMutation, SyncFuelCardFeedMutationVariables>;
 export const FuelPurchaseImportDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImport","hash":"sha256:15bc80f50ada8bce5289481e607af6b019f1f0fce834365e1279e9a8a4153b80"}} as unknown as TypedDocumentString<FuelPurchaseImportQuery, FuelPurchaseImportQueryVariables>;
 export const FuelPurchaseImportRowsDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportRows","hash":"sha256:76069fcd08f48d67bd04dd94e0702df4d9971c03c2ff5959ba8d3706aa9d5384"}} as unknown as TypedDocumentString<FuelPurchaseImportRowsQuery, FuelPurchaseImportRowsQueryVariables>;
 export const FuelPurchaseImportTemplateDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportTemplate","hash":"sha256:31cc70334d73006c9b344e26682020d505d5893d2b8b8253be40add52cb77d4d"}} as unknown as TypedDocumentString<FuelPurchaseImportTemplateQuery, FuelPurchaseImportTemplateQueryVariables>;

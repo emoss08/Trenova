@@ -173,7 +173,7 @@ func (s *Service) createInvoiceJournalPosting(
 	case billingqueue.BillTypeDebitMemo:
 		ledgerAmount = amount
 	}
-	return s.customerLedgerRepo.AppendEntries(ctx, []*customerledger.Entry{{
+	return s.customerLedgerRepo.AppendEntries(ctx, []*customerledger.CustomerLedgerEntry{{
 		ID:               pulid.MustNew("cledg_"),
 		OrganizationID:   entity.OrganizationID,
 		BusinessUnitID:   entity.BusinessUnitID,

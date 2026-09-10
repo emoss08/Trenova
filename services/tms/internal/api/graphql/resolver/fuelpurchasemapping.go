@@ -124,6 +124,12 @@ func fuelCardsRequestFromGraphQL(
 	if input.Status != nil {
 		req.Statuses = []fuelpurchase.CardStatus{*input.Status}
 	}
+	if input.UnassignedOnly != nil {
+		req.UnassignedOnly = *input.UnassignedOnly
+	}
+	if input.DiscoveredOnly != nil {
+		req.DiscoveredOnly = *input.DiscoveredOnly
+	}
 
 	return req, nil
 }
@@ -447,6 +453,59 @@ func cancelCardRequestFromInput(
 		Reason:     input.Reason,
 		UserID:     userID,
 	}, nil
+}
+
+func assignCardRequestFromInput(
+	input gqlmodel.AssignFuelCardInput,
+	tenant pagination.TenantInfo,
+	userID pulid.ID,
+) (*fuelpurchaseservice.AssignCardRequest, error) {
+	id, err := requiredID("id", input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	tractorID, err := optionalScopedID("assignedTractorId", input.AssignedTractorID)
+	if err != nil {
+		return nil, err
+	}
+
+	workerID, err := optionalScopedID("assignedWorkerId", input.AssignedWorkerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &fuelpurchaseservice.AssignCardRequest{
+		TenantInfo:        tenant,
+		ID:                id,
+		Version:           int64(input.Version),
+		AssignedTractorID: idValuePtr(tractorID),
+		AssignedWorkerID:  idValuePtr(workerID),
+		UserID:            userID,
+	}, nil
+}
+
+func fuelCardSyncResultToModel(
+	result *fuelpurchaseservice.SyncFeedResult,
+) *gqlmodel.FuelCardSyncResult {
+	if result == nil {
+		return nil
+	}
+
+	model := &gqlmodel.FuelCardSyncResult{
+		Provider:        result.Provider,
+		Fetched:         result.Fetched,
+		Committed:       result.Committed,
+		Queued:          result.Queued,
+		AlreadyImported: result.AlreadyImported,
+		CardsDiscovered: result.CardsDiscovered,
+	}
+	if !result.BatchID.IsNil() {
+		batchID := result.BatchID.String()
+		model.BatchID = &batchID
+	}
+
+	return model
 }
 
 func loadTractor(ctx context.Context, id *pulid.ID) (*tractor.Tractor, error) {

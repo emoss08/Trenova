@@ -231,6 +231,22 @@ func sumMoney(id, label, field string, path ...string) report.ColumnSpec {
 	})
 }
 
+// sumMinor sums a column stored in minor units and scales it to major units in
+// SQL, not just at display time, so the exported number is dollars rather than
+// cents. The ledger, receivables and settlement tables store money this way and
+// have no decimal twin, so sumMoney would overstate every total by a hundred.
+func sumMinor(id, label, field string, path ...string) report.ColumnSpec {
+	return newMeasure(&measureSpec{
+		id:        id,
+		label:     label,
+		agg:       reportcatalog.AggSum,
+		field:     field,
+		path:      path,
+		display:   money(),
+		transform: scaleFromMinor(),
+	})
+}
+
 func maxMoney(id, label, field string) report.ColumnSpec {
 	return newMeasure(&measureSpec{
 		id:      id,
@@ -498,6 +514,11 @@ func loadedPivot(measureIDs ...string) *report.PivotSpec {
 
 func roundTo(precision int) *report.TransformSpec {
 	return &report.TransformSpec{Op: report.TransformRound, Precision: &precision}
+}
+
+func scaleFromMinor() *report.TransformSpec {
+	factor := 0.01
+	return &report.TransformSpec{Op: report.TransformScale, Factor: &factor}
 }
 
 func money() *reportfmt.Spec {

@@ -24,6 +24,172 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// CardFeedState — table "fuel_card_feed_states", alias "fcfs"
+// ---------------------------------------------------------------------------
+
+// CardFeedStateTable holds the table name, alias, and primary key columns
+// for the "fuel_card_feed_states" table. The alias "fcfs" is used in all generated
+// SQL fragments (e.g. "fcfs.id = ?").
+var CardFeedStateTable = TableInfo{
+	Name:       "fuel_card_feed_states",
+	Alias:      "fcfs",
+	PrimaryKey: []string{"organization_id", "business_unit_id", "provider", "feed_type"},
+}
+
+// CardFeedStateColumns provides type-safe column references for the "fuel_card_feed_states" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CardFeedStateColumns.ID.String())
+//	// SELECT fcfs.id FROM fuel_card_feed_states AS fcfs
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CardFeedStateColumns.ID.Eq(), id)           // WHERE fcfs.id = ?
+//	q.Order(CardFeedStateColumns.CreatedAt.OrderDesc())  // ORDER BY fcfs.created_at DESC
+var CardFeedStateColumns = struct {
+	OrganizationID Column // "organization_id" → qualified: "fcfs.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "fcfs.business_unit_id"
+	Provider       Column // "provider" → qualified: "fcfs.provider"
+	FeedType       Column // "feed_type" → qualified: "fcfs.feed_type"
+	Cursor         Column // "cursor" → qualified: "fcfs.cursor"
+	LastPolledAt   Column // "last_polled_at" → qualified: "fcfs.last_polled_at"
+	LastSuccessAt  Column // "last_success_at" → qualified: "fcfs.last_success_at"
+	FailureCount   Column // "failure_count" → qualified: "fcfs.failure_count"
+	LastError      Column // "last_error" → qualified: "fcfs.last_error"
+}{
+	OrganizationID: NewColumn("organization_id", "fcfs"),
+	BusinessUnitID: NewColumn("business_unit_id", "fcfs"),
+	Provider:       NewColumn("provider", "fcfs"),
+	FeedType:       NewColumn("feed_type", "fcfs"),
+	Cursor:         NewColumn("cursor", "fcfs"),
+	LastPolledAt:   NewColumn("last_polled_at", "fcfs"),
+	LastSuccessAt:  NewColumn("last_success_at", "fcfs"),
+	FailureCount:   NewColumn("failure_count", "fcfs"),
+	LastError:      NewColumn("last_error", "fcfs"),
+}
+
+// CardFeedStateFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CardFeedState.GetStaticFieldMap().
+var CardFeedStateFieldMap = map[string]string{
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"provider":       "provider",
+	"feedType":       "feed_type",
+	"cursor":         "cursor",
+	"lastPolledAt":   "last_polled_at",
+	"lastSuccessAt":  "last_success_at",
+	"failureCount":   "failure_count",
+	"lastError":      "last_error",
+}
+
+// CardFeedStateInsertableColumns lists column names suitable for INSERT statements on the "fuel_card_feed_states" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CardFeedStateInsertableColumns = []string{
+	"organization_id",
+	"business_unit_id",
+	"provider",
+	"feed_type",
+	"cursor",
+	"last_polled_at",
+	"last_success_at",
+	"failure_count",
+	"last_error",
+}
+
+// CardFeedStateScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE fcfs.organization_id = ? AND fcfs.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.CardFeedStateScopeTenant(sq, ti).
+//		Where(buncolgen.CardFeedStateColumns.ID.Eq(), id)
+func CardFeedStateScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, CardFeedStateColumns.OrganizationID, CardFeedStateColumns.BusinessUnitID, ti)
+}
+
+// CardFeedStateScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.CardFeedStateScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.CardFeedStateColumns.ID.In(), bun.List(ids))
+//	})
+func CardFeedStateScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, CardFeedStateColumns.OrganizationID, CardFeedStateColumns.BusinessUnitID, ti)
+}
+
+// CardFeedStateScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.CardFeedStateScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.CardFeedStateColumns.ID.Eq(), id)
+//	})
+func CardFeedStateScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, CardFeedStateColumns.OrganizationID, CardFeedStateColumns.BusinessUnitID, ti)
+}
+
+// CardFeedStateApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.CardFeedStateApplyTenant(tenantInfo))
+func CardFeedStateApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(CardFeedStateColumns.OrganizationID, CardFeedStateColumns.BusinessUnitID, ti)
+}
+
+// CardFeedStateFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "fuel_card_feed_states" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CardFeedStateFilter.OrganizationID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "organizationId", Operator: "eq", Value: value}
+var CardFeedStateFilter = struct {
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Provider       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	FeedType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feedType" → DB: "feed_type"
+	Cursor         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cursor" → DB: "cursor"
+	LastPolledAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastPolledAt" → DB: "last_polled_at"
+	LastSuccessAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSuccessAt" → DB: "last_success_at"
+	FailureCount   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCount" → DB: "failure_count"
+	LastError      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastError" → DB: "last_error"
+}{
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("provider", op, value)
+	},
+	FeedType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("feedType", op, value)
+	},
+	Cursor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cursor", op, value)
+	},
+	LastPolledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastPolledAt", op, value)
+	},
+	LastSuccessAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastSuccessAt", op, value)
+	},
+	FailureCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureCount", op, value)
+	},
+	LastError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastError", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // FuelCard — table "fuel_cards", alias "fcard"
 // ---------------------------------------------------------------------------
 
@@ -62,7 +228,10 @@ var FuelCardColumns = struct {
 	ExpiresAt         Column // "expires_at" → qualified: "fcard.expires_at"
 	CancelledAt       Column // "cancelled_at" → qualified: "fcard.cancelled_at"
 	CancelReason      Column // "cancel_reason" → qualified: "fcard.cancel_reason"
+	DiscoveredAt      Column // "discovered_at" → qualified: "fcard.discovered_at"
 	Notes             Column // "notes" → qualified: "fcard.notes"
+	SearchVector      Column // "search_vector" → qualified: "fcard.search_vector"
+	Rank              Column // "rank" → qualified: "fcard.rank"
 	Version           Column // "version" → qualified: "fcard.version"
 	CreatedAt         Column // "created_at" → qualified: "fcard.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "fcard.updated_at"
@@ -80,7 +249,10 @@ var FuelCardColumns = struct {
 	ExpiresAt:         NewColumn("expires_at", "fcard"),
 	CancelledAt:       NewColumn("cancelled_at", "fcard"),
 	CancelReason:      NewColumn("cancel_reason", "fcard"),
+	DiscoveredAt:      NewColumn("discovered_at", "fcard"),
 	Notes:             NewColumn("notes", "fcard"),
+	SearchVector:      NewColumn("search_vector", "fcard"),
+	Rank:              NewColumn("rank", "fcard"),
 	Version:           NewColumn("version", "fcard"),
 	CreatedAt:         NewColumn("created_at", "fcard"),
 	UpdatedAt:         NewColumn("updated_at", "fcard"),
@@ -104,6 +276,7 @@ var FuelCardFieldMap = map[string]string{
 	"expiresAt":         "expires_at",
 	"cancelledAt":       "cancelled_at",
 	"cancelReason":      "cancel_reason",
+	"discoveredAt":      "discovered_at",
 	"notes":             "notes",
 	"version":           "version",
 	"createdAt":         "created_at",
@@ -126,6 +299,7 @@ var FuelCardInsertableColumns = []string{
 	"expires_at",
 	"cancelled_at",
 	"cancel_reason",
+	"discovered_at",
 	"notes",
 	"version",
 	"created_at",
@@ -208,6 +382,7 @@ var FuelCardFilter = struct {
 	ExpiresAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	CancelledAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelledAt" → DB: "cancelled_at"
 	CancelReason      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
+	DiscoveredAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "discoveredAt" → DB: "discovered_at"
 	Notes             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -251,6 +426,9 @@ var FuelCardFilter = struct {
 	},
 	CancelReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("cancelReason", op, value)
+	},
+	DiscoveredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("discoveredAt", op, value)
 	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("notes", op, value)
@@ -317,6 +495,8 @@ var FuelPurchaseColumns = struct {
 	TaxPaid              Column // "tax_paid" → qualified: "fpur.tax_paid"
 	Notes                Column // "notes" → qualified: "fpur.notes"
 	CreatedByID          Column // "created_by_id" → qualified: "fpur.created_by_id"
+	SearchVector         Column // "search_vector" → qualified: "fpur.search_vector"
+	Rank                 Column // "rank" → qualified: "fpur.rank"
 	Version              Column // "version" → qualified: "fpur.version"
 	CreatedAt            Column // "created_at" → qualified: "fpur.created_at"
 	UpdatedAt            Column // "updated_at" → qualified: "fpur.updated_at"
@@ -346,6 +526,8 @@ var FuelPurchaseColumns = struct {
 	TaxPaid:              NewColumn("tax_paid", "fpur"),
 	Notes:                NewColumn("notes", "fpur"),
 	CreatedByID:          NewColumn("created_by_id", "fpur"),
+	SearchVector:         NewColumn("search_vector", "fpur"),
+	Rank:                 NewColumn("rank", "fpur"),
 	Version:              NewColumn("version", "fpur"),
 	CreatedAt:            NewColumn("created_at", "fpur"),
 	UpdatedAt:            NewColumn("updated_at", "fpur"),
@@ -633,6 +815,8 @@ var ImportBatchColumns = struct {
 	BusinessUnitID    Column // "business_unit_id" → qualified: "fpib.business_unit_id"
 	OrganizationID    Column // "organization_id" → qualified: "fpib.organization_id"
 	Provider          Column // "provider" → qualified: "fpib.provider"
+	Origin            Column // "origin" → qualified: "fpib.origin"
+	FeedReference     Column // "feed_reference" → qualified: "fpib.feed_reference"
 	DocumentID        Column // "document_id" → qualified: "fpib.document_id"
 	FileName          Column // "file_name" → qualified: "fpib.file_name"
 	SourceFormat      Column // "source_format" → qualified: "fpib.source_format"
@@ -659,6 +843,8 @@ var ImportBatchColumns = struct {
 	BusinessUnitID:    NewColumn("business_unit_id", "fpib"),
 	OrganizationID:    NewColumn("organization_id", "fpib"),
 	Provider:          NewColumn("provider", "fpib"),
+	Origin:            NewColumn("origin", "fpib"),
+	FeedReference:     NewColumn("feed_reference", "fpib"),
 	DocumentID:        NewColumn("document_id", "fpib"),
 	FileName:          NewColumn("file_name", "fpib"),
 	SourceFormat:      NewColumn("source_format", "fpib"),
@@ -691,6 +877,8 @@ var ImportBatchFieldMap = map[string]string{
 	"businessUnitId":    "business_unit_id",
 	"organizationId":    "organization_id",
 	"provider":          "provider",
+	"origin":            "origin",
+	"feedReference":     "feed_reference",
 	"documentId":        "document_id",
 	"fileName":          "file_name",
 	"sourceFormat":      "source_format",
@@ -721,6 +909,8 @@ var ImportBatchInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"provider",
+	"origin",
+	"feed_reference",
 	"document_id",
 	"file_name",
 	"source_format",
@@ -817,6 +1007,8 @@ var ImportBatchFilter = struct {
 	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	Provider          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	Origin            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "origin" → DB: "origin"
+	FeedReference     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feedReference" → DB: "feed_reference"
 	DocumentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
 	FileName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
 	SourceFormat      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceFormat" → DB: "source_format"
@@ -850,6 +1042,12 @@ var ImportBatchFilter = struct {
 	},
 	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("provider", op, value)
+	},
+	Origin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("origin", op, value)
+	},
+	FeedReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("feedReference", op, value)
 	},
 	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("documentId", op, value)

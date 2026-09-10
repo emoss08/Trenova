@@ -41,23 +41,23 @@ func (_m *MockJournalEntryRepository) EXPECT() *MockJournalEntryRepository_Expec
 }
 
 // GetByID provides a mock function for the type MockJournalEntryRepository
-func (_mock *MockJournalEntryRepository) GetByID(ctx context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.Entry, error) {
+func (_mock *MockJournalEntryRepository) GetByID(ctx context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *journalentry.Entry
+	var r0 *journalentry.JournalEntry
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetJournalEntryByIDRequest) (*journalentry.Entry, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetJournalEntryByIDRequest) *journalentry.Entry); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetJournalEntryByIDRequest) *journalentry.JournalEntry); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*journalentry.Entry)
+			r0 = ret.Get(0).(*journalentry.JournalEntry)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetJournalEntryByIDRequest) error); ok {
@@ -98,34 +98,34 @@ func (_c *MockJournalEntryRepository_GetByID_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockJournalEntryRepository_GetByID_Call) Return(entry *journalentry.Entry, err error) *MockJournalEntryRepository_GetByID_Call {
+func (_c *MockJournalEntryRepository_GetByID_Call) Return(entry *journalentry.JournalEntry, err error) *MockJournalEntryRepository_GetByID_Call {
 	_c.Call.Return(entry, err)
 	return _c
 }
 
-func (_c *MockJournalEntryRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.Entry, error)) *MockJournalEntryRepository_GetByID_Call {
+func (_c *MockJournalEntryRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error)) *MockJournalEntryRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // List provides a mock function for the type MockJournalEntryRepository
-func (_mock *MockJournalEntryRepository) List(ctx context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.Entry], error) {
+func (_mock *MockJournalEntryRepository) List(ctx context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*journalentry.Entry]
+	var r0 *pagination.ListResult[*journalentry.JournalEntry]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.Entry], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListJournalEntriesRequest) *pagination.ListResult[*journalentry.Entry]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListJournalEntriesRequest) *pagination.ListResult[*journalentry.JournalEntry]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*journalentry.Entry])
+			r0 = ret.Get(0).(*pagination.ListResult[*journalentry.JournalEntry])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListJournalEntriesRequest) error); ok {
@@ -166,12 +166,12 @@ func (_c *MockJournalEntryRepository_List_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockJournalEntryRepository_List_Call) Return(listResult *pagination.ListResult[*journalentry.Entry], err error) *MockJournalEntryRepository_List_Call {
+func (_c *MockJournalEntryRepository_List_Call) Return(listResult *pagination.ListResult[*journalentry.JournalEntry], err error) *MockJournalEntryRepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockJournalEntryRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.Entry], error)) *MockJournalEntryRepository_List_Call {
+func (_c *MockJournalEntryRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error)) *MockJournalEntryRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

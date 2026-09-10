@@ -314,7 +314,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			return txErr
 		}
 		if s.customerLedgerRepo != nil {
-			ledgerEntries := make([]*customerledger.Entry, 0, len(created.Applications)*2)
+			ledgerEntries := make([]*customerledger.CustomerLedgerEntry, 0, len(created.Applications)*2)
 			line := 1
 			for _, app := range created.Applications {
 				if app == nil {
@@ -323,7 +323,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 				if app.AppliedAmountMinor > 0 {
 					ledgerEntries = append(
 						ledgerEntries,
-						&customerledger.Entry{
+						&customerledger.CustomerLedgerEntry{
 							ID:               pulid.MustNew("cledg_"),
 							OrganizationID:   created.OrganizationID,
 							BusinessUnitID:   created.BusinessUnitID,
@@ -344,7 +344,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 				if app.ShortPayAmountMinor > 0 {
 					ledgerEntries = append(
 						ledgerEntries,
-						&customerledger.Entry{
+						&customerledger.CustomerLedgerEntry{
 							ID:               pulid.MustNew("cledg_"),
 							OrganizationID:   created.OrganizationID,
 							BusinessUnitID:   created.BusinessUnitID,
@@ -595,7 +595,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 			return txErr
 		}
 		if s.customerLedgerRepo != nil {
-			ledgerEntries := make([]*customerledger.Entry, 0, len(applications)*2)
+			ledgerEntries := make([]*customerledger.CustomerLedgerEntry, 0, len(applications)*2)
 			projectionLine := 1
 			for _, app := range applications {
 				if app == nil {
@@ -604,7 +604,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 				if app.AppliedAmountMinor > 0 {
 					ledgerEntries = append(
 						ledgerEntries,
-						&customerledger.Entry{
+						&customerledger.CustomerLedgerEntry{
 							ID:               pulid.MustNew("cledg_"),
 							OrganizationID:   payment.OrganizationID,
 							BusinessUnitID:   payment.BusinessUnitID,
@@ -625,7 +625,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 				if app.ShortPayAmountMinor > 0 {
 					ledgerEntries = append(
 						ledgerEntries,
-						&customerledger.Entry{
+						&customerledger.CustomerLedgerEntry{
 							ID:               pulid.MustNew("cledg_"),
 							OrganizationID:   payment.OrganizationID,
 							BusinessUnitID:   payment.BusinessUnitID,
@@ -857,7 +857,7 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 			}
 			if txErr := s.customerLedgerRepo.AppendEntries(
 				txCtx,
-				[]*customerledger.Entry{
+				[]*customerledger.CustomerLedgerEntry{
 					{
 						ID:               pulid.MustNew("cledg_"),
 						OrganizationID:   payment.OrganizationID,

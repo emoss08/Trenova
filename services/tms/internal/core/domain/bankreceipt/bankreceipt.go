@@ -2,6 +2,7 @@ package bankreceipt
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,6 +32,8 @@ type BankReceipt struct {
 	Version                  int64    `json:"version"                  bun:"version,type:BIGINT,notnull"`
 	CreatedAt                int64    `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64    `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	MatchedCustomerPayment *customerpayment.Payment `json:"matchedCustomerPayment,omitempty" bun:"rel:belongs-to,join:matched_customer_payment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (r *BankReceipt) Validate(multiErr *errortypes.MultiError) {

@@ -102,6 +102,17 @@ exceedances, escort thresholds, superload flags, daylight/rush-hour/weekend
 restrictions, lead time, validity, fees, and a waiver workflow
 (`domain/permit/`, `domain/jurisdictionrule/`).
 
+**Self-service reporting.** The report builder is driven by a curated manifest
+(`internal/infrastructure/database/reportcatalog/reportcatalog.yml`) compiled into a
+typed catalog, covering 70 entities across operations, parties, equipment, freight,
+billing, accounting and payroll. The compiler resolves join paths from bun relation
+tags, gates every entity on a permission resource and every column on a field
+sensitivity, and re-applies tenant predicates at each alias — including through
+lateral and many-to-many hops. The general ledger, AR subledger, cash application,
+driver settlements and rate agreements are all reportable, and a canned library ships
+a trial balance, posted activity by GL account, an AR subledger view and a settlement
+register.
+
 **Platform.** An RBAC engine with privilege-escalation guards across 403
 registered resources; the Temporal job fabric; the GTC CDC service with DLQ and
 replay; AES-GCM envelope encryption backed by GCP KMS; document intelligence with
@@ -206,7 +217,6 @@ credits AP.
 | SAML modeled but disabled | `iamservice/service.go:124` — "SAML providers cannot be managed until SAML sign-in is available" | Large shippers and 3PLs still require SAML |
 | Rate limiting is in-process and IP-keyed | `middleware/ratelimit.go` uses `x/time/rate` on `c.ClientIP()` | Does not survive horizontal scaling; not per-tenant or per-API-key |
 | Public API is a 13-resource allowlist | `apikeyservice/policy.go`, read/create/update only | No billing, invoice, settlement, document, or EDI access via API |
-| Report catalog excludes all financial tables | `reportcatalog.yml` has 27 datasets, none of `journal_entries`, `gl_accounts`, `gl_balances`, `driver_settlements`, `customer_payments`, `bank_receipts`, `rate_agreements` | The self-service report builder cannot report on the ledger, cash, settlements, or rates at all |
 | US-only geography | `domain/usstate/` is the only jurisdiction entity; no provinces | Cross-border Canada is impossible; no PARS/PAPS, ACE eManifest, in-bond, or customs broker |
 | Telematics is Samsara-only | `domain/integration/telematics.go:9` returns true only for Samsara; Motive is a commented-out enum member | The 12-method provider interface is ready; implementations are not |
 | Realtime hard-coupled to one vendor | `realtimeservice` mints JWTs for Foony (`wss://realtime.foony.io`); no self-hosted WebSocket or SSE fallback | A vendor outage means no realtime and no degraded mode |
@@ -353,17 +363,16 @@ A carrier can be fined or fail an audit without these.
 8. Safety module: accidents, incidents, cargo claims and OS&D, roadside
    inspections
 9. Consolidated invoicing and invoice tax
-10. Point the report catalog at the financial tables — small change, large payoff
 
 ### P2 — Depth and Reach
 
-11. Carrier portal; carrier vetting feed (FMCSA and COI monitoring)
-12. AP: vendors, bills, three-way match; ERP/GL export; ACH/NACHA payout; 1099-NEC
-13. A second telematics provider (Motive) against the existing interface
-14. Dock and appointment scheduling; yard and trailer pools
-15. Finish or delete the orphaned consolidation and dedicated-lane schema
-16. Cross-border: provinces, ACE eManifest, customs
-17. Kubernetes/Helm, a realtime fallback, and a responsive web shell
+10. Carrier portal; carrier vetting feed (FMCSA and COI monitoring)
+11. AP: vendors, bills, three-way match; ERP/GL export; ACH/NACHA payout; 1099-NEC
+12. A second telematics provider (Motive) against the existing interface
+13. Dock and appointment scheduling; yard and trailer pools
+14. Finish or delete the orphaned consolidation and dedicated-lane schema
+15. Cross-border: provinces, ACE eManifest, customs
+16. Kubernetes/Helm, a realtime fallback, and a responsive web shell
 
 ### P3 — Differentiators
 

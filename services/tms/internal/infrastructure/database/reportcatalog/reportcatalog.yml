@@ -644,3 +644,717 @@ entities:
       taxDueMinor: { label: "Tax Due (Minor)" }
       surchargeDueMinor: { label: "Surcharge Due (Minor)" }
       lineTotalMinor: { label: "Line Total (Minor)" }
+
+  # ---------------------------------------------------------------------------
+  # Accounting: the general ledger, receivables, and the cash that settles them.
+  #
+  # Everything on this surface states money in minor units, because that is how
+  # the ledger stores it — there is no decimal twin the way `invoices` has one.
+  # No format hint divides by a hundred, so the unit goes in the label instead,
+  # the same call this file already makes for byte counts and millisecond
+  # durations. Canned reports scale properly via a transform; a hand-built
+  # report shows honest cents.
+  # ---------------------------------------------------------------------------
+
+  gl_account:
+    struct: glaccount.GLAccount
+    resource: general_ledger_account
+    label: GL Account
+    pluralLabel: GL Accounts
+    description: The chart of accounts and its running balances
+    category: Accounting
+    fields:
+      accountCode: { label: "Account Code" }
+      name: { label: "Account Name" }
+      isSystem: { label: "System Account" }
+      allowManualJe: { label: "Allows Manual Journals" }
+      requireProject: { label: "Requires Project" }
+      currentBalance: { label: "Current Balance (Minor)" }
+      debitBalance: { label: "Debit Balance (Minor)" }
+      creditBalance: { label: "Credit Balance (Minor)" }
+    edges:
+      accountType: { label: "Account Type" }
+      parent: { label: "Parent Account" }
+      children: { label: "Child Accounts" }
+
+  account_type:
+    struct: accounttype.AccountType
+    resource: account_type
+    label: Account Type
+    pluralLabel: Account Types
+    description: Asset, liability, equity, revenue and expense classification
+    category: Accounting
+    fields:
+      category: { label: "Account Category" }
+      isSystem: { label: "System Type" }
+
+  fiscal_year:
+    struct: fiscalyear.FiscalYear
+    resource: fiscal_year
+    label: Fiscal Year
+    pluralLabel: Fiscal Years
+    description: Accounting years and their close state
+    category: Accounting
+    fields:
+      name: { label: "Fiscal Year" }
+      startDate: { label: "Starts" }
+      endDate: { label: "Ends" }
+      isCurrent: { label: "Current" }
+      isCalendarYear: { label: "Calendar Year" }
+      allowAdjustingEntries: { label: "Allows Adjusting Entries" }
+    edges:
+      periods: { label: "Fiscal Periods" }
+
+  # A fiscal period has no belongs-to back to its year: fiscalyear imports
+  # fiscalperiod to generate its periods, so the reverse relation would be an
+  # import cycle. Reports that need the year start at fiscal_year and cross
+  # `periods`.
+  fiscal_period:
+    struct: fiscalperiod.FiscalPeriod
+    resource: fiscal_period
+    label: Fiscal Period
+    pluralLabel: Fiscal Periods
+    description: Accounting periods, their status, and their close and reopen history
+    category: Accounting
+    fields:
+      periodNumber: { label: "Period" }
+      periodType: { label: "Period Type" }
+      name: { label: "Period Name" }
+      startDate: { label: "Starts" }
+      endDate: { label: "Ends" }
+      isAdjusting: { label: "Adjusting Period" }
+      allowAdjustingEntries: { label: "Allows Adjusting Entries" }
+      # A deadline is an instant, but "deadline" is not one of the column-name
+      # suffixes read as epoch, so it is declared.
+      adjustmentDeadline: { label: "Adjustment Deadline", type: epoch }
+
+  customer_payment:
+    struct: customerpayment.Payment
+    resource: customer_payment
+    label: Customer Payment
+    pluralLabel: Customer Payments
+    description: Cash received from customers and how much of it is applied
+    category: Accounting
+    fields:
+      amountMinor: { label: "Amount (Minor)" }
+      appliedAmountMinor: { label: "Applied (Minor)" }
+      unappliedAmountMinor: { label: "Unapplied (Minor)" }
+      paymentMethod: { label: "Payment Method" }
+      referenceNumber: { label: "Reference Number" }
+      currencyCode: { label: Currency }
+    edges:
+      customer: { label: Customer }
+      applications: { label: Applications }
+
+  customer_payment_application:
+    struct: customerpayment.Application
+    resource: customer_payment
+    label: Payment Application
+    pluralLabel: Payment Applications
+    description: Which invoice each dollar of a payment was applied to
+    category: Accounting
+    fields:
+      lineNumber: { label: Line }
+      appliedAmountMinor: { label: "Applied (Minor)" }
+      shortPayAmountMinor: { label: "Short Pay (Minor)" }
+    edges:
+      payment: { label: "Customer Payment" }
+      invoice: { label: Invoice }
+
+  bank_receipt:
+    struct: bankreceipt.BankReceipt
+    resource: bank_receipt
+    label: Bank Receipt
+    pluralLabel: Bank Receipts
+    description: Deposits read off the bank statement and their match state
+    category: Accounting
+    fields:
+      amountMinor: { label: "Amount (Minor)" }
+      referenceNumber: { label: "Reference Number" }
+      memo: { label: "Bank Memo" }
+      exceptionReason: { label: "Exception Reason" }
+    edges:
+      matchedCustomerPayment: { label: "Matched Payment" }
+
+  # ---------------------------------------------------------------------------
+  # Invoice corrections. These share the invoice resource, because a credit memo
+  # and its rebill are invoices in every sense that matters to a permission.
+  # ---------------------------------------------------------------------------
+
+  invoice_adjustment:
+    struct: invoiceadjustment.InvoiceAdjustment
+    resource: invoice
+    label: Invoice Adjustment
+    pluralLabel: Invoice Adjustments
+    description: Credit memos and rebills against an issued invoice
+    category: Billing
+    excludeFields:
+      - idempotencyKey
+      - executionError
+      - metadata
+    fields:
+      approvalStatus: { label: "Approval Status" }
+      replacementReviewStatus: { label: "Replacement Review" }
+      rebillStrategy: { label: "Rebill Strategy" }
+      policyReason: { label: "Policy Reason" }
+      creditTotalAmount: { label: "Credit Total", format: money }
+      creditTotalAmountMinor: { label: "Credit Total (Minor)" }
+      rebillTotalAmount: { label: "Rebill Total", format: money }
+      rebillTotalAmountMinor: { label: "Rebill Total (Minor)" }
+      netDeltaAmount: { label: "Net Delta", format: money }
+      netDeltaAmountMinor: { label: "Net Delta (Minor)" }
+      # Stored as a percentage number, not a fraction, so it carries no percent
+      # hint — that hint shifts by two and would read 1250% for twelve and a half.
+      rerateVariancePercent: { label: "Rerate Variance (%)" }
+      wouldCreateUnappliedCredit: { label: "Creates Unapplied Credit" }
+      requiresReconciliationException: { label: "Needs Reconciliation Exception" }
+      approvalRequired: { label: "Approval Required" }
+      rejectionReason: { label: "Rejection Reason" }
+    edges:
+      lines: { label: "Adjustment Lines" }
+
+  invoice_adjustment_line:
+    struct: invoiceadjustment.InvoiceAdjustmentLine
+    resource: invoice
+    label: Invoice Adjustment Line
+    pluralLabel: Invoice Adjustment Lines
+    description: Per-charge credit and rebill detail behind an adjustment
+    category: Billing
+    excludeFields:
+      - replacementPayload
+    fields:
+      lineNumber: { label: Line }
+      creditQuantity: { label: "Credit Quantity" }
+      creditAmount: { label: "Credit Amount", format: money }
+      creditAmountMinor: { label: "Credit Amount (Minor)" }
+      remainingEligibleAmount: { label: "Remaining Eligible", format: money }
+      rebillQuantity: { label: "Rebill Quantity" }
+      rebillAmount: { label: "Rebill Amount", format: money }
+      rebillAmountMinor: { label: "Rebill Amount (Minor)" }
+
+  # ---------------------------------------------------------------------------
+  # Driver settlements and the pay elements that feed them.
+  # ---------------------------------------------------------------------------
+
+  # The exceptions column is a JSON array of code, severity and message. A json
+  # field can be neither filtered, grouped, nor aggregated, so on a report it is
+  # a raw blob in a cell; hasExceptions answers the reportable question.
+  driver_settlement:
+    struct: driversettlement.Settlement
+    resource: driver_settlement
+    label: Driver Settlement
+    pluralLabel: Driver Settlements
+    description: Driver and owner-operator pay statements
+    category: Payroll
+    excludeFields:
+      - exceptions
+    fields:
+      settlementNumber: { label: "Settlement Number" }
+      payProfileName: { label: "Pay Profile" }
+      # period_start and period_end are instants whose column names end in
+      # neither _at nor _date, so the type is declared rather than inferred.
+      periodStart: { label: "Period Start", type: epoch }
+      periodEnd: { label: "Period End", type: epoch }
+      grossEarningsMinor: { label: "Gross Earnings (Minor)" }
+      reimbursementsMinor: { label: "Reimbursements (Minor)" }
+      deductionsMinor: { label: "Deductions (Minor)" }
+      carryForwardInMinor: { label: "Carry Forward In (Minor)" }
+      carryForwardOutMinor: { label: "Carry Forward Out (Minor)" }
+      netPayMinor: { label: "Net Pay (Minor)" }
+      totalMiles: { label: "Total Miles", format: distance }
+      shipmentCount: { label: Shipments, format: count }
+      currencyCode: { label: Currency }
+      hasExceptions: { label: "Has Exceptions" }
+      paymentMethod: { label: "Payment Method" }
+      paymentReference: { label: "Payment Reference" }
+      voidReason: { label: "Void Reason" }
+    edges:
+      worker: { label: Driver }
+      batch: { label: "Settlement Batch" }
+      lines: { label: "Settlement Lines" }
+
+  driver_settlement_line:
+    struct: driversettlement.SettlementLine
+    resource: driver_settlement
+    label: Settlement Line
+    pluralLabel: Settlement Lines
+    description: Each earning, deduction and reimbursement on a settlement
+    category: Payroll
+    fields:
+      lineNumber: { label: Line }
+      componentKind: { label: Component }
+      method: { label: "Calculation Method" }
+      amountMinor: { label: "Amount (Minor)" }
+      proNumber: { label: "PRO Number" }
+    edges:
+      settlement: { label: Settlement }
+      shipment: { label: Shipment }
+      payCode: { label: "Pay Code" }
+
+  driver_settlement_batch:
+    struct: driversettlement.SettlementBatch
+    resource: driver_settlement
+    label: Settlement Batch
+    pluralLabel: Settlement Batches
+    description: A pay run and its totals
+    category: Payroll
+    fields:
+      name: { label: "Batch Name" }
+      periodStart: { label: "Period Start", type: epoch }
+      periodEnd: { label: "Period End", type: epoch }
+      settlementCount: { label: Settlements, format: count }
+      exceptionCount: { label: Exceptions, format: count }
+      totalGrossMinor: { label: "Total Gross (Minor)" }
+      totalNetMinor: { label: "Total Net (Minor)" }
+      currencyCode: { label: Currency }
+    edges:
+      settlements: { label: Settlements }
+
+  driver_pay_event:
+    struct: driversettlement.PayEvent
+    resource: driver_settlement
+    label: Driver Pay Event
+    pluralLabel: Driver Pay Events
+    description: Pay accrued against a shipment, before and after it settles
+    category: Payroll
+    excludeFields:
+      - idempotencyKey
+      - components
+    fields:
+      grossAmountMinor: { label: "Gross Amount (Minor)" }
+      totalMiles: { label: "Total Miles", format: distance }
+      currencyCode: { label: Currency }
+      proNumber: { label: "PRO Number" }
+      onHold: { label: "On Hold" }
+      holdReason: { label: "Hold Reason" }
+      voidReason: { label: "Void Reason" }
+    edges:
+      worker: { label: Driver }
+      shipment: { label: Shipment }
+      settlement: { label: Settlement }
+
+  escrow_account:
+    struct: driverpay.EscrowAccount
+    resource: escrow_account
+    label: Escrow Account
+    pluralLabel: Escrow Accounts
+    description: Owner-operator escrow balances against their target
+    category: Payroll
+    fields:
+      targetAmountMinor: { label: "Target (Minor)" }
+      balanceMinor: { label: "Balance (Minor)" }
+      annualInterestRate: { label: "Annual Interest Rate (%)" }
+      lastInterestAccrualDate: { label: "Last Interest Accrual" }
+      openedDate: { label: Opened }
+      closedDate: { label: Closed }
+      currencyCode: { label: Currency }
+    edges:
+      worker: { label: Driver }
+      transactions: { label: "Escrow Transactions" }
+    # Without this, any report showing an account balance beside its last
+    # movement joins the whole transaction ledger and sums the balance once per
+    # transaction. created_at breaks the tie so the row picked is stable.
+    pickEdges:
+      latestTransaction:
+        label: "Latest Transaction"
+        via: [transactions]
+        orderBy: ["-transactions.occurredDate", "-transactions.createdAt"]
+
+  escrow_transaction:
+    struct: driverpay.EscrowTransaction
+    resource: escrow_account
+    label: Escrow Transaction
+    pluralLabel: Escrow Transactions
+    description: Contributions, interest, refunds and deductions against escrow
+    category: Payroll
+    fields:
+      type: { label: "Transaction Type" }
+      amountMinor: { label: "Amount (Minor)" }
+      balanceAfterMinor: { label: "Balance After (Minor)" }
+      occurredDate: { label: Occurred }
+    edges:
+      escrowAccount: { label: "Escrow Account" }
+
+  pay_advance:
+    struct: driverpay.PayAdvance
+    resource: pay_advance
+    label: Pay Advance
+    pluralLabel: Pay Advances
+    description: Cash and money-code advances, what has been recovered, and what was written off
+    category: Payroll
+    fields:
+      issuedDate: { label: Issued }
+      amountMinor: { label: "Amount (Minor)" }
+      recoveredMinor: { label: "Recovered (Minor)" }
+      writtenOffMinor: { label: "Written Off (Minor)" }
+      writeOffReason: { label: "Write-Off Reason" }
+      currencyCode: { label: Currency }
+    edges:
+      worker: { label: Driver }
+
+  recurring_deduction:
+    struct: driverpay.RecurringDeduction
+    resource: recurring_deduction
+    label: Recurring Deduction
+    pluralLabel: Recurring Deductions
+    description: Standing deductions, including garnishments and escrow contributions
+    category: Payroll
+    fields:
+      courtOrderNumber: { label: "Court Order Number" }
+      caseNumber: { label: "Case Number" }
+      issuingAgency: { label: "Issuing Agency" }
+      amountMinor: { label: "Amount (Minor)" }
+      totalCapMinor: { label: "Total Cap (Minor)" }
+      deductedToDateMinor: { label: "Deducted to Date (Minor)" }
+      startDate: { label: Starts }
+      endDate: { label: Ends }
+      currencyCode: { label: Currency }
+    edges:
+      worker: { label: Driver }
+      payCode: { label: "Pay Code" }
+      escrowAccount: { label: "Escrow Account" }
+
+  recurring_earning:
+    struct: driverpay.RecurringEarning
+    resource: recurring_earning
+    label: Recurring Earning
+    pluralLabel: Recurring Earnings
+    description: Standing earnings such as per diem and retention bonuses
+    category: Payroll
+    fields:
+      amountMinor: { label: "Amount (Minor)" }
+      totalCapMinor: { label: "Total Cap (Minor)" }
+      paidToDateMinor: { label: "Paid to Date (Minor)" }
+      startDate: { label: Starts }
+      endDate: { label: Ends }
+      currencyCode: { label: Currency }
+    edges:
+      worker: { label: Driver }
+      payCode: { label: "Pay Code" }
+
+  # The pay code carries the GL account, which is what lets settlement cost roll
+  # up by account without going through the journal at all.
+  pay_code:
+    struct: driverpay.PayCode
+    resource: pay_code
+    label: Pay Code
+    pluralLabel: Pay Codes
+    description: Earning and deduction codes and the GL accounts they post to
+    category: Payroll
+    fields:
+      taxable: { label: Taxable }
+      countsTowardGuarantee: { label: "Counts Toward Guarantee" }
+      defaultAmountMinor: { label: "Default Amount (Minor)" }
+      isSystem: { label: "System Code" }
+    edges:
+      glAccount: { label: "GL Account" }
+
+  # ---------------------------------------------------------------------------
+  # Rate agreements: the negotiated price behind every shipment, and the quote
+  # recording what each one was actually charged.
+  #
+  # Every effective_from and effective_to here is an instant whose column name
+  # the epoch heuristic does not recognise, so each one is declared. The percent
+  # columns are percentage numbers rather than fractions, so none of them takes
+  # the percent hint, which shifts by two.
+  # ---------------------------------------------------------------------------
+
+  rate_agreement:
+    struct: rateagreement.RateAgreement
+    resource: rate_agreement
+    label: Rate Agreement
+    pluralLabel: Rate Agreements
+    description: Negotiated customer and carrier contracts
+    category: Billing
+    fields:
+      partyType: { label: "Party Type" }
+      code: { label: "Agreement Code" }
+      name: { label: "Agreement Name" }
+      agreementType: { label: "Agreement Type" }
+      contractRef: { label: "Contract Reference" }
+      effectiveFrom: { label: "Effective From", type: epoch }
+      effectiveTo: { label: "Effective To", type: epoch }
+      autoRenew: { label: "Auto Renew" }
+      renewalNoticeDays: { label: "Renewal Notice (days)", format: count }
+      currency: { label: Currency }
+      defaultMinCharge: { label: "Default Minimum Charge", format: money }
+      defaultMaxCharge: { label: "Default Maximum Charge", format: money }
+      roundingMode: { label: "Rounding Mode" }
+      roundingPrecision: { label: "Rounding Precision" }
+      marginFloorPercent: { label: "Margin Floor (%)" }
+      maxPayPercentOfSell: { label: "Max Pay % of Sell" }
+      reviewComment: { label: "Review Comment" }
+      currentVersionNumber: { label: "Current Version" }
+    edges:
+      customer: { label: Customer }
+      carrier: { label: Carrier }
+      rules: { label: "Lane Rules" }
+      accessorials: { label: "Accessorial Schedule" }
+      versions: { label: Versions }
+    # An agreement has one set of terms in force and a shelf of superseded ones.
+    # Reaching the current terms through `versions` multiplies every agreement
+    # row by its revision count; picking the highest version number reaches them
+    # once.
+    pickEdges:
+      currentVersion:
+        label: "Current Version"
+        via: [versions]
+        orderBy: ["-versions.versionNumber"]
+
+  # Lane geography is grouped by, not measured, which is the same exception the
+  # location coordinates above are declared under.
+  rate_agreement_rule:
+    struct: rateagreement.RateAgreementRule
+    resource: rate_agreement
+    label: Lane Rule
+    pluralLabel: Lane Rules
+    description: The lane, applicability and price of one line of a contract
+    category: Billing
+    fields:
+      partyType: { label: "Party Type" }
+      originScopeType: { label: "Origin Scope" }
+      originScopeValue: { label: "Origin Scope Value" }
+      destinationScopeType: { label: "Destination Scope" }
+      destinationScopeValue: { label: "Destination Scope Value" }
+      laneKey: { label: "Lane Key" }
+      rate: { label: Rate, format: money }
+      currency: { label: Currency }
+      discountPercent: { label: "Discount (%)" }
+      minCharge: { label: "Minimum Charge", format: money }
+      maxCharge: { label: "Maximum Charge", format: money }
+      roundingMode: { label: "Rounding Mode" }
+      effectiveFrom: { label: "Effective From", type: epoch }
+      effectiveTo: { label: "Effective To", type: epoch }
+    edges:
+      breaks: { label: "Weight Breaks" }
+
+  rate_agreement_rule_break:
+    struct: rateagreement.RateAgreementRuleBreak
+    resource: rate_agreement
+    label: Weight Break
+    pluralLabel: Weight Breaks
+    description: The rate steps of a weight-broken lane rule
+    category: Billing
+    fields:
+      rate: { label: Rate, format: money }
+      minCharge: { label: "Minimum Charge", format: money }
+      sortOrder: { label: "Sort Order" }
+
+  rate_agreement_accessorial:
+    struct: rateagreement.RateAgreementAccessorial
+    resource: rate_agreement
+    label: Contract Accessorial
+    pluralLabel: Contract Accessorials
+    description: The negotiated price of each accessorial under a contract
+    category: Billing
+    fields:
+      rateUnit: { label: "Rate Unit" }
+      amount: { label: Amount, format: money }
+      autoApply: { label: "Auto Apply" }
+      applyCondition: { label: "Apply Condition" }
+      freeUnits: { label: "Free Units", format: count }
+      maxAmount: { label: "Maximum Amount", format: money }
+      effectiveFrom: { label: "Effective From", type: epoch }
+      effectiveTo: { label: "Effective To", type: epoch }
+    edges:
+      accessorialCharge: { label: "Accessorial Charge" }
+
+  rate_agreement_version:
+    struct: rateagreement.RateAgreementVersion
+    resource: rate_agreement
+    label: Agreement Version
+    pluralLabel: Agreement Versions
+    description: What a contract said at each revision, and why it changed
+    category: Billing
+    fields:
+      versionNumber: { label: Version }
+      changeMessage: { label: "Change Message" }
+
+  # The rate leakage fact. contextHash fingerprints the inputs for dedupe and
+  # trace is the engine's explanation tree; neither is a reportable value.
+  rate_quote:
+    struct: ratequote.RateQuote
+    resource: rate_quote
+    label: Rate Quote
+    pluralLabel: Rate Quotes
+    description: How each shipment was priced, what it cost, and what an override gave away
+    category: Billing
+    excludeFields:
+      - contextHash
+      - trace
+    fields:
+      partyType: { label: "Party Type" }
+      agreementVersionNumber: { label: "Agreement Version" }
+      specificityScore: { label: "Specificity Score" }
+      currency: { label: Currency }
+      linehaulAmount: { label: Linehaul, format: money }
+      fuelAmount: { label: Fuel, format: money }
+      accessorialAmount: { label: Accessorials, format: money }
+      totalAmount: { label: Total, format: money }
+      costAmount: { label: Cost, format: money }
+      marginAmount: { label: Margin, format: money }
+      marginPercent: { label: "Margin (%)" }
+      billingCurrency: { label: "Billing Currency" }
+      billingAmount: { label: "Billing Amount", format: money }
+      fxRate: { label: "FX Rate" }
+      asOf: { label: "As Of", type: epoch }
+      engineVersion: { label: "Engine Version" }
+      overrideReason: { label: "Override Reason" }
+      foregoneAmount: { label: "Foregone Amount", format: money }
+    edges:
+      agreement: { label: "Rate Agreement" }
+
+  accessorial_charge:
+    struct: accessorialcharge.AccessorialCharge
+    resource: accessorial_charge
+    label: Accessorial Charge
+    pluralLabel: Accessorial Charges
+    description: The organization's accessorial catalog and default pricing
+    category: Billing
+    fields:
+      rateUnit: { label: "Rate Unit" }
+      amount: { label: "Default Amount", format: money }
+
+  # ---------------------------------------------------------------------------
+  # The journal itself. These six entities are what make the ledger reportable:
+  # the batch a posting ran in, the entry, the debit-and-credit lines underneath
+  # it, the pre-aggregated period balance every trial balance is built from, the
+  # operational event that produced the entry, and the AR subledger.
+  # ---------------------------------------------------------------------------
+
+  journal_batch:
+    struct: journalentry.JournalBatch
+    resource: journal_entry
+    label: Journal Batch
+    pluralLabel: Journal Batches
+    description: The unit journal entries are posted in
+    category: Accounting
+    fields:
+      batchNumber: { label: "Batch Number" }
+      batchType: { label: "Batch Type" }
+      accountingDate: { label: "Accounting Date" }
+      entryCount: { label: Entries, format: count }
+    edges:
+      fiscalYear: { label: "Fiscal Year" }
+      fiscalPeriod: { label: "Fiscal Period" }
+      entries: { label: "Journal Entries" }
+
+  journal_entry:
+    struct: journalentry.JournalEntry
+    resource: journal_entry
+    label: Journal Entry
+    pluralLabel: Journal Entries
+    description: Double-entry journal headers, their approval state, and their reversals
+    category: Accounting
+    fields:
+      entryNumber: { label: "Entry Number" }
+      entryType: { label: "Entry Type" }
+      entryDate: { label: "Entry Date" }
+      accountingDate: { label: "Accounting Date" }
+      referenceNumber: { label: "Reference Number" }
+      referenceType: { label: "Reference Type" }
+      referenceId: { label: "Reference ID" }
+      totalDebit: { label: "Total Debit (Minor)" }
+      totalCredit: { label: "Total Credit (Minor)" }
+      isPosted: { label: Posted }
+      isAutoGenerated: { label: "Auto Generated" }
+      isReversal: { label: Reversal }
+      reversalReason: { label: "Reversal Reason" }
+      requiresApproval: { label: "Requires Approval" }
+      isApproved: { label: Approved }
+      approvalNotes: { label: "Approval Notes" }
+      isRejected: { label: Rejected }
+      rejectionReason: { label: "Rejection Reason" }
+    edges:
+      batch: { label: "Journal Batch" }
+      fiscalYear: { label: "Fiscal Year" }
+      fiscalPeriod: { label: "Fiscal Period" }
+      lines: { label: "Journal Lines" }
+      reversalOf: { label: "Reverses Entry" }
+      reversedBy: { label: "Reversed By Entry" }
+
+  # The grain the ledger is actually reported at. A line carries the account and
+  # the two analysis dimensions the schema commits to — customer and location —
+  # which is what makes "revenue by GL account by customer" one grouping rather
+  # than a reconciliation exercise. department_id, project_id and vendor_id are
+  # columns with no table behind them, so they stay bare references.
+  journal_entry_line:
+    struct: journalentry.JournalEntryLine
+    resource: journal_entry
+    label: Journal Line
+    pluralLabel: Journal Lines
+    description: Debit and credit detail behind each journal entry
+    category: Accounting
+    fields:
+      lineNumber: { label: Line }
+      debitAmount: { label: "Debit (Minor)" }
+      creditAmount: { label: "Credit (Minor)" }
+      netAmount: { label: "Net (Minor)" }
+      taxCode: { label: "Tax Code" }
+      taxAmount: { label: "Tax (Minor)" }
+      isTaxLine: { label: "Tax Line" }
+      isReconciled: { label: Reconciled }
+    edges:
+      journalEntry: { label: "Journal Entry" }
+      glAccount: { label: "GL Account" }
+      customer: { label: Customer }
+      location: { label: Location }
+
+  # The trial balance, pre-aggregated per account per period. It has no id
+  # column — its identity is the five-column key — so a count of rows here
+  # counts account-periods, not documents.
+  gl_account_balance:
+    struct: glbalance.GLAccountPeriodBalance
+    resource: accounting_report
+    label: Account Period Balance
+    pluralLabel: Account Period Balances
+    description: Debits, credits and net change per GL account per fiscal period
+    category: Accounting
+    fields:
+      periodDebitMinor: { label: "Period Debit (Minor)" }
+      periodCreditMinor: { label: "Period Credit (Minor)" }
+      netChangeMinor: { label: "Net Change (Minor)" }
+    edges:
+      glAccount: { label: "GL Account" }
+      fiscalYear: { label: "Fiscal Year" }
+      fiscalPeriod: { label: "Fiscal Period" }
+      lastJournalEntry: { label: "Last Journal Entry" }
+
+  # An idempotency key is plumbing: it exists to make a retry safe, and nobody
+  # filters a report on one.
+  journal_source:
+    struct: journalsource.Source
+    resource: journal_entry
+    label: Journal Source
+    pluralLabel: Journal Sources
+    description: What operational event produced each journal entry
+    category: Accounting
+    excludeFields:
+      - idempotencyKey
+    fields:
+      sourceObjectType: { label: "Source Object" }
+      sourceObjectId: { label: "Source Object ID" }
+      sourceEventType: { label: "Source Event" }
+      sourceDocumentNumber: { label: "Source Document" }
+    edges:
+      journalBatch: { label: "Journal Batch" }
+      journalEntry: { label: "Journal Entry" }
+
+  customer_ledger_entry:
+    struct: customerledger.CustomerLedgerEntry
+    resource: accounts_receivable
+    label: Customer Ledger Entry
+    pluralLabel: Customer Ledger Entries
+    description: The AR subledger — every document that moved a customer's balance
+    category: Accounting
+    fields:
+      sourceObjectType: { label: "Source Object" }
+      sourceObjectId: { label: "Source Object ID" }
+      sourceEventType: { label: "Source Event" }
+      documentNumber: { label: "Document Number" }
+      transactionDate: { label: "Transaction Date" }
+      lineNumber: { label: Line }
+      amountMinor: { label: "Amount (Minor)" }
+    edges:
+      customer: { label: Customer }
+      relatedInvoice: { label: Invoice }

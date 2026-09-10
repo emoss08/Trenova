@@ -301,6 +301,38 @@ func (r *mutationResolver) CancelFuelCard(ctx context.Context, input gqlmodel.Ca
 	return r.fuelPurchaseService.CancelCard(ctx, req)
 }
 
+func (r *mutationResolver) AssignFuelCard(ctx context.Context, input gqlmodel.AssignFuelCardInput) (*fuelpurchase.FuelCard, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceFuelCard, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := assignCardRequestFromInput(input, tenantInfo(authCtx), authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.fuelPurchaseService.AssignCard(ctx, req)
+}
+
+func (r *mutationResolver) SyncFuelCardFeed(ctx context.Context, provider fuelpurchase.CardProvider) (*gqlmodel.FuelCardSyncResult, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceFuelPurchaseImport, permission.OpImport)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.fuelPurchaseService.SyncFeed(ctx, &fuelpurchaseservice.SyncFeedRequest{
+		TenantInfo: tenantInfo(authCtx),
+		Provider:   provider,
+		UserID:     authCtx.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return fuelCardSyncResultToModel(result), nil
+}
+
 func (r *mutationResolver) CreateFuelPurchase(ctx context.Context, input gqlmodel.FuelPurchaseInput) (*fuelpurchase.FuelPurchase, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceFuelPurchase, permission.OpCreate)
 	if err != nil {

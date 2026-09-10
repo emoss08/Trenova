@@ -76,23 +76,14 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
         </div>
       ) : (
         <ul className="divide-y">
-          {flagged.map(({ row, reasons }) => (
+          {flagged.map(({ row }) => (
             <li key={row.member.workerId}>
               <Link
                 to={memberHref(row.member.workerId)}
                 className="group/row hover:bg-accent grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors"
               >
-                <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
-                  <MemberIdentity member={row.member} size="sm" className="min-w-48" />
-                  <ul className="flex flex-wrap items-center gap-1" aria-label="Reasons">
-                    {reasons.map((reason) => (
-                      <li key={reason.key}>
-                        <Badge variant={reason.severity === "critical" ? "inactive" : "warning"}>
-                          {reason.label}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="flex min-w-0 flex-row items-center gap-x-4 gap-y-1">
+                  <MemberIdentity member={row.member} size="sm" className="w-full" />
                 </div>
                 <ChevronRightIcon
                   aria-hidden

@@ -373,6 +373,48 @@ function collectFieldErrors(graphQLErrors: NormalizedGraphQLError[]): Validation
   return collected;
 }
 
+// A *gqlerror.Error rendered through Go's Error() method prints its source position and
+// field path in front of the message: "input:1:63: dispatchPlanAutoAssign Auto assignment
+// is disabled for this organization". None of that belongs in a toast — the path and
+// locations already arrive as their own response fields — so it is stripped here rather
+// than at every call site that surfaces a message. The server no longer emits the prefix;
+// this keeps an older or differently-wrapped backend from leaking it into the UI.
+const gqlErrorPositionPattern = /^input(?::\d+:\d+)?: /;
+
+function formatErrorPath(path: unknown): string {
+  if (!Array.isArray(path)) {
+    return "";
+  }
+
+  let formatted = "";
+  for (const segment of path) {
+    if (typeof segment === "number") {
+      formatted += `[${segment}]`;
+    } else if (typeof segment === "string") {
+      formatted += formatted === "" ? segment : `.${segment}`;
+    } else {
+      return "";
+    }
+  }
+
+  return formatted;
+}
+
+export function stripGraphQLErrorPrefix(message: string, path: unknown): string {
+  const withoutPosition = message.replace(gqlErrorPositionPattern, "");
+  if (withoutPosition === message) {
+    return message;
+  }
+
+  const pathPrefix = formatErrorPath(path);
+  const stripped =
+    pathPrefix !== "" && withoutPosition.startsWith(`${pathPrefix} `)
+      ? withoutPosition.slice(pathPrefix.length + 1)
+      : withoutPosition;
+
+  return stripped.trim() === "" ? message : stripped;
+}
+
 function normalizeGraphQLError(error: GraphQLErrorResponse): NormalizedGraphQLError {
   const extensions: GraphQLErrorExtensions = isRecord(error.extensions)
     ? { ...error.extensions }
@@ -383,7 +425,10 @@ function normalizeGraphQLError(error: GraphQLErrorResponse): NormalizedGraphQLEr
     errors: extensions.errors,
     extensions,
     locations: error.locations,
-    message: typeof error.message === "string" ? error.message : "GraphQL request failed",
+    message:
+      typeof error.message === "string"
+        ? stripGraphQLErrorPrefix(error.message, error.path)
+        : "GraphQL request failed",
     params: extensions.params,
     path: error.path,
     traceId: stringExtension(extensions.traceId),

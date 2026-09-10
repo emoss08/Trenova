@@ -7,5 +7,5 @@ import (
 )
 
 type CustomerLedgerProjectionRepository interface {
-	AppendEntries(ctx context.Context, entries []*customerledger.Entry) error
+	AppendEntries(ctx context.Context, entries []*customerledger.CustomerLedgerEntry) error
 }

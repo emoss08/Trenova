@@ -13,6 +13,9 @@ export const integrationModalTypes = [
   "PCMiler",
   "Resend",
   "Postmark",
+  "WEXFuel",
+  "ComdataFuel",
+  "RampFuel",
 ] as const;
 
 export type IntegrationModalType = (typeof integrationModalTypes)[number];

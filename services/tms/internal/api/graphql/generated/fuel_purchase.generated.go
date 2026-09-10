@@ -440,6 +440,29 @@ func (ec *executionContext) fieldContext_FuelCard_notes(_ context.Context, field
 	return graphql.NewScalarFieldContext("FuelCard", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _FuelCard_discoveredAt(ctx context.Context, field graphql.CollectedField, obj *fuelpurchase.FuelCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCard_discoveredAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DiscoveredAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCard_discoveredAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCard", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _FuelCard_version(ctx context.Context, field graphql.CollectedField, obj *fuelpurchase.FuelCard) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -713,6 +736,167 @@ func (ec *executionContext) _FuelCardEdge_cursor(ctx context.Context, field grap
 }
 func (ec *executionContext) fieldContext_FuelCardEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FuelCardEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_provider(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_provider(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Provider, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v fuelpurchase.CardProvider) graphql.Marshaler {
+			return ec.marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type FuelCardProvider does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_batchId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_batchId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BatchID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_batchId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_fetched(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_fetched(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Fetched, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_fetched(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_committed(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_committed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Committed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_committed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_queued(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_queued(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Queued, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_queued(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_alreadyImported(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_alreadyImported(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AlreadyImported, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_alreadyImported(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FuelCardSyncResult_cardsDiscovered(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelCardSyncResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelCardSyncResult_cardsDiscovered(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CardsDiscovered, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelCardSyncResult_cardsDiscovered(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelCardSyncResult", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _FuelImportTemplate_fileName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FuelImportTemplate) (ret graphql.Marshaler) {
@@ -1765,6 +1949,52 @@ func (ec *executionContext) _FuelPurchaseImportBatch_provider(ctx context.Contex
 }
 func (ec *executionContext) fieldContext_FuelPurchaseImportBatch_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FuelPurchaseImportBatch", field, false, false, errors.New("field of type FuelCardProvider does not have child fields"))
+}
+
+func (ec *executionContext) _FuelPurchaseImportBatch_origin(ctx context.Context, field graphql.CollectedField, obj *fuelpurchase.ImportBatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelPurchaseImportBatch_origin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Origin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v fuelpurchase.ImportOrigin) graphql.Marshaler {
+			return ec.marshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FuelPurchaseImportBatch_origin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelPurchaseImportBatch", field, false, false, errors.New("field of type FuelPurchaseImportOrigin does not have child fields"))
+}
+
+func (ec *executionContext) _FuelPurchaseImportBatch_feedReference(ctx context.Context, field graphql.CollectedField, obj *fuelpurchase.ImportBatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FuelPurchaseImportBatch_feedReference(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FeedReference, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FuelPurchaseImportBatch_feedReference(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FuelPurchaseImportBatch", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _FuelPurchaseImportBatch_documentId(ctx context.Context, field graphql.CollectedField, obj *fuelpurchase.ImportBatch) (ret graphql.Marshaler) {
@@ -3520,6 +3750,57 @@ func (ec *executionContext) fieldContext_FuelPurchaseImportSummary_latestPurchas
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAssignFuelCardInput(ctx context.Context, obj any) (gqlmodel.AssignFuelCardInput, error) {
+	var it gqlmodel.AssignFuelCardInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "version", "assignedTractorId", "assignedWorkerId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "assignedTractorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assignedTractorId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssignedTractorID = data
+		case "assignedWorkerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assignedWorkerId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssignedWorkerID = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCancelFuelCardInput(ctx context.Context, obj any) (gqlmodel.CancelFuelCardInput, error) {
 	var it gqlmodel.CancelFuelCardInput
 	if obj == nil {
@@ -3731,7 +4012,7 @@ func (ec *executionContext) unmarshalInputFuelCardsInput(ctx context.Context, ob
 		asMap["first"] = 20
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "provider", "status", "assignedWorkerId", "assignedTractorId"}
+	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "provider", "status", "assignedWorkerId", "assignedTractorId", "unassignedOnly", "discoveredOnly"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3808,6 +4089,20 @@ func (ec *executionContext) unmarshalInputFuelCardsInput(ctx context.Context, ob
 				return it, err
 			}
 			it.AssignedTractorID = data
+		case "unassignedOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unassignedOnly"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UnassignedOnly = data
+		case "discoveredOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("discoveredOnly"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DiscoveredOnly = data
 		}
 	}
 	return it, nil
@@ -4411,6 +4706,11 @@ func (ec *executionContext) _FuelCard(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "discoveredAt":
+			out.Values[i] = ec._FuelCard_discoveredAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "version":
 			out.Values[i] = ec._FuelCard_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4590,6 +4890,74 @@ func (ec *executionContext) _FuelCardEdge(ctx context.Context, sel ast.Selection
 			}
 		case "cursor":
 			out.Values[i] = ec._FuelCardEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var fuelCardSyncResultImplementors = []string{"FuelCardSyncResult"}
+
+func (ec *executionContext) _FuelCardSyncResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.FuelCardSyncResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, fuelCardSyncResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FuelCardSyncResult")
+		case "provider":
+			out.Values[i] = ec._FuelCardSyncResult_provider(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "batchId":
+			out.Values[i] = ec._FuelCardSyncResult_batchId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "fetched":
+			out.Values[i] = ec._FuelCardSyncResult_fetched(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "committed":
+			out.Values[i] = ec._FuelCardSyncResult_committed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "queued":
+			out.Values[i] = ec._FuelCardSyncResult_queued(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "alreadyImported":
+			out.Values[i] = ec._FuelCardSyncResult_alreadyImported(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cardsDiscovered":
+			out.Values[i] = ec._FuelCardSyncResult_cardsDiscovered(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5400,6 +5768,16 @@ func (ec *executionContext) _FuelPurchaseImportBatch(ctx context.Context, sel as
 		case "provider":
 			out.Values[i] = ec._FuelPurchaseImportBatch_provider(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "origin":
+			out.Values[i] = ec._FuelPurchaseImportBatch_origin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "feedReference":
+			out.Values[i] = ec._FuelPurchaseImportBatch_feedReference(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "documentId":
@@ -6777,6 +7155,11 @@ func (ec *executionContext) _FuelPurchaseImportSummary(ctx context.Context, sel 
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAssignFuelCardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignFuelCardInput(ctx context.Context, v any) (gqlmodel.AssignFuelCardInput, error) {
+	res, err := ec.unmarshalInputAssignFuelCardInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCancelFuelCardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCancelFuelCardInput(ctx context.Context, v any) (gqlmodel.CancelFuelCardInput, error) {
 	res, err := ec.unmarshalInputCancelFuelCardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6872,6 +7255,16 @@ func (ec *executionContext) marshalNFuelCardStatus2githubᚗcomᚋemoss08ᚋtren
 	return res
 }
 
+func (ec *executionContext) marshalNFuelCardSyncResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelCardSyncResult(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.FuelCardSyncResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FuelCardSyncResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNFuelCardsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelCardsInput(ctx context.Context, v any) (gqlmodel.FuelCardsInput, error) {
 	res, err := ec.unmarshalInputFuelCardsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6941,6 +7334,23 @@ func (ec *executionContext) marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋem
 		return graphql.Null
 	}
 	return ec._FuelPurchaseImportBatch(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx context.Context, v any) (fuelpurchase.ImportOrigin, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := fuelpurchase.ImportOrigin(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx context.Context, sel ast.SelectionSet, v fuelpurchase.ImportOrigin) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNFuelPurchaseImportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRow(ctx context.Context, sel ast.SelectionSet, v *fuelpurchase.ImportRow) graphql.Marshaler {

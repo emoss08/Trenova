@@ -31,25 +31,77 @@ import (
 )
 
 type fakeRepo struct {
-	mu        sync.Mutex
-	cards     map[pulid.ID]*fuelpurchase.FuelCard
-	purchases map[pulid.ID]*fuelpurchase.FuelPurchase
-	batches   map[pulid.ID]*fuelpurchase.ImportBatch
-	rows      map[pulid.ID][]*fuelpurchase.ImportRow
-	commits   int
+	mu         sync.Mutex
+	cards      map[pulid.ID]*fuelpurchase.FuelCard
+	purchases  map[pulid.ID]*fuelpurchase.FuelPurchase
+	batches    map[pulid.ID]*fuelpurchase.ImportBatch
+	rows       map[pulid.ID][]*fuelpurchase.ImportRow
+	feedStates map[string]*fuelpurchase.CardFeedState
+	commits    int
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
-		cards:     map[pulid.ID]*fuelpurchase.FuelCard{},
-		purchases: map[pulid.ID]*fuelpurchase.FuelPurchase{},
-		batches:   map[pulid.ID]*fuelpurchase.ImportBatch{},
-		rows:      map[pulid.ID][]*fuelpurchase.ImportRow{},
+		cards:      map[pulid.ID]*fuelpurchase.FuelCard{},
+		purchases:  map[pulid.ID]*fuelpurchase.FuelPurchase{},
+		batches:    map[pulid.ID]*fuelpurchase.ImportBatch{},
+		rows:       map[pulid.ID][]*fuelpurchase.ImportRow{},
+		feedStates: map[string]*fuelpurchase.CardFeedState{},
 	}
 }
 
 func sameTenant(orgID, buID pulid.ID, tenant pagination.TenantInfo) bool {
 	return orgID == tenant.OrgID && buID == tenant.BuID
+}
+
+func (f *fakeRepo) allCards() []*fuelpurchase.FuelCard {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	out := make([]*fuelpurchase.FuelCard, 0, len(f.cards))
+	for _, card := range f.cards {
+		out = append(out, card)
+	}
+
+	return out
+}
+
+func (f *fakeRepo) allPurchases() []*fuelpurchase.FuelPurchase {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	out := make([]*fuelpurchase.FuelPurchase, 0, len(f.purchases))
+	for _, purchase := range f.purchases {
+		out = append(out, purchase)
+	}
+
+	return out
+}
+
+func (f *fakeRepo) allBatches() []*fuelpurchase.ImportBatch {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	out := make([]*fuelpurchase.ImportBatch, 0, len(f.batches))
+	for _, batch := range f.batches {
+		out = append(out, batch)
+	}
+
+	return out
+}
+
+func (f *fakeRepo) batch(id pulid.ID) *fuelpurchase.ImportBatch {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.batches[id]
+}
+
+func (f *fakeRepo) feedState(provider fuelpurchase.CardProvider) *fuelpurchase.CardFeedState {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.feedStates[feedStateKey(provider, fuelpurchase.FeedTypeTransactions)]
 }
 
 func (f *fakeRepo) ListCards(
@@ -106,6 +158,70 @@ func (f *fakeRepo) FindCardByLastFour(
 		return &copied, nil
 	}
 	return nil, nil
+}
+
+func (f *fakeRepo) FindCardsByLastFour(
+	_ context.Context,
+	req *repositories.FindFuelCardsByLastFourRequest,
+) (map[string]*fuelpurchase.FuelCard, error) {
+	wanted := make(map[string]struct{}, len(req.LastFours))
+	for _, lastFour := range req.LastFours {
+		wanted[lastFour] = struct{}{}
+	}
+
+	found := make(map[string]*fuelpurchase.FuelCard, len(wanted))
+	for _, card := range f.cards {
+		if !sameTenant(card.OrganizationID, card.BusinessUnitID, req.TenantInfo) {
+			continue
+		}
+		if _, ok := wanted[card.LastFour]; !ok || card.IsCancelled() {
+			continue
+		}
+		if req.Provider != "" && card.Provider != req.Provider {
+			continue
+		}
+		copied := *card
+		found[card.LastFour] = &copied
+	}
+
+	return found, nil
+}
+
+func (f *fakeRepo) GetFeedState(
+	_ context.Context,
+	req *repositories.GetFuelFeedStateRequest,
+) (*fuelpurchase.CardFeedState, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if state, ok := f.feedStates[feedStateKey(req.Provider, req.FeedType)]; ok {
+		copied := *state
+		return &copied, nil
+	}
+
+	return &fuelpurchase.CardFeedState{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		Provider:       req.Provider,
+		FeedType:       req.FeedType,
+	}, nil
+}
+
+func (f *fakeRepo) SaveFeedState(
+	_ context.Context,
+	state *fuelpurchase.CardFeedState,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	copied := *state
+	f.feedStates[feedStateKey(state.Provider, state.FeedType)] = &copied
+
+	return nil
+}
+
+func feedStateKey(provider fuelpurchase.CardProvider, feedType fuelpurchase.FeedType) string {
+	return string(provider) + ":" + string(feedType)
 }
 
 func (f *fakeRepo) ListActiveCards(
@@ -420,11 +536,13 @@ func (f *fakeRepo) CommitImport(
 			"version mismatch",
 		)
 	}
-	committedAt := req.CommittedAt
-	stored.Status = fuelpurchase.ImportStatusCommitted
-	stored.CommittedAt = &committedAt
-	stored.CommittedByID = req.CommittedByID
-	stored.CommittedCount = result.Committed
+	stored.CommittedCount += result.Committed
+	if !req.KeepOpen {
+		committedAt := req.CommittedAt
+		stored.Status = fuelpurchase.ImportStatusCommitted
+		stored.CommittedAt = &committedAt
+		stored.CommittedByID = req.CommittedByID
+	}
 	stored.Version++
 	batch.Version = stored.Version
 
@@ -573,6 +691,7 @@ type harness struct {
 	userID    pulid.ID
 	tractorA  *tractor.Tractor
 	tractorB  *tractor.Tractor
+	feeds     *fakeFeedResolver
 	audits    *[]auditRecord
 	auditLock *sync.Mutex
 }
@@ -681,6 +800,7 @@ func newHarness(t *testing.T) *harness {
 
 	repo := newFakeRepo()
 	docs := newFakeDocuments()
+	feeds := newFakeFeedResolver()
 	now := int64(1_784_000_000)
 
 	svc := fuelpurchaseservice.NewWithDeps(fuelpurchaseservice.Deps{
@@ -690,6 +810,7 @@ func newHarness(t *testing.T) *harness {
 		WorkerRepo:    workerRepo,
 		Documents:     docs,
 		AuditService:  auditService,
+		Feeds:         feeds,
 		Validator:     fuelpurchaseservice.NewValidatorWithDeps(fakeReferenceChecker{}, repo),
 		Now:           func() int64 { return now },
 	})
@@ -703,6 +824,7 @@ func newHarness(t *testing.T) *harness {
 		userID:    pulid.MustNew("usr_"),
 		tractorA:  tractorA,
 		tractorB:  tractorB,
+		feeds:     feeds,
 		audits:    &audits,
 		auditLock: auditLock,
 	}

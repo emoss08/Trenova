@@ -136,6 +136,17 @@ var BankReceiptInsertableColumns = []string{
 	"updated_at",
 }
 
+// BankReceiptRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(BankReceiptRelations.MatchedCustomerPayment)
+//	// Bun eager-loads the MatchedCustomerPayment association via a separate query
+var BankReceiptRelations = struct {
+	MatchedCustomerPayment string
+}{
+	MatchedCustomerPayment: "MatchedCustomerPayment",
+}
+
 // BankReceiptScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE br.organization_id = ? AND br.business_unit_id = ?

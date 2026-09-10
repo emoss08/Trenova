@@ -230,7 +230,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 		t,
 		ledgerProjectionRepo.AppendEntries(
 			ctx,
-			[]*customerledger.Entry{
+			[]*customerledger.CustomerLedgerEntry{
 				{
 					ID:               pulid.MustNew("cledg_"),
 					OrganizationID:   org.ID,

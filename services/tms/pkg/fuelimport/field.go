@@ -290,6 +290,21 @@ var providerSynonyms = map[fuelpurchase.CardProvider]map[Field][]string{
 		FieldTractorCode:          {"unit number", "unit"},
 		FieldDriverName:           {"driver id", "driver name"},
 	},
+	// Ramp runs on commercial Visa rather than a fleet network, so an
+	// authorization carries the merchant and the amount but no pump detail. The
+	// fields it does not name are the reason a Ramp row cannot become a tax
+	// record without somebody completing it.
+	fuelpurchase.CardProviderRamp: {
+		FieldPurchasedAt:          {"user transaction time", "transaction date"},
+		FieldVendor:               {"merchant name", "merchant descriptor"},
+		FieldCity:                 {"merchant city", "city"},
+		FieldJurisdiction:         {"merchant state", "state"},
+		FieldTotalAmount:          {"amount"},
+		FieldCurrency:             {"currency code", "currency"},
+		FieldCardLastFour:         {"card last four", "last four"},
+		FieldTransactionReference: {"id", "transaction id"},
+		FieldDriverName:           {"card holder name", "user name"},
+	},
 	fuelpurchase.CardProviderWEX: {
 		FieldPurchasedAt:          {"transaction date", "date"},
 		FieldVendor:               {"merchant name", "merchant"},

@@ -36,6 +36,13 @@ func (r *repository) applyCardFilters(
 	if !req.AssignedWorkerID.IsNil() {
 		q = q.Where(cols.AssignedWorkerID.Eq(), req.AssignedWorkerID)
 	}
+	if req.UnassignedOnly {
+		q = q.Where(cols.AssignedTractorID.IsNull()).
+			Where(cols.AssignedWorkerID.IsNull())
+	}
+	if req.DiscoveredOnly {
+		q = q.Where(cols.DiscoveredAt.IsNotNull())
+	}
 
 	return q
 }
@@ -152,6 +159,68 @@ func (r *repository) GetCardsByIDs(
 	}
 
 	return entities, nil
+}
+
+// FindCardsByLastFour resolves many cards in one round trip, which is what a feed
+// needs: it has to know which of a file's cards already exist before it can
+// decide which to create. Cancelled cards are excluded so a reissued last four
+// resolves to the live card.
+func (r *repository) FindCardsByLastFour(
+	ctx context.Context,
+	req *repositories.FindFuelCardsByLastFourRequest,
+) (map[string]*fuelpurchase.FuelCard, error) {
+	cols := buncolgen.FuelCardColumns
+
+	wanted := make([]string, 0, len(req.LastFours))
+	seen := make(map[string]struct{}, len(req.LastFours))
+	for _, lastFour := range req.LastFours {
+		lastFour = strings.TrimSpace(lastFour)
+		if lastFour == "" {
+			continue
+		}
+		if _, duplicate := seen[lastFour]; duplicate {
+			continue
+		}
+		seen[lastFour] = struct{}{}
+		wanted = append(wanted, lastFour)
+	}
+
+	found := make(map[string]*fuelpurchase.FuelCard, len(wanted))
+	if len(wanted) == 0 {
+		return found, nil
+	}
+
+	entities := make([]*fuelpurchase.FuelCard, 0, len(wanted))
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.FuelCardScopeTenant(sq, req.TenantInfo).
+				Where(cols.LastFour.In(), bun.List(wanted)).
+				Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
+			if req.Provider != "" {
+				sq = sq.Where(cols.Provider.Eq(), req.Provider)
+			}
+
+			return sq
+		}).
+		Order(cols.CreatedAt.OrderDesc()).
+		Scan(ctx); err != nil {
+		r.l.Error("failed to find fuel cards by last four", zap.Error(err))
+
+		return nil, fmt.Errorf("find fuel cards by last four: %w", err)
+	}
+
+	// Ordered newest first, so the first row for a last four wins and later
+	// duplicates are ignored, matching what the single-card lookup returns.
+	for _, entity := range entities {
+		if _, taken := found[entity.LastFour]; taken {
+			continue
+		}
+		found[entity.LastFour] = entity
+	}
+
+	return found, nil
 }
 
 func (r *repository) FindCardByLastFour(

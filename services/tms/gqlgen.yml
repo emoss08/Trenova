@@ -1473,6 +1473,9 @@ models:
   FuelImportFormat:
     model:
       - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.SourceFormat
+  FuelPurchaseImportOrigin:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.ImportOrigin
   FuelCard:
     model:
       - github.com/emoss08/trenova/internal/core/domain/fuelpurchase.FuelCard
@@ -2269,10 +2272,10 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/manualjournal.Request
   JournalEntry:
     model:
-      - github.com/emoss08/trenova/internal/core/domain/journalentry.Entry
+      - github.com/emoss08/trenova/internal/core/domain/journalentry.JournalEntry
   JournalEntryLine:
     model:
-      - github.com/emoss08/trenova/internal/core/domain/journalentry.Line
+      - github.com/emoss08/trenova/internal/core/domain/journalentry.JournalEntryLine
     fields:
       glAccount:
         resolver: true
