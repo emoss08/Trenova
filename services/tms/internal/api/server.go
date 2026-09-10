@@ -30,10 +30,14 @@ type Server struct {
 	l          *zap.Logger
 }
 
-func NewServer(p Params) *Server {
+func NewServer(p Params) (*Server, error) {
 	gin.SetMode(p.Config.Server.Mode)
 
 	router := gin.New()
+	if err := configureClientIPResolution(router, p.Config); err != nil {
+		return nil, err
+	}
+
 	handler := middleware.NewRequestTimeoutHandler(router, p.Config, p.ErrorHandler)
 
 	httpServer := &http.Server{
@@ -61,7 +65,30 @@ func NewServer(p Params) *Server {
 		},
 	})
 
-	return server
+	return server, nil
+}
+
+func configureClientIPResolution(router *gin.Engine, cfg *config.Config) error {
+	router.TrustedPlatform = trustedPlatformHeader(cfg.Server.TrustedPlatform)
+
+	if err := router.SetTrustedProxies(cfg.Server.TrustedProxies); err != nil {
+		return fmt.Errorf("configure trusted proxies: %w", err)
+	}
+
+	return nil
+}
+
+func trustedPlatformHeader(platform string) string {
+	switch platform {
+	case config.TrustedPlatformCloudflare:
+		return gin.PlatformCloudflare
+	case config.TrustedPlatformGoogleAppEngine:
+		return gin.PlatformGoogleAppEngine
+	case config.TrustedPlatformFlyIO:
+		return gin.PlatformFlyIO
+	default:
+		return ""
+	}
 }
 
 func (s *Server) Start(ctx context.Context) error {

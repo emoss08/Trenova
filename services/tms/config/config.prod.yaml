@@ -10,6 +10,12 @@ server:
   idleTimeout: 120s
   shutdownTimeout: 10s
   requestTimeout: 55s
+  # server.trustedProxies defaults to loopback plus the private ranges, so a
+  # reverse proxy on the same network is believed about the client IP and a
+  # direct caller is not. When the API is reachable only through an edge that
+  # overwrites its own client-IP header, name it here instead and
+  # X-Forwarded-For is ignored entirely: cloudflare | google-app-engine | flyio.
+  # trustedPlatform: cloudflare
   cors:
     enabled: true
     allowedOrigins:
