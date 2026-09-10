@@ -5,17 +5,18 @@ import "net/http"
 type ProblemType string
 
 const (
-	ProblemTypeBlank          = ProblemType("about:blank")
-	ProblemTypeValidation     = ProblemType("validation-error")
-	ProblemTypeBusiness       = ProblemType("business-rule-violation")
-	ProblemTypeDatabase       = ProblemType("database-error")
-	ProblemTypeAuthentication = ProblemType("authentication-error")
-	ProblemTypeAuthorization  = ProblemType("authorization-error")
-	ProblemTypeNotFound       = ProblemType("resource-not-found")
-	ProblemTypeRateLimit      = ProblemType("rate-limit-exceeded")
-	ProblemTypeConflict       = ProblemType("resource-conflict")
-	ProblemTypeTimeout        = ProblemType("request-timeout")
-	ProblemTypeInternal       = ProblemType("internal-error")
+	ProblemTypeBlank           = ProblemType("about:blank")
+	ProblemTypeValidation      = ProblemType("validation-error")
+	ProblemTypeBusiness        = ProblemType("business-rule-violation")
+	ProblemTypeDatabase        = ProblemType("database-error")
+	ProblemTypeAuthentication  = ProblemType("authentication-error")
+	ProblemTypeAuthorization   = ProblemType("authorization-error")
+	ProblemTypeNotFound        = ProblemType("resource-not-found")
+	ProblemTypeRequestTooLarge = ProblemType("request-entity-too-large")
+	ProblemTypeRateLimit       = ProblemType("rate-limit-exceeded")
+	ProblemTypeConflict        = ProblemType("resource-conflict")
+	ProblemTypeTimeout         = ProblemType("request-timeout")
+	ProblemTypeInternal        = ProblemType("internal-error")
 )
 
 type ProblemTypeInfo struct {
@@ -61,6 +62,12 @@ var problemTypeRegistry = map[ProblemType]ProblemTypeInfo{ //nolint:exhaustive /
 		Title:      "Resource Not Found",
 		StatusCode: http.StatusNotFound,
 		ShouldLog:  false,
+	},
+	ProblemTypeRequestTooLarge: {
+		Type:       ProblemTypeRequestTooLarge,
+		Title:      "Request Entity Too Large",
+		StatusCode: http.StatusRequestEntityTooLarge,
+		ShouldLog:  true,
 	},
 	ProblemTypeRateLimit: {
 		Type:       ProblemTypeRateLimit,
