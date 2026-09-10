@@ -10,6 +10,7 @@ const (
 	catalogDocsLabel            = "Docs"
 	catalogWebsiteLabel         = "Website"
 	catalogViewIntegrationLabel = "View Integration"
+	catalogFuelCardsLabel       = "Fuel Cards"
 	catalogPostmarkLogoURL      = "/integrations/logos/postmark_all.png"
 	catalogSlateColor           = "#0f172a"
 	catalogGoogleMapsLogoURL    = "/integrations/logos/googleMaps.svg"
@@ -328,6 +329,86 @@ var CatalogDefinitions = []CatalogItem{
 		},
 		Featured:           false,
 		SortOrder:          21,
+		PrimaryActionLabel: catalogViewIntegrationLabel,
+	},
+	{
+		Type:          integration.TypeWEXFuel,
+		Name:          "WEX",
+		Description:   "Post fuel purchases and IFTA gallons automatically from WEX and EFS fleet card transactions.",
+		Category:      integration.CategoryFuelCards,
+		CategoryLabel: catalogFuelCardsLabel,
+		LogoURL:       "/integrations/logos/wex-logo-light.png",
+		LogoLightURL:  "/integrations/logos/wex-logo-light.png",
+		LogoDarkURL:   "/integrations/logos/wex-logo-dark.png",
+		DocsURL:       "https://www.wexinc.com/products/business-payment-solutions/fleet-cards/",
+		WebsiteURL:    "https://www.wexinc.com/",
+		Color:         "#c8102e",
+		GlowFrom:      "#c8102e",
+		GlowTo:        "#f97316",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://www.wexinc.com/",
+			},
+		},
+		Featured:           false,
+		SortOrder:          50,
+		PrimaryActionLabel: catalogViewIntegrationLabel,
+	},
+	{
+		Type:          integration.TypeComdataFuel,
+		Name:          "Comdata",
+		Description:   "Post fuel purchases and IFTA gallons automatically from Comdata fleet card transactions.",
+		Category:      integration.CategoryFuelCards,
+		CategoryLabel: catalogFuelCardsLabel,
+		LogoURL:       "/integrations/logos/comdata-logo-light.png",
+		LogoLightURL:  "/integrations/logos/comdata-logo-light.png",
+		LogoDarkURL:   "/integrations/logos/comdata-logo-dark.png",
+		DocsURL:       "https://www.comdata.com/",
+		WebsiteURL:    "https://www.comdata.com/",
+		Color:         "#00539b",
+		GlowFrom:      "#00539b",
+		GlowTo:        "#38bdf8",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://www.comdata.com/",
+			},
+		},
+		Featured:           false,
+		SortOrder:          51,
+		PrimaryActionLabel: catalogViewIntegrationLabel,
+	},
+	{
+		Type:          integration.TypeRampFuel,
+		Name:          "Ramp",
+		Description:   "Read Ramp card transactions for fuel spend. Ramp runs on commercial Visa, so its rows carry the merchant and amount but not the gallons an IFTA return needs.",
+		Category:      integration.CategoryFuelCards,
+		CategoryLabel: catalogFuelCardsLabel,
+		LogoURL:       "/integrations/logos/ramp-logo-light.png",
+		LogoLightURL:  "/integrations/logos/ramp-logo-light.png",
+		LogoDarkURL:   "/integrations/logos/ramp-logo-dark.png",
+		DocsURL:       "https://docs.ramp.com/developer-api/v1/overview/introduction",
+		WebsiteURL:    "https://ramp.com/",
+		Color:         "#f7d046",
+		GlowFrom:      "#f7d046",
+		GlowTo:        "#facc15",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://docs.ramp.com/developer-api/v1/overview/introduction",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://ramp.com/",
+			},
+		},
+		Featured:           false,
+		SortOrder:          52,
 		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 }

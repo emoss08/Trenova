@@ -18,6 +18,7 @@ const row: FuelCardRow = {
   cancelledAt: null,
   cancelReason: null,
   notes: "Reissued after loss",
+  discoveredAt: null,
   version: 3,
   createdAt: 1,
   updatedAt: 2,

@@ -85,6 +85,7 @@ type ResolverRoot interface {
 	Invoice() InvoiceResolver
 	InvoiceLine() InvoiceLineResolver
 	JobPosition() JobPositionResolver
+	JournalEntry() JournalEntryResolver
 	JournalEntryLine() JournalEntryLineResolver
 	JurisdictionRule() JurisdictionRuleResolver
 	LeaveControl() LeaveControlResolver
@@ -3472,6 +3473,7 @@ type ComplexityRoot struct {
 		CancelReason      func(childComplexity int) int
 		CancelledAt       func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
+		DiscoveredAt      func(childComplexity int) int
 		ExpiresAt         func(childComplexity int) int
 		ExternalCardID    func(childComplexity int) int
 		ID                func(childComplexity int) int
@@ -3494,6 +3496,16 @@ type ComplexityRoot struct {
 	FuelCardEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	FuelCardSyncResult struct {
+		AlreadyImported func(childComplexity int) int
+		BatchID         func(childComplexity int) int
+		CardsDiscovered func(childComplexity int) int
+		Committed       func(childComplexity int) int
+		Fetched         func(childComplexity int) int
+		Provider        func(childComplexity int) int
+		Queued          func(childComplexity int) int
 	}
 
 	FuelCostResolution struct {
@@ -3629,10 +3641,12 @@ type ComplexityRoot struct {
 		DocumentID        func(childComplexity int) int
 		Error             func(childComplexity int) int
 		ErrorCount        func(childComplexity int) int
+		FeedReference     func(childComplexity int) int
 		FileName          func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Mapping           func(childComplexity int) int
 		OrganizationID    func(childComplexity int) int
+		Origin            func(childComplexity int) int
 		Provider          func(childComplexity int) int
 		RowCount          func(childComplexity int) int
 		Rows              func(childComplexity int, input *gqlmodel.FuelPurchaseImportRowsInput) int
@@ -4653,6 +4667,7 @@ type ComplexityRoot struct {
 		ArchiveWorkerCredentialType           func(childComplexity int, id string, version *int) int
 		AssignBillingQueueBiller              func(childComplexity int, id string, input gqlmodel.BillingQueueAssignInput) int
 		AssignDocumentTemplate                func(childComplexity int, input gqlmodel.AssignDocumentTemplateInput) int
+		AssignFuelCard                        func(childComplexity int, input gqlmodel.AssignFuelCardInput) int
 		AssignPayProfileToWorker              func(childComplexity int, input gqlmodel.AssignPayProfileInput) int
 		AssignRequiredWorkerTraining          func(childComplexity int, workerID string) int
 		AssignUserPosition                    func(childComplexity int, userID string, positionID *string) int
@@ -4914,6 +4929,7 @@ type ComplexityRoot struct {
 		SubmitDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		SubmitMyExpense                       func(childComplexity int, input gqlmodel.SubmitMyExpenseInput) int
 		SubmitPerformanceReview               func(childComplexity int, input gqlmodel.PerformanceReviewStatusInput) int
+		SyncFuelCardFeed                      func(childComplexity int, provider fuelpurchase.CardProvider) int
 		TransferShipmentOwnership             func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
 		TransferShipmentToBilling             func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
 		TransitionShiftSwap                   func(childComplexity int, input gqlmodel.TransitionShiftSwapInput) int
@@ -25263,6 +25279,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelCard.CreatedAt(childComplexity), true
+	case "FuelCard.discoveredAt":
+		if e.ComplexityRoot.FuelCard.DiscoveredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCard.DiscoveredAt(childComplexity), true
 	case "FuelCard.expiresAt":
 		if e.ComplexityRoot.FuelCard.ExpiresAt == nil {
 			break
@@ -25361,6 +25383,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelCardEdge.Node(childComplexity), true
+
+	case "FuelCardSyncResult.alreadyImported":
+		if e.ComplexityRoot.FuelCardSyncResult.AlreadyImported == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.AlreadyImported(childComplexity), true
+	case "FuelCardSyncResult.batchId":
+		if e.ComplexityRoot.FuelCardSyncResult.BatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.BatchID(childComplexity), true
+	case "FuelCardSyncResult.cardsDiscovered":
+		if e.ComplexityRoot.FuelCardSyncResult.CardsDiscovered == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.CardsDiscovered(childComplexity), true
+	case "FuelCardSyncResult.committed":
+		if e.ComplexityRoot.FuelCardSyncResult.Committed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.Committed(childComplexity), true
+	case "FuelCardSyncResult.fetched":
+		if e.ComplexityRoot.FuelCardSyncResult.Fetched == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.Fetched(childComplexity), true
+	case "FuelCardSyncResult.provider":
+		if e.ComplexityRoot.FuelCardSyncResult.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.Provider(childComplexity), true
+	case "FuelCardSyncResult.queued":
+		if e.ComplexityRoot.FuelCardSyncResult.Queued == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelCardSyncResult.Queued(childComplexity), true
 
 	case "FuelCostResolution.fuelIndexId":
 		if e.ComplexityRoot.FuelCostResolution.FuelIndexID == nil {
@@ -25967,6 +26032,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelPurchaseImportBatch.ErrorCount(childComplexity), true
+	case "FuelPurchaseImportBatch.feedReference":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.FeedReference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.FeedReference(childComplexity), true
 	case "FuelPurchaseImportBatch.fileName":
 		if e.ComplexityRoot.FuelPurchaseImportBatch.FileName == nil {
 			break
@@ -25991,6 +26062,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelPurchaseImportBatch.OrganizationID(childComplexity), true
+	case "FuelPurchaseImportBatch.origin":
+		if e.ComplexityRoot.FuelPurchaseImportBatch.Origin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatch.Origin(childComplexity), true
 	case "FuelPurchaseImportBatch.provider":
 		if e.ComplexityRoot.FuelPurchaseImportBatch.Provider == nil {
 			break
@@ -30884,6 +30961,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AssignDocumentTemplate(childComplexity, args["input"].(gqlmodel.AssignDocumentTemplateInput)), true
+	case "Mutation.assignFuelCard":
+		if e.ComplexityRoot.Mutation.AssignFuelCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_assignFuelCard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AssignFuelCard(childComplexity, args["input"].(gqlmodel.AssignFuelCardInput)), true
 	case "Mutation.assignPayProfileToWorker":
 		if e.ComplexityRoot.Mutation.AssignPayProfileToWorker == nil {
 			break
@@ -33740,6 +33828,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SubmitPerformanceReview(childComplexity, args["input"].(gqlmodel.PerformanceReviewStatusInput)), true
+	case "Mutation.syncFuelCardFeed":
+		if e.ComplexityRoot.Mutation.SyncFuelCardFeed == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_syncFuelCardFeed_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SyncFuelCardFeed(childComplexity, args["provider"].(fuelpurchase.CardProvider)), true
 	case "Mutation.transferShipmentOwnership":
 		if e.ComplexityRoot.Mutation.TransferShipmentOwnership == nil {
 			break
@@ -59999,6 +60098,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputApplyCustomerPaymentInput,
 		ec.unmarshalInputArchiveWorkerCredentialInput,
 		ec.unmarshalInputAssignDocumentTemplateInput,
+		ec.unmarshalInputAssignFuelCardInput,
 		ec.unmarshalInputAssignPayProfileInput,
 		ec.unmarshalInputAssignShiftInput,
 		ec.unmarshalInputAssignWorkerPTOPolicyInput,
@@ -67409,6 +67509,24 @@ enum FuelPurchaseImportRowStatus {
 enum FuelImportFormat {
   CSV
   XLSX
+  """
+  A file whose fields are at fixed column positions, per the provider's record
+  layout. The layout is configured on the connection, because the networks
+  publish theirs under their own agreements and they differ by account.
+  """
+  FixedWidth
+  """
+  Rows read from a provider's API rather than a file.
+  """
+  API
+}
+
+"""
+Whether a batch came from a person choosing a file or from a scheduled sync.
+"""
+enum FuelPurchaseImportOrigin {
+  Upload
+  Feed
 }
 
 """
@@ -67430,6 +67548,11 @@ type FuelCard {
   cancelledAt: Timestamp
   cancelReason: String
   notes: String
+  """
+  When a feed created this card from a transaction nobody had registered a card
+  for. It stays set after assignment, so where a card came from is still legible.
+  """
+  discoveredAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -67555,6 +67678,16 @@ type FuelPurchaseImportBatch {
   businessUnitId: ID!
   organizationId: ID!
   provider: FuelCardProvider!
+  """
+  Whether a person opened this batch by uploading a file, or a scheduled sync
+  opened it. A feed batch has no uploader and no stored document.
+  """
+  origin: FuelPurchaseImportOrigin!
+  """
+  What the sync read: the remote file path for a file feed, or the request window
+  for an API feed.
+  """
+  feedReference: String
   documentId: ID
   fileName: String
   sourceFormat: FuelImportFormat
@@ -67687,6 +67820,45 @@ input FuelCardsInput {
   status: FuelCardStatus
   assignedWorkerId: ID
   assignedTractorId: ID
+  """
+  Only cards with neither a tractor nor a driver on them. A feed creates cards
+  in this state the first time it sees a transaction on one.
+  """
+  unassignedOnly: Boolean
+  """
+  Only cards a feed created rather than a person.
+  """
+  discoveredOnly: Boolean
+}
+
+"""
+Ties a discovered card to the equipment or driver that carries it. Passing null
+for either clears it, and a card with neither can still not match a purchase.
+"""
+input AssignFuelCardInput {
+  id: ID!
+  version: Int!
+  assignedTractorId: ID
+  assignedWorkerId: ID
+}
+
+"""
+What one run of a card feed did.
+"""
+type FuelCardSyncResult {
+  provider: FuelCardProvider!
+  """
+  The batch the run opened, absent when the feed had nothing new.
+  """
+  batchId: ID
+  fetched: Int!
+  committed: Int!
+  """
+  Rows the run could not resolve. They stay in the batch for somebody to fix.
+  """
+  queued: Int!
+  alreadyImported: Int!
+  cardsDiscovered: Int!
 }
 
 input CancelFuelCardInput {
@@ -67779,6 +67951,12 @@ extend type Mutation {
   createFuelCard(input: FuelCardInput!): FuelCard!
   updateFuelCard(id: ID!, version: Int!, input: FuelCardInput!): FuelCard!
   cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
+  assignFuelCard(input: AssignFuelCardInput!): FuelCard!
+  """
+  Reads a connected card feed now instead of waiting for the schedule. Rows that
+  resolve are posted; the rest stay in the run's batch for review.
+  """
+  syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
   updateFuelPurchase(id: ID!, version: Int!, input: FuelPurchaseInput!): FuelPurchase!
   """
@@ -84746,6 +84924,8 @@ func (ec *executionContext) childFields_FuelCard(ctx context.Context, field grap
 		return ec.fieldContext_FuelCard_cancelReason(ctx, field)
 	case "notes":
 		return ec.fieldContext_FuelCard_notes(ctx, field)
+	case "discoveredAt":
+		return ec.fieldContext_FuelCard_discoveredAt(ctx, field)
 	case "version":
 		return ec.fieldContext_FuelCard_version(ctx, field)
 	case "createdAt":
@@ -84780,6 +84960,26 @@ func (ec *executionContext) childFields_FuelCardEdge(ctx context.Context, field 
 		return ec.fieldContext_FuelCardEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FuelCardEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelCardSyncResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "provider":
+		return ec.fieldContext_FuelCardSyncResult_provider(ctx, field)
+	case "batchId":
+		return ec.fieldContext_FuelCardSyncResult_batchId(ctx, field)
+	case "fetched":
+		return ec.fieldContext_FuelCardSyncResult_fetched(ctx, field)
+	case "committed":
+		return ec.fieldContext_FuelCardSyncResult_committed(ctx, field)
+	case "queued":
+		return ec.fieldContext_FuelCardSyncResult_queued(ctx, field)
+	case "alreadyImported":
+		return ec.fieldContext_FuelCardSyncResult_alreadyImported(ctx, field)
+	case "cardsDiscovered":
+		return ec.fieldContext_FuelCardSyncResult_cardsDiscovered(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelCardSyncResult", field.Name)
 }
 
 func (ec *executionContext) childFields_FuelCostResolution(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -85030,6 +85230,10 @@ func (ec *executionContext) childFields_FuelPurchaseImportBatch(ctx context.Cont
 		return ec.fieldContext_FuelPurchaseImportBatch_organizationId(ctx, field)
 	case "provider":
 		return ec.fieldContext_FuelPurchaseImportBatch_provider(ctx, field)
+	case "origin":
+		return ec.fieldContext_FuelPurchaseImportBatch_origin(ctx, field)
+	case "feedReference":
+		return ec.fieldContext_FuelPurchaseImportBatch_feedReference(ctx, field)
 	case "documentId":
 		return ec.fieldContext_FuelPurchaseImportBatch_documentId(ctx, field)
 	case "fileName":

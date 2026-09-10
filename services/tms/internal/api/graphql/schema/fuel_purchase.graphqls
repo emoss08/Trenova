@@ -78,6 +78,24 @@ enum FuelPurchaseImportRowStatus {
 enum FuelImportFormat {
   CSV
   XLSX
+  """
+  A file whose fields are at fixed column positions, per the provider's record
+  layout. The layout is configured on the connection, because the networks
+  publish theirs under their own agreements and they differ by account.
+  """
+  FixedWidth
+  """
+  Rows read from a provider's API rather than a file.
+  """
+  API
+}
+
+"""
+Whether a batch came from a person choosing a file or from a scheduled sync.
+"""
+enum FuelPurchaseImportOrigin {
+  Upload
+  Feed
 }
 
 """
@@ -99,6 +117,11 @@ type FuelCard {
   cancelledAt: Timestamp
   cancelReason: String
   notes: String
+  """
+  When a feed created this card from a transaction nobody had registered a card
+  for. It stays set after assignment, so where a card came from is still legible.
+  """
+  discoveredAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -224,6 +247,16 @@ type FuelPurchaseImportBatch {
   businessUnitId: ID!
   organizationId: ID!
   provider: FuelCardProvider!
+  """
+  Whether a person opened this batch by uploading a file, or a scheduled sync
+  opened it. A feed batch has no uploader and no stored document.
+  """
+  origin: FuelPurchaseImportOrigin!
+  """
+  What the sync read: the remote file path for a file feed, or the request window
+  for an API feed.
+  """
+  feedReference: String
   documentId: ID
   fileName: String
   sourceFormat: FuelImportFormat
@@ -356,6 +389,45 @@ input FuelCardsInput {
   status: FuelCardStatus
   assignedWorkerId: ID
   assignedTractorId: ID
+  """
+  Only cards with neither a tractor nor a driver on them. A feed creates cards
+  in this state the first time it sees a transaction on one.
+  """
+  unassignedOnly: Boolean
+  """
+  Only cards a feed created rather than a person.
+  """
+  discoveredOnly: Boolean
+}
+
+"""
+Ties a discovered card to the equipment or driver that carries it. Passing null
+for either clears it, and a card with neither can still not match a purchase.
+"""
+input AssignFuelCardInput {
+  id: ID!
+  version: Int!
+  assignedTractorId: ID
+  assignedWorkerId: ID
+}
+
+"""
+What one run of a card feed did.
+"""
+type FuelCardSyncResult {
+  provider: FuelCardProvider!
+  """
+  The batch the run opened, absent when the feed had nothing new.
+  """
+  batchId: ID
+  fetched: Int!
+  committed: Int!
+  """
+  Rows the run could not resolve. They stay in the batch for somebody to fix.
+  """
+  queued: Int!
+  alreadyImported: Int!
+  cardsDiscovered: Int!
 }
 
 input CancelFuelCardInput {
@@ -448,6 +520,12 @@ extend type Mutation {
   createFuelCard(input: FuelCardInput!): FuelCard!
   updateFuelCard(id: ID!, version: Int!, input: FuelCardInput!): FuelCard!
   cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
+  assignFuelCard(input: AssignFuelCardInput!): FuelCard!
+  """
+  Reads a connected card feed now instead of waiting for the schedule. Rows that
+  resolve are posted; the rest stay in the run's batch for review.
+  """
+  syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
   updateFuelPurchase(id: ID!, version: Int!, input: FuelPurchaseInput!): FuelPurchase!
   """

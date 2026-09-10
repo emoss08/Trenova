@@ -253,6 +253,9 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 		},
 		SupportsTestConnect: true,
 	},
+	TypeWEXFuel:     wexFuelSpec(),
+	TypeComdataFuel: comdataFuelSpec(),
+	TypeRampFuel:    rampFuelSpec(),
 }
 
 func HasRequiredConfiguration(configuration map[string]any, spec IntegrationSpec) bool {

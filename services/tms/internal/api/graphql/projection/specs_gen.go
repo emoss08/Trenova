@@ -208,6 +208,8 @@ var JournalEntryLineAccountSpec TypeSpec
 
 var JournalReversalSpec TypeSpec
 
+var JournalSourceInfoSpec TypeSpec
+
 var JurisdictionRuleSpec TypeSpec
 
 var JurisdictionRuleOverrideSpec TypeSpec
@@ -7587,6 +7589,10 @@ func init() {
 				FieldMapKey: "notes",
 			},
 			{
+				Name:        "discoveredAt",
+				FieldMapKey: "discoveredAt",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -7914,6 +7920,14 @@ func init() {
 			{
 				Name:        "provider",
 				FieldMapKey: "provider",
+			},
+			{
+				Name:        "origin",
+				FieldMapKey: "origin",
+			},
+			{
+				Name:        "feedReference",
+				FieldMapKey: "feedReference",
 			},
 			{
 				Name:        "documentId",
@@ -9683,6 +9697,41 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	JournalSourceInfoSpec = TypeSpec{
+		TypeName: "JournalSourceInfo",
+		FieldMap: buncolgen.SourceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "sourceObjectType",
+				FieldMapKey: "sourceObjectType",
+			},
+			{
+				Name:        "sourceObjectId",
+				FieldMapKey: "sourceObjectId",
+			},
+			{
+				Name:        "sourceEventType",
+				FieldMapKey: "sourceEventType",
+			},
+			{
+				Name:        "sourceDocumentNumber",
+				FieldMapKey: "sourceDocumentNumber",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
 			},
 		},
 	}

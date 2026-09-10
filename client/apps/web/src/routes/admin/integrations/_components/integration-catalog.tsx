@@ -37,6 +37,11 @@ import { EIAFuelPricesIntegrationModal } from "./eia/eia-integration-modal";
 import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-modal";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
+import {
+  ComdataFuelIntegrationModal,
+  RampFuelIntegrationModal,
+  WEXFuelIntegrationModal,
+} from "./fuel/fuel-integration-modals";
 import { PCMilerIntegrationModal } from "./pcmiler/pcmiler-integration-modal";
 import { PostmarkIntegrationModal } from "./postmark/postmark-integration-modal";
 import { ResendIntegrationModal } from "./resend/resend-integration-modal";
@@ -422,6 +427,18 @@ export function IntegrationCatalogCard() {
       <PostmarkIntegrationModal
         open={searchParams.type === "Postmark"}
         onOpenChange={setModalOpen("Postmark")}
+      />
+      <WEXFuelIntegrationModal
+        open={searchParams.type === "WEXFuel"}
+        onOpenChange={setModalOpen("WEXFuel")}
+      />
+      <ComdataFuelIntegrationModal
+        open={searchParams.type === "ComdataFuel"}
+        onOpenChange={setModalOpen("ComdataFuel")}
+      />
+      <RampFuelIntegrationModal
+        open={searchParams.type === "RampFuel"}
+        onOpenChange={setModalOpen("RampFuel")}
       />
     </>
   );

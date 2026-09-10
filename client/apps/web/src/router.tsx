@@ -918,6 +918,18 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/fuel/unassigned-cards",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.FuelCard),
+            ),
+            async lazy() {
+              const { UnassignedFuelCardsPage } = await import("@/routes/fuel-card/page");
+              return { Component: UnassignedFuelCardsPage };
+            },
+          },
+          {
             path: "/fuel/configuration-files/ifta-tax-rates",
             loader: combineLoaders(
               protectedLoader,

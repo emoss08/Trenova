@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,25 +30,27 @@ func TestEndpointConfigFromProfile(t *testing.T) {
 		"privateKey": "",
 	})
 
-	require.Equal(t, "sftp.example.com", cfg.host)
-	require.Equal(t, "22", cfg.port)
-	require.Equal(t, "trenova", cfg.username)
-	require.Equal(t, "password", cfg.authMode)
+	require.Equal(t, "sftp.example.com", cfg.Host)
+	require.Equal(t, "22", cfg.Port)
+	require.Equal(t, "trenova", cfg.Username)
+	require.Equal(t, "password", cfg.AuthMode)
 	require.Equal(t, "/mailbox/out", cfg.outboundDirectory)
 	require.Equal(t, "{messageId}.edi", cfg.fileNamingPattern)
-	require.Equal(t, "secret", cfg.password)
-	require.Empty(t, cfg.privateKey)
+	require.Equal(t, "secret", cfg.Password)
+	require.Empty(t, cfg.PrivateKey)
 }
 
 func TestValidateEndpointConfig(t *testing.T) {
 	t.Parallel()
 
 	valid := endpointConfig{
-		host:         "sftp.example.com",
-		username:     "trenova",
-		authMode:     AuthModePassword,
-		knownHostKey: "ssh-ed25519 AAAA",
-		password:     "secret",
+		Config: sftp.Config{
+			Host:         "sftp.example.com",
+			Username:     "trenova",
+			AuthMode:     AuthModePassword,
+			KnownHostKey: "ssh-ed25519 AAAA",
+			Password:     "secret",
+		},
 	}
 
 	tests := []struct {
@@ -58,35 +61,35 @@ func TestValidateEndpointConfig(t *testing.T) {
 		{name: "valid password auth", mutate: func(*endpointConfig) {}},
 		{
 			name:    "missing host",
-			mutate:  func(cfg *endpointConfig) { cfg.host = "" },
+			mutate:  func(cfg *endpointConfig) { cfg.Host = "" },
 			wantErr: "SFTP host is required",
 		},
 		{
 			name:    "missing username",
-			mutate:  func(cfg *endpointConfig) { cfg.username = "" },
+			mutate:  func(cfg *endpointConfig) { cfg.Username = "" },
 			wantErr: "SFTP username is required",
 		},
 		{
 			name:    "missing known host key",
-			mutate:  func(cfg *endpointConfig) { cfg.knownHostKey = "" },
+			mutate:  func(cfg *endpointConfig) { cfg.KnownHostKey = "" },
 			wantErr: "SFTP known host key is required",
 		},
 		{
 			name:    "missing password secret",
-			mutate:  func(cfg *endpointConfig) { cfg.password = "" },
+			mutate:  func(cfg *endpointConfig) { cfg.Password = "" },
 			wantErr: "SFTP password secret is required",
 		},
 		{
 			name: "missing private key secret",
 			mutate: func(cfg *endpointConfig) {
-				cfg.authMode = "privateKey"
-				cfg.password = ""
+				cfg.AuthMode = "privateKey"
+				cfg.Password = ""
 			},
 			wantErr: "SFTP private key secret is required",
 		},
 		{
 			name:    "non numeric port",
-			mutate:  func(cfg *endpointConfig) { cfg.port = "abc" },
+			mutate:  func(cfg *endpointConfig) { cfg.Port = "abc" },
 			wantErr: "SFTP port must be numeric",
 		},
 	}
@@ -95,7 +98,7 @@ func TestValidateEndpointConfig(t *testing.T) {
 			t.Parallel()
 			cfg := valid
 			tt.mutate(&cfg)
-			err := validateEndpointConfig(&cfg)
+			err := cfg.Validate()
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 				return

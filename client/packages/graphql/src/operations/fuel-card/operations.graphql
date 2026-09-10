@@ -13,6 +13,7 @@ fragment FuelCardFields on FuelCard {
   cancelledAt
   cancelReason
   notes
+  discoveredAt
   version
   createdAt
   updatedAt
@@ -64,5 +65,23 @@ mutation UpdateFuelCard($id: ID!, $version: Int!, $input: FuelCardInput!) {
 mutation CancelFuelCard($input: CancelFuelCardInput!) {
   cancelFuelCard(input: $input) {
     ...FuelCardFields
+  }
+}
+
+mutation AssignFuelCard($input: AssignFuelCardInput!) {
+  assignFuelCard(input: $input) {
+    ...FuelCardFields
+  }
+}
+
+mutation SyncFuelCardFeed($provider: FuelCardProvider!) {
+  syncFuelCardFeed(provider: $provider) {
+    provider
+    batchId
+    fetched
+    committed
+    queued
+    alreadyImported
+    cardsDiscovered
   }
 }

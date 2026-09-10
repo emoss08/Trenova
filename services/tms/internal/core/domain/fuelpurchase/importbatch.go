@@ -48,11 +48,13 @@ type ImportBatch struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Provider     CardProvider `json:"provider"     bun:"provider,type:fuel_card_provider_enum,notnull"`
-	DocumentID   *pulid.ID    `json:"documentId"   bun:"document_id,type:VARCHAR(100),nullzero"`
-	FileName     string       `json:"fileName"     bun:"file_name,type:VARCHAR(255),nullzero"`
-	SourceFormat SourceFormat `json:"sourceFormat" bun:"source_format,type:fuel_import_format_enum,nullzero"`
-	Status       ImportStatus `json:"status"       bun:"status,type:fuel_import_status_enum,notnull,default:'Pending'"`
+	Provider      CardProvider `json:"provider"      bun:"provider,type:fuel_card_provider_enum,notnull"`
+	Origin        ImportOrigin `json:"origin"        bun:"origin,type:fuel_import_origin_enum,notnull"`
+	FeedReference string       `json:"feedReference" bun:"feed_reference,type:VARCHAR(255),nullzero"`
+	DocumentID    *pulid.ID    `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
+	FileName      string       `json:"fileName"      bun:"file_name,type:VARCHAR(255),nullzero"`
+	SourceFormat  SourceFormat `json:"sourceFormat"  bun:"source_format,type:fuel_import_format_enum,nullzero"`
+	Status        ImportStatus `json:"status"        bun:"status,type:fuel_import_status_enum,notnull,default:'Pending'"`
 
 	DefaultFuelType   domaintypes.IFTAFuelType `json:"defaultFuelType"   bun:"default_fuel_type,type:ifta_fuel_type_enum,nullzero"`
 	DefaultFuelCardID *pulid.ID                `json:"defaultFuelCardId" bun:"default_fuel_card_id,type:VARCHAR(100),nullzero"`
@@ -86,6 +88,10 @@ type ImportBatch struct {
 
 func (b *ImportBatch) Normalize() {
 	b.FileName = strings.TrimSpace(b.FileName)
+	b.FeedReference = strings.TrimSpace(b.FeedReference)
+	if b.Origin == "" {
+		b.Origin = ImportOriginUpload
+	}
 	b.DefaultCurrency = strings.ToUpper(strings.TrimSpace(b.DefaultCurrency))
 	if b.DefaultCurrency == "" {
 		b.DefaultCurrency = money.DefaultCurrencyCode
@@ -106,7 +112,15 @@ func (b *ImportBatch) Validate(multiErr *errortypes.MultiError) {
 				Error("File name cannot be longer than 255 characters"),
 		),
 		validation.Field(&b.SourceFormat,
-			domainvalidation.ValidEnum[SourceFormat]("Source format must be CSV or XLSX"),
+			domainvalidation.ValidEnum[SourceFormat]("Source format is not valid"),
+		),
+		validation.Field(&b.Origin,
+			validation.Required.Error("Origin is required"),
+			domainvalidation.ValidEnum[ImportOrigin]("Origin is not valid"),
+		),
+		validation.Field(&b.FeedReference,
+			validation.Length(0, maxImportFileNameLength).
+				Error("Feed reference cannot be longer than 255 characters"),
 		),
 		validation.Field(&b.Status,
 			validation.Required.Error("Status is required"),
@@ -130,7 +144,8 @@ func (b *ImportBatch) validateLifecycle(multiErr *errortypes.MultiError) {
 		multiErr.Add("rowCount", errortypes.ErrInvalid, "Row counts cannot be negative")
 	}
 
-	if b.Status == ImportStatusParsed && (b.DocumentID == nil || b.DocumentID.IsNil()) {
+	if b.Status == ImportStatusParsed && !b.Origin.IsFeed() &&
+		(b.DocumentID == nil || b.DocumentID.IsNil()) {
 		multiErr.Add(
 			"documentId",
 			errortypes.ErrRequired,
@@ -146,7 +161,7 @@ func (b *ImportBatch) validateLifecycle(multiErr *errortypes.MultiError) {
 				"A committed import must record when it was committed",
 			)
 		}
-		if b.CommittedByID.IsNil() {
+		if b.CommittedByID.IsNil() && !b.Origin.IsFeed() {
 			multiErr.Add(
 				"committedById",
 				errortypes.ErrRequired,
@@ -183,6 +198,8 @@ func (b *ImportBatch) NewRowCount() int {
 }
 
 func (b *ImportBatch) HasRowsToCommit() bool { return b.NewRowCount() > 0 }
+
+func (b *ImportBatch) IsFeed() bool { return b.Origin.IsFeed() }
 
 func (b *ImportBatch) GetID() pulid.ID { return b.ID }
 

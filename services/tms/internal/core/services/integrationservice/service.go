@@ -30,23 +30,34 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	AuditService services.AuditService
 	Registry     *permission.Registry
+
+	FuelCardConnectors []services.FuelCardProvider `group:"fuelCardConnectors"`
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         repositories.IntegrationRepository
-	encryption   *encryptionservice.Service
-	auditService services.AuditService
-	registry     *permission.Registry
+	l                  *zap.Logger
+	repo               repositories.IntegrationRepository
+	encryption         *encryptionservice.Service
+	auditService       services.AuditService
+	registry           *permission.Registry
+	fuelCardConnectors map[integration.Type]services.FuelCardProvider
 }
 
 func New(p Params) *Service {
+	connectors := make(map[integration.Type]services.FuelCardProvider, len(p.FuelCardConnectors))
+	for _, connector := range p.FuelCardConnectors {
+		if connector != nil {
+			connectors[connector.IntegrationType()] = connector
+		}
+	}
+
 	return &Service{
-		l:            p.Logger.Named("service.integration"),
-		repo:         p.Repo,
-		encryption:   p.Encryption,
-		auditService: p.AuditService,
-		registry:     p.Registry,
+		l:                  p.Logger.Named("service.integration"),
+		repo:               p.Repo,
+		encryption:         p.Encryption,
+		auditService:       p.AuditService,
+		registry:           p.Registry,
+		fuelCardConnectors: connectors,
 	}
 }
 
@@ -308,7 +319,7 @@ func (s *Service) TestConnection(
 		)
 	}
 
-	tester, ok := connectionTesters[typ]
+	tester, ok := s.testerFor(typ)
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"no connection tester registered for this integration type",

@@ -1,5 +1,5 @@
 {
-  "operationCount": 692,
+  "operationCount": 694,
   "fragmentCount": 167,
   "operations": [
     {
@@ -1257,6 +1257,28 @@
       "sdl": "mutation AssignBillingQueueBiller($id: ID!, $input: BillingQueueAssignInput!) {\n  assignBillingQueueBiller(id: $id, input: $input) {\n    ...BillingQueueActionFields\n  }\n}\n\nfragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AssignFuelCard",
+      "kind": "mutation",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:4294d48aa2abbc1b3d399f93288d3259fd57d03440f6baf1c6288c30ffa7df7f",
+      "rootFields": [
+        "assignFuelCard"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AssignFuelCardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelCardFields"
+      ],
+      "usages": [],
+      "sdl": "mutation AssignFuelCard($input: AssignFuelCardInput!) {\n  assignFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
       "name": "AssignPayProfileToWorker",
       "kind": "mutation",
       "domain": "driver-settlement",
@@ -1901,7 +1923,7 @@
       "kind": "mutation",
       "domain": "fuel-card",
       "sourceFile": "src/operations/fuel-card/operations.graphql",
-      "hash": "sha256:f93748bfecc5f07647f51fc9929ae94346009a0f0d17df3e835609e29741a176",
+      "hash": "sha256:57ea8939185a798d8b009ea00c709e301b26e00a3630c851edd91af69c3e0ce2",
       "rootFields": [
         "cancelFuelCard"
       ],
@@ -1916,7 +1938,7 @@
         "FuelCardFields"
       ],
       "usages": [],
-      "sdl": "mutation CancelFuelCard($input: CancelFuelCardInput!) {\n  cancelFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+      "sdl": "mutation CancelFuelCard($input: CancelFuelCardInput!) {\n  cancelFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "CancelMyExpense",
@@ -2836,7 +2858,7 @@
       "kind": "mutation",
       "domain": "fuel-card",
       "sourceFile": "src/operations/fuel-card/operations.graphql",
-      "hash": "sha256:31868851d191fb859a57778c4ac76e24dbdb82f75fee9620d93e8f4924954779",
+      "hash": "sha256:2403b71f501d02a0850060a7cad83dbae2bb9b2a0fb75ee686a03eeff90cf2a1",
       "rootFields": [
         "createFuelCard"
       ],
@@ -2851,7 +2873,7 @@
         "FuelCardFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateFuelCard($input: FuelCardInput!) {\n  createFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+      "sdl": "mutation CreateFuelCard($input: FuelCardInput!) {\n  createFuelCard(input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "CreateFuelIndex",
@@ -6288,7 +6310,7 @@
       "kind": "query",
       "domain": "fuel-card",
       "sourceFile": "src/operations/fuel-card/operations.graphql",
-      "hash": "sha256:01fb3333e469ca988846cda5556e9e6b0dbfc125e4fa81f01739c0048d258759",
+      "hash": "sha256:b6577686f4d8e00dd0fd4f4a9ba529b2b9874da0e842888cbe96ad80334c0dfb",
       "rootFields": [
         "fuelCard"
       ],
@@ -6303,14 +6325,14 @@
         "FuelCardFields"
       ],
       "usages": [],
-      "sdl": "query FuelCard($id: ID!) {\n  fuelCard(id: $id) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+      "sdl": "query FuelCard($id: ID!) {\n  fuelCard(id: $id) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "FuelCardTable",
       "kind": "query",
       "domain": "fuel-card",
       "sourceFile": "src/operations/fuel-card/operations.graphql",
-      "hash": "sha256:08bab34c0b22a68ef521d267fe0f3138a9288b3cfd19b48aa23c19710e77f5ef",
+      "hash": "sha256:fe01c96e14012ea096b5fb1f250fc042b4171ee9ab1264f1bd7d84c8a8f9c52b",
       "rootFields": [
         "fuelCards"
       ],
@@ -6330,7 +6352,7 @@
         "FuelCardFields"
       ],
       "usages": [],
-      "sdl": "query FuelCardTable($input: FuelCardsInput!, $includeTotalCount: Boolean = true) {\n  fuelCards(input: $input) {\n    edges {\n      node {\n        ...FuelCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+      "sdl": "query FuelCardTable($input: FuelCardsInput!, $includeTotalCount: Boolean = true) {\n  fuelCards(input: $input) {\n    edges {\n      node {\n        ...FuelCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "FuelDashboard",
@@ -12480,6 +12502,26 @@
       "sdl": "query SuggestCarrierForEdiInvoice($invoiceId: ID!) {\n  suggestCarrierForEdiInvoice(invoiceId: $invoiceId) {\n    id\n    code\n    name\n    scac\n    dotNumber\n  }\n}"
     },
     {
+      "name": "SyncFuelCardFeed",
+      "kind": "mutation",
+      "domain": "fuel-card",
+      "sourceFile": "src/operations/fuel-card/operations.graphql",
+      "hash": "sha256:4ae581acc39b91d46ed28d1f27902d16277724e2bb9b983d6750fa2fc19e1134",
+      "rootFields": [
+        "syncFuelCardFeed"
+      ],
+      "variables": [
+        {
+          "name": "provider",
+          "type": "FuelCardProvider!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation SyncFuelCardFeed($provider: FuelCardProvider!) {\n  syncFuelCardFeed(provider: $provider) {\n    provider\n    batchId\n    fetched\n    committed\n    queued\n    alreadyImported\n    cardsDiscovered\n  }\n}"
+    },
+    {
       "name": "TableConfigurationDetail",
       "kind": "query",
       "domain": "table-configuration",
@@ -13457,7 +13499,7 @@
       "kind": "mutation",
       "domain": "fuel-card",
       "sourceFile": "src/operations/fuel-card/operations.graphql",
-      "hash": "sha256:0d1814fc8247359cd021b69608a739da4b0b1d9b5107c474b55cbc969d836251",
+      "hash": "sha256:7b988de6a70d1106cd0aa908f5d9c95e0984a9f8193b669e7d3028db10f18a46",
       "rootFields": [
         "updateFuelCard"
       ],
@@ -13482,7 +13524,7 @@
         "FuelCardFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateFuelCard($id: ID!, $version: Int!, $input: FuelCardInput!) {\n  updateFuelCard(id: $id, version: $version, input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+      "sdl": "mutation UpdateFuelCard($id: ID!, $version: Int!, $input: FuelCardInput!) {\n  updateFuelCard(id: $id, version: $version, input: $input) {\n    ...FuelCardFields\n  }\n}\n\nfragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "UpdateFuelIndex",
@@ -16602,6 +16644,7 @@
       "sourceFile": "src/operations/fuel-card/operations.graphql",
       "fragments": [],
       "usedByOperations": [
+        "AssignFuelCard",
         "CancelFuelCard",
         "CreateFuelCard",
         "FuelCard",
@@ -16609,7 +16652,7 @@
         "UpdateFuelCard"
       ],
       "usages": [],
-      "sdl": "fragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
+      "sdl": "fragment FuelCardFields on FuelCard {\n  id\n  businessUnitId\n  organizationId\n  provider\n  lastFour\n  label\n  externalCardId\n  assignedWorkerId\n  assignedTractorId\n  status\n  expiresAt\n  cancelledAt\n  cancelReason\n  notes\n  discoveredAt\n  version\n  createdAt\n  updatedAt\n  assignedWorker {\n    id\n    wholeName\n    firstName\n    lastName\n  }\n  assignedTractor {\n    id\n    code\n  }\n}"
     },
     {
       "name": "FuelIndexFields",
@@ -18632,6 +18675,32 @@
         }
       ],
       "sdl": "input ArchiveWorkerCredentialInput {\n  id: ID!\n  reason: String\n  version: Int\n}"
+    },
+    "AssignFuelCardInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "assignedTractorId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "assignedWorkerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nTies a discovered card to the equipment or driver that carries it. Passing null\nfor either clears it, and a card with neither can still not match a purchase.\n\"\"\"\ninput AssignFuelCardInput {\n  assignedTractorId: ID\n  assignedWorkerId: ID\n  id: ID!\n  version: Int!\n}"
     },
     "AssignPayProfileInput": {
       "kind": "input",
@@ -21145,6 +21214,11 @@
           "defaultValue": null
         },
         {
+          "name": "discoveredOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
           "name": "fieldFilters",
           "type": "[FieldFilterInput!]",
           "defaultValue": null
@@ -21179,9 +21253,14 @@
           "name": "status",
           "type": "FuelCardStatus",
           "defaultValue": null
+        },
+        {
+          "name": "unassignedOnly",
+          "type": "Boolean",
+          "defaultValue": null
         }
       ],
-      "sdl": "input FuelCardsInput {\n  after: String\n  assignedTractorId: ID\n  assignedWorkerId: ID\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  provider: FuelCardProvider\n  query: String\n  sort: [SortFieldInput!]\n  status: FuelCardStatus\n}"
+      "sdl": "input FuelCardsInput {\n  after: String\n  assignedTractorId: ID\n  assignedWorkerId: ID\n  \"\"\"Only cards a feed created rather than a person.\"\"\"\n  discoveredOnly: Boolean\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  provider: FuelCardProvider\n  query: String\n  sort: [SortFieldInput!]\n  status: FuelCardStatus\n  \"\"\"\n  Only cards with neither a tractor nor a driver on them. A feed creates cards\n  in this state the first time it sees a transaction on one.\n  \"\"\"\n  unassignedOnly: Boolean\n}"
     },
     "FuelIndexInput": {
       "kind": "input",

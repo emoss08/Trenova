@@ -335,15 +335,17 @@ func (r *repository) CommitImport(
 			}
 		}
 
-		committedAt := req.CommittedAt
-		batch.Status = fuelpurchase.ImportStatusCommitted
-		batch.CommittedCount = insertedCount
-		batch.CommittedAt = &committedAt
-		batch.CommittedByID = req.CommittedByID
+		batch.CommittedCount += insertedCount
 		batch.Error = ""
 		if batch.Summary != nil {
 			batch.Summary.NewCount = 0
 			batch.Summary.AlreadyImportedCount += len(skippedRowIDs)
+		}
+		if !req.KeepOpen {
+			committedAt := req.CommittedAt
+			batch.Status = fuelpurchase.ImportStatusCommitted
+			batch.CommittedAt = &committedAt
+			batch.CommittedByID = req.CommittedByID
 		}
 		if _, uErr := r.updateBatch(txCtx, tx, batch); uErr != nil {
 			return uErr

@@ -7,7 +7,7 @@ import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import type { WorkerHealthMeta } from "@trenova/shared/lib/worker-health";
 
 export function memberHref(workerId: string): string {
-  return `/hr/workers?entityId=${workerId}&modType=edit`;
+  return `/hr/workers?panelEntityId=${workerId}&panelType=edit`;
 }
 
 type MemberAvatarProps = {
@@ -49,7 +49,7 @@ export function MemberIdentity({ member, size = "default", className }: MemberId
   const secondary = [member.positionTitle, member.fleetCode].filter(Boolean).join(" · ");
 
   return (
-    <div className={cn("flex min-w-0 items-center gap-2.5", className)}>
+    <div className={cn("flex flex-row min-w-0 items-center gap-2.5", className)}>
       <MemberAvatar member={member} size={size} />
       <div className="flex min-w-0 flex-col leading-tight">
         <span className="flex min-w-0 items-center gap-1.5">
