@@ -45,6 +45,9 @@ var (
 	ErrCredentialedWildcardCORS = errors.New(
 		"production and staging cannot allow wildcard CORS with credentials",
 	)
+	ErrInvalidTrustedProxy = errors.New(
+		"server.trustedProxies entries must be an IP address or CIDR block",
+	)
 	ErrInvalidHostPrefixCookie = errors.New(
 		"__Host- session cookies require secure=true, httpOnly=true, sameSite=strict, path=/, and an empty domain",
 	)
