@@ -31,12 +31,12 @@ func TestNewCreatesService(t *testing.T) {
 func TestGetEntryDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
-	entry := &journalentry.Entry{ID: pulid.MustNew("je_")}
+	entry := &journalentry.JournalEntry{ID: pulid.MustNew("je_")}
 	repo := mocks.NewMockJournalEntryRepository(t)
 	var actualReq repositories.GetJournalEntryByIDRequest
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.Entry, error) {
+		RunAndReturn(func(_ context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error) {
 			actualReq = req
 			return entry, nil
 		})
@@ -76,7 +76,7 @@ func TestListEntriesDelegatesToRepository(t *testing.T) {
 
 	repo := mocks.NewMockJournalEntryRepository(t)
 	req := &repositories.ListJournalEntriesRequest{Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}}}
-	expected := &pagination.ListResult[*journalentry.Entry]{Items: []*journalentry.Entry{{ID: pulid.MustNew("je_")}}, Total: 1}
+	expected := &pagination.ListResult[*journalentry.JournalEntry]{Items: []*journalentry.JournalEntry{{ID: pulid.MustNew("je_")}}, Total: 1}
 	repo.EXPECT().List(mock.Anything, req).Return(expected, nil).Once()
 	svc := &Service{entryRepo: repo}
 

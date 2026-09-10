@@ -48,7 +48,8 @@ type Params struct {
 	WorkerRepo   repositories.WorkerRepository
 	Documents    services.InvoiceDocumentService
 	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	Realtime     services.RealtimeService      `optional:"true"`
+	Feeds        services.FuelCardFeedResolver `optional:"true"`
 	Validator    *Validator
 }
 
@@ -61,6 +62,7 @@ type Service struct {
 	documents     services.InvoiceDocumentService
 	auditService  services.AuditService
 	realtime      services.RealtimeService
+	feeds         services.FuelCardFeedResolver
 	validator     *Validator
 	now           func() int64
 }
@@ -75,6 +77,7 @@ func New(p Params) *Service {
 		documents:     p.Documents,
 		auditService:  p.AuditService,
 		realtime:      p.Realtime,
+		feeds:         p.Feeds,
 		validator:     p.Validator,
 		now:           timeutils.NowUnix,
 	}
@@ -89,6 +92,7 @@ type Deps struct {
 	Documents     services.InvoiceDocumentService
 	AuditService  services.AuditService
 	Realtime      services.RealtimeService
+	Feeds         services.FuelCardFeedResolver
 	Validator     *Validator
 	Now           func() int64
 }
@@ -111,6 +115,7 @@ func NewWithDeps(d Deps) *Service {
 		documents:     d.Documents,
 		auditService:  d.AuditService,
 		realtime:      d.Realtime,
+		feeds:         d.Feeds,
 		validator:     d.Validator,
 		now:           now,
 	}

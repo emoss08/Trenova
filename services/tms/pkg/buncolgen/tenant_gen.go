@@ -2773,6 +2773,178 @@ var OrganizationMembershipFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// PasswordResetToken — table "password_reset_tokens", alias "prt"
+// ---------------------------------------------------------------------------
+
+// PasswordResetTokenTable holds the table name, alias, and primary key columns
+// for the "password_reset_tokens" table. The alias "prt" is used in all generated
+// SQL fragments (e.g. "prt.id = ?").
+var PasswordResetTokenTable = TableInfo{
+	Name:       "password_reset_tokens",
+	Alias:      "prt",
+	PrimaryKey: []string{"id"},
+}
+
+// PasswordResetTokenColumns provides type-safe column references for the "password_reset_tokens" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PasswordResetTokenColumns.ID.String())
+//	// SELECT prt.id FROM password_reset_tokens AS prt
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PasswordResetTokenColumns.ID.Eq(), id)           // WHERE prt.id = ?
+//	q.Order(PasswordResetTokenColumns.CreatedAt.OrderDesc())  // ORDER BY prt.created_at DESC
+var PasswordResetTokenColumns = struct {
+	ID             Column // "id" → qualified: "prt.id"
+	UserID         Column // "user_id" → qualified: "prt.user_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "prt.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "prt.organization_id"
+	TokenHash      Column // "token_hash" → qualified: "prt.token_hash"
+	ExpiresAt      Column // "expires_at" → qualified: "prt.expires_at"
+	UsedAt         Column // "used_at" → qualified: "prt.used_at"
+	InvalidatedAt  Column // "invalidated_at" → qualified: "prt.invalidated_at"
+	CreatedAt      Column // "created_at" → qualified: "prt.created_at"
+}{
+	ID:             NewColumn("id", "prt"),
+	UserID:         NewColumn("user_id", "prt"),
+	BusinessUnitID: NewColumn("business_unit_id", "prt"),
+	OrganizationID: NewColumn("organization_id", "prt"),
+	TokenHash:      NewColumn("token_hash", "prt"),
+	ExpiresAt:      NewColumn("expires_at", "prt"),
+	UsedAt:         NewColumn("used_at", "prt"),
+	InvalidatedAt:  NewColumn("invalidated_at", "prt"),
+	CreatedAt:      NewColumn("created_at", "prt"),
+}
+
+// PasswordResetTokenFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by PasswordResetToken.GetStaticFieldMap().
+var PasswordResetTokenFieldMap = map[string]string{
+	"id":             "id",
+	"userId":         "user_id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"expiresAt":      "expires_at",
+	"usedAt":         "used_at",
+	"invalidatedAt":  "invalidated_at",
+	"createdAt":      "created_at",
+}
+
+// PasswordResetTokenInsertableColumns lists column names suitable for INSERT statements on the "password_reset_tokens" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PasswordResetTokenInsertableColumns = []string{
+	"id",
+	"user_id",
+	"business_unit_id",
+	"organization_id",
+	"token_hash",
+	"expires_at",
+	"used_at",
+	"invalidated_at",
+	"created_at",
+}
+
+// PasswordResetTokenRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(PasswordResetTokenRelations.User)
+//	// Bun eager-loads the User association via a separate query
+var PasswordResetTokenRelations = struct {
+	User string
+}{
+	User: "User",
+}
+
+// PasswordResetTokenScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE prt.organization_id = ? AND prt.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.PasswordResetTokenScopeTenant(sq, ti).
+//		Where(buncolgen.PasswordResetTokenColumns.ID.Eq(), id)
+func PasswordResetTokenScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, PasswordResetTokenColumns.OrganizationID, PasswordResetTokenColumns.BusinessUnitID, ti)
+}
+
+// PasswordResetTokenScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.PasswordResetTokenScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.PasswordResetTokenColumns.ID.In(), bun.List(ids))
+//	})
+func PasswordResetTokenScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, PasswordResetTokenColumns.OrganizationID, PasswordResetTokenColumns.BusinessUnitID, ti)
+}
+
+// PasswordResetTokenScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.PasswordResetTokenScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.PasswordResetTokenColumns.ID.Eq(), id)
+//	})
+func PasswordResetTokenScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, PasswordResetTokenColumns.OrganizationID, PasswordResetTokenColumns.BusinessUnitID, ti)
+}
+
+// PasswordResetTokenApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.PasswordResetTokenApplyTenant(tenantInfo))
+func PasswordResetTokenApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(PasswordResetTokenColumns.OrganizationID, PasswordResetTokenColumns.BusinessUnitID, ti)
+}
+
+// PasswordResetTokenFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "password_reset_tokens" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PasswordResetTokenFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PasswordResetTokenFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ExpiresAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	UsedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedAt" → DB: "used_at"
+	InvalidatedAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invalidatedAt" → DB: "invalidated_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	UsedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usedAt", op, value)
+	},
+	InvalidatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invalidatedAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // SSOConfig — table "sso_configs", alias "ssoc"
 // ---------------------------------------------------------------------------
 

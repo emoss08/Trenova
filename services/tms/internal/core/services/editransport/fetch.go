@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"path"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/maputils"
-	"github.com/pkg/sftp"
+	"github.com/emoss08/trenova/shared/sftp"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -55,32 +55,27 @@ func fetchInboundOverSFTP(
 	if err != nil {
 		return nil, err
 	}
-	client, sshClient, err := dialSFTP(ctx, cfg)
+	client, err := sftp.Dial(ctx, cfg.Config)
 	if err != nil {
 		return nil, err
 	}
-	defer sshClient.Close()
 	defer client.Close()
 
-	entries, err := client.ReadDir(inboundDirectory)
+	entries, err := client.ListFiles(inboundDirectory)
 	if err != nil {
-		return nil, fmt.Errorf("list inbound directory: %w", err)
+		return nil, err
 	}
 	files := make([]*services.EDIInboundRemoteFile, 0, len(entries))
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		remotePath := path.Join(inboundDirectory, entry.Name())
-		contents, readErr := readRemoteFile(client, remotePath)
+		contents, readErr := client.ReadFile(entry.Path)
 		if readErr != nil {
-			return nil, fmt.Errorf("read inbound file %s: %w", remotePath, readErr)
+			return nil, fmt.Errorf("read inbound file %s: %w", entry.Path, readErr)
 		}
 		files = append(files, &services.EDIInboundRemoteFile{
-			Path:     remotePath,
-			Name:     entry.Name(),
+			Path:     entry.Path,
+			Name:     entry.Name,
 			Contents: contents,
-			Size:     entry.Size(),
+			Size:     entry.Size,
 		})
 	}
 	return files, nil
@@ -95,27 +90,17 @@ func archiveInboundOverSFTP(
 	if err != nil {
 		return err
 	}
-	client, sshClient, err := dialSFTP(ctx, cfg)
+	client, err := sftp.Dial(ctx, cfg.Config)
 	if err != nil {
 		return err
 	}
-	defer sshClient.Close()
 	defer client.Close()
 
-	archiveDirectory := stringOrDefault(
+	archiveDirectory := stringutils.WithDefault(
 		maputils.StringValue(req.Profile.Config, configKeyArchiveDir),
 		path.Join(inboundDirectory, "processed"),
 	)
-	if err = client.MkdirAll(archiveDirectory); err != nil {
-		return fmt.Errorf("create archive directory: %w", err)
-	}
-	archivePath := path.Join(archiveDirectory, path.Base(remotePath))
-	if err = client.PosixRename(remotePath, archivePath); err != nil {
-		if renameErr := client.Rename(remotePath, archivePath); renameErr != nil {
-			return fmt.Errorf("archive inbound file: %w", renameErr)
-		}
-	}
-	return nil
+	return client.Archive(remotePath, archiveDirectory)
 }
 
 func inboundEndpointConfig(
@@ -131,21 +116,8 @@ func inboundEndpointConfig(
 		)
 	}
 	cfg := endpointConfigFromProfile(req.Profile, req.Secrets)
-	if err := validateEndpointConfig(&cfg); err != nil {
+	if err := cfg.Validate(); err != nil {
 		return nil, "", err
 	}
 	return &cfg, inboundDirectory, nil
-}
-
-func readRemoteFile(client *sftp.Client, remotePath string) (string, error) {
-	file, err := client.Open(remotePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }

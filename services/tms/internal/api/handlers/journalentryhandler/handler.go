@@ -96,7 +96,7 @@ func (h *Handler) listEntries(c *gin.Context) {
 		accountingDateEnd = parsed
 	}
 
-	pagination.List(c, query, h.eh, func() (*pagination.ListResult[*journalentry.Entry], error) {
+	pagination.List(c, query, h.eh, func() (*pagination.ListResult[*journalentry.JournalEntry], error) {
 		return h.service.ListEntries(
 			c.Request.Context(),
 			&repositories.ListJournalEntriesRequest{

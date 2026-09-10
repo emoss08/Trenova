@@ -45,7 +45,7 @@ type entryRecord struct {
 	CreatedByID      string `bun:"created_by_id"`
 }
 
-func (r *repository) AppendEntries(ctx context.Context, entries []*customerledger.Entry) error {
+func (r *repository) AppendEntries(ctx context.Context, entries []*customerledger.CustomerLedgerEntry) error {
 	if len(entries) == 0 {
 		return nil
 	}

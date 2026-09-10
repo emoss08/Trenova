@@ -28,7 +28,7 @@ func NewValidator(p ValidatorParams) *Validator { return &Validator{fiscalRepo: 
 
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
-	entry *journalentry.Entry,
+	entry *journalentry.JournalEntry,
 	reqAccountingDate int64,
 	reasonCode, reasonText string,
 ) *errortypes.MultiError {

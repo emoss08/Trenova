@@ -489,15 +489,15 @@ func (fakeReversalDB) HealthCheck(context.Context) error { return nil }
 func (fakeReversalDB) IsHealthy(context.Context) bool    { return true }
 func (fakeReversalDB) Close() error                      { return nil }
 
-func postedEntry(id, orgID, buID pulid.ID) *journalentry.Entry {
-	return &journalentry.Entry{
+func postedEntry(id, orgID, buID pulid.ID) *journalentry.JournalEntry {
+	return &journalentry.JournalEntry{
 		ID:             id,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		EntryNumber:    "JE-1",
 		Status:         "Posted",
 		IsPosted:       true,
-		Lines: []*journalentry.Line{
+		Lines: []*journalentry.JournalEntryLine{
 			{
 				GLAccountID:  pulid.MustNew("gla_"),
 				LineNumber:   1,
@@ -518,12 +518,12 @@ func postedEntry(id, orgID, buID pulid.ID) *journalentry.Entry {
 	}
 }
 
-func cloneEntry(src *journalentry.Entry) *journalentry.Entry {
+func cloneEntry(src *journalentry.JournalEntry) *journalentry.JournalEntry {
 	if src == nil {
 		return nil
 	}
 	copy := *src
-	copy.Lines = make([]*journalentry.Line, 0, len(src.Lines))
+	copy.Lines = make([]*journalentry.JournalEntryLine, 0, len(src.Lines))
 	for _, line := range src.Lines {
 		if line == nil {
 			copy.Lines = append(copy.Lines, nil)

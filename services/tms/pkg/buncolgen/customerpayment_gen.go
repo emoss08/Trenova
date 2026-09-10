@@ -104,6 +104,19 @@ var ApplicationInsertableColumns = []string{
 	"updated_at",
 }
 
+// ApplicationRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ApplicationRelations.Payment)
+//	// Bun eager-loads the Payment association via a separate query
+var ApplicationRelations = struct {
+	Payment string
+	Invoice string
+}{
+	Payment: "Payment",
+	Invoice: "Invoice",
+}
+
 // ApplicationScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE cpa.organization_id = ? AND cpa.business_unit_id = ?
@@ -341,8 +354,10 @@ var PaymentInsertableColumns = []string{
 //	// Bun eager-loads the Applications association via a separate query
 var PaymentRelations = struct {
 	Applications string
+	Customer     string
 }{
 	Applications: "Applications",
+	Customer:     "Customer",
 }
 
 // PaymentScopeTenant restricts a query to a single tenant by adding:

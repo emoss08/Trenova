@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
@@ -27,6 +28,27 @@ var connectionTesters = map[integration.Type]connectionTester{
 	integration.TypePCMiler:            &pcmilerConnectionTester{},
 	integration.TypeResend:             &resendConnectionTester{},
 	integration.TypePostmark:           &postmarkConnectionTester{},
+}
+
+// fuelCardConnectionTester delegates to the connector that reads the feed, so
+// "Test Connection" exercises the same dial, the same credentials and the same
+// directory listing a scheduled run would.
+type fuelCardConnectionTester struct {
+	connector services.FuelCardProvider
+}
+
+func (t *fuelCardConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+	return t.connector.TestConnection(ctx, cfg)
+}
+
+func (s *Service) testerFor(typ integration.Type) (connectionTester, bool) {
+	if connector, ok := s.fuelCardConnectors[typ]; ok {
+		return &fuelCardConnectionTester{connector: connector}, true
+	}
+
+	tester, ok := connectionTesters[typ]
+
+	return tester, ok
 }
 
 type resendConnectionTester struct{}

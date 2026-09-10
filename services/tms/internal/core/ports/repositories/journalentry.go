@@ -37,7 +37,7 @@ type JournalEntryRepository interface {
 	List(
 		ctx context.Context,
 		req *ListJournalEntriesRequest,
-	) (*pagination.ListResult[*journalentry.Entry], error)
-	GetByID(ctx context.Context, req GetJournalEntryByIDRequest) (*journalentry.Entry, error)
+	) (*pagination.ListResult[*journalentry.JournalEntry], error)
+	GetByID(ctx context.Context, req GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error)
 	MarkReversed(ctx context.Context, req MarkJournalEntryReversedRequest) error
 }

@@ -17,6 +17,9 @@ const (
 	TypeSendGrid           = Type("SendGrid")
 	TypeMailgun            = Type("Mailgun")
 	TypePostmark           = Type("Postmark")
+	TypeWEXFuel            = Type("WEXFuel")
+	TypeComdataFuel        = Type("ComdataFuel")
+	TypeRampFuel           = Type("RampFuel")
 	// TypeMotive     Type = "Motive"
 )
 
@@ -30,6 +33,7 @@ const (
 	CategoryWeather                = Category("Weather")
 	CategoryFinancialData          = Category("FinancialData")
 	CategoryEmail                  = Category("Email")
+	CategoryFuelCards              = Category("FuelCards")
 )
 
 func (v Type) IsValid() bool {
@@ -47,7 +51,10 @@ func (v Type) IsValid() bool {
 		TypeAmazonSES,
 		TypeSendGrid,
 		TypeMailgun,
-		TypePostmark:
+		TypePostmark,
+		TypeWEXFuel,
+		TypeComdataFuel,
+		TypeRampFuel:
 		return true
 	default:
 		return false
@@ -62,7 +69,8 @@ func (v Category) IsValid() bool {
 		CategoryArtificialIntelligence,
 		CategoryWeather,
 		CategoryFinancialData,
-		CategoryEmail:
+		CategoryEmail,
+		CategoryFuelCards:
 		return true
 	default:
 		return false

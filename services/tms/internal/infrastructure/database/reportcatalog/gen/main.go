@@ -4,12 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var (
 	manifestPath   = flag.String("manifest", "", "Path to the reportcatalog.yml curation manifest")
 	domainDir      = flag.String("domain", "", "Path to the domain directory containing entity packages")
-	domaintypesDir = flag.String("domaintypes", "", "Path to the shared domaintypes package for enum resolution")
+	enumPkgs       = flag.String("enumpkgs", "", "Comma-separated paths to packages outside the domain directory to index for enum resolution")
 	outputPath     = flag.String("output", "", "Output path for the generated catalog file")
 )
 
@@ -17,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	if *manifestPath == "" || *domainDir == "" || *outputPath == "" {
-		fmt.Fprintln(os.Stderr, "Usage: reportcataloggen -manifest=<file> -domain=<dir> [-domaintypes=<dir>] -output=<file>")
+		fmt.Fprintln(os.Stderr, "Usage: reportcataloggen -manifest=<file> -domain=<dir> [-enumpkgs=<dir,dir>] -output=<file>")
 		os.Exit(1)
 	}
 
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	b, err := newBuilder(manifest, *domainDir, *domaintypesDir)
+	b, err := newBuilder(manifest, *domainDir, splitPaths(*enumPkgs))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -66,4 +67,15 @@ func main() {
 
 	fmt.Printf("Generated report catalog: %d entities, %d fields, %d edges (%s)\n",
 		entityCount, fieldCount, edgeCount, version[:16]+"…")
+}
+
+func splitPaths(value string) []string {
+	parts := strings.Split(value, ",")
+	paths := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			paths = append(paths, trimmed)
+		}
+	}
+	return paths
 }

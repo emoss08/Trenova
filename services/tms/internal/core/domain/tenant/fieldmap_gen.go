@@ -81,6 +81,13 @@ func (e *OrganizationMembership) GetStaticFieldMap() map[string]string {
 	return buncolgen.OrganizationMembershipFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PasswordResetToken].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PasswordResetTokenFieldMap] instead of parsing struct tags via reflection.
+func (e *PasswordResetToken) GetStaticFieldMap() map[string]string {
+	return buncolgen.PasswordResetTokenFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SSOConfig].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.SSOConfigFieldMap] instead of parsing struct tags via reflection.

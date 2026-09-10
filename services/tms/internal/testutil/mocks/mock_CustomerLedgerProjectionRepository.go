@@ -39,7 +39,7 @@ func (_m *MockCustomerLedgerProjectionRepository) EXPECT() *MockCustomerLedgerPr
 }
 
 // AppendEntries provides a mock function for the type MockCustomerLedgerProjectionRepository
-func (_mock *MockCustomerLedgerProjectionRepository) AppendEntries(ctx context.Context, entries []*customerledger.Entry) error {
+func (_mock *MockCustomerLedgerProjectionRepository) AppendEntries(ctx context.Context, entries []*customerledger.CustomerLedgerEntry) error {
 	ret := _mock.Called(ctx, entries)
 
 	if len(ret) == 0 {
@@ -47,7 +47,7 @@ func (_mock *MockCustomerLedgerProjectionRepository) AppendEntries(ctx context.C
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*customerledger.Entry) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*customerledger.CustomerLedgerEntry) error); ok {
 		r0 = returnFunc(ctx, entries)
 	} else {
 		r0 = ret.Error(0)
@@ -62,20 +62,20 @@ type MockCustomerLedgerProjectionRepository_AppendEntries_Call struct {
 
 // AppendEntries is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entries []*customerledger.Entry
+//   - entries []*customerledger.CustomerLedgerEntry
 func (_e *MockCustomerLedgerProjectionRepository_Expecter) AppendEntries(ctx any, entries any) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
 	return &MockCustomerLedgerProjectionRepository_AppendEntries_Call{Call: _e.mock.On("AppendEntries", ctx, entries)}
 }
 
-func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) Run(run func(ctx context.Context, entries []*customerledger.Entry)) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
+func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) Run(run func(ctx context.Context, entries []*customerledger.CustomerLedgerEntry)) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []*customerledger.Entry
+		var arg1 []*customerledger.CustomerLedgerEntry
 		if args[1] != nil {
-			arg1 = args[1].([]*customerledger.Entry)
+			arg1 = args[1].([]*customerledger.CustomerLedgerEntry)
 		}
 		run(
 			arg0,
@@ -90,7 +90,7 @@ func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) Return(err 
 	return _c
 }
 
-func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) RunAndReturn(run func(ctx context.Context, entries []*customerledger.Entry) error) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
+func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) RunAndReturn(run func(ctx context.Context, entries []*customerledger.CustomerLedgerEntry) error) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
 	_c.Call.Return(run)
 	return _c
 }

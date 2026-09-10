@@ -653,6 +653,17 @@ input AssignDocumentTemplateInput {
 }
 
 """
+Ties a discovered card to the equipment or driver that carries it. Passing null
+for either clears it, and a card with neither can still not match a purchase.
+"""
+input AssignFuelCardInput {
+  assignedTractorId: ID
+  assignedWorkerId: ID
+  id: ID!
+  version: Int!
+}
+
+"""
 Assigns a pay profile to a worker. Any currently-open assignment for the worker
 is automatically ended on the new effective date — no manual cleanup needed.
 """
@@ -5640,6 +5651,11 @@ type FuelCard {
   cancelReason: String
   cancelledAt: Timestamp
   createdAt: Timestamp!
+  """
+  When a feed created this card from a transaction nobody had registered a card
+  for. It stays set after assignment, so where a card came from is still legible.
+  """
+  discoveredAt: Timestamp
   expiresAt: Timestamp
   externalCardId: String
   id: ID!
@@ -5693,10 +5709,27 @@ enum FuelCardStatus {
   Suspended
 }
 
+"""What one run of a card feed did."""
+type FuelCardSyncResult {
+  alreadyImported: Int!
+  """The batch the run opened, absent when the feed had nothing new."""
+  batchId: ID
+  cardsDiscovered: Int!
+  committed: Int!
+  fetched: Int!
+  provider: FuelCardProvider!
+  """
+  Rows the run could not resolve. They stay in the batch for somebody to fix.
+  """
+  queued: Int!
+}
+
 input FuelCardsInput {
   after: String
   assignedTractorId: ID
   assignedWorkerId: ID
+  """Only cards a feed created rather than a person."""
+  discoveredOnly: Boolean
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
   first: Int = 20
@@ -5704,6 +5737,11 @@ input FuelCardsInput {
   query: String
   sort: [SortFieldInput!]
   status: FuelCardStatus
+  """
+  Only cards with neither a tractor nor a driver on them. A feed creates cards
+  in this state the first time it sees a transaction on one.
+  """
+  unassignedOnly: Boolean
 }
 
 type FuelCostResolution {
@@ -5715,7 +5753,15 @@ type FuelCostResolution {
 }
 
 enum FuelImportFormat {
+  """Rows read from a provider's API rather than a file."""
+  API
   CSV
+  """
+  A file whose fields are at fixed column positions, per the provider's record
+  layout. The layout is configured on the connection, because the networks
+  publish theirs under their own agreements and they differ by account.
+  """
+  FixedWidth
   XLSX
 }
 
@@ -5897,6 +5943,11 @@ type FuelPurchaseImportBatch {
   documentId: ID
   error: String
   errorCount: Int!
+  """
+  What the sync read: the remote file path for a file feed, or the request window
+  for an API feed.
+  """
+  feedReference: String
   fileName: String
   id: ID!
   """
@@ -5904,6 +5955,11 @@ type FuelPurchaseImportBatch {
   """
   mapping: JSON
   organizationId: ID!
+  """
+  Whether a person opened this batch by uploading a file, or a scheduled sync
+  opened it. A feed batch has no uploader and no stored document.
+  """
+  origin: FuelPurchaseImportOrigin!
   provider: FuelCardProvider!
   rowCount: Int!
   rows(input: FuelPurchaseImportRowsInput): FuelPurchaseImportRowConnection!
@@ -5915,6 +5971,14 @@ type FuelPurchaseImportBatch {
   updatedAt: Timestamp!
   uploadedById: ID
   version: Int!
+}
+
+"""
+Whether a batch came from a person choosing a file or from a scheduled sync.
+"""
+enum FuelPurchaseImportOrigin {
+  Feed
+  Upload
 }
 
 """
@@ -7814,6 +7878,7 @@ type Mutation {
   archiveWorkerCredentialType(id: ID!, version: Int): WorkerCredentialType!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
   assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
+  assignFuelCard(input: AssignFuelCardInput!): FuelCard!
   assignPayProfileToWorker(input: AssignPayProfileInput!): WorkerPayAssignment!
   """
   Opens every required course the worker is missing, has failed or has let
@@ -8195,6 +8260,11 @@ type Mutation {
   submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   submitPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
+  """
+  Reads a connected card feed now instead of waiting for the schedule. Rows that
+  resolve are posted; the rest stay in the run's batch for review.
+  """
+  syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   transitionShiftSwap(input: TransitionShiftSwapInput!): ShiftSwapRequest!

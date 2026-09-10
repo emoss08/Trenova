@@ -17,6 +17,8 @@ type ListFuelCardsRequest struct {
 	Provider           fuelpurchase.CardProvider `json:"provider"`
 	AssignedTractorID  pulid.ID                  `json:"assignedTractorId"`
 	AssignedWorkerID   pulid.ID                  `json:"assignedWorkerId"`
+	UnassignedOnly     bool                      `json:"unassignedOnly"`
+	DiscoveredOnly     bool                      `json:"discoveredOnly"`
 	IncludeAssignments bool                      `json:"includeAssignments"`
 }
 
@@ -35,6 +37,18 @@ type FindFuelCardByLastFourRequest struct {
 	TenantInfo pagination.TenantInfo     `json:"tenantInfo"`
 	Provider   fuelpurchase.CardProvider `json:"provider"`
 	LastFour   string                    `json:"lastFour"`
+}
+
+type FindFuelCardsByLastFourRequest struct {
+	TenantInfo pagination.TenantInfo     `json:"tenantInfo"`
+	Provider   fuelpurchase.CardProvider `json:"provider"`
+	LastFours  []string                  `json:"lastFours"`
+}
+
+type GetFuelFeedStateRequest struct {
+	TenantInfo pagination.TenantInfo     `json:"tenantInfo"`
+	Provider   fuelpurchase.CardProvider `json:"provider"`
+	FeedType   fuelpurchase.FeedType     `json:"feedType"`
 }
 
 type ListActiveFuelCardsRequest struct {
@@ -121,6 +135,12 @@ type CommitImportRequest struct {
 	RowIDByReference map[string]pulid.ID          `json:"rowIdByReference"`
 	CommittedByID    pulid.ID                     `json:"committedById"`
 	CommittedAt      int64                        `json:"committedAt"`
+
+	// KeepOpen leaves the batch's status and commit stamp alone, so rows that
+	// could not be resolved stay actionable after the ones that could have been
+	// posted. A sync sets it when it queues anything for review; a person
+	// committing an upload never does, because they have already seen the rows.
+	KeepOpen bool `json:"keepOpen"`
 }
 
 type CommitImportResult struct {
@@ -146,6 +166,10 @@ type FuelPurchaseRepository interface {
 		ctx context.Context,
 		req *ListActiveFuelCardsRequest,
 	) ([]*fuelpurchase.FuelCard, error)
+	FindCardsByLastFour(
+		ctx context.Context,
+		req *FindFuelCardsByLastFourRequest,
+	) (map[string]*fuelpurchase.FuelCard, error)
 	CreateCard(ctx context.Context, entity *fuelpurchase.FuelCard) (*fuelpurchase.FuelCard, error)
 	UpdateCard(ctx context.Context, entity *fuelpurchase.FuelCard) (*fuelpurchase.FuelCard, error)
 
@@ -198,4 +222,10 @@ type FuelPurchaseRepository interface {
 		req *ListImportRowsRequest,
 	) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error)
 	CommitImport(ctx context.Context, req *CommitImportRequest) (*CommitImportResult, error)
+
+	GetFeedState(
+		ctx context.Context,
+		req *GetFuelFeedStateRequest,
+	) (*fuelpurchase.CardFeedState, error)
+	SaveFeedState(ctx context.Context, state *fuelpurchase.CardFeedState) error
 }

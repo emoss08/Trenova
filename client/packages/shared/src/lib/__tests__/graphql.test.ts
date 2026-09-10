@@ -8,6 +8,7 @@ import {
   resolveGraphQLURL,
   setPartialErrorReporter,
   setSessionExpiryHandler,
+  stripGraphQLErrorPrefix,
 } from "@trenova/shared/lib/graphql";
 
 const PROBLEM_BASE = "https://trenova.app/problems/";
@@ -785,5 +786,92 @@ describe("documentContainsMutation", () => {
   it("ignores the keyword inside comments and block strings", () => {
     expect(documentContainsMutation("# mutation M { a }\nquery Q { a }")).toBe(false);
     expect(documentContainsMutation('query Q($s: String = """mutation""") { a }')).toBe(false);
+  });
+});
+
+describe("stripGraphQLErrorPrefix", () => {
+  it("drops the gqlerror position and path prefix", () => {
+    expect(
+      stripGraphQLErrorPrefix(
+        "input:1:63: dispatchPlanAutoAssign Auto assignment is disabled for this organization",
+        ["dispatchPlanAutoAssign"],
+      ),
+    ).toBe("Auto assignment is disabled for this organization");
+  });
+
+  it("handles nested and indexed paths", () => {
+    expect(
+      stripGraphQLErrorPrefix("input:2:5: updateShipment.stops[0].location Stop is required", [
+        "updateShipment",
+        "stops",
+        0,
+        "location",
+      ]),
+    ).toBe("Stop is required");
+  });
+
+  it("drops the prefix when the position is absent", () => {
+    expect(
+      stripGraphQLErrorPrefix("input: updateShipment Customer is inactive", ["updateShipment"]),
+    ).toBe("Customer is inactive");
+  });
+
+  it("leaves a clean message untouched", () => {
+    expect(stripGraphQLErrorPrefix("Auto assignment is disabled", ["dispatchPlanAutoAssign"])).toBe(
+      "Auto assignment is disabled",
+    );
+  });
+
+  it("keeps a message that only looks like an input path", () => {
+    expect(stripGraphQLErrorPrefix("input format is invalid", undefined)).toBe(
+      "input format is invalid",
+    );
+  });
+
+  it("keeps the original when stripping would leave nothing", () => {
+    expect(
+      stripGraphQLErrorPrefix("input:1:1: dispatchPlanAutoAssign ", ["dispatchPlanAutoAssign"]),
+    ).toBe("input:1:1: dispatchPlanAutoAssign ");
+  });
+});
+
+describe("normalizeGraphQLError", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    clearCsrfToken();
+    setCsrfToken("graphql-token");
+    fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    clearCsrfToken();
+    vi.unstubAllGlobals();
+  });
+
+  it("strips the gqlerror prefix before the message reaches a toast", async () => {
+    fetchMock.mockResolvedValueOnce(
+      createGraphQLResponse({
+        data: { dispatchPlan: null },
+        errors: [
+          {
+            message:
+              "input:1:63: dispatchPlan.autoAssign Auto assignment is disabled for this organization",
+            path: ["dispatchPlan", "autoAssign"],
+            extensions: { code: "INVALID", type: `${PROBLEM_BASE}validation-error` },
+          },
+        ],
+      }),
+    );
+
+    const result = await requestGraphQLResult<{ dispatchPlan: null }>({
+      document: "query Test { dispatchPlan { autoAssign } }",
+      operationName: "Test",
+    });
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toBe("Auto assignment is disabled for this organization");
+    expect(result.errors[0].path).toEqual(["dispatchPlan", "autoAssign"]);
   });
 });

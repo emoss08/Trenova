@@ -48,6 +48,7 @@ type FuelCard struct {
 	ExpiresAt         *int64       `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
 	CancelledAt       *int64       `json:"cancelledAt"       bun:"cancelled_at,type:BIGINT,nullzero"`
 	CancelReason      string       `json:"cancelReason"      bun:"cancel_reason,type:TEXT,nullzero"`
+	DiscoveredAt      *int64       `json:"discoveredAt"      bun:"discovered_at,type:BIGINT,nullzero"`
 	Notes             string       `json:"notes"             bun:"notes,type:TEXT,nullzero"`
 
 	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
@@ -139,6 +140,19 @@ func (c *FuelCard) validateCancellation(multiErr *errortypes.MultiError) {
 }
 
 func (c *FuelCard) IsActive() bool { return c.Status == CardStatusActive }
+
+// IsUnassigned reports whether the card is not yet tied to a tractor or a driver.
+// A feed creates cards in this state the first time it sees a transaction on one,
+// and they stay unusable for matching until somebody assigns them.
+func (c *FuelCard) IsUnassigned() bool {
+	return (c.AssignedTractorID == nil || c.AssignedTractorID.IsNil()) &&
+		(c.AssignedWorkerID == nil || c.AssignedWorkerID.IsNil())
+}
+
+// WasDiscovered reports whether a feed created this card rather than a person.
+func (c *FuelCard) WasDiscovered() bool {
+	return c.DiscoveredAt != nil && *c.DiscoveredAt > 0
+}
 
 func (c *FuelCard) IsCancelled() bool { return c.Status == CardStatusCancelled }
 

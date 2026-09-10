@@ -11,6 +11,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/shared/sftp"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -58,7 +60,7 @@ func (t *VANTransport) TestConnection(
 			failedCheck("configuration", "EDI communication profile is required"),
 		}
 	}
-	mailboxID := stringOrDefault(
+	mailboxID := stringutils.WithDefault(
 		maputils.StringValue(req.Profile.Config, configKeyVANMailboxID),
 		"",
 	)
@@ -80,20 +82,19 @@ func testSFTPEndpoint(
 		return append(checks, failedCheck("configuration", "EDI communication profile is required"))
 	}
 	cfg := endpointConfigFromProfile(req.Profile, req.Secrets)
-	if err := validateEndpointConfig(&cfg); err != nil {
+	if err := cfg.Validate(); err != nil {
 		return append(checks, failedCheck("configuration", err.Error()))
 	}
 	checks = append(checks, passedCheck("configuration", "Endpoint configuration is complete"))
 
-	client, sshClient, err := dialSFTP(ctx, &cfg)
+	client, err := sftp.Dial(ctx, cfg.Config)
 	if err != nil {
 		return append(checks, failedCheck("connection", err.Error()))
 	}
-	defer sshClient.Close()
 	defer client.Close()
 	checks = append(checks, passedCheck("connection", "Connected and authenticated"))
 
-	outboundDirectory := stringOrDefault(cfg.outboundDirectory, fallbackOutboundDirectory)
+	outboundDirectory := stringutils.WithDefault(cfg.outboundDirectory, fallbackOutboundDirectory)
 	if _, statErr := client.Stat(outboundDirectory); statErr != nil {
 		checks = append(checks, warningCheck(
 			"outbound directory",

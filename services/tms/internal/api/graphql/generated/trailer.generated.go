@@ -226,6 +226,8 @@ type MutationResolver interface {
 	CreateFuelCard(ctx context.Context, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	UpdateFuelCard(ctx context.Context, id string, version int, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	CancelFuelCard(ctx context.Context, input gqlmodel.CancelFuelCardInput) (*fuelpurchase.FuelCard, error)
+	AssignFuelCard(ctx context.Context, input gqlmodel.AssignFuelCardInput) (*fuelpurchase.FuelCard, error)
+	SyncFuelCardFeed(ctx context.Context, provider fuelpurchase.CardProvider) (*gqlmodel.FuelCardSyncResult, error)
 	CreateFuelPurchase(ctx context.Context, input gqlmodel.FuelPurchaseInput) (*fuelpurchase.FuelPurchase, error)
 	UpdateFuelPurchase(ctx context.Context, id string, version int, input gqlmodel.FuelPurchaseInput) (*fuelpurchase.FuelPurchase, error)
 	DeleteFuelPurchase(ctx context.Context, id string, version int) (bool, error)
@@ -693,8 +695,8 @@ type QueryResolver interface {
 	IFTACurrentPeriod(ctx context.Context) (*ifta.Period, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
-	JournalEntry(ctx context.Context, id string) (*journalentry.Entry, error)
-	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.Entry, error)
+	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
+	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReversals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalReversalConnection, error)
 	JournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
@@ -1401,6 +1403,20 @@ func (ec *executionContext) field_Mutation_assignDocumentTemplate_args(ctx conte
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.AssignDocumentTemplateInput, error) {
 			return ec.unmarshalNAssignDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignDocumentTemplateInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_assignFuelCard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AssignFuelCardInput, error) {
+			return ec.unmarshalNAssignFuelCardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignFuelCardInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5386,6 +5402,20 @@ func (ec *executionContext) field_Mutation_submitPerformanceReview_args(ctx cont
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_syncFuelCardFeed_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "provider",
+		func(ctx context.Context, v any) (fuelpurchase.CardProvider, error) {
+			return ec.unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["provider"] = arg0
 	return args, nil
 }
 
@@ -18650,6 +18680,94 @@ func (ec *executionContext) fieldContext_Mutation_cancelFuelCard(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_cancelFuelCard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_assignFuelCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_assignFuelCard(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AssignFuelCard(ctx, fc.Args["input"].(gqlmodel.AssignFuelCardInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *fuelpurchase.FuelCard) graphql.Marshaler {
+			return ec.marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_assignFuelCard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FuelCard(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_assignFuelCard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_syncFuelCardFeed(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_syncFuelCardFeed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SyncFuelCardFeed(ctx, fc.Args["provider"].(fuelpurchase.CardProvider))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.FuelCardSyncResult) graphql.Marshaler {
+			return ec.marshalNFuelCardSyncResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelCardSyncResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_syncFuelCardFeed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FuelCardSyncResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_syncFuelCardFeed_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -38601,8 +38719,8 @@ func (ec *executionContext) _Query_journalEntry(ctx context.Context, field graph
 			return ec.Resolvers.Query().JournalEntry(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *journalentry.Entry) graphql.Marshaler {
-			return ec.marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐEntry(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
+			return ec.marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry(ctx, selections, v)
 		},
 		true,
 		false,
@@ -38645,8 +38763,8 @@ func (ec *executionContext) _Query_journalEntriesBySource(ctx context.Context, f
 			return ec.Resolvers.Query().JournalEntriesBySource(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*journalentry.Entry) graphql.Marshaler {
-			return ec.marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐEntryᚄ(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v []*journalentry.JournalEntry) graphql.Marshaler {
+			return ec.marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -49349,6 +49467,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "cancelFuelCard":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_cancelFuelCard(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignFuelCard":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_assignFuelCard(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncFuelCardFeed":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncFuelCardFeed(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

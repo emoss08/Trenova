@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,7 +46,8 @@ type Payment struct {
 	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	Applications []*Application `json:"applications,omitempty" bun:"rel:has-many,join:id=customer_payment_id"`
+	Applications []*Application     `json:"applications,omitempty" bun:"rel:has-many,join:id=customer_payment_id"`
+	Customer     *customer.Customer `json:"customer,omitempty"     bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 type Application struct {
@@ -60,6 +63,9 @@ type Application struct {
 	LineNumber          int      `json:"lineNumber"          bun:"line_number,type:INTEGER,notnull"`
 	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	Payment *Payment         `json:"payment,omitempty" bun:"rel:belongs-to,join:customer_payment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Invoice *invoice.Invoice `json:"invoice,omitempty" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (p *Payment) Validate(multiErr *errortypes.MultiError) {

@@ -13,6 +13,7 @@ import (
 func validBatch() *fuelpurchase.ImportBatch {
 	return &fuelpurchase.ImportBatch{
 		Provider:        fuelpurchase.CardProviderEFS,
+		Origin:          fuelpurchase.ImportOriginUpload,
 		Status:          fuelpurchase.ImportStatusPending,
 		DefaultCurrency: "USD",
 	}
@@ -206,4 +207,101 @@ func TestImportRow_ValidateRejections(t *testing.T) {
 			assert.Contains(t, fieldErrors(multiErr), tt.field)
 		})
 	}
+}
+
+// A scheduled sync has no person to attribute the batch to and no uploaded file
+// to point at, so the two lifecycle rules that exist to keep an upload honest
+// have to stand down for a feed.
+func TestImportBatch_FeedBatchNeedsNoDocumentOrCommitter(t *testing.T) {
+	t.Parallel()
+
+	committedAt := int64(1_800_000_000)
+
+	t.Run("parsed without a document", func(t *testing.T) {
+		t.Parallel()
+
+		batch := validBatch()
+		batch.Origin = fuelpurchase.ImportOriginFeed
+		batch.Status = fuelpurchase.ImportStatusParsed
+
+		multiErr := errortypes.NewMultiError()
+		batch.Validate(multiErr)
+
+		assert.False(t, multiErr.HasErrors(), multiErr.Error())
+	})
+
+	t.Run("committed without a committer", func(t *testing.T) {
+		t.Parallel()
+
+		batch := validBatch()
+		batch.Origin = fuelpurchase.ImportOriginFeed
+		batch.Status = fuelpurchase.ImportStatusCommitted
+		batch.CommittedAt = &committedAt
+
+		multiErr := errortypes.NewMultiError()
+		batch.Validate(multiErr)
+
+		assert.False(t, multiErr.HasErrors(), multiErr.Error())
+	})
+
+	t.Run("committed still needs a time", func(t *testing.T) {
+		t.Parallel()
+
+		batch := validBatch()
+		batch.Origin = fuelpurchase.ImportOriginFeed
+		batch.Status = fuelpurchase.ImportStatusCommitted
+
+		multiErr := errortypes.NewMultiError()
+		batch.Validate(multiErr)
+
+		require.True(t, multiErr.HasErrors())
+		assert.Contains(t, fieldErrors(multiErr), "committedAt")
+	})
+}
+
+// An upload keeps both rules: a parsed batch has to point at the file it read,
+// and a committed one has to name who committed it.
+func TestImportBatch_UploadStillNeedsADocumentAndCommitter(t *testing.T) {
+	t.Parallel()
+
+	committedAt := int64(1_800_000_000)
+
+	t.Run("parsed without a document", func(t *testing.T) {
+		t.Parallel()
+
+		batch := validBatch()
+		batch.Status = fuelpurchase.ImportStatusParsed
+
+		multiErr := errortypes.NewMultiError()
+		batch.Validate(multiErr)
+
+		require.True(t, multiErr.HasErrors())
+		assert.Contains(t, fieldErrors(multiErr), "documentId")
+	})
+
+	t.Run("committed without a committer", func(t *testing.T) {
+		t.Parallel()
+
+		documentID := pulid.MustNew("doc_")
+		batch := validBatch()
+		batch.Status = fuelpurchase.ImportStatusCommitted
+		batch.DocumentID = &documentID
+		batch.CommittedAt = &committedAt
+
+		multiErr := errortypes.NewMultiError()
+		batch.Validate(multiErr)
+
+		require.True(t, multiErr.HasErrors())
+		assert.Contains(t, fieldErrors(multiErr), "committedById")
+	})
+}
+
+func TestImportBatch_NormalizeDefaultsOriginToUpload(t *testing.T) {
+	t.Parallel()
+
+	batch := &fuelpurchase.ImportBatch{Provider: fuelpurchase.CardProviderEFS}
+	batch.Normalize()
+
+	assert.Equal(t, fuelpurchase.ImportOriginUpload, batch.Origin)
+	assert.False(t, batch.IsFeed())
 }

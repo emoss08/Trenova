@@ -380,6 +380,13 @@ const fuelModule: NavModule = {
       capability: OrganizationCapability.AssetOperations,
     },
     {
+      id: "unassigned-cards",
+      label: "Unassigned Cards",
+      path: "/fuel/unassigned-cards",
+      resource: Resource.FuelCard,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
       id: "jurisdiction-mileage",
       label: "Jurisdiction Mileage",
       path: "/fuel/jurisdiction-mileage",
