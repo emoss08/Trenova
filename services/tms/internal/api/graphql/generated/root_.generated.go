@@ -3660,6 +3660,17 @@ type ComplexityRoot struct {
 		Version           func(childComplexity int) int
 	}
 
+	FuelPurchaseImportBatchConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	FuelPurchaseImportBatchEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	FuelPurchaseImportParsed struct {
 		CardLastFour         func(childComplexity int) int
 		CurrencyCode         func(childComplexity int) int
@@ -3676,6 +3687,14 @@ type ComplexityRoot struct {
 		UnitPrice            func(childComplexity int) int
 		Vendor               func(childComplexity int) int
 		VendorCity           func(childComplexity int) int
+	}
+
+	FuelPurchaseImportResolveResult struct {
+		Batch     func(childComplexity int) int
+		Committed func(childComplexity int) int
+		Queued    func(childComplexity int) int
+		Resolved  func(childComplexity int) int
+		Reviewed  func(childComplexity int) int
 	}
 
 	FuelPurchaseImportRow struct {
@@ -4892,6 +4911,7 @@ type ComplexityRoot struct {
 		ResetCannedFork                       func(childComplexity int, id string) int
 		ResetHomeLayout                       func(childComplexity int) int
 		ResolveAgentException                 func(childComplexity int, id string, input gqlmodel.AgentExceptionResolveInput) int
+		ResolveFuelPurchaseImportRows         func(childComplexity int, id string, version int) int
 		ResolveSettlementDispute              func(childComplexity int, input gqlmodel.ResolveSettlementDisputeInput) int
 		ResolveShipmentComment                func(childComplexity int, shipmentID string, commentID string) int
 		RespondToMyAssignment                 func(childComplexity int, input gqlmodel.RespondToMyAssignmentInput) int
@@ -5990,6 +6010,7 @@ type ComplexityRoot struct {
 		FuelPurchase                        func(childComplexity int, id string) int
 		FuelPurchaseImport                  func(childComplexity int, id string) int
 		FuelPurchaseImportTemplate          func(childComplexity int, provider fuelpurchase.CardProvider) int
+		FuelPurchaseImports                 func(childComplexity int, input gqlmodel.FuelPurchaseImportsInput) int
 		FuelPurchases                       func(childComplexity int, input gqlmodel.FuelPurchasesInput) int
 		FuelSurchargeProgram                func(childComplexity int, id string) int
 		FuelSurchargePrograms               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -26140,6 +26161,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.FuelPurchaseImportBatch.Version(childComplexity), true
 
+	case "FuelPurchaseImportBatchConnection.edges":
+		if e.ComplexityRoot.FuelPurchaseImportBatchConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatchConnection.Edges(childComplexity), true
+	case "FuelPurchaseImportBatchConnection.pageInfo":
+		if e.ComplexityRoot.FuelPurchaseImportBatchConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatchConnection.PageInfo(childComplexity), true
+	case "FuelPurchaseImportBatchConnection.totalCount":
+		if e.ComplexityRoot.FuelPurchaseImportBatchConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatchConnection.TotalCount(childComplexity), true
+
+	case "FuelPurchaseImportBatchEdge.cursor":
+		if e.ComplexityRoot.FuelPurchaseImportBatchEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatchEdge.Cursor(childComplexity), true
+	case "FuelPurchaseImportBatchEdge.node":
+		if e.ComplexityRoot.FuelPurchaseImportBatchEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportBatchEdge.Node(childComplexity), true
+
 	case "FuelPurchaseImportParsed.cardLastFour":
 		if e.ComplexityRoot.FuelPurchaseImportParsed.CardLastFour == nil {
 			break
@@ -26230,6 +26283,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FuelPurchaseImportParsed.VendorCity(childComplexity), true
+
+	case "FuelPurchaseImportResolveResult.batch":
+		if e.ComplexityRoot.FuelPurchaseImportResolveResult.Batch == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportResolveResult.Batch(childComplexity), true
+	case "FuelPurchaseImportResolveResult.committed":
+		if e.ComplexityRoot.FuelPurchaseImportResolveResult.Committed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportResolveResult.Committed(childComplexity), true
+	case "FuelPurchaseImportResolveResult.queued":
+		if e.ComplexityRoot.FuelPurchaseImportResolveResult.Queued == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportResolveResult.Queued(childComplexity), true
+	case "FuelPurchaseImportResolveResult.resolved":
+		if e.ComplexityRoot.FuelPurchaseImportResolveResult.Resolved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportResolveResult.Resolved(childComplexity), true
+	case "FuelPurchaseImportResolveResult.reviewed":
+		if e.ComplexityRoot.FuelPurchaseImportResolveResult.Reviewed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FuelPurchaseImportResolveResult.Reviewed(childComplexity), true
 
 	case "FuelPurchaseImportRow.businessUnitId":
 		if e.ComplexityRoot.FuelPurchaseImportRow.BusinessUnitID == nil {
@@ -33421,6 +33505,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResolveAgentException(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentExceptionResolveInput)), true
+	case "Mutation.resolveFuelPurchaseImportRows":
+		if e.ComplexityRoot.Mutation.ResolveFuelPurchaseImportRows == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resolveFuelPurchaseImportRows_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ResolveFuelPurchaseImportRows(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.resolveSettlementDispute":
 		if e.ComplexityRoot.Mutation.ResolveSettlementDispute == nil {
 			break
@@ -40042,6 +40137,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.FuelPurchaseImportTemplate(childComplexity, args["provider"].(fuelpurchase.CardProvider)), true
+	case "Query.fuelPurchaseImports":
+		if e.ComplexityRoot.Query.FuelPurchaseImports == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fuelPurchaseImports_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.FuelPurchaseImports(childComplexity, args["input"].(gqlmodel.FuelPurchaseImportsInput)), true
 	case "Query.fuelPurchases":
 		if e.ComplexityRoot.Query.FuelPurchases == nil {
 			break
@@ -60187,6 +60293,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputFuelIndexInput,
 		ec.unmarshalInputFuelIndexPriceInput,
 		ec.unmarshalInputFuelPurchaseImportRowsInput,
+		ec.unmarshalInputFuelPurchaseImportsInput,
 		ec.unmarshalInputFuelPurchaseInput,
 		ec.unmarshalInputFuelPurchasesInput,
 		ec.unmarshalInputFuelSurchargeProgramInput,
@@ -67861,6 +67968,61 @@ type FuelCardSyncResult {
   cardsDiscovered: Int!
 }
 
+"""
+What working a held import's rows out again achieved.
+"""
+type FuelPurchaseImportResolveResult {
+  batch: FuelPurchaseImportBatch!
+  """
+  Rows that were still waiting when this ran.
+  """
+  reviewed: Int!
+  """
+  Rows that resolved this time.
+  """
+  resolved: Int!
+  """
+  Rows posted as purchases. Only a feed posts on its own; an upload waits to be
+  committed.
+  """
+  committed: Int!
+  """
+  Rows still waiting on something.
+  """
+  queued: Int!
+}
+
+input FuelPurchaseImportsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  """
+  Feed lists the runs a scheduled sync opened; Upload lists the statements people
+  chose. Omit for both.
+  """
+  origin: FuelPurchaseImportOrigin
+  provider: FuelCardProvider
+  statuses: [FuelPurchaseImportStatus!]
+  """
+  Only imports still holding rows that could not be worked out.
+  """
+  heldRowsOnly: Boolean
+}
+
+type FuelPurchaseImportBatchEdge {
+  node: FuelPurchaseImportBatch!
+  cursor: String!
+}
+
+type FuelPurchaseImportBatchConnection {
+  edges: [FuelPurchaseImportBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 input CancelFuelCardInput {
   id: ID!
   version: Int!
@@ -67943,6 +68105,7 @@ extend type Query {
   fuelCard(id: ID!): FuelCard!
   fuelPurchases(input: FuelPurchasesInput!): FuelPurchaseConnection!
   fuelPurchase(id: ID!): FuelPurchase!
+  fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
 }
@@ -67976,6 +68139,14 @@ extend type Mutation {
   is already on file are marked AlreadyImported rather than duplicated.
   """
   commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
+  """
+  Reads the rows an import is still holding and works them out again against the
+  organization's current cards, tractors and jurisdictions. This is what posts the
+  rows a feed could not place once the card it saw has been assigned, without the
+  statement being fetched a second time. Rows that already became purchases are
+  left alone.
+  """
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
   discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
 }
 `, BuiltIn: false},
@@ -85286,6 +85457,28 @@ func (ec *executionContext) childFields_FuelPurchaseImportBatch(ctx context.Cont
 	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportBatch", field.Name)
 }
 
+func (ec *executionContext) childFields_FuelPurchaseImportBatchConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_FuelPurchaseImportBatchConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_FuelPurchaseImportBatchConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_FuelPurchaseImportBatchConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportBatchConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportBatchEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_FuelPurchaseImportBatchEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_FuelPurchaseImportBatchEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportBatchEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_FuelPurchaseImportParsed(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "purchasedAt":
@@ -85320,6 +85513,22 @@ func (ec *executionContext) childFields_FuelPurchaseImportParsed(ctx context.Con
 		return ec.fieldContext_FuelPurchaseImportParsed_odometer(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportParsed", field.Name)
+}
+
+func (ec *executionContext) childFields_FuelPurchaseImportResolveResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "batch":
+		return ec.fieldContext_FuelPurchaseImportResolveResult_batch(ctx, field)
+	case "reviewed":
+		return ec.fieldContext_FuelPurchaseImportResolveResult_reviewed(ctx, field)
+	case "resolved":
+		return ec.fieldContext_FuelPurchaseImportResolveResult_resolved(ctx, field)
+	case "committed":
+		return ec.fieldContext_FuelPurchaseImportResolveResult_committed(ctx, field)
+	case "queued":
+		return ec.fieldContext_FuelPurchaseImportResolveResult_queued(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FuelPurchaseImportResolveResult", field.Name)
 }
 
 func (ec *executionContext) childFields_FuelPurchaseImportRow(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

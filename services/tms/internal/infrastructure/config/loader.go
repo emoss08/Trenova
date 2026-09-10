@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -152,6 +153,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.idleTimeout", "120s")
 	l.viper.SetDefault("server.shutdownTimeout", "10s")
 	l.viper.SetDefault("server.requestTimeout", "55s")
+	l.viper.SetDefault("server.trustedProxies", DefaultTrustedProxies)
 
 	// Database defaults
 	l.viper.SetDefault("database.driver", "postgres")
@@ -329,6 +331,7 @@ func (l *Loader) validateConfig(config *Config) error {
 	validators := []func(*Config) error{
 		validateDatabasePool,
 		validateServerTimeouts,
+		validateTrustedProxies,
 		validateHostPrefixCookie,
 		validateLoggingConfig,
 		validatePlatformConfig,
@@ -379,6 +382,26 @@ func validateCORSConfig(config *Config, env string) error {
 		config.Server.CORS.Credentials &&
 		slices.Contains(config.Server.CORS.AllowedOrigins, "*") {
 		return ErrCredentialedWildcardCORS
+	}
+
+	return nil
+}
+
+func validateTrustedProxies(config *Config) error {
+	for _, proxy := range config.Server.TrustedProxies {
+		trimmed := strings.TrimSpace(proxy)
+		if trimmed == "" {
+			return fmt.Errorf("%w: %q", ErrInvalidTrustedProxy, proxy)
+		}
+		if strings.Contains(trimmed, "/") {
+			if _, _, err := net.ParseCIDR(trimmed); err != nil {
+				return fmt.Errorf("%w: %q", ErrInvalidTrustedProxy, proxy)
+			}
+			continue
+		}
+		if net.ParseIP(trimmed) == nil {
+			return fmt.Errorf("%w: %q", ErrInvalidTrustedProxy, proxy)
+		}
 	}
 
 	return nil

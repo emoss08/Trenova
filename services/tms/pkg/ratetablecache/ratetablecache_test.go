@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeLookup struct{ formulatemplatetypes.RateTableLookup }
+type fakeLookup struct {
+	formulatemplatetypes.RateTableLookup
+}
 
 type stampedSource struct {
 	stamp  atomic.Value

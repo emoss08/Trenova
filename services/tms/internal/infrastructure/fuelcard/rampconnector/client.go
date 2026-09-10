@@ -111,6 +111,7 @@ func (t transaction) cells() []string {
 		t.lastFour(),
 		t.ID,
 		t.holderName(),
+		"",
 	}
 }
 

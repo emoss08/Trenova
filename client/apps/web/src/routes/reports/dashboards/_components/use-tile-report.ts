@@ -1,7 +1,7 @@
 import {
   useCannedReports,
   useReportDefinition,
-  useReportDefinitionList,
+  useReportDefinitionsByIds,
 } from "@/hooks/use-reports";
 import {
   parseReportIR,
@@ -48,15 +48,23 @@ export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
   entities: string[];
   candidates: FilterCandidate[];
 } {
-  const definitions = useReportDefinitionList("");
+  // Only the reports this dashboard actually points at, resolved by id. Reading
+  // them out of a page of the library instead meant a tile whose report sat
+  // past that page contributed no filter candidates at all, silently.
+  const definitionIds = useMemo(
+    () => [
+      ...new Set(
+        tiles.flatMap((tile) => (tile.definitionId && !tile.cannedKey ? [tile.definitionId] : [])),
+      ),
+    ],
+    [tiles],
+  );
+  const definitions = useReportDefinitionsByIds(definitionIds);
   const canned = useCannedReports();
 
   return useMemo(() => {
     const byId = new Map(
-      (definitions.data ?? []).map((entry) => [
-        entry.id,
-        { raw: entry.definition, name: entry.name },
-      ]),
+      definitions.data.map((entry) => [entry.id, { raw: entry.definition, name: entry.name }]),
     );
     const byKey = new Map(
       (canned.data ?? []).map((entry) => [entry.key, { raw: entry.definition, name: entry.name }]),

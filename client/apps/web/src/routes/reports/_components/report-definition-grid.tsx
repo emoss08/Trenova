@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
   useCreateReportDefinition,
@@ -239,7 +240,13 @@ export function ReportDefinitionGrid({
   onClearFilters: () => void;
 }) {
   const navigate = useNavigate();
-  const { data: definitions, isLoading } = useReportDefinitionList(search);
+  const {
+    data: definitions,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useReportDefinitionList(search);
   const deleteDefinition = useDeleteReportDefinition();
   const createDefinition = useCreateReportDefinition();
   const { canCreate } = usePermissions(Resource.Report);
@@ -308,9 +315,11 @@ export function ReportDefinitionGrid({
             variant="reports"
             title={hasFilters ? "Nothing matches" : "No reports yet"}
             description={
-              hasFilters
-                ? "No report fits the search and filters. Widen them, or clear them to see every report you own."
-                : "A report you build or customize from the gallery lands here, grouped by what it is about, ready to run or schedule."
+              hasNextPage
+                ? "No report on the pages loaded so far fits these filters. Load the rest of the library, or widen them."
+                : hasFilters
+                  ? "No report fits the search and filters. Widen them, or clear them to see every report you own."
+                  : "A report you build or customize from the gallery lands here, grouped by what it is about, ready to run or schedule."
             }
             onClearFilters={hasFilters ? onClearFilters : undefined}
             action={
@@ -354,6 +363,11 @@ export function ReportDefinitionGrid({
               </div>
             </section>
           ))}
+        </div>
+      )}
+      {hasNextPage && (
+        <div className="flex justify-center px-4 pb-4">
+          <LoadMoreReports pending={isFetchingNextPage} onLoadMore={() => void fetchNextPage()} />
         </div>
       )}
       <RunReportDialog
@@ -406,5 +420,25 @@ export function ReportDefinitionGrid({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+/**
+ * The rest of the library. The grid narrows by category and status over what it
+ * holds, so without a way to reach the next page a filter could report an empty
+ * library that is merely an unloaded one.
+ */
+function LoadMoreReports({ pending, onLoadMore }: { pending: boolean; onLoadMore: () => void }) {
+  return (
+    <Button variant="outline" size="sm" disabled={pending} onClick={onLoadMore}>
+      {pending ? (
+        <>
+          <Spinner className="size-3.5" />
+          Loading
+        </>
+      ) : (
+        "Load more reports"
+      )}
+    </Button>
   );
 }

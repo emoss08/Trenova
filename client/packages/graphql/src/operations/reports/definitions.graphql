@@ -84,3 +84,33 @@ mutation ResetCannedFork($id: ID!) {
     ...ReportDefinitionFields
   }
 }
+
+fragment ReportDefinitionOptionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  kind
+  status
+  visibility
+  lastRunAt
+  updatedAt
+}
+
+# The picker's own read of the report library. It deliberately omits totalCount
+# — the GraphQL layer gates the COUNT on that selection — and the definition
+# blob, which is megabytes across a full library and is only needed once a
+# report has actually been chosen.
+query ReportDefinitionOptions($input: DataTableConnectionInput!) {
+  reportDefinitions(input: $input) {
+    edges {
+      node {
+        ...ReportDefinitionOptionFields
+      }
+      cursor
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

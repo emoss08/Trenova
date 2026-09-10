@@ -479,6 +479,36 @@ func (r *mutationResolver) CommitFuelPurchaseImport(ctx context.Context, id stri
 	})
 }
 
+func (r *mutationResolver) ResolveFuelPurchaseImportRows(ctx context.Context, id string, version int) (*gqlmodel.FuelPurchaseImportResolveResult, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceFuelPurchaseImport, permission.OpImport)
+	if err != nil {
+		return nil, err
+	}
+
+	batchID, err := requiredID("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.fuelPurchaseService.ResolveRows(ctx, &fuelpurchaseservice.ResolveRowsRequest{
+		TenantInfo: tenantInfo(authCtx),
+		BatchID:    batchID,
+		Version:    int64(version),
+		UserID:     authCtx.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.FuelPurchaseImportResolveResult{
+		Batch:     result.Batch,
+		Reviewed:  result.Reviewed,
+		Resolved:  result.Resolved,
+		Committed: result.Committed,
+		Queued:    result.Queued,
+	}, nil
+}
+
 func (r *mutationResolver) DiscardFuelPurchaseImport(ctx context.Context, id string, version int, reason *string) (*fuelpurchase.ImportBatch, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceFuelPurchase, permission.OpCancel)
 	if err != nil {
@@ -587,6 +617,35 @@ func (r *queryResolver) FuelPurchase(ctx context.Context, id string) (*fuelpurch
 	}
 
 	return r.fuelPurchaseService.GetPurchase(ctx, tenantInfo(authCtx), purchaseID)
+}
+
+func (r *queryResolver) FuelPurchaseImports(ctx context.Context, input gqlmodel.FuelPurchaseImportsInput) (*gqlmodel.FuelPurchaseImportBatchConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceFuelPurchaseImport, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	connection, err := dataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+		First:        input.First,
+		After:        input.After,
+		Query:        input.Query,
+		FieldFilters: input.FieldFilters,
+		FilterGroups: input.FilterGroups,
+		Sort:         input.Sort,
+	}, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.fuelPurchaseService.ListImports(
+		ctx,
+		fuelImportsRequestFromGraphQL(connection, input),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return fuelImportCursorConnectionToModel(result)
 }
 
 func (r *queryResolver) FuelPurchaseImport(ctx context.Context, id string) (*fuelpurchase.ImportBatch, error) {

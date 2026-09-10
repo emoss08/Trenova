@@ -22,6 +22,7 @@ const maxImportFileNameLength = 255
 
 var (
 	_ bun.BeforeAppendModelHook          = (*ImportBatch)(nil)
+	_ domaintypes.PostgresSearchable     = (*ImportBatch)(nil)
 	_ pagination.CursorEntity            = (*ImportBatch)(nil)
 	_ validationframework.TenantedEntity = (*ImportBatch)(nil)
 )
@@ -74,6 +75,9 @@ type ImportBatch struct {
 	StagedAt      *int64   `json:"stagedAt"      bun:"staged_at,type:BIGINT,nullzero"`
 	CommittedAt   *int64   `json:"committedAt"   bun:"committed_at,type:BIGINT,nullzero"`
 	CommittedByID pulid.ID `json:"committedById" bun:"committed_by_id,type:VARCHAR(100),nullzero"`
+
+	SearchVector string `json:"-"       bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"       bun:"rank,type:VARCHAR(100),scanonly"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -214,6 +218,24 @@ func (b *ImportBatch) GetTableName() string { return "fuel_purchase_import_batch
 func (b *ImportBatch) GetResourceType() string { return "fuel_purchase_import" }
 
 func (b *ImportBatch) GetResourceID() string { return b.ID.String() }
+
+// GetPostgresSearchConfig makes a run findable by what it read: the file somebody
+// uploaded, or the remote path a feed pulled. Everything else on a batch is an
+// enum or a count, which the field filters already handle.
+func (b *ImportBatch) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "fpib",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "file_name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "feed_reference",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
+}
 
 func (b *ImportBatch) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()

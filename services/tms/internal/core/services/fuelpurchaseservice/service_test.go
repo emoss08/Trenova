@@ -187,6 +187,32 @@ func (f *fakeRepo) FindCardsByLastFour(
 	return found, nil
 }
 
+func (f *fakeRepo) ListImportBatches(
+	_ context.Context,
+	req *repositories.ListImportBatchesRequest,
+) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	out := make([]*fuelpurchase.ImportBatch, 0, len(f.batches))
+	for _, batch := range f.batches {
+		if req.Origin != "" && batch.Origin != req.Origin {
+			continue
+		}
+		if req.Provider != "" && batch.Provider != req.Provider {
+			continue
+		}
+		if req.HeldRowsOnly && batch.ErrorCount == 0 {
+			continue
+		}
+		out = append(out, batch)
+	}
+
+	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt > out[j].CreatedAt })
+
+	return pagination.NewCursorListResult(out, len(out)+1), nil
+}
+
 func (f *fakeRepo) GetFeedState(
 	_ context.Context,
 	req *repositories.GetFuelFeedStateRequest,
@@ -691,6 +717,7 @@ type harness struct {
 	userID    pulid.ID
 	tractorA  *tractor.Tractor
 	tractorB  *tractor.Tractor
+	byCode    map[string]*tractor.Tractor
 	feeds     *fakeFeedResolver
 	audits    *[]auditRecord
 	auditLock *sync.Mutex
@@ -824,10 +851,26 @@ func newHarness(t *testing.T) *harness {
 		userID:    pulid.MustNew("usr_"),
 		tractorA:  tractorA,
 		tractorB:  tractorB,
+		byCode:    byCode,
 		feeds:     feeds,
 		audits:    &audits,
 		auditLock: auditLock,
 	}
+}
+
+// registerTractor puts a unit on file after the fact, which is what somebody does
+// when a statement names a truck the system did not know about yet.
+func (h *harness) registerTractor(code string) *tractor.Tractor {
+	entity := &tractor.Tractor{
+		ID:              pulid.MustNew("trac_"),
+		OrganizationID:  h.tenant.OrgID,
+		BusinessUnitID:  h.tenant.BuID,
+		Code:            code,
+		PrimaryWorkerID: h.tractorA.PrimaryWorkerID,
+	}
+	h.byCode[strings.ToUpper(code)] = entity
+
+	return entity
 }
 
 func (h *harness) auditOps(resource permission.Resource) []permission.Operation {

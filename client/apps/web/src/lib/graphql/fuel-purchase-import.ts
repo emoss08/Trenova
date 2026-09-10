@@ -1,5 +1,7 @@
 import {
   CommitFuelPurchaseImportDocument,
+  FuelPurchaseImportTableDocument,
+  ResolveFuelPurchaseImportRowsDocument,
   CreateFuelPurchaseImportDocument,
   DiscardFuelPurchaseImportDocument,
   FuelPurchaseImportDocument,
@@ -8,6 +10,8 @@ import {
   StageFuelPurchaseImportDocument,
   type CommitFuelPurchaseImportMutation,
   type CommitFuelPurchaseImportMutationVariables,
+  type ResolveFuelPurchaseImportRowsMutation,
+  type ResolveFuelPurchaseImportRowsMutationVariables,
   type CreateFuelPurchaseImportInput,
   type CreateFuelPurchaseImportMutation,
   type CreateFuelPurchaseImportMutationVariables,
@@ -28,6 +32,7 @@ import {
   type StageFuelPurchaseImportMutationVariables,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type FuelPurchaseImportBatch = FuelPurchaseImportBatchFieldsFragment;
 export type FuelPurchaseImportRow = FuelPurchaseImportRowFieldsFragment;
@@ -39,6 +44,19 @@ export type FuelPurchaseImportRowsPage = {
 export type FuelImportTemplate = FuelPurchaseImportTemplateQuery["fuelPurchaseImportTemplate"];
 
 export const FUEL_PURCHASE_IMPORT_KEY = "fuel-purchase-import";
+export const FUEL_FEED_RUN_LIST_KEY = "fuel-feed-run-list";
+
+/**
+ * Every run a connected fuel card feed has opened, newest first. An upload is a
+ * different thing entirely — somebody chose that file — so this view is narrowed
+ * to Feed, and the two never mix.
+ */
+export const fuelFeedRunTableGraphQLConfig = defineDataTableGraphQLConfig({
+  document: FuelPurchaseImportTableDocument,
+  operationName: "FuelPurchaseImportTable",
+  connectionKey: "fuelPurchaseImports",
+  inputExtraVariables: { origin: "Feed" },
+});
 export const FUEL_PURCHASE_IMPORT_ROWS_KEY = "fuel-purchase-import-rows";
 
 export async function fetchFuelPurchaseImport(
@@ -144,4 +162,27 @@ export async function discardFuelPurchaseImport(
     variables: { id, version, reason: reason ?? null },
   });
   return data.discardFuelPurchaseImport as FuelPurchaseImportBatch;
+}
+
+export type FuelPurchaseImportResolveResult =
+  ResolveFuelPurchaseImportRowsMutation["resolveFuelPurchaseImportRows"];
+
+/**
+ * Works the rows an import is still holding out again against the organization's
+ * current cards, tractors and jurisdictions. This is what posts the rows a feed
+ * could not place, once the card it discovered has been assigned.
+ */
+export async function resolveFuelPurchaseImportRows(
+  id: string,
+  version: number,
+): Promise<FuelPurchaseImportResolveResult> {
+  const data = await requestGraphQL<
+    ResolveFuelPurchaseImportRowsMutation,
+    ResolveFuelPurchaseImportRowsMutationVariables
+  >({
+    document: ResolveFuelPurchaseImportRowsDocument,
+    operationName: "ResolveFuelPurchaseImportRows",
+    variables: { id, version },
+  });
+  return data.resolveFuelPurchaseImportRows;
 }

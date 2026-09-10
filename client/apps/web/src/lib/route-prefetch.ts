@@ -22,7 +22,21 @@ export interface RoutePrefetchQuery {
   readonly retry?: boolean | number;
 }
 
-export type RoutePrefetchList = readonly RoutePrefetchQuery[];
+/**
+ * A paged query a route wants warmed. An infinite query stores `{ pages,
+ * pageParams }` where a plain one stores the payload itself, so warming one
+ * through prefetchQuery would seed a cache entry the page then cannot read —
+ * the page would throw on `data.pages`. Carrying the paging fields is what
+ * lets `warm` reach for the right prefetch.
+ */
+export interface RoutePrefetchInfiniteQuery extends RoutePrefetchQuery {
+  readonly initialPageParam: unknown;
+  readonly getNextPageParam: (...args: never[]) => unknown;
+}
+
+export type RoutePrefetchEntry = RoutePrefetchQuery | RoutePrefetchInfiniteQuery;
+
+export type RoutePrefetchList = readonly RoutePrefetchEntry[];
 
 /**
  * Returns the queries a route wants warmed for a given navigation. Runs after the auth and
@@ -34,13 +48,24 @@ export type RoutePrefetch = (
   args: LoaderFunctionArgs,
 ) => RoutePrefetchList | Promise<RoutePrefetchList>;
 
-function warm(options: RoutePrefetchQuery): void {
-  void queryClient
-    .prefetchQuery({
-      ...options,
-      staleTime: options.staleTime ?? PREFETCH_STALE_TIME_MS,
-    })
-    .catch(() => undefined);
+function isInfinite(options: RoutePrefetchEntry): options is RoutePrefetchInfiniteQuery {
+  return "initialPageParam" in options;
+}
+
+function warm(options: RoutePrefetchEntry): void {
+  const shared = { ...options, staleTime: options.staleTime ?? PREFETCH_STALE_TIME_MS };
+
+  // The page type is opaque at this seam: every entry carries its own queryFn,
+  // and the two agree by construction inside the factory that produced them.
+  const started = isInfinite(options)
+    ? queryClient.prefetchInfiniteQuery(
+        shared as unknown as Parameters<typeof queryClient.prefetchInfiniteQuery>[0],
+      )
+    : queryClient.prefetchQuery(
+        shared as unknown as Parameters<typeof queryClient.prefetchQuery>[0],
+      );
+
+  void started.catch(() => undefined);
 }
 
 async function runPrefetch(prefetch: RoutePrefetch, args: LoaderFunctionArgs): Promise<void> {

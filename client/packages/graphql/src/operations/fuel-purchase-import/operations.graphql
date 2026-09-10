@@ -3,6 +3,8 @@ fragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {
   businessUnitId
   organizationId
   provider
+  origin
+  feedReference
   documentId
   fileName
   sourceFormat
@@ -142,5 +144,35 @@ mutation CommitFuelPurchaseImport($id: ID!, $version: Int!) {
 mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {
   discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {
     ...FuelPurchaseImportBatchFields
+  }
+}
+
+mutation ResolveFuelPurchaseImportRows($id: ID!, $version: Int!) {
+  resolveFuelPurchaseImportRows(id: $id, version: $version) {
+    reviewed
+    resolved
+    committed
+    queued
+    batch {
+      ...FuelPurchaseImportBatchFields
+    }
+  }
+}
+
+query FuelPurchaseImportTable(
+  $input: FuelPurchaseImportsInput!
+  $includeTotalCount: Boolean = true
+) {
+  fuelPurchaseImports(input: $input) {
+    edges {
+      node {
+        ...FuelPurchaseImportBatchFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }

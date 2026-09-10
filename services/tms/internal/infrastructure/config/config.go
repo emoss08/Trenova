@@ -22,6 +22,8 @@ type ServerConfig struct {
 	IdleTimeout       time.Duration `mapstructure:"idleTimeout"`
 	ShutdownTimeout   time.Duration `mapstructure:"shutdownTimeout"`
 	RequestTimeout    time.Duration `mapstructure:"requestTimeout"`
+	TrustedProxies    []string      `mapstructure:"trustedProxies"`
+	TrustedPlatform   string        `mapstructure:"trustedPlatform"   validate:"omitempty,oneof=cloudflare google-app-engine flyio"`
 	CORS              CORSConfig    `mapstructure:"cors,omitempty"`
 }
 

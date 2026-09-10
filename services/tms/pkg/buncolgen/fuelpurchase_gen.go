@@ -835,6 +835,8 @@ var ImportBatchColumns = struct {
 	StagedAt          Column // "staged_at" → qualified: "fpib.staged_at"
 	CommittedAt       Column // "committed_at" → qualified: "fpib.committed_at"
 	CommittedByID     Column // "committed_by_id" → qualified: "fpib.committed_by_id"
+	SearchVector      Column // "search_vector" → qualified: "fpib.search_vector"
+	Rank              Column // "rank" → qualified: "fpib.rank"
 	Version           Column // "version" → qualified: "fpib.version"
 	CreatedAt         Column // "created_at" → qualified: "fpib.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "fpib.updated_at"
@@ -863,6 +865,8 @@ var ImportBatchColumns = struct {
 	StagedAt:          NewColumn("staged_at", "fpib"),
 	CommittedAt:       NewColumn("committed_at", "fpib"),
 	CommittedByID:     NewColumn("committed_by_id", "fpib"),
+	SearchVector:      NewColumn("search_vector", "fpib"),
+	Rank:              NewColumn("rank", "fpib"),
 	Version:           NewColumn("version", "fpib"),
 	CreatedAt:         NewColumn("created_at", "fpib"),
 	UpdatedAt:         NewColumn("updated_at", "fpib"),

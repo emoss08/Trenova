@@ -192,3 +192,69 @@ describe("lazyPrefetch", () => {
     await flushMicrotasks();
   });
 });
+
+/**
+ * An infinite query stores `{ pages, pageParams }` where a plain one stores the
+ * payload itself. Warming one through prefetchQuery seeds a cache entry the
+ * page then cannot read — its first render throws on `data.pages` — so the
+ * paged reports library only survives its route's prefetch if `warm` reaches
+ * for prefetchInfiniteQuery instead.
+ */
+describe("createPrefetchLoader with a paged query", () => {
+  const infiniteEntry = (
+    queryKey: readonly unknown[],
+    queryFn: (context: { pageParam?: unknown }) => unknown,
+  ) => ({
+    queryKey,
+    queryFn,
+    initialPageParam: null as string | null,
+    getNextPageParam: () => undefined,
+  });
+
+  it("stores a warmed page under the shape an infinite query reads", async () => {
+    const queryKey = ["prefetch-test", "paged"] as const;
+    const queryFn = vi.fn(() => Promise.resolve({ rows: ["a"] }));
+
+    await createPrefetchLoader(() => [infiniteEntry(queryKey, queryFn)])(args);
+    await untilSettled(queryKey);
+
+    expect(queryClient.getQueryData(queryKey)).toEqual({
+      pages: [{ rows: ["a"] }],
+      pageParams: [null],
+    });
+  });
+
+  it("hands the first page param to the query function", async () => {
+    const queryKey = ["prefetch-test", "paged-param"] as const;
+    const queryFn = vi.fn((context: { pageParam?: unknown }) => {
+      void context;
+      return Promise.resolve({ rows: [] });
+    });
+
+    await createPrefetchLoader(() => [infiniteEntry(queryKey, queryFn)])(args);
+    await untilSettled(queryKey);
+
+    expect(queryFn.mock.calls[0]?.[0]).toMatchObject({ pageParam: null });
+  });
+
+  it("still warms a plain query as a plain query", async () => {
+    const queryKey = ["prefetch-test", "plain"] as const;
+    const queryFn = vi.fn(() => Promise.resolve({ rows: ["a"] }));
+
+    await createPrefetchLoader(() => [{ queryKey, queryFn }])(args);
+    await untilSettled(queryKey);
+
+    expect(queryClient.getQueryData(queryKey)).toEqual({ rows: ["a"] });
+  });
+
+  it("gives a paged query the same default staleTime", async () => {
+    const queryKey = ["prefetch-test", "paged-stale"] as const;
+
+    await createPrefetchLoader(() => [
+      infiniteEntry(queryKey, () => Promise.resolve({ rows: [] })),
+    ])(args);
+    await untilSettled(queryKey);
+
+    expect(storedStaleTime(queryKey)).toBe(PREFETCH_STALE_TIME_MS);
+  });
+});

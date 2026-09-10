@@ -554,3 +554,57 @@ func epochPtr(value int64) *int {
 	converted := int(value)
 	return &converted
 }
+
+func fuelImportsRequestFromGraphQL(
+	connection gqlDataTableConnection,
+	input gqlmodel.FuelPurchaseImportsInput,
+) *repositories.ListImportBatchesRequest {
+	req := &repositories.ListImportBatchesRequest{
+		Filter:             connection.Filter,
+		Cursor:             connection.Cursor,
+		Statuses:           input.Statuses,
+		IncludeDefaultCard: true,
+	}
+	if input.Origin != nil {
+		req.Origin = *input.Origin
+	}
+	if input.Provider != nil {
+		req.Provider = *input.Provider
+	}
+	if input.HeldRowsOnly != nil {
+		req.HeldRowsOnly = *input.HeldRowsOnly
+	}
+
+	return req
+}
+
+func fuelImportCursorConnectionToModel(
+	result *pagination.CursorListResult[*fuelpurchase.ImportBatch],
+) (*gqlmodel.FuelPurchaseImportBatchConnection, error) {
+	edges, err := entityCursorEdges(
+		result.Items,
+		result.CursorSort,
+		result,
+		func(
+			node *fuelpurchase.ImportBatch,
+			cursor string,
+		) *gqlmodel.FuelPurchaseImportBatchEdge {
+			return &gqlmodel.FuelPurchaseImportBatchEdge{Node: node, Cursor: cursor}
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.FuelPurchaseImportBatchConnection{
+		Edges: edges,
+		PageInfo: pageInfo(
+			result.HasNextPage,
+			lastEdgeCursor(
+				edges,
+				func(edge *gqlmodel.FuelPurchaseImportBatchEdge) string { return edge.Cursor },
+			),
+		),
+		TotalCount: result.TotalCount,
+	}, nil
+}

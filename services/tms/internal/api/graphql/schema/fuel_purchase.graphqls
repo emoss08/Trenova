@@ -430,6 +430,61 @@ type FuelCardSyncResult {
   cardsDiscovered: Int!
 }
 
+"""
+What working a held import's rows out again achieved.
+"""
+type FuelPurchaseImportResolveResult {
+  batch: FuelPurchaseImportBatch!
+  """
+  Rows that were still waiting when this ran.
+  """
+  reviewed: Int!
+  """
+  Rows that resolved this time.
+  """
+  resolved: Int!
+  """
+  Rows posted as purchases. Only a feed posts on its own; an upload waits to be
+  committed.
+  """
+  committed: Int!
+  """
+  Rows still waiting on something.
+  """
+  queued: Int!
+}
+
+input FuelPurchaseImportsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  """
+  Feed lists the runs a scheduled sync opened; Upload lists the statements people
+  chose. Omit for both.
+  """
+  origin: FuelPurchaseImportOrigin
+  provider: FuelCardProvider
+  statuses: [FuelPurchaseImportStatus!]
+  """
+  Only imports still holding rows that could not be worked out.
+  """
+  heldRowsOnly: Boolean
+}
+
+type FuelPurchaseImportBatchEdge {
+  node: FuelPurchaseImportBatch!
+  cursor: String!
+}
+
+type FuelPurchaseImportBatchConnection {
+  edges: [FuelPurchaseImportBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 input CancelFuelCardInput {
   id: ID!
   version: Int!
@@ -512,6 +567,7 @@ extend type Query {
   fuelCard(id: ID!): FuelCard!
   fuelPurchases(input: FuelPurchasesInput!): FuelPurchaseConnection!
   fuelPurchase(id: ID!): FuelPurchase!
+  fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
 }
@@ -545,5 +601,13 @@ extend type Mutation {
   is already on file are marked AlreadyImported rather than duplicated.
   """
   commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
+  """
+  Reads the rows an import is still holding and works them out again against the
+  organization's current cards, tractors and jurisdictions. This is what posts the
+  rows a feed could not place once the card it saw has been assigned, without the
+  statement being fetched a second time. Rows that already became purchases are
+  left alone.
+  """
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
   discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
 }

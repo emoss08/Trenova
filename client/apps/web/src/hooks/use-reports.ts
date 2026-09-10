@@ -1,11 +1,16 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
+  DataTablePageInfoFieldsFragmentDoc,
   ReportDashboardFieldsFragmentDoc,
   ReportDefinitionFieldsFragmentDoc,
+  ReportDefinitionOptionFieldsFragmentDoc,
+  ReportDefinitionOptionsDocument,
   ReportPreviewFieldsFragmentDoc,
   ReportRunFieldsFragmentDoc,
   ReportScheduleFieldsFragmentDoc,
   ReportViewFieldsFragmentDoc,
+  type ReportDefinitionByIdQuery,
+  type ReportDefinitionOptionFieldsFragment,
   type ReportDrillInput,
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
@@ -30,7 +35,15 @@ import {
   type ReportRun,
 } from "@/lib/graphql/reports";
 import { queries } from "@/lib/queries";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { reportDefinitionsInfiniteQuery } from "@/lib/queries/reports";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 const CATALOG_STALE_TIME = 5 * 60_000;
 const RUN_POLL_INTERVAL = 3_000;
@@ -61,13 +74,69 @@ export function useCannedReports(enabled = true) {
   });
 }
 
+/**
+ * The report library for the grid that lists it. It pages: the previous read
+ * asked for a fixed first hundred and showed nothing to say that a hundred and
+ * first existed, so a large library was silently cut off.
+ */
 export function useReportDefinitionList(search: string) {
-  return useQuery({
-    ...queries.reports.definitionList(search),
+  return useInfiniteQuery({
+    ...reportDefinitionsInfiniteQuery(search),
     staleTime: 15_000,
     select: (data) =>
-      data.reportDefinitions.edges.map((edge) =>
-        getFragmentData(ReportDefinitionFieldsFragmentDoc, edge.node),
+      data.pages.flatMap((page) =>
+        page.reportDefinitions.edges.map((edge) =>
+          getFragmentData(ReportDefinitionFieldsFragmentDoc, edge.node),
+        ),
+      ),
+  });
+}
+
+export type ReportDefinitionOption = ReportDefinitionOptionFieldsFragment;
+
+const DEFINITION_OPTIONS_PAGE_SIZE = 25;
+
+/**
+ * The report library as a picker reads it: one page at a time, searched by the
+ * server, ordered by name. It exists alongside useReportDefinitionList because
+ * the two answer different questions — the list resolves a report the caller
+ * already chose and needs the definition blob for, while this one browses a
+ * library that may run to thousands of rows and needs only enough of each to
+ * recognise it.
+ */
+export function useReportDefinitionOptions(search: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: [...queries.reports.definitionOptions(search).queryKey, "infinite"],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam, signal }) =>
+      requestGraphQL({
+        document: ReportDefinitionOptionsDocument,
+        operationName: "ReportDefinitionOptions",
+        variables: {
+          input: {
+            first: DEFINITION_OPTIONS_PAGE_SIZE,
+            after: pageParam,
+            query: search || undefined,
+            sort: [{ field: "name", direction: "asc" }],
+          },
+        },
+        signal,
+      }),
+    getNextPageParam: (lastPage) => {
+      const { hasNextPage, endCursor } = getFragmentData(
+        DataTablePageInfoFieldsFragmentDoc,
+        lastPage.reportDefinitions.pageInfo,
+      );
+      return hasNextPage && endCursor ? endCursor : undefined;
+    },
+    enabled,
+    staleTime: 30_000,
+    retry: false,
+    select: (data): ReportDefinitionOption[] =>
+      data.pages.flatMap((page) =>
+        page.reportDefinitions.edges.map((edge) =>
+          getFragmentData(ReportDefinitionOptionFieldsFragmentDoc, edge.node),
+        ),
       ),
   });
 }
@@ -77,6 +146,29 @@ export function useReportDefinition(id: string | undefined) {
     ...queries.reports.definition(id ?? ""),
     enabled: Boolean(id),
     select: (data) => getFragmentData(ReportDefinitionFieldsFragmentDoc, data.reportDefinition),
+  });
+}
+
+/**
+ * Several saved reports at once, resolved one cache entry per id. Callers that
+ * need the definition blob behind a known set of reports — a dashboard reading
+ * the reports its own tiles point at — use this rather than scanning a page of
+ * the library: the work is bounded by how many reports were asked for, not by
+ * how large the library is, and it shares its cache entries with
+ * useReportDefinition, so a dashboard that already rendered those tiles pays
+ * nothing extra.
+ */
+export function useReportDefinitionsByIds(ids: string[]) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      ...queries.reports.definition(id),
+      select: (data: ReportDefinitionByIdQuery) =>
+        getFragmentData(ReportDefinitionFieldsFragmentDoc, data.reportDefinition),
+    })),
+    combine: (results) => ({
+      data: results.flatMap((result) => (result.data ? [result.data] : [])),
+      isLoading: results.some((result) => result.isLoading),
+    }),
   });
 }
 
@@ -215,6 +307,7 @@ function useInvalidateDefinitions() {
   return async (definitionId?: string) => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queries.reports.definitionList._def }),
+      queryClient.invalidateQueries({ queryKey: queries.reports.definitionOptions._def }),
       definitionId
         ? queryClient.invalidateQueries({
             queryKey: queries.reports.definition(definitionId).queryKey,

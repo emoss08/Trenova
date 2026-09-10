@@ -11,6 +11,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { ConfigFieldSpec, UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -31,7 +32,8 @@ import { toast } from "sonner";
 export type FuelFeedVendor = {
   integrationType: string;
   name: string;
-  logoLight: string;
+  /** Optional: the header falls back to a monogram when no asset is shipped. */
+  logoLight?: string;
   logoDark?: string;
   headline: string;
   blurb: string;
@@ -330,6 +332,9 @@ function SpecField({
 }
 
 function FuelFeedHeader({ vendor }: { vendor: FuelFeedVendor }) {
+  const { theme } = useTheme();
+  const logo = theme === "dark" ? (vendor.logoDark ?? vendor.logoLight) : vendor.logoLight;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-center gap-4">
@@ -339,11 +344,17 @@ function FuelFeedHeader({ vendor }: { vendor: FuelFeedVendor }) {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage
-          src={vendor.logoLight}
-          alt={`${vendor.name} Logo`}
-          className="h-8 max-w-24 object-contain"
-        />
+        {logo ? (
+          <LazyImage
+            src={logo}
+            alt={`${vendor.name} Logo`}
+            className="h-8 max-w-24 object-contain"
+          />
+        ) : (
+          <span className="bg-muted text-foreground/80 flex size-8 items-center justify-center rounded-md text-xs font-semibold">
+            {vendor.name.slice(0, 2).toUpperCase()}
+          </span>
+        )}
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">{vendor.headline}</h3>

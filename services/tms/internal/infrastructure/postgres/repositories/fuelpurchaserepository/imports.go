@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -362,6 +364,95 @@ func (r *repository) CommitImport(
 		}
 		r.l.Error("failed to commit fuel purchase import", zap.Error(err))
 		return nil, err
+	}
+
+	return result, nil
+}
+
+func (r *repository) applyImportBatchFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListImportBatchesRequest,
+) *bun.SelectQuery {
+	cols := buncolgen.ImportBatchColumns
+
+	if req.Origin != "" {
+		q = q.Where(cols.Origin.Eq(), req.Origin)
+	}
+	if req.Provider != "" {
+		q = q.Where(cols.Provider.Eq(), req.Provider)
+	}
+	if len(req.Statuses) > 0 {
+		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
+	}
+	if req.HeldRowsOnly {
+		q = q.Where(cols.ErrorCount.Gt(), 0)
+	}
+
+	return q
+}
+
+// ListImportBatches lists the statements on file, newest first. A feed opens one
+// per run, so this doubles as the history of what each connection has read.
+func (r *repository) ListImportBatches(
+	ctx context.Context,
+	req *repositories.ListImportBatchesRequest,
+) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
+	dba := r.db.DBForContext(ctx)
+
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.NewSelect().
+			Model((*fuelpurchase.ImportBatch)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.ImportBatchTable.Alias,
+					req.Filter,
+					(*fuelpurchase.ImportBatch)(nil),
+				)
+				return r.applyImportBatchFilters(sq, req)
+			}).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count fuel purchase imports", zap.Error(err))
+			return nil, fmt.Errorf("count fuel purchase imports: %w", err)
+		}
+		totalCount = &total
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*fuelpurchase.ImportBatch]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(items *[]*fuelpurchase.ImportBatch) *bun.SelectQuery {
+				q := dba.NewSelect().
+					Model(items).
+					ColumnExpr(buncolgen.ImportBatchTable.All())
+				if req.IncludeDefaultCard {
+					q = q.Relation(buncolgen.ImportBatchRelations.DefaultFuelCard)
+				}
+				return q
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				sq, applyErr := querybuilder.ApplyCursorFilters(
+					sq,
+					buncolgen.ImportBatchTable.Alias,
+					req.Filter,
+					req.Cursor,
+					(*fuelpurchase.ImportBatch)(nil),
+				)
+				if applyErr != nil {
+					return sq, applyErr
+				}
+				return r.applyImportBatchFilters(sq, req), nil
+			},
+		},
+	)
+	if err != nil {
+		r.l.Error("failed to list fuel purchase imports", zap.Error(err))
+		return nil, fmt.Errorf("list fuel purchase imports: %w", err)
 	}
 
 	return result, nil

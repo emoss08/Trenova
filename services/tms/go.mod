@@ -43,7 +43,7 @@ require (
 	github.com/minio/minio-go/v7 v7.3.0
 	github.com/openai/openai-go/v3 v3.59.0
 	github.com/paulmach/orb v0.13.0
-	github.com/pkg/sftp v1.13.11
+	github.com/pkg/sftp v1.13.11 // indirect
 	github.com/prometheus/client_golang v1.24.1
 	github.com/redis/go-redis/extra/redisotel/v9 v9.22.0
 	github.com/redis/go-redis/v9 v9.22.0

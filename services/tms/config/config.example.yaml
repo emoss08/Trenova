@@ -33,6 +33,24 @@ server:
   idleTimeout: 120s # Maximum keep-alive idle connection duration
   shutdownTimeout: 10s # Maximum graceful shutdown duration
   requestTimeout: 55s # Maximum app-controlled handler duration
+  # Which peers may set the forwarding headers that decide the reported client
+  # IP. That IP keys rate limiting, the GraphQL cost budget, and audited session
+  # activity, so a peer outside this list has its headers ignored and is
+  # reported by its own address. Defaults to loopback plus the private ranges;
+  # set to [] to trust nothing when the API is exposed directly.
+  trustedProxies:
+    - 127.0.0.0/8
+    - ::1/128
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - 169.254.0.0/16
+    - fe80::/10
+    - fc00::/7
+  # Take the client IP from a platform header the edge overwrites, instead of
+  # X-Forwarded-For. Safe only when the API is exclusively reachable through
+  # that platform: cloudflare | google-app-engine | flyio. Empty disables it.
+  trustedPlatform: ""
   cors:
     enabled: true # Enable CORS
     allowedOrigins: # Allowed origins for CORS

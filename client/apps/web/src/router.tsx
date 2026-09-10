@@ -918,6 +918,18 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/fuel/feed-runs",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.FuelPurchaseImport),
+            ),
+            async lazy() {
+              const { FuelFeedRunsPage } = await import("@/routes/fuel-feed-run/page");
+              return { Component: FuelFeedRunsPage };
+            },
+          },
+          {
             path: "/fuel/unassigned-cards",
             loader: combineLoaders(
               protectedLoader,

@@ -380,6 +380,13 @@ const fuelModule: NavModule = {
       capability: OrganizationCapability.AssetOperations,
     },
     {
+      id: "feed-runs",
+      label: "Feed Runs",
+      path: "/fuel/feed-runs",
+      resource: Resource.FuelPurchaseImport,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
       id: "unassigned-cards",
       label: "Unassigned Cards",
       path: "/fuel/unassigned-cards",
