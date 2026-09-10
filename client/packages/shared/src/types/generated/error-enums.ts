@@ -41,6 +41,7 @@ export const ProblemType = z.enum([
   "authentication-error",
   "authorization-error",
   "resource-not-found",
+  "request-entity-too-large",
   "rate-limit-exceeded",
   "resource-conflict",
   "request-timeout",
