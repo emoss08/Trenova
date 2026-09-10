@@ -20,6 +20,7 @@ platform:
     heartbeatInterval: 5m
     tenantSyncInterval: 1h
     failOpenOnError: false # Development only
+    maxProvisioningBodyBytes: 1048576 # Max /control-plane/tenants/provision body (bytes); bounded before the HMAC check
 
 # HTTP Server configuration
 server:

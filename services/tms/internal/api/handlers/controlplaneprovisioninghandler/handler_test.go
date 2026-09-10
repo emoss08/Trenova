@@ -3,9 +3,11 @@ package controlplaneprovisioninghandler
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+const testMaxProvisioningBodyBytes = 4096
 
 type fakeProvisioningService struct {
 	called bool
@@ -85,6 +89,112 @@ func TestHandler_ProvisionTenant(t *testing.T) {
 	})
 }
 
+func TestHandler_ProvisionTenantBodyLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("rejects a declared oversized body without reading it", func(t *testing.T) {
+		service := &fakeProvisioningService{}
+		handler := newTestHandler(service)
+		router := gin.New()
+		handler.RegisterPublicRoutes(router.Group("/api/v1"))
+
+		payload := bytes.Repeat([]byte("a"), testMaxProvisioningBodyBytes*16)
+		source := &countingReader{r: bytes.NewReader(payload)}
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/api/v1/control-plane/tenants/provision",
+			source,
+		)
+		req.ContentLength = int64(len(payload))
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusRequestEntityTooLarge, rec.Code)
+		require.False(t, service.called)
+		require.Zero(t, source.read)
+	})
+
+	t.Run("rejects an oversized chunked body with no content length", func(t *testing.T) {
+		service := &fakeProvisioningService{}
+		handler := newTestHandler(service)
+		router := gin.New()
+		handler.RegisterPublicRoutes(router.Group("/api/v1"))
+
+		source := &countingReader{
+			r: bytes.NewReader(bytes.Repeat([]byte("a"), testMaxProvisioningBodyBytes*16)),
+		}
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/api/v1/control-plane/tenants/provision",
+			source,
+		)
+		req.ContentLength = -1
+		req.TransferEncoding = []string{"chunked"}
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusRequestEntityTooLarge, rec.Code)
+		require.False(t, service.called)
+		require.LessOrEqual(t, source.read, int64(testMaxProvisioningBodyBytes)+1)
+	})
+
+	t.Run("rejects a signed oversized body", func(t *testing.T) {
+		service := &fakeProvisioningService{}
+		handler := newTestHandler(service)
+		router := gin.New()
+		handler.RegisterPublicRoutes(router.Group("/api/v1"))
+		body := bytes.Repeat([]byte("a"), testMaxProvisioningBodyBytes+1)
+
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/api/v1/control-plane/tenants/provision",
+			bytes.NewReader(body),
+		)
+		signTestRequest(req, "cp_secret", body, time.Unix(100, 0))
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusRequestEntityTooLarge, rec.Code)
+		require.False(t, service.called)
+	})
+
+	t.Run("accepts a signed body at the configured limit", func(t *testing.T) {
+		service := &fakeProvisioningService{}
+		handler := newTestHandler(service)
+		router := gin.New()
+		handler.RegisterPublicRoutes(router.Group("/api/v1"))
+		body := paddedProvisioningBody(t, testMaxProvisioningBodyBytes)
+		require.Len(t, body, testMaxProvisioningBodyBytes)
+
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/api/v1/control-plane/tenants/provision",
+			bytes.NewReader(body),
+		)
+		signTestRequest(req, "cp_secret", body, time.Unix(100, 0))
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusAccepted, rec.Code)
+		require.True(t, service.called)
+	})
+}
+
+type countingReader struct {
+	r    io.Reader
+	read int64
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.read += int64(n)
+	return n, err
+}
+
 func newTestHandler(service services.TenantProvisioningService) *Handler {
 	cfg := &config.Config{
 		App: config.AppConfig{
@@ -93,7 +203,8 @@ func newTestHandler(service services.TenantProvisioningService) *Handler {
 		Platform: config.PlatformConfig{
 			InstanceID: "inst_test",
 			ControlPlane: config.PlatformControlPlaneConfig{
-				APIKey: "cp_secret",
+				APIKey:                   "cp_secret",
+				MaxProvisioningBodyBytes: testMaxProvisioningBodyBytes,
 			},
 		},
 	}
@@ -113,6 +224,21 @@ func newTestHandler(service services.TenantProvisioningService) *Handler {
 func mustProvisioningBody(t *testing.T) []byte {
 	t.Helper()
 
+	return mustProvisioningBodyWithPadding(t, 0)
+}
+
+func paddedProvisioningBody(t *testing.T, size int) []byte {
+	t.Helper()
+
+	base := mustProvisioningBodyWithPadding(t, 0)
+	require.Less(t, len(base), size)
+
+	return mustProvisioningBodyWithPadding(t, size-len(base))
+}
+
+func mustProvisioningBodyWithPadding(t *testing.T, padding int) []byte {
+	t.Helper()
+
 	customerID := pulid.MustNew("bu_")
 	body, err := sonic.Marshal(services.TenantProvisioningRequest{
 		InstanceID: "inst_test",
@@ -124,7 +250,7 @@ func mustProvisioningBody(t *testing.T) []byte {
 		Workspace: services.TenantProvisioningWorkspace{
 			ID:             pulid.MustNew("org_"),
 			BusinessUnitID: customerID,
-			Name:           "Acme Northeast",
+			Name:           "Acme Northeast" + strings.Repeat("a", padding),
 			State:          "NY",
 			AddressLine1:   "100 Main Street",
 			City:           "Albany",

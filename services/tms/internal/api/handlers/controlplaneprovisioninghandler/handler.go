@@ -58,8 +58,16 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) provisionTenant(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
+	body, err := helpers.ReadBoundedRequestBody(
+		c,
+		h.cfg.Platform.ControlPlane.GetMaxProvisioningBodyBytes(),
+	)
 	if err != nil {
+		if helpers.IsRequestTooLargeError(err) {
+			h.eh.HandleError(c, err)
+			return
+		}
+
 		h.eh.HandleError(c, errortypes.NewValidationError(
 			"payload",
 			errortypes.ErrInvalid,
