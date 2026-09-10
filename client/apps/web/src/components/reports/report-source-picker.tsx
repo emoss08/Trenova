@@ -72,10 +72,14 @@ export function ReportSourcePicker({
   const canned = useCannedReports(!savedTab);
 
   // A report chosen on an earlier page must still show as chosen. The library
-  // is paged, so the selected row is fetched by id and pinned above the page
-  // rather than waiting for the user to scroll back to where it lives.
+  // is paged, so a selection the loaded pages do not carry is fetched by id and
+  // pinned above them rather than waiting for the user to scroll back to where
+  // it lives. A selection already on the page needs no second read.
+  const onLoadedPage =
+    value.definitionId != null &&
+    (definitions.data ?? []).some((entry) => entry.id === value.definitionId);
   const selectedDefinition = useReportDefinition(
-    savedTab && value.definitionId ? value.definitionId : undefined,
+    savedTab && value.definitionId && !onLoadedPage ? value.definitionId : undefined,
   );
 
   // Switching source kind is a decision about which report, so the other kind's

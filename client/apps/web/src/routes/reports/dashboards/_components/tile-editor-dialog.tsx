@@ -12,14 +12,13 @@ import { Label } from "@trenova/shared/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { useCannedReports, useReportCatalog, useReportDefinitionList } from "@/hooks/use-reports";
+import { ReportSourcePicker, type ReportSource } from "@/components/reports/report-source-picker";
+import { useReportCatalog } from "@/hooks/use-reports";
 import { buildCatalogIndex, outputColumnChoices } from "../../builder/_components/builder-state";
 import {
   REPORT_TILE_KIND_CHOICES,
@@ -43,15 +42,6 @@ type TileEditorDialogProps = {
 
 const UNLINKED = "__unlinked__";
 
-const SAVED_PREFIX = "def:";
-const CANNED_PREFIX = "canned:";
-
-function sourceValue(tile: ReportDashboardTile): string {
-  if (tile.definitionId) return `${SAVED_PREFIX}${tile.definitionId}`;
-  if (tile.cannedKey) return `${CANNED_PREFIX}${tile.cannedKey}`;
-  return "";
-}
-
 export function TileEditorDialog({
   open,
   onOpenChange,
@@ -65,8 +55,6 @@ export function TileEditorDialog({
     if (open) setDraft(tile);
   }, [open, tile]);
 
-  const definitions = useReportDefinitionList("");
-  const canned = useCannedReports();
   const report = useTileReport(tileNeedsReport(draft.kind) ? draft : null);
 
   // Labels come from the catalog so a KPI is chosen by the header it will
@@ -88,20 +76,6 @@ export function TileEditorDialog({
   const charts = report.ir?.charts ?? [];
   const reportParams = report.ir?.parameters ?? [];
 
-  const sourceItems = useMemo(
-    () => [
-      ...(definitions.data ?? []).map((definition) => ({
-        value: `${SAVED_PREFIX}${definition.id}`,
-        label: definition.name,
-      })),
-      ...(canned.data ?? []).map((entry) => ({
-        value: `${CANNED_PREFIX}${entry.key}`,
-        label: entry.name,
-      })),
-    ],
-    [definitions.data, canned.data],
-  );
-
   const setKind = (kind: ReportDashboardTileKind) => {
     setDraft((prev) => ({
       ...prev,
@@ -114,25 +88,16 @@ export function TileEditorDialog({
     }));
   };
 
-  const setSource = (value: string) => {
-    if (value.startsWith(SAVED_PREFIX)) {
-      setDraft((prev) => ({
-        ...prev,
-        definitionId: value.slice(SAVED_PREFIX.length),
-        cannedKey: undefined,
-        chartId: undefined,
-        columnId: undefined,
-      }));
-      return;
-    }
+  // A chart or measure id means nothing outside the report that defined it, so
+  // swapping the source clears both.
+  const setSource = (next: ReportSource) =>
     setDraft((prev) => ({
       ...prev,
-      cannedKey: value.slice(CANNED_PREFIX.length),
-      definitionId: undefined,
+      definitionId: next.definitionId ?? undefined,
+      cannedKey: next.cannedKey ?? undefined,
       chartId: undefined,
       columnId: undefined,
     }));
-  };
 
   const incomplete =
     (tileNeedsReport(draft.kind) && !draft.definitionId && !draft.cannedKey) ||
@@ -141,7 +106,7 @@ export function TileEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[88vh] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Tile</DialogTitle>
           <DialogDescription>
@@ -149,7 +114,7 @@ export function TileEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
+        <div className="-mx-1 flex min-h-0 flex-col gap-4 overflow-y-auto px-1">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="tile-kind">Shows</Label>
             <Select
@@ -174,36 +139,15 @@ export function TileEditorDialog({
 
           {tileNeedsReport(draft.kind) && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tile-source">Report</Label>
-              <Select
-                value={sourceValue(draft)}
-                onValueChange={(value) => {
-                  if (value) setSource(value);
+              <Label id="tile-source-label">Report</Label>
+              <ReportSourcePicker
+                labelledBy="tile-source-label"
+                value={{
+                  definitionId: draft.definitionId ?? null,
+                  cannedKey: draft.cannedKey ?? null,
                 }}
-                items={sourceItems}
-              >
-                <SelectTrigger className="w-full" id="tile-source">
-                  <SelectValue placeholder="Choose a report" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>My reports</SelectLabel>
-                    {(definitions.data ?? []).map((definition) => (
-                      <SelectItem key={definition.id} value={`${SAVED_PREFIX}${definition.id}`}>
-                        {definition.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Gallery</SelectLabel>
-                    {(canned.data ?? []).map((entry) => (
-                      <SelectItem key={entry.key} value={`${CANNED_PREFIX}${entry.key}`}>
-                        {entry.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                onChange={setSource}
+              />
             </div>
           )}
 

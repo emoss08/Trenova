@@ -12,6 +12,7 @@ import {
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
+import { reportDefinitionsInfiniteQuery } from "@/lib/queries/reports";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -47,7 +48,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
     case "dashboards":
       return [queries.reports.dashboards()];
     default:
-      return [queries.reports.definitionList(query)];
+      return [reportDefinitionsInfiniteQuery(query)];
   }
 };
 

@@ -7,15 +7,21 @@ import {
   ReportDashboardsDocument,
   ReportDefinitionByIdDocument,
   ReportDefinitionRevisionsDocument,
+  DataTablePageInfoFieldsFragmentDoc,
   ReportDefinitionsTableDocument,
   ReportRunByIdDocument,
   ReportSchedulesDocument,
   ReportViewsDocument,
+  type ReportDefinitionsTableQuery,
   type ReportDrillInput,
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+
+/** Reports per page in the library grid. Two full rows on a wide screen. */
+const REPORT_DEFINITION_PAGE_SIZE = 24;
 
 export const reports = createQueryKeys("reports", {
   catalog: () => ({
@@ -36,18 +42,14 @@ export const reports = createQueryKeys("reports", {
         signal,
       }),
   }),
+  // Key space only. The library is cursor-paged, so its options are built by
+  // reportDefinitionsInfiniteQuery below — the query-key factory cannot carry
+  // the paging fields.
   definitionList: (search: string) => ({
     queryKey: [search],
-    queryFn: async ({ signal }) =>
-      requestGraphQL({
-        document: ReportDefinitionsTableDocument,
-        operationName: "ReportDefinitionsTable",
-        variables: { input: { first: 100, query: search || undefined } },
-        signal,
-      }),
   }),
-  // Key space only. The picker pages this connection with useInfiniteQuery,
-  // which owns its own queryFn so it can thread the cursor through pageParam.
+  // Key space only, as above: the picker pages this connection with
+  // useInfiniteQuery and owns its own queryFn.
   definitionOptions: (search: string) => ({
     queryKey: [search],
   }),
@@ -141,3 +143,36 @@ export const reports = createQueryKeys("reports", {
       }),
   }),
 });
+
+/**
+ * The report library, one page at a time. The grid and the route's prefetch
+ * both read it, so the cursor plumbing lives here rather than in either.
+ */
+export function reportDefinitionsInfiniteQuery(search: string) {
+  return {
+    queryKey: reports.definitionList(search).queryKey,
+    queryFn: async ({ signal, pageParam }: { signal: AbortSignal; pageParam?: unknown }) =>
+      requestGraphQL({
+        document: ReportDefinitionsTableDocument,
+        operationName: "ReportDefinitionsTable",
+        variables: {
+          input: {
+            first: REPORT_DEFINITION_PAGE_SIZE,
+            after: (pageParam as string | null) ?? null,
+            query: search || undefined,
+            sort: [{ field: "name", direction: "asc" }],
+          },
+          includeTotalCount: false,
+        },
+        signal,
+      }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage: ReportDefinitionsTableQuery) => {
+      const { hasNextPage, endCursor } = getFragmentData(
+        DataTablePageInfoFieldsFragmentDoc,
+        lastPage.reportDefinitions.pageInfo,
+      );
+      return hasNextPage && endCursor ? endCursor : undefined;
+    },
+  };
+}

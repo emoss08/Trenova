@@ -49,6 +49,32 @@ type CategoryTab = {
   count: number;
 };
 
+type FocusDirection = "next" | "previous" | "up" | "down";
+
+const ARROW_DIRECTIONS: Record<string, FocusDirection | undefined> = {
+  ArrowRight: "next",
+  ArrowLeft: "previous",
+  ArrowDown: "down",
+  ArrowUp: "up",
+};
+
+/**
+ * How many cards share a row with the one at `index`, read off their laid-out
+ * positions. Cards in the same CSS grid row share an offsetTop, and a section
+ * heading between two groups restarts the count — which is what makes an
+ * arrow-down from the last row of Work land on the first row of Pulse.
+ */
+function columnsAround(cards: HTMLButtonElement[], index: number): number {
+  const top = cards[index]?.offsetTop;
+  if (top == null) return 1;
+
+  let columns = 0;
+  for (const card of cards) {
+    if (card.offsetTop === top) columns += 1;
+  }
+  return Math.max(columns, 1);
+}
+
 function matches(option: HomeWidgetOption, term: string): boolean {
   if (term === "") return true;
   return (
@@ -176,15 +202,28 @@ function WidgetGallery({
     [full, onAdd],
   );
 
-  /** Moves focus between cards so the grid is usable without a pointer. */
-  const moveFocus = useCallback((from: HTMLElement, delta: number) => {
+  /**
+   * Moves focus between cards so the grid is usable without a pointer. A row is
+   * measured rather than assumed: the grid is one, two, or three columns
+   * depending on the width, so a fixed vertical step lands on the wrong card at
+   * every size but the widest.
+   */
+  const moveFocus = useCallback((from: HTMLElement, direction: FocusDirection) => {
     const grid = gridRef.current;
     if (!grid) return;
+
     const cards = Array.from(grid.querySelectorAll<HTMLButtonElement>("[data-widget-card]"));
     const index = cards.indexOf(from as HTMLButtonElement);
     if (index === -1) return;
-    const next = cards[Math.min(Math.max(index + delta, 0), cards.length - 1)];
-    next?.focus();
+
+    const step =
+      direction === "next"
+        ? 1
+        : direction === "previous"
+          ? -1
+          : columnsAround(cards, index) * (direction === "down" ? 1 : -1);
+
+    cards[Math.min(Math.max(index + step, 0), cards.length - 1)]?.focus();
   }, []);
 
   const focusFirstCard = useCallback(() => {
@@ -395,25 +434,16 @@ function WidgetCard({
   added: boolean;
   disabled: boolean;
   onAdd: () => void;
-  onMove: (from: HTMLElement, delta: number) => void;
+  onMove: (from: HTMLElement, direction: FocusDirection) => void;
 }) {
   const { icon: Icon, shape } = widgetVisualFor(option.key);
   const needsSetup = option.configKind !== "none" && option.configKind !== "queue";
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
-    const step =
-      event.key === "ArrowRight"
-        ? 1
-        : event.key === "ArrowLeft"
-          ? -1
-          : event.key === "ArrowDown"
-            ? 3
-            : event.key === "ArrowUp"
-              ? -3
-              : 0;
-    if (step === 0) return;
+    const direction = ARROW_DIRECTIONS[event.key];
+    if (!direction) return;
     event.preventDefault();
-    onMove(event.currentTarget, step);
+    onMove(event.currentTarget, direction);
   };
 
   return (

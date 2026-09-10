@@ -147,6 +147,19 @@ describe("ReportSourcePicker", () => {
     expect(mocks.useReportDefinition).toHaveBeenCalledWith("rdef_99");
   });
 
+  // Reading the chosen report a second time when it is already in front of the
+  // user is a request per open of the dialog, for nothing.
+  it("does not re-read a chosen report the loaded page already carries", async () => {
+    renderPicker({ definitionId: "rdef_1", cannedKey: null });
+
+    expect(await screen.findByRole("option", { name: /Aging Detail/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(mocks.useReportDefinition).not.toHaveBeenCalledWith("rdef_1");
+    expect(mocks.useReportDefinition).toHaveBeenCalledWith(undefined);
+  });
+
   it("does not repeat the chosen report when the page already carries it", async () => {
     mocks.useReportDefinition.mockReturnValue({
       data: definition("rdef_1", "Aging Detail"),

@@ -52,8 +52,20 @@ const CATALOG = {
       category: "pulse",
       configKind: "metric",
     }),
+    option({ key: "kpi-row", label: "Metric Strip", category: "pulse", configKind: "metricRow" }),
+    option({ key: "fleet-status", label: "Fleet Status", category: "pulse" }),
+    option({ key: "on-time-goal", label: "On-Time Goal", category: "pulse" }),
   ],
 } as unknown as HomeWidgetCatalog;
+
+const ALL_LABELS = [
+  "Unassigned Loads",
+  "Billing Queue",
+  "Metric",
+  "Metric Strip",
+  "Fleet Status",
+  "On-Time Goal",
+];
 
 function renderGallery(
   overrides: {
@@ -90,13 +102,24 @@ function cardNames(): string[] {
     .map((element) => within(element).getAllByText(/.+/)[0]?.textContent ?? "");
 }
 
+/**
+ * happy-dom lays nothing out, so the row a card belongs to has to be stated.
+ * Cards sharing an offsetTop share a CSS grid row, which is what the gallery
+ * reads to size an arrow-key step.
+ */
+function layOutRows(cards: HTMLElement[], tops: number[]) {
+  cards.forEach((card, index) => {
+    Object.defineProperty(card, "offsetTop", { value: tops[index] ?? 0, configurable: true });
+  });
+}
+
 describe("AddWidgetDialog", () => {
   it("groups the catalog under the categories the server publishes", () => {
     renderGallery();
 
     expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Pulse" })).toBeInTheDocument();
-    expect(cardNames()).toEqual(["Unassigned Loads", "Billing Queue", "Metric"]);
+    expect(cardNames()).toEqual(ALL_LABELS);
   });
 
   it("searches the description, not just the name", async () => {
@@ -115,7 +138,7 @@ describe("AddWidgetDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /^Pulse/ }));
 
-    expect(cardNames()).toEqual(["Metric"]);
+    expect(cardNames()).toEqual(["Metric", "Metric Strip", "Fleet Status", "On-Time Goal"]);
     expect(screen.queryByRole("heading", { name: "Work" })).toBeNull();
   });
 
@@ -139,7 +162,7 @@ describe("AddWidgetDialog", () => {
     await user.type(screen.getByLabelText("Search widgets"), "billed");
     await user.click(screen.getByRole("button", { name: "Clear search" }));
 
-    expect(cardNames()).toEqual(["Metric"]);
+    expect(cardNames()).toEqual(["Metric", "Metric Strip", "Fleet Status", "On-Time Goal"]);
   });
 
   it("hands the chosen widget back to the canvas", async () => {
@@ -183,7 +206,61 @@ describe("AddWidgetDialog", () => {
 
     expect(screen.getByText("Nothing matches")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
-    expect(cardNames()).toEqual(["Unassigned Loads", "Billing Queue", "Metric"]);
+    expect(cardNames()).toEqual(ALL_LABELS);
+  });
+
+  // The card grid is one, two, or three columns depending on the width, so a
+  // fixed vertical step lands on the wrong card at every size but the widest.
+  it("steps down by a measured row, not an assumed one", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    const cards = screen
+      .getAllByRole("button")
+      .filter((element) => element.hasAttribute("data-widget-card"));
+
+    // Two per row, three rows. A step that assumed three columns would land on
+    // the fourth card instead of the third.
+    layOutRows(cards, [0, 0, 120, 120, 240, 240]);
+
+    cards[0].focus();
+    await user.keyboard("{ArrowDown}");
+
+    expect(document.activeElement).toBe(cards[2]);
+  });
+
+  it("steps down by three when three cards share a row", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    const cards = screen
+      .getAllByRole("button")
+      .filter((element) => element.hasAttribute("data-widget-card"));
+
+    layOutRows(cards, [0, 0, 0, 120, 120, 120]);
+
+    cards[0].focus();
+    await user.keyboard("{ArrowDown}");
+
+    expect(document.activeElement).toBe(cards[3]);
+  });
+
+  it("moves one card at a time along a row", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    const cards = screen
+      .getAllByRole("button")
+      .filter((element) => element.hasAttribute("data-widget-card"));
+
+    layOutRows(cards, [0, 0, 120, 120, 240, 240]);
+
+    cards[0].focus();
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(cards[1]);
+
+    await user.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toBe(cards[0]);
   });
 
   it("draws placeholders rather than an empty gallery while the catalog loads", () => {
