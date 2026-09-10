@@ -1,10 +1,16 @@
 FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 
 WORKDIR /build
 
-COPY client/package.json client/pnpm-lock.yaml ./
+COPY client/package.json client/pnpm-lock.yaml client/pnpm-workspace.yaml client/.npmrc ./
+COPY client/apps/web/package.json ./apps/web/
+COPY client/apps/dash/package.json ./apps/dash/
+COPY client/packages/config/package.json ./packages/config/
+COPY client/packages/graphql/package.json ./packages/graphql/
+COPY client/packages/shared/package.json ./packages/shared/
+
 RUN pnpm install --frozen-lockfile
 
 COPY client/ ./
@@ -14,11 +20,11 @@ ENV VITE_API_URL=${VITE_API_URL}
 ENV BROWSER=none
 ENV CI=true
 
-RUN pnpm vite build
+RUN pnpm --filter @trenova/web exec vite build
 
 FROM caddy:2-alpine
 
-COPY --from=builder /build/dist /srv
+COPY --from=builder /build/apps/web/dist/client /srv
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80 443
