@@ -37,7 +37,7 @@ func New(p Params) *Service {
 func (s *Service) ListEntries(
 	ctx context.Context,
 	req *repositories.ListJournalEntriesRequest,
-) (*pagination.ListResult[*journalentry.Entry], error) {
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	return s.entryRepo.List(ctx, req)
 }
 
@@ -45,7 +45,7 @@ func (s *Service) GetEntry(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entryID pulid.ID,
-) (*journalentry.Entry, error) {
+) (*journalentry.JournalEntry, error) {
 	return s.entryRepo.GetByID(
 		ctx,
 		repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: tenantInfo},
@@ -56,7 +56,7 @@ func (s *Service) ListEntriesBySource(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sourceObjectType, sourceObjectID string,
-) ([]*journalentry.Entry, error) {
+) ([]*journalentry.JournalEntry, error) {
 	sources, err := s.sourceRepo.ListByObject(
 		ctx,
 		repositories.GetJournalSourceByObjectRequest{
@@ -70,7 +70,7 @@ func (s *Service) ListEntriesBySource(
 	}
 
 	seen := make(map[pulid.ID]struct{}, len(sources))
-	entries := make([]*journalentry.Entry, 0, len(sources))
+	entries := make([]*journalentry.JournalEntry, 0, len(sources))
 	for _, source := range sources {
 		if source == nil || source.JournalEntryID.IsNil() {
 			continue

@@ -19,7 +19,7 @@ func TestValidateCreateRejectsInvalidEntryStates(t *testing.T) {
 	t.Parallel()
 
 	v := &Validator{}
-	err := v.ValidateCreate(t.Context(), &journalentry.Entry{Status: "Draft", IsPosted: false, IsReversal: true, ReversedByID: pulid.MustNew("je_")}, 0, "", "")
+	err := v.ValidateCreate(t.Context(), &journalentry.JournalEntry{Status: "Draft", IsPosted: false, IsReversal: true, ReversedByID: pulid.MustNew("je_")}, 0, "", "")
 
 	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Only posted journal entries")

@@ -7,6 +7,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -20,7 +21,15 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *journalEntryLineResolver) GlAccount(ctx context.Context, obj *journalentry.Line) (*gqlmodel.JournalEntryLineAccount, error) {
+func (r *journalEntryResolver) EntryType(ctx context.Context, obj *journalentry.JournalEntry) (string, error) {
+	panic(fmt.Errorf("not implemented: EntryType - entryType"))
+}
+
+func (r *journalEntryResolver) Status(ctx context.Context, obj *journalentry.JournalEntry) (string, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
+}
+
+func (r *journalEntryLineResolver) GlAccount(ctx context.Context, obj *journalentry.JournalEntryLine) (*gqlmodel.JournalEntryLineAccount, error) {
 	if obj.GLAccountID.IsNil() {
 		return nil, nil //nolint:nilnil // absent relation renders as null
 	}
@@ -50,7 +59,7 @@ func (r *journalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 	}, nil
 }
 
-func (r *queryResolver) JournalEntry(ctx context.Context, id string) (*journalentry.Entry, error) {
+func (r *queryResolver) JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -68,7 +77,7 @@ func (r *queryResolver) JournalEntry(ctx context.Context, id string) (*journalen
 	return r.journalEntryService.GetEntry(ctx, tenantInfo(authCtx), entryID)
 }
 
-func (r *queryResolver) JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.Entry, error) {
+func (r *queryResolver) JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -101,8 +110,13 @@ func (r *queryResolver) JournalSourceByObject(ctx context.Context, sourceType st
 	return source, nil
 }
 
+func (r *Resolver) JournalEntry() generated.JournalEntryResolver { return &journalEntryResolver{r} }
+
 func (r *Resolver) JournalEntryLine() generated.JournalEntryLineResolver {
 	return &journalEntryLineResolver{r}
 }
 
-type journalEntryLineResolver struct{ *Resolver }
+type (
+	journalEntryResolver     struct{ *Resolver }
+	journalEntryLineResolver struct{ *Resolver }
+)

@@ -65,6 +65,8 @@ var CustomFieldDefinitionColumns = struct {
 	ValidationRules Column // "validation_rules" → qualified: "cfd.validation_rules"
 	DefaultValue    Column // "default_value" → qualified: "cfd.default_value"
 	UIAttributes    Column // "ui_attributes" → qualified: "cfd.ui_attributes"
+	SearchVector    Column // "search_vector" → qualified: "cfd.search_vector"
+	Rank            Column // "rank" → qualified: "cfd.rank"
 	Version         Column // "version" → qualified: "cfd.version"
 	CreatedAt       Column // "created_at" → qualified: "cfd.created_at"
 	UpdatedAt       Column // "updated_at" → qualified: "cfd.updated_at"
@@ -85,6 +87,8 @@ var CustomFieldDefinitionColumns = struct {
 	ValidationRules: NewColumn("validation_rules", "cfd"),
 	DefaultValue:    NewColumn("default_value", "cfd"),
 	UIAttributes:    NewColumn("ui_attributes", "cfd"),
+	SearchVector:    NewColumn("search_vector", "cfd"),
+	Rank:            NewColumn("rank", "cfd"),
 	Version:         NewColumn("version", "cfd"),
 	CreatedAt:       NewColumn("created_at", "cfd"),
 	UpdatedAt:       NewColumn("updated_at", "cfd"),

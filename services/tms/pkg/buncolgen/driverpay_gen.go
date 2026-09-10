@@ -596,6 +596,17 @@ var EscrowTransactionInsertableColumns = []string{
 	"created_at",
 }
 
+// EscrowTransactionRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EscrowTransactionRelations.EscrowAccount)
+//	// Bun eager-loads the EscrowAccount association via a separate query
+var EscrowTransactionRelations = struct {
+	EscrowAccount string
+}{
+	EscrowAccount: "EscrowAccount",
+}
+
 // EscrowTransactionScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE esctx.organization_id = ? AND esctx.business_unit_id = ?

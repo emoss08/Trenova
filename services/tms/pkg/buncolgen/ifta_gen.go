@@ -1194,6 +1194,8 @@ var TaxRateColumns = struct {
 	SurchargeRatePerGallon Column // "surcharge_rate_per_gallon" → qualified: "iftr.surcharge_rate_per_gallon"
 	SourceNote             Column // "source_note" → qualified: "iftr.source_note"
 	SourceURL              Column // "source_url" → qualified: "iftr.source_url"
+	SearchVector           Column // "search_vector" → qualified: "iftr.search_vector"
+	Rank                   Column // "rank" → qualified: "iftr.rank"
 	Version                Column // "version" → qualified: "iftr.version"
 	CreatedAt              Column // "created_at" → qualified: "iftr.created_at"
 	UpdatedAt              Column // "updated_at" → qualified: "iftr.updated_at"
@@ -1207,6 +1209,8 @@ var TaxRateColumns = struct {
 	SurchargeRatePerGallon: NewColumn("surcharge_rate_per_gallon", "iftr"),
 	SourceNote:             NewColumn("source_note", "iftr"),
 	SourceURL:              NewColumn("source_url", "iftr"),
+	SearchVector:           NewColumn("search_vector", "iftr"),
+	Rank:                   NewColumn("rank", "iftr"),
 	Version:                NewColumn("version", "iftr"),
 	CreatedAt:              NewColumn("created_at", "iftr"),
 	UpdatedAt:              NewColumn("updated_at", "iftr"),

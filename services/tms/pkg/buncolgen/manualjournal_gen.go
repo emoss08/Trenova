@@ -282,6 +282,8 @@ var RequestColumns = struct {
 	PostedBatchID           Column // "posted_batch_id" → qualified: "mjr.posted_batch_id"
 	CreatedByID             Column // "created_by_id" → qualified: "mjr.created_by_id"
 	UpdatedByID             Column // "updated_by_id" → qualified: "mjr.updated_by_id"
+	SearchVector            Column // "search_vector" → qualified: "mjr.search_vector"
+	Rank                    Column // "rank" → qualified: "mjr.rank"
 	Version                 Column // "version" → qualified: "mjr.version"
 	CreatedAt               Column // "created_at" → qualified: "mjr.created_at"
 	UpdatedAt               Column // "updated_at" → qualified: "mjr.updated_at"
@@ -310,6 +312,8 @@ var RequestColumns = struct {
 	PostedBatchID:           NewColumn("posted_batch_id", "mjr"),
 	CreatedByID:             NewColumn("created_by_id", "mjr"),
 	UpdatedByID:             NewColumn("updated_by_id", "mjr"),
+	SearchVector:            NewColumn("search_vector", "mjr"),
+	Rank:                    NewColumn("rank", "mjr"),
 	Version:                 NewColumn("version", "mjr"),
 	CreatedAt:               NewColumn("created_at", "mjr"),
 	UpdatedAt:               NewColumn("updated_at", "mjr"),

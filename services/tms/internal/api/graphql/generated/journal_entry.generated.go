@@ -19,8 +19,12 @@ import (
 
 // region    ************************** generated!.gotpl **************************
 
+type JournalEntryResolver interface {
+	EntryType(ctx context.Context, obj *journalentry.JournalEntry) (string, error)
+	Status(ctx context.Context, obj *journalentry.JournalEntry) (string, error)
+}
 type JournalEntryLineResolver interface {
-	GlAccount(ctx context.Context, obj *journalentry.Line) (*gqlmodel.JournalEntryLineAccount, error)
+	GlAccount(ctx context.Context, obj *journalentry.JournalEntryLine) (*gqlmodel.JournalEntryLineAccount, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -31,7 +35,7 @@ type JournalEntryLineResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _JournalEntry_id(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_id(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -54,7 +58,7 @@ func (ec *executionContext) fieldContext_JournalEntry_id(_ context.Context, fiel
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_organizationId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_organizationId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -77,7 +81,7 @@ func (ec *executionContext) fieldContext_JournalEntry_organizationId(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -100,7 +104,7 @@ func (ec *executionContext) fieldContext_JournalEntry_businessUnitId(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_batchId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_batchId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -123,7 +127,7 @@ func (ec *executionContext) fieldContext_JournalEntry_batchId(_ context.Context,
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_fiscalYearId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_fiscalYearId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -146,7 +150,7 @@ func (ec *executionContext) fieldContext_JournalEntry_fiscalYearId(_ context.Con
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_fiscalPeriodId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_fiscalPeriodId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -169,7 +173,7 @@ func (ec *executionContext) fieldContext_JournalEntry_fiscalPeriodId(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_entryNumber(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_entryNumber(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -192,7 +196,7 @@ func (ec *executionContext) fieldContext_JournalEntry_entryNumber(_ context.Cont
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_entryType(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_entryType(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -201,7 +205,7 @@ func (ec *executionContext) _JournalEntry_entryType(ctx context.Context, field g
 			return ec.fieldContext_JournalEntry_entryType(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.EntryType, nil
+			return ec.Resolvers.JournalEntry().EntryType(ctx, obj)
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -212,10 +216,10 @@ func (ec *executionContext) _JournalEntry_entryType(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_JournalEntry_entryType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("JournalEntry", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_status(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_status(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -224,7 +228,7 @@ func (ec *executionContext) _JournalEntry_status(ctx context.Context, field grap
 			return ec.fieldContext_JournalEntry_status(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Status, nil
+			return ec.Resolvers.JournalEntry().Status(ctx, obj)
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -235,10 +239,10 @@ func (ec *executionContext) _JournalEntry_status(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_JournalEntry_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("JournalEntry", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_accountingDate(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_accountingDate(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -261,7 +265,7 @@ func (ec *executionContext) fieldContext_JournalEntry_accountingDate(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_description(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_description(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -284,7 +288,7 @@ func (ec *executionContext) fieldContext_JournalEntry_description(_ context.Cont
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_referenceType(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_referenceType(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -307,7 +311,7 @@ func (ec *executionContext) fieldContext_JournalEntry_referenceType(_ context.Co
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_referenceId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_referenceId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -330,7 +334,7 @@ func (ec *executionContext) fieldContext_JournalEntry_referenceId(_ context.Cont
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_totalDebit(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_totalDebit(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -353,7 +357,7 @@ func (ec *executionContext) fieldContext_JournalEntry_totalDebit(_ context.Conte
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_totalCredit(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_totalCredit(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -376,7 +380,7 @@ func (ec *executionContext) fieldContext_JournalEntry_totalCredit(_ context.Cont
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_isPosted(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_isPosted(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -399,7 +403,7 @@ func (ec *executionContext) fieldContext_JournalEntry_isPosted(_ context.Context
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_isReversal(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_isReversal(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -422,7 +426,7 @@ func (ec *executionContext) fieldContext_JournalEntry_isReversal(_ context.Conte
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_reversalOfId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_reversalOfId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -445,7 +449,7 @@ func (ec *executionContext) fieldContext_JournalEntry_reversalOfId(_ context.Con
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_reversedById(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_reversedById(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -468,7 +472,7 @@ func (ec *executionContext) fieldContext_JournalEntry_reversedById(_ context.Con
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_reversalDate(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_reversalDate(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -491,7 +495,7 @@ func (ec *executionContext) fieldContext_JournalEntry_reversalDate(_ context.Con
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_reversalReason(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_reversalReason(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -514,7 +518,7 @@ func (ec *executionContext) fieldContext_JournalEntry_reversalReason(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntry", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntry_lines(ctx context.Context, field graphql.CollectedField, obj *journalentry.Entry) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntry_lines(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -526,8 +530,8 @@ func (ec *executionContext) _JournalEntry_lines(ctx context.Context, field graph
 			return obj.Lines, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*journalentry.Line) graphql.Marshaler {
-			return ec.marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐLineᚄ(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v []*journalentry.JournalEntryLine) graphql.Marshaler {
+			return ec.marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLineᚄ(ctx, selections, v)
 		},
 		true,
 		false,
@@ -546,7 +550,7 @@ func (ec *executionContext) fieldContext_JournalEntry_lines(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _JournalEntryLine_id(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_id(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -569,7 +573,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_id(_ context.Context, 
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_journalEntryId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_journalEntryId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -592,7 +596,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_journalEntryId(_ conte
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_glAccountId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_glAccountId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -615,7 +619,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_glAccountId(_ context.
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_lineNumber(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_lineNumber(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -638,7 +642,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_lineNumber(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_description(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_description(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -661,7 +665,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_description(_ context.
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_debitAmount(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_debitAmount(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -684,7 +688,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_debitAmount(_ context.
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_creditAmount(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_creditAmount(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -707,7 +711,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_creditAmount(_ context
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_netAmount(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_netAmount(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -730,7 +734,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_netAmount(_ context.Co
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_customerId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_customerId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -753,7 +757,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_customerId(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_locationId(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_locationId(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -776,7 +780,7 @@ func (ec *executionContext) fieldContext_JournalEntryLine_locationId(_ context.C
 	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _JournalEntryLine_glAccount(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
+func (ec *executionContext) _JournalEntryLine_glAccount(ctx context.Context, field graphql.CollectedField, obj *journalentry.JournalEntryLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1029,7 +1033,7 @@ func (ec *executionContext) fieldContext_JournalSourceInfo_status(_ context.Cont
 
 var journalEntryImplementors = []string{"JournalEntry"}
 
-func (ec *executionContext) _JournalEntry(ctx context.Context, sel ast.SelectionSet, obj *journalentry.Entry) graphql.Marshaler {
+func (ec *executionContext) _JournalEntry(ctx context.Context, sel ast.SelectionSet, obj *journalentry.JournalEntry) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, journalEntryImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -1042,112 +1046,178 @@ func (ec *executionContext) _JournalEntry(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._JournalEntry_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizationId":
 			out.Values[i] = ec._JournalEntry_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._JournalEntry_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "batchId":
 			out.Values[i] = ec._JournalEntry_batchId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fiscalYearId":
 			out.Values[i] = ec._JournalEntry_fiscalYearId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fiscalPeriodId":
 			out.Values[i] = ec._JournalEntry_fiscalPeriodId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "entryNumber":
 			out.Values[i] = ec._JournalEntry_entryNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "entryType":
-			out.Values[i] = ec._JournalEntry_entryType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JournalEntry_entryType(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-			out.Values[i] = ec._JournalEntry_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JournalEntry_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "accountingDate":
 			out.Values[i] = ec._JournalEntry_accountingDate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._JournalEntry_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "referenceType":
 			out.Values[i] = ec._JournalEntry_referenceType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "referenceId":
 			out.Values[i] = ec._JournalEntry_referenceId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "totalDebit":
 			out.Values[i] = ec._JournalEntry_totalDebit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "totalCredit":
 			out.Values[i] = ec._JournalEntry_totalCredit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "isPosted":
 			out.Values[i] = ec._JournalEntry_isPosted(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "isReversal":
 			out.Values[i] = ec._JournalEntry_isReversal(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "reversalOfId":
 			out.Values[i] = ec._JournalEntry_reversalOfId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "reversedById":
 			out.Values[i] = ec._JournalEntry_reversedById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "reversalDate":
 			out.Values[i] = ec._JournalEntry_reversalDate(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "reversalReason":
 			out.Values[i] = ec._JournalEntry_reversalReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lines":
 			out.Values[i] = ec._JournalEntry_lines(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -1172,7 +1242,7 @@ func (ec *executionContext) _JournalEntry(ctx context.Context, sel ast.Selection
 
 var journalEntryLineImplementors = []string{"JournalEntryLine"}
 
-func (ec *executionContext) _JournalEntryLine(ctx context.Context, sel ast.SelectionSet, obj *journalentry.Line) graphql.Marshaler {
+func (ec *executionContext) _JournalEntryLine(ctx context.Context, sel ast.SelectionSet, obj *journalentry.JournalEntryLine) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, journalEntryLineImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -1406,11 +1476,11 @@ func (ec *executionContext) _JournalSourceInfo(ctx context.Context, sel ast.Sele
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*journalentry.Entry) graphql.Marshaler {
+func (ec *executionContext) marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*journalentry.JournalEntry) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐEntry(ctx, sel, v[i])
+		return ec.marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -1422,7 +1492,7 @@ func (ec *executionContext) marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐEntry(ctx context.Context, sel ast.SelectionSet, v *journalentry.Entry) graphql.Marshaler {
+func (ec *executionContext) marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -1432,7 +1502,7 @@ func (ec *executionContext) marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtre
 	return ec._JournalEntry(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐLine(ctx context.Context, sel ast.SelectionSet, v *journalentry.Line) graphql.Marshaler {
+func (ec *executionContext) marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLine(ctx context.Context, sel ast.SelectionSet, v *journalentry.JournalEntryLine) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -1442,21 +1512,21 @@ func (ec *executionContext) marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08�
 	return ec._JournalEntryLine(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐEntry(ctx context.Context, sel ast.SelectionSet, v *journalentry.Entry) graphql.Marshaler {
+func (ec *executionContext) marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._JournalEntry(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*journalentry.Line) graphql.Marshaler {
+func (ec *executionContext) marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*journalentry.JournalEntryLine) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐLine(ctx, sel, v[i])
+		return ec.marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLine(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {

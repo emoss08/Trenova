@@ -28,10 +28,10 @@ func TestListEntries(t *testing.T) {
 
 	entryRepo := mocks.NewMockJournalEntryRepository(t)
 	sourceRepo := mocks.NewMockJournalSourceRepository(t)
-	entry := &journalentry.Entry{ID: pulid.MustNew("je_"), EntryNumber: "JE-1"}
-	entryRepo.EXPECT().List(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.Entry], error) {
+	entry := &journalentry.JournalEntry{ID: pulid.MustNew("je_"), EntryNumber: "JE-1"}
+	entryRepo.EXPECT().List(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 		assert.Equal(t, sharedtestutil.TestOrgID, req.Filter.TenantInfo.OrgID)
-		return &pagination.ListResult[*journalentry.Entry]{Items: []*journalentry.Entry{entry}, Total: 1}, nil
+		return &pagination.ListResult[*journalentry.JournalEntry]{Items: []*journalentry.JournalEntry{entry}, Total: 1}, nil
 	}).Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
 
@@ -40,7 +40,7 @@ func TestListEntries(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp pagination.Response[[]*journalentry.Entry]
+	var resp pagination.Response[[]*journalentry.JournalEntry]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.Len(t, resp.Results, 1)
 	assert.Equal(t, entry.ID, resp.Results[0].ID)
@@ -52,7 +52,7 @@ func TestGetEntry(t *testing.T) {
 	entryRepo := mocks.NewMockJournalEntryRepository(t)
 	sourceRepo := mocks.NewMockJournalSourceRepository(t)
 	entryID := pulid.MustNew("je_")
-	entryRepo.EXPECT().GetByID(mock.Anything, repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).Return(&journalentry.Entry{ID: entryID}, nil).Once()
+	entryRepo.EXPECT().GetByID(mock.Anything, repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).Return(&journalentry.JournalEntry{ID: entryID}, nil).Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
 
 	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/accounting/journal-entries/" + entryID.String() + "/").WithDefaultAuthContext()

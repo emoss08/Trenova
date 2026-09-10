@@ -61,6 +61,8 @@ type EscrowTransaction struct {
 	SettlementID      *pulid.ID             `json:"settlementId"      bun:"settlement_id,type:VARCHAR(100),nullzero"`
 	CreatedByID       pulid.ID              `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	CreatedAt         int64                 `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" bun:"rel:belongs-to,join:escrow_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (e *EscrowAccount) Validate(multiErr *errortypes.MultiError) {

@@ -83,5 +83,10 @@ func Default() *Registry {
 		ptoLiability(),
 		credentialExpiryForecast(),
 		dqfCredentialDetail(),
+
+		trialBalance(),
+		revenueByGLAccount(),
+		arAgingByDocument(),
+		settlementRegister(),
 	})
 }

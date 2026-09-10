@@ -417,9 +417,13 @@ var PayEventInsertableColumns = []string{
 //	q.Relation(PayEventRelations.Worker)
 //	// Bun eager-loads the Worker association via a separate query
 var PayEventRelations = struct {
-	Worker string
+	Worker     string
+	Shipment   string
+	Settlement string
 }{
-	Worker: "Worker",
+	Worker:     "Worker",
+	Shipment:   "Shipment",
+	Settlement: "Settlement",
 }
 
 // PayEventScopeTenant restricts a query to a single tenant by adding:
@@ -1450,6 +1454,21 @@ var SettlementLineInsertableColumns = []string{
 	"pro_number",
 	"created_at",
 	"updated_at",
+}
+
+// SettlementLineRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(SettlementLineRelations.Settlement)
+//	// Bun eager-loads the Settlement association via a separate query
+var SettlementLineRelations = struct {
+	Settlement string
+	Shipment   string
+	PayCode    string
+}{
+	Settlement: "Settlement",
+	Shipment:   "Shipment",
+	PayCode:    "PayCode",
 }
 
 // SettlementLineScopeTenant restricts a query to a single tenant by adding:
