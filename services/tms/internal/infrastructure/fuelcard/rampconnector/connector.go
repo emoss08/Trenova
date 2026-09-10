@@ -37,6 +37,11 @@ var sheetHeaders = []string{
 	"Card Last Four",
 	"ID",
 	"Card Holder Name",
+	// Ramp never sends gallons, but the column has to exist. Staging refuses a
+	// sheet with no quantity column at all, which would drop the whole window on
+	// the floor; an empty column instead fails each row on its own, so every
+	// transaction lands in the review queue saying what it is missing.
+	"Gallons",
 }
 
 // Connector reads card transactions from Ramp.
@@ -182,11 +187,19 @@ func settingsFrom(config map[string]string) (*settings, error) {
 		defaultCurrency: stringutils.WithDefault(config[integration.ConfigKeyFuelCurrency], "USD"),
 	}
 
-	if fuelType := domaintypes.IFTAFuelType(
+	// Ramp never names a product, so without a fuel type to fall back on the
+	// staging pipeline rejects the sheet outright and the whole window is lost.
+	// Refusing here says why, instead of reporting a feed that quietly reads
+	// nothing every hour.
+	fuelType := domaintypes.IFTAFuelType(
 		strings.TrimSpace(config[integration.ConfigKeyFuelDefaultFuelType]),
-	); fuelType.IsValid() {
-		resolved.defaultFuelType = fuelType
+	)
+	if !fuelType.IsValid() {
+		return nil, errors.New(
+			"a default fuel type is required, because Ramp transactions do not name a product",
+		)
 	}
+	resolved.defaultFuelType = fuelType
 
 	return resolved, nil
 }

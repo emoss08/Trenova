@@ -234,6 +234,7 @@ type MutationResolver interface {
 	CreateFuelPurchaseImport(ctx context.Context, input gqlmodel.CreateFuelPurchaseImportInput) (*fuelpurchase.ImportBatch, error)
 	StageFuelPurchaseImport(ctx context.Context, input gqlmodel.StageFuelPurchaseImportInput) (*fuelpurchase.ImportBatch, error)
 	CommitFuelPurchaseImport(ctx context.Context, id string, version int) (*fuelpurchase.ImportBatch, error)
+	ResolveFuelPurchaseImportRows(ctx context.Context, id string, version int) (*gqlmodel.FuelPurchaseImportResolveResult, error)
 	DiscardFuelPurchaseImport(ctx context.Context, id string, version int, reason *string) (*fuelpurchase.ImportBatch, error)
 	CreateFuelIndex(ctx context.Context, input gqlmodel.FuelIndexInput) (*gqlmodel.FuelIndex, error)
 	UpdateFuelIndex(ctx context.Context, id string, input gqlmodel.FuelIndexInput) (*gqlmodel.FuelIndex, error)
@@ -662,6 +663,7 @@ type QueryResolver interface {
 	FuelCard(ctx context.Context, id string) (*fuelpurchase.FuelCard, error)
 	FuelPurchases(ctx context.Context, input gqlmodel.FuelPurchasesInput) (*gqlmodel.FuelPurchaseConnection, error)
 	FuelPurchase(ctx context.Context, id string) (*fuelpurchase.FuelPurchase, error)
+	FuelPurchaseImports(ctx context.Context, input gqlmodel.FuelPurchaseImportsInput) (*gqlmodel.FuelPurchaseImportBatchConnection, error)
 	FuelPurchaseImport(ctx context.Context, id string) (*fuelpurchase.ImportBatch, error)
 	FuelPurchaseImportTemplate(ctx context.Context, provider fuelpurchase.CardProvider) (*gqlmodel.FuelImportTemplate, error)
 	FuelIndexes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FuelIndexConnection, error)
@@ -4823,6 +4825,28 @@ func (ec *executionContext) field_Mutation_resolveAgentException_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_resolveFuelPurchaseImportRows_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNInt2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_resolveSettlementDispute_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -8956,6 +8980,20 @@ func (ec *executionContext) field_Query_fuelPurchaseImport_args(ctx context.Cont
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_fuelPurchaseImports_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FuelPurchaseImportsInput, error) {
+			return ec.unmarshalNFuelPurchaseImportsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportsInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -19032,6 +19070,50 @@ func (ec *executionContext) fieldContext_Mutation_commitFuelPurchaseImport(ctx c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_commitFuelPurchaseImport_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resolveFuelPurchaseImportRows(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_resolveFuelPurchaseImportRows(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ResolveFuelPurchaseImportRows(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.FuelPurchaseImportResolveResult) graphql.Marshaler {
+			return ec.marshalNFuelPurchaseImportResolveResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportResolveResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_resolveFuelPurchaseImportRows(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FuelPurchaseImportResolveResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_resolveFuelPurchaseImportRows_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -37338,6 +37420,50 @@ func (ec *executionContext) fieldContext_Query_fuelPurchase(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_fuelPurchaseImports(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_fuelPurchaseImports(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().FuelPurchaseImports(ctx, fc.Args["input"].(gqlmodel.FuelPurchaseImportsInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.FuelPurchaseImportBatchConnection) graphql.Marshaler {
+			return ec.marshalNFuelPurchaseImportBatchConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportBatchConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_fuelPurchaseImports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FuelPurchaseImportBatchConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_fuelPurchaseImports_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_fuelPurchaseImport(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -49527,6 +49653,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "resolveFuelPurchaseImportRows":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resolveFuelPurchaseImportRows(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "discardFuelPurchaseImport":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_discardFuelPurchaseImport(ctx, field)
@@ -55463,6 +55596,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_fuelPurchase(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "fuelPurchaseImports":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_fuelPurchaseImports(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

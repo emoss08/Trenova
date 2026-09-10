@@ -67,22 +67,46 @@ func Stage(sheet *rateimport.Sheet, opts StageOptions) *StageResult {
 		parseOpts.DefaultUnit = UnitFromHeader(sheet.Headers[index])
 	}
 
-	result.Rows = make([]*StagedRow, 0, len(sheet.Rows))
-	firstByReference := make(map[string]int, len(sheet.Rows))
-
+	raw := make([]RawRow, 0, len(sheet.Rows))
 	for index, cells := range sheet.Rows {
-		parsed, err := ParseRow(cells, result.Mapping, parseOpts)
+		raw = append(raw, RawRow{RowNumber: sheet.FirstDataRow + index, Cells: cells})
+	}
+	result.Rows = StageRows(raw, result.Mapping, parseOpts)
+
+	return result
+}
+
+// RawRow is one line of a statement and the number it is known by. Rows read
+// back from a batch keep the numbers they were first given, so a row somebody
+// was told about is still that row after it is staged again.
+type RawRow struct {
+	RowNumber int
+	Cells     []string
+}
+
+// StageRows parses rows, fills in a reference for any that arrived without one,
+// and marks the ones that repeat a reference already seen in the same batch.
+//
+// It is separated from [Stage] because a batch can be staged more than once: a
+// row held for review is parsed again after somebody fixes what it was waiting
+// on, and it has to be read exactly as it was the first time.
+func StageRows(raw []RawRow, mapping Mapping, opts ParseOptions) []*StagedRow {
+	rows := make([]*StagedRow, 0, len(raw))
+	firstByReference := make(map[string]int, len(raw))
+
+	for _, item := range raw {
+		parsed, err := ParseRow(item.Cells, mapping, opts)
 		if errors.Is(err, ErrBlankRow) {
 			continue
 		}
 
 		row := &StagedRow{
-			RowNumber: sheet.FirstDataRow + index,
-			Cells:     cells,
+			RowNumber: item.RowNumber,
+			Cells:     item.Cells,
 		}
 		if err != nil {
 			row.Err = err
-			result.Rows = append(result.Rows, row)
+			rows = append(rows, row)
 			continue
 		}
 
@@ -105,8 +129,8 @@ func Stage(sheet *rateimport.Sheet, opts StageOptions) *StageResult {
 			firstByReference[parsed.Reference] = row.RowNumber
 		}
 
-		result.Rows = append(result.Rows, row)
+		rows = append(rows, row)
 	}
 
-	return result
+	return rows
 }

@@ -17,6 +17,8 @@ function batch(overrides: Partial<FuelPurchaseImportBatch> = {}): FuelPurchaseIm
     businessUnitId: "bu_1",
     organizationId: "org_1",
     provider: "Comdata",
+    origin: "Upload",
+    feedReference: null,
     documentId: "doc_1",
     fileName: "statement.csv",
     sourceFormat: "CSV",

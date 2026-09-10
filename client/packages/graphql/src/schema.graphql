@@ -5973,6 +5973,17 @@ type FuelPurchaseImportBatch {
   version: Int!
 }
 
+type FuelPurchaseImportBatchConnection {
+  edges: [FuelPurchaseImportBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelPurchaseImportBatchEdge {
+  cursor: String!
+  node: FuelPurchaseImportBatch!
+}
+
 """
 Whether a batch came from a person choosing a file or from a scheduled sync.
 """
@@ -6001,6 +6012,22 @@ type FuelPurchaseImportParsed {
   unitPrice: Decimal
   vendor: String
   vendorCity: String
+}
+
+"""What working a held import's rows out again achieved."""
+type FuelPurchaseImportResolveResult {
+  batch: FuelPurchaseImportBatch!
+  """
+  Rows posted as purchases. Only a feed posts on its own; an upload waits to be
+  committed.
+  """
+  committed: Int!
+  """Rows still waiting on something."""
+  queued: Int!
+  """Rows that resolved this time."""
+  resolved: Int!
+  """Rows that were still waiting when this ran."""
+  reviewed: Int!
 }
 
 type FuelPurchaseImportRow {
@@ -6090,6 +6117,24 @@ type FuelPurchaseImportSummary {
   totalAmount: Decimal!
   """Gallons across the rows that will commit."""
   totalGallons: Decimal!
+}
+
+input FuelPurchaseImportsInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  """Only imports still holding rows that could not be worked out."""
+  heldRowsOnly: Boolean
+  """
+  Feed lists the runs a scheduled sync opened; Upload lists the statements people
+  chose. Omit for both.
+  """
+  origin: FuelPurchaseImportOrigin
+  provider: FuelCardProvider
+  query: String
+  sort: [SortFieldInput!]
+  statuses: [FuelPurchaseImportStatus!]
 }
 
 input FuelPurchaseInput {
@@ -8192,6 +8237,14 @@ type Mutation {
   resetHomeLayout: HomeLayout!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   """
+  Reads the rows an import is still holding and works them out again against the
+  organization's current cards, tractors and jurisdictions. This is what posts the
+  rows a feed could not place once the card it saw has been assigned, without the
+  statement being fetched a second time. Rows that already became purchases are
+  left alone.
+  """
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  """
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
   """
   resolveSettlementDispute(input: ResolveSettlementDisputeInput!): SettlementDispute!
@@ -10095,6 +10148,7 @@ type Query {
   fuelPurchase(id: ID!): FuelPurchase!
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
+  fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!
   fuelPurchases(input: FuelPurchasesInput!): FuelPurchaseConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!

@@ -139,8 +139,8 @@ func feedDefaultsFields() []ConfigFieldSpec {
 			Key:      ConfigKeyFuelDefaultFuelType,
 			Label:    "Default Fuel Type",
 			Type:     ConfigFieldTypeSelect,
-			Options:  []string{"Diesel", "Gasoline", "Biodiesel", "Propane", "LNG", "CNG", "Ethanol", "Methanol", "E85", "M85", "A55", "Electricity", "Hydrogen"},
-			HelpText: "Used when a transaction does not name its product. Leave blank to hold those rows for review instead.",
+			Options:  fuelTypeOptions(),
+			HelpText: "Used when a file has no product column at all. A file that names its product per row ignores this.",
 		},
 		{
 			Key:         ConfigKeyFuelCurrency,
@@ -150,6 +150,13 @@ func feedDefaultsFields() []ConfigFieldSpec {
 			Placeholder: "USD",
 			HelpText:    "Used when a transaction does not name its currency.",
 		},
+	}
+}
+
+func fuelTypeOptions() []string {
+	return []string{
+		"Diesel", "Gasoline", "Biodiesel", "Propane", "LNG", "CNG",
+		"Ethanol", "Methanol", "E85", "M85", "A55", "Electricity", "Hydrogen",
 	}
 }
 
@@ -239,6 +246,23 @@ func rampFuelSpec() IntegrationSpec {
 				Type:        ConfigFieldTypeURL,
 				Default:     "https://api.ramp.com/developer/v1",
 				Placeholder: "https://api.ramp.com/developer/v1",
+			},
+			{
+				Key:      ConfigKeyFuelDefaultFuelType,
+				Label:    "Default Fuel Type",
+				Type:     ConfigFieldTypeSelect,
+				Required: true,
+				Default:  "Diesel",
+				Options:  fuelTypeOptions(),
+				HelpText: "Ramp transactions never name a product, so every row needs a fuel type to fall back on. Rows still wait for review, because they carry no gallons either.",
+			},
+			{
+				Key:         ConfigKeyFuelCurrency,
+				Label:       "Currency",
+				Type:        ConfigFieldTypeString,
+				Default:     "USD",
+				Placeholder: "USD",
+				HelpText:    "Used when a transaction does not name its currency.",
 			},
 			discoverCardsField(),
 		},

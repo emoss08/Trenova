@@ -912,3 +912,10 @@ func readSheet(format fuelpurchase.SourceFormat, content []byte) (*rateimport.Sh
 	}
 	return rateimport.ReadCSV(content)
 }
+
+func (s *Service) ListImports(
+	ctx context.Context,
+	req *repositories.ListImportBatchesRequest,
+) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
+	return s.repo.ListImportBatches(ctx, req)
+}

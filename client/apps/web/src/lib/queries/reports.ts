@@ -46,6 +46,11 @@ export const reports = createQueryKeys("reports", {
         signal,
       }),
   }),
+  // Key space only. The picker pages this connection with useInfiniteQuery,
+  // which owns its own queryFn so it can thread the cursor through pageParam.
+  definitionOptions: (search: string) => ({
+    queryKey: [search],
+  }),
   definition: (id: string) => ({
     queryKey: [id],
     queryFn: async ({ signal }) =>

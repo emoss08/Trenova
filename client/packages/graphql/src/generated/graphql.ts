@@ -1742,6 +1742,11 @@ export type FuelIndexSource =
   | 'Custom'
   | 'EIA';
 
+/** Whether a batch came from a person choosing a file or from a scheduled sync. */
+export type FuelPurchaseImportOrigin =
+  | 'Feed'
+  | 'Upload';
+
 /**
  * Only New rows commit. DuplicateInFile is the second occurrence of a reference
  * inside the statement; AlreadyImported matches a purchase already on file.
@@ -1771,6 +1776,24 @@ export type FuelPurchaseImportStatus =
   | 'Failed'
   | 'Parsed'
   | 'Pending';
+
+export type FuelPurchaseImportsInput = {
+  after?: string | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  /** Only imports still holding rows that could not be worked out. */
+  heldRowsOnly?: boolean | null | undefined;
+  /**
+   * Feed lists the runs a scheduled sync opened; Upload lists the statements people
+   * chose. Omit for both.
+   */
+  origin?: FuelPurchaseImportOrigin | null | undefined;
+  provider?: FuelCardProvider | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+  statuses?: Array<FuelPurchaseImportStatus> | null | undefined;
+};
 
 export type FuelPurchaseInput = {
   cardLastFour?: string | null | undefined;
@@ -7087,7 +7110,7 @@ export type SyncFuelCardFeedMutationVariables = Exact<{
 
 export type SyncFuelCardFeedMutation = { syncFuelCardFeed: { provider: FuelCardProvider, batchId: string | null, fetched: number, committed: number, queued: number, alreadyImported: number, cardsDiscovered: number } };
 
-export type FuelPurchaseImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, documentId: string | null, fileName: string | null, sourceFormat: FuelImportFormat | null, status: FuelPurchaseImportStatus, defaultFuelType: IftaFuelType | null, defaultFuelCardId: string | null, defaultCurrency: string, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, committedCount: number, error: string | null, uploadedById: string | null, stagedAt: number | null, committedAt: number | null, committedById: string | null, version: number, createdAt: number, updatedAt: number, summary: { rowCount: number, newCount: number, duplicateInFileCount: number, alreadyImportedCount: number, errorCount: number, totalGallons: string, totalAmount: string, byFuelType: unknown, byJurisdiction: unknown, earliestPurchasedAt: number | null, latestPurchasedAt: number | null } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, defaultFuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportBatchFieldsFragment' };
+export type FuelPurchaseImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, feedReference: string | null, documentId: string | null, fileName: string | null, sourceFormat: FuelImportFormat | null, status: FuelPurchaseImportStatus, defaultFuelType: IftaFuelType | null, defaultFuelCardId: string | null, defaultCurrency: string, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, committedCount: number, error: string | null, uploadedById: string | null, stagedAt: number | null, committedAt: number | null, committedById: string | null, version: number, createdAt: number, updatedAt: number, summary: { rowCount: number, newCount: number, duplicateInFileCount: number, alreadyImportedCount: number, errorCount: number, totalGallons: string, totalAmount: string, byFuelType: unknown, byJurisdiction: unknown, earliestPurchasedAt: number | null, latestPurchasedAt: number | null } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, defaultFuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportBatchFieldsFragment' };
 
 export type FuelPurchaseImportRowFieldsFragment = { id: string, importBatchId: string, rowNumber: number, cells: Array<string>, transactionReference: string | null, status: FuelPurchaseImportRowStatus, error: string | null, resolvedTractorId: string | null, resolvedFuelCardId: string | null, resolvedJurisdictionId: string | null, resolutionNotes: Array<string>, fuelPurchaseId: string | null, createdAt: number, parsed: { purchasedAt: number | null, vendor: string | null, vendorCity: string | null, jurisdictionCode: string | null, fuelType: IftaFuelType | null, quantity: string | null, quantityUnit: FuelQuantityUnit | null, gallons: string | null, unitPrice: string | null, totalAmount: string | null, currencyCode: string | null, transactionReference: string | null, cardLastFour: string | null, tractorCode: string | null, odometer: number | null } | null, resolvedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportRowFieldsFragment' };
 
@@ -7143,6 +7166,22 @@ export type DiscardFuelPurchaseImportMutationVariables = Exact<{
 
 
 export type DiscardFuelPurchaseImportMutation = { discardFuelPurchaseImport: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } };
+
+export type ResolveFuelPurchaseImportRowsMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type ResolveFuelPurchaseImportRowsMutation = { resolveFuelPurchaseImportRows: { reviewed: number, resolved: number, committed: number, queued: number, batch: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } } };
+
+export type FuelPurchaseImportTableQueryVariables = Exact<{
+  input: FuelPurchaseImportsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FuelPurchaseImportTableQuery = { fuelPurchaseImports: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type FuelPurchaseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, cardLastFour: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, unitPrice: string | null, totalAmount: string, currencyCode: string, odometer: number | null, transactionReference: string | null, source: FuelPurchaseSource, importBatchId: string | null, taxPaid: boolean, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string, firstName: string, lastName: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string }, fuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseFieldsFragment' };
 
@@ -8396,6 +8435,15 @@ export type ResetCannedForkMutationVariables = Exact<{
 
 
 export type ResetCannedForkMutation = { resetCannedFork: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
+
+export type ReportDefinitionOptionFieldsFragment = { id: string, name: string, description: string, category: string, kind: string, status: string, visibility: string, lastRunAt: number | null, updatedAt: number } & { ' $fragmentName'?: 'ReportDefinitionOptionFieldsFragment' };
+
+export type ReportDefinitionOptionsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ReportDefinitionOptionsQuery = { reportDefinitions: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportDefinitionOptionFieldsFragment': ReportDefinitionOptionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
@@ -11981,6 +12029,8 @@ export const FuelPurchaseImportBatchFieldsFragmentDoc = new TypedDocumentString(
   businessUnitId
   organizationId
   provider
+  origin
+  feedReference
   documentId
   fileName
   sourceFormat
@@ -13292,6 +13342,19 @@ export const ReportDefinitionFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ReportDefinitionFields"}) as unknown as TypedDocumentString<ReportDefinitionFieldsFragment, unknown>;
+export const ReportDefinitionOptionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportDefinitionOptionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  kind
+  status
+  visibility
+  lastRunAt
+  updatedAt
+}
+    `, {"fragmentName":"ReportDefinitionOptionFields"}) as unknown as TypedDocumentString<ReportDefinitionOptionFieldsFragment, unknown>;
 export const ReportPreviewFieldsFragmentDoc = new TypedDocumentString(`
     fragment ReportPreviewFields on ReportPreview {
   columns {
@@ -15975,13 +16038,15 @@ export const UpdateFuelCardDocument = {"__meta__":{"kind":"mutation","name":"Upd
 export const CancelFuelCardDocument = {"__meta__":{"kind":"mutation","name":"CancelFuelCard","hash":"sha256:57ea8939185a798d8b009ea00c709e301b26e00a3630c851edd91af69c3e0ce2"}} as unknown as TypedDocumentString<CancelFuelCardMutation, CancelFuelCardMutationVariables>;
 export const AssignFuelCardDocument = {"__meta__":{"kind":"mutation","name":"AssignFuelCard","hash":"sha256:4294d48aa2abbc1b3d399f93288d3259fd57d03440f6baf1c6288c30ffa7df7f"}} as unknown as TypedDocumentString<AssignFuelCardMutation, AssignFuelCardMutationVariables>;
 export const SyncFuelCardFeedDocument = {"__meta__":{"kind":"mutation","name":"SyncFuelCardFeed","hash":"sha256:4ae581acc39b91d46ed28d1f27902d16277724e2bb9b983d6750fa2fc19e1134"}} as unknown as TypedDocumentString<SyncFuelCardFeedMutation, SyncFuelCardFeedMutationVariables>;
-export const FuelPurchaseImportDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImport","hash":"sha256:15bc80f50ada8bce5289481e607af6b019f1f0fce834365e1279e9a8a4153b80"}} as unknown as TypedDocumentString<FuelPurchaseImportQuery, FuelPurchaseImportQueryVariables>;
+export const FuelPurchaseImportDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImport","hash":"sha256:1bb31f5cb19365fea83264e7ee2b831e7a6901d16a56cc1986b4a95a82718193"}} as unknown as TypedDocumentString<FuelPurchaseImportQuery, FuelPurchaseImportQueryVariables>;
 export const FuelPurchaseImportRowsDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportRows","hash":"sha256:76069fcd08f48d67bd04dd94e0702df4d9971c03c2ff5959ba8d3706aa9d5384"}} as unknown as TypedDocumentString<FuelPurchaseImportRowsQuery, FuelPurchaseImportRowsQueryVariables>;
 export const FuelPurchaseImportTemplateDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportTemplate","hash":"sha256:31cc70334d73006c9b344e26682020d505d5893d2b8b8253be40add52cb77d4d"}} as unknown as TypedDocumentString<FuelPurchaseImportTemplateQuery, FuelPurchaseImportTemplateQueryVariables>;
-export const CreateFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelPurchaseImport","hash":"sha256:6b75ae1a80914d39cfe031c5957551966a9b17b94e355da4f8f8e9b7b148a39e"}} as unknown as TypedDocumentString<CreateFuelPurchaseImportMutation, CreateFuelPurchaseImportMutationVariables>;
-export const StageFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"StageFuelPurchaseImport","hash":"sha256:d5a302b371ad1652deff531b40d000743c0a10c098f88ce768d5663744ce9323"}} as unknown as TypedDocumentString<StageFuelPurchaseImportMutation, StageFuelPurchaseImportMutationVariables>;
-export const CommitFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"CommitFuelPurchaseImport","hash":"sha256:551ac231774a82195fa412c22bb7c7f9df7428e09e068ac6bd429f8d91852ce3"}} as unknown as TypedDocumentString<CommitFuelPurchaseImportMutation, CommitFuelPurchaseImportMutationVariables>;
-export const DiscardFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"DiscardFuelPurchaseImport","hash":"sha256:c5c58d1c52402aee117637775ee81dbabaf5b5abbc6a04275a4685acf58295ce"}} as unknown as TypedDocumentString<DiscardFuelPurchaseImportMutation, DiscardFuelPurchaseImportMutationVariables>;
+export const CreateFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelPurchaseImport","hash":"sha256:e95a1303958d8995c8a2ec927507eb9891ed516ce966a5fc6301fd0b402c60ef"}} as unknown as TypedDocumentString<CreateFuelPurchaseImportMutation, CreateFuelPurchaseImportMutationVariables>;
+export const StageFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"StageFuelPurchaseImport","hash":"sha256:140a72958a0096aed76adac20a3728560f4d956101610e7e66db13bae9e37ed3"}} as unknown as TypedDocumentString<StageFuelPurchaseImportMutation, StageFuelPurchaseImportMutationVariables>;
+export const CommitFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"CommitFuelPurchaseImport","hash":"sha256:9406a447878e33fc2130176e7200ea5953a6d29fa828067cd14cb1a7aba97a60"}} as unknown as TypedDocumentString<CommitFuelPurchaseImportMutation, CommitFuelPurchaseImportMutationVariables>;
+export const DiscardFuelPurchaseImportDocument = {"__meta__":{"kind":"mutation","name":"DiscardFuelPurchaseImport","hash":"sha256:88d15ca5892546f827423faae288ce44e51cb6ad35dcc5f710eac111661e7ba7"}} as unknown as TypedDocumentString<DiscardFuelPurchaseImportMutation, DiscardFuelPurchaseImportMutationVariables>;
+export const ResolveFuelPurchaseImportRowsDocument = {"__meta__":{"kind":"mutation","name":"ResolveFuelPurchaseImportRows","hash":"sha256:893b4bba0a2264b92217328e52b5c509bb6c7b6dfc917ef39f1641420a8dd042"}} as unknown as TypedDocumentString<ResolveFuelPurchaseImportRowsMutation, ResolveFuelPurchaseImportRowsMutationVariables>;
+export const FuelPurchaseImportTableDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseImportTable","hash":"sha256:0d95f1db2e963ce5bc359e00b949d9e9ba9fd34165ce64ee980ee8ae5c6a9ef2"}} as unknown as TypedDocumentString<FuelPurchaseImportTableQuery, FuelPurchaseImportTableQueryVariables>;
 export const FuelPurchaseTableDocument = {"__meta__":{"kind":"query","name":"FuelPurchaseTable","hash":"sha256:1b517bbfca7c783424cb89b37ff0e1b284c061714a3775c215929551249ca481"}} as unknown as TypedDocumentString<FuelPurchaseTableQuery, FuelPurchaseTableQueryVariables>;
 export const FuelPurchaseDocument = {"__meta__":{"kind":"query","name":"FuelPurchase","hash":"sha256:d42b03441fabf22f72b2a52b37d9e38d3667ece2aa8a8a2ca48b4eeac53665a8"}} as unknown as TypedDocumentString<FuelPurchaseQuery, FuelPurchaseQueryVariables>;
 export const CreateFuelPurchaseDocument = {"__meta__":{"kind":"mutation","name":"CreateFuelPurchase","hash":"sha256:ef463f75895788d035e4a316c19e1a029c9cdac9c08aceb92d5d7adb9137fed7"}} as unknown as TypedDocumentString<CreateFuelPurchaseMutation, CreateFuelPurchaseMutationVariables>;
@@ -16143,6 +16208,7 @@ export const UpdateReportDefinitionDocument = {"__meta__":{"kind":"mutation","na
 export const DeleteReportDefinitionDocument = {"__meta__":{"kind":"mutation","name":"DeleteReportDefinition","hash":"sha256:94b019b0a0a6bf268d050bd41d841b986997ed0566ca7673306374af6391871a"}} as unknown as TypedDocumentString<DeleteReportDefinitionMutation, DeleteReportDefinitionMutationVariables>;
 export const ForkCannedReportDocument = {"__meta__":{"kind":"mutation","name":"ForkCannedReport","hash":"sha256:470c88501e4ff64893585861abe0b143a3ca126c3b2937fe59346dcc3f76864b"}} as unknown as TypedDocumentString<ForkCannedReportMutation, ForkCannedReportMutationVariables>;
 export const ResetCannedForkDocument = {"__meta__":{"kind":"mutation","name":"ResetCannedFork","hash":"sha256:fdfc8cd8949b329a08fe31e350c065b5be2e732678ee7494e897c729e99ff96c"}} as unknown as TypedDocumentString<ResetCannedForkMutation, ResetCannedForkMutationVariables>;
+export const ReportDefinitionOptionsDocument = {"__meta__":{"kind":"query","name":"ReportDefinitionOptions","hash":"sha256:d6c98fc9e87e488486890e898c0c758e16c3e2d046b597e93911513b64b2fd42"}} as unknown as TypedDocumentString<ReportDefinitionOptionsQuery, ReportDefinitionOptionsQueryVariables>;
 export const PreviewReportDocument = {"__meta__":{"kind":"query","name":"PreviewReport","hash":"sha256:8093eaf35edcef1de2de2366a7c65d3b3b6c12b432e8ceaf62d76c6e247a6f7d"}} as unknown as TypedDocumentString<PreviewReportQuery, PreviewReportQueryVariables>;
 export const DrillThroughReportDocument = {"__meta__":{"kind":"query","name":"DrillThroughReport","hash":"sha256:4dcc2a7446bfffed53694614a973a051d531d33ee0dc0696611fa2fdaf89351e"}} as unknown as TypedDocumentString<DrillThroughReportQuery, DrillThroughReportQueryVariables>;
 export const ReportRunsTableDocument = {"__meta__":{"kind":"query","name":"ReportRunsTable","hash":"sha256:a0c575b11f65353b9eb77c3940c12fd0bc82feb31b6159173ca8036c97262a70"}} as unknown as TypedDocumentString<ReportRunsTableQuery, ReportRunsTableQueryVariables>;

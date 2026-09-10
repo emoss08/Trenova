@@ -11,9 +11,9 @@ import { FuelFeedForm, type FuelFeedVendor } from "./fuel-feed-form";
 
 export const wexFuelVendor: FuelFeedVendor = {
   integrationType: "WEXFuel",
-  name: "WEX",
   logoLight: "/integrations/logos/wex-logo-light.png",
-  logoDark: "/integrations/logos/wex-logo-dark.png",
+  logoDark: "/integrations/logos/wex-logo-dark.svg",
+  name: "WEX",
   headline: "Connect WEX and EFS fuel cards",
   blurb: "Post fuel purchases and IFTA gallons from your",
   docsLabel: "WEX fleet card reporting.",
@@ -24,9 +24,9 @@ export const wexFuelVendor: FuelFeedVendor = {
 
 export const comdataFuelVendor: FuelFeedVendor = {
   integrationType: "ComdataFuel",
-  name: "Comdata",
   logoLight: "/integrations/logos/comdata-logo-light.png",
   logoDark: "/integrations/logos/comdata-logo-dark.png",
+  name: "Comdata",
   headline: "Connect Comdata fuel cards",
   blurb: "Post fuel purchases and IFTA gallons from your",
   docsLabel: "Comdata iConnectData reports.",
@@ -37,9 +37,9 @@ export const comdataFuelVendor: FuelFeedVendor = {
 
 export const rampFuelVendor: FuelFeedVendor = {
   integrationType: "RampFuel",
+  logoLight: "/integrations/logos/ramp-logo-light.svg",
+  logoDark: "/integrations/logos/ramp-logo-dark.svg",
   name: "Ramp",
-  logoLight: "/integrations/logos/ramp-logo-light.png",
-  logoDark: "/integrations/logos/ramp-logo-dark.png",
   headline: "Connect Ramp cards",
   blurb: "Read card transactions with the",
   docsLabel: "Ramp developer API.",

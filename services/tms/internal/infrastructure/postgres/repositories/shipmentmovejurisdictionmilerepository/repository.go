@@ -138,7 +138,7 @@ func (r *repository) ListUnattributedMoves(
 		With(completedMovesCTE, r.completedMovesWithoutBreakdown(dba, req.TenantInfo)).
 		TableExpr(completedMovesCTE).
 		ColumnExpr("COUNT(*) AS total_moves").
-		ColumnExpr("ROUND(COALESCE(SUM(" + completedMoveMilesCol + "), 0)::numeric, 2) AS total_miles").
+		ColumnExpr("ROUND(COALESCE(SUM("+completedMoveMilesCol+"), 0)::numeric, 2) AS total_miles").
 		Where(completedAtCol+" >= ?", req.Start).
 		Where(completedAtCol+" < ?", req.End).
 		Scan(ctx, &totals); err != nil {
@@ -161,7 +161,7 @@ func (r *repository) ListUnattributedMoves(
 		ColumnExpr(completedMoveIDCol).
 		Where(completedAtCol+" >= ?", req.Start).
 		Where(completedAtCol+" < ?", req.End).
-		OrderExpr(completedMoveIDCol + " ASC").
+		OrderExpr(completedMoveIDCol+" ASC").
 		Limit(req.PageSize()).
 		Offset(req.Offset).
 		Scan(ctx, &page.MoveIDs); err != nil {

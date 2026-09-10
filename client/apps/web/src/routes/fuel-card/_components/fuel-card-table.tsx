@@ -120,6 +120,11 @@ export default function FuelCardTable({ unassignedOnly = false }: { unassignedOn
         columns={columns}
         contextMenuActions={contextMenuActions}
         TablePanel={FuelCardPanel}
+        // A card only lands here because a feed saw a transaction on one nobody
+        // had registered. Anything somebody adds by hand they assign as they go,
+        // so offering "add" on this view would only invite a card that instantly
+        // does not belong on it.
+        enableCreateAction={!unassignedOnly}
         renderEmptyState={(state) =>
           unassignedOnly ? <UnassignedFuelCardsEmpty {...state} /> : <FuelCardsEmpty {...state} />
         }

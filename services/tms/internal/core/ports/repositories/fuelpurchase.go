@@ -121,6 +121,16 @@ type GetImportBatchByIDRequest struct {
 	IncludeRows bool                  `json:"includeRows"`
 }
 
+type ListImportBatchesRequest struct {
+	Filter             *pagination.QueryOptions    `json:"filter"`
+	Cursor             pagination.CursorInfo       `json:"cursor"`
+	Origin             fuelpurchase.ImportOrigin   `json:"origin"`
+	Provider           fuelpurchase.CardProvider   `json:"provider"`
+	Statuses           []fuelpurchase.ImportStatus `json:"statuses"`
+	HeldRowsOnly       bool                        `json:"heldRowsOnly"`
+	IncludeDefaultCard bool                        `json:"includeDefaultCard"`
+}
+
 type ListImportRowsRequest struct {
 	BatchID    pulid.ID                       `json:"batchId"`
 	TenantInfo pagination.TenantInfo          `json:"tenantInfo"`
@@ -200,6 +210,10 @@ type FuelPurchaseRepository interface {
 	DeletePurchase(ctx context.Context, req *DeleteFuelPurchaseRequest) error
 	AccumulateFuel(ctx context.Context, req *AccumulateFuelRequest) ([]*FuelAccumulationRow, error)
 
+	ListImportBatches(
+		ctx context.Context,
+		req *ListImportBatchesRequest,
+	) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error)
 	GetImportBatchByID(
 		ctx context.Context,
 		req *GetImportBatchByIDRequest,

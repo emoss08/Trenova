@@ -1,6 +1,6 @@
 {
-  "operationCount": 694,
-  "fragmentCount": 167,
+  "operationCount": 697,
+  "fragmentCount": 168,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -2616,7 +2616,7 @@
       "kind": "mutation",
       "domain": "fuel-purchase-import",
       "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
-      "hash": "sha256:551ac231774a82195fa412c22bb7c7f9df7428e09e068ac6bd429f8d91852ce3",
+      "hash": "sha256:9406a447878e33fc2130176e7200ea5953a6d29fa828067cd14cb1a7aba97a60",
       "rootFields": [
         "commitFuelPurchaseImport"
       ],
@@ -2636,7 +2636,7 @@
         "FuelPurchaseImportBatchFields"
       ],
       "usages": [],
-      "sdl": "mutation CommitFuelPurchaseImport($id: ID!, $version: Int!) {\n  commitFuelPurchaseImport(id: $id, version: $version) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+      "sdl": "mutation CommitFuelPurchaseImport($id: ID!, $version: Int!) {\n  commitFuelPurchaseImport(id: $id, version: $version) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "CommodityTable",
@@ -2922,7 +2922,7 @@
       "kind": "mutation",
       "domain": "fuel-purchase-import",
       "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
-      "hash": "sha256:6b75ae1a80914d39cfe031c5957551966a9b17b94e355da4f8f8e9b7b148a39e",
+      "hash": "sha256:e95a1303958d8995c8a2ec927507eb9891ed516ce966a5fc6301fd0b402c60ef",
       "rootFields": [
         "createFuelPurchaseImport"
       ],
@@ -2937,7 +2937,7 @@
         "FuelPurchaseImportBatchFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateFuelPurchaseImport($input: CreateFuelPurchaseImportInput!) {\n  createFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+      "sdl": "mutation CreateFuelPurchaseImport($input: CreateFuelPurchaseImportInput!) {\n  createFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "CreateFuelSurchargeProgram",
@@ -4735,7 +4735,7 @@
       "kind": "mutation",
       "domain": "fuel-purchase-import",
       "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
-      "hash": "sha256:c5c58d1c52402aee117637775ee81dbabaf5b5abbc6a04275a4685acf58295ce",
+      "hash": "sha256:88d15ca5892546f827423faae288ce44e51cb6ad35dcc5f710eac111661e7ba7",
       "rootFields": [
         "discardFuelPurchaseImport"
       ],
@@ -4760,7 +4760,7 @@
         "FuelPurchaseImportBatchFields"
       ],
       "usages": [],
-      "sdl": "mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {\n  discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+      "sdl": "mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {\n  discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "DismissMyNotifications",
@@ -6472,7 +6472,7 @@
       "kind": "query",
       "domain": "fuel-purchase-import",
       "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
-      "hash": "sha256:15bc80f50ada8bce5289481e607af6b019f1f0fce834365e1279e9a8a4153b80",
+      "hash": "sha256:1bb31f5cb19365fea83264e7ee2b831e7a6901d16a56cc1986b4a95a82718193",
       "rootFields": [
         "fuelPurchaseImport"
       ],
@@ -6487,7 +6487,7 @@
         "FuelPurchaseImportBatchFields"
       ],
       "usages": [],
-      "sdl": "query FuelPurchaseImport($id: ID!) {\n  fuelPurchaseImport(id: $id) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+      "sdl": "query FuelPurchaseImport($id: ID!) {\n  fuelPurchaseImport(id: $id) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "FuelPurchaseImportRows",
@@ -6515,6 +6515,33 @@
       ],
       "usages": [],
       "sdl": "query FuelPurchaseImportRows($id: ID!, $input: FuelPurchaseImportRowsInput) {\n  fuelPurchaseImport(id: $id) {\n    id\n    rows(input: $input) {\n      edges {\n        node {\n          ...FuelPurchaseImportRowFields\n        }\n        cursor\n      }\n      totalCount\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n}\n\nfragment FuelPurchaseImportRowFields on FuelPurchaseImportRow {\n  id\n  importBatchId\n  rowNumber\n  cells\n  parsed {\n    purchasedAt\n    vendor\n    vendorCity\n    jurisdictionCode\n    fuelType\n    quantity\n    quantityUnit\n    gallons\n    unitPrice\n    totalAmount\n    currencyCode\n    transactionReference\n    cardLastFour\n    tractorCode\n    odometer\n  }\n  transactionReference\n  status\n  error\n  resolvedTractorId\n  resolvedFuelCardId\n  resolvedJurisdictionId\n  resolutionNotes\n  fuelPurchaseId\n  createdAt\n  resolvedTractor {\n    id\n    code\n  }\n}"
+    },
+    {
+      "name": "FuelPurchaseImportTable",
+      "kind": "query",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:0d95f1db2e963ce5bc359e00b949d9e9ba9fd34165ce64ee980ee8ae5c6a9ef2",
+      "rootFields": [
+        "fuelPurchaseImports"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "FuelPurchaseImportsInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "query FuelPurchaseImportTable($input: FuelPurchaseImportsInput!, $includeTotalCount: Boolean = true) {\n  fuelPurchaseImports(input: $input) {\n    edges {\n      node {\n        ...FuelPurchaseImportBatchFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "FuelPurchaseImportTemplate",
@@ -10475,6 +10502,29 @@
       "sdl": "query ReportDefinitionById($id: ID!) {\n  reportDefinition(id: $id) {\n    ...ReportDefinitionFields\n  }\n}\n\nfragment ReportDefinitionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  tags\n  kind\n  cannedKey\n  cannedVersion\n  ownerId\n  visibility\n  status\n  diagnostics\n  catalogVersion\n  definition\n  defaultFormat\n  currentRevision\n  lastRunAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ReportDefinitionOptions",
+      "kind": "query",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/definitions.graphql",
+      "hash": "sha256:d6c98fc9e87e488486890e898c0c758e16c3e2d046b597e93911513b64b2fd42",
+      "rootFields": [
+        "reportDefinitions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "ReportDefinitionOptionFields"
+      ],
+      "usages": [],
+      "sdl": "query ReportDefinitionOptions($input: DataTableConnectionInput!) {\n  reportDefinitions(input: $input) {\n    edges {\n      node {\n        ...ReportDefinitionOptionFields\n      }\n      cursor\n    }\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ReportDefinitionOptionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  kind\n  status\n  visibility\n  lastRunAt\n  updatedAt\n}"
+    },
+    {
       "name": "ReportDefinitionRevisions",
       "kind": "query",
       "domain": "reports",
@@ -10776,6 +10826,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query ResolvedCostProfilePage($asOfDate: String) {\n  resolvedCostProfile(asOfDate: $asOfDate) {\n    totalCpm\n    variableCpm\n    fixedCpm\n    targetMarginPercent\n    includeDeadheadMiles\n    asOfDate\n    fuel {\n      pricePerGallon\n      priceDate\n      fuelIndexId\n      milesPerGallon\n      source\n    }\n    categories {\n      category\n      name\n      costBehavior\n      ratePerMile\n      effectiveSource\n    }\n    glWindow {\n      fromDate\n      toDate\n      fleetMiles\n      hasPostings\n    }\n  }\n}"
+    },
+    {
+      "name": "ResolveFuelPurchaseImportRows",
+      "kind": "mutation",
+      "domain": "fuel-purchase-import",
+      "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
+      "hash": "sha256:893b4bba0a2264b92217328e52b5c509bb6c7b6dfc917ef39f1641420a8dd042",
+      "rootFields": [
+        "resolveFuelPurchaseImportRows"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "FuelPurchaseImportBatchFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ResolveFuelPurchaseImportRows($id: ID!, $version: Int!) {\n  resolveFuelPurchaseImportRows(id: $id, version: $version) {\n    reviewed\n    resolved\n    committed\n    queued\n    batch {\n      ...FuelPurchaseImportBatchFields\n    }\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "ResolveSettlementDispute",
@@ -12289,7 +12366,7 @@
       "kind": "mutation",
       "domain": "fuel-purchase-import",
       "sourceFile": "src/operations/fuel-purchase-import/operations.graphql",
-      "hash": "sha256:d5a302b371ad1652deff531b40d000743c0a10c098f88ce768d5663744ce9323",
+      "hash": "sha256:140a72958a0096aed76adac20a3728560f4d956101610e7e66db13bae9e37ed3",
       "rootFields": [
         "stageFuelPurchaseImport"
       ],
@@ -12304,7 +12381,7 @@
         "FuelPurchaseImportBatchFields"
       ],
       "usages": [],
-      "sdl": "mutation StageFuelPurchaseImport($input: StageFuelPurchaseImportInput!) {\n  stageFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+      "sdl": "mutation StageFuelPurchaseImport($input: StageFuelPurchaseImportInput!) {\n  stageFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "StartMyTraining",
@@ -16184,6 +16261,7 @@
         "RecurringDeductionTable",
         "RecurringEarningTable",
         "RecurringShipmentTable",
+        "ReportDefinitionOptions",
         "ReportDefinitionsTable",
         "ReportRunsTable",
         "RoleTable",
@@ -16692,10 +16770,12 @@
         "CreateFuelPurchaseImport",
         "DiscardFuelPurchaseImport",
         "FuelPurchaseImport",
+        "FuelPurchaseImportTable",
+        "ResolveFuelPurchaseImportRows",
         "StageFuelPurchaseImport"
       ],
       "usages": [],
-      "sdl": "fragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+      "sdl": "fragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
       "name": "FuelPurchaseImportRowFields",
@@ -17285,6 +17365,18 @@
       ],
       "usages": [],
       "sdl": "fragment ReportDefinitionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  tags\n  kind\n  cannedKey\n  cannedVersion\n  ownerId\n  visibility\n  status\n  diagnostics\n  catalogVersion\n  definition\n  defaultFormat\n  currentRevision\n  lastRunAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ReportDefinitionOptionFields",
+      "typeCondition": "ReportDefinition",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/definitions.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ReportDefinitionOptions"
+      ],
+      "usages": [],
+      "sdl": "fragment ReportDefinitionOptionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  kind\n  status\n  visibility\n  lastRunAt\n  updatedAt\n}"
     },
     {
       "name": "ReportPreviewFields",
@@ -21355,6 +21447,63 @@
         }
       ],
       "sdl": "input FuelPurchaseImportRowsInput {\n  after: String\n  first: Int = 50\n  statuses: [FuelPurchaseImportRowStatus!]\n}"
+    },
+    "FuelPurchaseImportsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "heldRowsOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "origin",
+          "type": "FuelPurchaseImportOrigin",
+          "defaultValue": null
+        },
+        {
+          "name": "provider",
+          "type": "FuelCardProvider",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[FuelPurchaseImportStatus!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelPurchaseImportsInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  \"\"\"Only imports still holding rows that could not be worked out.\"\"\"\n  heldRowsOnly: Boolean\n  \"\"\"\n  Feed lists the runs a scheduled sync opened; Upload lists the statements people\n  chose. Omit for both.\n  \"\"\"\n  origin: FuelPurchaseImportOrigin\n  provider: FuelCardProvider\n  query: String\n  sort: [SortFieldInput!]\n  statuses: [FuelPurchaseImportStatus!]\n}"
     },
     "FuelPurchaseInput": {
       "kind": "input",
@@ -28799,6 +28948,25 @@
         "Skipped"
       ],
       "sdl": "\"\"\"\nOnly New rows commit. DuplicateInFile is the second occurrence of a reference\ninside the statement; AlreadyImported matches a purchase already on file.\n\"\"\"\nenum FuelPurchaseImportRowStatus {\n  AlreadyImported\n  Committed\n  DuplicateInFile\n  Error\n  New\n  Skipped\n}"
+    },
+    "FuelPurchaseImportOrigin": {
+      "kind": "enum",
+      "values": [
+        "Feed",
+        "Upload"
+      ],
+      "sdl": "\"\"\"\nWhether a batch came from a person choosing a file or from a scheduled sync.\n\"\"\"\nenum FuelPurchaseImportOrigin {\n  Feed\n  Upload\n}"
+    },
+    "FuelPurchaseImportStatus": {
+      "kind": "enum",
+      "values": [
+        "Committed",
+        "Discarded",
+        "Failed",
+        "Parsed",
+        "Pending"
+      ],
+      "sdl": "\"\"\"\nPending until a statement is staged; Parsed once its rows have been read and\nresolved; Committed when the rows became purchases. Failed and Discarded batches\ncan be staged again or left as a record of what was tried.\n\"\"\"\nenum FuelPurchaseImportStatus {\n  Committed\n  Discarded\n  Failed\n  Parsed\n  Pending\n}"
     },
     "FuelQuantityUnit": {
       "kind": "enum",

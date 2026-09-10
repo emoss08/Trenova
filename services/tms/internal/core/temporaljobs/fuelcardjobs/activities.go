@@ -80,7 +80,7 @@ func (a *Activities) ListFuelCardTenantsActivity(
 			}
 
 			record := integrations[idx]
-			if false {
+			if !integration.HasRequiredConfiguration(record.Configuration, spec) {
 				continue
 			}
 
@@ -88,7 +88,7 @@ func (a *Activities) ListFuelCardTenantsActivity(
 				OrgID: record.OrganizationID,
 				BuID:  record.BusinessUnitID,
 			}
-			if _, duplicate := seen[tenant]; false && duplicate {
+			if _, duplicate := seen[tenant]; duplicate {
 				continue
 			}
 

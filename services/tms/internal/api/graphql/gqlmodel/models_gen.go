@@ -2451,6 +2451,17 @@ type FuelPurchaseEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type FuelPurchaseImportBatchConnection struct {
+	Edges      []*FuelPurchaseImportBatchEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount *int                           `json:"totalCount,omitempty"`
+}
+
+type FuelPurchaseImportBatchEdge struct {
+	Node   *fuelpurchase.ImportBatch `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
 // The purchase a statement row would become, as parsed and before any ids are
 // assigned. Absent when the row could not be read at all.
 type FuelPurchaseImportParsed struct {
@@ -2471,6 +2482,20 @@ type FuelPurchaseImportParsed struct {
 	Odometer             *int                       `json:"odometer,omitempty"`
 }
 
+// What working a held import's rows out again achieved.
+type FuelPurchaseImportResolveResult struct {
+	Batch *fuelpurchase.ImportBatch `json:"batch"`
+	// Rows that were still waiting when this ran.
+	Reviewed int `json:"reviewed"`
+	// Rows that resolved this time.
+	Resolved int `json:"resolved"`
+	// Rows posted as purchases. Only a feed posts on its own; an upload waits to be
+	// committed.
+	Committed int `json:"committed"`
+	// Rows still waiting on something.
+	Queued int `json:"queued"`
+}
+
 type FuelPurchaseImportRowConnection struct {
 	Edges      []*FuelPurchaseImportRowEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
@@ -2486,6 +2511,22 @@ type FuelPurchaseImportRowsInput struct {
 	First    *int                           `json:"first,omitempty"`
 	After    *string                        `json:"after,omitempty"`
 	Statuses []fuelpurchase.ImportRowStatus `json:"statuses,omitempty"`
+}
+
+type FuelPurchaseImportsInput struct {
+	First        *int                `json:"first,omitempty"`
+	After        *string             `json:"after,omitempty"`
+	Query        *string             `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
+	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+	// Feed lists the runs a scheduled sync opened; Upload lists the statements people
+	// chose. Omit for both.
+	Origin   *fuelpurchase.ImportOrigin  `json:"origin,omitempty"`
+	Provider *fuelpurchase.CardProvider  `json:"provider,omitempty"`
+	Statuses []fuelpurchase.ImportStatus `json:"statuses,omitempty"`
+	// Only imports still holding rows that could not be worked out.
+	HeldRowsOnly *bool `json:"heldRowsOnly,omitempty"`
 }
 
 type FuelPurchaseInput struct {

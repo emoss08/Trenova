@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	manifestPath   = flag.String("manifest", "", "Path to the reportcatalog.yml curation manifest")
-	domainDir      = flag.String("domain", "", "Path to the domain directory containing entity packages")
-	enumPkgs       = flag.String("enumpkgs", "", "Comma-separated paths to packages outside the domain directory to index for enum resolution")
-	outputPath     = flag.String("output", "", "Output path for the generated catalog file")
+	manifestPath = flag.String("manifest", "", "Path to the reportcatalog.yml curation manifest")
+	domainDir    = flag.String("domain", "", "Path to the domain directory containing entity packages")
+	enumPkgs     = flag.String("enumpkgs", "", "Comma-separated paths to packages outside the domain directory to index for enum resolution")
+	outputPath   = flag.String("output", "", "Output path for the generated catalog file")
 )
 
 func main() {

@@ -78,9 +78,17 @@ export function HomeCanvas({
     () => new Map((catalog?.widgets ?? []).map((option) => [option.key, option])),
     [catalog?.widgets],
   );
-  const usedKeys = useMemo(() => new Set(widgets.map((widget) => widget.key)), [widgets]);
+  const usedCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const widget of widgets) {
+      counts.set(widget.key, (counts.get(widget.key) ?? 0) + 1);
+    }
+    return counts;
+  }, [widgets]);
 
   const addWidget = (option: HomeWidgetOption) => {
+    if (widgets.length >= maxWidgets) return;
+
     const widget: HomeWidget = {
       id: nextItemId(widgets, "widget_"),
       key: option.key,
@@ -90,12 +98,15 @@ export function HomeCanvas({
       config: emptyConfig(),
     };
 
-    setAddOpen(false);
     onChange([...widgets, widget]);
 
     // A widget that cannot draw anything until it is told what to show opens
-    // its editor immediately, rather than landing as an empty card.
+    // its editor immediately, rather than landing as an empty card — and the
+    // gallery steps aside so the two dialogs never stack. Anything that draws
+    // on its own leaves the gallery open, because picking several queues in a
+    // row is the common case and reopening between each is pure friction.
     if (option.configKind !== "none" && option.configKind !== "queue") {
+      setAddOpen(false);
       setConfiguring({ widget, isNew: true });
     }
   };
@@ -215,8 +226,9 @@ export function HomeCanvas({
         onOpenChange={setAddOpen}
         catalog={catalog}
         loading={catalogLoading}
-        usedKeys={usedKeys}
-        remaining={Math.max(maxWidgets - widgets.length, 0)}
+        usedCounts={usedCounts}
+        used={widgets.length}
+        max={maxWidgets}
         onAdd={addWidget}
       />
 

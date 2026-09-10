@@ -1,11 +1,15 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
+  DataTablePageInfoFieldsFragmentDoc,
   ReportDashboardFieldsFragmentDoc,
   ReportDefinitionFieldsFragmentDoc,
+  ReportDefinitionOptionFieldsFragmentDoc,
+  ReportDefinitionOptionsDocument,
   ReportPreviewFieldsFragmentDoc,
   ReportRunFieldsFragmentDoc,
   ReportScheduleFieldsFragmentDoc,
   ReportViewFieldsFragmentDoc,
+  type ReportDefinitionOptionFieldsFragment,
   type ReportDrillInput,
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
@@ -30,7 +34,8 @@ import {
   type ReportRun,
 } from "@/lib/graphql/reports";
 import { queries } from "@/lib/queries";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const CATALOG_STALE_TIME = 5 * 60_000;
 const RUN_POLL_INTERVAL = 3_000;
@@ -68,6 +73,55 @@ export function useReportDefinitionList(search: string) {
     select: (data) =>
       data.reportDefinitions.edges.map((edge) =>
         getFragmentData(ReportDefinitionFieldsFragmentDoc, edge.node),
+      ),
+  });
+}
+
+export type ReportDefinitionOption = ReportDefinitionOptionFieldsFragment;
+
+const DEFINITION_OPTIONS_PAGE_SIZE = 25;
+
+/**
+ * The report library as a picker reads it: one page at a time, searched by the
+ * server, ordered by name. It exists alongside useReportDefinitionList because
+ * the two answer different questions — the list resolves a report the caller
+ * already chose and needs the definition blob for, while this one browses a
+ * library that may run to thousands of rows and needs only enough of each to
+ * recognise it.
+ */
+export function useReportDefinitionOptions(search: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: [...queries.reports.definitionOptions(search).queryKey, "infinite"],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam, signal }) =>
+      requestGraphQL({
+        document: ReportDefinitionOptionsDocument,
+        operationName: "ReportDefinitionOptions",
+        variables: {
+          input: {
+            first: DEFINITION_OPTIONS_PAGE_SIZE,
+            after: pageParam,
+            query: search || undefined,
+            sort: [{ field: "name", direction: "asc" }],
+          },
+        },
+        signal,
+      }),
+    getNextPageParam: (lastPage) => {
+      const { hasNextPage, endCursor } = getFragmentData(
+        DataTablePageInfoFieldsFragmentDoc,
+        lastPage.reportDefinitions.pageInfo,
+      );
+      return hasNextPage && endCursor ? endCursor : undefined;
+    },
+    enabled,
+    staleTime: 30_000,
+    retry: false,
+    select: (data): ReportDefinitionOption[] =>
+      data.pages.flatMap((page) =>
+        page.reportDefinitions.edges.map((edge) =>
+          getFragmentData(ReportDefinitionOptionFieldsFragmentDoc, edge.node),
+        ),
       ),
   });
 }
@@ -215,6 +269,7 @@ function useInvalidateDefinitions() {
   return async (definitionId?: string) => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queries.reports.definitionList._def }),
+      queryClient.invalidateQueries({ queryKey: queries.reports.definitionOptions._def }),
       definitionId
         ? queryClient.invalidateQueries({
             queryKey: queries.reports.definition(definitionId).queryKey,
