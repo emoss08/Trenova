@@ -46,6 +46,7 @@ func (c *ChainClassifier) Classify(err error) ProblemType {
 func NewDefaultClassifier() *ChainClassifier {
 	return NewChainClassifier(
 		ClassifierFunc(classifyTimeout),
+		ClassifierFunc(classifyRequestTooLarge),
 		ClassifierFunc(classifyValidation),
 		ClassifierFunc(classifyFormula),
 		ClassifierFunc(classifyBadRequest),
@@ -69,6 +70,13 @@ func classifyTimeout(err error) (ProblemType, bool) {
 		return ProblemTypeTimeout, true
 	}
 
+	return "", false
+}
+
+func classifyRequestTooLarge(err error) (ProblemType, bool) {
+	if IsRequestTooLargeError(err) {
+		return ProblemTypeRequestTooLarge, true
+	}
 	return "", false
 }
 

@@ -1283,14 +1283,25 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 	return c.GetMode() == PlatformModeDevelopment
 }
 
+const defaultControlPlaneMaxProvisioningBodyBytes int64 = 1 << 20
+
 type PlatformControlPlaneConfig struct {
-	Enabled            bool          `mapstructure:"enabled"`
-	Endpoint           string        `mapstructure:"endpoint"           validate:"omitempty,url,no_trailing_slash"`
-	APIKey             string        `mapstructure:"apiKey"`
-	Timeout            time.Duration `mapstructure:"timeout"`
-	HeartbeatInterval  time.Duration `mapstructure:"heartbeatInterval"`
-	TenantSyncInterval time.Duration `mapstructure:"tenantSyncInterval"`
-	FailOpenOnError    bool          `mapstructure:"failOpenOnError"`
+	Enabled                  bool          `mapstructure:"enabled"`
+	Endpoint                 string        `mapstructure:"endpoint"                 validate:"omitempty,url,no_trailing_slash"`
+	APIKey                   string        `mapstructure:"apiKey"`
+	Timeout                  time.Duration `mapstructure:"timeout"`
+	HeartbeatInterval        time.Duration `mapstructure:"heartbeatInterval"`
+	TenantSyncInterval       time.Duration `mapstructure:"tenantSyncInterval"`
+	FailOpenOnError          bool          `mapstructure:"failOpenOnError"`
+	MaxProvisioningBodyBytes int64         `mapstructure:"maxProvisioningBodyBytes" validate:"omitempty,min=1024"`
+}
+
+func (c *PlatformControlPlaneConfig) GetMaxProvisioningBodyBytes() int64 {
+	if c.MaxProvisioningBodyBytes <= 0 {
+		return defaultControlPlaneMaxProvisioningBodyBytes
+	}
+
+	return c.MaxProvisioningBodyBytes
 }
 
 func (c *PlatformControlPlaneConfig) GetTimeout() time.Duration {
