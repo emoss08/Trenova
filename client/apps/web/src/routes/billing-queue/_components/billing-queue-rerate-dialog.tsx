@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormulaTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -34,6 +35,8 @@ export function BillingQueueRerateDialog({
   itemId: string;
   currentTemplateId?: string;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<RerateFormValues>({
@@ -53,10 +56,10 @@ export function BillingQueueRerateDialog({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
-      toast.success("Shipment re-rated with new formula template");
+      toast.success(t("Shipment re-rated with new formula template"));
     },
     onError: () => {
-      toast.error("Failed to re-rate shipment");
+      toast.error(t("Failed to re-rate shipment"));
     },
   });
 
@@ -77,9 +80,9 @@ export function BillingQueueRerateDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Change Formula Template</DialogTitle>
+          <DialogTitle>{t("Change Formula Template")}</DialogTitle>
           <DialogDescription>
-            Select a different formula template to re-rate the freight charge.
+            {t("Select a different formula template to re-rate the freight charge.")}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(onSubmit)}>
@@ -88,17 +91,17 @@ export function BillingQueueRerateDialog({
               <FormulaTemplateAutocompleteField
                 control={control}
                 name="formulaTemplateId"
-                label="Formula Template"
+                label={t("Formula Template")}
                 rules={{ required: true }}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isPending} loadingText="Re-rating...">
-              Re-rate
+            <Button type="submit" isLoading={isPending} loadingText={t("Re-rating...")}>
+              {t("Re-rate")}
             </Button>
           </DialogFooter>
         </Form>

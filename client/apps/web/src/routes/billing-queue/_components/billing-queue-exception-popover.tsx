@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -78,6 +79,8 @@ export function BillingQueueExceptionPopover({
   successMessage,
   onSuccess,
 }: BillingQueueExceptionPopoverProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const schema = useMemo(() => buildExceptionSchema(targetStatus), [targetStatus]);
@@ -153,8 +156,8 @@ export function BillingQueueExceptionPopover({
               <SelectField
                 control={control}
                 name="exceptionReasonCode"
-                label="Reason"
-                placeholder="Select reason..."
+                label={t("Reason")}
+                placeholder={t("Select reason...")}
                 options={REASON_OPTIONS}
                 rules={{ required: true }}
               />
@@ -163,8 +166,8 @@ export function BillingQueueExceptionPopover({
               <TextareaField
                 control={control}
                 name="exceptionNotes"
-                label="Notes"
-                placeholder="Add notes..."
+                label={t("Notes")}
+                placeholder={t("Add notes...")}
                 rules={{
                   required: targetStatus === "Exception",
                 }}
@@ -172,8 +175,8 @@ export function BillingQueueExceptionPopover({
             </FormControl>
           </FormGroup>
           <div className="mt-3 flex justify-end">
-            <Button type="submit" size="sm" isLoading={isSubmitting} loadingText="Submitting...">
-              Submit
+            <Button type="submit" size="sm" isLoading={isSubmitting} loadingText={t("Submitting...")}>
+              {t("Submit")}
             </Button>
           </div>
         </Form>

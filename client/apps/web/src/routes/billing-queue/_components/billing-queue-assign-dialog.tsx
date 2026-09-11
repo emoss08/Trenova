@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -32,6 +33,8 @@ export function BillingQueueAssignDialog({
   onOpenChange,
   itemId,
 }: BillingQueueAssignDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<BillingQueueAssignInput>({
@@ -56,8 +59,8 @@ export function BillingQueueAssignDialog({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      toast.success("Biller assigned", {
-        description: "The billing queue item has been assigned.",
+      toast.success(t("Biller assigned"), {
+        description: t("The billing queue item has been assigned."),
       });
     },
   });
@@ -79,8 +82,8 @@ export function BillingQueueAssignDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Assign Biller</DialogTitle>
-          <DialogDescription>Assign a biller to review this billing queue item.</DialogDescription>
+          <DialogTitle>{t("Assign Biller")}</DialogTitle>
+          <DialogDescription>{t("Assign a biller to review this billing queue item.")}</DialogDescription>
         </DialogHeader>
         <Form
           onSubmit={(e) => {
@@ -93,17 +96,17 @@ export function BillingQueueAssignDialog({
               <UserAutocompleteField
                 control={control}
                 name="billerId"
-                label="Biller"
+                label={t("Biller")}
                 rules={{ required: true }}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Assigning...">
-              Assign
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Assigning...")}>
+              {t("Assign")}
             </Button>
           </DialogFooter>
         </Form>

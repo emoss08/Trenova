@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -28,6 +29,8 @@ type Props = {
 };
 
 export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Props) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const cleanFilters = useMemo(() => {
@@ -66,7 +69,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-filter-presets"] });
-      toast.success("Filter preset saved");
+      toast.success(t("Filter preset saved"));
     },
   });
 
@@ -83,9 +86,9 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Save Filter Preset</DialogTitle>
+          <DialogTitle>{t("Save Filter Preset")}</DialogTitle>
           <DialogDescription>
-            Save the current filter combination as a reusable preset.
+            {t("Save the current filter combination as a reusable preset.")}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(onSubmit)}>
@@ -93,7 +96,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
             <FormGroup>
               <FormControl>
                 <Input
-                  placeholder="Preset name"
+                  placeholder={t("Preset name")}
                   {...register("name")}
                   className="h-8 text-sm"
                   autoFocus
@@ -103,7 +106,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={isSubmitting}>
               {isSubmitting ? "Saving..." : "Save"}

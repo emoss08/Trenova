@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
 import {
@@ -29,6 +30,8 @@ export function BillingQueueItemCard({
   onHold: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
+
   const proNumber = item.shipment?.proNumber || item.shipmentId.slice(0, 12);
   const customerName = item.shipment?.customer?.name;
   const totalCharges = item.shipment?.totalChargeAmount;
@@ -53,7 +56,7 @@ export function BillingQueueItemCard({
                 <PlainBillingQueueStatusBadge status={item.status} />
                 {item.isAdjustmentOrigin ? (
                   <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                    Rebill
+                    {t("Rebill")}
                   </span>
                 ) : null}
               </div>
@@ -74,11 +77,11 @@ export function BillingQueueItemCard({
       <ContextMenuContent>
         <ContextMenuItem onClick={onAssignBiller} disabled={isTerminal}>
           <UserPlusIcon className="size-3.5" />
-          Assign Biller
+          {t("Assign Biller")}
         </ContextMenuItem>
         <ContextMenuItem onClick={onHold} disabled={isTerminal || item.status === "OnHold"}>
           <PauseIcon className="size-3.5" />
-          Hold
+          {t("Hold")}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
@@ -87,12 +90,12 @@ export function BillingQueueItemCard({
           }
         >
           <ExternalLinkIcon className="size-3.5" />
-          View Shipment
+          {t("View Shipment")}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onCancel} disabled={isTerminal} className="text-destructive">
           <XIcon className="size-3.5" />
-          Cancel
+          {t("Cancel")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

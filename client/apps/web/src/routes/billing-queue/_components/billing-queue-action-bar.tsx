@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -34,6 +35,8 @@ export function BillingQueueActionBar({
   onAssignBiller: () => void;
   onAutoAdvance?: () => void;
 }) {
+  const t = useT();
+
   const currentUser = useAuthStore((s) => s.user);
   const invalidate = useInvalidateBillingQueue();
 
@@ -63,7 +66,7 @@ export function BillingQueueActionBar({
     resourceName: "BillingQueueItem",
     onSuccess: () => {
       invalidate();
-      toast.success("Review started");
+      toast.success(t("Review started"));
     },
   });
 
@@ -79,11 +82,11 @@ export function BillingQueueActionBar({
             disabled={isPending || !currentUser?.id}
           >
             <PlayIcon className="size-3.5" />
-            Start Review
+            {t("Start Review")}
           </Button>
           <Button size="sm" variant="outline" onClick={onAssignBiller} disabled={isPending}>
             <UserPlusIcon className="size-3.5" />
-            Assign Biller
+            {t("Assign Biller")}
           </Button>
           <Button
             size="sm"
@@ -92,7 +95,7 @@ export function BillingQueueActionBar({
             disabled={isPending}
           >
             <PauseIcon className="size-3.5" />
-            Hold
+            {t("Hold")}
           </Button>
         </div>
       );
@@ -110,7 +113,7 @@ export function BillingQueueActionBar({
                   disabled={isPending || !canApprove}
                 >
                   <CheckIcon className="size-3.5" />
-                  Approve
+                  {t("Approve")}
                 </Button>
               }
             />
@@ -125,21 +128,21 @@ export function BillingQueueActionBar({
           <BillingQueueExceptionPopover
             itemId={item.id}
             targetStatus="Exception"
-            label="Exception"
+            label={t("Exception")}
             icon={<AlertTriangleIcon className="size-3.5" />}
             variant="destructive"
             disabled={isPending}
-            successMessage="Marked as exception"
+            successMessage={t("Marked as exception")}
             onSuccess={invalidate}
           />
           <BillingQueueExceptionPopover
             itemId={item.id}
             targetStatus="SentBackToOps"
-            label="Send Back"
+            label={t("Send Back")}
             icon={<SendIcon className="size-3.5" />}
             variant="outline"
             disabled={isPending}
-            successMessage="Sent back to ops"
+            successMessage={t("Sent back to ops")}
             onSuccess={invalidate}
           />
           <Button
@@ -149,7 +152,7 @@ export function BillingQueueActionBar({
             disabled={isPending}
           >
             <PauseIcon className="size-3.5" />
-            Hold
+            {t("Hold")}
           </Button>
         </div>
       );
@@ -163,7 +166,7 @@ export function BillingQueueActionBar({
             disabled={isPending}
           >
             <PlayIcon className="size-3.5" />
-            Resume
+            {t("Resume")}
           </Button>
         </div>
       );
@@ -178,7 +181,7 @@ export function BillingQueueActionBar({
             disabled={isPending}
           >
             <UndoIcon className="size-3.5" />
-            Resolve
+            {t("Resolve")}
           </Button>
         </div>
       );
@@ -193,7 +196,7 @@ export function BillingQueueActionBar({
             disabled={isPending}
           >
             <UndoIcon className="size-3.5" />
-            Revert to Review
+            {t("Revert to Review")}
           </Button>
         </div>
       );
