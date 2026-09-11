@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -39,6 +40,8 @@ export function JurisdictionRuleOverridePanel({
   mode,
   row,
 }: DataTablePanelProps<JurisdictionRuleOverride>) {
+  const t = useT();
+
   const form = useForm<JurisdictionRuleOverride>({
     resolver: zodResolver(jurisdictionRuleOverrideSchema) as Resolver<JurisdictionRuleOverride>,
     defaultValues: EMPTY as JurisdictionRuleOverride,
@@ -55,7 +58,7 @@ export function JurisdictionRuleOverridePanel({
       form={form}
       url="/jurisdiction-rule-overrides/"
       queryKey={QUERY_KEY}
-      title="Carrier Override"
+      title={t("Carrier Override")}
       formComponent={<JurisdictionRuleOverrideForm />}
     />
   );
@@ -69,6 +72,8 @@ function OverrideEditPanel({
 }: Pick<DataTablePanelProps<JurisdictionRuleOverride>, "open" | "onOpenChange" | "row"> & {
   form: ReturnType<typeof useForm<JurisdictionRuleOverride>>;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const {
     formState: { isSubmitting },
@@ -91,8 +96,8 @@ function OverrideEditPanel({
     mutationFn: async (values) =>
       api.put<JurisdictionRuleOverride>(`/jurisdiction-rule-overrides/${row?.id}/`, values),
     onSuccess: () => {
-      toast.success("Changes have been saved", {
-        description: "Carrier override updated successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Carrier override updated successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
@@ -103,8 +108,8 @@ function OverrideEditPanel({
   const removeMutation = useApiMutation({
     mutationFn: async () => api.delete(`/jurisdiction-rule-overrides/${row?.id}/`),
     onSuccess: () => {
-      toast.success("Override removed", {
-        description: "This jurisdiction reverts to its statutory limits.",
+      toast.success(t("Override removed"), {
+        description: t("This jurisdiction reverts to its statutory limits."),
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       onOpenChange(false);
@@ -117,7 +122,7 @@ function OverrideEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={row?.state?.name ?? "Carrier Override"}
-      description="Applies to your organization only"
+      description={t("Applies to your organization only")}
       footer={
         <>
           {/* Removing an override loosens this jurisdiction back to the
@@ -131,7 +136,7 @@ function OverrideEditPanel({
             {removeMutation.isPending ? "Removing..." : "Remove Override"}
           </Button>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="panel-edit-form" disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save"}
@@ -140,7 +145,7 @@ function OverrideEditPanel({
       }
     >
       {!row ? (
-        <ComponentLoader message="Loading Carrier Override..." />
+        <ComponentLoader message={t("Loading Carrier Override...")} />
       ) : (
         <FormProvider {...form}>
           <Form

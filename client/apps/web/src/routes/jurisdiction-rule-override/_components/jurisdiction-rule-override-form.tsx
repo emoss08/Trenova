@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { CheckboxField } from "@/components/fields/checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -9,6 +10,8 @@ import { ShieldIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 
 export function JurisdictionRuleOverrideForm() {
+  const t = useT();
+
   const { control } = useFormContext<JurisdictionRuleOverride>();
 
   return (
@@ -16,19 +19,18 @@ export function JurisdictionRuleOverrideForm() {
       <Alert>
         <ShieldIcon className="size-4" />
         <AlertDescription>
-          An override can only make a state limit stricter, never looser. Leave a field blank to use
-          whatever the state requires. This applies to your organization alone.
+          {t("An override can only make a state limit stricter, never looser. Leave a field blank to use whatever the state requires. This applies to your organization alone.")}
         </AlertDescription>
       </Alert>
 
-      <FormSection title="Jurisdiction" description="Which state this override applies to">
+      <FormSection title={t("Jurisdiction")} description={t("Which state this override applies to")}>
         <FormGroup cols={1}>
           <FormControl cols="full">
             <UsStateAutocompleteField
               control={control}
               name="stateId"
-              label="State"
-              placeholder="Select state"
+              label={t("State")}
+              placeholder={t("Select state")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -36,100 +38,100 @@ export function JurisdictionRuleOverrideForm() {
       </FormSection>
 
       <FormSection
-        title="Tighter Limits"
-        description="Leave blank to defer to the state. A value above the state limit is rejected."
+        title={t("Tighter Limits")}
+        description={t("Leave blank to defer to the state. A value above the state limit is rejected.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="maxWidthFeet"
-              label="Max Width"
+              label={t("Max Width")}
               sideText="ft"
-              placeholder="Defer to state"
+              placeholder={t("Defer to state")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxHeightFeet"
-              label="Max Height"
+              label={t("Max Height")}
               sideText="ft"
-              placeholder="Defer to state"
+              placeholder={t("Defer to state")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxLengthFeet"
-              label="Max Length"
+              label={t("Max Length")}
               sideText="ft"
-              placeholder="Defer to state"
+              placeholder={t("Defer to state")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxWeightPounds"
-              label="Max Weight"
+              label={t("Max Weight")}
               sideText="lbs"
               thousandSeparator
-              placeholder="Defer to state"
+              placeholder={t("Defer to state")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Lead Time"
-        description="This one runs the other way: an override may require more notice than the state, never less."
+        title={t("Lead Time")}
+        description={t("This one runs the other way: an override may require more notice than the state, never less.")}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
             <NumberField
               control={control}
               name="permitLeadTimeDays"
-              label="Permit Lead Time"
+              label={t("Permit Lead Time")}
               sideText="days"
-              placeholder="Defer to state"
+              placeholder={t("Defer to state")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Added Restrictions"
-        description="Restrictions the state does not impose. A restriction the state does impose cannot be lifted here."
+        title={t("Added Restrictions")}
+        description={t("Restrictions the state does not impose. A restriction the state does impose cannot be lifted here.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <CheckboxField
               control={control}
               name="daylightOnly"
-              label="Daylight Only"
-              description="We do not run oversize at night in this state"
+              label={t("Daylight Only")}
+              description={t("We do not run oversize at night in this state")}
             />
           </FormControl>
           <FormControl>
             <CheckboxField
               control={control}
               name="holidayRestricted"
-              label="Holiday Restricted"
-              description="We do not run oversize on holidays in this state"
+              label={t("Holiday Restricted")}
+              description={t("We do not run oversize on holidays in this state")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
-      <FormSection title="Reason" description="Why this organization runs tighter than the statute">
+      <FormSection title={t("Reason")} description={t("Why this organization runs tighter than the statute")}>
         <FormGroup cols={1}>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="reason"
-              label="Reason"
-              description="At least 10 characters. This is what explains the override to whoever reads it next."
-              placeholder="Our trailer fleet and insurance terms are narrower than this state allows"
+              label={t("Reason")}
+              description={t("At least 10 characters. This is what explains the override to whoever reads it next.")}
+              placeholder={t("Our trailer fleet and insurance terms are narrower than this state allows")}
               rules={{ required: true }}
             />
           </FormControl>

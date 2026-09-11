@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { overriddenLimits } from "@trenova/shared/lib/permit";
 import { truncateText } from "@trenova/shared/lib/utils";
@@ -33,7 +34,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
             ))}
           </div>
         ) : (
-          <span className="text-muted-foreground">Nothing</span>
+          <span className="text-muted-foreground">{translate("Nothing")}</span>
         );
       },
       size: 320,
