@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentMultiSelectAutocompleteField } from "@/components/autocomplete-fields";
 import { DocumentUploadSection } from "@/components/document-upload-section";
 import { NumberInput } from "@/components/fields/number-input";
@@ -105,6 +106,8 @@ export function InvoiceAdjustmentTypeSelector({
   clearErrors: UseFormClearErrors<AdjustmentFormValues>;
   onSelectionChange?: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -160,7 +163,7 @@ export function InvoiceAdjustmentTypeSelector({
 
       {kind === "CreditAndRebill" ? (
         <div className="space-y-1.5">
-          <p className="text-muted-foreground text-xs font-medium">Rebill Strategy</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Rebill Strategy")}</p>
           <div className="border-border bg-muted/50 flex gap-1 rounded-lg border p-1">
             {rebillStrategies.map((strategy) => {
               const isSelected = rebillStrategy === strategy.value;
@@ -210,14 +213,16 @@ export function InvoiceAdjustmentSupportingDocumentsSection({
   shipmentId: Invoice["shipmentId"];
   draft: InvoiceAdjustment | null;
 }) {
+  const t = useT();
+
   return (
     <div className="space-y-4">
       <Separator />
       <TextareaField
         control={control}
         name="reason"
-        label="Reason"
-        placeholder="Describe the commercial correction or finance rationale..."
+        label={t("Reason")}
+        placeholder={t("Describe the commercial correction or finance rationale...")}
         minRows={3}
       />
 
@@ -229,7 +234,7 @@ export function InvoiceAdjustmentSupportingDocumentsSection({
             ? "Supporting Documents (Required)"
             : "Supporting Documents (Optional)"
         }
-        placeholder="Search shipment documents..."
+        placeholder={t("Search shipment documents...")}
         description={
           supportingDocumentsRequired
             ? "Required by policy for this adjustment type."
@@ -270,12 +275,14 @@ export function InvoiceAdjustmentLineEditor({
   sourceLineAmounts: Map<string, number>;
   previewLinesById: Map<string, InvoiceAdjustmentPreviewLine>;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border overflow-hidden rounded-lg border">
       <div className="border-border bg-muted/40 grid grid-cols-[1fr_120px_120px] items-center border-b px-4 py-2">
-        <span className="text-muted-foreground text-xs font-medium">Description</span>
-        <span className="text-muted-foreground text-right text-xs font-medium">Credit</span>
-        <span className="text-muted-foreground text-right text-xs font-medium">Rebill</span>
+        <span className="text-muted-foreground text-xs font-medium">{t("Description")}</span>
+        <span className="text-muted-foreground text-right text-xs font-medium">{t("Credit")}</span>
+        <span className="text-muted-foreground text-right text-xs font-medium">{t("Rebill")}</span>
       </div>
       <div className="divide-border divide-y">
         {lines.map((line, index) => (
@@ -318,6 +325,8 @@ function InvoiceAdjustmentLineEditorRow({
   sourceLineAmounts: Map<string, number>;
   previewLine?: InvoiceAdjustmentPreviewLine;
 }) {
+  const t = useT();
+
   const originalAmount =
     sourceLineAmounts.get(line.originalLineId) ??
     Math.abs(Number(invoice.lines[index]?.amount ?? 0));
@@ -344,11 +353,11 @@ function InvoiceAdjustmentLineEditorRow({
           <p className="truncate text-sm font-medium">{line.description}</p>
         </div>
         <div className="text-2xs text-muted-foreground mt-1.5 ml-7 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-          <span>{formatCurrency(originalAmount)} original</span>
+          <span>{t("{0} original", formatCurrency(originalAmount))}</span>
           <span className="text-muted-foreground/40">/</span>
-          <span>{formatCurrency(alreadyCreditedAmount)} credited</span>
+          <span>{t("{0} credited", formatCurrency(alreadyCreditedAmount))}</span>
           <span className="text-muted-foreground/40">/</span>
-          <span>{formatCurrency(Math.max(remainingEligibleAmount, 0))} eligible</span>
+          <span>{t("{0} eligible", formatCurrency(Math.max(remainingEligibleAmount, 0)))}</span>
         </div>
         {hasError ? (
           <div className="mt-1.5 ml-7 flex items-start gap-1.5">
@@ -360,7 +369,7 @@ function InvoiceAdjustmentLineEditorRow({
           </div>
         ) : requestedCreditAmount > 0 ? (
           <p className="text-2xs text-muted-foreground mt-1 ml-7">
-            Requesting {formatCurrency(requestedCreditAmount)} credit
+            {t("Requesting {0} credit", formatCurrency(requestedCreditAmount))}
           </p>
         ) : null}
       </div>
@@ -404,12 +413,14 @@ export function InvoiceAdjustmentPreviewPanel({
 }: {
   preview: InvoiceAdjustmentPreview | null;
 }) {
+  const t = useT();
+
   if (!preview) {
     return (
       <div className="border-border flex flex-col items-center justify-center rounded-lg border border-dashed py-8">
         <ReceiptIcon className="text-muted-foreground/30 mb-2 size-5" />
         <p className="text-muted-foreground/60 text-xs">
-          Click Preview to see the adjustment summary
+          {t("Click Preview to see the adjustment summary")}
         </p>
       </div>
     );
@@ -425,24 +436,24 @@ export function InvoiceAdjustmentPreviewPanel({
     <div className="space-y-3">
       <div className="border-border overflow-hidden rounded-lg border">
         <div className="border-border bg-muted/40 border-b px-4 py-2">
-          <p className="text-muted-foreground text-xs font-medium">Adjustment Summary</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Adjustment Summary")}</p>
         </div>
         <div className="divide-border divide-y">
           <PreviewRow
-            label="Credit Total"
+            label={t("Credit Total")}
             value={formatCurrency(Number(preview.creditTotalAmount))}
           />
           <PreviewRow
-            label="Rebill Total"
+            label={t("Rebill Total")}
             value={formatCurrency(Number(preview.rebillTotalAmount))}
           />
           <PreviewRow
-            label="Net Delta"
+            label={t("Net Delta")}
             value={formatCurrency(Number(preview.netDeltaAmount))}
             highlight
           />
           <PreviewRow
-            label="Accounting Date"
+            label={t("Accounting Date")}
             value={formatUnixDate(preview.accountingDate)}
             icon={<CalendarIcon className="size-3" />}
           />
@@ -457,21 +468,21 @@ export function InvoiceAdjustmentPreviewPanel({
           <div className="flex items-center gap-2">
             <ShieldAlertIcon className="size-3.5 text-yellow-600 dark:text-yellow-400" />
             <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
-              Policy Implications
+              {t("Policy Implications")}
             </p>
           </div>
           <div className="mt-2 space-y-1.5">
             {preview.requiresApproval ? (
-              <PolicyItem text="Approval required before financial mutation" />
+              <PolicyItem text={t("Approval required before financial mutation")} />
             ) : null}
             {preview.requiresReconciliationException ? (
-              <PolicyItem text="Creates a reconciliation exception for finance follow-up" />
+              <PolicyItem text={t("Creates a reconciliation exception for finance follow-up")} />
             ) : null}
             {preview.requiresReplacementInvoiceReview ? (
-              <PolicyItem text="Replacement invoice requires billing review" />
+              <PolicyItem text={t("Replacement invoice requires billing review")} />
             ) : null}
             {preview.wouldCreateUnappliedCredit ? (
-              <PolicyItem text="Creates unapplied customer credit based on settlement state" />
+              <PolicyItem text={t("Creates unapplied customer credit based on settlement state")} />
             ) : null}
           </div>
         </div>
@@ -481,7 +492,7 @@ export function InvoiceAdjustmentPreviewPanel({
         <div className="border-border bg-muted/30 rounded-lg border px-4 py-3">
           <div className="flex items-center gap-2">
             <InfoIcon className="text-muted-foreground size-3.5" />
-            <p className="text-muted-foreground text-xs font-medium">Warnings</p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Warnings")}</p>
           </div>
           <div className="mt-2 space-y-1">
             {preview.warnings.map((warning) => (
@@ -497,7 +508,7 @@ export function InvoiceAdjustmentPreviewPanel({
         <div className="border-destructive/20 bg-destructive/5 rounded-lg border px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertTriangleIcon className="text-destructive size-3.5" />
-            <p className="text-destructive text-xs font-medium">Issues Found</p>
+            <p className="text-destructive text-xs font-medium">{t("Issues Found")}</p>
           </div>
           <div className="mt-2 space-y-2">
             {eligibilityIssues.map((line) => (
@@ -523,7 +534,7 @@ export function InvoiceAdjustmentPreviewPanel({
         <div className="flex items-center gap-2 rounded-lg border border-green-600/20 bg-green-600/5 px-4 py-2.5">
           <CheckCircle2Icon className="size-3.5 text-green-600 dark:text-green-400" />
           <p className="text-xs font-medium text-green-700 dark:text-green-400">
-            Preview passed validation
+            {t("Preview passed validation")}
           </p>
         </div>
       ) : null}

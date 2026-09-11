@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -53,6 +54,8 @@ export function InvoiceAdjustmentRuntimeSection({
   latestAdjustment: InvoiceAdjustment | null;
   latestAdjustmentDetail: InvoiceAdjustment | null | undefined;
 }) {
+  const t = useT();
+
   const sortedAdjustments = useMemo(
     () =>
       correctionSummary
@@ -71,9 +74,9 @@ export function InvoiceAdjustmentRuntimeSection({
   if (!latestAdjustment && !correctionSummary?.adjustments.length) {
     return (
       <div className="rounded-lg border border-dashed p-3">
-        <p className="text-muted-foreground text-xs font-medium">Invoice Adjustments</p>
+        <p className="text-muted-foreground text-xs font-medium">{t("Invoice Adjustments")}</p>
         <p className="text-2xs text-muted-foreground mt-0.5">
-          No invoice adjustments have been created for this invoice yet.
+          {t("No invoice adjustments have been created for this invoice yet.")}
         </p>
       </div>
     );
@@ -83,7 +86,7 @@ export function InvoiceAdjustmentRuntimeSection({
     <div className="space-y-4">
       {latestAdjustment ? (
         <div className="space-y-1.5">
-          <p className="text-muted-foreground text-xs font-medium">Latest Adjustment</p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Latest Adjustment")}</p>
           <InvoiceAdjustmentLatestCard
             invoice={invoice}
             latestAdjustment={latestAdjustment}
@@ -94,7 +97,7 @@ export function InvoiceAdjustmentRuntimeSection({
       {correctionSummary ? (
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-muted-foreground text-xs font-medium">Invoice Lineage</p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Invoice Lineage")}</p>
             <ScrollArea className="h-[260px]">
               <div className="space-y-1.5">
                 {sortedInvoices.map((lineageInvoice) => {
@@ -121,7 +124,7 @@ export function InvoiceAdjustmentRuntimeSection({
             </ScrollArea>
           </div>
           <div className="space-y-1.5">
-            <p className="text-muted-foreground text-xs font-medium">Adjustment History</p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Adjustment History")}</p>
             <ScrollArea className="h-[260px]">
               <div className="space-y-1.5">
                 {sortedAdjustments.map((adjustment) => (
@@ -178,6 +181,8 @@ function InvoiceAdjustmentLatestCard({
   latestAdjustment: InvoiceAdjustment;
   latestAdjustmentDetail?: InvoiceAdjustment | null;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [showRejectForm, setShowRejectForm] = useState(false);
   const approvalForm = useForm({
@@ -192,9 +197,9 @@ function InvoiceAdjustmentLatestCard({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
-      toast.success("Adjustment approved");
+      toast.success(t("Adjustment approved"));
     },
-    onError: () => toast.error("Failed to approve invoice adjustment"),
+    onError: () => toast.error(t("Failed to approve invoice adjustment")),
   });
 
   const rejectMutation = useApiMutation({
@@ -209,7 +214,7 @@ function InvoiceAdjustmentLatestCard({
     }) => apiService.invoiceAdjustmentService.reject(adjustmentId, rejectReason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
-      toast.success("Adjustment rejected");
+      toast.success(t("Adjustment rejected"));
       approvalForm.reset();
       setShowRejectForm(false);
     },
@@ -252,8 +257,7 @@ function InvoiceAdjustmentLatestCard({
       </div>
 
       <p className="text-2xs text-muted-foreground mt-1.5">
-        Credit {formatCurrency(Number(latestAdjustment.creditTotalAmount))} · Rebill{" "}
-        {formatCurrency(Number(latestAdjustment.rebillTotalAmount))}
+        {t("Credit {0} · Rebill {1}", formatCurrency(Number(latestAdjustment.creditTotalAmount)), formatCurrency(Number(latestAdjustment.rebillTotalAmount)))}
       </p>
 
       {reason ? (
@@ -269,29 +273,29 @@ function InvoiceAdjustmentLatestCard({
       ) : null}
 
       <div className="text-2xs mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <ArtifactLink to={`/billing/invoices?item=${invoice.id}`} label="Current Invoice" />
+        <ArtifactLink to={`/billing/invoices?item=${invoice.id}`} label={t("Current Invoice")} />
         {latestAdjustment.creditMemoInvoiceId ? (
           <ArtifactLink
             to={`/billing/invoices?item=${latestAdjustment.creditMemoInvoiceId}`}
-            label="Credit Memo"
+            label={t("Credit Memo")}
           />
         ) : null}
         {latestAdjustment.replacementInvoiceId ? (
           <ArtifactLink
             to={`/billing/invoices?item=${latestAdjustment.replacementInvoiceId}`}
-            label="Replacement"
+            label={t("Replacement")}
           />
         ) : null}
         {latestAdjustment.rebillQueueItemId ? (
           <ArtifactLink
             to={`/billing/queue?item=${latestAdjustment.rebillQueueItemId}&includePosted=true`}
-            label="Rebill Queue"
+            label={t("Rebill Queue")}
           />
         ) : null}
         {latestAdjustment.batchId ? (
           <ArtifactLink
             to={`/billing/adjustment-batches?item=${latestAdjustment.batchId}`}
-            label="Batch"
+            label={t("Batch")}
           />
         ) : null}
       </div>
@@ -299,7 +303,7 @@ function InvoiceAdjustmentLatestCard({
       {allDocs.length > 0 ? (
         <Collapsible className="mt-2.5">
           <CollapsibleTrigger className="group text-2xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium">
-            <span>Documents ({allDocs.length})</span>
+            <span>{t("Documents ({0})", allDocs.length)}</span>
             <ChevronDownIcon className="size-3 transition-transform group-data-panel-open:rotate-180" />
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -327,7 +331,7 @@ function InvoiceAdjustmentLatestCard({
                 disabled={approveMutation.isPending}
               >
                 <CheckIcon className="size-3.5" />
-                Approve
+                {t("Approve")}
               </Button>
               <Button
                 size="sm"
@@ -336,7 +340,7 @@ function InvoiceAdjustmentLatestCard({
                 onClick={() => setShowRejectForm(true)}
               >
                 <XIcon className="size-3.5" />
-                Reject
+                {t("Reject")}
               </Button>
             </div>
           ) : (
@@ -345,8 +349,8 @@ function InvoiceAdjustmentLatestCard({
                 <InputField
                   control={approvalForm.control}
                   name="rejectReason"
-                  label="Rejection Reason"
-                  placeholder="Why is this being rejected?"
+                  label={t("Rejection Reason")}
+                  placeholder={t("Why is this being rejected?")}
                 />
                 <div className="flex items-center gap-2">
                   <Button
@@ -355,7 +359,7 @@ function InvoiceAdjustmentLatestCard({
                     type="submit"
                     disabled={rejectMutation.isPending}
                   >
-                    Confirm Rejection
+                    {t("Confirm Rejection")}
                   </Button>
                   <Button
                     size="sm"
@@ -366,7 +370,7 @@ function InvoiceAdjustmentLatestCard({
                       approvalForm.reset();
                     }}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                 </div>
               </div>
@@ -395,6 +399,8 @@ function ExecutionFailureCollapsible({
 }: {
   executionError: InvoiceAdjustment["executionError"];
 }) {
+  const t = useT();
+
   const errorText = executionError?.trim().length
     ? upperFirst(executionError)
     : "Execution failed, but no detailed reason was recorded.";
@@ -403,7 +409,7 @@ function ExecutionFailureCollapsible({
     <Collapsible>
       <CollapsibleTrigger className="group text-2xs text-destructive flex items-center gap-1 font-medium hover:underline">
         <AlertTriangleIcon className="size-3" />
-        <span>Execution failed</span>
+        <span>{t("Execution failed")}</span>
         <ChevronDownIcon className="size-3 transition-transform group-data-[panel-open]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent>

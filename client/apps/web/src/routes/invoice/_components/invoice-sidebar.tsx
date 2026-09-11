@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -43,6 +44,8 @@ export function InvoiceSidebar({
   selectedInvoiceId: string | null;
   onSelectInvoice: (id: string) => void;
 }) {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
   const { status, query, billType } = searchParams;
   const deferredSearch = useDeferredValue(query);
@@ -120,7 +123,7 @@ export function InvoiceSidebar({
     <div className="flex h-full flex-col">
       <div className="flex flex-col gap-1.5 border-b p-2">
         <Input
-          placeholder="Search invoice, PRO, bill-to..."
+          placeholder={t("Search invoice, PRO, bill-to...")}
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           value={query}
           onChange={(event) => void setSearchParams({ query: event.target.value })}
@@ -135,10 +138,10 @@ export function InvoiceSidebar({
             }
           >
             <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder={t("All statuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="all">{t("All Statuses")}</SelectItem>
               {invoiceStatusChoices.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
                   {choice.label}
@@ -154,10 +157,10 @@ export function InvoiceSidebar({
             }
           >
             <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder="All bill types" />
+              <SelectValue placeholder={t("All bill types")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Bill Types</SelectItem>
+              <SelectItem value="all">{t("All Bill Types")}</SelectItem>
               {billTypeChoices.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
                   {choice.label}
@@ -195,7 +198,7 @@ export function InvoiceSidebar({
           {isFetchingNextPage ? (
             <div className="flex items-center justify-center py-4">
               <TextShimmer className="font-mono text-sm" duration={1}>
-                Loading more...
+                {t("Loading more...")}
               </TextShimmer>
             </div>
           ) : null}

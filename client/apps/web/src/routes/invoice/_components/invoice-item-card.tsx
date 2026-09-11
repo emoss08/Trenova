@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
 import {
   PlainInvoiceStatusBadge,
@@ -27,6 +28,8 @@ export function InvoiceItemCard({
   onClick: () => void;
   onPost: () => void;
 }) {
+  const t = useT();
+
   const age = formatDistanceToNowStrict(fromUnixTime(invoice.createdAt), { addSuffix: true });
   const customerName = invoice.customer?.name ?? invoice.billToName;
   const totalAmount = Number(invoice.totalAmount ?? 0);
@@ -68,17 +71,17 @@ export function InvoiceItemCard({
           }
         >
           <ExternalLinkIcon className="size-3.5" />
-          View Shipment
+          {t("View Shipment")}
         </ContextMenuItem>
         <ContextMenuItem
           onClick={() => window.open(`/billing/queue?item=${invoice.billingQueueItemId}`, "_blank")}
         >
           <FileTextIcon className="size-3.5" />
-          View Billing Queue Item
+          {t("View Billing Queue Item")}
         </ContextMenuItem>
         <ContextMenuItem onClick={onPost} disabled={invoice.status === "Posted"}>
           <SendIcon className="size-3.5" />
-          Post Invoice
+          {t("Post Invoice")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

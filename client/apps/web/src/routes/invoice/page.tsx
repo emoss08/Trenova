@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import {
@@ -18,6 +19,8 @@ const BillingQueueDocumentPreview = lazy(
 );
 
 export function InvoicesPage() {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(invoiceSelectionSearchParamsParser);
   const selectedInvoiceId = searchParams.item;
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
@@ -74,7 +77,7 @@ export function InvoicesPage() {
           <SheetHeader className="border-border border-b pr-12">
             <SheetTitle>{selectedDocumentName || "Document Preview"}</SheetTitle>
             <SheetDescription>
-              Review the supporting shipment document attached to this invoice.
+              {t("Review the supporting shipment document attached to this invoice.")}
             </SheetDescription>
           </SheetHeader>
           <div className="h-[calc(100%-73px)]">

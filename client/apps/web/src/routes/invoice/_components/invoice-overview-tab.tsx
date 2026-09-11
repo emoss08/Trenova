@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -23,6 +24,8 @@ export function InvoiceOverviewTab({
   latestAdjustment: InvoiceAdjustment | null;
   latestAdjustmentDetail: InvoiceAdjustment | null | undefined;
 }) {
+  const t = useT();
+
   const shipment = invoice.shipment;
   const originLocation = shipment ? getOriginLocation(shipment) : null;
   const destinationLocation = shipment ? getDestinationLocation(shipment) : null;
@@ -39,7 +42,7 @@ export function InvoiceOverviewTab({
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="flex flex-col gap-5">
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>Bill-To</SectionLabel>
+              <SectionLabel>{t("Bill-To")}</SectionLabel>
               <div className="mt-1.5">
                 <p className="text-sm font-medium">{invoice.billToName}</p>
                 {invoice.billToCode ? (
@@ -59,19 +62,19 @@ export function InvoiceOverviewTab({
             </div>
 
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>Charge Summary</SectionLabel>
+              <SectionLabel>{t("Charge Summary")}</SectionLabel>
               <div className="mt-2 space-y-2">
                 <ChargeSummaryRow
-                  label="Freight Charges"
+                  label={t("Freight Charges")}
                   value={formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
                 />
                 <ChargeSummaryRow
-                  label="Other Charges"
+                  label={t("Other Charges")}
                   value={formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
                 />
                 <Separator />
                 <ChargeSummaryRow
-                  label="Total"
+                  label={t("Total")}
                   value={formatCurrency(Number(invoice.totalAmount ?? 0), invoice.currencyCode)}
                   bold
                 />
@@ -79,10 +82,10 @@ export function InvoiceOverviewTab({
             </div>
 
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>References</SectionLabel>
+              <SectionLabel>{t("References")}</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
                 {invoice.shipmentId ? (
-                  <PropertyCell label="Shipment">
+                  <PropertyCell label={t("Shipment")}>
                     <Link
                       to={`/shipment-management/shipments?item=${invoice.shipmentId}`}
                       className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
@@ -93,7 +96,7 @@ export function InvoiceOverviewTab({
                   </PropertyCell>
                 ) : null}
                 {invoice.orderId ? (
-                  <PropertyCell label="Order">
+                  <PropertyCell label={t("Order")}>
                     <Link
                       to={`/shipment-management/orders?panelType=edit&panelEntityId=${invoice.orderId}`}
                       className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
@@ -103,22 +106,22 @@ export function InvoiceOverviewTab({
                     </Link>
                   </PropertyCell>
                 ) : null}
-                <PropertyCell label="Billing Queue">
+                <PropertyCell label={t("Billing Queue")}>
                   <Link
                     to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
                     className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
                   >
-                    Queue Item
+                    {t("Queue Item")}
                     <ExternalLinkIcon className="size-2.5" />
                   </Link>
                 </PropertyCell>
                 {invoice.shipmentBol ? (
-                  <PropertyCell label="BOL">
+                  <PropertyCell label={t("BOL")}>
                     <span className="text-xs font-medium">{invoice.shipmentBol}</span>
                   </PropertyCell>
                 ) : null}
                 {originLocation && destinationLocation ? (
-                  <PropertyCell label="Route">
+                  <PropertyCell label={t("Route")}>
                     <span className="text-xs font-medium">
                       {originLocation.city}, {originLocation.state?.abbreviation} →{" "}
                       {destinationLocation.city}, {destinationLocation.state?.abbreviation}
@@ -131,20 +134,20 @@ export function InvoiceOverviewTab({
 
           <div className="flex flex-col gap-5">
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>Invoice Details</SectionLabel>
+              <SectionLabel>{t("Invoice Details")}</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-                <PropertyCell label="Service Date">
+                <PropertyCell label={t("Service Date")}>
                   <span className="text-xs font-medium">{formatUnixDate(invoice.serviceDate)}</span>
                 </PropertyCell>
-                <PropertyCell label="Currency">
+                <PropertyCell label={t("Currency")}>
                   <span className="text-xs font-medium">{invoice.currencyCode}</span>
                 </PropertyCell>
-                <PropertyCell label="Posted">
+                <PropertyCell label={t("Posted")}>
                   <span className="text-xs font-medium">
                     {invoice.status === "Posted" ? formatUnixDateTime(invoice.postedAt) : "Not yet"}
                   </span>
                 </PropertyCell>
-                <PropertyCell label="Lineage">
+                <PropertyCell label={t("Lineage")}>
                   <span className="text-xs font-medium">
                     {invoice.isAdjustmentArtifact
                       ? isCurrentVersion
@@ -157,20 +160,20 @@ export function InvoiceOverviewTab({
             </div>
 
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>Lifecycle</SectionLabel>
+              <SectionLabel>{t("Lifecycle")}</SectionLabel>
               <div className="mt-2">
                 <LifecycleStep
-                  label="Generated from Billing Queue"
+                  label={t("Generated from Billing Queue")}
                   active
                   timestamp={formatUnixDateTime(invoice.createdAt)}
                 />
                 <LifecycleStep
-                  label="Ready for Posting"
+                  label={t("Ready for Posting")}
                   active
                   timestamp={formatUnixDate(invoice.invoiceDate)}
                 />
                 <LifecycleStep
-                  label="Posted to Invoice History"
+                  label={t("Posted to Invoice History")}
                   active={invoice.status === "Posted"}
                   timestamp={formatUnixDateTime(invoice.postedAt)}
                   isLast
@@ -180,7 +183,7 @@ export function InvoiceOverviewTab({
 
             {correctionSummary?.invoices.length ? (
               <div className="bg-card rounded-lg border p-3">
-                <SectionLabel>Correction Group</SectionLabel>
+                <SectionLabel>{t("Correction Group")}</SectionLabel>
                 <div className="mt-2 flex flex-col gap-1.5">
                   {correctionSummary.invoices.map((lineageInvoice) => {
                     const current =
