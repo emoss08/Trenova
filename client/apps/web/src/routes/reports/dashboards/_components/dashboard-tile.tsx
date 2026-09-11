@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportPreview } from "@/hooks/use-reports";
@@ -81,6 +82,8 @@ export function DashboardTileBody({
   tileFilterValues,
   categorySelect,
 }: DashboardTileBodyProps) {
+  const t = useT();
+
   const report = useTileReport(tile);
   const chart = useTileChart(tile, report.ir?.charts);
 
@@ -119,7 +122,7 @@ export function DashboardTileBody({
   // Without a resolved report there is nothing to query, and a disabled query
   // would otherwise sit on "pending" forever.
   if (!report.ir) {
-    return <TileMessage>This tile&apos;s report is no longer available.</TileMessage>;
+    return <TileMessage>{t("This tile's report is no longer available.")}</TileMessage>;
   }
 
   if (data.isError) {
@@ -148,7 +151,7 @@ export function DashboardTileBody({
         rows={rows}
         totals={totals}
         density="compact"
-        emptyMessage="No rows."
+        emptyMessage={t("No rows.")}
       />
     );
   }
@@ -175,6 +178,8 @@ export function DashboardTileBody({
 }
 
 export function TileFooterLink({ tile }: { tile: ReportDashboardTile }) {
+  const t = useT();
+
   const href = tile.definitionId
     ? `/reports/explore/${tile.definitionId}`
     : tile.cannedKey
@@ -189,8 +194,8 @@ export function TileFooterLink({ tile }: { tile: ReportDashboardTile }) {
       size="icon"
       className="size-6 opacity-0 transition-opacity group-hover/tile:opacity-100"
       render={<Link to={href} />}
-      aria-label="Open this report"
-      title="Open this report"
+      aria-label={t("Open this report")}
+      title={t("Open this report")}
     >
       <ExternalLinkIcon className="size-3.5" />
     </Button>

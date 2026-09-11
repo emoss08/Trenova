@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalogEntity, ReportCatalogField } from "@/lib/graphql/reports";
@@ -180,6 +181,8 @@ export function CatalogFieldTree({
   filterFields,
   className,
 }: FieldTreeProps) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const entity = useMemo(() => index.entities.get(entityKey), [index, entityKey]);
 
@@ -190,7 +193,7 @@ export function CatalogFieldTree({
       <div className="relative">
         <Input
           className="h-8 pl-7"
-          placeholder="Search fields..."
+          placeholder={t("Search fields...")}
           value={search}
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           onChange={(event) => setSearch(event.target.value)}

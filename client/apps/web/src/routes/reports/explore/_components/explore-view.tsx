@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
@@ -58,6 +59,8 @@ export function ExploreView({
   defaultFormat,
   editHref,
 }: ExploreViewProps) {
+  const t = useT();
+
   const ir = useMemo<ReportIR | null>(() => parseReportIR(definition), [definition]);
   const parameters: ReportParameterDef[] = ir?.parameters ?? [];
 
@@ -103,7 +106,7 @@ export function ExploreView({
     return (
       <ExploreEmpty>
         <CircleAlertIcon className="text-destructive size-5" />
-        <p className="text-sm">This report&apos;s definition could not be read.</p>
+        <p className="text-sm">{t("This report's definition could not be read.")}</p>
       </ExploreEmpty>
     );
   }
@@ -116,7 +119,7 @@ export function ExploreView({
           size="icon"
           className="size-7"
           render={<Link to="/reports" />}
-          aria-label="Back to reports"
+          aria-label={t("Back to reports")}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -130,12 +133,12 @@ export function ExploreView({
         {editHref && (
           <Button variant="outline" size="sm" className="h-7" render={<Link to={editHref} />}>
             <PencilIcon className="size-3.5" />
-            Edit
+            {t("Edit")}
           </Button>
         )}
         <Button size="sm" className="h-7" onClick={() => setRunOpen(true)}>
           <DownloadIcon className="size-3.5" />
-          Export
+          {t("Export")}
         </Button>
       </header>
 
@@ -163,7 +166,7 @@ export function ExploreView({
             view === "table" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          Table
+          {t("Table")}
         </button>
         {charts.map((chart) => (
           <button
@@ -179,11 +182,11 @@ export function ExploreView({
           </button>
         ))}
         <Badge variant="secondary" className="tabular-nums">
-          {rows.length} row{rows.length === 1 ? "" : "s"}
+          {t("{0} row{1}", rows.length, rows.length === 1 ? "" : "s")}
         </Badge>
         {preview.data?.truncated && (
           <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">
-            row limit reached
+            {t("row limit reached")}
           </span>
         )}
         <div className="flex-1" />
@@ -192,7 +195,7 @@ export function ExploreView({
           <>
             <Input
               className="h-7 w-56 text-xs"
-              placeholder="Filter these rows..."
+              placeholder={t("Filter these rows...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               value={quickFilter}
               onChange={(event) => setQuickFilter(event.target.value)}
@@ -202,7 +205,7 @@ export function ExploreView({
                 render={
                   <Button variant="outline" size="sm" className="h-7">
                     <Columns3Icon className="size-3.5" />
-                    Columns
+                    {t("Columns")}
                   </Button>
                 }
               />
@@ -227,10 +230,9 @@ export function ExploreView({
       <div className="flex min-h-0 flex-1 flex-col">
         {missing.length > 0 ? (
           <ExploreEmpty>
-            <p className="text-sm font-medium">This report needs a value first</p>
+            <p className="text-sm font-medium">{t("This report needs a value first")}</p>
             <p className="text-muted-foreground max-w-sm text-xs">
-              Fill in {missing.map((param) => param.label || param.name).join(", ")} above to load
-              the results.
+              {t("Fill in {0} above to load the results.", missing.map((param) => param.label || param.name).join(", "))}
             </p>
           </ExploreEmpty>
         ) : preview.isError ? (

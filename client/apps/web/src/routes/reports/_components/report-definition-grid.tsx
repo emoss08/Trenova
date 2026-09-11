@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,6 +109,8 @@ function DefinitionCard({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const resetFork = useResetCannedFork();
   const { canCreate, canUpdate, canExport } = usePermissions(Resource.Report);
@@ -132,7 +135,7 @@ function DefinitionCard({
                   variant="ghost"
                   size="icon"
                   className="size-6 opacity-0 transition-opacity group-hover:opacity-100 data-popup-open:opacity-100"
-                  aria-label="Report actions"
+                  aria-label={t("Report actions")}
                 >
                   <MoreHorizontalIcon className="size-3.5" />
                 </Button>
@@ -140,36 +143,36 @@ function DefinitionCard({
             />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                title="Explore Results"
+                title={t("Explore Results")}
                 startContent={<TableIcon className="size-3.5" />}
                 onClick={() => void navigate(`/reports/explore/${definition.id}`)}
               />
               <DropdownMenuItem
-                title="Edit in Builder"
+                title={t("Edit in Builder")}
                 startContent={<PencilIcon className="size-3.5" />}
                 onClick={() => void navigate(`/reports/builder/${definition.id}`)}
               />
               {canCreate && (
                 <DropdownMenuItem
-                  title="Duplicate"
+                  title={t("Duplicate")}
                   startContent={<CopyIcon className="size-3.5" />}
                   onClick={onDuplicate}
                 />
               )}
               {canExport && (
                 <DropdownMenuItem
-                  title="Schedules"
+                  title={t("Schedules")}
                   startContent={<CalendarClockIcon className="size-3.5" />}
                   onClick={onSchedules}
                 />
               )}
               {definition.kind === "canned_fork" && canUpdate && (
                 <DropdownMenuItem
-                  title="Reset to Default"
+                  title={t("Reset to Default")}
                   startContent={<RotateCcwIcon className="size-3.5" />}
                   onClick={() =>
                     resetFork.mutate(definition.id, {
-                      onSuccess: () => toast.success("Report reset to its canned default"),
+                      onSuccess: () => toast.success(t("Report reset to its canned default")),
                       onError: (error) =>
                         toast.error(graphQLErrorMessage(error, "Failed to reset the report")),
                     })
@@ -178,7 +181,7 @@ function DefinitionCard({
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                title="Delete"
+                title={t("Delete")}
                 color="danger"
                 startContent={<Trash2Icon className="size-3.5" />}
                 onClick={onDelete}
@@ -192,11 +195,11 @@ function DefinitionCard({
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {definition.visibility === "shared" ? (
             <span className="flex items-center gap-1">
-              <GlobeIcon className="size-3" /> Shared
+              <GlobeIcon className="size-3" /> {t("Shared")}
             </span>
           ) : (
             <span className="flex items-center gap-1">
-              <LockIcon className="size-3" /> Private
+              <LockIcon className="size-3" /> {t("Private")}
             </span>
           )}
           <span className="text-border">•</span>
@@ -218,7 +221,7 @@ function DefinitionCard({
             }}
           >
             <PlayIcon className="size-3" />
-            Run
+            {t("Run")}
           </Button>
         )}
       </div>
@@ -239,6 +242,8 @@ export function ReportDefinitionGrid({
   status: ReportStatusFilter;
   onClearFilters: () => void;
 }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const {
     data: definitions,
@@ -258,7 +263,7 @@ export function ReportDefinitionGrid({
   const duplicateDefinition = (definition: ReportDefinition) => {
     const ir = parseReportIR(definition.definition);
     if (!ir) {
-      toast.error("This report's definition could not be read");
+      toast.error(t("This report's definition could not be read"));
       return;
     }
     createDefinition.mutate(
@@ -330,7 +335,7 @@ export function ReportDefinitionGrid({
                   onClick={() => void navigate("/reports/builder")}
                 >
                   <PlusIcon className="size-3.5" />
-                  New report
+                  {t("New report")}
                 </Button>
               ) : undefined
             }
@@ -395,26 +400,25 @@ export function ReportDefinitionGrid({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete {0}?", deleteTarget?.name)}</AlertDialogTitle>
             <AlertDialogDescription>
-              The report definition and its revision history will be permanently removed. Completed
-              run artifacts are kept until they expire.
+              {t("The report definition and its revision history will be permanently removed. Completed run artifacts are kept until they expire.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (!deleteTarget) return;
                 deleteDefinition.mutate(deleteTarget.id, {
-                  onSuccess: () => toast.success("Report deleted"),
+                  onSuccess: () => toast.success(t("Report deleted")),
                   onError: (error) =>
                     toast.error(graphQLErrorMessage(error, "Failed to delete the report")),
                 });
                 setDeleteTarget(null);
               }}
             >
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -429,12 +433,14 @@ export function ReportDefinitionGrid({
  * library that is merely an unloaded one.
  */
 function LoadMoreReports({ pending, onLoadMore }: { pending: boolean; onLoadMore: () => void }) {
+  const t = useT();
+
   return (
     <Button variant="outline" size="sm" disabled={pending} onClick={onLoadMore}>
       {pending ? (
         <>
           <Spinner className="size-3.5" />
-          Loading
+          {t("Loading")}
         </>
       ) : (
         "Load more reports"

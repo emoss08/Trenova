@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -88,11 +89,13 @@ function TileControls({
   onRemove: () => void;
   onResize: (patch: Partial<ReportDashboardTile>) => void;
 }) {
+  const t = useT();
+
   return (
     <Popover>
       <PopoverTrigger
         render={
-          <Button variant="ghost" size="icon" className="size-6 shrink-0" aria-label="Tile options">
+          <Button variant="ghost" size="icon" className="size-6 shrink-0" aria-label={t("Tile options")}>
             <MoreHorizontalIcon className="size-3.5" />
           </Button>
         }
@@ -101,7 +104,7 @@ function TileControls({
         <div className="flex flex-col gap-2">
           <SizeStepper
             icon={ChevronsLeftRightIcon}
-            label="Width"
+            label={t("Width")}
             value={tile.w}
             min={1}
             max={DASHBOARD_GRID_COLUMNS}
@@ -109,7 +112,7 @@ function TileControls({
           />
           <SizeStepper
             icon={ChevronsUpDownIcon}
-            label="Height"
+            label={t("Height")}
             value={tile.h}
             min={1}
             max={MAX_TILE_HEIGHT}
@@ -118,7 +121,7 @@ function TileControls({
           <div className="border-border flex flex-col gap-1 border-t pt-2">
             <Button variant="ghost" size="sm" className="h-7 justify-start" onClick={onEdit}>
               <PencilIcon className="size-3.5" />
-              Edit tile
+              {t("Edit tile")}
             </Button>
             <Button
               variant="ghost"
@@ -127,7 +130,7 @@ function TileControls({
               onClick={onRemove}
             >
               <Trash2Icon className="size-3.5" />
-              Remove tile
+              {t("Remove tile")}
             </Button>
           </div>
         </div>
@@ -237,6 +240,8 @@ function TileFrame({
 }
 
 export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const updateDashboard = useUpdateReportDashboard();
   const deleteDashboard = useDeleteReportDashboard();
@@ -397,7 +402,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
       {
         onSuccess: () => {
           setEditing(false);
-          toast.success("Dashboard saved");
+          toast.success(t("Dashboard saved"));
         },
         onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to save the dashboard")),
       },
@@ -407,7 +412,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
   const handleDelete = () => {
     deleteDashboard.mutate(dashboard.id, {
       onSuccess: () => {
-        toast.success("Dashboard deleted");
+        toast.success(t("Dashboard deleted"));
         void navigate("/reports?tab=dashboards");
       },
       onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to delete the dashboard")),
@@ -422,7 +427,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
           size="icon"
           className="size-7"
           render={<Link to="/reports?tab=dashboards" />}
-          aria-label="Back to dashboards"
+          aria-label={t("Back to dashboards")}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -431,7 +436,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
             className="h-8 max-w-80"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Dashboard name"
+            placeholder={t("Dashboard name")}
           />
         ) : (
           <span className="truncate text-sm font-medium">{dashboard.name}</span>
@@ -441,7 +446,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
           <>
             <Button variant="outline" size="sm" className="h-7" onClick={addTile}>
               <PlusIcon className="size-3.5" />
-              Tile
+              {t("Tile")}
             </Button>
             <Button
               variant="outline"
@@ -450,7 +455,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               onClick={() => setSettingsOpen(true)}
             >
               <SettingsIcon className="size-3.5" />
-              Filters
+              {t("Filters")}
             </Button>
             <Button
               variant="ghost"
@@ -460,10 +465,10 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               disabled={deleteDashboard.isPending}
             >
               <Trash2Icon className="size-3.5" />
-              Delete
+              {t("Delete")}
             </Button>
             <Button variant="ghost" size="sm" className="h-7" onClick={() => setEditing(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               size="sm"
@@ -489,7 +494,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
             {canEdit && (
               <Button variant="outline" size="sm" className="h-7" onClick={startEditing}>
                 <PencilIcon className="size-3.5" />
-                Edit
+                {t("Edit")}
               </Button>
             )}
           </>
@@ -540,7 +545,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               </span>
               <button
                 type="button"
-                aria-label="Remove filter"
+                aria-label={t("Remove filter")}
                 onClick={() => setCrossFilters((prev) => removeCrossFilter(prev, id))}
               >
                 <XIcon className="size-3" />
@@ -558,7 +563,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
                 setCrossFilters({});
               }}
             >
-              Clear
+              {t("Clear")}
             </Button>
           )}
         </div>
@@ -571,7 +576,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               <LayoutDashboardIcon className="text-muted-foreground size-5" strokeWidth={1.75} />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium">Nothing here yet</p>
+              <p className="text-sm font-medium">{t("Nothing here yet")}</p>
               <p className="text-muted-foreground max-w-xs text-xs">
                 {editing
                   ? "Add a tile to point at a report."
@@ -615,7 +620,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
         )}
         {editing && draft.tiles.length >= MAX_DASHBOARD_TILES && (
           <p className="text-2xs text-muted-foreground pt-3 text-center">
-            This dashboard has reached the {MAX_DASHBOARD_TILES}-tile limit.
+            {t("This dashboard has reached the {0}-tile limit.", MAX_DASHBOARD_TILES)}
           </p>
         )}
       </div>

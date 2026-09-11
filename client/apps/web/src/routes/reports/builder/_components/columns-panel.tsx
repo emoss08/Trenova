@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -93,6 +94,8 @@ function ComputedOperandField({
   defaultTarget: number;
   onChange: (operand: ReportComputedOperand) => void;
 }) {
+  const t = useT();
+
   const isTarget = computedOperandIsTarget(operand);
   const choices = disallowTarget
     ? measures
@@ -112,7 +115,7 @@ function ComputedOperandField({
         items={choices}
       >
         <SelectTrigger className="h-7">
-          <SelectValue placeholder="Select measure" />
+          <SelectValue placeholder={t("Select measure")} />
         </SelectTrigger>
         <SelectContent>
           {choices.map((choice) => (
@@ -147,6 +150,8 @@ function ComputedColumnBody({
   column: ReportColumnSpec;
   onUpdate: (column: ReportColumnSpec) => void;
 }) {
+  const t = useT();
+
   const computed = column.computed;
   if (!computed) return null;
 
@@ -169,7 +174,7 @@ function ComputedColumnBody({
   return (
     <div className="grid grid-cols-2 gap-2">
       <ComputedOperandField
-        label="First value"
+        label={t("First value")}
         operand={left}
         measures={operandChoices}
         // Two constants are a number, not a calculation, so the side opposite
@@ -179,7 +184,7 @@ function ComputedColumnBody({
         onChange={(operand) => setOperand("left", operand)}
       />
       <div className="flex flex-col gap-1">
-        <Label className="text-muted-foreground text-xs">Operation</Label>
+        <Label className="text-muted-foreground text-xs">{t("Operation")}</Label>
         <Select
           value={computed.op}
           onValueChange={(op) => {
@@ -200,7 +205,7 @@ function ComputedColumnBody({
         </Select>
       </div>
       <ComputedOperandField
-        label="Second value"
+        label={t("Second value")}
         operand={right}
         measures={operandChoices}
         disallowTarget={computedOperandIsTarget(left)}
@@ -208,7 +213,7 @@ function ComputedColumnBody({
         onChange={(operand) => setOperand("right", operand)}
       />
       <div className="flex flex-col gap-1">
-        <Label className="text-muted-foreground text-xs">Format</Label>
+        <Label className="text-muted-foreground text-xs">{t("Format")}</Label>
         <Select
           value={computed.format ?? "none"}
           onValueChange={(format) => {
@@ -229,11 +234,11 @@ function ComputedColumnBody({
         </Select>
       </div>
       <div className="col-span-2 flex flex-col gap-1">
-        <Label className="text-muted-foreground text-xs">Column name</Label>
+        <Label className="text-muted-foreground text-xs">{t("Column name")}</Label>
         <Input
           className="h-7"
           value={column.label ?? ""}
-          placeholder="Revenue per mile"
+          placeholder={t("Revenue per mile")}
           onChange={(event) => onUpdate({ ...column, label: event.target.value || undefined })}
         />
       </div>
@@ -254,6 +259,8 @@ function SortableColumnRow({
   onUpdate: (column: ReportColumnSpec) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const [formatOpen, setFormatOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const sortable = useSortable({ id: column.id });
@@ -284,7 +291,7 @@ function SortableColumnRow({
         <button
           type="button"
           className="text-muted-foreground hover:text-foreground cursor-grab"
-          aria-label="Reorder column"
+          aria-label={t("Reorder column")}
           {...sortable.attributes}
           {...sortable.listeners}
         >
@@ -302,9 +309,9 @@ function SortableColumnRow({
             size="icon"
             className="size-6"
             onClick={() => setFilterOpen((open) => !open)}
-            aria-label="Measure filter"
+            aria-label={t("Measure filter")}
             aria-expanded={filterOpen}
-            title="Only count matching records"
+            title={t("Only count matching records")}
           >
             <FilterIcon className={cn("size-3.5", column.filter && "text-primary")} />
           </Button>
@@ -314,9 +321,9 @@ function SortableColumnRow({
           size="icon"
           className="size-6"
           onClick={() => setFormatOpen((open) => !open)}
-          aria-label="Formatting options"
+          aria-label={t("Formatting options")}
           aria-expanded={formatOpen}
-          title="Formatting"
+          title={t("Formatting")}
         >
           <PaletteIcon
             className={cn("size-3.5", (column.display || column.transform) && "text-primary")}
@@ -327,7 +334,7 @@ function SortableColumnRow({
           size="icon"
           className="size-6"
           onClick={onRemove}
-          aria-label="Remove column"
+          aria-label={t("Remove column")}
         >
           <XIcon className="size-3.5" />
         </Button>
@@ -337,7 +344,7 @@ function SortableColumnRow({
       ) : (
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1">
-            <Label className="text-muted-foreground text-xs">Kind</Label>
+            <Label className="text-muted-foreground text-xs">{t("Kind")}</Label>
             <Select
               value={column.kind}
               onValueChange={(kind) => {
@@ -354,14 +361,14 @@ function SortableColumnRow({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {canBeDimension && <SelectItem value="dimension">Dimension</SelectItem>}
-                {canBeMeasure && <SelectItem value="measure">Measure</SelectItem>}
+                {canBeDimension && <SelectItem value="dimension">{t("Dimension")}</SelectItem>}
+                {canBeMeasure && <SelectItem value="measure">{t("Measure")}</SelectItem>}
               </SelectContent>
             </Select>
           </div>
           {column.kind === "measure" && (
             <div className="flex flex-col gap-1">
-              <Label className="text-muted-foreground text-xs">Aggregation</Label>
+              <Label className="text-muted-foreground text-xs">{t("Aggregation")}</Label>
               <Select
                 value={column.agg ?? ""}
                 onValueChange={(agg) => {
@@ -373,7 +380,7 @@ function SortableColumnRow({
                 }))}
               >
                 <SelectTrigger className="h-7">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t("Select")} />
                 </SelectTrigger>
                 <SelectContent>
                   {aggregations.map((agg) => (
@@ -387,7 +394,7 @@ function SortableColumnRow({
           )}
           {column.kind === "dimension" && field?.type === "epoch" && (
             <div className="flex flex-col gap-1">
-              <Label className="text-muted-foreground text-xs">Bucket</Label>
+              <Label className="text-muted-foreground text-xs">{t("Bucket")}</Label>
               <Select
                 value={column.bucket ?? "none"}
                 onValueChange={(bucket) => {
@@ -403,7 +410,7 @@ function SortableColumnRow({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Exact</SelectItem>
+                  <SelectItem value="none">{t("Exact")}</SelectItem>
                   {REPORT_DATE_BUCKET_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
                       {choice.label}
@@ -419,7 +426,7 @@ function SortableColumnRow({
               column.kind === "dimension" && field?.type !== "epoch" ? "" : "col-span-2",
             )}
           >
-            <Label className="text-muted-foreground text-xs">Column name</Label>
+            <Label className="text-muted-foreground text-xs">{t("Column name")}</Label>
             <Input
               className="h-7"
               value={column.label ?? ""}
@@ -475,6 +482,8 @@ function SortableColumnRow({
 }
 
 export function ColumnsPanel({ index, ir, onChange }: ColumnsPanelProps) {
+  const t = useT();
+
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -509,7 +518,7 @@ export function ColumnsPanel({ index, ir, onChange }: ColumnsPanelProps) {
   if (ir.columns.length === 0) {
     return (
       <p className="text-muted-foreground px-2 py-4 text-center text-sm">
-        Add fields from the catalog to define the report&apos;s columns.
+        {t("Add fields from the catalog to define the report's columns.")}
       </p>
     );
   }
@@ -545,7 +554,7 @@ export function ColumnsPanel({ index, ir, onChange }: ColumnsPanelProps) {
       {measureColumns(ir).length > 0 && (
         <Button variant="outline" size="sm" className="h-7 self-start" onClick={addCalculation}>
           <SigmaIcon className="size-3.5" />
-          Calculation
+          {t("Calculation")}
         </Button>
       )}
     </div>

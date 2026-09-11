@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
@@ -33,6 +34,8 @@ const TONE_SWATCH: Record<ReportDisplayTone, string> = {
 };
 
 export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps) {
+  const t = useT();
+
   const update = (index: number, patch: Partial<ReportDisplayRuleSpec>) =>
     onChange(rules.map((rule, i) => (i === index ? { ...rule, ...patch } : rule)));
 
@@ -45,7 +48,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
     <div className="border-border/60 flex flex-col gap-2 border-t pt-2">
       <div className="flex items-center gap-2">
         <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Highlight when
+          {t("Highlight when")}
         </span>
         <div className="flex-1" />
         <Button
@@ -56,14 +59,13 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
           onClick={() => onChange([...rules, { op: "gt", value: 0, tone: "negative" }])}
         >
           <PlusIcon className="size-3.5" />
-          Rule
+          {t("Rule")}
         </Button>
       </div>
 
       {rules.length === 0 ? (
         <p className="text-2xs text-muted-foreground">
-          Colour a value when it crosses a threshold, so an exception is visible without reading
-          every number. The first matching rule wins.
+          {t("Colour a value when it crosses a threshold, so an exception is visible without reading every number. The first matching rule wins.")}
         </p>
       ) : (
         rules.map((rule, index) => (
@@ -135,7 +137,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
               size="icon"
               className="size-6"
               onClick={() => remove(index)}
-              aria-label="Remove rule"
+              aria-label={t("Remove rule")}
             >
               <XIcon className="size-3.5" />
             </Button>
@@ -144,7 +146,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
       )}
 
       <p className="text-2xs text-muted-foreground">
-        Percent columns compare against the displayed value, so 12 means 12%.
+        {t("Percent columns compare against the displayed value, so 12 means 12%.")}
       </p>
     </div>
   );

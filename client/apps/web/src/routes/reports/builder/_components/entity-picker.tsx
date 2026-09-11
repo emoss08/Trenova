@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalog, ReportCatalogEntity } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
@@ -49,6 +50,8 @@ export function EntityPicker({
   catalog: ReportCatalog;
   onSelect: (entityKey: string) => void;
 }) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
 
   const grouped = useMemo(() => {
@@ -78,16 +81,15 @@ export function EntityPicker({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <h2 className="text-lg font-semibold">What is this report about?</h2>
+          <h2 className="text-lg font-semibold">{t("What is this report about?")}</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Every report has one primary entity — it defines what each row represents. You can bring
-            in related data through joins afterward.
+            {t("Every report has one primary entity — it defines what each row represents. You can bring in related data through joins afterward.")}
           </p>
           <div className="relative mt-4">
             <Input
               autoFocus
               className="pl-8"
-              placeholder="Search entities..."
+              placeholder={t("Search entities...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -98,7 +100,7 @@ export function EntityPicker({
         <div className="mt-6 flex flex-col gap-6">
           {grouped.length === 0 && (
             <p className="text-muted-foreground py-12 text-center text-sm">
-              No entities match &quot;{search}&quot;.
+              {t("No entities match \"{0}\".", search)}
             </p>
           )}
           {grouped.map(([category, entities], groupIndex) => {

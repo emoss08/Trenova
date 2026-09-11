@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import type { ReportChartSpec } from "@/types/report";
 import { useQuery } from "@tanstack/react-query";
@@ -47,6 +48,8 @@ function pinLabel(value: unknown): string {
 }
 
 export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
+  const t = useT();
+
   const mapId = useMapId();
   const { data: googleMaps } = useQuery({
     ...queries.integration.runtimeConfig("GoogleMaps"),
@@ -92,13 +95,13 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
   }, [points]);
 
   if (!chart.latColumnId || !chart.lngColumnId) {
-    return <MapNotice message="Choose a latitude and a longitude column." />;
+    return <MapNotice message={t("Choose a latitude and a longitude column.")} />;
   }
   if (!googleMaps?.config.apiKey) {
-    return <MapNotice message="Maps are unavailable — no Google Maps key is configured." />;
+    return <MapNotice message={t("Maps are unavailable — no Google Maps key is configured.")} />;
   }
   if (points.length === 0) {
-    return <MapNotice message="This report returned no rows with usable coordinates." />;
+    return <MapNotice message={t("This report returned no rows with usable coordinates.")} />;
   }
 
   return (

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ReportIrInput, ReportPreview } from "@/lib/graphql/reports";
@@ -43,6 +44,8 @@ export function PreviewGrid({
   error,
   ready,
 }: PreviewGridProps) {
+  const t = useT();
+
   const [view, setView] = useState("table");
   const [sort, setSort] = useState<GridSort | null>(null);
   const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
@@ -58,9 +61,9 @@ export function PreviewGrid({
           <Table2Icon className="text-muted-foreground size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium">Live preview</p>
+          <p className="text-sm font-medium">{t("Live preview")}</p>
           <p className="text-muted-foreground max-w-xs text-xs">
-            Add fields from the catalog on the left — the preview updates as you build.
+            {t("Add fields from the catalog on the left — the preview updates as you build.")}
           </p>
         </div>
       </CenteredState>
@@ -74,7 +77,7 @@ export function PreviewGrid({
           <CircleAlertIcon className="text-destructive size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium">The preview couldn&apos;t be compiled</p>
+          <p className="text-sm font-medium">{t("The preview couldn't be compiled")}</p>
           <p className="text-muted-foreground max-w-lg text-xs whitespace-pre-wrap">{error}</p>
         </div>
       </CenteredState>
@@ -106,7 +109,7 @@ export function PreviewGrid({
             view === "table" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          Preview
+          {t("Preview")}
         </button>
         {charts.map((chart) => (
           <button
@@ -122,11 +125,11 @@ export function PreviewGrid({
           </button>
         ))}
         <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-px tabular-nums">
-          {rows.length} row{rows.length === 1 ? "" : "s"}
+          {t("{0} row{1}", rows.length, rows.length === 1 ? "" : "s")}
         </span>
         {preview.truncated && (
           <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">
-            first 100 shown
+            {t("first 100 shown")}
           </span>
         )}
         <div className="flex-1" />
@@ -154,7 +157,7 @@ export function PreviewGrid({
             const target = buildDrillTarget(ir, preview.columns, rows[rowIndex], columnIndex);
             if (target) setDrillTarget(target);
           }}
-          emptyMessage="The report compiled but returned no rows for the preview window."
+          emptyMessage={t("The report compiled but returned no rows for the preview window.")}
         />
       )}
 

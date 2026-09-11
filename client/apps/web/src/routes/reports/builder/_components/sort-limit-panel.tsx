@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -33,6 +34,8 @@ export function SortLimitPanel({
   onLimitChange,
   onTotalsChange,
 }: SortLimitPanelProps) {
+  const t = useT();
+
   const sort = ir.sort ?? [];
   // Sorting addresses output columns, so a pivoted measure appears once per
   // bucket — sorting by the measure itself has nothing to point at.
@@ -58,7 +61,7 @@ export function SortLimitPanel({
               items={items}
             >
               <SelectTrigger className="h-7 flex-1">
-                <SelectValue placeholder="Column" />
+                <SelectValue placeholder={t("Column")} />
               </SelectTrigger>
               <SelectContent>
                 {choices.map((choice) => (
@@ -80,8 +83,8 @@ export function SortLimitPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="asc">Ascending</SelectItem>
-                <SelectItem value="desc">Descending</SelectItem>
+                <SelectItem value="asc">{t("Ascending")}</SelectItem>
+                <SelectItem value="desc">{t("Descending")}</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -89,7 +92,7 @@ export function SortLimitPanel({
               size="icon"
               className="size-6"
               onClick={() => onSortChange(sort.filter((_, i) => i !== sortIndex))}
-              aria-label="Remove sort"
+              aria-label={t("Remove sort")}
             >
               <XIcon className="size-3.5" />
             </Button>
@@ -103,19 +106,19 @@ export function SortLimitPanel({
           onClick={() => onSortChange([...sort, { columnId: choices[0].id, direction: "desc" }])}
         >
           <PlusIcon className="size-3.5" />
-          Sort
+          {t("Sort")}
         </Button>
       </div>
       <div className="flex items-center gap-2">
         <Label htmlFor="report-limit" className="text-muted-foreground text-xs">
-          Row Limit
+          {t("Row Limit")}
         </Label>
         <Input
           id="report-limit"
           className="h-7 w-32"
           type="number"
           min={1}
-          placeholder="Server default"
+          placeholder={t("Server default")}
           value={ir.limit ? String(ir.limit) : ""}
           onChange={(event) => {
             const parsed = Number.parseInt(event.target.value, 10);
@@ -126,7 +129,7 @@ export function SortLimitPanel({
       <div className="border-border flex flex-col gap-1 rounded-md border p-2">
         <div className="flex items-center justify-between gap-2">
           <Label htmlFor="report-totals" className="text-muted-foreground text-xs">
-            Total row
+            {t("Total row")}
           </Label>
           <Switch
             id="report-totals"

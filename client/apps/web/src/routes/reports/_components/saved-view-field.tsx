@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -40,6 +41,8 @@ export function SavedViewField({
   selectedViewId,
   onSelect,
 }: SavedViewFieldProps) {
+  const t = useT();
+
   const currentUserId = useAuthStore((state) => state.user?.id);
   const { data: views, isLoading } = useReportViews(definitionId);
   const createView = useCreateReportView();
@@ -133,7 +136,7 @@ export function SavedViewField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor="report-run-view">Saved view</Label>
+      <Label htmlFor="report-run-view">{t("Saved view")}</Label>
       <div className="flex items-center gap-1.5">
         <Select
           value={selectedViewId ?? NO_VIEW}
@@ -142,7 +145,7 @@ export function SavedViewField({
           disabled={isLoading}
         >
           <SelectTrigger className="w-full" id="report-run-view">
-            <SelectValue placeholder="No saved view" />
+            <SelectValue placeholder={t("No saved view")} />
           </SelectTrigger>
           <SelectContent>
             {choices.map((choice) => (
@@ -156,7 +159,7 @@ export function SavedViewField({
           <Button
             variant="outline"
             size="icon"
-            aria-label="Delete view"
+            aria-label={t("Delete view")}
             disabled={deleteView.isPending}
             onClick={handleDelete}
           >
@@ -185,7 +188,7 @@ export function SavedViewField({
             <div className="flex flex-col gap-2 pt-1.5">
               <Input
                 autoFocus
-                placeholder="West region, last quarter"
+                placeholder={t("West region, last quarter")}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 onKeyDown={(event) => {
@@ -197,7 +200,7 @@ export function SavedViewField({
                   className="text-muted-foreground text-xs font-normal"
                   htmlFor="report-view-shared"
                 >
-                  Share with everyone who can read this report
+                  {t("Share with everyone who can read this report")}
                 </Label>
                 <Switch id="report-view-shared" checked={shared} onCheckedChange={setShared} />
               </div>

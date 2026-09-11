@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useCannedReports, useForkCannedReport } from "@/hooks/use-reports";
@@ -43,6 +44,8 @@ function CannedReportCard({
   onCustomize: () => void;
   customizing: boolean;
 }) {
+  const t = useT();
+
   return (
     <ReportCard index={index}>
       <div className="flex items-start gap-3">
@@ -50,7 +53,7 @@ function CannedReportCard({
           <div className="flex items-center gap-1.5">
             <h3 className="truncate text-sm font-medium">{report.name}</h3>
             <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-0.5">
-              v{report.version}
+              {t("v{0}", report.version)}
             </span>
           </div>
           <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
@@ -68,7 +71,7 @@ function CannedReportCard({
             render={<Link to={`/reports/explore?canned=${encodeURIComponent(report.key)}`} />}
           >
             <TableIcon className="size-3" />
-            Explore
+            {t("Explore")}
           </Button>
           {canCustomize && (
             <Button
@@ -85,7 +88,7 @@ function CannedReportCard({
           {canRun && (
             <Button size="sm" variant="outline" className="text-2xs h-6 gap-1 px-2" onClick={onRun}>
               <PlayIcon className="size-3" />
-              Run
+              {t("Run")}
             </Button>
           )}
         </div>

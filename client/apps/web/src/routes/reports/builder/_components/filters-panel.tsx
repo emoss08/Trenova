@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
@@ -85,6 +86,8 @@ function FilterRow({
   onUpdate: (filter: ReportFieldFilter) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const field = resolveField(index, ir.entity, filter.ref);
   const operators = field ? operatorsForFieldType(field.type) : [];
   const parameters = ir.parameters ?? [];
@@ -156,10 +159,10 @@ function FilterRow({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__value__">Fixed value</SelectItem>
+            <SelectItem value="__value__">{t("Fixed value")}</SelectItem>
             {compatibleParams.map((param) => (
               <SelectItem key={param.name} value={param.name}>
-                Param: {param.label || param.name}
+                {t("Param: {0}", param.label || param.name)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -179,7 +182,7 @@ function FilterRow({
         size="icon"
         className="size-6"
         onClick={onRemove}
-        aria-label="Remove filter"
+        aria-label={t("Remove filter")}
       >
         <XIcon className="size-3.5" />
       </Button>
@@ -202,6 +205,8 @@ function GroupEditor({
   onRemove?: () => void;
   depth: number;
 }) {
+  const t = useT();
+
   const filters = group.filters ?? [];
   const groups = group.groups ?? [];
 
@@ -229,8 +234,8 @@ function GroupEditor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="and">Match all</SelectItem>
-            <SelectItem value="or">Match any</SelectItem>
+            <SelectItem value="and">{t("Match all")}</SelectItem>
+            <SelectItem value="or">{t("Match any")}</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex-1" />
@@ -244,7 +249,7 @@ function GroupEditor({
           }}
         >
           <PlusIcon className="size-3.5" />
-          Condition
+          {t("Condition")}
         </Button>
         {depth < MAX_GROUP_DEPTH && (
           <Button
@@ -254,7 +259,7 @@ function GroupEditor({
             onClick={() => onChange({ ...group, groups: [...groups, { op: "and", filters: [] }] })}
           >
             <PlusIcon className="size-3.5" />
-            Group
+            {t("Group")}
           </Button>
         )}
         {onRemove && (
@@ -263,14 +268,14 @@ function GroupEditor({
             size="icon"
             className="size-6"
             onClick={onRemove}
-            aria-label="Remove group"
+            aria-label={t("Remove group")}
           >
             <XIcon className="size-3.5" />
           </Button>
         )}
       </div>
       {filters.length === 0 && groups.length === 0 && (
-        <p className="text-muted-foreground px-1 text-xs">No conditions in this group.</p>
+        <p className="text-muted-foreground px-1 text-xs">{t("No conditions in this group.")}</p>
       )}
       {filters.map((filter, filterIndex) => (
         <FilterRow

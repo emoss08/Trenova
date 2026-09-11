@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -83,6 +84,8 @@ export function ParameterField({
   onChange: (value: unknown) => void;
   compact?: boolean;
 }) {
+  const t = useT();
+
   const label = param.label || param.name;
   const inputId = `report-param-${param.name}`;
   const allowedValues = param.allowedValues ?? [];
@@ -168,7 +171,7 @@ export function ParameterField({
           items={allowedValues.map((allowed) => ({ value: allowed, label: allowed }))}
         >
           <SelectTrigger className={`w-full ${controlHeight ?? ""}`} id={inputId}>
-            <SelectValue placeholder="Select value" />
+            <SelectValue placeholder={t("Select value")} />
           </SelectTrigger>
           <SelectContent>
             {allowedValues.map((allowed) => (
@@ -192,7 +195,7 @@ export function ParameterField({
         <Input
           id={inputId}
           className={controlHeight}
-          placeholder="Comma-separated values"
+          placeholder={t("Comma-separated values")}
           defaultValue={joined}
           onChange={(event) => {
             const values = event.target.value

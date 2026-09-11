@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -49,6 +50,8 @@ export function TileEditorDialog({
   dashboardParams,
   onSave,
 }: TileEditorDialogProps) {
+  const t = useT();
+
   const [draft, setDraft] = useState<ReportDashboardTile>(tile);
 
   useEffect(() => {
@@ -108,15 +111,15 @@ export function TileEditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[88vh] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Tile</DialogTitle>
+          <DialogTitle>{t("Tile")}</DialogTitle>
           <DialogDescription>
-            Tiles read from a saved or gallery report, so the dashboard and the export always agree.
+            {t("Tiles read from a saved or gallery report, so the dashboard and the export always agree.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="-mx-1 flex min-h-0 flex-col gap-4 overflow-y-auto px-1">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="tile-kind">Shows</Label>
+            <Label htmlFor="tile-kind">{t("Shows")}</Label>
             <Select
               value={draft.kind}
               onValueChange={(kind) => {
@@ -139,7 +142,7 @@ export function TileEditorDialog({
 
           {tileNeedsReport(draft.kind) && (
             <div className="flex flex-col gap-1.5">
-              <Label id="tile-source-label">Report</Label>
+              <Label id="tile-source-label">{t("Report")}</Label>
               <ReportSourcePicker
                 labelledBy="tile-source-label"
                 value={{
@@ -153,10 +156,10 @@ export function TileEditorDialog({
 
           {draft.kind === "chart" && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tile-chart">Chart</Label>
+              <Label htmlFor="tile-chart">{t("Chart")}</Label>
               {charts.length === 0 ? (
                 <p className="text-muted-foreground text-xs">
-                  This report has no charts yet — add one in the report builder.
+                  {t("This report has no charts yet — add one in the report builder.")}
                 </p>
               ) : (
                 <Select
@@ -186,10 +189,10 @@ export function TileEditorDialog({
 
           {draft.kind === "kpi" && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tile-column">Measure</Label>
+              <Label htmlFor="tile-column">{t("Measure")}</Label>
               {measures.length === 0 ? (
                 <p className="text-muted-foreground text-xs">
-                  This report returns no measures to show as a KPI.
+                  {t("This report returns no measures to show as a KPI.")}
                 </p>
               ) : (
                 <Select
@@ -200,7 +203,7 @@ export function TileEditorDialog({
                   items={measures.map((output) => ({ value: output.id, label: output.label }))}
                 >
                   <SelectTrigger className="w-full" id="tile-column">
-                    <SelectValue placeholder="Choose a measure" />
+                    <SelectValue placeholder={t("Choose a measure")} />
                   </SelectTrigger>
                   <SelectContent>
                     {measures.map((output) => (
@@ -216,7 +219,7 @@ export function TileEditorDialog({
 
           {draft.kind === "text" && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tile-text">Text</Label>
+              <Label htmlFor="tile-text">{t("Text")}</Label>
               <Textarea
                 id="tile-text"
                 rows={4}
@@ -227,7 +230,7 @@ export function TileEditorDialog({
           )}
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="tile-title">Title</Label>
+            <Label htmlFor="tile-title">{t("Title")}</Label>
             <Input
               id="tile-title"
               value={draft.title ?? ""}
@@ -240,10 +243,9 @@ export function TileEditorDialog({
 
           {reportParams.length > 0 && dashboardParams.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <Label>Dashboard parameters</Label>
+              <Label>{t("Dashboard parameters")}</Label>
               <p className="text-2xs text-muted-foreground">
-                Link this report&apos;s parameters to the dashboard&apos;s. Matching names link
-                themselves.
+                {t("Link this report's parameters to the dashboard's. Matching names link themselves.")}
               </p>
               {reportParams.map((param) => {
                 const bound = draft.paramBindings?.[param.name];
@@ -300,12 +302,12 @@ export function TileEditorDialog({
 
           {draft.kind === "table" && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tile-limit">Row limit</Label>
+              <Label htmlFor="tile-limit">{t("Row limit")}</Label>
               <Input
                 id="tile-limit"
                 type="number"
                 min={1}
-                placeholder="Report default"
+                placeholder={t("Report default")}
                 value={draft.limit ? String(draft.limit) : ""}
                 onChange={(event) => {
                   const parsed = Number.parseInt(event.target.value, 10);
@@ -321,7 +323,7 @@ export function TileEditorDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={incomplete}
@@ -330,7 +332,7 @@ export function TileEditorDialog({
               onOpenChange(false);
             }}
           >
-            Save Tile
+            {t("Save Tile")}
           </Button>
         </DialogFooter>
       </DialogContent>

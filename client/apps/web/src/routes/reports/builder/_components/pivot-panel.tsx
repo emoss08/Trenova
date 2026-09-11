@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -58,6 +59,8 @@ function withValueLabel(
 }
 
 export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
+  const t = useT();
+
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const measures = aggregateColumns(ir);
   const pivot = ir.pivot ?? null;
@@ -66,7 +69,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
   if (measures.length === 0) {
     return (
       <p className="text-muted-foreground px-2 py-4 text-center text-sm">
-        Pivots spread measures across the values of a dimension — add a measure column first.
+        {t("Pivots spread measures across the values of a dimension — add a measure column first.")}
       </p>
     );
   }
@@ -109,7 +112,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             size="icon"
             className="size-6"
             onClick={() => onChange(null)}
-            aria-label="Remove pivot"
+            aria-label={t("Remove pivot")}
           >
             <XIcon className="size-3.5" />
           </Button>
@@ -118,7 +121,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
       {pivot && (
         <>
           <div className="flex flex-col gap-1.5">
-            <Label className="text-muted-foreground text-xs">Pivot Values</Label>
+            <Label className="text-muted-foreground text-xs">{t("Pivot Values")}</Label>
             {pivotField && pivotField.enumValues.length > 0 ? (
               <div className="flex flex-col gap-1">
                 {pivotField.enumValues.map((enumValue) => (
@@ -143,7 +146,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             ) : (
               <Input
                 className="h-7"
-                placeholder="Comma-separated values"
+                placeholder={t("Comma-separated values")}
                 value={pivot.values.join(", ")}
                 onChange={(event) =>
                   onChange(
@@ -161,9 +164,9 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
           </div>
           {pivot.values.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <Label className="text-muted-foreground text-xs">Column names</Label>
+              <Label className="text-muted-foreground text-xs">{t("Column names")}</Label>
               <p className="text-2xs text-muted-foreground">
-                Each pivot value becomes its own column — name them however the report should read.
+                {t("Each pivot value becomes its own column — name them however the report should read.")}
               </p>
               <div className="flex flex-col gap-1">
                 {pivot.values.map((value, valueIndex) => (
@@ -188,7 +191,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-muted-foreground text-xs">Measures to Pivot</Label>
+            <Label className="text-muted-foreground text-xs">{t("Measures to Pivot")}</Label>
             <div className="flex flex-col gap-1">
               {measures.map((column) => (
                 <label key={column.id} className="flex items-center gap-2 text-sm">
@@ -211,7 +214,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="pivot-include-other" className="text-muted-foreground text-xs">
-              Include &quot;Other&quot; bucket
+              {t("Include \"Other\" bucket")}
             </Label>
             <Switch
               id="pivot-include-other"

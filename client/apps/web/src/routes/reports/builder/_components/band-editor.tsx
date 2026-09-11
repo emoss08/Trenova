@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -42,6 +43,8 @@ const PREVIEW_LIMIT = 4;
  * it into a distribution someone can read.
  */
 export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEditorProps) {
+  const t = useT();
+
   const band = column.band;
   const mode: ReportBandMode | "none" = band ? bandMode(band) : "none";
   const edges = band?.edges ?? [];
@@ -83,7 +86,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
   return (
     <div className="col-span-2 flex flex-col gap-2">
       <div className="flex flex-col gap-1">
-        <Label className="text-muted-foreground text-xs">Group into</Label>
+        <Label className="text-muted-foreground text-xs">{t("Group into")}</Label>
         <Select
           value={mode}
           onValueChange={(next) => {
@@ -106,7 +109,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
 
       {mode === "width" && (
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Range size</Label>
+          <Label className="text-muted-foreground text-xs">{t("Range size")}</Label>
           <Input
             className="h-7"
             type="number"
@@ -121,7 +124,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
       {mode === "edges" && (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <Label className="text-muted-foreground text-xs">Range starts at</Label>
+            <Label className="text-muted-foreground text-xs">{t("Range starts at")}</Label>
             <div className="flex-1" />
             <Button
               variant="ghost"
@@ -131,7 +134,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
               onClick={addEdge}
             >
               <PlusIcon className="size-3.5" />
-              Range
+              {t("Range")}
             </Button>
           </div>
           {edges.map((edge, position) => (
@@ -149,7 +152,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
                 className="size-6 shrink-0"
                 disabled={edges.length <= 2}
                 onClick={() => removeEdge(position)}
-                aria-label="Remove range"
+                aria-label={t("Remove range")}
               >
                 <XIcon className="size-3.5" />
               </Button>
@@ -157,7 +160,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
           ))}
           {!ascending && (
             <p className="text-2xs text-destructive">
-              Each range has to start above the one before it.
+              {t("Each range has to start above the one before it.")}
             </p>
           )}
         </div>

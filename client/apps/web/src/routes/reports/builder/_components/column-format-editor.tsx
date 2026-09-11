@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -88,6 +89,8 @@ export function ColumnFormatEditor({
   formatHint,
   onUpdate,
 }: ColumnFormatEditorProps) {
+  const t = useT();
+
   const valueType = columnValueType(column, fieldType);
   const display = column.display ?? {};
   const transform = column.transform;
@@ -129,7 +132,7 @@ export function ColumnFormatEditor({
     <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
         <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Formatting
+          {t("Formatting")}
         </span>
         <span className="bg-background text-2xs text-foreground/80 rounded-sm px-1.5 py-px font-mono tabular-nums">
           {preview || "—"}
@@ -140,7 +143,7 @@ export function ColumnFormatEditor({
             variant="ghost"
             size="icon"
             className="size-6"
-            aria-label="Reset formatting"
+            aria-label={t("Reset formatting")}
             onClick={() => onUpdate({ ...column, display: undefined, transform: undefined })}
           >
             <RotateCcwIcon className="size-3.5" />
@@ -150,7 +153,7 @@ export function ColumnFormatEditor({
 
       <div className="grid grid-cols-2 gap-2">
         <SelectField
-          label="Display as"
+          label={t("Display as")}
           value={display.style ?? ""}
           choices={displayStylesForType(valueType)}
           onChange={(style) => patchDisplay({ style })}
@@ -158,7 +161,7 @@ export function ColumnFormatEditor({
 
         {numeric && (
           <div className="flex flex-col gap-1">
-            <Label className="text-muted-foreground text-xs">Decimal places</Label>
+            <Label className="text-muted-foreground text-xs">{t("Decimal places")}</Label>
             <Input
               className="h-7"
               type="number"
@@ -177,7 +180,7 @@ export function ColumnFormatEditor({
 
         {resolved.style === "currency" && (
           <SelectField
-            label="Currency"
+            label={t("Currency")}
             value={display.currency ?? ""}
             choices={REPORT_CURRENCY_CHOICES}
             onChange={(currency) => patchDisplay({ currency })}
@@ -186,7 +189,7 @@ export function ColumnFormatEditor({
 
         {numeric && (
           <SelectField
-            label="Negatives"
+            label={t("Negatives")}
             value={display.negative ?? ""}
             choices={REPORT_NEGATIVE_CHOICES}
             onChange={(negative) => patchDisplay({ negative })}
@@ -195,7 +198,7 @@ export function ColumnFormatEditor({
 
         {numeric && (
           <SelectField
-            label="Large numbers"
+            label={t("Large numbers")}
             value={display.notation ?? ""}
             choices={REPORT_NOTATION_CHOICES}
             onChange={(notation) => patchDisplay({ notation })}
@@ -204,7 +207,7 @@ export function ColumnFormatEditor({
 
         {resolved.style === "date" && (
           <SelectField
-            label="Date format"
+            label={t("Date format")}
             value={display.dateStyle ?? ""}
             choices={REPORT_DATE_STYLE_CHOICES}
             onChange={(dateStyle) => patchDisplay({ dateStyle })}
@@ -213,7 +216,7 @@ export function ColumnFormatEditor({
 
         {resolved.style === "bool" && (
           <SelectField
-            label="Values shown as"
+            label={t("Values shown as")}
             value={display.boolStyle ?? ""}
             choices={REPORT_BOOL_STYLE_CHOICES}
             onChange={(boolStyle) => patchDisplay({ boolStyle })}
@@ -222,7 +225,7 @@ export function ColumnFormatEditor({
 
         {resolved.style === "duration" && (
           <SelectField
-            label="Source unit"
+            label={t("Source unit")}
             value={display.durationUnit ?? ""}
             choices={REPORT_DURATION_UNIT_CHOICES}
             onChange={(durationUnit) => patchDisplay({ durationUnit })}
@@ -231,7 +234,7 @@ export function ColumnFormatEditor({
 
         {resolved.style === "duration" && (
           <SelectField
-            label="Duration format"
+            label={t("Duration format")}
             value={display.durationStyle ?? ""}
             choices={REPORT_DURATION_STYLE_CHOICES}
             onChange={(durationStyle) => patchDisplay({ durationStyle })}
@@ -239,7 +242,7 @@ export function ColumnFormatEditor({
         )}
 
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Prefix</Label>
+          <Label className="text-muted-foreground text-xs">{t("Prefix")}</Label>
           <Input
             className="h-7"
             maxLength={12}
@@ -250,7 +253,7 @@ export function ColumnFormatEditor({
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Suffix</Label>
+          <Label className="text-muted-foreground text-xs">{t("Suffix")}</Label>
           <Input
             className="h-7"
             maxLength={12}
@@ -261,19 +264,19 @@ export function ColumnFormatEditor({
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Empty values show</Label>
+          <Label className="text-muted-foreground text-xs">{t("Empty values show")}</Label>
           <Input
             className="h-7"
             maxLength={24}
             value={display.nullText ?? ""}
-            placeholder="Blank"
+            placeholder={t("Blank")}
             onChange={(event) => patchDisplay({ nullText: event.target.value || undefined })}
           />
         </div>
 
         {numeric && (
           <div className="border-border bg-background flex items-center justify-between gap-2 self-end rounded-md border px-2 py-1">
-            <Label className="text-muted-foreground text-xs">Thousands separator</Label>
+            <Label className="text-muted-foreground text-xs">{t("Thousands separator")}</Label>
             <Switch
               checked={display.grouping ?? resolved.grouping}
               onCheckedChange={(checked) => patchDisplay({ grouping: checked })}
@@ -292,16 +295,16 @@ export function ColumnFormatEditor({
       {transformChoices.length > 0 && !bandIsSet(column.band) && (
         <div className="border-border/60 grid grid-cols-2 gap-2 border-t pt-2">
           <SelectField
-            label="Transform value"
+            label={t("Transform value")}
             value={transform?.op ?? ""}
             choices={transformChoices}
-            placeholder="No transform"
+            placeholder={t("No transform")}
             onChange={(op) => setTransform(op)}
           />
 
           {transform && transformUsesPrecision(transform.op) && (
             <div className="flex flex-col gap-1">
-              <Label className="text-muted-foreground text-xs">Decimal places</Label>
+              <Label className="text-muted-foreground text-xs">{t("Decimal places")}</Label>
               <Input
                 className="h-7"
                 type="number"
@@ -320,7 +323,7 @@ export function ColumnFormatEditor({
 
           {transform?.op === "scale" && (
             <div className="flex flex-col gap-1">
-              <Label className="text-muted-foreground text-xs">Multiplier</Label>
+              <Label className="text-muted-foreground text-xs">{t("Multiplier")}</Label>
               <Input
                 className="h-7"
                 type="number"
@@ -337,8 +340,7 @@ export function ColumnFormatEditor({
           )}
 
           <p className="text-2xs text-muted-foreground col-span-2">
-            Transforms change the number this report returns — sorting and exported cells use the
-            transformed value. Your records are never modified.
+            {t("Transforms change the number this report returns — sorting and exported cells use the transformed value. Your records are never modified.")}
           </p>
         </div>
       )}

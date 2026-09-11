@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -62,6 +63,8 @@ function CoordinateField({
   optional?: boolean;
   onChange: (id: string | undefined) => void;
 }) {
+  const t = useT();
+
   const items = optional ? [{ id: NONE, label: "None" }, ...choices] : choices;
 
   return (
@@ -76,7 +79,7 @@ function CoordinateField({
         items={items.map((choice) => ({ value: choice.id, label: choice.label }))}
       >
         <SelectTrigger className="h-7">
-          <SelectValue placeholder="Choose column" />
+          <SelectValue placeholder={t("Choose column")} />
         </SelectTrigger>
         <SelectContent>
           {items.map((choice) => (
@@ -109,6 +112,8 @@ function ChartEditor({
   onUpdate: (chart: ReportChartSpec) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const outputs = outputColumnChoices(index, ir);
   const dimensions = outputs.filter((output) => output.isDim);
   const measures = outputs.filter((output) => !output.isDim);
@@ -162,7 +167,7 @@ function ChartEditor({
         <Input
           className="h-7 flex-1"
           value={chart.title ?? ""}
-          placeholder="Chart title"
+          placeholder={t("Chart title")}
           onChange={(event) => onUpdate({ ...chart, title: event.target.value || undefined })}
         />
         <Button
@@ -170,7 +175,7 @@ function ChartEditor({
           size="icon"
           className="size-6"
           onClick={onRemove}
-          aria-label="Remove chart"
+          aria-label={t("Remove chart")}
         >
           <XIcon className="size-3.5" />
         </Button>
@@ -178,7 +183,7 @@ function ChartEditor({
 
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Type</Label>
+          <Label className="text-muted-foreground text-xs">{t("Type")}</Label>
           <Select
             value={chart.type}
             onValueChange={(type) => {
@@ -202,19 +207,19 @@ function ChartEditor({
         {chartNeedsCoordinates(chart.type) && (
           <>
             <CoordinateField
-              label="Latitude"
+              label={t("Latitude")}
               value={chart.latColumnId}
               choices={outputs}
               onChange={(latColumnId) => onUpdate({ ...chart, latColumnId })}
             />
             <CoordinateField
-              label="Longitude"
+              label={t("Longitude")}
               value={chart.lngColumnId}
               choices={outputs}
               onChange={(lngColumnId) => onUpdate({ ...chart, lngColumnId })}
             />
             <CoordinateField
-              label="Pin label"
+              label={t("Pin label")}
               value={chart.labelColumnId}
               choices={outputs}
               optional
@@ -236,7 +241,7 @@ function ChartEditor({
               items={axisChoices.map((choice) => ({ value: choice.id, label: choice.label }))}
             >
               <SelectTrigger className="h-7">
-                <SelectValue placeholder="Choose column" />
+                <SelectValue placeholder={t("Choose column")} />
               </SelectTrigger>
               <SelectContent>
                 {axisChoices.map((choice) => (
@@ -251,7 +256,7 @@ function ChartEditor({
 
         {chart.type === "kpi" && (
           <div className="flex flex-col gap-1">
-            <Label className="text-muted-foreground text-xs">Compare against</Label>
+            <Label className="text-muted-foreground text-xs">{t("Compare against")}</Label>
             <Select
               value={chart.compareId ?? NONE}
               onValueChange={(compareId) => {
@@ -270,7 +275,7 @@ function ChartEditor({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE}>No comparison</SelectItem>
+                <SelectItem value={NONE}>{t("No comparison")}</SelectItem>
                 {measures.map((choice) => (
                   <SelectItem key={choice.id} value={choice.id}>
                     {choice.label}
@@ -288,7 +293,7 @@ function ChartEditor({
         </Label>
         {measures.length === 0 ? (
           <p className="text-2xs text-muted-foreground">
-            Add a measure column before plotting this report.
+            {t("Add a measure column before plotting this report.")}
           </p>
         ) : (
           <div className="flex flex-col gap-1">
@@ -308,7 +313,7 @@ function ChartEditor({
       <div className="grid grid-cols-2 gap-2">
         {chartSupportsStacking(chart.type) && seriesIds.length > 1 && (
           <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
-            <Label className="text-muted-foreground text-xs">Stacked</Label>
+            <Label className="text-muted-foreground text-xs">{t("Stacked")}</Label>
             <Switch
               checked={chart.stacked ?? false}
               onCheckedChange={(stacked) => onUpdate({ ...chart, stacked })}
@@ -317,7 +322,7 @@ function ChartEditor({
         )}
         {(chart.type === "line" || chart.type === "area") && (
           <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
-            <Label className="text-muted-foreground text-xs">Smooth</Label>
+            <Label className="text-muted-foreground text-xs">{t("Smooth")}</Label>
             <Switch
               checked={chart.curved ?? false}
               onCheckedChange={(curved) => onUpdate({ ...chart, curved })}
@@ -326,7 +331,7 @@ function ChartEditor({
         )}
         {(chart.type === "bar" || chart.type === "hbar") && (
           <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
-            <Label className="text-muted-foreground text-xs">Show values</Label>
+            <Label className="text-muted-foreground text-xs">{t("Show values")}</Label>
             <Switch
               checked={chart.showValues ?? false}
               onCheckedChange={(showValues) => onUpdate({ ...chart, showValues })}
@@ -335,7 +340,7 @@ function ChartEditor({
         )}
         {seriesIds.length > 1 && chart.type !== "kpi" && (
           <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
-            <Label className="text-muted-foreground text-xs">Legend</Label>
+            <Label className="text-muted-foreground text-xs">{t("Legend")}</Label>
             <Switch
               checked={!chart.hideLegend}
               onCheckedChange={(shown) => onUpdate({ ...chart, hideLegend: !shown })}
@@ -344,12 +349,12 @@ function ChartEditor({
         )}
         {chart.type !== "kpi" && (
           <div className="flex flex-col gap-1">
-            <Label className="text-muted-foreground text-xs">Top N categories</Label>
+            <Label className="text-muted-foreground text-xs">{t("Top N categories")}</Label>
             <Input
               className="h-7"
               type="number"
               min={0}
-              placeholder="All"
+              placeholder={t("All")}
               value={chart.limit ? String(chart.limit) : ""}
               onChange={(event) => {
                 const parsed = Number.parseInt(event.target.value, 10);
@@ -365,12 +370,12 @@ function ChartEditor({
 
       <div className="border-border/60 grid grid-cols-2 gap-2 border-t pt-2">
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Target value</Label>
+          <Label className="text-muted-foreground text-xs">{t("Target value")}</Label>
           <Input
             className="h-7"
             type="number"
             step="any"
-            placeholder="None"
+            placeholder={t("None")}
             disabled={Boolean(chart.goal?.columnId)}
             value={chart.goal?.value ?? ""}
             onChange={(event) => {
@@ -385,7 +390,7 @@ function ChartEditor({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Target column</Label>
+          <Label className="text-muted-foreground text-xs">{t("Target column")}</Label>
           <Select
             value={chart.goal?.columnId ?? NONE}
             onValueChange={(columnId) => {
@@ -409,7 +414,7 @@ function ChartEditor({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>None</SelectItem>
+              <SelectItem value={NONE}>{t("None")}</SelectItem>
               {measures.map((choice) => (
                 <SelectItem key={choice.id} value={choice.id}>
                   {choice.label}
@@ -420,10 +425,10 @@ function ChartEditor({
         </div>
         {(chart.goal?.value !== undefined || chart.goal?.columnId) && (
           <div className="col-span-2 flex flex-col gap-1">
-            <Label className="text-muted-foreground text-xs">Target label</Label>
+            <Label className="text-muted-foreground text-xs">{t("Target label")}</Label>
             <Input
               className="h-7"
-              placeholder="Target"
+              placeholder={t("Target")}
               value={chart.goal?.label ?? ""}
               onChange={(event) =>
                 onUpdate({
@@ -440,6 +445,8 @@ function ChartEditor({
 }
 
 export function ChartsPanel({ index, ir, onChange }: ChartsPanelProps) {
+  const t = useT();
+
   const charts = ir.charts ?? [];
   const outputs = outputColumnChoices(index, ir);
   const measures = outputs.filter((output) => !output.isDim);
@@ -453,7 +460,7 @@ export function ChartsPanel({ index, ir, onChange }: ChartsPanelProps) {
   if (measures.length === 0 && !canMap) {
     return (
       <p className="text-muted-foreground px-2 py-4 text-center text-sm">
-        Charts plot measures — add one to the report first.
+        {t("Charts plot measures — add one to the report first.")}
       </p>
     );
   }
@@ -502,7 +509,7 @@ export function ChartsPanel({ index, ir, onChange }: ChartsPanelProps) {
         onClick={addChart}
       >
         <PlusIcon className="size-3.5" />
-        Chart
+        {t("Chart")}
       </Button>
     </div>
   );
