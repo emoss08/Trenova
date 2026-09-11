@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -35,6 +36,8 @@ import { useCallback } from "react";
 import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 
 export default function BillingControlForm() {
+  const t = useT();
+
   const { data } = useSuspenseQuery({
     ...queries.billingControl.get(),
   });
@@ -75,7 +78,7 @@ export default function BillingControlForm() {
           <AutomationCard />
           <ExceptionPolicyCard />
           <RatingPolicyCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -83,15 +86,16 @@ export default function BillingControlForm() {
 }
 
 function InvoiceDefaultsCard() {
+  const t = useT();
+
   const { control } = useFormContext<BillingControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invoice Defaults</CardTitle>
+        <CardTitle>{t("Invoice Defaults")}</CardTitle>
         <CardDescription>
-          Set the organization-level invoice defaults used when customer-specific billing profile
-          settings are not present.
+          {t("Set the organization-level invoice defaults used when customer-specific billing profile settings are not present.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -100,8 +104,8 @@ function InvoiceDefaultsCard() {
             <SwitchField
               control={control}
               name="showDueDateOnInvoice"
-              label="Show Due Date On Invoice"
-              description="Displays the payment due date on customer-facing invoices."
+              label={t("Show Due Date On Invoice")}
+              description={t("Displays the payment due date on customer-facing invoices.")}
               position="left"
             />
           </FormControl>
@@ -109,8 +113,8 @@ function InvoiceDefaultsCard() {
             <SwitchField
               control={control}
               name="showBalanceDueOnInvoice"
-              label="Show Balance Due On Invoice"
-              description="Displays the outstanding balance due on customer-facing invoices."
+              label={t("Show Balance Due On Invoice")}
+              description={t("Displays the outstanding balance due on customer-facing invoices.")}
               position="left"
             />
           </FormControl>
@@ -118,8 +122,8 @@ function InvoiceDefaultsCard() {
             <SelectField
               control={control}
               name="defaultPaymentTerm"
-              label="Default Payment Term"
-              description="Fallback payment term used when a customer billing profile does not define one."
+              label={t("Default Payment Term")}
+              description={t("Fallback payment term used when a customer billing profile does not define one.")}
               options={paymentTermChoices}
               rules={{ required: true }}
             />
@@ -128,18 +132,18 @@ function InvoiceDefaultsCard() {
             <TextareaField
               control={control}
               name="defaultInvoiceTerms"
-              label="Default Invoice Terms"
-              placeholder="Payment, billing, and remittance terms"
-              description="Default invoice terms text applied when customer-specific terms are not present."
+              label={t("Default Invoice Terms")}
+              placeholder={t("Payment, billing, and remittance terms")}
+              description={t("Default invoice terms text applied when customer-specific terms are not present.")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="defaultInvoiceFooter"
-              label="Default Invoice Footer"
-              placeholder="Footer content displayed on invoices"
-              description="Default footer text shown on invoices when no customer-specific footer is configured."
+              label={t("Default Invoice Footer")}
+              placeholder={t("Footer content displayed on invoices")}
+              description={t("Default footer text shown on invoices when no customer-specific footer is configured.")}
             />
           </FormControl>
         </FormGroup>
@@ -149,6 +153,8 @@ function InvoiceDefaultsCard() {
 }
 
 function AutomationCard() {
+  const t = useT();
+
   const { control } = useFormContext<BillingControl>();
   const transferMode = useWatch({ control, name: "billingQueueTransferMode" });
   const draftCreationMode = useWatch({ control, name: "invoiceDraftCreationMode" });
@@ -156,10 +162,9 @@ function AutomationCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Automation Policy</CardTitle>
+        <CardTitle>{t("Automation Policy")}</CardTitle>
         <CardDescription>
-          Control how shipments move into billing, when invoice drafts are created, and whether
-          posted invoices remain manual-review only or may auto-post when no blocking issues exist.
+          {t("Control how shipments move into billing, when invoice drafts are created, and whether posted invoices remain manual-review only or may auto-post when no blocking issues exist.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -168,8 +173,8 @@ function AutomationCard() {
             <SelectField
               control={control}
               name="readyToBillAssignmentMode"
-              label="Ready-To-Bill Assignment Mode"
-              description="Controls whether eligible shipments are marked ready to bill automatically or only by user action."
+              label={t("Ready-To-Bill Assignment Mode")}
+              description={t("Controls whether eligible shipments are marked ready to bill automatically or only by user action.")}
               options={readyToBillAssignmentModeChoices}
               rules={{ required: true }}
             />
@@ -178,8 +183,8 @@ function AutomationCard() {
             <SelectField
               control={control}
               name="billingQueueTransferMode"
-              label="Billing Queue Transfer Mode"
-              description="Controls whether ready-to-bill shipments enter the billing queue automatically or only by user action."
+              label={t("Billing Queue Transfer Mode")}
+              description={t("Controls whether ready-to-bill shipments enter the billing queue automatically or only by user action.")}
               options={billingQueueTransferModeChoices}
               rules={{ required: true }}
             />
@@ -190,8 +195,8 @@ function AutomationCard() {
                 <SelectField
                   control={control}
                   name="billingQueueTransferSchedule"
-                  label="Billing Queue Transfer Schedule"
-                  description="Defines how frequently the automatic billing queue transfer job runs."
+                  label={t("Billing Queue Transfer Schedule")}
+                  description={t("Defines how frequently the automatic billing queue transfer job runs.")}
                   options={transferScheduleChoices}
                   rules={{ required: true }}
                 />
@@ -200,8 +205,8 @@ function AutomationCard() {
                 <NumberField
                   control={control}
                   name="billingQueueTransferBatchSize"
-                  label="Billing Queue Transfer Batch Size"
-                  description="Maximum number of ready items processed in a single automatic transfer batch."
+                  label={t("Billing Queue Transfer Batch Size")}
+                  description={t("Maximum number of ready items processed in a single automatic transfer batch.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -211,8 +216,8 @@ function AutomationCard() {
             <SelectField
               control={control}
               name="invoiceDraftCreationMode"
-              label="Invoice Draft Creation Mode"
-              description="Controls whether invoice drafts are created only by users or automatically when items are transferred."
+              label={t("Invoice Draft Creation Mode")}
+              description={t("Controls whether invoice drafts are created only by users or automatically when items are transferred.")}
               options={invoiceDraftCreationModeChoices}
               rules={{ required: true }}
             />
@@ -221,8 +226,8 @@ function AutomationCard() {
             <SelectField
               control={control}
               name="invoicePostingMode"
-              label="Invoice Posting Mode"
-              description="Controls whether invoice posting always requires manual review or may auto-post when no blocking issues remain."
+              label={t("Invoice Posting Mode")}
+              description={t("Controls whether invoice posting always requires manual review or may auto-post when no blocking issues remain.")}
               options={invoicePostingModeChoices}
               rules={{ required: true }}
             />
@@ -233,8 +238,8 @@ function AutomationCard() {
                 <NumberField
                   control={control}
                   name="autoInvoiceBatchSize"
-                  label="Auto Invoice Batch Size"
-                  description="Maximum number of invoice drafts created in a single automatic batch."
+                  label={t("Auto Invoice Batch Size")}
+                  description={t("Maximum number of invoice drafts created in a single automatic batch.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -242,8 +247,8 @@ function AutomationCard() {
                 <SwitchField
                   control={control}
                   name="notifyOnAutoInvoiceCreation"
-                  label="Notify On Auto Invoice Creation"
-                  description="Sends notifications when invoice drafts are created automatically."
+                  label={t("Notify On Auto Invoice Creation")}
+                  description={t("Sends notifications when invoice drafts are created automatically.")}
                   position="left"
                 />
               </FormControl>
@@ -256,6 +261,8 @@ function AutomationCard() {
 }
 
 function ExceptionPolicyCard() {
+  const t = useT();
+
   const { control } = useFormContext<BillingControl>();
   const shipmentRequirementEnforcement = useWatch({
     control,
@@ -269,10 +276,9 @@ function ExceptionPolicyCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Exception Policy</CardTitle>
+        <CardTitle>{t("Exception Policy")}</CardTitle>
         <CardDescription>
-          Define how shipment billing requirement failures and rate-variance validations affect
-          billing progression, review routing, and blocking behavior.
+          {t("Define how shipment billing requirement failures and rate-variance validations affect billing progression, review routing, and blocking behavior.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -281,8 +287,8 @@ function ExceptionPolicyCard() {
             <SelectField
               control={control}
               name="shipmentBillingRequirementEnforcement"
-              label="Shipment Billing Requirement Enforcement"
-              description="Defines how missing shipment billing requirements affect readiness and billing progression."
+              label={t("Shipment Billing Requirement Enforcement")}
+              description={t("Defines how missing shipment billing requirements affect readiness and billing progression.")}
               options={enforcementLevelChoices}
               rules={{ required: true }}
             />
@@ -291,8 +297,8 @@ function ExceptionPolicyCard() {
             <SelectField
               control={control}
               name="rateValidationEnforcement"
-              label="Rate Validation Enforcement"
-              description="Defines how rate-variance validation results affect invoice workflow progression."
+              label={t("Rate Validation Enforcement")}
+              description={t("Defines how rate-variance validation results affect invoice workflow progression.")}
               options={enforcementLevelChoices}
               rules={{ required: true }}
             />
@@ -303,8 +309,8 @@ function ExceptionPolicyCard() {
               <SelectField
                 control={control}
                 name="billingExceptionDisposition"
-                label="Billing Exception Disposition"
-                description="Determines whether review-required billing exceptions stay with billing or are returned to operations."
+                label={t("Billing Exception Disposition")}
+                description={t("Determines whether review-required billing exceptions stay with billing or are returned to operations.")}
                 options={billingExceptionDispositionChoices}
                 rules={{ required: true }}
               />
@@ -314,8 +320,8 @@ function ExceptionPolicyCard() {
             <SwitchField
               control={control}
               name="notifyOnBillingExceptions"
-              label="Notify On Billing Exceptions"
-              description="Sends notifications when billing exceptions are recorded."
+              label={t("Notify On Billing Exceptions")}
+              description={t("Sends notifications when billing exceptions are recorded.")}
               position="left"
             />
           </FormControl>
@@ -323,8 +329,8 @@ function ExceptionPolicyCard() {
             <NumberField
               control={control}
               name="rateVarianceTolerancePercent"
-              label="Rate Variance Tolerance Percent"
-              description="Tolerance percentage used when evaluating whether a rate variance can bypass review."
+              label={t("Rate Variance Tolerance Percent")}
+              description={t("Tolerance percentage used when evaluating whether a rate variance can bypass review.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -332,8 +338,8 @@ function ExceptionPolicyCard() {
             <SelectField
               control={control}
               name="rateVarianceAutoResolutionMode"
-              label="Rate Variance Auto Resolution Mode"
-              description="Controls whether review is skipped for rate variances that are within the configured tolerance."
+              label={t("Rate Variance Auto Resolution Mode")}
+              description={t("Controls whether review is skipped for rate variances that are within the configured tolerance.")}
               options={rateVarianceAutoResolutionModeChoices}
               rules={{ required: true }}
             />
@@ -345,6 +351,8 @@ function ExceptionPolicyCard() {
 }
 
 function RatingPolicyCard() {
+  const t = useT();
+
   const { control } = useFormContext<BillingControl>();
 
   const unratedShipmentDisposition = useWatch({
@@ -355,10 +363,9 @@ function RatingPolicyCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Rating Policy</CardTitle>
+        <CardTitle>{t("Rating Policy")}</CardTitle>
         <CardDescription>
-          Decide what happens when no rate agreement covers a shipment&apos;s lane, and how manual
-          rate overrides are governed.
+          {t("Decide what happens when no rate agreement covers a shipment's lane, and how manual rate overrides are governed.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -367,8 +374,8 @@ function RatingPolicyCard() {
             <SelectField
               control={control}
               name="unratedShipmentDisposition"
-              label="Unrated Shipment Disposition"
-              description="What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed."
+              label={t("Unrated Shipment Disposition")}
+              description={t("What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed.")}
               options={unratedShipmentDispositionChoices}
               rules={{ required: true }}
             />
@@ -378,10 +385,10 @@ function RatingPolicyCard() {
               <FormulaTemplateAutocompleteField
                 control={control}
                 name="fallbackFormulaTemplateId"
-                label="Fallback Formula Template"
-                placeholder="Select formula template"
+                label={t("Fallback Formula Template")}
+                placeholder={t("Select formula template")}
                 clearable
-                description="Used when an unrated shipment carries no formula template of its own. Leave empty to require one on the shipment."
+                description={t("Used when an unrated shipment carries no formula template of its own. Leave empty to require one on the shipment.")}
               />
             </FormControl>
           )}
@@ -389,8 +396,8 @@ function RatingPolicyCard() {
             <SwitchField
               control={control}
               name="requireRateOverrideReason"
-              label="Require Rate Override Reason"
-              description="A manual rate override must say why, so the audit trail explains the departure from the contract."
+              label={t("Require Rate Override Reason")}
+              description={t("A manual rate override must say why, so the audit trail explains the departure from the contract.")}
               position="left"
             />
           </FormControl>
@@ -398,8 +405,8 @@ function RatingPolicyCard() {
             <SwitchField
               control={control}
               name="enforceMarginFloor"
-              label="Enforce Margin Floor"
-              description="Blocks rates that fall below an agreement's margin floor instead of only flagging them."
+              label={t("Enforce Margin Floor")}
+              description={t("Blocks rates that fall below an agreement's margin floor instead of only flagging them.")}
               position="left"
             />
           </FormControl>
