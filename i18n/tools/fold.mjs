@@ -54,6 +54,24 @@ export function foldableRuns(children) {
   return folded;
 }
 
+// containsJSX reports whether an expression produces markup. Such an expression cannot
+// become a placeholder: the runtime substitutes strings, so a React element would render as
+// serialized junk, and the words nested inside it would vanish from the catalog. Runs like
+// `Run Console {isRunning && <Badge>Live</Badge>}` are therefore left unfolded and handled
+// as ordinary text plus untouched markup.
+function containsJSX(node) {
+  if (node === null || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(containsJSX);
+  if (typeof node.type !== "string") return false;
+  if (node.type === "JSXElement" || node.type === "JSXFragment") return true;
+
+  for (const key of Object.keys(node)) {
+    if (key === "loc" || key === "leadingComments" || key === "trailingComments") continue;
+    if (containsJSX(node[key])) return true;
+  }
+  return false;
+}
+
 function buildMessage(run) {
   let index = 0;
   let message = "";
@@ -72,9 +90,14 @@ function buildMessage(run) {
       message += expr.value;
       continue;
     }
+    if (containsJSX(expr)) return null;
+
     message += `{${index}}`;
     index += 1;
-    expressions.push(expr);
+    // The container is kept, not the expression: Babel excludes wrapping parentheses from a
+    // node's range, so slicing `a && (b)` by the expression yields the unbalanced `a && (b`.
+    // The container always spans a complete `{ ... }`.
+    expressions.push(child);
   }
 
   const normalized = message.trim().replace(/\s+/g, " ");

@@ -89,15 +89,6 @@
       "routes/worker"
     ]
   },
-  "({0} of {1} shipments change {2} ).": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "({0} values)": {
     "sites": 1,
     "scope": [
@@ -3802,7 +3793,7 @@
       "service/driverportalservice"
     ]
   },
-  "A swap needs two acceptances: the colleague's and the office's. Only a swap the colleague has accepted is yours to decide. {0}": {
+  "A swap needs two acceptances: the colleague's and the office's. Only a swap the colleague has accepted is yours to decide.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -5193,7 +5184,7 @@
     ]
   },
   "Accessorial": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -5301,15 +5292,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Accessorial {0}{1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/rate-agreement"
     ]
   },
   "Accessorials": {
@@ -5767,7 +5749,7 @@
     ]
   },
   "Accruals start from the effective date on the next nightly run.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -5928,6 +5910,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Acknowledge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Acknowledged": {
@@ -8575,7 +8566,7 @@
     ]
   },
   "Adjust any band's range or rate, then save the program.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -19766,7 +19757,7 @@
       "domain/driverpay"
     ]
   },
-  "Calculation receipt {0}": {
+  "Calculation receipt": {
     "sites": 1,
     "scope": [
       "ts"
@@ -21397,7 +21388,7 @@
     ]
   },
   "Carrier override updated successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -22723,7 +22714,7 @@
     ]
   },
   "Check at least one invoice and enter an applied amount.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -22768,7 +22759,7 @@
     ]
   },
   "Check the date (one price per week) and value": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -24725,7 +24716,7 @@
     ]
   },
   "Clock": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -24812,15 +24803,6 @@
     ],
     "areas": [
       "domain/detention"
-    ]
-  },
-  "Clock {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/time-attendance"
     ]
   },
   "Clocked in": {
@@ -25784,7 +25766,7 @@
       "routes/accounting-dashboard"
     ]
   },
-  "Collections worklist {0}": {
+  "Collections worklist": {
     "sites": 1,
     "scope": [
       "ts"
@@ -28354,7 +28336,7 @@
     ]
   },
   "Contact your system administrator for assistance.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -29514,7 +29496,7 @@
     ]
   },
   "Copy webhook URL": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -30058,7 +30040,7 @@
     ]
   },
   "Could not export the selected templates. Please try again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -30067,7 +30049,7 @@
     ]
   },
   "Could not export the template. Please try again.": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -30085,7 +30067,7 @@
     ]
   },
   "Could not fork the template. Please try again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -30265,7 +30247,7 @@
     ]
   },
   "Could not restore to the selected version": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -31259,13 +31241,14 @@
     ]
   },
   "Create Shipment": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/config"
+      "apps/web/config",
+      "routes/shipment"
     ]
   },
   "Create Shipment Type": {
@@ -35221,7 +35204,7 @@
     ]
   },
   "Deactivate": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -37154,7 +37137,7 @@
     ]
   },
   "Delete": {
-    "sites": 24,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -40655,7 +40638,7 @@
     ]
   },
   "Document": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -40664,6 +40647,7 @@
       "routes/admin",
       "routes/customer-ledger",
       "routes/customer-statement",
+      "routes/worker",
       "routes/worker-credential-type"
     ]
   },
@@ -40818,7 +40802,7 @@
     ]
   },
   "Document Type updated successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -41312,15 +41296,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Document {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Documentation": {
@@ -48217,7 +48192,7 @@
     ]
   },
   "Every balance is derived on read, so the change applies to existing cases as well as new ones.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -48235,7 +48210,7 @@
     ]
   },
   "Every band is editable — adjust any range or value before saving.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -48442,7 +48417,7 @@
     ]
   },
   "Every line was rebuilt from the miles, fuel and rates on file now.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -48451,7 +48426,7 @@
     ]
   },
   "Every line, each fuel type's subtotal and the grand total, as the form reads.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -48541,7 +48516,7 @@
     ]
   },
   "Every remaining leg has been canceled.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -48559,7 +48534,7 @@
     ]
   },
   "Every required course is already open or current.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -48821,7 +48796,7 @@
       "routes/policies"
     ]
   },
-  "Everyone is in good standing. {0}": {
+  "Everyone is in good standing.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -49619,7 +49594,7 @@
       "service/ediservice"
     ]
   },
-  "Expects {0}": {
+  "Expects": {
     "sites": 1,
     "scope": [
       "ts"
@@ -49628,7 +49603,7 @@
       "routes/formula-template"
     ]
   },
-  "Expects {0}{1}{2}": {
+  "Expects {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -53685,12 +53660,14 @@
     ]
   },
   "Filter": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/edi",
+      "routes/shipment",
       "routes/worker"
     ]
   },
@@ -53791,16 +53768,6 @@
     ],
     "areas": [
       "service/reporting"
-    ]
-  },
-  "Filter {0}": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/shipment"
     ]
   },
   "Filters": {
@@ -56787,7 +56754,7 @@
       "routes/cost-control"
     ]
   },
-  "GL Postings {0}": {
+  "GL Postings": {
     "sites": 1,
     "scope": [
       "ts"
@@ -59189,11 +59156,12 @@
     ]
   },
   "History": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/carrier-settlement",
       "routes/driver-settlement",
       "routes/loads.tsx",
@@ -59210,15 +59178,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "History {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Hit count cannot be negative": {
@@ -59281,7 +59240,7 @@
     ]
   },
   "Hold Reason updated successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -64499,7 +64458,7 @@
     ]
   },
   "Invoice balances and the GL were updated.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65075,6 +65034,15 @@
       "routes/worker"
     ]
   },
+  "Issue action": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Issue bearer tokens for directory synchronization.": {
     "sites": 1,
     "scope": [
@@ -65313,7 +65281,7 @@
     ]
   },
   "It comes off the ladder but stays in the record with your reason.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65322,7 +65290,7 @@
     ]
   },
   "It counts as satisfied; the reason stays on the record.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65331,7 +65299,7 @@
     ]
   },
   "It is a draft again and recomputes with the data on file. The reason is kept with the return.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65340,7 +65308,7 @@
     ]
   },
   "It is a fresh draft for the same quarter. The filed return is left exactly as it was.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65349,7 +65317,7 @@
     ]
   },
   "It is immutable now. A correction opens a new draft through an amendment, leaving this one as filed.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65358,7 +65326,7 @@
     ]
   },
   "It is kept on the list so approvals made under it can still be explained.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65385,7 +65353,7 @@
     ]
   },
   "It starts as a draft. Submit it for review when it is ready.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65394,7 +65362,7 @@
     ]
   },
   "It stays in the worker's history and no longer counts toward compliance.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65403,7 +65371,7 @@
     ]
   },
   "It stays on file for the purchases already made with it.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -75424,7 +75392,7 @@
     ]
   },
   "Monitoring the workflow run now.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -79131,7 +79099,7 @@
     ]
   },
   "No exportable columns are available.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -80963,7 +80931,7 @@
     ]
   },
   "No uncovered moves in the current window.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -81895,7 +81863,7 @@
     ]
   },
   "Nothing else changed: the miles, fuel and rates it was built from are kept.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -82365,7 +82333,7 @@
     ]
   },
   "Nothing was changed. Write a rate agreement for it and try again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -84053,7 +84021,7 @@
     ]
   },
   "One or more invoices would be over-applied.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -88376,7 +88344,7 @@
     ]
   },
   "Outstanding offers have been withdrawn.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -94019,7 +93987,7 @@
     ]
   },
   "Please try again or contact your system administrator.": {
-    "sites": 6,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -94040,7 +94008,7 @@
     ]
   },
   "Please wait a moment and try again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -94735,7 +94703,7 @@
     ]
   },
   "Post it where employees can see it, from February 1 to April 30.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -95748,7 +95716,7 @@
       "routes/holiday"
     ]
   },
-  "Previous-employer investigation was due {0}{1}": {
+  "Previous-employer investigation was due": {
     "sites": 1,
     "scope": [
       "ts"
@@ -96703,7 +96671,7 @@
     ]
   },
   "Programs assigned to customer billing profiles must be unassigned first": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -97625,7 +97593,7 @@
     ]
   },
   "Purchases on this card will match to what it is assigned to.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -98526,7 +98494,7 @@
     ]
   },
   "Rank": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -98582,15 +98550,6 @@
     ]
   },
   "Rank the carriers a lane should waterfall through, with the rate and offer window for each.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/routing-guide"
-    ]
-  },
-  "Rank {0}{1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -99694,6 +99653,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Re-extract": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Re-extraction is only available for rate confirmation import documents": {
@@ -101012,7 +100980,7 @@
       "apps/web/components"
     ]
   },
-  "Recent failures {0}": {
+  "Recent failures": {
     "sites": 1,
     "scope": [
       "ts"
@@ -101249,7 +101217,7 @@
     ]
   },
   "Recompute the quarter's return to take it out of the figures.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -101258,7 +101226,7 @@
     ]
   },
   "Recompute the quarter's return to take these miles out of the figures.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -101878,7 +101846,7 @@
     ]
   },
   "Record the answer here once the Clearinghouse responds.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -101941,7 +101909,7 @@
     ]
   },
   "Record the result here once the laboratory or MRO reports back.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -105894,7 +105862,7 @@
     ]
   },
   "Requirements are re-checked against this permit.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -106717,7 +106685,7 @@
     ]
   },
   "Restore": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -106981,7 +106949,7 @@
     ]
   },
   "Retry": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -107001,6 +106969,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Retry Extraction": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Retry Upload": {
@@ -107296,7 +107273,7 @@
     ]
   },
   "Returns for the quarter will flag the missing rate when recomputed.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -107921,7 +107898,7 @@
     ]
   },
   "Review and test it before saving.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -108511,7 +108488,7 @@
     ]
   },
   "Role created successfully": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -108548,7 +108525,7 @@
     ]
   },
   "Role updated successfully": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -108575,7 +108552,7 @@
     ]
   },
   "Rollback": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -109620,7 +109597,7 @@
       "routes/formula-template"
     ]
   },
-  "Run Console {0}": {
+  "Run Console": {
     "sites": 1,
     "scope": [
       "ts"
@@ -109676,7 +109653,7 @@
       "routes/rate-agreement"
     ]
   },
-  "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template. {0}": {
+  "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -110758,7 +110735,7 @@
     ]
   },
   "Save": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -111024,6 +111001,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Save rates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.": {
@@ -116267,7 +116253,7 @@
     ]
   },
   "Service failure reason code updated successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -117417,7 +117403,7 @@
       "routes/recurring-shipment"
     ]
   },
-  "Shifts {0}": {
+  "Shifts": {
     "sites": 1,
     "scope": [
       "ts"
@@ -118767,6 +118753,15 @@
       "routes/worker"
     ]
   },
+  "Shop carriers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Shopping": {
     "sites": 1,
     "scope": [
@@ -120055,11 +120050,12 @@
     ]
   },
   "Sort": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/reports",
       "routes/service-failure-reason-code"
     ]
@@ -120156,15 +120152,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Sort {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Sort, Limit & Totals": {
@@ -122989,7 +122976,7 @@
     ]
   },
   "Submit it when you are ready for the worker to sign off.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -123740,26 +123727,18 @@
     ]
   },
   "Swaps": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/dash/_components",
-      "routes/worker"
-    ]
-  },
-  "Swaps waiting on you": {
     "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/scheduling"
+      "apps/dash/_components",
+      "routes/scheduling",
+      "routes/worker"
     ]
   },
-  "Swaps {0}": {
-    "sites": 1,
+  "Swaps waiting on you": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -123786,7 +123765,7 @@
     ]
   },
   "Switched to monitoring the existing workflow run.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -124304,7 +124283,7 @@
     ]
   },
   "Target": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -124575,15 +124554,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Target {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
     ]
   },
   "Target {0}% · 7-day {1}%": {
@@ -126644,7 +126614,7 @@
       "routes/edi"
     ]
   },
-  "The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender. {0}": {
+  "The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -126771,7 +126741,7 @@
     ]
   },
   "The applied total exceeds the payment amount.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -126816,7 +126786,7 @@
     ]
   },
   "The assignment has been removed from this move.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -126942,7 +126912,7 @@
     ]
   },
   "The billing queue item has been assigned.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127277,7 +127247,7 @@
     ]
   },
   "The case number is not reused — two case 4s cannot be told apart.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127286,7 +127256,7 @@
     ]
   },
   "The case number is not reused, so two cases can never share one.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127304,7 +127274,7 @@
     ]
   },
   "The cash receipt and invoice applications were backed out.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127367,7 +127337,7 @@
     ]
   },
   "The certification has been cleared so the figures can be corrected.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127376,7 +127346,7 @@
     ]
   },
   "The change returned it to Draft. Shipments cannot be rated with it until it is approved again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127403,7 +127373,7 @@
     ]
   },
   "The charge was forgiven and the reason recorded as evidence.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127772,7 +127742,7 @@
     ]
   },
   "The contribution stops with it; the record of the cover stays.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127790,7 +127760,7 @@
     ]
   },
   "The correction is kept alongside the original record.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -127952,7 +127922,7 @@
     ]
   },
   "The customer notice went out and was recorded as evidence.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -128186,7 +128156,7 @@
     ]
   },
   "The days recorded against it stay drawn down; they were taken.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -128330,7 +128300,7 @@
     ]
   },
   "The detention charge will post to the shipment.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -128420,7 +128390,7 @@
     ]
   },
   "The draft is computed from the miles, fuel and rates on file now. Recompute it whenever late data lands.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -129241,7 +129211,7 @@
     ]
   },
   "The formula, variables, lines, and charge policy are in the editor.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -129295,7 +129265,7 @@
     ]
   },
   "The full claim file — receipt, evidence, and notices — is on your clipboard.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -129403,7 +129373,7 @@
     ]
   },
   "The hours go back to the entitlement.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -129781,7 +129751,7 @@
     ]
   },
   "The load is back in the unassigned lane.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130006,7 +129976,7 @@
     ]
   },
   "The move is uncovered again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130141,7 +130111,7 @@
     ]
   },
   "The names are now the record. Correcting one means voiding the round.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130321,7 +130291,7 @@
     ]
   },
   "The order has been settled and closed.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130384,7 +130354,7 @@
     ]
   },
   "The original computation is preserved for the claim file.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130565,7 +130535,7 @@
     ]
   },
   "The period can be drawn again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130918,7 +130888,7 @@
     ]
   },
   "The rank-1 carrier has been offered the move.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131098,7 +131068,7 @@
     ]
   },
   "The record stays on file with the reason it was voided.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131107,7 +131077,7 @@
     ]
   },
   "The recurring series created this shipment for you — you can discard this manual entry.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131287,7 +131257,7 @@
     ]
   },
   "The resolution stays on the record and in the audit log.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131296,7 +131266,7 @@
     ]
   },
   "The resource has been modified. Please refresh and try again.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131668,7 +131638,7 @@
     ]
   },
   "The shipment has been added to the billing queue.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131677,7 +131647,7 @@
     ]
   },
   "The shipment has been canceled.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131686,7 +131656,7 @@
     ]
   },
   "The shipment has been moved onto its own order.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131695,7 +131665,7 @@
     ]
   },
   "The shipment has been restored.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131704,7 +131674,7 @@
     ]
   },
   "The shipment has been transferred to the new owner.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131731,7 +131701,7 @@
     ]
   },
   "The shipment will be duplicated in the background.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -131749,7 +131719,7 @@
     ]
   },
   "The shipments have been attached to this order.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132100,7 +132070,7 @@
     ]
   },
   "The stop actuals and move status have been updated.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132109,7 +132079,7 @@
     ]
   },
   "The stops are still in the notice window — try again in a moment.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132605,7 +132575,7 @@
     ]
   },
   "The waiver and its reason are recorded against this shipment.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132686,7 +132656,7 @@
     ]
   },
   "The worker has been asked to read it and sign off in Dash.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132695,7 +132665,7 @@
     ]
   },
   "The worker has been notified.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132731,7 +132701,7 @@
     ]
   },
   "The worker mapping was repaired and will be picked up on next sync.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132785,7 +132755,7 @@
     ]
   },
   "The worksheet is locked. Reopening it takes a reason, which is audited.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -133001,7 +132971,7 @@
     ]
   },
   "They can now approve what you can approve, for the people you manage — and nothing beyond that.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -133839,7 +133809,7 @@
     ]
   },
   "This jurisdiction reverts to its statutory limits.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -134385,7 +134355,7 @@
     ]
   },
   "This rule now shows who confirmed it and when.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -134529,7 +134499,7 @@
       "routes/formula-template"
     ]
   },
-  "This template is currently used by {0} {1} . {2}": {
+  "This template is currently used by": {
     "sites": 1,
     "scope": [
       "ts"
@@ -134991,6 +134961,15 @@
       "routes/fuel-card"
     ]
   },
+  "Tier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-policy"
+    ]
+  },
   "Tier accrual must be above zero": {
     "sites": 1,
     "scope": [
@@ -135052,15 +135031,6 @@
     ],
     "areas": [
       "domain/detention"
-    ]
-  },
-  "Tier {0}{1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-policy"
     ]
   },
   "Tiers must be contiguous with no gaps or overlaps": {
@@ -135407,7 +135377,7 @@
       "routes/time-attendance"
     ]
   },
-  "Timesheets in the run": {
+  "Timesheets": {
     "sites": 1,
     "scope": [
       "ts"
@@ -135416,7 +135386,7 @@
       "routes/time-attendance"
     ]
   },
-  "Timesheets {0}": {
+  "Timesheets in the run": {
     "sites": 1,
     "scope": [
       "ts"
@@ -136768,7 +136738,7 @@
     ]
   },
   "Tracking was cleared. Start a new sync to continue.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -138798,7 +138768,7 @@
     ]
   },
   "Unable to submit the sync request right now.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -147789,7 +147759,7 @@
     ]
   },
   "Worker updated successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -148758,7 +148728,7 @@
     ]
   },
   "You are now working in a different organization.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -148849,7 +148819,7 @@
     ]
   },
   "You don't have permission to perform this action.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -148885,7 +148855,7 @@
     ]
   },
   "You have exceeded the rate limit. Please try again later.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -149093,7 +149063,7 @@
     ]
   },
   "Your draft is preserved — retry or discard it from the comment.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -149228,7 +149198,7 @@
     ]
   },
   "Your password has been updated successfully.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -149264,7 +149234,7 @@
     ]
   },
   "Your profile settings have been saved.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -149797,6 +149767,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "d avg": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-ledger"
     ]
   },
   "database connection is not configured": {
@@ -152301,6 +152280,15 @@
       "routes/time-attendance"
     ]
   },
+  "on site,": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "on the": {
     "sites": 2,
     "scope": [
@@ -152408,6 +152396,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "over two weeks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/_components"
     ]
   },
   "p.{0}": {
@@ -152744,6 +152741,15 @@
     ],
     "areas": [
       "service/distancecalculationservice"
+    ]
+  },
+  "shipments change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "showing the {0} most recent": {
@@ -153381,54 +153387,6 @@
       "routes/worker"
     ]
   },
-  "{0} Acknowledge": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0} Copy webhook URL": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{0} Create Shipment": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0} Deactivate": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{0} Delete": {
-    "sites": 6,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/distance-override",
-      "routes/document-packet-rule",
-      "routes/organization"
-    ]
-  },
   "{0} Every row that failed is listed below; fix the file and upload it again.": {
     "sites": 1,
     "scope": [
@@ -153456,15 +153414,6 @@
       "routes/reports"
     ]
   },
-  "{0} Issue action": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "{0} KB": {
     "sites": 1,
     "scope": [
@@ -153490,78 +153439,6 @@
     ],
     "areas": [
       "routes/fleet-safety"
-    ]
-  },
-  "{0} Re-extract": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "{0} Restore": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "{0} Retry": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0} Retry Extraction": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0} Rollback": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "{0} Save": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0} Save rates": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/rate-matrix"
-    ]
-  },
-  "{0} Shop carriers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} accepted": {
@@ -154133,15 +154010,6 @@
       "routes/reports"
     ]
   },
-  "{0} fields {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "{0} field{1}": {
     "sites": 1,
     "scope": [
@@ -154658,15 +154526,6 @@
     ],
     "areas": [
       "routes/detention-desk"
-    ]
-  },
-  "{0} on site, {1} free {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "{0} online": {
@@ -155819,15 +155678,6 @@
       "routes/dispatch-console"
     ]
   },
-  "{0}{1} · {2} day {3} over two weeks": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/dash/_components"
-    ]
-  },
   "{0}{1} · {2} gal": {
     "sites": 1,
     "scope": [
@@ -155889,15 +155739,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "{0}{1}{2}d": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/accounting-dashboard"
     ]
   },
   "{0}–{1}°F": {
