@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { TrailerRow } from "@/lib/graphql/equipment-table";
@@ -12,6 +13,8 @@ import { TrailerForm } from "./trailer-form";
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 
 export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<TrailerRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(trailerSchema),
     defaultValues: {
@@ -67,7 +70,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         form={form}
         url="/trailers/"
         queryKey="trailer-list"
-        title="Trailer"
+        title={t("Trailer")}
         fieldKey="code"
         formComponent={<TrailerForm />}
         tabs={documentsTabs}
@@ -83,7 +86,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       form={form}
       url="/trailers/"
       queryKey="trailer-list"
-      title="Trailer"
+      title={t("Trailer")}
       formComponent={<TrailerForm />}
       useDock
     />
