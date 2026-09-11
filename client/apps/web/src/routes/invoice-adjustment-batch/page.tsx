@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { queries } from "@/lib/queries";
@@ -37,6 +38,8 @@ const statusChoices = [
 ];
 
 export function InvoiceAdjustmentBatchPage() {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(invoiceAdjustmentBatchSearchParamsParser);
   const { item: selectedBatchId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
@@ -84,18 +87,18 @@ export function InvoiceAdjustmentBatchPage() {
       toolbar={
         <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
           <SummaryCard
-            label="Batches In Flight"
+            label={t("Batches In Flight")}
             value={String(summaryQuery.data?.batchesInFlight ?? 0)}
           />
           <SummaryCard
-            label="Failed Items"
+            label={t("Failed Items")}
             value={String(summaryQuery.data?.failedBatchItems ?? 0)}
           />
           <SummaryCard
-            label="Approvals Pending"
+            label={t("Approvals Pending")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard label="Write-Offs" value={String(summaryQuery.data?.writeOffPending ?? 0)} />
+          <SummaryCard label={t("Write-Offs")} value={String(summaryQuery.data?.writeOffPending ?? 0)} />
         </div>
       }
       sidebar={
@@ -104,7 +107,7 @@ export function InvoiceAdjustmentBatchPage() {
             <Input
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
-              placeholder="Search batch id, submitter, idempotency key..."
+              placeholder={t("Search batch id, submitter, idempotency key...")}
               className="h-8 text-xs"
             />
             <Select
@@ -115,10 +118,10 @@ export function InvoiceAdjustmentBatchPage() {
               }
             >
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder={t("All statuses")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {statusChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
                     {choice.label}
@@ -174,10 +177,10 @@ export function InvoiceAdjustmentBatchPage() {
                     </span>
                   </div>
                   <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
-                    <Metric label="Total" value={String(row.totalCount)} />
-                    <Metric label="Done" value={String(row.processedCount)} />
-                    <Metric label="Failed" value={String(row.failedCount)} />
-                    <Metric label="Pending" value={String(row.pendingCount)} />
+                    <Metric label={t("Total")} value={String(row.totalCount)} />
+                    <Metric label={t("Done")} value={String(row.processedCount)} />
+                    <Metric label={t("Failed")} value={String(row.failedCount)} />
+                    <Metric label={t("Pending")} value={String(row.pendingCount)} />
                   </div>
                   {row.lastFailure ? (
                     <p className="text-destructive mt-3 line-clamp-2 text-xs">{row.lastFailure}</p>
@@ -193,8 +196,8 @@ export function InvoiceAdjustmentBatchPage() {
           {!selectedRow ? (
             <BillingDetailUnselected
               layout="cards"
-              title="Nothing open"
-              description="Pick a batch from the list to see how each item ran and what it created."
+              title={t("Nothing open")}
+              description={t("Pick a batch from the list to see how each item ran and what it created.")}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -211,22 +214,22 @@ export function InvoiceAdjustmentBatchPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 pt-4 md:grid-cols-4">
-                  <Metric label="Total" value={String(selectedRow.totalCount)} />
-                  <Metric label="Succeeded" value={String(selectedRow.succeededCount)} />
-                  <Metric label="Failed" value={String(selectedRow.failedCount)} />
-                  <Metric label="Pending" value={String(selectedRow.pendingCount)} />
-                  <Metric label="Submitted At" value={formatTimestamp(selectedRow.submittedAt)} />
-                  <Metric label="Status" value={selectedRow.status} />
-                  <Metric label="Last Failure Count" value={String(selectedRow.lastFailureCount)} />
-                  <Metric label="Idempotency Key" value={selectedRow.idempotencyKey} />
+                  <Metric label={t("Total")} value={String(selectedRow.totalCount)} />
+                  <Metric label={t("Succeeded")} value={String(selectedRow.succeededCount)} />
+                  <Metric label={t("Failed")} value={String(selectedRow.failedCount)} />
+                  <Metric label={t("Pending")} value={String(selectedRow.pendingCount)} />
+                  <Metric label={t("Submitted At")} value={formatTimestamp(selectedRow.submittedAt)} />
+                  <Metric label={t("Status")} value={selectedRow.status} />
+                  <Metric label={t("Last Failure Count")} value={String(selectedRow.lastFailureCount)} />
+                  <Metric label={t("Idempotency Key")} value={selectedRow.idempotencyKey} />
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="border-b">
-                  <CardTitle>Item Results</CardTitle>
+                  <CardTitle>{t("Item Results")}</CardTitle>
                   <CardDescription>
-                    Per-item outcome, failure reason, and created artifacts.
+                    {t("Per-item outcome, failure reason, and created artifacts.")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">
@@ -234,10 +237,10 @@ export function InvoiceAdjustmentBatchPage() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted/40 text-muted-foreground text-left">
                         <tr>
-                          <th className="px-4 py-3">Invoice</th>
-                          <th className="px-4 py-3">Status</th>
-                          <th className="px-4 py-3">Failure</th>
-                          <th className="px-4 py-3">Artifacts</th>
+                          <th className="px-4 py-3">{t("Invoice")}</th>
+                          <th className="px-4 py-3">{t("Status")}</th>
+                          <th className="px-4 py-3">{t("Failure")}</th>
+                          <th className="px-4 py-3">{t("Artifacts")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -251,13 +254,13 @@ export function InvoiceAdjustmentBatchPage() {
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-2">
                                 <LinkButton to={`/billing/invoices?item=${item.invoiceId}`}>
-                                  Invoice
+                                  {t("Invoice")}
                                 </LinkButton>
                                 {item.adjustmentId ? (
                                   <LinkButton
                                     to={`/billing/pending-approvals?item=${item.adjustmentId}`}
                                   >
-                                    Adjustment
+                                    {t("Adjustment")}
                                   </LinkButton>
                                 ) : null}
                               </div>
