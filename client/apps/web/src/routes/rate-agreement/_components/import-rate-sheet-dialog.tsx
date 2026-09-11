@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RateAgreementAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { downloadCsv } from "@/lib/data-table-export";
@@ -69,6 +70,8 @@ type ImportRateSheetDialogProps = {
  * often blamed for: a tariff nobody read replacing one somebody negotiated.
  */
 export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -107,11 +110,11 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
     mutationFn: () => apiService.rateImportService.commit(batch?.id as string),
     onSuccess: async (applied) => {
       setBatch(applied);
-      toast.success("Rates applied to the agreement");
+      toast.success(t("Rates applied to the agreement"));
       await queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
       await queryClient.invalidateQueries({ queryKey: ["rate-imports", applied.rateAgreementId] });
     },
-    onError: () => toast.error("The rates could not be applied"),
+    onError: () => toast.error(t("The rates could not be applied")),
   });
 
   const { mutate: discard } = useMutation({
@@ -120,7 +123,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
       setBatch(discarded);
       void queryClient.invalidateQueries({ queryKey: ["rate-imports", discarded.rateAgreementId] });
     },
-    onError: () => toast.error("The import could not be discarded"),
+    onError: () => toast.error(t("The import could not be discarded")),
   });
 
   const { data: failedRows } = useQuery({
@@ -132,7 +135,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
   const { mutate: downloadTemplate, isPending: isDownloading } = useMutation({
     mutationFn: () => apiService.rateImportService.template(),
     onSuccess: ({ fileName, content }) => downloadCsv(content, fileName),
-    onError: () => toast.error("The template could not be downloaded"),
+    onError: () => toast.error(t("The template could not be downloaded")),
   });
 
   const stage = useCallback(
@@ -179,10 +182,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Import Rate Sheet</DialogTitle>
+          <DialogTitle>{t("Import Rate Sheet")}</DialogTitle>
           <DialogDescription>
-            Upload a CSV or XLSX rate sheet into an agreement. Nothing is applied until you have
-            read exactly what it would change.
+            {t("Upload a CSV or XLSX rate sheet into an agreement. Nothing is applied until you have read exactly what it would change.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -195,19 +197,19 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                     <RateAgreementAutocompleteField
                       control={form.control}
                       name="rateAgreementId"
-                      label="Agreement"
-                      placeholder="Select agreement"
+                      label={t("Agreement")}
+                      placeholder={t("Select agreement")}
                       rules={{ required: true }}
-                      description="The contract this sheet's lanes are imported into."
+                      description={t("The contract this sheet's lanes are imported into.")}
                     />
                   </FormControl>
                   <FormControl>
                     <AutoCompleteDateField
                       control={form.control}
                       name="effectiveFrom"
-                      label="Rates Take Effect"
+                      label={t("Rates Take Effect")}
                       rules={{ required: true }}
-                      description="The day the imported rates start pricing — the negotiated date, not the upload date."
+                      description={t("The day the imported rates start pricing — the negotiated date, not the upload date.")}
                     />
                   </FormControl>
                 </FormGroup>
@@ -234,7 +236,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 {isUploading ? "Reading the sheet…" : "Drop a rate sheet here, or click to browse"}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
-                CSV or XLSX. Columns are matched by name.
+                {t("CSV or XLSX. Columns are matched by name.")}
               </p>
             </button>
             <input
@@ -249,15 +251,14 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
               <Alert variant="destructive">
                 <CircleAlertIcon className="size-4" />
                 <AlertDescription>
-                  <p className="font-medium">This sheet could not be imported</p>
+                  <p className="font-medium">{t("This sheet could not be imported")}</p>
                   <ul className="mt-1 list-inside list-disc space-y-0.5">
                     {fileProblems.map((problem) => (
                       <li key={problem}>{problem}</li>
                     ))}
                   </ul>
                   <p className="mt-1.5 text-xs">
-                    The template below has every column the importer recognises, with two example
-                    rows.
+                    {t("The template below has every column the importer recognises, with two example rows.")}
                   </p>
                 </AlertDescription>
               </Alert>
@@ -265,7 +266,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
             <div className="bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
               <p className="text-muted-foreground text-xs">
-                Not sure how to lay out the sheet? Start from the template.
+                {t("Not sure how to lay out the sheet? Start from the template.")}
               </p>
               <Button
                 type="button"
@@ -276,7 +277,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 className="gap-1.5"
               >
                 <DownloadIcon className="size-3.5" />
-                Download Template
+                {t("Download Template")}
               </Button>
             </div>
           </>
@@ -290,7 +291,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                   {batch.status}
                 </Badge>
                 <span className="font-mono text-xs">{batch.fileName}</span>
-                <span className="text-muted-foreground text-xs">{batch.rowCount} rows</span>
+                <span className="text-muted-foreground text-xs">{t("{0} rows", batch.rowCount)}</span>
               </div>
               <p className="text-sm">{importHeadline(batch)}</p>
             </div>
@@ -313,8 +314,8 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-16 text-xs">Row</TableHead>
-                      <TableHead className="text-xs">Why it would not read</TableHead>
+                      <TableHead className="w-16 text-xs">{t("Row")}</TableHead>
+                      <TableHead className="text-xs">{t("Why it would not read")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -336,9 +337,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs">Lane</TableHead>
-                      <TableHead className="text-xs">What Happens</TableHead>
-                      <TableHead className="text-xs">Changes</TableHead>
+                      <TableHead className="text-xs">{t("Lane")}</TableHead>
+                      <TableHead className="text-xs">{t("What Happens")}</TableHead>
+                      <TableHead className="text-xs">{t("Changes")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -380,15 +381,15 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                   setBatch(undefined);
                 }}
               >
-                Discard
+                {t("Discard")}
               </Button>
               <Button
                 type="button"
                 isLoading={isCommitting}
-                loadingText="Applying..."
+                loadingText={t("Applying...")}
                 onClick={() => commit()}
               >
-                Apply These Rates
+                {t("Apply These Rates")}
               </Button>
             </>
           ) : (

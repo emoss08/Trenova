@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CarrierAutocompleteField,
   CustomerAutocompleteField,
@@ -85,6 +86,8 @@ export function RateIncreaseDialog({
   onOpenChange,
   selectedAgreements = [],
 }: RateIncreaseDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const hasSelection = selectedAgreements.length > 0;
 
@@ -169,7 +172,7 @@ export function RateIncreaseDialog({
     mutationFn: (payload: RateIncreaseRequestPayload) =>
       apiService.rateAgreementService.previewRateIncrease(payload),
     onSuccess: setPlan,
-    onError: () => toast.error("The increase could not be previewed"),
+    onError: () => toast.error(t("The increase could not be previewed")),
   });
 
   const apply = useMutation({
@@ -183,7 +186,7 @@ export function RateIncreaseDialog({
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement"] });
       onOpenChange(false);
     },
-    onError: () => toast.error("The increase could not be applied"),
+    onError: () => toast.error(t("The increase could not be applied")),
   });
 
   const runPreview = () => {
@@ -235,11 +238,10 @@ export function RateIncreaseDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUpIcon className="size-4" />
-            General Rate Increase
+            {t("General Rate Increase")}
           </DialogTitle>
           <DialogDescription>
-            Every affected lane is closed out and succeeded at the new rate from the effective date.
-            The old rates stay in history, and nothing moves until you have read the preview.
+            {t("Every affected lane is closed out and succeeded at the new rate from the effective date. The old rates stay in history, and nothing moves until you have read the preview.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -273,9 +275,9 @@ export function RateIncreaseDialog({
                   <CustomerAutocompleteField
                     control={form.control}
                     name="customerId"
-                    label="Customer"
-                    placeholder="Select customer"
-                    description="Every active agreement billing this customer takes the increase."
+                    label={t("Customer")}
+                    placeholder={t("Select customer")}
+                    description={t("Every active agreement billing this customer takes the increase.")}
                   />
                 </FormControl>
               )}
@@ -284,9 +286,9 @@ export function RateIncreaseDialog({
                   <CarrierAutocompleteField
                     control={form.control}
                     name="carrierId"
-                    label="Carrier"
-                    placeholder="Select carrier"
-                    description="Every active agreement paying this carrier takes the increase."
+                    label={t("Carrier")}
+                    placeholder={t("Select carrier")}
+                    description={t("Every active agreement paying this carrier takes the increase.")}
                   />
                 </FormControl>
               )}
@@ -295,9 +297,9 @@ export function RateIncreaseDialog({
                   <SelectField
                     control={form.control}
                     name="partyType"
-                    label="Party Type"
+                    label={t("Party Type")}
                     options={ratePartyTypeChoices}
-                    description="Customer agreements raise what you bill; carrier agreements raise what you pay."
+                    description={t("Customer agreements raise what you bill; carrier agreements raise what you pay.")}
                   />
                 </FormControl>
               )}
@@ -305,9 +307,9 @@ export function RateIncreaseDialog({
                 <AutoCompleteDateField
                   control={form.control}
                   name="effectiveFrom"
-                  label="Takes Effect"
+                  label={t("Takes Effect")}
                   rules={{ required: true }}
-                  description="The announced date. Shipments before it keep pricing at the old rates."
+                  description={t("The announced date. Shipments before it keep pricing at the old rates.")}
                 />
               </FormControl>
             </FormGroup>
@@ -352,7 +354,7 @@ export function RateIncreaseDialog({
                 size="sm"
               >
                 <NumberFieldGroup>
-                  <NumberFieldInput aria-label="Change" className="text-right" />
+                  <NumberFieldInput aria-label={t("Change")} className="text-right" />
                 </NumberFieldGroup>
               </NumberFieldRoot>
             </div>
@@ -362,12 +364,12 @@ export function RateIncreaseDialog({
               variant="outline"
               onClick={runPreview}
               isLoading={preview.isPending}
-              loadingText="Reading..."
+              loadingText={t("Reading...")}
             >
-              Preview Changes
+              {t("Preview Changes")}
             </Button>
             <p className="text-2xs text-muted-foreground">
-              A negative change is a decrease. Weight breaks move with their lane.
+              {t("A negative change is a decrease. Weight breaks move with their lane.")}
             </p>
           </div>
         </div>
@@ -393,8 +395,7 @@ export function RateIncreaseDialog({
               <Alert variant="destructive">
                 <CircleAlertIcon className="size-4" />
                 <AlertDescription>
-                  This decrease would push {plan.negativeCount} lanes below zero, and a negative
-                  rate is not a discount. Narrow the scope or soften the change.
+                  {t("This decrease would push {0} lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.", plan.negativeCount)}
                 </AlertDescription>
               </Alert>
             )}
@@ -404,11 +405,11 @@ export function RateIncreaseDialog({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs">Agreement</TableHead>
-                      <TableHead className="text-xs">Lane</TableHead>
-                      <TableHead className="text-right text-xs">Before</TableHead>
-                      <TableHead className="text-right text-xs">After</TableHead>
-                      <TableHead className="text-right text-xs">Change</TableHead>
+                      <TableHead className="text-xs">{t("Agreement")}</TableHead>
+                      <TableHead className="text-xs">{t("Lane")}</TableHead>
+                      <TableHead className="text-right text-xs">{t("Before")}</TableHead>
+                      <TableHead className="text-right text-xs">{t("After")}</TableHead>
+                      <TableHead className="text-right text-xs">{t("Change")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -419,7 +420,7 @@ export function RateIncreaseDialog({
                           <span className="text-xs font-medium">{line.label || line.laneKey}</span>
                           {line.breakCount > 0 && (
                             <p className="text-2xs text-muted-foreground">
-                              {line.breakCount} weight breaks move with it
+                              {t("{0} weight breaks move with it", line.breakCount)}
                             </p>
                           )}
                         </TableCell>
@@ -443,16 +444,16 @@ export function RateIncreaseDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
             disabled={!canApply}
             isLoading={apply.isPending}
-            loadingText="Applying..."
+            loadingText={t("Applying...")}
             onClick={runApply}
           >
-            Apply Increase
+            {t("Apply Increase")}
           </Button>
         </DialogFooter>
       </DialogContent>

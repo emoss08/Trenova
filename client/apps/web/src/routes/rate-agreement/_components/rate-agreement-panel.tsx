@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
@@ -81,6 +82,8 @@ type ReviewHeaderActionsProps = {
  * by resending it.
  */
 function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsProps) {
+  const t = useT();
+
   const { allowed: canSubmit } = usePermission(Resource.RateAgreement, Operation.Submit);
   const { allowed: canApprove } = usePermission(Resource.RateAgreement, Operation.Approve);
   const { allowed: canReject } = usePermission(Resource.RateAgreement, Operation.Reject);
@@ -98,7 +101,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
           onClick={() => onReviewAction("submit")}
         >
           <SendIcon className="size-3" />
-          Submit for Review
+          {t("Submit for Review")}
         </Button>
       )}
       {agreement.status === "InReview" && (
@@ -112,7 +115,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
               onClick={() => onReviewAction("approve")}
             >
               <CheckIcon className="size-3" />
-              Approve
+              {t("Approve")}
             </Button>
           )}
           {canReject && (
@@ -124,7 +127,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
               onClick={() => onReviewAction("reject")}
             >
               <XIcon className="size-3" />
-              Reject
+              {t("Reject")}
             </Button>
           )}
         </div>
@@ -138,7 +141,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
           onClick={() => onReviewAction("suspend")}
         >
           <PauseIcon className="size-3" />
-          Suspend
+          {t("Suspend")}
         </Button>
       )}
       {agreement.status === "Suspended" && canUpdate && (
@@ -150,7 +153,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
           onClick={() => onReviewAction("resume")}
         >
           <PlayIcon className="size-3" />
-          Resume
+          {t("Resume")}
         </Button>
       )}
       {(agreement.status === "Suspended" || agreement.status === "Expired") && canArchive && (
@@ -162,12 +165,12 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
           onClick={() => onReviewAction("archive")}
         >
           <ArchiveIcon className="size-3" />
-          Archive
+          {t("Archive")}
         </Button>
       )}
       {agreement.currentVersionNumber ? (
         <Badge variant="outline" className="mr-1 font-mono text-xs">
-          v{agreement.currentVersionNumber}
+          {t("v{0}", agreement.currentVersionNumber)}
         </Badge>
       ) : null}
     </div>
@@ -180,6 +183,8 @@ export function RateAgreementPanel({
   mode,
   row,
 }: DataTablePanelProps<RateAgreementRow>) {
+  const t = useT();
+
   const [reviewAction, setReviewAction] = useState<RateAgreementReviewAction | null>(null);
 
   const form = useForm<RateAgreement>({
@@ -253,7 +258,7 @@ export function RateAgreementPanel({
           form={form}
           size="xl"
           queryKey="rate-agreement-list"
-          title="Rate Agreement"
+          title={t("Rate Agreement")}
           fieldKey="name"
           formTabs={formTabs}
           isRecordLoading={isLoading || !isSeated}
@@ -291,8 +296,8 @@ export function RateAgreementPanel({
       form={form}
       size="xl"
       queryKey="rate-agreement-list"
-      title="Rate Agreement"
-      description="Write the contract once, and every shipment on its lanes prices itself against it."
+      title={t("Rate Agreement")}
+      description={t("Write the contract once, and every shipment on its lanes prices itself against it.")}
       formTabs={formTabs}
       mutationFn={(values) => apiService.rateAgreementService.create(values)}
     />

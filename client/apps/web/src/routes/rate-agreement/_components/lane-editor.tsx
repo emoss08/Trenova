@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FormulaTemplateAutocompleteField,
   RateMatrixAutocompleteField,
@@ -56,6 +57,8 @@ const NEW_LANE: RateAgreementRule = {
  * out as they are typed rather than discovered from an invoice weeks later.
  */
 export function LaneEditor() {
+  const t = useT();
+
   const { control, getValues } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "rules" });
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
@@ -90,8 +93,7 @@ export function LaneEditor() {
     <div className="flex flex-col gap-4">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No lanes yet. An active agreement needs at least one, otherwise nothing can price against
-          it.
+          {t("No lanes yet. An active agreement needs at least one, otherwise nothing can price against it.")}
         </p>
       )}
 
@@ -99,11 +101,10 @@ export function LaneEditor() {
         <Alert variant="destructive">
           <TriangleAlertIcon className="size-4" />
           <AlertTitle>
-            {issues.length === 1 ? "One lane" : `${issues.length} lanes`} can never apply
+            {t("{0} can never apply", issues.length === 1 ? "One lane" : `${issues.length} lanes`)}
           </AlertTitle>
           <AlertDescription>
-            A lane written exactly as narrowly as another one leaves the winner to a tie-break.
-            Narrow it, widen the other, or give one a higher priority.
+            {t("A lane written exactly as narrowly as another one leaves the winner to a tie-break. Narrow it, widen the other, or give one a higher priority.")}
           </AlertDescription>
         </Alert>
       )}
@@ -123,7 +124,7 @@ export function LaneEditor() {
 
       <Button type="button" variant="outline" size="sm" onClick={appendLane}>
         <PlusIcon className="mr-1 size-3.5" />
-        Add lane
+        {t("Add lane")}
       </Button>
     </div>
   );
@@ -148,6 +149,8 @@ function LaneRow({
   rateAgreementId,
   onRemove,
 }: LaneRowProps) {
+  const t = useT();
+
   // A lane prices through exactly one of the two, so whichever is chosen hides
   // the other — clearing the selection brings the alternative back.
   const usesMatrix = Boolean(rule?.rateMatrixId);
@@ -173,7 +176,7 @@ function LaneRow({
             </Badge>
             {rule && (
               <Badge variant="secondary" className="text-[10px]">
-                specificity {laneSpecificity(rule)}
+                {t("specificity {0}", laneSpecificity(rule))}
               </Badge>
             )}
           </div>
@@ -193,7 +196,7 @@ function LaneRow({
             className="h-6 text-xs"
             onClick={onRemove}
           >
-            Remove
+            {t("Remove")}
           </Button>
         </div>
       </div>
@@ -207,18 +210,18 @@ function LaneRow({
           <InputField
             control={control}
             name={`rules.${index}.label` as never}
-            label="Label"
-            placeholder="Dallas to Chicago"
-            description="What this lane is called on a rate confirmation and in a trace"
+            label={t("Label")}
+            placeholder={t("Dallas to Chicago")}
+            description={t("What this lane is called on a rate confirmation and in a trace")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name={`rules.${index}.direction` as never}
-            label="Direction"
-            placeholder="Direction"
-            description="Whether the lane also prices the return trip"
+            label={t("Direction")}
+            placeholder={t("Direction")}
+            description={t("Whether the lane also prices the return trip")}
             options={rateDirectionChoices}
           />
         </FormControl>
@@ -227,13 +230,13 @@ function LaneRow({
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="bg-muted/30 rounded-md border p-3">
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-            Origin
+            {t("Origin")}
           </p>
           <LaneScopeFields control={control} side="origin" namePrefix={`rules.${index}.`} />
         </div>
         <div className="bg-muted/30 rounded-md border p-3">
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-            Destination
+            {t("Destination")}
           </p>
           <LaneScopeFields control={control} side="destination" namePrefix={`rules.${index}.`} />
         </div>
@@ -246,9 +249,9 @@ function LaneRow({
               control={control}
               rules={{ required: !usesMatrix }}
               name={`rules.${index}.formulaTemplateId` as never}
-              label="Rating Method"
-              placeholder="Select rating method"
-              description="The formula template this lane prices through — the lane's rate binds in as the template's base rate"
+              label={t("Rating Method")}
+              placeholder={t("Select rating method")}
+              description={t("The formula template this lane prices through — the lane's rate binds in as the template's base rate")}
             />
           </FormControl>
         )}
@@ -257,12 +260,12 @@ function LaneRow({
             <NumberField
               control={control}
               name={`rules.${index}.rate` as never}
-              label="Rate"
+              label={t("Rate")}
               placeholder="2.55"
               sideText="$"
               decimalScale={4}
               thousandSeparator
-              description="Feeds the rating method as its base rate — leave empty when the lane is banded by weight"
+              description={t("Feeds the rating method as its base rate — leave empty when the lane is banded by weight")}
             />
           </FormControl>
         )}
@@ -272,9 +275,9 @@ function LaneRow({
               control={control}
               rules={{ required: !usesFormula }}
               name={`rules.${index}.rateMatrixId` as never}
-              label="Rate Matrix"
-              placeholder="Matrix"
-              description="Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean"
+              label={t("Rate Matrix")}
+              placeholder={t("Matrix")}
+              description={t("Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean")}
             />
           </FormControl>
         )}
@@ -285,43 +288,43 @@ function LaneRow({
           <NumberField
             control={control}
             name={`rules.${index}.minCharge` as never}
-            label="Minimum Charge"
+            label={t("Minimum Charge")}
             placeholder="850.00"
             sideText="$"
             decimalScale={2}
             thousandSeparator
-            description="The floor this lane never prices below"
+            description={t("The floor this lane never prices below")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name={`rules.${index}.maxCharge` as never}
-            label="Maximum Charge"
+            label={t("Maximum Charge")}
             placeholder="0.00"
             sideText="$"
             decimalScale={2}
             thousandSeparator
-            description="A ceiling, when the contract sets one"
+            description={t("A ceiling, when the contract sets one")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name={`rules.${index}.minBillableDistance` as never}
-            label="Minimum Billable Miles"
+            label={t("Minimum Billable Miles")}
             placeholder="250"
             sideText="mi"
-            description="Short hauls bill at this distance however far they actually ran"
+            description={t("Short hauls bill at this distance however far they actually ran")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name={`rules.${index}.priority` as never}
-            label="Priority"
+            label={t("Priority")}
             placeholder="0"
-            description="Breaks a tie between lanes written equally narrowly"
+            description={t("Breaks a tie between lanes written equally narrowly")}
           />
         </FormControl>
       </FormGroup>

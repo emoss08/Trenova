@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccessorialChargeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -29,6 +30,8 @@ const NEW_ACCESSORIAL = {
  * somebody remembering.
  */
 export function AccessorialScheduleEditor() {
+  const t = useT();
+
   const { control } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "accessorials" });
   const accessorials = (useWatch({ control, name: "accessorials" }) ??
@@ -38,8 +41,7 @@ export function AccessorialScheduleEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No negotiated accessorials. Without one, every accessorial is priced at the organization
-          default instead of at what the contract says.
+          {t("No negotiated accessorials. Without one, every accessorial is priced at the organization default instead of at what the contract says.")}
         </p>
       )}
 
@@ -52,9 +54,9 @@ export function AccessorialScheduleEditor() {
           <div key={field.id} className="bg-card rounded-md border p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium">
-                Accessorial {index + 1}
+                {t("Accessorial")} {index + 1}
                 {row?.waived && (
-                  <span className="text-muted-foreground ml-2 text-xs font-normal">Waived</span>
+                  <span className="text-muted-foreground ml-2 text-xs font-normal">{t("Waived")}</span>
                 )}
               </p>
               <Button
@@ -64,7 +66,7 @@ export function AccessorialScheduleEditor() {
                 className="h-6 text-xs"
                 onClick={() => remove(index)}
               >
-                Remove
+                {t("Remove")}
               </Button>
             </div>
 
@@ -74,9 +76,9 @@ export function AccessorialScheduleEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`accessorials.${index}.accessorialChargeId` as never}
-                  label="Accessorial"
-                  placeholder="Charge"
-                  description="Which service this price is for"
+                  label={t("Accessorial")}
+                  placeholder={t("Charge")}
+                  description={t("Which service this price is for")}
                 />
               </FormControl>
               <FormControl>
@@ -84,9 +86,9 @@ export function AccessorialScheduleEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`accessorials.${index}.method` as never}
-                  label="Method"
-                  placeholder="Method"
-                  description="Flat, per unit, or a percentage"
+                  label={t("Method")}
+                  placeholder={t("Method")}
+                  description={t("Flat, per unit, or a percentage")}
                   options={accessorialChargeMethodChoices}
                 />
               </FormControl>
@@ -96,9 +98,9 @@ export function AccessorialScheduleEditor() {
                     control={control}
                     rules={{ required: true }}
                     name={`accessorials.${index}.rateUnit` as never}
-                    label="Rate Unit"
-                    placeholder="Unit"
-                    description="What a unit is on this charge"
+                    label={t("Rate Unit")}
+                    placeholder={t("Unit")}
+                    description={t("What a unit is on this charge")}
                     options={rateUnitChoices}
                   />
                 </FormControl>
@@ -107,12 +109,12 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.amount` as never}
-                    label="Amount"
+                    label={t("Amount")}
                     placeholder="75.00"
                     sideText="$"
                     decimalScale={2}
                     thousandSeparator
-                    description="What the contract charges"
+                    description={t("What the contract charges")}
                   />
                 </FormControl>
               )}
@@ -124,33 +126,33 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.amount` as never}
-                    label="Amount Per Unit"
+                    label={t("Amount Per Unit")}
                     placeholder="65.00"
                     sideText="$"
                     decimalScale={2}
                     thousandSeparator
-                    description="What the contract charges for each unit"
+                    description={t("What the contract charges for each unit")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.freeUnits` as never}
-                    label="Free Units"
+                    label={t("Free Units")}
                     placeholder="2"
-                    description="Units the contract gives away before charging"
+                    description={t("Units the contract gives away before charging")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.maxAmount` as never}
-                    label="Maximum Amount"
+                    label={t("Maximum Amount")}
                     placeholder="0.00"
                     sideText="$"
                     decimalScale={2}
                     thousandSeparator
-                    description="A ceiling on what this charge can reach"
+                    description={t("A ceiling on what this charge can reach")}
                   />
                 </FormControl>
               </FormGroup>
@@ -161,8 +163,8 @@ export function AccessorialScheduleEditor() {
                 <SwitchField
                   control={control}
                   name={`accessorials.${index}.autoApply` as never}
-                  label="Auto Apply"
-                  description="Added to every shipment this contract prices, so it never depends on somebody remembering"
+                  label={t("Auto Apply")}
+                  description={t("Added to every shipment this contract prices, so it never depends on somebody remembering")}
                   outlined
                 />
               </FormControl>
@@ -170,8 +172,8 @@ export function AccessorialScheduleEditor() {
                 <SwitchField
                   control={control}
                   name={`accessorials.${index}.waived` as never}
-                  label="Waived"
-                  description="The contract gives this service away, which is a stated term rather than an omission"
+                  label={t("Waived")}
+                  description={t("The contract gives this service away, which is a stated term rather than an omission")}
                   outlined
                 />
               </FormControl>
@@ -183,9 +185,9 @@ export function AccessorialScheduleEditor() {
                   <InputField
                     control={control}
                     name={`accessorials.${index}.applyCondition` as never}
-                    label="Apply Condition"
-                    placeholder="totalStops > 2"
-                    description="An expression in the same language the rating formulas use. Leave empty to apply to every shipment."
+                    label={t("Apply Condition")}
+                    placeholder={t("totalStops > 2")}
+                    description={t("An expression in the same language the rating formulas use. Leave empty to apply to every shipment.")}
                   />
                 </FormControl>
               </FormGroup>
@@ -196,7 +198,7 @@ export function AccessorialScheduleEditor() {
 
       <Button type="button" variant="outline" size="sm" onClick={() => append(NEW_ACCESSORIAL)}>
         <PlusIcon className="mr-1 size-3.5" />
-        Add accessorial
+        {t("Add accessorial")}
       </Button>
     </div>
   );

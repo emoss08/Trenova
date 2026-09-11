@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -30,6 +31,8 @@ export function LaneHistoryPopover({
   laneKey,
   displayLaneKey,
 }: LaneHistoryPopoverProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const { data: history, isLoading } = useQuery({
@@ -49,22 +52,22 @@ export function LaneHistoryPopover({
         render={
           <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-1.5">
             <HistoryIcon className="size-3" />
-            <span className="text-2xs">History</span>
+            <span className="text-2xs">{t("History")}</span>
           </Button>
         }
       />
       <PopoverContent align="end" className="w-96 p-0">
         <div className="border-b p-3">
-          <p className="text-xs font-medium">Rate History</p>
+          <p className="text-xs font-medium">{t("Rate History")}</p>
           <p className="text-2xs text-muted-foreground mt-0.5 font-mono">
             {displayLaneKey ?? laneKey}
           </p>
         </div>
         <ScrollArea className="h-70 px-3 pb-2">
-          {isLoading && <p className="text-2xs text-muted-foreground">Reading the lineage…</p>}
+          {isLoading && <p className="text-2xs text-muted-foreground">{t("Reading the lineage…")}</p>}
           {!isLoading && (history?.length ?? 0) === 0 && (
             <p className="text-2xs text-muted-foreground">
-              Nothing recorded yet — history begins the first time this lane is saved.
+              {t("Nothing recorded yet — history begins the first time this lane is saved.")}
             </p>
           )}
           <div className="flex flex-col gap-2">

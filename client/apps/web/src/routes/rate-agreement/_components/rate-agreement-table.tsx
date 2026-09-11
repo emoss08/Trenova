@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { rateAgreementTableGraphQLConfig, type RateAgreementRow } from "@/lib/graphql/rate-tables";
@@ -14,6 +15,8 @@ import { RateAgreementPanel } from "./rate-agreement-panel";
 import { RateIncreaseDialog } from "./rate-increase-dialog";
 
 export default function RateAgreementTable() {
+  const t = useT();
+
   const columns = useMemo(() => getColumns(), []);
   const queryClient = useQueryClient();
   const { allowed: canDuplicate } = usePermission(Resource.RateAgreement, Operation.Duplicate);
@@ -28,7 +31,7 @@ export default function RateAgreementTable() {
       toast.success(`Duplicated as ${copy.code} — a fresh draft, ready to edit`);
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
     },
-    onError: () => toast.error("The agreement could not be duplicated"),
+    onError: () => toast.error(t("The agreement could not be duplicated")),
   });
 
   const addRecordActions = useMemo<AddRecordAction[]>(

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   LocationAutocompleteField,
   RateZoneAutocompleteField,
@@ -57,6 +58,8 @@ export function LaneScopeFields<T extends FieldValues>({
   side,
   namePrefix,
 }: LaneScopeFieldsProps<T>) {
+  const t = useT();
+
   const names = fieldsFor(namePrefix, side);
   const scopeType = useWatch({
     control,
@@ -72,8 +75,8 @@ export function LaneScopeFields<T extends FieldValues>({
           rules={{ required: true }}
           name={names.scopeType as never}
           label={`${label} Scope`}
-          placeholder="Select scope"
-          description="How narrowly this end of the lane is written. A narrower scope beats a wider one covering the same load."
+          placeholder={t("Select scope")}
+          description={t("How narrowly this end of the lane is written. A narrower scope beats a wider one covering the same load.")}
           options={rateScopeTypeChoices}
         />
       </FormControl>
@@ -85,8 +88,8 @@ export function LaneScopeFields<T extends FieldValues>({
             rules={{ required: true }}
             name={names.scopeValue as never}
             label={`${label} Zone`}
-            placeholder="Select zone"
-            description="The market area this end covers"
+            placeholder={t("Select zone")}
+            description={t("The market area this end covers")}
           />
         </FormControl>
       )}
@@ -98,8 +101,8 @@ export function LaneScopeFields<T extends FieldValues>({
             rules={{ required: true }}
             name={names.scopeValue as never}
             label={`${label} State`}
-            placeholder="Select state"
-            description="The state this end covers"
+            placeholder={t("Select state")}
+            description={t("The state this end covers")}
           />
         </FormControl>
       )}
@@ -111,8 +114,8 @@ export function LaneScopeFields<T extends FieldValues>({
             rules={{ required: true }}
             name={names.scopeValue as never}
             label={`${label} Location`}
-            placeholder="Select location"
-            description="The single facility this end covers"
+            placeholder={t("Select location")}
+            description={t("The single facility this end covers")}
           />
         </FormControl>
       )}
@@ -125,8 +128,8 @@ export function LaneScopeFields<T extends FieldValues>({
               rules={{ required: true }}
               name={names.scopeValue as never}
               label={`${label} State`}
-              placeholder="Select state"
-              description="The state the city sits in"
+              placeholder={t("Select state")}
+              description={t("The state the city sits in")}
             />
           </FormControl>
           <FormControl>
@@ -135,8 +138,8 @@ export function LaneScopeFields<T extends FieldValues>({
               rules={{ required: true }}
               name={names.city as never}
               label={`${label} City`}
-              placeholder="City"
-              description="Spelling and case do not matter — the city is folded before it is matched"
+              placeholder={t("City")}
+              description={t("Spelling and case do not matter — the city is folded before it is matched")}
             />
           </FormControl>
         </>
@@ -166,8 +169,8 @@ export function LaneScopeFields<T extends FieldValues>({
             rules={{ required: true }}
             name={names.scopeValue as never}
             label={`${label} Country`}
-            placeholder="USA"
-            description="Three letter country code"
+            placeholder={t("USA")}
+            description={t("Three letter country code")}
           />
         </FormControl>
       )}
@@ -182,7 +185,7 @@ export function LaneScopeFields<T extends FieldValues>({
               label={`${label} Radius`}
               placeholder="80000"
               sideText="m"
-              description="How far from the centre point this end reaches"
+              description={t("How far from the centre point this end reaches")}
             />
           </FormControl>
           <FormControl>
@@ -192,7 +195,7 @@ export function LaneScopeFields<T extends FieldValues>({
               name={names.latitude as never}
               label={`${label} Latitude`}
               placeholder="32.7767"
-              description="The centre point this end measures from"
+              description={t("The centre point this end measures from")}
             />
           </FormControl>
           <FormControl>
@@ -202,7 +205,7 @@ export function LaneScopeFields<T extends FieldValues>({
               name={names.longitude as never}
               label={`${label} Longitude`}
               placeholder="-96.7970"
-              description="The centre point this end measures from"
+              description={t("The centre point this end measures from")}
             />
           </FormControl>
         </>
