@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Link } from "react-router";
@@ -24,6 +25,8 @@ export function AccountingDashboardEmpty({
   description,
   className,
 }: AccountingDashboardEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -32,7 +35,7 @@ export function AccountingDashboardEmpty({
       description={description}
       action={
         <Button variant="outline" size="sm" render={<Link to="/billing/queue" />}>
-          Open the billing queue
+          {t("Open the billing queue")}
         </Button>
       }
       sketch={

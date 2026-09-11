@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -16,6 +17,8 @@ const SEVERITY_STYLES: Record<string, string> = {
 };
 
 export function CollectionsWorklistCard() {
+  const t = useT();
+
   const { data: items, isLoading } = useQuery(queries.ar.collectionsWorklist(25));
 
   const rows = items ?? [];
@@ -24,7 +27,7 @@ export function CollectionsWorklistCard() {
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <CardTitle className="text-sm font-medium">
-          Collections worklist
+          {t("Collections worklist")}
           {rows.length > 0 ? (
             <span className="bg-muted text-muted-foreground ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
               {rows.length}
@@ -35,7 +38,7 @@ export function CollectionsWorklistCard() {
           to="/accounting/ar/open-items"
           className="text-muted-foreground hover:text-foreground text-xs hover:underline"
         >
-          Open items
+          {t("Open items")}
         </Link>
       </CardHeader>
       <CardContent className="p-2">
@@ -48,7 +51,7 @@ export function CollectionsWorklistCard() {
         ) : rows.length === 0 ? (
           <div className="text-muted-foreground flex h-56 flex-col items-center justify-center gap-2 text-sm">
             <CheckCircle2Icon className="size-5 text-emerald-500" />
-            Nothing needs attention right now
+            {t("Nothing needs attention right now")}
           </div>
         ) : (
           <div className="max-h-80 divide-y overflow-y-auto">
@@ -63,6 +66,8 @@ export function CollectionsWorklistCard() {
 }
 
 function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
+  const t = useT();
+
   return (
     <m.div
       initial={{ opacity: 0, x: -6 }}
@@ -94,13 +99,13 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
           <div className="mt-0.5 flex items-center gap-1.5">
             {item.daysPastDue > 0 ? (
               <span className="text-muted-foreground text-[11px] tabular-nums">
-                {item.daysPastDue}d past due
+                {t("{0}d past due", item.daysPastDue)}
               </span>
             ) : (
-              <span className="text-muted-foreground text-[11px]">not yet due</span>
+              <span className="text-muted-foreground text-[11px]">{t("not yet due")}</span>
             )}
-            {item.isDisputed ? <Badge variant="orange">Disputed</Badge> : null}
-            {item.hasShortPay ? <Badge variant="inactive">Short-paid</Badge> : null}
+            {item.isDisputed ? <Badge variant="orange">{t("Disputed")}</Badge> : null}
+            {item.hasShortPay ? <Badge variant="inactive">{t("Short-paid")}</Badge> : null}
           </div>
         </div>
       </Link>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
@@ -31,6 +32,8 @@ const cashFlowChartConfig = {
 } satisfies ChartConfig;
 
 export function CashFlowForecastCard() {
+  const t = useT();
+
   const { data: points, isLoading } = useQuery(queries.ar.cashFlowForecast());
 
   const { chartData, nowLabel } = useMemo(() => {
@@ -50,15 +53,15 @@ export function CashFlowForecastCard() {
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">Cash-flow forecast — 90 days</CardTitle>
-        <span className="text-muted-foreground text-xs">weekly, collected vs due</span>
+        <CardTitle className="text-sm font-medium">{t("Cash-flow forecast — 90 days")}</CardTitle>
+        <span className="text-muted-foreground text-xs">{t("weekly, collected vs due")}</span>
       </CardHeader>
       <CardContent className="p-4">
         {isLoading ? (
           <Skeleton className="h-56 w-full" />
         ) : chartData.length === 0 ? (
           <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-            No receivables activity yet
+            {t("No receivables activity yet")}
           </div>
         ) : (
           <ChartContainer config={cashFlowChartConfig} className="h-56 w-full">

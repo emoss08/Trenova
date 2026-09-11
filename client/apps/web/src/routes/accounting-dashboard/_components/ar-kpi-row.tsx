@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -22,6 +23,8 @@ import { m } from "motion/react";
 import { Link } from "react-router";
 
 export function ARKpiRow() {
+  const t = useT();
+
   const { data: kpis, isLoading } = useQuery(queries.ar.dashboardKpis());
 
   if (isLoading || !kpis) {
@@ -39,7 +42,7 @@ export function ARKpiRow() {
       <KpiCard
         index={0}
         icon={WalletIcon}
-        label="AR Outstanding"
+        label={t("AR Outstanding")}
         value={formatCurrency(kpis.overview.totalOpenMinor / 100)}
         detail={`${kpis.overview.openInvoiceCount} open ${
           kpis.overview.openInvoiceCount === 1 ? "invoice" : "invoices"
@@ -51,15 +54,15 @@ export function ARKpiRow() {
       <KpiCard
         index={3}
         icon={BanknoteIcon}
-        label="Unapplied Cash"
+        label={t("Unapplied Cash")}
         value={formatCurrency(kpis.overview.unappliedCashMinor / 100)}
-        detail="awaiting application"
+        detail={t("awaiting application")}
         to="/accounting/ar/payments"
       />
       <KpiCard
         index={4}
         icon={AlertTriangleIcon}
-        label="Overdue"
+        label={t("Overdue")}
         value={`${kpis.overduePercent.toFixed(1)}%`}
         valueClassName={kpis.overduePercent >= 25 ? "text-red-600 dark:text-red-400" : undefined}
         detail={`${formatCurrency(kpis.overview.overdueMinor / 100)} past due`}
@@ -70,13 +73,15 @@ export function ARKpiRow() {
 }
 
 function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
+  const t = useT();
+
   const delta = kpis.dsoDeltaDays;
   const isUp = delta > 0.05;
   const isDown = delta < -0.05;
   const overTarget = kpis.currentDsoDays > AR_DSO_TARGET_DAYS;
 
   return (
-    <KpiShell index={1} icon={TimerIcon} label="Days Sales Outstanding">
+    <KpiShell index={1} icon={TimerIcon} label={t("Days Sales Outstanding")}>
       <div className="flex items-baseline gap-2">
         <p
           className={cn(
@@ -84,7 +89,7 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
             overTarget && "text-red-600 dark:text-red-400",
           )}
         >
-          {kpis.currentDsoDays.toFixed(1)}d
+          {t("{0}d", kpis.currentDsoDays.toFixed(1))}
         </p>
         {(isUp || isDown) && (
           <span
@@ -101,13 +106,15 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
         )}
       </div>
       <p className="text-muted-foreground text-[11px]">
-        target &lt; {AR_DSO_TARGET_DAYS}d · vs 4 weeks ago
+        {t("target < {0}d · vs 4 weeks ago", AR_DSO_TARGET_DAYS)}
       </p>
     </KpiShell>
   );
 }
 
 function CeiKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
+  const t = useT();
+
   const cei = kpis.cei;
   const barClass =
     cei >= AR_CEI_HEALTHY_THRESHOLD
@@ -117,7 +124,7 @@ function CeiKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
         : "bg-red-500 dark:bg-red-400";
 
   return (
-    <KpiShell index={2} icon={GaugeIcon} label="Collection Effectiveness">
+    <KpiShell index={2} icon={GaugeIcon} label={t("Collection Effectiveness")}>
       <p className="text-2xl font-semibold tracking-tight tabular-nums">{cei.toFixed(0)}%</p>
       <div className="bg-muted mt-1.5 h-1 w-full overflow-hidden rounded-full">
         <m.div

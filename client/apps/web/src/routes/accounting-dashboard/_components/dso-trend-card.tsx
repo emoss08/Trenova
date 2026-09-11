@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
@@ -22,6 +23,8 @@ const dsoChartConfig = {
 } satisfies ChartConfig;
 
 export function DsoTrendCard() {
+  const t = useT();
+
   const [range, setRange] = useState<number>(13);
   const { data: trend, isLoading } = useQuery(queries.ar.dsoTrend(range));
 
@@ -38,7 +41,7 @@ export function DsoTrendCard() {
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">DSO trend</CardTitle>
+        <CardTitle className="text-sm font-medium">{t("DSO trend")}</CardTitle>
         <RangeToggle value={range} onChange={setRange} />
       </CardHeader>
       <CardContent className="p-4">
@@ -46,7 +49,7 @@ export function DsoTrendCard() {
           <Skeleton className="h-56 w-full" />
         ) : chartData.length === 0 ? (
           <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-            No billing activity yet
+            {t("No billing activity yet")}
           </div>
         ) : (
           <ChartContainer config={dsoChartConfig} className="h-56 w-full">
