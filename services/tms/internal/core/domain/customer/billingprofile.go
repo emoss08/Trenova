@@ -42,7 +42,7 @@ type CustomerBillingProfile struct {
 	AutoCreditHold                            bool                                      `json:"autoCreditHold"                            bun:"auto_credit_hold,type:BOOLEAN,notnull"`
 	CreditHoldReason                          string                                    `json:"creditHoldReason"                          bun:"credit_hold_reason,type:TEXT,nullzero"`
 	InvoiceMethod                             InvoiceMethod                             `json:"invoiceMethod"                             bun:"invoice_method,type:invoice_method_enum,notnull,default:'Individual'"`
-	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"               bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull,default:true"`
+	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"               bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull"`
 	AllowInvoiceConsolidation                 bool                                      `json:"allowInvoiceConsolidation"                 bun:"allow_invoice_consolidation,type:BOOLEAN,notnull"`
 	ConsolidationPeriodDays                   int8                                      `json:"consolidationPeriodDays"                   bun:"consolidation_period_days,type:INTEGER,notnull,default:7"`
 	ConsolidationGroupBy                      ConsolidationGroupBy                      `json:"consolidationGroupBy"                      bun:"consolidation_group_by,type:consolidation_group_by_enum,notnull,default:'None'"`
@@ -56,13 +56,13 @@ type CustomerBillingProfile struct {
 	GracePeriodDays                           int8                                      `json:"gracePeriodDays"                           bun:"grace_period_days,type:SMALLINT,notnull"`
 	TaxExempt                                 bool                                      `json:"taxExempt"                                 bun:"tax_exempt,type:BOOLEAN,notnull"`
 	TaxExemptNumber                           string                                    `json:"taxExemptNumber"                           bun:"tax_exempt_number,type:VARCHAR(50),nullzero"`
-	EnforceCustomerBillingReq                 bool                                      `json:"enforceCustomerBillingReq"                 bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"`
-	ValidateCustomerRates                     bool                                      `json:"validateCustomerRates"                     bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
-	AutoTransfer                              bool                                      `json:"autoTransfer"                              bun:"auto_transfer,type:BOOLEAN,notnull,default:true"`
-	AutoMarkReadyToBill                       bool                                      `json:"autoMarkReadyToBill"                       bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"`
-	AutoBill                                  bool                                      `json:"autoBill"                                  bun:"auto_bill,type:BOOLEAN,notnull,default:true"`
+	EnforceCustomerBillingReq                 bool                                      `json:"enforceCustomerBillingReq"                 bun:"enforce_customer_billing_req,type:BOOLEAN,notnull"`
+	ValidateCustomerRates                     bool                                      `json:"validateCustomerRates"                     bun:"validate_customer_rates,type:BOOLEAN,notnull"`
+	AutoTransfer                              bool                                      `json:"autoTransfer"                              bun:"auto_transfer,type:BOOLEAN,notnull"`
+	AutoMarkReadyToBill                       bool                                      `json:"autoMarkReadyToBill"                       bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull"`
+	AutoBill                                  bool                                      `json:"autoBill"                                  bun:"auto_bill,type:BOOLEAN,notnull"`
 	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
-	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull,default:true"`
+	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull"`
 	BillingCurrency                           string                                    `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
 	RequirePONumber                           bool                                      `json:"requirePONumber"                           bun:"require_po_number,type:BOOLEAN,notnull"`
 	RequireBOLNumber                          bool                                      `json:"requireBOLNumber"                          bun:"require_bol_number,type:BOOLEAN,notnull"`
@@ -175,12 +175,22 @@ func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {
 		b.FuelSurchargeProgramID != nil && !b.FuelSurchargeProgramID.IsNil()
 }
 
+// NewDefaultBillingProfile is the profile a customer gets when one is not
+// supplied. Every billing automation it turns on is named here rather than left
+// to a column default: the fields below carry no bun default, so what this
+// constructor omits is stored false.
 func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBillingProfile {
 	return &CustomerBillingProfile{
 		OrganizationID:              orgID,
 		BusinessUnitID:              buID,
 		CustomerID:                  customerID,
 		AutoSendInvoiceOnGeneration: true,
+		EnforceCustomerBillingReq:   true,
+		ValidateCustomerRates:       true,
+		AutoTransfer:                true,
+		AutoMarkReadyToBill:         true,
+		AutoBill:                    true,
+		AutoApplyAccessorials:       true,
 		FuelSurchargeMode:           FuelSurchargeModeNone,
 		InvoiceAdjustmentSupportingDocumentPolicy: InvoiceAdjustmentSupportingDocumentPolicyInherit,
 	}
