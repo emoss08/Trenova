@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import {
@@ -84,7 +85,7 @@ function applyFieldErrors<T extends FieldValues>(
     // provider rather than their own. Render-tree topology must not decide whether the
     // user learns why the save failed.
     form.setError("root", { message, type: "validation" });
-    toast.error("This change could not be saved", { description: message });
+    toast.error(translate("This change could not be saved"), { description: message });
   }
 }
 
@@ -109,15 +110,15 @@ export function handleMutationError<T extends FieldValues>({
 
     const description = error instanceof Error ? error.message : "An unexpected error occurred";
 
-    toast.error("Error", {
+    toast.error(translate("Error"), {
       description,
     });
     return;
   }
 
   if (apiProblem.isVersionMismatchError(normalized)) {
-    toast.error("Version mismatch", {
-      description: "The resource has been modified. Please refresh and try again.",
+    toast.error(translate("Version mismatch"), {
+      description: translate("The resource has been modified. Please refresh and try again."),
     });
     return;
   }
@@ -128,15 +129,15 @@ export function handleMutationError<T extends FieldValues>({
   }
 
   if (apiProblem.isBusinessError(normalized)) {
-    toast.error("Invalid Operation", {
+    toast.error(translate("Invalid Operation"), {
       description: normalized.message,
     });
     return;
   }
 
   if (apiProblem.isRateLimitError(normalized)) {
-    toast.error("Rate limit exceeded", {
-      description: "Please wait a moment and try again.",
+    toast.error(translate("Rate limit exceeded"), {
+      description: translate("Please wait a moment and try again."),
     });
     return;
   }
@@ -149,14 +150,14 @@ export function handleMutationError<T extends FieldValues>({
   }
 
   if (apiProblem.isAuthorizationError(normalized)) {
-    toast.error("Access denied", {
-      description: "You don't have permission to perform this action.",
+    toast.error(translate("Access denied"), {
+      description: translate("You don't have permission to perform this action."),
     });
     return;
   }
 
   if (apiProblem.isNotFoundError(normalized)) {
-    toast.error("Not found", {
+    toast.error(translate("Not found"), {
       description: normalized.detail || "The requested resource was not found.",
     });
     return;
@@ -166,7 +167,7 @@ export function handleMutationError<T extends FieldValues>({
     console.error(`Error handling ${resourceName}:`, error);
   }
 
-  toast.error("Error", {
+  toast.error(translate("Error"), {
     description: normalized.message,
   });
 }
