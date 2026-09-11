@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { HosClockGauges } from "@/components/hos/hos-clock-gauges";
 import type { DispatchBoardDriver } from "@/lib/graphql/dispatch-console";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
@@ -183,6 +184,8 @@ export function CapacityRail({
   selectedWorkerId: string | null;
   onSelectDriver: (workerId: string) => void;
 }) {
+  const t = useT();
+
   const {
     capacityFilter: filter,
     driverSearch: search,
@@ -232,10 +235,10 @@ export function CapacityRail({
         <Input
           value={search}
           onChange={(event) => setDriverSearch(event.target.value)}
-          placeholder="Search driver, tractor, fleet"
+          placeholder={t("Search driver, tractor, fleet")}
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           className="h-8 pl-7 text-xs"
-          aria-label="Search drivers by name, tractor code, or fleet"
+          aria-label={t("Search drivers by name, tractor code, or fleet")}
         />
         <div className="flex flex-wrap gap-1">
           {CAPACITY_FILTERS.map((option) => {
@@ -261,10 +264,10 @@ export function CapacityRail({
 
       <div className="flex items-center justify-between border-b px-2.5 py-1.5">
         <span className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
-          Capacity
+          {t("Capacity")}
         </span>
         <span className="text-muted-foreground text-[10.5px] tabular-nums">
-          {visible.length} of {drivers.length}
+          {t("{0} of {1}", visible.length, drivers.length)}
         </span>
       </div>
 
@@ -278,7 +281,7 @@ export function CapacityRail({
           <CapacityRailRowsSkeleton />
         ) : visible.length === 0 ? (
           <p className="text-muted-foreground p-4 text-center text-xs">
-            No drivers match this view.
+            {t("No drivers match this view.")}
           </p>
         ) : (
           visible.map((driver) => (

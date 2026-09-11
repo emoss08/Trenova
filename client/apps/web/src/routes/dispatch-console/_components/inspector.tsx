@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { PermissionGate } from "@/components/permission-gate";
@@ -47,6 +48,8 @@ function CandidateRow({
   onAssign: (candidate: DispatchCandidate) => void;
   isAssigning: boolean;
 }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState(false);
   const verdict = verdictMeta(candidate.verdict);
   const missingTractor = !candidate.tractorId;
@@ -71,15 +74,15 @@ function CandidateRow({
       </div>
 
       <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
-        <span className="tabular-nums">Score {candidate.score}</span>
-        <span>· {formatMiles(candidate.deadheadMiles)} empty</span>
-        <span>· {formatClockDurationMs(candidate.driveRemainingMs)} drive left</span>
+        <span className="tabular-nums">{t("Score {0}", candidate.score)}</span>
+        <span>{t("· {0} empty", formatMiles(candidate.deadheadMiles))}</span>
+        <span>{t("· {0} drive left", formatClockDurationMs(candidate.driveRemainingMs))}</span>
         {candidate.minutesOfSlack < 0 ? (
           <span className="text-red-600 dark:text-red-400">
-            · {Math.abs(candidate.minutesOfSlack)}m late
+            {t("· {0}m late", Math.abs(candidate.minutesOfSlack))}
           </span>
         ) : (
-          <span>· {candidate.minutesOfSlack}m margin</span>
+          <span>{t("· {0}m margin", candidate.minutesOfSlack)}</span>
         )}
       </div>
 
@@ -117,6 +120,8 @@ function CandidateRow({
 }
 
 function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
+  const t = useT();
+
   const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
   const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
 
@@ -126,12 +131,12 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
         <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
         <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
         <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
-          Carrier
+          {t("Carrier")}
         </Badge>
       </div>
       {move.carrierTotalCost != null && (
         <span className="text-muted-foreground text-[10px] tabular-nums">
-          Total cost {formatCurrency(move.carrierTotalCost)}
+          {t("Total cost {0}", formatCurrency(move.carrierTotalCost))}
         </span>
       )}
       {move.carrierAssignmentId && (
@@ -148,10 +153,10 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
             size="sm"
             variant="outline"
             className="h-6 px-2 text-[10px]"
-            title="Broker this move to a different carrier — the current assignment is replaced"
+            title={t("Broker this move to a different carrier — the current assignment is replaced")}
             onClick={() => openCarrierAssign(move)}
           >
-            Replace carrier
+            {t("Replace carrier")}
           </Button>
         </CapabilityGate>
         <Button
@@ -160,7 +165,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
           className="h-6 px-2 text-[10px]"
           onClick={() => openCarrierCancel(move)}
         >
-          Cancel carrier assignment
+          {t("Cancel carrier assignment")}
         </Button>
       </div>
     </div>
@@ -217,6 +222,8 @@ function MoveInspector({
   hotkeysEnabled: boolean;
   actions: DispatchActions;
 }) {
+  const t = useT();
+
   const [includeBlocked, setIncludeBlocked] = useState(false);
   const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
   const openTender = useDispatchConsoleStore.use.openTender();
@@ -269,8 +276,7 @@ function MoveInspector({
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
         <span className="text-muted-foreground text-[10px]">
-          Pickup{" "}
-          {move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled"}
+          {t("Pickup {0}", move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled")}
         </span>
       </div>
 
@@ -285,7 +291,7 @@ function MoveInspector({
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         {canRankDrivers && (
           <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-            {candidates.length} candidates
+            {t("{0} candidates", candidates.length)}
           </span>
         )}
         <div className="ml-auto flex items-center gap-1.5">
@@ -300,7 +306,7 @@ function MoveInspector({
                   onClick={() => openCarrierAssign(move)}
                 >
                   <Building2Icon className="size-3" aria-hidden />
-                  Assign to carrier
+                  {t("Assign to carrier")}
                 </Button>
               </PermissionGate>
             )}
@@ -314,7 +320,7 @@ function MoveInspector({
                   onClick={() => openTender(move)}
                 >
                   <SendIcon className="size-3" aria-hidden />
-                  Tender to carriers
+                  {t("Tender to carriers")}
                 </Button>
               </PermissionGate>
             )}
@@ -356,8 +362,7 @@ function MoveInspector({
                   ))}
               {!isLoading && candidates.length === 0 && (
                 <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-                  No eligible driver for this move.
-                  {!includeBlocked ? " Show ineligible drivers to see why." : ""}
+                  {t("No eligible driver for this move. {0}", !includeBlocked ? " Show ineligible drivers to see why." : "")}
                 </p>
               )}
             </>
@@ -379,6 +384,8 @@ function DriverMatchRow({
   match: DispatchDriverMoveMatch;
   onSelectMove: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const verdict = verdictMeta(match.score.verdict);
 
   return (
@@ -401,8 +408,7 @@ function DriverMatchRow({
         {match.move.destinationState}
       </span>
       <span className="text-muted-foreground text-[10px]">
-        {formatUnixDateTime(match.move.originWindowStart)} ·{" "}
-        {formatMiles(match.score.deadheadMiles)} empty
+        {t("{0} · {1} empty", formatUnixDateTime(match.move.originWindowStart), formatMiles(match.score.deadheadMiles))}
       </span>
     </button>
   );
@@ -415,6 +421,8 @@ function DriverInspector({
   driver: DispatchBoardDriver;
   onSelectMove: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.driverMoves({ workerId: driver.workerId, limit: 20 }),
     staleTime: CANDIDATE_STALE_MS,
@@ -433,7 +441,7 @@ function DriverInspector({
           {driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`}
         </span>
         <span className="text-muted-foreground text-[10px]">
-          Available {formatUnixDateTime(driver.projectedTimeAvailable)}
+          {t("Available {0}", formatUnixDateTime(driver.projectedTimeAvailable))}
         </span>
       </div>
 
@@ -443,7 +451,7 @@ function DriverInspector({
         {driver.commitments.length > 0 && (
           <div className="flex flex-col gap-1">
             <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-              Committed
+              {t("Committed")}
             </span>
             {driver.commitments.map((commitment) => (
               <div
@@ -452,7 +460,7 @@ function DriverInspector({
               >
                 <span className="truncate font-mono text-[10px]">{commitment.proNumber}</span>
                 <span className="text-muted-foreground shrink-0 text-[10px]">
-                  to {commitment.destinationCity}, {commitment.destinationState}
+                  {t("to {0}, {1}", commitment.destinationCity, commitment.destinationState)}
                 </span>
               </div>
             ))}
@@ -461,7 +469,7 @@ function DriverInspector({
       </div>
 
       <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-[10px] tracking-wide uppercase">
-        Best fit ({matches.length})
+        {t("Best fit ({0})", matches.length)}
       </span>
 
       <ScrollArea
@@ -480,7 +488,7 @@ function DriverInspector({
               ))}
           {!isLoading && matches.length === 0 && (
             <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-              No open moves suit this driver right now.
+              {t("No open moves suit this driver right now.")}
             </p>
           )}
         </div>
@@ -510,6 +518,8 @@ export function Inspector({
   hotkeysEnabled: boolean;
   actions: DispatchActions;
 }) {
+  const t = useT();
+
   const capabilities = useOrgCapabilities();
   const canRankDrivers = hasOrganizationCapability(
     capabilities,
@@ -542,7 +552,7 @@ export function Inspector({
         <DriverInspector driver={selectedDriver} onSelectMove={onSelectMove} />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
-          <p className="text-xs font-medium">Nothing selected</p>
+          <p className="text-xs font-medium">{t("Nothing selected")}</p>
           <p className="text-muted-foreground text-[11px]">
             {canRankDrivers
               ? "Select a move to rank drivers for it, or a driver to find them work."

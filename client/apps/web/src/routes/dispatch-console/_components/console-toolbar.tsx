@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { formatRangeLabelForDays, isTodayAnchor } from "@/lib/timeline/time-scale";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -44,6 +45,8 @@ export function ConsoleToolbar({
   onUndo: () => void;
   onPlan: () => void;
 }) {
+  const t = useT();
+
   const {
     anchor,
     zoom,
@@ -63,8 +66,8 @@ export function ConsoleToolbar({
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Previous window"
-          title="Previous window (←)"
+          aria-label={t("Previous window")}
+          title={t("Previous window (←)")}
           onClick={() => shiftWindow(-1)}
         >
           <ChevronLeftIcon className="size-3.5" />
@@ -73,18 +76,18 @@ export function ConsoleToolbar({
           type="button"
           variant="outline"
           size="xxs"
-          title="Jump to today (T)"
+          title={t("Jump to today (T)")}
           onClick={goToday}
           disabled={isTodayAnchor(anchor)}
         >
-          Today
+          {t("Today")}
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Next window"
-          title="Next window (→)"
+          aria-label={t("Next window")}
+          title={t("Next window (→)")}
           onClick={() => shiftWindow(1)}
         >
           <ChevronRightIcon className="size-3.5" />
@@ -94,7 +97,7 @@ export function ConsoleToolbar({
       <Popover>
         <PopoverTrigger
           className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors"
-          aria-label="Jump to date"
+          aria-label={t("Jump to date")}
         >
           <CalendarIcon className="text-muted-foreground size-3" />
           {formatRangeLabelForDays(anchor, zoom)}
@@ -111,7 +114,7 @@ export function ConsoleToolbar({
 
       <div
         role="group"
-        aria-label="Window length"
+        aria-label={t("Window length")}
         className="border-border inline-flex overflow-hidden rounded-md border"
       >
         {TIMELINE_ZOOM_OPTIONS.map((option, index) => (
@@ -138,7 +141,7 @@ export function ConsoleToolbar({
       {timelineAvailable && (
         <div
           role="group"
-          aria-label="Center view"
+          aria-label={t("Center view")}
           className="border-border inline-flex overflow-hidden rounded-md border"
         >
           {CENTER_MODE_OPTIONS.map((option, index) => (
@@ -167,7 +170,7 @@ export function ConsoleToolbar({
 
       <label className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
-        Show covered
+        {t("Show covered")}
       </label>
 
       <div className="ml-auto flex items-center gap-1.5">
@@ -179,7 +182,7 @@ export function ConsoleToolbar({
           onClick={onUndo}
         >
           <Undo2Icon className="size-3" aria-hidden />
-          Undo
+          {t("Undo")}
           <Kbd className="h-4 min-w-4 text-[9px]">u</Kbd>
         </Button>
         {/* Auto-assign plans driver/tractor pairings, which the API refuses for an
@@ -194,7 +197,7 @@ export function ConsoleToolbar({
             onClick={onPlan}
           >
             <SparklesIcon className="size-3" aria-hidden />
-            Auto-assign
+            {t("Auto-assign")}
           </Button>
         </CapabilityGate>
       </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { useDroppable } from "@dnd-kit/core";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -53,6 +54,8 @@ function MoveCard({
   isSelected: boolean;
   onSelect: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const { setNodeRef, isOver, active } = useDroppable({
     id: `move:${move.moveId}`,
     data: { type: "move-target", move },
@@ -82,7 +85,7 @@ function MoveCard({
           <span className="truncate font-mono text-xs font-semibold">{move.proNumber}</span>
           {move.moveCount > 1 && (
             <Badge variant="outline" className="h-4 shrink-0 rounded px-1 text-[9px]">
-              Leg {move.sequence + 1}/{move.moveCount}
+              {t("Leg {0}/{1}", move.sequence + 1, move.moveCount)}
             </Badge>
           )}
         </div>
@@ -129,19 +132,19 @@ function MoveCard({
         {move.hasHazmat && (
           <Badge variant="inactive" className="h-4 rounded px-1 text-[9px]">
             <FlameIcon className="mr-0.5 size-2.5" aria-hidden />
-            Hazmat
+            {t("Hazmat")}
           </Badge>
         )}
         {move.temperatureMin != null && (
           <Badge variant="info" className="h-4 rounded px-1 text-[9px]">
             <SnowflakeIcon className="mr-0.5 size-2.5" aria-hidden />
-            {move.temperatureMin}–{move.temperatureMax}°F
+            {t("{0}–{1}°F", move.temperatureMin, move.temperatureMax)}
           </Badge>
         )}
         {move.hasActiveHold && (
           <Badge variant="inactive" className="h-4 rounded px-1 text-[9px]">
             <TriangleAlertIcon className="mr-0.5 size-2.5" aria-hidden />
-            On hold
+            {t("On hold")}
           </Badge>
         )}
         <TenderChip move={move} />
@@ -180,6 +183,8 @@ function UrgencyColumn({
   selectedMoveId: string | null;
   onSelectMove: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const meta = urgencyMeta(bucket);
 
   return (
@@ -202,7 +207,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="text-muted-foreground py-6 text-center text-[11px]">Nothing here.</p>
+            <p className="text-muted-foreground py-6 text-center text-[11px]">{t("Nothing here.")}</p>
           )}
         </div>
       </ScrollArea>

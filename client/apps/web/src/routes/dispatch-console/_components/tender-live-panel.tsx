@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import type { LiveTender, LiveTenderOffer } from "@/lib/graphql/tender";
 import { TenderOfferStatusBadge, TenderStatusBadge } from "@trenova/shared/components/status-badge";
@@ -58,6 +59,8 @@ function TenderCancelDialog({
   isSubmitting: boolean;
   onConfirm: (reason: string) => void;
 }) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(cancelTenderPayloadSchema),
     defaultValues: { reason: "" },
@@ -77,10 +80,9 @@ function TenderCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Cancel Tender</DialogTitle>
+          <DialogTitle>{t("Cancel Tender")}</DialogTitle>
           <DialogDescription>
-            Outstanding offers are withdrawn and carriers can no longer accept. The reason is
-            recorded on the tender.
+            {t("Outstanding offers are withdrawn and carriers can no longer accept. The reason is recorded on the tender.")}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -93,22 +95,22 @@ function TenderCancelDialog({
             <TextareaField
               control={control}
               name="reason"
-              label="Reason"
+              label={t("Reason")}
               rules={{ required: true }}
-              placeholder="e.g., Covered internally with a company driver"
+              placeholder={t("e.g., Covered internally with a company driver")}
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Keep tender
+              {t("Keep tender")}
             </Button>
             <Button
               type="submit"
               variant="destructive"
               isLoading={isSubmitting}
-              loadingText="Canceling..."
+              loadingText={t("Canceling...")}
             >
-              Cancel tender
+              {t("Cancel tender")}
             </Button>
           </DialogFooter>
         </Form>
@@ -128,6 +130,8 @@ function RecordResponseDialog({
   isSubmitting: boolean;
   onConfirm: (payload: RecordTenderResponsePayload) => void;
 }) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(recordTenderResponsePayloadSchema),
     defaultValues: { action: "Accept" as const, declineReason: "" },
@@ -139,10 +143,9 @@ function RecordResponseDialog({
     <Dialog open onOpenChange={(nextOpen) => !nextOpen && onOpenChange(false)}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Record Carrier Response</DialogTitle>
+          <DialogTitle>{t("Record Carrier Response")}</DialogTitle>
           <DialogDescription>
-            {offer.carrier?.name ?? "The carrier"} responded off-channel — by phone or a direct
-            email. Record it here so the tender advances.
+            {t("{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.", offer.carrier?.name ?? "The carrier")}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -159,7 +162,7 @@ function RecordResponseDialog({
                 className="flex-1"
                 onClick={() => setValue("action", "Accept")}
               >
-                Accepted
+                {t("Accepted")}
               </Button>
               <Button
                 type="button"
@@ -167,25 +170,25 @@ function RecordResponseDialog({
                 className="flex-1"
                 onClick={() => setValue("action", "Decline")}
               >
-                Declined
+                {t("Declined")}
               </Button>
             </div>
             {action === "Decline" && (
               <TextareaField
                 control={control}
                 name="declineReason"
-                label="Decline Reason"
+                label={t("Decline Reason")}
                 rules={{ required: true }}
-                placeholder="e.g., No truck available in the area"
+                placeholder={t("e.g., No truck available in the area")}
               />
             )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Recording...">
-              Record response
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Recording...")}>
+              {t("Record response")}
             </Button>
           </DialogFooter>
         </Form>
@@ -205,6 +208,8 @@ function OfferRow({
   nowSeconds: number;
   onRecordResponse: ((offer: LiveTenderOffer) => void) | null;
 }) {
+  const t = useT();
+
   const countdown =
     offer.status === "Sent" ? formatOfferCountdown(offer.expiresAt, nowSeconds) : "";
 
@@ -241,10 +246,10 @@ function OfferRow({
           </span>
         )}
         {offer.respondedAt != null && (
-          <span>· responded {formatUnixDateTime(offer.respondedAt)}</span>
+          <span>{t("· responded {0}", formatUnixDateTime(offer.respondedAt))}</span>
         )}
         {offer.respondedAt != null && offer.responseSource && (
-          <span title="How the carrier's response reached us">
+          <span title={t("How the carrier's response reached us")}>
             · {TENDER_RESPONSE_SOURCE_LABEL[offer.responseSource]}
           </span>
         )}
@@ -265,7 +270,7 @@ function OfferRow({
             className="h-6 px-2 text-[10px]"
             onClick={() => onRecordResponse(offer)}
           >
-            Record response
+            {t("Record response")}
           </Button>
         </div>
       )}
@@ -295,6 +300,8 @@ export function TenderLivePanel({
   /** Opens the manual carrier-assign flow; shown on the NeedsReview banner. */
   onAssignManually?: () => void;
 }) {
+  const t = useT();
+
   const nowSeconds = useNowSeconds();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [respondingTo, setRespondingTo] = useState<LiveTenderOffer | null>(null);
@@ -343,18 +350,16 @@ export function TenderLivePanel({
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         {tender.routingGuide && (
-          <span className="text-muted-foreground text-[10px]">via {tender.routingGuide.name}</span>
+          <span className="text-muted-foreground text-[10px]">{t("via {0}", tender.routingGuide.name)}</span>
         )}
       </div>
 
       {tender.status === "NeedsReview" && (
         <Alert variant="destructive">
           <TriangleAlertIcon className="size-4" aria-hidden />
-          <AlertTitle>Carrier accepted, but auto-assignment failed</AlertTitle>
+          <AlertTitle>{t("Carrier accepted, but auto-assignment failed")}</AlertTitle>
           <AlertDescription>
-            The accepting carrier could not be assigned to the move automatically — the move may
-            have gained coverage in the meantime, or the assignment was blocked. Assign the carrier
-            manually with the regular carrier-assign flow, or cancel this tender.
+            {t("The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender.")}
             {onAssignManually && canAssignMove && (
               <Button
                 size="sm"
@@ -362,7 +367,7 @@ export function TenderLivePanel({
                 className="mt-2 h-6 px-2 text-[10px]"
                 onClick={onAssignManually}
               >
-                Assign manually
+                {t("Assign manually")}
               </Button>
             )}
           </AlertDescription>
@@ -381,7 +386,7 @@ export function TenderLivePanel({
         ))}
         {offers.length === 0 && (
           <p className="text-muted-foreground py-3 text-center text-[11px]">
-            No offers on this tender.
+            {t("No offers on this tender.")}
           </p>
         )}
       </div>
@@ -395,7 +400,7 @@ export function TenderLivePanel({
             disabled={isTendering}
             onClick={() => setCancelOpen(true)}
           >
-            Cancel tender
+            {t("Cancel tender")}
           </Button>
         </div>
       )}

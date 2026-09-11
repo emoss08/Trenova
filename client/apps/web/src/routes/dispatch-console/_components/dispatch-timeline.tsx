@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   DispatchBoardDriver,
   DispatchBoardMove,
@@ -367,6 +368,8 @@ function UnassignedLaneRow({
   selectedMoveId: string | null;
   onSelectMove: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const height = rowHeight(row);
 
   return (
@@ -379,9 +382,9 @@ function UnassignedLaneRow({
           <InboxIcon className="size-3.5" />
         </span>
         <div className="flex min-w-0 flex-col">
-          <span className="text-warning truncate text-[11.5px] font-medium">Uncovered</span>
+          <span className="text-warning truncate text-[11.5px] font-medium">{t("Uncovered")}</span>
           <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
-            {row.spans.length} {row.spans.length === 1 ? "move" : "moves"} · drag onto a driver
+            {t("{0}{1} · drag onto a driver", row.spans.length, row.spans.length === 1 ? "move" : "moves")}
           </span>
         </div>
       </div>
@@ -426,6 +429,8 @@ export function DispatchTimeline({
   onSelectMove: (moveId: string) => void;
   onSelectDriver: (workerId: string) => void;
 }) {
+  const t = useT();
+
   const { pxPerHour, hourTickStep } = timelineZoomConfig(zoom);
   const canvasWidth = canvasWidthForRange(range, pxPerHour);
   const dayColumns = useMemo(() => buildDayColumnsForRange(range, pxPerHour), [range, pxPerHour]);
@@ -478,9 +483,9 @@ export function DispatchTimeline({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
         <CalendarClockIcon className="text-muted-foreground size-6" />
-        <p className="text-sm font-semibold">No drivers to plan</p>
+        <p className="text-sm font-semibold">{t("No drivers to plan")}</p>
         <p className="text-muted-foreground max-w-sm text-xs">
-          No active, assignable drivers match the current filters.
+          {t("No active, assignable drivers match the current filters.")}
         </p>
       </div>
     );
@@ -498,7 +503,7 @@ export function DispatchTimeline({
             style={{ width: RAIL_WIDTH_PX }}
           >
             <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
-              Drivers · {drivers.length}
+              {t("Drivers · {0}", drivers.length)}
             </span>
           </div>
           <div className="bg-muted relative shrink-0" style={{ width: canvasWidth }}>

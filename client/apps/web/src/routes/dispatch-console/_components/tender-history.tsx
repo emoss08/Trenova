@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { ShipmentTender } from "@/lib/graphql/tender";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { TenderOfferStatusBadge, TenderStatusBadge } from "@trenova/shared/components/status-badge";
@@ -22,6 +23,8 @@ function acceptedCarrierName(tender: ShipmentTender): string | null {
 }
 
 function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState(false);
   const offers = [...(tender.offers ?? [])].sort((a, b) => a.rank - b.rank);
   const acceptedCarrier = acceptedCarrierName(tender);
@@ -50,7 +53,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
 
       {acceptedCarrier && (
         <span className="text-muted-foreground px-2 pb-1 text-[10px]">
-          Accepted by <span className="text-foreground font-medium">{acceptedCarrier}</span>
+          {t("Accepted by")} <span className="text-foreground font-medium">{acceptedCarrier}</span>
           {tender.acceptedAt != null ? ` · ${formatUnixDateTime(tender.acceptedAt)}` : ""}
         </span>
       )}
@@ -86,12 +89,12 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                   {formatOfferRate(offer.rate, offer.rateMethod)}
                 </span>
                 <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
-                {offer.sentAt != null && <span>· sent {formatUnixDateTime(offer.sentAt)}</span>}
+                {offer.sentAt != null && <span>{t("· sent {0}", formatUnixDateTime(offer.sentAt))}</span>}
                 {offer.respondedAt != null && (
-                  <span>· responded {formatUnixDateTime(offer.respondedAt)}</span>
+                  <span>{t("· responded {0}", formatUnixDateTime(offer.respondedAt))}</span>
                 )}
                 {offer.respondedAt != null && offer.responseSource && (
-                  <span title="How the carrier's response reached us">
+                  <span title={t("How the carrier's response reached us")}>
                     · {TENDER_RESPONSE_SOURCE_LABEL[offer.responseSource]}
                   </span>
                 )}
@@ -104,7 +107,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
             </div>
           ))}
           {offers.length === 0 && (
-            <p className="text-muted-foreground py-1 text-center text-[10px]">No offers.</p>
+            <p className="text-muted-foreground py-1 text-center text-[10px]">{t("No offers.")}</p>
           )}
         </div>
       )}
@@ -123,6 +126,8 @@ export function TenderHistory({
   shipmentId: string;
   className?: string;
 }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.shipmentTenders(shipmentId),
   });
@@ -135,7 +140,7 @@ export function TenderHistory({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">Tenders</span>
+      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">{t("Tenders")}</span>
       {isLoading ? (
         <Skeleton className="h-12 rounded-md" />
       ) : (

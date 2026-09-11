@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchScoreFactor } from "@/lib/graphql/dispatch-console";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
@@ -20,6 +21,8 @@ export function ScoreBreakdown({
   factors: readonly DispatchScoreFactor[];
   className?: string;
 }) {
+  const t = useT();
+
   const [showFlat, setShowFlat] = useState(false);
   const reducedMotion = useReducedMotion();
 
@@ -32,7 +35,7 @@ export function ScoreBreakdown({
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline justify-between">
           <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-            Match score
+            {t("Match score")}
           </span>
           <span className="flex items-baseline gap-1">
             <span
@@ -54,7 +57,7 @@ export function ScoreBreakdown({
       </div>
 
       {factors.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">Not enough data to score this pairing.</p>
+        <p className="text-muted-foreground text-[11px]">{t("Not enough data to score this pairing.")}</p>
       ) : (
         <>
           <ul className="flex flex-col gap-2">
@@ -81,7 +84,7 @@ export function ScoreBreakdown({
                   className={cn("size-3 transition-transform", showFlat && "rotate-180")}
                   aria-hidden
                 />
-                {flat.length} factor{flat.length === 1 ? "" : "s"} contributed nothing
+                {t("{0} factor{1} contributed nothing", flat.length, flat.length === 1 ? "" : "s")}
               </button>
               {showFlat ? (
                 <ul className="border-border flex flex-col gap-1.5 border-l pl-3">
