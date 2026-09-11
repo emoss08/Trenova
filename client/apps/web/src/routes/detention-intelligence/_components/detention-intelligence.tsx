@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomerMargin } from "./customer-margin";
 import { DetentionIntelligenceEmpty } from "./detention-intelligence-empty";
 import { DetentionLedger, DetentionLedgerSkeleton } from "./detention-ledger";
@@ -26,6 +27,8 @@ export function DetentionIntelligence({
   /** Moves the page's window to its widest; absent once it is already there. */
   onWiden?: () => void;
 }) {
+  const t = useT();
+
   const days = detentionWindowDays(windowValue);
   const { facilities, customers, waivers, rollup } = useDetentionIntelligence(days);
 
@@ -34,7 +37,7 @@ export function DetentionIntelligence({
   if (!facilities.isLoading && !facilities.isError && (facilities.data ?? []).length === 0) {
     return (
       <DetentionIntelligenceEmpty
-        title="No detention in this window"
+        title={t("No detention in this window")}
         description={`No stop settled detention at any facility in the last ${days} days. Look back further, or check that the detention engine is switched on for this organization.`}
         onWiden={windowValue === WIDEST_WINDOW.value ? undefined : onWiden}
         widenLabel={`Look back ${WIDEST_WINDOW.days} days`}

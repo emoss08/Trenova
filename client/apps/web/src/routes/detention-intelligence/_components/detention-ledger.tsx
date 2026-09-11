@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ShareBreakdown, type ShareSegment } from "@/components/detention/detention-charts";
 import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -51,6 +52,8 @@ export function DetentionLedgerSkeleton() {
  * handed back at someone's discretion.
  */
 export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
+  const t = useT();
+
   const { billed, driverPay, netMargin, waived, stopCount, breachCount } = rollup;
 
   const kept = Math.max(netMargin, 0);
@@ -103,7 +106,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
       <div className="relative flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-            Net detention margin
+            {t("Net detention margin")}
           </p>
           <p
             className={cn(
@@ -114,10 +117,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
             <NumberFlow value={netMargin} format={CURRENCY_FORMAT} />
           </p>
           <p className="text-2xs text-muted-foreground mt-2 tabular-nums">
-            {stopCount.toLocaleString()} settled {stopCount === 1 ? "stop" : "stops"} across{" "}
-            {rollup.facilityCount} {rollup.facilityCount === 1 ? "facility" : "facilities"} ·{" "}
-            {Math.round(breachRate * 100)}% ran past free time
-            {rollup.truncated ? " · top facilities only" : ""}
+            {t("{0} settled {1} across {2}{3} · {4}% ran past free time {5}", stopCount.toLocaleString(), stopCount === 1 ? "stop" : "stops", rollup.facilityCount, rollup.facilityCount === 1 ? "facility" : "facilities", Math.round(breachRate * 100), rollup.truncated ? " · top facilities only" : "")}
           </p>
 
           <div className="mt-4 max-w-xl">
@@ -126,8 +126,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
 
           {overrun ? (
             <p className="text-2xs mt-3 text-red-600 dark:text-red-400">
-              Driver detention pay exceeded what was billed — the free-time concessions granted to
-              customers are wider than the driver contract allows for.
+              {t("Driver detention pay exceeded what was billed — the free-time concessions granted to customers are wider than the driver contract allows for.")}
             </p>
           ) : null}
         </div>
@@ -138,7 +137,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
             size={96}
             strokeWidth={7}
             tone={retentionTone(retention)}
-            aria-label="Share of billed detention retained after driver pay"
+            aria-label={t("Share of billed detention retained after driver pay")}
           >
             <div className="text-center">
               <p className="text-lg leading-none font-semibold tabular-nums">
@@ -148,19 +147,19 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
             </div>
           </RingGauge>
           <p className="text-2xs text-muted-foreground max-w-[9rem] leading-snug sm:text-center">
-            of every billed detention dollar survives driver pay
+            {t("of every billed detention dollar survives driver pay")}
           </p>
         </div>
       </div>
 
       <div className="divide-border border-border relative grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
         <LedgerStat
-          label="Billed"
+          label={t("Billed")}
           value={formatCurrency(billed)}
           detail={`${formatCurrency(exposure)} put in play`}
         />
         <LedgerStat
-          label="Driver pay"
+          label={t("Driver pay")}
           value={formatCurrency(driverPay)}
           detail={
             billed > 0
@@ -169,7 +168,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           }
         />
         <LedgerStat
-          label="Forgiven"
+          label={t("Forgiven")}
           value={formatCurrency(waived)}
           detail={
             exposure > 0
@@ -179,7 +178,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           valueClassName={waived > 0 ? "text-amber-600 dark:text-amber-400" : undefined}
         />
         <LedgerStat
-          label="Margin per stop"
+          label={t("Margin per stop")}
           value={formatCurrency(marginPerStop)}
           detail={
             rollup.suppressedCount > 0

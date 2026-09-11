@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Meter, ShareBreakdown, type ShareSegment } from "@/components/detention/detention-charts";
 import { detentionWaiverReasonChoices, findChoice } from "@/lib/choices";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -40,6 +41,8 @@ function LeakageRow({
   total: number;
   index: number;
 }) {
+  const t = useT();
+
   const share = total > 0 ? row.waivedAmount / total : 0;
   const perWaiver = row.waiverCount > 0 ? row.waivedAmount / row.waiverCount : 0;
   const description = reasonDescription(row.reason);
@@ -69,7 +72,7 @@ function LeakageRow({
             {formatCurrency(row.waivedAmount)}
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 tabular-nums">
-            {Math.round(share * 100)}% of leakage
+            {t("{0}% of leakage", Math.round(share * 100))}
           </p>
         </div>
       </div>
@@ -82,8 +85,7 @@ function LeakageRow({
           delay={Math.min(index, 10) * 0.04}
         />
         <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
-          {row.waiverCount} {row.waiverCount === 1 ? "waiver" : "waivers"} · {row.approverCount}{" "}
-          {row.approverCount === 1 ? "approver" : "approvers"} · {formatCurrency(perWaiver)} each
+          {t("{0}{1} · {2} {3} · {4} each", row.waiverCount, row.waiverCount === 1 ? "waiver" : "waivers", row.approverCount, row.approverCount === 1 ? "approver" : "approvers", formatCurrency(perWaiver))}
         </p>
       </div>
     </m.div>
@@ -103,6 +105,8 @@ export function WaiverLeakage({
   onRetry: () => void;
   index: number;
 }) {
+  const t = useT();
+
   const sorted = useMemo(() => [...rows].sort((a, b) => b.waivedAmount - a.waivedAmount), [rows]);
 
   const total = useMemo(() => sorted.reduce((sum, row) => sum + row.waivedAmount, 0), [sorted]);
@@ -127,15 +131,12 @@ export function WaiverLeakage({
     <Panel
       index={index}
       icon={HandCoinsIcon}
-      title="Waiver leakage"
-      description="Revenue forgiven at someone's discretion, grouped by the coded reason given."
+      title={t("Waiver leakage")}
+      description={t("Revenue forgiven at someone's discretion, grouped by the coded reason given.")}
       footer={
         leader ? (
           <p className="text-2xs text-muted-foreground">
-            <span className="text-foreground font-medium">{reasonLabel(leader.reason)}</span>{" "}
-            accounts for {Math.round(leaderShare * 100)}% of everything forgiven —{" "}
-            {formatCurrency(leader.waivedAmount)} across {leader.waiverCount}{" "}
-            {leader.waiverCount === 1 ? "waiver" : "waivers"}.
+            <span className="text-foreground font-medium">{reasonLabel(leader.reason)}</span>{t("accounts for {0}% of everything forgiven — {1} across {2} {3}.", Math.round(leaderShare * 100), formatCurrency(leader.waivedAmount), leader.waiverCount, leader.waiverCount === 1 ? "waiver" : "waivers")}
           </p>
         ) : null
       }
@@ -147,7 +148,7 @@ export function WaiverLeakage({
       ) : sorted.length === 0 ? (
         <PanelEmpty
           icon={HandCoinsIcon}
-          message="Nothing was waived in this window. Every accrued detention charge stood."
+          message={t("Nothing was waived in this window. Every accrued detention charge stood.")}
         />
       ) : (
         <>

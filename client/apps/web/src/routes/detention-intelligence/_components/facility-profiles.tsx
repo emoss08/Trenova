@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DwellSpreadRail, Meter } from "@/components/detention/detention-charts";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import {
@@ -69,6 +70,8 @@ function FacilityRow({
   index: number;
   dwellScale: number;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const breachRate = breachRateOf(row);
@@ -95,9 +98,7 @@ function FacilityRow({
             {row.locationName || row.locationId}
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-            {row.stopCount} {row.stopCount === 1 ? "stop" : "stops"} · {row.breachCount} past free
-            time
-            {row.disputeCount > 0 ? ` · ${row.disputeCount} disputed` : ""}
+            {t("{0}{1} · {2} past free time {3}", row.stopCount, row.stopCount === 1 ? "stop" : "stops", row.breachCount, row.disputeCount > 0 ? ` · ${row.disputeCount} disputed` : "")}
           </p>
         </div>
 
@@ -109,8 +110,7 @@ function FacilityRow({
             delay={Math.min(index, 10) * 0.03}
           />
           <p className="text-2xs text-muted-foreground mt-1.5 truncate tabular-nums">
-            {formatDetentionMinutes(Math.round(row.medianDwellMinutes))} med ·{" "}
-            {formatDetentionMinutes(Math.round(row.p90DwellMinutes))} p90
+            {t("{0} med · {1} p90", formatDetentionMinutes(Math.round(row.medianDwellMinutes)), formatDetentionMinutes(Math.round(row.p90DwellMinutes)))}
           </p>
         </div>
 
@@ -121,7 +121,7 @@ function FacilityRow({
             delay={Math.min(index, 10) * 0.03}
           />
           <p className="text-2xs text-muted-foreground mt-1.5 tabular-nums">
-            {Math.round(breachRate * 100)}% breach
+            {t("{0}% breach", Math.round(breachRate * 100))}
           </p>
         </div>
 
@@ -130,7 +130,7 @@ function FacilityRow({
             {formatCurrency(row.billedAmount)}
           </p>
           <p className={cn("text-2xs mt-0.5 truncate tabular-nums", deltaToneClass(row.netMargin))}>
-            {formatSignedCurrency(row.netMargin)} net
+            {t("{0} net", formatSignedCurrency(row.netMargin))}
           </p>
         </div>
 
@@ -154,14 +154,14 @@ function FacilityRow({
           >
             <div className="border-border bg-muted/20 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-dashed px-3 py-3 sm:grid-cols-4">
               <MetricCell
-                label="Average dwell"
+                label={t("Average dwell")}
                 value={formatDetentionMinutes(Math.round(row.avgDwellMinutes))}
                 detail={`${formatDetentionMinutes(
                   Math.round(row.p90DwellMinutes - row.medianDwellMinutes),
                 )} tail over median`}
               />
               <MetricCell
-                label="Driver pay"
+                label={t("Driver pay")}
                 value={formatCurrency(row.driverPayAmount)}
                 detail={
                   row.billedAmount > 0
@@ -170,13 +170,13 @@ function FacilityRow({
                 }
               />
               <MetricCell
-                label="Margin per stop"
+                label={t("Margin per stop")}
                 value={formatCurrency(marginPerStop)}
                 valueClassName={deltaToneClass(marginPerStop)}
                 detail={`${formatCurrency(row.netMargin)} total`}
               />
               <MetricCell
-                label="Leakage"
+                label={t("Leakage")}
                 value={formatCurrency(row.waivedAmount)}
                 valueClassName={
                   row.waivedAmount > 0 ? "text-amber-600 dark:text-amber-400" : undefined
@@ -208,6 +208,8 @@ export function FacilityProfiles({
   onRetry: () => void;
   index: number;
 }) {
+  const t = useT();
+
   const [sort, setSort] = useState<FacilitySort>("billed");
   const [expanded, setExpanded] = useState(false);
 
@@ -224,15 +226,15 @@ export function FacilityProfiles({
     <Panel
       index={index}
       icon={WarehouseIcon}
-      title="Facility profiles"
-      description="Where detention actually accrues — the docks worth renegotiating or replanning around. Open a row for the full ledger behind it."
+      title={t("Facility profiles")}
+      description={t("Where detention actually accrues — the docks worth renegotiating or replanning around. Open a row for the full ledger behind it.")}
       action={
         rows.length > 1 ? (
           <SegmentedControl
             items={SORT_OPTIONS}
             value={sort}
             onValueChange={setSort}
-            aria-label="Rank facilities by"
+            aria-label={t("Rank facilities by")}
           />
         ) : null
       }
@@ -242,11 +244,11 @@ export function FacilityProfiles({
             <div className="text-2xs text-muted-foreground hidden items-center gap-3 md:flex">
               <span className="inline-flex items-center gap-1.5">
                 <span className="bg-foreground h-1.5 w-4 rounded-full" />
-                median dwell
+                {t("median dwell")}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="bg-foreground/25 h-1.5 w-4 rounded-full" />
-                p90 tail
+                {t("p90 tail")}
               </span>
             </div>
             {hidden > 0 || expanded ? (
@@ -270,7 +272,7 @@ export function FacilityProfiles({
       ) : sorted.length === 0 ? (
         <PanelEmpty
           icon={WarehouseIcon}
-          message="No detention settled at any facility in this window. Widen the range, or check that the detention engine is switched on for this organization."
+          message={t("No detention settled at any facility in this window. Widen the range, or check that the detention engine is switched on for this organization.")}
         />
       ) : (
         <div key={sort} className="divide-border divide-y">

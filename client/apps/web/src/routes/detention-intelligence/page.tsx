@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -13,6 +14,8 @@ import {
 } from "./_components/use-detention-intelligence";
 
 function RefreshAction() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isFetching = useIsFetching({ queryKey: queries.detention._def }) > 0;
 
@@ -23,7 +26,7 @@ function RefreshAction() {
       variant="outline"
       className="h-7"
       disabled={isFetching}
-      aria-label="Recalculate detention intelligence"
+      aria-label={t("Recalculate detention intelligence")}
       onClick={() => void queryClient.invalidateQueries({ queryKey: queries.detention._def })}
     >
       <RotateCwIcon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
@@ -33,6 +36,8 @@ function RefreshAction() {
 }
 
 export function DetentionIntelligencePage() {
+  const t = useT();
+
   const [windowValue, setWindowValue] = useState<DetentionWindowValue>("90");
 
   return (
@@ -47,7 +52,7 @@ export function DetentionIntelligencePage() {
               items={DETENTION_WINDOW_OPTIONS}
               value={windowValue}
               onValueChange={setWindowValue}
-              aria-label="Analysis window"
+              aria-label={t("Analysis window")}
             />
             <RefreshAction />
           </>
