@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -26,6 +27,8 @@ import { getColumns, invalidatePayEventQueries } from "./pay-event-columns";
 import { PayEventPanel } from "./pay-event-panel";
 
 export default function PayEventsTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const [holdRows, setHoldRows] = useState<DriverPayEventRow[]>([]);
@@ -36,7 +39,7 @@ export default function PayEventsTable() {
     async (rows: DriverPayEventRow[]) => {
       const held = rows.filter((row) => row.onHold);
       if (held.length === 0) {
-        toast.info("None of the selected pay events are on hold.");
+        toast.info(t("None of the selected pay events are on hold."));
         return;
       }
       await runBulkAction(held, (row) => releaseDriverPayEvent(row.id), {
@@ -45,18 +48,18 @@ export default function PayEventsTable() {
       });
       invalidatePayEventQueries(queryClient);
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const openHoldDialog = useCallback((rows: DriverPayEventRow[]) => {
     const eligible = rows.filter((row) => row.status === "Accrued" && !row.onHold);
     if (eligible.length === 0) {
-      toast.info("Only accrued, unheld pay events can be held.");
+      toast.info(t("Only accrued, unheld pay events can be held."));
       return;
     }
     setHoldRows(eligible);
     setHoldReason("");
-  }, []);
+  }, [t]);
 
   const confirmBulkHold = useCallback(async () => {
     setHoldPending(true);
@@ -109,27 +112,26 @@ export default function PayEventsTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Hold {holdRows.length} pay event{holdRows.length === 1 ? "" : "s"}
+              {t("Hold {0} pay event{1}", holdRows.length, holdRows.length === 1 ? "" : "s")}
             </DialogTitle>
             <DialogDescription>
-              Held pay skips settlement generation and auto-attach until released. One reason is
-              recorded on every selected event.
+              {t("Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={holdReason}
             onChange={(event) => setHoldReason(event.target.value)}
-            placeholder="e.g. Awaiting signed BOLs for this batch"
+            placeholder={t("e.g. Awaiting signed BOLs for this batch")}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setHoldRows([])}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               disabled={holdReason.trim() === "" || holdPending}
               onClick={() => void confirmBulkHold()}
             >
-              Hold Pay
+              {t("Hold Pay")}
             </Button>
           </DialogFooter>
         </DialogContent>
