@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { resourceTypeChoices } from "@/lib/choices";
@@ -124,7 +125,7 @@ export function getColumns(
       header: "Warning Days",
       cell: ({ row }) =>
         row.original.expirationRequired ? (
-          <span>{row.original.expirationWarningDays}d</span>
+          <span>{translate("{0}d", row.original.expirationWarningDays)}</span>
         ) : (
           <span className="text-muted-foreground">-</span>
         ),

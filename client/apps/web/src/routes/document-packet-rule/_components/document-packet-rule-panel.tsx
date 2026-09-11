@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DocumentPacketRuleRow } from "@/lib/graphql/document-packet-rule-table";
@@ -13,6 +14,8 @@ export function DocumentPacketRulePanel({
   mode,
   row,
 }: DataTablePanelProps<DocumentPacketRuleRow>) {
+  const t = useT();
+
   const form = useForm<DocumentPacketRule>({
     resolver: zodResolver(documentPacketRuleSchema),
     defaultValues: {
@@ -33,7 +36,7 @@ export function DocumentPacketRulePanel({
         onOpenChange={onOpenChange}
         row={row}
         url="/document-packet-rules/"
-        title="Document Packet Rule"
+        title={t("Document Packet Rule")}
         queryKey="document-packet-rule-list"
         formComponent={<DocumentPacketRuleForm />}
         form={form}
@@ -48,7 +51,7 @@ export function DocumentPacketRulePanel({
       form={form}
       url="/document-packet-rules/"
       queryKey="document-packet-rule-list"
-      title="Document Packet Rule"
+      title={t("Document Packet Rule")}
       formComponent={<DocumentPacketRuleForm />}
     />
   );
