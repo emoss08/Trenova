@@ -11,14 +11,30 @@ func (p *StaticProvider) Products() []Product {
 		{
 			Key:         ProductTMS,
 			Name:        "Transportation Management",
-			Description: "Core shipment, dispatch, billing, accounting, and fleet workflows.",
+			Description: "Core shipment, dispatch, billing, accounting, fleet, and settlement workflows.",
 			Features: []FeatureKey{
 				FeatureCoreTMS,
 				FeatureDispatch,
 				FeatureBilling,
 				FeatureAccounting,
 				FeatureFleetMaintenance,
-				FeatureDocumentManagement,
+				FeatureSettlement,
+				FeatureDriverPortal,
+			},
+		},
+		{
+			Key:         ProductWorkforce,
+			Name:        "Workforce Management",
+			Description: "Driver and employee records, DOT compliance, time off, scheduling, talent, safety, and benefits.",
+			Features: []FeatureKey{
+				FeatureWorkforceCore,
+				FeatureWorkforceCompliance,
+				FeatureWorkforceTimeOff,
+				FeatureWorkforceTimeTracking,
+				FeatureWorkforceTalent,
+				FeatureWorkforceSafety,
+				FeatureWorkforceBenefits,
+				FeatureWorkforceSelfService,
 			},
 		},
 		{
@@ -53,9 +69,12 @@ func (p *StaticProvider) Products() []Product {
 			Name:        "Platform",
 			Description: "Cross-cutting platform capabilities.",
 			Features: []FeatureKey{
+				FeatureDocumentManagement,
 				FeatureGlobalSearch,
 				FeatureAPIKeys,
 				FeatureTableChangeAlerts,
+				FeatureAgentAutomation,
+				FeatureAdministration,
 				FeatureRealtimeNotifications,
 			},
 		},
@@ -63,7 +82,21 @@ func (p *StaticProvider) Products() []Product {
 }
 
 func (p *StaticProvider) Features() []Feature {
-	return append(tmsFeatures(), platformFeatures()...)
+	features := make([]Feature, 0, len(graphQLSourceOwners))
+	features = append(features, tmsFeatures()...)
+	features = append(features, workforceFeatures()...)
+	features = append(features, platformFeatures()...)
+
+	return withGraphQLOwnership(features)
+}
+
+func withGraphQLOwnership(features []Feature) []Feature {
+	for i := range features {
+		features[i].GraphQLSources = graphQLSourcesFor(features[i].Key)
+		features[i].GraphQLRootFields = graphQLRootFieldsFor(features[i].Key)
+	}
+
+	return features
 }
 
 func tmsFeatures() []Feature {
@@ -80,7 +113,7 @@ func tmsFeatures() []Feature {
 			ProductKey:       ProductTMS,
 			Name:             "Dispatch",
 			Description:      "Shipment movement planning and execution.",
-			RequiresFeatures: []FeatureKey{FeatureCoreTMS},
+			RequiresFeatures: []FeatureKey{FeatureCoreTMS, FeatureWorkforceCore},
 			Routes:           dispatchRouteRefs(),
 		},
 		{
@@ -103,24 +136,118 @@ func tmsFeatures() []Feature {
 			Key:              FeatureFleetMaintenance,
 			ProductKey:       ProductTMS,
 			Name:             "Fleet",
-			Description:      "Equipment, workers, and fleet reference data.",
+			Description:      "Equipment, tractors, trailers, and fleet reference data.",
 			RequiresFeatures: []FeatureKey{FeatureCoreTMS},
 			Routes:           fleetRouteRefs(),
 		},
 		{
-			Key:              FeatureDocumentManagement,
-			ProductKey:       ProductTMS,
-			Name:             "Document Management",
-			Description:      "Document upload, storage, packets, and parsing rules.",
-			RequiresFeatures: []FeatureKey{FeatureCoreTMS},
-			Routes:           documentManagementRouteRefs(),
-			Meters:           []MeterKey{MeterDocumentUploads},
+			Key:                    FeatureSettlement,
+			ProductKey:             ProductTMS,
+			Name:                   "Settlement",
+			Description:            "Driver and carrier settlement runs, escrow, advances, deductions, and disputes.",
+			RequiresFeatures:       []FeatureKey{FeatureCoreTMS, FeatureWorkforceCore},
+			LegacyGrantingFeatures: []FeatureKey{FeatureCoreTMS},
+		},
+		{
+			Key:                    FeatureDriverPortal,
+			ProductKey:             ProductTMS,
+			Name:                   "Driver Portal",
+			Description:            "Driver-facing loads, pay, hours of service, and document capture.",
+			RequiresFeatures:       []FeatureKey{FeatureCoreTMS, FeatureWorkforceCore},
+			LegacyGrantingFeatures: []FeatureKey{FeatureCoreTMS},
+			Routes:                 driverPortalRouteRefs(),
+		},
+	}
+}
+
+func workforceFeatures() []Feature {
+	return []Feature{
+		{
+			Key:                    FeatureWorkforceCore,
+			ProductKey:             ProductWorkforce,
+			Name:                   "Workforce Core",
+			Description:            "Worker records, profiles, job positions, org structure, holidays, and onboarding checklists.",
+			LegacyGrantingFeatures: []FeatureKey{FeatureFleetMaintenance},
+			Routes:                 workforceCoreRouteRefs(),
+			Meters:                 []MeterKey{MeterWorkforceManagedWorkers},
+		},
+		{
+			Key:              FeatureWorkforceCompliance,
+			ProductKey:       ProductWorkforce,
+			Name:             "Workforce Compliance",
+			Description:      "Driver qualification files, credentials, DOT testing, random pools, and Clearinghouse queries.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore, FeatureDocumentManagement},
+			Meters:           []MeterKey{MeterWorkforceComplianceScreens},
+		},
+		{
+			Key:              FeatureWorkforceTimeOff,
+			ProductKey:       ProductWorkforce,
+			Name:             "Time Off",
+			Description:      "PTO policies, accrual ledgers, balances, and leave case administration.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore},
+		},
+		{
+			Key:              FeatureWorkforceTimeTracking,
+			ProductKey:       ProductWorkforce,
+			Name:             "Time and Scheduling",
+			Description:      "Timesheets, shift templates, swaps, and rota scheduling.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore},
+		},
+		{
+			Key:              FeatureWorkforceTalent,
+			ProductKey:       ProductWorkforce,
+			Name:             "Talent",
+			Description:      "Training courses and records, performance reviews, discipline, and recognition.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore},
+		},
+		{
+			Key:              FeatureWorkforceSafety,
+			ProductKey:       ProductWorkforce,
+			Name:             "Workforce Safety",
+			Description:      "Injury reporting, OSHA annual summaries, safety events, and fleet safety standing.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore},
+		},
+		{
+			Key:              FeatureWorkforceBenefits,
+			ProductKey:       ProductWorkforce,
+			Name:             "Benefits",
+			Description:      "Benefit plan administration and worker enrollments.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore},
+		},
+		{
+			Key:              FeatureWorkforceSelfService,
+			ProductKey:       ProductWorkforce,
+			Name:             "Employee Self Service",
+			Description:      "Worker portal access, policy acknowledgements, and profile change requests.",
+			RequiresFeatures: []FeatureKey{FeatureWorkforceCore},
 		},
 	}
 }
 
 func platformFeatures() []Feature {
 	return []Feature{
+		{
+			Key:         FeatureDocumentManagement,
+			ProductKey:  ProductPlatform,
+			Name:        "Document Management",
+			Description: "Document upload, storage, packets, and parsing rules.",
+			Routes:      documentManagementRouteRefs(),
+			Meters:      []MeterKey{MeterDocumentUploads},
+		},
+		{
+			Key:         FeatureAgentAutomation,
+			ProductKey:  ProductPlatform,
+			Name:        "Agent Automation",
+			Description: "Agent runs, proposals, and exception handling.",
+		},
+		{
+			Key:                    FeatureAdministration,
+			ProductKey:             ProductPlatform,
+			Name:                   "Administration",
+			Description:            "Users, roles, permissions, audit history, custom fields, and table configuration.",
+			LegacyGrantingFeatures: []FeatureKey{FeatureCoreTMS},
+			Routes:                 administrationRouteRefs(),
+		},
 		{
 			Key:              FeatureDocumentIntelligence,
 			ProductKey:       ProductDocumentIntelligence,
@@ -214,11 +341,27 @@ func (p *StaticProvider) Meters() []Meter {
 		},
 		{
 			Key:         MeterDocumentUploads,
-			ProductKey:  ProductTMS,
+			ProductKey:  ProductPlatform,
 			FeatureKey:  FeatureDocumentManagement,
 			Name:        "Document Uploads",
 			Description: "Documents uploaded into tenant storage.",
 			Unit:        "document",
+		},
+		{
+			Key:         MeterWorkforceManagedWorkers,
+			ProductKey:  ProductWorkforce,
+			FeatureKey:  FeatureWorkforceCore,
+			Name:        "Managed Workers",
+			Description: "Active workers under workforce management, the per-seat billing unit.",
+			Unit:        "worker",
+		},
+		{
+			Key:         MeterWorkforceComplianceScreens,
+			ProductKey:  ProductWorkforce,
+			FeatureKey:  FeatureWorkforceCompliance,
+			Name:        "Compliance Screenings",
+			Description: "DOT test orders and Clearinghouse queries run against workers.",
+			Unit:        "screening",
 		},
 		{
 			Key:         MeterDocumentAIClassifications,

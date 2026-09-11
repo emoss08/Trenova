@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const deniedFeatureReason = "your plan does not include this feature"
+
 type ControlPlaneAccessMiddlewareParams struct {
 	fx.In
 
@@ -173,33 +175,54 @@ func (m *ControlPlaneAccessMiddleware) authorizeProductAccess(
 	featureKey platformcatalog.FeatureKey,
 	checkedAt int64,
 ) (*services.AccessAuthorizeResult, bool) {
-	result, err := m.authorizer.AuthorizeAccess(
-		c.Request.Context(),
-		&services.AccessAuthorizeRequest{
-			OrganizationID: authCtx.OrganizationID,
-			BusinessUnitID: authCtx.BusinessUnitID,
-			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-			PrincipalID:    authCtx.PrincipalID,
-			UserID:         authCtx.UserID,
-			APIKeyID:       authCtx.APIKeyID,
-			HTTPMethod:     c.Request.Method,
-			HTTPPath:       c.Request.URL.Path,
-			RoutePattern:   routePattern,
-			FeatureKey:     featureKey,
-			CheckedAt:      checkedAt,
-		},
+	var (
+		denied  *services.AccessAuthorizeResult
+		lastErr error
 	)
-	if err != nil {
-		m.errorHandler.HandleError(c, err)
-		return nil, false
+	for _, candidate := range m.registry.AuthorizingFeatures(featureKey) {
+		result, err := m.authorizer.AuthorizeAccess(
+			c.Request.Context(),
+			&services.AccessAuthorizeRequest{
+				OrganizationID: authCtx.OrganizationID,
+				BusinessUnitID: authCtx.BusinessUnitID,
+				PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+				PrincipalID:    authCtx.PrincipalID,
+				UserID:         authCtx.UserID,
+				APIKeyID:       authCtx.APIKeyID,
+				HTTPMethod:     c.Request.Method,
+				HTTPPath:       c.Request.URL.Path,
+				RoutePattern:   routePattern,
+				FeatureKey:     candidate,
+				CheckedAt:      checkedAt,
+			},
+		)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if result.Allowed {
+			return result, true
+		}
+		if denied == nil {
+			denied = result
+		}
 	}
-	if !result.Allowed {
-		m.logDeniedAccess(c, routePattern, result.FeatureKey, result.Reason)
-		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(result.Reason))
+
+	if denied != nil {
+		m.logDeniedAccess(c, routePattern, denied.FeatureKey, denied.Reason)
+		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(denied.Reason))
 		return nil, false
 	}
 
-	return result, true
+	if lastErr != nil {
+		m.errorHandler.HandleError(c, lastErr)
+		return nil, false
+	}
+
+	m.logDeniedAccess(c, routePattern, featureKey, deniedFeatureReason)
+	m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(deniedFeatureReason))
+
+	return nil, false
 }
 
 func (m *ControlPlaneAccessMiddleware) recordRequestUsage(

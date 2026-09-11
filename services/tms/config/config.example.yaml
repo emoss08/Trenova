@@ -21,6 +21,10 @@ platform:
     tenantSyncInterval: 1h
     failOpenOnError: false # Development only
     maxProvisioningBodyBytes: 1048576 # Max /control-plane/tenants/provision body (bytes); bounded before the HMAC check
+    # Per-operation GraphQL entitlement checks. disabled: no checks (default).
+    # observe: check and log denials without blocking, to size the blast radius before enforcing.
+    # enforce: deny unentitled or unmapped root fields with 403 FEATURE_NOT_ENTITLED.
+    graphqlAccessMode: disabled
 
 # HTTP Server configuration
 server:
