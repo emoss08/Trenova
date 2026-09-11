@@ -15,6 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
+	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
@@ -101,6 +105,8 @@ func (f closeFixture) postToAccount(
 		FiscalYearID:     f.closingYear.ID,
 		FiscalPeriodID:   f.closedPeriod.ID,
 		AccountingDate:   f.closingYear.StartDate,
+		PostedAt:         &f.closingYear.StartDate,
+		PostedByID:       f.userID,
 		CreatedByID:      f.userID,
 		EntryID:          pulid.MustNew("je_"),
 		EntryNumber:      "JE-" + suffix,
@@ -488,6 +494,20 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		journalpostingrepository.Params{DB: conn, Logger: logger},
 	)
 
+	// SetupTestDB only migrates, so the seeds have to be run here: the fixture
+	// below reads the organization that carries the chart of accounts and the
+	// accounting control, and neither exists in an empty schema.
+	registry := seeder.NewRegistry()
+	seeds.Register(registry)
+	engine := seeder.NewEngine(db, registry, &config.Config{
+		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
+	})
+	_, seedErr := engine.Execute(ctx, seeder.ExecuteOptions{
+		Environment: common.EnvDevelopment,
+		Force:       true,
+	})
+	require.NoError(t, seedErr)
+
 	// The seeded organization is the one that carries a chart of accounts and an
 	// accounting control; a synthetic org would have neither.
 	var org struct {
@@ -583,6 +603,10 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		FiscalYearID:     closingYear.ID,
 		FiscalPeriodID:   closingPeriod.ID,
 		AccountingDate:   closingYear.StartDate,
+		// chk_journal_entries_posted_at requires both of these whenever
+		// is_posted is set, so a posted entry cannot be written without them.
+		PostedAt:         &closingYear.StartDate,
+		PostedByID:       userID,
 		CreatedByID:      userID,
 		EntryID:          pulid.MustNew("je_"),
 		EntryNumber:      "JE-SEED-0001",
