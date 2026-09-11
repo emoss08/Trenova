@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AgingDistributionBar,
   type AgingBucketTotals,
@@ -17,6 +18,8 @@ export function AgingSummaryHeader({
   totals: AgingBucketTotals | undefined;
   isLoading: boolean;
 }) {
+  const t = useT();
+
   const { data: kpis } = useQuery(queries.ar.dashboardKpis());
 
   if (isLoading || !totals) {
@@ -36,32 +39,32 @@ export function AgingSummaryHeader({
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
-        <SummaryTile index={0} label="Total Open" value={formatCurrency(totalOpen / 100)} />
+        <SummaryTile index={0} label={t("Total Open")} value={formatCurrency(totalOpen / 100)} />
         <SummaryTile
           index={1}
-          label="Current"
+          label={t("Current")}
           value={`${currentShare.toFixed(1)}%`}
           detail={formatCurrency(totals.currentMinor / 100)}
           valueClassName="text-emerald-600 dark:text-emerald-400"
         />
         <SummaryTile
           index={2}
-          label="Overdue"
+          label={t("Overdue")}
           value={`${overdueShare.toFixed(1)}%`}
           detail={formatCurrency((totalOpen - totals.currentMinor) / 100)}
           valueClassName={overdueShare > 0 ? "text-red-600 dark:text-red-400" : undefined}
         />
         <SummaryTile
           index={3}
-          label="Current DSO"
+          label={t("Current DSO")}
           value={kpis ? `${kpis.currentDsoDays.toFixed(1)}d` : "—"}
           detail={`target < ${AR_DSO_TARGET_DAYS}d`}
         />
         <SummaryTile
           index={4}
-          label="CEI"
+          label={t("CEI")}
           value={kpis ? `${kpis.cei.toFixed(0)}%` : "—"}
-          detail="trailing 90 days"
+          detail={t("trailing 90 days")}
         />
       </div>
 
@@ -69,7 +72,7 @@ export function AgingSummaryHeader({
         <Card className="gap-0 rounded-md p-0">
           <CardHeader className="px-4 pt-3 pb-2">
             <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Distribution
+              {t("Distribution")}
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
