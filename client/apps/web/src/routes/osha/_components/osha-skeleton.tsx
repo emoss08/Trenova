@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { YEARS_OFFERED } from "@/lib/osha-log";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -95,8 +96,10 @@ function BlockSkeleton({
 }
 
 function SummaryCardSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="Form 300A" className="bg-card flex min-w-0 flex-col rounded-lg border">
+    <section aria-label={t("Form 300A")} className="bg-card flex min-w-0 flex-col rounded-lg border">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3">
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-2">
@@ -111,28 +114,28 @@ function SummaryCardSkeleton() {
         </div>
       </header>
       <div className="grid gap-x-8 gap-y-5 px-4 py-4 md:grid-cols-[3fr_2fr]">
-        <BlockSkeleton label="Number of cases" titleWidth="w-24">
+        <BlockSkeleton label={t("Number of cases")} titleWidth="w-24">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Array.from({ length: CASE_COLUMN_COUNT }, (_, index) => (
               <FigureSkeleton key={index} />
             ))}
           </div>
         </BlockSkeleton>
-        <BlockSkeleton label="Number of days" titleWidth="w-24">
+        <BlockSkeleton label={t("Number of days")} titleWidth="w-24">
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: DAY_TOTAL_COUNT }, (_, index) => (
               <FigureSkeleton key={index} />
             ))}
           </div>
         </BlockSkeleton>
-        <BlockSkeleton label="Injury and illness types" titleWidth="w-36" className="md:col-span-2">
+        <BlockSkeleton label={t("Injury and illness types")} titleWidth="w-36" className="md:col-span-2">
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
             {Array.from({ length: ILLNESS_TYPE_COUNT }, (_, index) => (
               <FigureSkeleton key={index} />
             ))}
           </div>
         </BlockSkeleton>
-        <BlockSkeleton label="Establishment information" titleWidth="w-40">
+        <BlockSkeleton label={t("Establishment information")} titleWidth="w-40">
           <div className="divide-border/60 flex flex-col divide-y">
             {ESTABLISHMENT_ROW_WIDTHS.map((width, index) => (
               <div
@@ -145,7 +148,7 @@ function SummaryCardSkeleton() {
             ))}
           </div>
         </BlockSkeleton>
-        <BlockSkeleton label="Certification" titleWidth="w-24">
+        <BlockSkeleton label={t("Certification")} titleWidth="w-24">
           <div className="flex flex-col gap-1.5">
             <Skeleton className="h-3 w-40" />
             <Skeleton className="h-3 w-52" />
@@ -158,6 +161,8 @@ function SummaryCardSkeleton() {
 }
 
 function TrackSkeleton() {
+  const t = useT();
+
   return (
     <aside className="bg-card flex min-w-0 flex-col rounded-lg border">
       <header className="flex items-center gap-2 border-b px-3 py-2">
@@ -165,7 +170,7 @@ function TrackSkeleton() {
         <Skeleton className="h-3.5 w-32" />
         <Skeleton className="size-3.5 rounded-full" />
       </header>
-      <ol aria-label="Where the year stands" className="flex flex-col p-3">
+      <ol aria-label={t("Where the year stands")} className="flex flex-col p-3">
         {Array.from({ length: TRACK_STEP_COUNT }, (_, index) => {
           const last = index === TRACK_STEP_COUNT - 1;
           return (
@@ -187,8 +192,10 @@ function TrackSkeleton() {
 }
 
 function CaseTableSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="Form 300" className="flex min-w-0 flex-col gap-3">
+    <section aria-label={t("Form 300")} className="flex min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <Skeleton className="h-3.5 w-40" />
@@ -200,7 +207,7 @@ function CaseTableSkeleton() {
         </div>
       </div>
       <div className="bg-card overflow-hidden rounded-lg border">
-        <table aria-label="Cases" className="w-full text-sm">
+        <table aria-label={t("Cases")} className="w-full text-sm">
           <thead>
             <tr className="bg-sidebar h-10 border-b">
               <th className="w-20 px-2">
@@ -293,8 +300,10 @@ function CaseTableSkeleton() {
  * panels' labels only so the two trees can be compared like for like.
  */
 export function OshaLogSkeleton() {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading the log">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading the log")}>
       <div className="contents" aria-hidden>
         <YearPickerSkeleton />
         <OverviewSkeleton />

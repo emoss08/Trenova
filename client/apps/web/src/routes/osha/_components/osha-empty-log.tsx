@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -21,6 +22,8 @@ type OshaEmptyLogProps = {
  * where the entries would go, and the words underneath say what to do next.
  */
 export function OshaEmptyLog({ title, description, action, className }: OshaEmptyLogProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -47,10 +50,10 @@ export function OshaEmptyLog({ title, description, action, className }: OshaEmpt
               "text-muted-foreground border-b px-3 py-1.5 text-left text-2xs leading-none",
             )}
           >
-            <span>Case</span>
-            <span>Employee</span>
-            <span>Date</span>
-            <span>What happened</span>
+            <span>{t("Case")}</span>
+            <span>{t("Employee")}</span>
+            <span>{t("Date")}</span>
+            <span>{t("What happened")}</span>
             <span className="flex gap-1">
               <FormMark>G</FormMark>
               <FormMark>H</FormMark>

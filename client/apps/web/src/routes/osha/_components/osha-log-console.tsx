@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -46,6 +47,8 @@ import { OshaSummaryDialog } from "./osha-summary-dialog";
 import { oshaLogQuery, oshaSummariesQuery } from "./queries";
 
 export default function OshaLogConsole() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.WorkerInjury, Operation.Read);
   const { allowed: canUpdate } = usePermission(Resource.WorkerInjury, Operation.Update);
@@ -110,32 +113,32 @@ export default function OshaLogConsole() {
   const certifyMutation = useMutation({
     mutationFn: () => certifyOshaSummary(year),
     onSuccess: () => {
-      toast.success("Summary certified", {
-        description: "Post it where employees can see it, from February 1 to April 30.",
+      toast.success(t("Summary certified"), {
+        description: t("Post it where employees can see it, from February 1 to April 30."),
       });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not certify the summary", { description: error.message }),
+      toast.error(t("Could not certify the summary"), { description: error.message }),
   });
 
   const uncertifyMutation = useMutation({
     mutationFn: () => uncertifyOshaSummary(year),
     onSuccess: () => {
-      toast.success("Summary reopened", {
-        description: "The certification has been cleared so the figures can be corrected.",
+      toast.success(t("Summary reopened"), {
+        description: t("The certification has been cleared so the figures can be corrected."),
       });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not reopen the summary", { description: error.message }),
+      toast.error(t("Could not reopen the summary"), { description: error.message }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (entry: OshaLogCase) => deleteWorkerInjury(entry.id),
     onSuccess: (_, entry) => {
       toast.success(`Case ${caseLabel(entry)} deleted`, {
-        description: "The case number is not reused, so two cases can never share one.",
+        description: t("The case number is not reused, so two cases can never share one."),
       });
       setDeleting(null);
       if (openCaseId === entry.id) setOpenCaseId(null);
@@ -143,7 +146,7 @@ export default function OshaLogConsole() {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not delete the case", { description: error.message }),
+      toast.error(t("Could not delete the case"), { description: error.message }),
   });
 
   // The log carries names, body parts and claims. Somebody without the grant
@@ -162,7 +165,7 @@ export default function OshaLogConsole() {
           setFilter("all");
           setQuery("");
         }}
-        aria-label="Log year"
+        aria-label={t("Log year")}
       />
 
       <OshaOverview log={log} />
@@ -181,11 +184,9 @@ export default function OshaLogConsole() {
         <aside className="bg-card flex min-w-0 flex-col rounded-lg border">
           <header className="flex items-center gap-2 border-b px-3 py-2">
             <MilestoneIcon className="text-muted-foreground size-3.5" />
-            <h2 className="text-sm font-medium">Where {log.year} stands</h2>
+            <h2 className="text-sm font-medium">{t("Where {0} stands", log.year)}</h2>
             <InfoPopover title={`Where ${log.year} stands`}>
-              The year on its way to a posted 300A. OSHA wants the summary certified by a company
-              executive and posted where employees can see it from 1 February to 30 April of the
-              following year (29 CFR 1904.32).
+              {t("The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).")}
             </InfoPopover>
           </header>
           <div className="p-3">
@@ -239,21 +240,19 @@ export default function OshaLogConsole() {
             <AlertDialogMedia>
               <Trash2Icon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete case {deleting ? caseLabel(deleting) : ""}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete case {0}?", deleting ? caseLabel(deleting) : "")}</AlertDialogTitle>
             <AlertDialogDescription>
-              The case comes off the log and out of the totals. Its number is never reused, and the
-              rule expects a recordable case to stay on the log for five years, so delete only a
-              case that was recorded in error.
+              {t("The case comes off the log and out of the totals. Its number is never reused, and the rule expects a recordable case to stay on the log for five years, so delete only a case that was recorded in error.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep the case</AlertDialogCancel>
+            <AlertDialogCancel>{t("Keep the case")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => deleting && deleteMutation.mutate(deleting)}
             >
-              Delete case
+              {t("Delete case")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

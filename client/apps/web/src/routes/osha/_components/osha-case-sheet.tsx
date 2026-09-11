@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { OshaLogCase } from "@/lib/graphql/worker-injury";
 import { caseLabel, illnessTypeNumber, logColumn } from "@/lib/osha-log";
 import { workerRecordHref } from "@/lib/route-utils";
@@ -74,6 +75,8 @@ function CaseDetail({
   onEdit,
   onDelete,
 }: Omit<OshaCaseSheetProps, "entry" | "onOpenChange"> & { entry: OshaLogCase }) {
+  const t = useT();
+
   const column = logColumn(entry.classification);
   const typeNumber = illnessTypeNumber(entry.illnessType);
   const workerName = entry.worker
@@ -85,16 +88,15 @@ function CaseDetail({
     <>
       <SheetHeader className="pr-10">
         <div className="flex flex-wrap items-center gap-2">
-          <SheetTitle>Case {caseLabel(entry)}</SheetTitle>
+          <SheetTitle>{t("Case {0}", caseLabel(entry))}</SheetTitle>
           <Badge variant={classificationTone(entry.classification)}>
             {caseClassificationLabel(entry.classification)}
           </Badge>
-          {entry.status === "Open" ? <Badge variant="warning">Open</Badge> : null}
-          {entry.recordable ? null : <Badge variant="secondary">Off the log</Badge>}
+          {entry.status === "Open" ? <Badge variant="warning">{t("Open")}</Badge> : null}
+          {entry.recordable ? null : <Badge variant="secondary">{t("Off the log")}</Badge>}
         </div>
         <SheetDescription>
-          Occurred {formatUnixDateMedium(entry.occurredAt)}
-          {entry.reportedAt ? `, reported ${formatUnixDateMedium(entry.reportedAt)}` : ""}
+          {t("Occurred {0}{1}", formatUnixDateMedium(entry.occurredAt), entry.reportedAt ? `, reported ${formatUnixDateMedium(entry.reportedAt)}` : "")}
         </SheetDescription>
       </SheetHeader>
 
@@ -114,7 +116,7 @@ function CaseDetail({
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-xs font-medium">{workerName}</span>
             <span className="text-muted-foreground text-2xs">
-              Open the worker&apos;s safety tab
+              {t("Open the worker's safety tab")}
             </span>
           </span>
         </Link>
@@ -123,24 +125,23 @@ function CaseDetail({
           <p className="bg-muted/60 text-muted-foreground flex items-start gap-2 rounded-md px-3 py-2 text-xs">
             <LockIcon className="mt-0.5 size-3.5 shrink-0" />
             <span>
-              Privacy case. The posted log reads &ldquo;{entry.logName}&rdquo;; the name stays on
-              the confidential list.
+              {t("Privacy case. The posted log reads “{0}”; the name stays on the confidential list.", entry.logName)}
             </span>
           </p>
         ) : null}
 
-        <Section title="What happened">
+        <Section title={t("What happened")}>
           <p className="text-xs leading-relaxed">{entry.description}</p>
           <dl className="mt-2 text-xs">
-            <Row label="Where">{entry.location?.trim() || null}</Row>
-            <Row label="Body part">{entry.bodyPart?.trim() || null}</Row>
-            <Row label="Object or substance">{entry.harmfulAgent?.trim() || null}</Row>
+            <Row label={t("Where")}>{entry.location?.trim() || null}</Row>
+            <Row label={t("Body part")}>{entry.bodyPart?.trim() || null}</Row>
+            <Row label={t("Object or substance")}>{entry.harmfulAgent?.trim() || null}</Row>
           </dl>
         </Section>
 
-        <Section title="Outcome">
+        <Section title={t("Outcome")}>
           <dl className="text-xs">
-            <Row label="Log column">
+            <Row label={t("Log column")}>
               {column ? (
                 <span className="inline-flex items-center gap-1.5">
                   <FormMark className="text-foreground">{column}</FormMark>
@@ -150,55 +151,55 @@ function CaseDetail({
                 caseClassificationLabel(entry.classification)
               )}
             </Row>
-            <Row label="Type">
+            <Row label={t("Type")}>
               <span className="inline-flex items-center gap-1.5">
                 {typeNumber !== null ? <FormMark>({typeNumber})</FormMark> : null}
                 {illnessTypeLabel(entry.illnessType)}
               </span>
             </Row>
-            <Row label="Treatment">{injuryTreatmentLabel(entry.treatment)}</Row>
-            <Row label="Days away from work">
+            <Row label={t("Treatment")}>{injuryTreatmentLabel(entry.treatment)}</Row>
+            <Row label={t("Days away from work")}>
               <span className="inline-flex items-center gap-1.5">
                 <FormMark>K</FormMark>
                 {entry.daysAway}
               </span>
             </Row>
-            <Row label="Days restricted or transferred">
+            <Row label={t("Days restricted or transferred")}>
               <span className="inline-flex items-center gap-1.5">
                 <FormMark>L</FormMark>
                 {entry.daysRestricted}
               </span>
             </Row>
-            <Row label="Returned to work">
+            <Row label={t("Returned to work")}>
               {entry.returnedToWorkAt ? formatUnixDateMedium(entry.returnedToWorkAt) : null}
             </Row>
-            <Row label="Status">
+            <Row label={t("Status")}>
               {entry.status === "Open" ? "Open, days may still accrue" : "Closed"}
             </Row>
           </dl>
           {capped ? (
             <p className="text-muted-foreground mt-2 text-2xs">
-              Counting stopped at {MAX_COUNTED_DAYS} days, as the log requires.
+              {t("Counting stopped at {0} days, as the log requires.", MAX_COUNTED_DAYS)}
             </p>
           ) : null}
         </Section>
 
-        <Section title="Workers' compensation claim">
+        <Section title={t("Workers' compensation claim")}>
           {entry.claimStatus === "NotFiled" ? (
-            <p className="text-muted-foreground text-xs">No claim has been filed.</p>
+            <p className="text-muted-foreground text-xs">{t("No claim has been filed.")}</p>
           ) : (
             <dl className="text-xs">
-              <Row label="Status">
+              <Row label={t("Status")}>
                 <Badge variant={claimStatusTone(entry.claimStatus)}>
                   {claimStatusLabel(entry.claimStatus)}
                 </Badge>
               </Row>
-              <Row label="Claim number">{entry.claimNumber?.trim() || null}</Row>
-              <Row label="Carrier">{entry.claimCarrier?.trim() || null}</Row>
-              <Row label="Filed">
+              <Row label={t("Claim number")}>{entry.claimNumber?.trim() || null}</Row>
+              <Row label={t("Carrier")}>{entry.claimCarrier?.trim() || null}</Row>
+              <Row label={t("Filed")}>
                 {entry.claimFiledAt ? formatUnixDateMedium(entry.claimFiledAt) : null}
               </Row>
-              <Row label="Closed">
+              <Row label={t("Closed")}>
                 {entry.claimClosedAt ? formatUnixDateMedium(entry.claimClosedAt) : null}
               </Row>
             </dl>
@@ -206,7 +207,7 @@ function CaseDetail({
         </Section>
 
         {entry.notes?.trim() ? (
-          <Section title="Notes">
+          <Section title={t("Notes")}>
             <p className="text-muted-foreground text-xs leading-relaxed whitespace-pre-line">
               {entry.notes.trim()}
             </p>
@@ -224,13 +225,13 @@ function CaseDetail({
               onClick={() => onDelete(entry)}
             >
               <Trash2Icon className="size-3.5" />
-              Delete case
+              {t("Delete case")}
             </Button>
           ) : null}
           {canUpdate ? (
             <Button variant="outline" size="sm" onClick={() => onEdit(entry)}>
               <PencilIcon className="size-3.5" />
-              Edit case
+              {t("Edit case")}
             </Button>
           ) : null}
         </SheetFooter>
@@ -249,11 +250,13 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
+  const t = useT();
+
   return (
     <div className="border-border/60 flex items-center justify-between gap-3 border-b py-1.5 last:border-0">
       <dt className="text-muted-foreground shrink-0">{label}</dt>
       <dd className="min-w-0 truncate text-right font-medium tabular-nums">
-        {children ?? <span className="text-muted-foreground/70 font-normal">Not given</span>}
+        {children ?? <span className="text-muted-foreground/70 font-normal">{t("Not given")}</span>}
       </dd>
     </div>
   );
