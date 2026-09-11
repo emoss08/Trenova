@@ -53,8 +53,8 @@ type PayCode struct {
 	Code                  string             `json:"code"                  bun:"code,type:VARCHAR(20),notnull"`
 	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(100),notnull"`
 	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero"`
-	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull,default:true"`
-	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull,default:true"`
+	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull"`
+	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull"`
 	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero"`
 	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero"`
 	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull"`

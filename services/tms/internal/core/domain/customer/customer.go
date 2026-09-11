@@ -44,7 +44,7 @@ type Customer struct {
 	PlaceID                string             `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
 	ExternalID             string             `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
 	Geom                   *postgis.Point     `json:"-"                      bun:"geom,type:geography,scanonly"`
-	AllowConsolidation     bool               `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN,default:true"`
+	AllowConsolidation     bool               `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
 	ExclusiveConsolidation bool               `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
 	ConsolidationPriority  int                `json:"consolidationPriority"  bun:"consolidation_priority,type:INTEGER,default:1"`
 	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`

@@ -39,7 +39,7 @@ type ReasonCode struct {
 	DefaultReasonCode    string              `json:"defaultReasonCode"     bun:"default_reason_code,type:VARCHAR(3),nullzero"`
 	DefaultExceptionCode string              `json:"defaultExceptionCode"  bun:"default_exception_code,type:VARCHAR(3),nullzero"`
 	DefaultNote          string              `json:"defaultNote"           bun:"default_note,type:TEXT,nullzero"`
-	Active               bool                `json:"active"                bun:"active,type:BOOLEAN,notnull,default:true"`
+	Active               bool                `json:"active"                bun:"active,type:BOOLEAN,notnull"`
 	SortOrder            int32               `json:"sortOrder"             bun:"sort_order,type:INTEGER,notnull,default:100"`
 	ExternalMap          map[string]any      `json:"externalMap,omitempty" bun:"external_map,type:JSONB,nullzero"`
 	ArchivedAt           *int64              `json:"archivedAt"            bun:"archived_at,type:BIGINT,nullzero"`

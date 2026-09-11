@@ -334,7 +334,7 @@ type WorkerChecklistTemplateItem struct {
 	Label            string            `json:"label"            bun:"label,type:VARCHAR(150),notnull"`
 	Description      string            `json:"description"      bun:"description,type:TEXT,nullzero"`
 	Kind             ChecklistItemKind `json:"kind"             bun:"kind,type:worker_checklist_item_kind_enum,notnull,default:'Task'"`
-	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull,default:true"`
+	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull"`
 	DueOffsetDays    int32             `json:"dueOffsetDays"    bun:"due_offset_days,type:INTEGER,notnull"`
 	Owner            ChecklistOwner    `json:"owner"            bun:"owner,type:worker_checklist_owner_enum,notnull,default:'HR'"`
 	CredentialTypeID pulid.ID          `json:"credentialTypeId" bun:"credential_type_id,type:VARCHAR(100),nullzero"`
@@ -497,7 +497,7 @@ type WorkerChecklistItem struct {
 	Label                string              `json:"label"                bun:"label,type:VARCHAR(150),notnull"`
 	Description          string              `json:"description"          bun:"description,type:TEXT,nullzero"`
 	Kind                 ChecklistItemKind   `json:"kind"                 bun:"kind,type:worker_checklist_item_kind_enum,notnull,default:'Task'"`
-	Required             bool                `json:"required"             bun:"required,type:BOOLEAN,notnull,default:true"`
+	Required             bool                `json:"required"             bun:"required,type:BOOLEAN,notnull"`
 	Owner                ChecklistOwner      `json:"owner"                bun:"owner,type:worker_checklist_owner_enum,notnull,default:'HR'"`
 	DueAt                *int64              `json:"dueAt"                bun:"due_at,type:BIGINT,nullzero"`
 	CredentialTypeID     pulid.ID            `json:"credentialTypeId"     bun:"credential_type_id,type:VARCHAR(100),nullzero"`

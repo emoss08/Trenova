@@ -33,7 +33,7 @@ type CostCategory struct {
 	RateSource           RateSource          `json:"rateSource"           bun:"rate_source,type:cost_rate_source_enum,notnull,default:'Benchmark'"`
 	BenchmarkRatePerMile decimal.Decimal     `json:"benchmarkRatePerMile" bun:"benchmark_rate_per_mile,type:NUMERIC(19,6),notnull,default:0"`
 	OverrideRatePerMile  decimal.NullDecimal `json:"overrideRatePerMile"  bun:"override_rate_per_mile,type:NUMERIC(19,6),nullzero"`
-	IsActive             bool                `json:"isActive"             bun:"is_active,type:BOOLEAN,notnull,default:true"`
+	IsActive             bool                `json:"isActive"             bun:"is_active,type:BOOLEAN,notnull"`
 	SortOrder            int16               `json:"sortOrder"            bun:"sort_order,type:SMALLINT,notnull"`
 	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
 	CreatedAt            int64               `json:"createdAt"            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -94,6 +94,7 @@ func (s *JurisdictionRulesBaselineSeed) Run(ctx context.Context, tx bun.Tx) erro
 		rules = append(rules, jurisdictionrule.JurisdictionRule{
 			StateID:           states[i].ID,
 			Status:            jurisdictionrule.StatusActive,
+			HolidayRestricted: true,
 			MaxWidthFeet:      jurisdictionrule.FederalMaxWidthFeet,
 			MaxHeightFeet:     jurisdictionrule.FederalMaxHeightFeet,
 			MaxLengthFeet:     jurisdictionrule.FederalMaxLengthFeet,

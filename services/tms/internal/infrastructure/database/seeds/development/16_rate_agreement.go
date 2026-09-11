@@ -493,15 +493,16 @@ func (s *RateAgreementSeed) createMatrix(
 		}
 
 		cells = append(cells, &ratematrix.RateMatrixCell{
-			ID:             pulid.MustNew("rmc_"),
-			OrganizationID: refs.orgID,
-			BusinessUnitID: refs.buID,
-			RateMatrixID:   matrix.ID,
-			D0Key:          originID.String(),
-			D1Key:          destinationID.String(),
-			Value:          decimal.RequireFromString(def.ratePerMile),
-			CreatedAt:      refs.now,
-			UpdatedAt:      refs.now,
+			ID:              pulid.MustNew("rmc_"),
+			OrganizationID:  refs.orgID,
+			BusinessUnitID:  refs.buID,
+			RateMatrixID:    matrix.ID,
+			D0Key:           originID.String(),
+			D1Key:           destinationID.String(),
+			DeficitEligible: true,
+			Value:           decimal.RequireFromString(def.ratePerMile),
+			CreatedAt:       refs.now,
+			UpdatedAt:       refs.now,
 		})
 	}
 
@@ -773,6 +774,7 @@ func (s *RateAgreementSeed) buildRule(
 		PartyID:               agreement.PartyID(),
 		Label:                 lane.def.label,
 		Status:                rateagreement.RuleStatusActive,
+		AllowDeficitRating:    true,
 		OriginScopeType:       lane.def.originType,
 		OriginScopeValue:      originValue,
 		OriginCity:            lane.def.originCity,

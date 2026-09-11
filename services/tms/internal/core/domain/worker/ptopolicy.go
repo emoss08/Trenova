@@ -142,10 +142,10 @@ type PTOPolicy struct {
 	Status            PTOPolicyStatus `json:"status"            bun:"status,type:pto_policy_status_enum,notnull,default:'Draft'"`
 	IsDefault         bool            `json:"isDefault"         bun:"is_default,type:BOOLEAN,notnull"`
 	YearBasis         PTOYearBasis    `json:"yearBasis"         bun:"year_basis,type:pto_year_basis_enum,notnull,default:'CalendarYear'"`
-	CountWeekends     bool            `json:"countWeekends"     bun:"count_weekends,type:BOOLEAN,notnull,default:true"`
+	CountWeekends     bool            `json:"countWeekends"     bun:"count_weekends,type:BOOLEAN,notnull"`
 	WaitingPeriodDays int32           `json:"waitingPeriodDays" bun:"waiting_period_days,type:INTEGER,notnull"`
-	RequiresApproval  bool            `json:"requiresApproval"  bun:"requires_approval,type:BOOLEAN,notnull,default:true"`
-	EnforceBalance    bool            `json:"enforceBalance"    bun:"enforce_balance,type:BOOLEAN,notnull,default:true"`
+	RequiresApproval  bool            `json:"requiresApproval"  bun:"requires_approval,type:BOOLEAN,notnull"`
+	EnforceBalance    bool            `json:"enforceBalance"    bun:"enforce_balance,type:BOOLEAN,notnull"`
 	AllowNegative     bool            `json:"allowNegative"     bun:"allow_negative,type:BOOLEAN,notnull"`
 	NegativeFloorDays decimal.Decimal `json:"negativeFloorDays" bun:"negative_floor_days,type:NUMERIC(6,2),notnull,default:0"`
 	Version           int64           `json:"version"           bun:"version,type:BIGINT"`

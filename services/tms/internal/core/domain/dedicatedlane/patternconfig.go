@@ -26,9 +26,9 @@ type PatternConfig struct {
 	ID                    pulid.ID        `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID        pulid.ID        `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID        pulid.ID        `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Enabled               bool            `json:"enabled"               bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled               bool            `json:"enabled"               bun:"enabled,type:BOOLEAN,notnull"`
 	RequireExactMatch     bool            `json:"requireExactMatch"     bun:"require_exact_match,type:BOOLEAN,notnull"`
-	WeightRecentShipments bool            `json:"weightRecentShipments" bun:"weight_recent_shipments,type:BOOLEAN,notnull,default:true"`
+	WeightRecentShipments bool            `json:"weightRecentShipments" bun:"weight_recent_shipments,type:BOOLEAN,notnull"`
 	MinConfidenceScore    decimal.Decimal `json:"minConfidenceScore"    bun:"min_confidence_score,type:NUMERIC(5,4),notnull,default:0.7"`
 	MinFrequency          int64           `json:"minFrequency"          bun:"min_frequency,type:INTEGER,notnull,default:3"`
 	AnalysisWindowDays    int64           `json:"analysisWindowDays"    bun:"analysis_window_days,type:INTEGER,notnull,default:90"`

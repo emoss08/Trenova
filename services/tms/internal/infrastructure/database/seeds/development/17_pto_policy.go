@@ -158,15 +158,16 @@ func standardPTOPolicy(refs *ptoSeedRefs) *worker.PTOPolicy {
 
 func ownerOperatorPTOPolicy(refs *ptoSeedRefs) *worker.PTOPolicy {
 	return &worker.PTOPolicy{
-		OrganizationID: refs.orgID,
-		BusinessUnitID: refs.buID,
-		Name:           "Owner Operator",
-		Code:           ptoPolicyOwnerOpCode,
-		Description:    "Tracks time off for owner-operators without enforcing a balance",
-		Status:         worker.PTOPolicyStatusActive,
-		YearBasis:      worker.PTOYearBasisCalendarYear,
-		CountWeekends:  true,
-		EnforceBalance: false,
+		OrganizationID:   refs.orgID,
+		BusinessUnitID:   refs.buID,
+		Name:             "Owner Operator",
+		Code:             ptoPolicyOwnerOpCode,
+		Description:      "Tracks time off for owner-operators without enforcing a balance",
+		Status:           worker.PTOPolicyStatusActive,
+		YearBasis:        worker.PTOYearBasisCalendarYear,
+		CountWeekends:    true,
+		EnforceBalance:   false,
+		RequiresApproval: true,
 		Rules: []*worker.PTOPolicyRule{
 			{
 				PTOType:       worker.PTOTypeVacation,

@@ -146,6 +146,7 @@ func ParseRow(
 		DestinationCity:       destination.City,
 		LaneKey:               rategeo.LaneKey(originKey, destinationKey),
 		Direction:             rateagreement.DirectionDirectional,
+		AllowDeficitRating:    true,
 		FormulaTemplateID:     &templateID,
 		Rate:                  rate,
 		Currency:              mapping.Value(row, FieldCurrency),

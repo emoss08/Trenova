@@ -34,7 +34,7 @@ type GLAccount struct {
 	Name           string             `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
 	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
 	IsSystem       bool               `json:"isSystem"       bun:"is_system,type:BOOLEAN"`
-	AllowManualJE  bool               `json:"allowManualJe"  bun:"allow_manual_je,type:BOOLEAN,default:true"`
+	AllowManualJE  bool               `json:"allowManualJe"  bun:"allow_manual_je,type:BOOLEAN"`
 	RequireProject bool               `json:"requireProject" bun:"require_project,type:BOOLEAN"`
 	CurrentBalance int64              `json:"currentBalance" bun:"current_balance,type:BIGINT"`
 	DebitBalance   int64              `json:"debitBalance"   bun:"debit_balance,type:BIGINT"`

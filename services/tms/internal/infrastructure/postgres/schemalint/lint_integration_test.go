@@ -31,54 +31,15 @@ func domainDir(t *testing.T) string {
 //
 // Every entry is a boolean column that defaults to TRUE in the schema, backed
 // by a Go field that declares a bun default — so false cannot be stored when
-// the row is created. They are listed rather than fixed because removing a tag
-// is only safe once the code that creates the row sets the value itself: some
-// of these rows are provisioned from a zero-valued struct and depend on the
-// substitution to come out true. Fix them by naming the value at the creation
-// site, then deleting the line here. Nothing may be added.
+// the row is created. Removing a tag is only safe once the code that creates
+// the row sets the value itself, which is why these are listed rather than
+// fixed: each is a tenant control provisioned from a struct that leaves the
+// field alone and leans on the substitution to come out true. Removing the tag
+// without naming the value would switch the flag off for every new tenant.
+//
+// Fix one by naming the value at the site that builds the row, then deleting
+// the line here. Nothing may be added.
 var knownUnfixed = map[string]struct{}{
-	// Built from user input: creating one with the flag off stores it on.
-	// The user can turn it off again afterwards, because UPDATE is unaffected.
-	"cost_categories.is_active":                 {},
-	"custom_field_definitions.is_active":        {},
-	"customers.allow_consolidation":             {},
-	"detention_occurrences.is_open":             {},
-	"documents.is_current_version":              {},
-	"driver_pay_profile_components.is_active":   {},
-	"edi_partners.enabled_for_inbound":          {},
-	"edi_partners.enabled_for_outbound":         {},
-	"equipment_continuity.is_current":           {},
-	"fuel_indices.is_active":                    {},
-	"gl_accounts.allow_manual_je":               {},
-	"hold_reasons.active":                       {},
-	"invoice_attachments.selected":              {},
-	"jurisdiction_rules.holiday_restricted":     {},
-	"mode_profile_capability_rules.enabled":     {},
-	"pattern_configs.enabled":                   {},
-	"pattern_configs.weight_recent_shipments":   {},
-	"pay_codes.counts_toward_guarantee":         {},
-	"pay_codes.taxable":                         {},
-	"pto_policies.count_weekends":               {},
-	"pto_policies.enforce_balance":              {},
-	"pto_policies.requires_approval":            {},
-	"rate_agreement_rules.allow_deficit_rating": {},
-	"rate_matrix_cells.deficit_eligible":        {},
-	"recurring_shipments.auto_generate":         {},
-	"report_schedules.enabled":                  {},
-	"role_constraints.enabled":                  {},
-	"service_failure_reason_codes.active":       {},
-	"tca_allowlisted_tables.enabled":            {},
-	"telematics_form_mappings.enabled":          {},
-	"training_courses.requires_acknowledgement": {},
-	"worker_checklist_items.required":           {},
-	"worker_checklist_template_items.required":  {},
-	"worker_policies.requires_signature":        {},
-	"worker_recognitions.visible_to_worker":     {},
-	"workers.available_for_dispatch":            {},
-
-	// Tenant control singletons, provisioned once with these defaults intended
-	// and edited only by UPDATE, so no user-visible bug today. They break the
-	// moment anything inserts one from user input.
 	"accounting_controls.notify_on_reconciliation_exception": {},
 	"accounting_controls.require_manual_je_approval":         {},
 	"accounting_controls.require_period_close_approval":      {},

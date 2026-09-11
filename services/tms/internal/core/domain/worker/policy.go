@@ -81,7 +81,7 @@ type WorkerPolicy struct {
 	Body              string             `json:"body"              bun:"body,type:TEXT,nullzero"`
 	DocumentID        pulid.ID           `json:"documentId"        bun:"document_id,type:VARCHAR(100),nullzero"`
 	VersionLabel      string             `json:"versionLabel"      bun:"version_label,type:VARCHAR(30),notnull,default:'1'"`
-	RequiresSignature bool               `json:"requiresSignature" bun:"requires_signature,type:BOOLEAN,notnull,default:true"`
+	RequiresSignature bool               `json:"requiresSignature" bun:"requires_signature,type:BOOLEAN,notnull"`
 	AppliesTo         PolicyAudience     `json:"appliesTo"         bun:"applies_to,type:worker_policy_audience_enum,notnull,default:'All'"`
 	EffectiveFrom     int64              `json:"effectiveFrom"     bun:"effective_from,type:BIGINT,notnull"`
 	CreatedByID       pulid.ID           `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`

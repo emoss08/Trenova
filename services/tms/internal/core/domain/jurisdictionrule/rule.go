@@ -54,7 +54,7 @@ type JurisdictionRule struct {
 	DaylightOnly       bool `json:"daylightOnly"       bun:"daylight_only,type:BOOLEAN,notnull,default:false"`
 	RushHourRestricted bool `json:"rushHourRestricted" bun:"rush_hour_restricted,type:BOOLEAN,notnull,default:false"`
 	WeekendRestricted  bool `json:"weekendRestricted"  bun:"weekend_restricted,type:BOOLEAN,notnull,default:false"`
-	HolidayRestricted  bool `json:"holidayRestricted"  bun:"holiday_restricted,type:BOOLEAN,notnull,default:true"`
+	HolidayRestricted  bool `json:"holidayRestricted"  bun:"holiday_restricted,type:BOOLEAN,notnull"`
 
 	PermitLeadTimeDays int16               `json:"permitLeadTimeDays" bun:"permit_lead_time_days,type:SMALLINT,notnull,default:1"`
 	PermitValidityDays int16               `json:"permitValidityDays" bun:"permit_validity_days,type:SMALLINT,notnull,default:5"`

@@ -29,7 +29,7 @@ type CapabilityRule struct {
 	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull"`
 	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull"`
 	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull,default:'Block'"`
-	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull"`
 	Parameters  map[string]any          `json:"parameters"  bun:"parameters,type:JSONB,nullzero"`
 
 	OverrideReason string `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero"`

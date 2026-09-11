@@ -151,7 +151,7 @@ type Document struct {
 	BusinessUnitID        pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
 	LineageID             pulid.ID            `json:"lineageId"             bun:"lineage_id,type:VARCHAR(100),notnull"`
 	VersionNumber         int64               `json:"versionNumber"         bun:"version_number,type:BIGINT,notnull,default:1"`
-	IsCurrentVersion      bool                `json:"isCurrentVersion"      bun:"is_current_version,type:BOOLEAN,notnull,default:true"`
+	IsCurrentVersion      bool                `json:"isCurrentVersion"      bun:"is_current_version,type:BOOLEAN,notnull"`
 	FileName              string              `json:"fileName"              bun:"file_name,type:VARCHAR(255),notnull"`
 	OriginalName          string              `json:"originalName"          bun:"original_name,type:VARCHAR(255),notnull"`
 	FileSize              int64               `json:"fileSize"              bun:"file_size,type:BIGINT,notnull"`
