@@ -39019,12 +39019,14 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "own",
+                "team",
                 "organization",
                 "business_unit",
                 "all"
             ],
             "x-enum-varnames": [
                 "DataScopeOwn",
+                "DataScopeTeam",
                 "DataScopeOrganization",
                 "DataScopeBusinessUnit",
                 "DataScopeAll"
@@ -42310,6 +42312,17 @@ const docTemplate = `{
                 "HoldSourceEDI"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.JurisdictionMileSource": {
+            "type": "string",
+            "enum": [
+                "RouteCalculation",
+                "Manual"
+            ],
+            "x-enum-varnames": [
+                "JurisdictionMileSourceRouteCalculation",
+                "JurisdictionMileSourceManual"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_shipment.MoveCoverageType": {
             "type": "string",
             "enum": [
@@ -43033,6 +43046,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "jurisdictionMiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMoveJurisdictionMile"
+                    }
+                },
                 "loaded": {
                     "type": "boolean"
                 },
@@ -43056,6 +43075,74 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Stop"
                     }
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMoveJurisdictionMile": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "calculatedAt": {
+                    "type": "integer"
+                },
+                "countryCode": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "dataVersion": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "distanceProfileId": {
+                    "type": "string"
+                },
+                "distanceUnits": {
+                    "type": "string"
+                },
+                "ferryDistance": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "jurisdictionCode": {
+                    "type": "string"
+                },
+                "loaded": {
+                    "type": "boolean"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "sequence": {
+                    "type": "integer"
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "shipmentMoveId": {
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.JurisdictionMileSource"
+                },
+                "tollDistance": {
+                    "type": "number"
                 },
                 "updatedAt": {
                     "type": "integer"
@@ -44085,6 +44172,10 @@ const docTemplate = `{
                 "organizationId": {
                     "type": "string"
                 },
+                "positionId": {
+                    "description": "PositionID is the title the user holds in this organisation. It sits on\nthe membership rather than the user because a position belongs to one\norganisation and the same person may hold different titles in two.",
+                    "type": "string"
+                },
                 "user": {
                     "description": "Relationships",
                     "allOf": [
@@ -44890,8 +44981,14 @@ const docTemplate = `{
                 "fleetCodeId": {
                     "type": "string"
                 },
+                "fuelType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_domaintypes.IFTAFuelType"
+                },
                 "id": {
                     "type": "string"
+                },
+                "iftaQualified": {
+                    "type": "boolean"
                 },
                 "lastKnownLocationId": {
                     "type": "string"
@@ -45154,6 +45251,21 @@ const docTemplate = `{
                 "DriverTypeTeam"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_worker.DrugAlcoholStatus": {
+            "type": "string",
+            "enum": [
+                "Unknown",
+                "Clear",
+                "Pending",
+                "Prohibited"
+            ],
+            "x-enum-varnames": [
+                "DrugAlcoholUnknown",
+                "DrugAlcoholClear",
+                "DrugAlcoholPending",
+                "DrugAlcoholProhibited"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_worker.EndorsementType": {
             "type": "string",
             "enum": [
@@ -45182,6 +45294,103 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "GenderMale",
                 "GenderFemale"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_worker.JobDepartment": {
+            "type": "string",
+            "enum": [
+                "Operations",
+                "Safety",
+                "Maintenance",
+                "Billing",
+                "Administration",
+                "Sales",
+                "HumanResources",
+                "Executive",
+                "Other"
+            ],
+            "x-enum-varnames": [
+                "DepartmentOperations",
+                "DepartmentSafety",
+                "DepartmentMaintenance",
+                "DepartmentBilling",
+                "DepartmentAdministration",
+                "DepartmentSales",
+                "DepartmentHumanResources",
+                "DepartmentExecutive",
+                "DepartmentOther"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_worker.JobPosition": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "department": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.JobDepartment"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "flsaExempt": {
+                    "description": "FLSAExempt says the position is exempt from overtime. It lives on the\nposition because that is where the duties test is applied — two people\ndoing the same job are exempt or not together.",
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isDrivingPosition": {
+                    "description": "IsDrivingPosition separates the roster that needs a CDL from the one that\ndoes not, which is the line most compliance rules are drawn along.",
+                    "type": "boolean"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "reportsTo": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.JobPosition"
+                },
+                "reportsToPositionId": {
+                    "description": "ReportsToPositionID is the shape of the org chart. A person's own manager\nis on the worker, because two people in the same position can report to\ndifferent managers.",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_domaintypes.Status"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_worker.LeaveType": {
+            "type": "string",
+            "enum": [
+                "FMLA",
+                "Medical",
+                "Military",
+                "Parental",
+                "Personal",
+                "Other"
+            ],
+            "x-enum-varnames": [
+                "LeaveTypeFMLA",
+                "LeaveTypeMedical",
+                "LeaveTypeMilitary",
+                "LeaveTypeParental",
+                "LeaveTypePersonal",
+                "LeaveTypeOther"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_worker.PTOStatus": {
@@ -45218,6 +45427,61 @@ const docTemplate = `{
                 "PTOTypeBereavement",
                 "PTOTypeMaternity",
                 "PTOTypePaternity"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_worker.ReturnToDutyStatus": {
+            "type": "string",
+            "enum": [
+                "NotRequired",
+                "SAPEvaluation",
+                "RTDTestRequired",
+                "FollowUpTesting",
+                "Complete"
+            ],
+            "x-enum-varnames": [
+                "ReturnToDutyNotRequired",
+                "ReturnToDutySAPEvaluation",
+                "ReturnToDutyRTDTestRequired",
+                "ReturnToDutyFollowUpTesting",
+                "ReturnToDutyComplete"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_worker.SafetyRating": {
+            "type": "string",
+            "enum": [
+                "Excellent",
+                "Good",
+                "Watch",
+                "AtRisk"
+            ],
+            "x-enum-varnames": [
+                "SafetyRatingExcellent",
+                "SafetyRatingGood",
+                "SafetyRatingWatch",
+                "SafetyRatingAtRisk"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_worker.TrainingHealth": {
+            "type": "string",
+            "enum": [
+                "Current",
+                "Scheduled",
+                "DueSoon",
+                "Overdue",
+                "ExpiringSoon",
+                "Expired",
+                "Failed",
+                "Missing"
+            ],
+            "x-enum-varnames": [
+                "TrainingHealthCurrent",
+                "TrainingHealthScheduled",
+                "TrainingHealthDueSoon",
+                "TrainingHealthOverdue",
+                "TrainingHealthExpiringSoon",
+                "TrainingHealthExpired",
+                "TrainingHealthFailed",
+                "TrainingHealthMissing"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_worker.Worker": {
@@ -45287,6 +45551,9 @@ const docTemplate = `{
                 "lastName": {
                     "type": "string"
                 },
+                "leaveType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.LeaveType"
+                },
                 "manager": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
                 },
@@ -45304,6 +45571,12 @@ const docTemplate = `{
                 },
                 "portalUser": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                },
+                "position": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.JobPosition"
+                },
+                "positionId": {
+                    "type": "string"
                 },
                 "postalCode": {
                     "type": "string"
@@ -45447,6 +45720,9 @@ const docTemplate = `{
                 "dob": {
                     "type": "integer"
                 },
+                "drugAlcoholStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.DrugAlcoholStatus"
+                },
                 "eldExempt": {
                     "type": "boolean"
                 },
@@ -45464,6 +45740,9 @@ const docTemplate = `{
                 },
                 "isQualified": {
                     "type": "boolean"
+                },
+                "lastClearinghouseQueryAt": {
+                    "type": "integer"
                 },
                 "lastComplianceCheck": {
                     "type": "integer"
@@ -45498,10 +45777,28 @@ const docTemplate = `{
                 "mvrDueDate": {
                     "type": "integer"
                 },
+                "nextClearinghouseQueryDue": {
+                    "type": "integer"
+                },
+                "nextCredentialExpiry": {
+                    "type": "integer"
+                },
+                "nextTrainingDue": {
+                    "type": "integer"
+                },
                 "organizationId": {
                     "type": "string"
                 },
                 "physicalDueDate": {
+                    "type": "integer"
+                },
+                "returnToDutyStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.ReturnToDutyStatus"
+                },
+                "safetyRating": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.SafetyRating"
+                },
+                "safetyScore": {
                     "type": "integer"
                 },
                 "shortHaulExempt": {
@@ -45509,6 +45806,9 @@ const docTemplate = `{
                 },
                 "terminationDate": {
                     "type": "integer"
+                },
+                "trainingHealth": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.TrainingHealth"
                 },
                 "twicCardNumber": {
                     "type": "string"
@@ -46558,6 +46858,12 @@ const docTemplate = `{
                 "distanceUnits": {
                     "type": "string"
                 },
+                "jurisdictionMiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.JurisdictionMileResult"
+                    }
+                },
                 "moveId": {
                     "type": "string"
                 },
@@ -46632,6 +46938,26 @@ const docTemplate = `{
             "properties": {
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.JurisdictionMileResult": {
+            "type": "object",
+            "properties": {
+                "countryCode": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "distanceUnits": {
+                    "type": "string"
+                },
+                "jurisdictionCode": {
+                    "type": "string"
+                },
+                "loaded": {
+                    "type": "boolean"
                 }
             }
         },
@@ -46963,6 +47289,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "permissionCount": {
+                    "type": "integer"
                 }
             }
         },
@@ -48485,6 +48814,47 @@ const docTemplate = `{
                 "EquipmentStatusOOS",
                 "EquipmentStatusAtMaintenance",
                 "EquipmentStatusSold"
+            ]
+        },
+        "github_com_emoss08_trenova_pkg_domaintypes.IFTAFuelType": {
+            "type": "string",
+            "enum": [
+                "Diesel",
+                "Gasoline",
+                "Gasohol",
+                "Propane",
+                "CNG",
+                "LNG",
+                "Ethanol",
+                "Methanol",
+                "E85",
+                "M85",
+                "A55",
+                "Biodiesel",
+                "Electricity",
+                "Hydrogen",
+                "DEF",
+                "Reefer",
+                "Other"
+            ],
+            "x-enum-varnames": [
+                "IFTAFuelTypeDiesel",
+                "IFTAFuelTypeGasoline",
+                "IFTAFuelTypeGasohol",
+                "IFTAFuelTypePropane",
+                "IFTAFuelTypeCNG",
+                "IFTAFuelTypeLNG",
+                "IFTAFuelTypeEthanol",
+                "IFTAFuelTypeMethanol",
+                "IFTAFuelTypeE85",
+                "IFTAFuelTypeM85",
+                "IFTAFuelTypeA55",
+                "IFTAFuelTypeBiodiesel",
+                "IFTAFuelTypeElectricity",
+                "IFTAFuelTypeHydrogen",
+                "IFTAFuelTypeDEF",
+                "IFTAFuelTypeReefer",
+                "IFTAFuelTypeOther"
             ]
         },
         "github_com_emoss08_trenova_pkg_domaintypes.OwnershipType": {
