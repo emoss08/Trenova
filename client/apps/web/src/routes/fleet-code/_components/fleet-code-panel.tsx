@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -13,6 +14,8 @@ export function FleetCodePanel({
   mode,
   row,
 }: DataTablePanelProps<FleetCodeRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(fleetCodeSchema),
     defaultValues: {
@@ -35,7 +38,7 @@ export function FleetCodePanel({
         form={form}
         url="/fleet-codes/"
         queryKey="fleet-code-list"
-        title="Fleet Code"
+        title={t("Fleet Code")}
         fieldKey="code"
         formComponent={<FleetCodeForm />}
       />
@@ -49,7 +52,7 @@ export function FleetCodePanel({
       form={form}
       url="/fleet-codes/"
       queryKey="fleet-code-list"
-      title="Fleet Code"
+      title={t("Fleet Code")}
       formComponent={<FleetCodeForm />}
     />
   );
