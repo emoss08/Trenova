@@ -227,7 +227,7 @@ function ContractRateAppliedAlert({
     <Alert variant="info" className="mb-3">
       <SparklesIcon className="size-4" />
       <AlertTitle>
-        {t("Rated from {0}{1}", rate.agreementName || "a rate agreement", rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+        {t("Rated from {0} {1}", rate.agreementName || "a rate agreement", rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
       </AlertTitle>
       <AlertDescription>
         <span>

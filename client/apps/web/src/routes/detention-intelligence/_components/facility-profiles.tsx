@@ -98,7 +98,7 @@ function FacilityRow({
             {row.locationName || row.locationId}
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-            {t("{0}{1} · {2} past free time {3}", row.stopCount, row.stopCount === 1 ? "stop" : "stops", row.breachCount, row.disputeCount > 0 ? ` · ${row.disputeCount} disputed` : "")}
+            {t("{0} {1} · {2} past free time {3}", row.stopCount, row.stopCount === 1 ? "stop" : "stops", row.breachCount, row.disputeCount > 0 ? ` · ${row.disputeCount} disputed` : "")}
           </p>
         </div>
 

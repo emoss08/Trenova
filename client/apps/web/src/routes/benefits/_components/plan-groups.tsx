@@ -90,7 +90,7 @@ function GroupHeading({ group }: { group: PlanTypeGroup<BenefitPlanRow, BenefitC
         </span>
       </h4>
       <span className="text-muted-foreground text-xs tabular-nums">
-        {t("{0} covered {1}{2}", group.enrolled, group.waived > 0 ? ` · ${group.waived} declined` : "", group.employerMinor > 0 ? ` · ${formatMinor(group.employerMinor)} employer` : "")}
+        {t("{0} covered {1} {2}", group.enrolled, group.waived > 0 ? ` · ${group.waived} declined` : "", group.employerMinor > 0 ? ` · ${formatMinor(group.employerMinor)} employer` : "")}
       </span>
     </header>
   );

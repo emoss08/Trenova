@@ -85,7 +85,7 @@ function LeakageRow({
           delay={Math.min(index, 10) * 0.04}
         />
         <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
-          {t("{0}{1} · {2} {3} · {4} each", row.waiverCount, row.waiverCount === 1 ? "waiver" : "waivers", row.approverCount, row.approverCount === 1 ? "approver" : "approvers", formatCurrency(perWaiver))}
+          {t("{0} {1} · {2} {3} · {4} each", row.waiverCount, row.waiverCount === 1 ? "waiver" : "waivers", row.approverCount, row.approverCount === 1 ? "approver" : "approvers", formatCurrency(perWaiver))}
         </p>
       </div>
     </m.div>

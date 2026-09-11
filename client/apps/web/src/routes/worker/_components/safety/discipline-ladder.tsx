@@ -168,7 +168,7 @@ export function DisciplineLadder({
                   </p>
                   <p className="text-xs">{action.reason}</p>
                   <p className="text-muted-foreground text-xs">
-                    {t("Issued {0}{1}{2}{3}{4}", formatUnixDate(action.issuedAt), action.issuedBy?.name ? ` by ${action.issuedBy.name}` : "", action.expiresAt ? ` · rolls off ${formatUnixDate(action.expiresAt)}` : "", action.suspensionDays ? ` · ${action.suspensionDays} days` : "", action.rescindReason ? ` · rescinded: ${action.rescindReason}` : "")}
+                    {t("Issued {0} {1} {2} {3} {4}", formatUnixDate(action.issuedAt), action.issuedBy?.name ? ` by ${action.issuedBy.name}` : "", action.expiresAt ? ` · rolls off ${formatUnixDate(action.expiresAt)}` : "", action.suspensionDays ? ` · ${action.suspensionDays} days` : "", action.rescindReason ? ` · rescinded: ${action.rescindReason}` : "")}
                   </p>
                   {action.workerComment ? (
                     <p className="text-muted-foreground mt-1 text-xs">“{action.workerComment}”</p>

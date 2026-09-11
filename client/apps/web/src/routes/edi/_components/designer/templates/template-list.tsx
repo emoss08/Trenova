@@ -140,7 +140,7 @@ function TemplateListItem({
             </Badge>
           </div>
           <div className="text-muted-foreground mt-1 text-xs">
-            {t("{0}{1} / {2} versions", template.transactionSet, template.direction, template.versions.length)}
+            {t("{0} {1} / {2} versions", template.transactionSet, template.direction, template.versions.length)}
           </div>
         </button>
         <Tooltip>

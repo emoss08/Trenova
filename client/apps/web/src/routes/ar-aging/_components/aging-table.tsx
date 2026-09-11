@@ -175,7 +175,7 @@ export function AgingTable({
         <TableFooter className="bg-muted/40 sticky bottom-0">
           <TableRow className="hover:bg-transparent">
             <TableCell className="py-2 text-xs font-medium">
-              {t("Totals · {0}{1}", rows.length, rows.length === 1 ? "customer" : "customers")}
+              {t("Totals · {0} {1}", rows.length, rows.length === 1 ? "customer" : "customers")}
             </TableCell>
             <TableCell className="py-2 text-right">
               <AmountDisplay value={totals.currentMinor} className="text-xs font-semibold" />

@@ -188,7 +188,7 @@ export function PositionTree({
           </Button>
           {tree.unplaced > 0 ? (
             <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0}{1} with no position", tree.unplaced, tree.unplaced === 1 ? "person" : "people")}
+              {t("{0} {1} with no position", tree.unplaced, tree.unplaced === 1 ? "person" : "people")}
             </span>
           ) : null}
         </div>

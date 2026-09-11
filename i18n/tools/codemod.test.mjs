@@ -162,3 +162,16 @@ test("does not create a sparse array when deps end with a trailing comma", () =>
   assert.doesNotMatch(out, /,\s*,/, "[x, , t] has a hole");
   assert.match(out, /x,\s*t\]/);
 });
+
+test("keeps the space between two interpolations", () => {
+  // `{years} {unit} on {date}` must not fold to "{0}{1} on {2}" — that renders "2years on".
+  const out = run(
+    `export function A({ item }: any) {\n  return <span>{item.years} {item.years === 1 ? "year" : "years"} on{" "}{fmt(item.onDate)}</span>;\n}\n`,
+  ).output;
+  assert.match(out, /t\("\{0\} \{1\} on \{2\}"/);
+});
+
+test("still treats whitespace between elements as layout", () => {
+  const result = run(`export function B() {\n  return <div>\n  <A />\n  <B />\n</div>;\n}\n`);
+  assert.equal(result.changed, false);
+});

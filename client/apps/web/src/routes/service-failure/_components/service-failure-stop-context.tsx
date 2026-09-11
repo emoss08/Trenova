@@ -176,7 +176,7 @@ function renderMinutes(label: string, value?: number | null) {
 
   return (
     <span>
-      {translate("{0}{1}m", label, value)}
+      {translate("{0} {1}m", label, value)}
     </span>
   );
 }

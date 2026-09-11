@@ -61,7 +61,7 @@ export function DeleteFuelPurchaseDialog({
           <AlertDialogDescription>
             {purchase ? (
               <span className="block">
-                {t("{0} gallons of {1} bought in {2} on {3}{4} will be removed outright.", purchase.gallons, purchase.fuelType.toLowerCase(), purchase.jurisdiction.code, formatUnixDateTime(purchase.purchasedAt), purchase.tractor?.code ? ` for tractor ${purchase.tractor.code}` : "")}
+                {t("{0} gallons of {1} bought in {2} on {3} {4} will be removed outright.", purchase.gallons, purchase.fuelType.toLowerCase(), purchase.jurisdiction.code, formatUnixDateTime(purchase.purchasedAt), purchase.tractor?.code ? ` for tractor ${purchase.tractor.code}` : "")}
               </span>
             ) : null}
             <span className="mt-2 block">

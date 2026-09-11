@@ -333,11 +333,11 @@ function AlertConditionFields({
             <p className="text-2xs text-muted-foreground">
               {targetsMeasure ? (
                 <>
-                  {t("Sends only when {0} is {1}{2}.", measureLabel, operatorLabel, Number(value) || 0)}
+                  {t("Sends only when {0} is {1} {2}.", measureLabel, operatorLabel, Number(value) || 0)}
                 </>
               ) : (
                 <>
-                  {t("Sends only when the report returns {0}{1} row {2}.", operatorLabel, Number(threshold) || 0, Number(threshold) === 1 ? "" : "s")}
+                  {t("Sends only when the report returns {0} {1} row {2}.", operatorLabel, Number(threshold) || 0, Number(threshold) === 1 ? "" : "s")}
                 </>
               )}
             </p>

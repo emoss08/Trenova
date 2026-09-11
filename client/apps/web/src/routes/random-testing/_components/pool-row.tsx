@@ -120,7 +120,7 @@ export function PoolRow({
           "Nothing drawn this year"
         ) : (
           <>
-            {t("Drug {0} of {1} · Alcohol {2} of {3}{4}", progress.drugSelected, progress.drugTarget, progress.alcoholSelected, progress.alcoholTarget, progress.onPace ? "" : " · a round fell short")}
+            {t("Drug {0} of {1} · Alcohol {2} of {3} {4}", progress.drugSelected, progress.drugTarget, progress.alcoholSelected, progress.alcoholTarget, progress.onPace ? "" : " · a round fell short")}
           </>
         )}
       </p>

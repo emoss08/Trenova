@@ -314,7 +314,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 disabled={validCount === 0}
                 onClick={() => result && importRates(result.valid)}
               >
-                {t("Publish {0}{1}", validCount, pluralize("rate", validCount))}
+                {t("Publish {0} {1}", validCount, pluralize("rate", validCount))}
               </Button>
             </>
           ) : (

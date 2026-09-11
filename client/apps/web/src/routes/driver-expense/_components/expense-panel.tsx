@@ -94,7 +94,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           <DriverExpenseStatusBadge status={expense.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Incurred {0} · Submitted {1}{2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
+          {t("Incurred {0} · Submitted {1} {2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
             ? ` by ${`${expense.worker.firstName} ${expense.worker.lastName}`.trim()}`
             : "")}
         </p>

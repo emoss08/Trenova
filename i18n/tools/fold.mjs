@@ -13,8 +13,8 @@
 //   <a><Logo /> Continue with {provider.name}</a>
 //     -> 'Continue with {0}', with <Logo /> left exactly where it was.
 
-function isMeaningful(child) {
-  return !(child.type === "JSXText" && child.value.trim() === "");
+function isWhitespaceText(child) {
+  return child.type === "JSXText" && child.value.trim() === "";
 }
 
 function isFoldable(child) {
@@ -26,18 +26,22 @@ function isFoldable(child) {
  * sentence worth folding: it must contain real text and at least one real interpolation.
  * A run of text alone is an ordinary JSXText and is handled as one; a run of
  * interpolations alone carries nothing to translate.
+ *
+ * Whitespace-only text INSIDE a run is kept. It is not layout — it is the space in
+ * `{years} {unit} on {date}`, and dropping it silently renders "2years on Mar 3".
+ * Only the whitespace at the run's edges is separated out, to be re-emitted around the
+ * call rather than absorbed into the message.
  */
 export function foldableRuns(children) {
-  const meaningful = children.filter(isMeaningful);
   const runs = [];
-
   let current = [];
+
   const flush = () => {
-    if (current.length > 1) runs.push(current);
+    if (current.length > 0) runs.push(current);
     current = [];
   };
 
-  for (const child of meaningful) {
+  for (const child of children) {
     if (isFoldable(child)) {
       current.push(child);
       continue;
@@ -48,17 +52,22 @@ export function foldableRuns(children) {
 
   const folded = [];
   for (const run of runs) {
-    const built = buildMessage(run);
+    const built = buildMessage(trimRun(run));
     if (built !== null) folded.push(built);
   }
   return folded;
 }
 
-// containsJSX reports whether an expression produces markup. Such an expression cannot
-// become a placeholder: the runtime substitutes strings, so a React element would render as
-// serialized junk, and the words nested inside it would vanish from the catalog. Runs like
-// `Run Console {isRunning && <Badge>Live</Badge>}` are therefore left unfolded and handled
-// as ordinary text plus untouched markup.
+// trimRun drops whitespace-only nodes from each end of a run so the message itself does not
+// start or end with layout, while the interior keeps every space it had.
+function trimRun(run) {
+  let start = 0;
+  let end = run.length;
+  while (start < end && isWhitespaceText(run[start])) start += 1;
+  while (end > start && isWhitespaceText(run[end - 1])) end -= 1;
+  return run.slice(start, end);
+}
+
 function containsJSX(node) {
   if (node === null || typeof node !== "object") return false;
   if (Array.isArray(node)) return node.some(containsJSX);

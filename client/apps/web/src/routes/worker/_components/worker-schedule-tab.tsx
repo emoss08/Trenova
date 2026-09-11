@@ -142,7 +142,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
               </p>
               {current ? (
                 <p className="text-muted-foreground mt-1 text-xs tabular-nums">
-                  {t("Since {0}{1}", formatShiftDate(current.effectiveFrom), current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
+                  {t("Since {0} {1}", formatShiftDate(current.effectiveFrom), current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
                     ? ` · week ${current.cycleOffsetWeeks + 1} of the rotation`
                     : "")}
                 </p>

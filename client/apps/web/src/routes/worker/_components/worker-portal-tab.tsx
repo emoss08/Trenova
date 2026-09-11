@@ -208,7 +208,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm">{invitation.email}</p>
                   <p className="text-muted-foreground text-xs">
-                    {t("Sent {0}{1}{2}", formatDate(invitation.createdAt), invitation.invitedBy ? ` by ${invitation.invitedBy.name}` : "", invitation.acceptedAt
+                    {t("Sent {0} {1} {2}", formatDate(invitation.createdAt), invitation.invitedBy ? ` by ${invitation.invitedBy.name}` : "", invitation.acceptedAt
                       ? ` · accepted ${formatDate(invitation.acceptedAt)}`
                       : "")}
                   </p>

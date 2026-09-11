@@ -262,7 +262,7 @@ export function BlackoutDatesField() {
             {pastDates.length > 0 && (
               <div className="border-border flex items-center gap-2 border-b px-2.5 py-1.5">
                 <span className="text-2xs text-muted-foreground">
-                  {t("{0}{1} already passed and no longer affect the schedule.", pastDates.length, pastDates.length === 1 ? "day has" : "days have")}
+                  {t("{0} {1} already passed and no longer affect the schedule.", pastDates.length, pastDates.length === 1 ? "day has" : "days have")}
                 </span>
                 <Button
                   type="button"

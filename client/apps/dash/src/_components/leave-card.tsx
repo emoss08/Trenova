@@ -86,13 +86,13 @@ export function LeaveCard() {
               <Badge variant="secondary">{leaveFrequencyLabel(row.frequency)}</Badge>
             </div>
             <p className="text-muted-foreground mt-0.5">
-              {t("{0}{1} · {2} h taken {3}", formatUnixDateMedium(row.startsAt), row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : " – ongoing", formatLeaveHours(row.hoursUsed), row.hoursCharged !== row.hoursUsed
+              {t("{0} {1} · {2} h taken {3}", formatUnixDateMedium(row.startsAt), row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : " – ongoing", formatLeaveHours(row.hoursUsed), row.hoursCharged !== row.hoursUsed
                 ? ` (${formatLeaveHours(row.hoursCharged)} h counted)`
                 : "")}
             </p>
             {row.certificationStatus === "NotRequired" ? null : (
               <p className="text-muted-foreground mt-0.5">
-                {t("Certification {0}{1}", certificationStatusLabel(row.certificationStatus).toLowerCase(), row.certificationDueAt
+                {t("Certification {0} {1}", certificationStatusLabel(row.certificationStatus).toLowerCase(), row.certificationDueAt
                   ? ` · due ${formatUnixDateMedium(row.certificationDueAt)}`
                   : "")}
               </p>

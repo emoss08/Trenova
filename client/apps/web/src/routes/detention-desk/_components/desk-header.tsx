@@ -82,7 +82,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
           disabled={sendNotices.isPending}
         >
           <MailIcon className="size-3.5" />
-          {t("Send {0}{1}", noticeQueue.length, pluralize("notice", noticeQueue.length))}
+          {t("Send {0} {1}", noticeQueue.length, pluralize("notice", noticeQueue.length))}
         </Button>
       )}
 

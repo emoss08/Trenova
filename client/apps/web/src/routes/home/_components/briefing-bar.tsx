@@ -193,7 +193,7 @@ export function BriefingBar({
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="text-xs font-medium"
                 >
-                  {t("{0}{1} you", total, total === 1 ? "item needs" : "items need")}
+                  {t("{0} {1} you", total, total === 1 ? "item needs" : "items need")}
                 </m.span>
                 {chips.map((chip, index) => (
                   <m.span

@@ -250,7 +250,7 @@ export function TimelineToolbar({
           ))}
         </div>
         <p className="font-table text-muted-foreground shrink-0 text-[10.5px] tabular-nums">
-          {t("{0}{1} in view", barCount, barCount === 1 ? "load" : "loads")}
+          {t("{0} {1} in view", barCount, barCount === 1 ? "load" : "loads")}
         </p>
       </div>
     </div>

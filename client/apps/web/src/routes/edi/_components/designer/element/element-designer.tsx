@@ -117,7 +117,7 @@ export function ElementDesigner() {
               <div>
                 <div className="text-sm font-semibold">{segment.name}</div>
                 <div className="text-muted-foreground text-xs">
-                  {t("Sequence {0}{1}", segment.sequence, segment.repeatPath ? ` / repeats ${segment.repeatPath}` : "")}
+                  {t("Sequence {0} {1}", segment.sequence, segment.repeatPath ? ` / repeats ${segment.repeatPath}` : "")}
                 </div>
               </div>
             </div>

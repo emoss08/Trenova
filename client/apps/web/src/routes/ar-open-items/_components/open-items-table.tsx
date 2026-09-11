@@ -266,7 +266,7 @@ export function OpenItemsTable({
           <TableFooter className="bg-muted/40">
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={8} className="py-2 text-right text-xs font-medium">
-                {t("Totals · {0}{1}", items.length, items.length === 1 ? "invoice" : "invoices")}
+                {t("Totals · {0} {1}", items.length, items.length === 1 ? "invoice" : "invoices")}
               </TableCell>
               <TableCell className="py-2 text-right">
                 <AmountDisplay value={totals.total} className="text-xs font-semibold" />

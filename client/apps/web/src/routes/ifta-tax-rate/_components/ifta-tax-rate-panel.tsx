@@ -141,7 +141,7 @@ function IftaTaxRateEditPanel({
       title={t("IFTA Tax Rate")}
       titleComponent={(record) => (
         <span>
-          {t("{0} · {1} · Q{2}{3}", record.jurisdiction.code, record.fuelType, record.quarter, record.year)}
+          {t("{0} · {1} · Q{2} {3}", record.jurisdiction.code, record.fuelType, record.quarter, record.year)}
         </span>
       )}
       queryKey={IFTA_TAX_RATE_LIST_KEY}

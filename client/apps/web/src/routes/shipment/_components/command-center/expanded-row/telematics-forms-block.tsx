@@ -84,7 +84,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
         <div className="flex shrink-0 items-center gap-2">
           {submission.applied ? (
             <Badge variant="active">
-              {t("Applied {0}{1}", submission.appliedFields, pluralize("field", submission.appliedFields))}
+              {t("Applied {0} {1}", submission.appliedFields, pluralize("field", submission.appliedFields))}
             </Badge>
           ) : (
             <Badge variant="secondary">{t("Not applied")}</Badge>

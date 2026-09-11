@@ -112,7 +112,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <SettlementDisputeStatusBadge status={dispute.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Submitted {0}{1}", formatDate(dispute.createdAt), dispute.worker
+          {t("Submitted {0} {1}", formatDate(dispute.createdAt), dispute.worker
             ? ` by ${`${dispute.worker.firstName} ${dispute.worker.lastName}`.trim()}`
             : "")}
         </p>

@@ -47,7 +47,7 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
           <div>
             <p className="text-muted-foreground">{t("Version")}</p>
             <p className="font-medium">
-              {t("v{0}{1}", publishedVersion.versionNumber, publishedVersion.label ? ` — ${publishedVersion.label}` : "")}
+              {t("v{0} {1}", publishedVersion.versionNumber, publishedVersion.label ? ` — ${publishedVersion.label}` : "")}
             </p>
           </div>
           <div>

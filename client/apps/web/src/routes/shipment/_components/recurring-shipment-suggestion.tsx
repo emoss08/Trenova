@@ -99,7 +99,7 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("A recurring shipment already covers this lane")}</p>
         <p className="text-muted-foreground text-xs">
-          {t("{0}{1} . You can generate the next occurrence from it instead of entering this shipment manually.", `"${series.name}" runs ${(describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase()}`, series.nextOccurrenceAt
+          {t("{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.", `"${series.name}" runs ${(describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase()}`, series.nextOccurrenceAt
             ? ` — next pickup ${formatToUserTimezone(series.nextOccurrenceAt)}`
             : "")}
         </p>

@@ -68,7 +68,7 @@ export function ChecklistCard({
               ) : null}
             </div>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {t("Started {0}{1}{2}{3}{4}", formatUnixDateMedium(checklist.startedAt), checklist.startedBy?.name ? ` by ${checklist.startedBy.name}` : "", checklist.dueAt && open ? ` · due ${formatUnixDateMedium(checklist.dueAt)}` : "", checklist.completedAt
+              {t("Started {0} {1} {2} {3} {4}", formatUnixDateMedium(checklist.startedAt), checklist.startedBy?.name ? ` by ${checklist.startedBy.name}` : "", checklist.dueAt && open ? ` · due ${formatUnixDateMedium(checklist.dueAt)}` : "", checklist.completedAt
                 ? ` · completed ${formatUnixDateMedium(checklist.completedAt)}`
                 : "", checklist.cancelledAt
                 ? ` · cancelled ${formatUnixDateMedium(checklist.cancelledAt)}${checklist.cancelReason ? ` — ${checklist.cancelReason}` : ""}`

@@ -12278,7 +12278,7 @@
       "routes/fuel-purchase"
     ]
   },
-  "Applied {0}{1}": {
+  "Applied {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -13404,7 +13404,7 @@
       "routes/document-packet-rule"
     ]
   },
-  "Are you sure you want to duplicate {0}{1}? This action cannot be undone.": {
+  "Are you sure you want to duplicate {0} {1}? This action cannot be undone.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -13612,7 +13612,7 @@
       "domain/ratequote"
     ]
   },
-  "As of {0}{1}": {
+  "As of {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -22007,7 +22007,7 @@
       "routes/worker"
     ]
   },
-  "Certification {0}{1}": {
+  "Certification {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -22054,7 +22054,7 @@
       "routes/worker"
     ]
   },
-  "Certified {0}{1}": {
+  "Certified {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -24252,7 +24252,7 @@
       "apps/web/components"
     ]
   },
-  "Class {0}{1}": {
+  "Class {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -42901,7 +42901,7 @@
       "routes/worker"
     ]
   },
-  "Drug {0} of {1} · Alcohol {2} of {3}{4}": {
+  "Drug {0} of {1} · Alcohol {2} of {3} {4}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -43195,7 +43195,7 @@
       "domain/homelayout"
     ]
   },
-  "Duplicate {0}{1}?": {
+  "Duplicate {0} {1}?": {
     "sites": 1,
     "scope": [
       "ts"
@@ -43326,7 +43326,7 @@
       "routes/shipment"
     ]
   },
-  "Dwelling {0} at {1}{2}": {
+  "Dwelling {0} at {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -57608,7 +57608,7 @@
       "routes/admin"
     ]
   },
-  "Giving up {0}{1}": {
+  "Giving up {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -60666,7 +60666,7 @@
       "apps/web/lib"
     ]
   },
-  "I have read {0}{1}": {
+  "I have read {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -62277,7 +62277,7 @@
       "domain/driverpay"
     ]
   },
-  "Incurred {0} · Submitted {1}{2}": {
+  "Incurred {0} · Submitted {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -65135,6 +65135,15 @@
       "domain/driverpay"
     ]
   },
+  "Issued {0} {1} {2} {3} {4}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Issued {0} ·": {
     "sites": 1,
     "scope": [
@@ -65142,15 +65151,6 @@
     ],
     "areas": [
       "routes/money.tsx"
-    ]
-  },
-  "Issued {0}{1}{2}{3}{4}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Issuer": {
@@ -83151,7 +83151,7 @@
       "domain/driverpay"
     ]
   },
-  "Occurred {0}{1}": {
+  "Occurred {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -86338,7 +86338,7 @@
       "domain/driverpay"
     ]
   },
-  "Opened {0}{1}": {
+  "Opened {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -97420,7 +97420,7 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "Publish {0}{1}": {
+  "Publish {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -99319,7 +99319,7 @@
       "apps/web/lib"
     ]
   },
-  "Rated from {0}{1}": {
+  "Rated from {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -106425,7 +106425,7 @@
       "packages/shared/components"
     ]
   },
-  "Resolved {0}{1}": {
+  "Resolved {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115301,7 +115301,7 @@
       "routes/detention-desk"
     ]
   },
-  "Send {0}{1}": {
+  "Send {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115466,7 +115466,7 @@
       "routes/billing-control"
     ]
   },
-  "Sends only when the report returns {0}{1} row {2}.": {
+  "Sends only when the report returns {0} {1} row {2}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115475,7 +115475,7 @@
       "routes/reports"
     ]
   },
-  "Sends only when {0} is {1}{2}.": {
+  "Sends only when {0} is {1} {2}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115596,7 +115596,7 @@
       "apps/dash/_components"
     ]
   },
-  "Sent {0}{1}{2}": {
+  "Sent {0} {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115828,7 +115828,7 @@
       "domain/tenant"
     ]
   },
-  "Sequence {0}{1}": {
+  "Sequence {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -119610,7 +119610,7 @@
       "routes/pay-profile"
     ]
   },
-  "Since {0}{1}": {
+  "Since {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -121524,7 +121524,7 @@
       "routes/my-team"
     ]
   },
-  "Started {0}{1}{2}{3}{4}": {
+  "Started {0} {1} {2} {3} {4}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -123122,7 +123122,7 @@
       "routes/edi"
     ]
   },
-  "Submitted {0}{1}": {
+  "Submitted {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -124556,6 +124556,15 @@
       "routes/reports"
     ]
   },
+  "Target {0} {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Target {0}% · 7-day {1}%": {
     "sites": 1,
     "scope": [
@@ -124563,15 +124572,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "Target {0}{1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Tariff": {
@@ -134072,7 +134072,7 @@
       "routes/dispatch-console"
     ]
   },
-  "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
+  "This partner is enabled for {0} {1} {2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -136636,7 +136636,7 @@
       "routes/trial-balance"
     ]
   },
-  "Totals · {0}{1}": {
+  "Totals · {0} {1}": {
     "sites": 3,
     "scope": [
       "ts"
@@ -140001,7 +140001,7 @@
       "routes/shipment"
     ]
   },
-  "Updated {0}{1}": {
+  "Updated {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -142064,16 +142064,7 @@
       "routes/admin"
     ]
   },
-  "Version {0}. A signature on an earlier version does not count — those people are outstanding again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/policies"
-    ]
-  },
-  "Version {0}{1}": {
+  "Version {0} {1}": {
     "sites": 3,
     "scope": [
       "ts"
@@ -142081,6 +142072,15 @@
     "areas": [
       "apps/dash/_components",
       "routes/admin"
+    ]
+  },
+  "Version {0}. A signature on an earlier version does not count — those people are outstanding again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/policies"
     ]
   },
   "Versions": {
@@ -149688,7 +149688,7 @@
       "routes/worker"
     ]
   },
-  "by {0}{1}": {
+  "by {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151910,7 +151910,7 @@
       "routes/dispatch-console"
     ]
   },
-  "from {0}{1}": {
+  "from {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -152262,7 +152262,7 @@
       "routes/home"
     ]
   },
-  "off by {0}{1}": {
+  "off by {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -152508,7 +152508,7 @@
       "packages/shared/components"
     ]
   },
-  "profile: {0}{1}": {
+  "profile: {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -152761,7 +152761,7 @@
       "routes/edi"
     ]
   },
-  "since {0}{1}": {
+  "since {0} {1}": {
     "sites": 2,
     "scope": [
       "ts"
@@ -153142,6 +153142,16 @@
       "apps/web/components"
     ]
   },
+  "v{0} {1}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/_components",
+      "routes/admin"
+    ]
+  },
   "v{0} · View history": {
     "sites": 1,
     "scope": [
@@ -153158,16 +153168,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "v{0}{1}": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/dash/_components",
-      "routes/admin"
     ]
   },
   "waiting on you": {
@@ -153468,7 +153468,7 @@
       "routes/home"
     ]
   },
-  "{0} active pool{1}{2}": {
+  "{0} active pool{1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153603,7 +153603,7 @@
       "routes/detention-policy"
     ]
   },
-  "{0} billed · {1} paid out · {2}{3}": {
+  "{0} billed · {1} paid out · {2} {3}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153738,7 +153738,7 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "{0} covered {1}{2}": {
+  "{0} covered {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153810,6 +153810,15 @@
       "routes/worker"
     ]
   },
+  "{0} day{1} {2} {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/_components"
+    ]
+  },
   "{0} day{1} · {2}": {
     "sites": 1,
     "scope": [
@@ -153826,15 +153835,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "{0} day{1}{2}{3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/dash/_components"
     ]
   },
   "{0} diagnostics returned by backend validation": {
@@ -153937,6 +153937,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "{0} event{1} {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fleet-safety"
+    ]
+  },
   "{0} event{1} ·": {
     "sites": 1,
     "scope": [
@@ -153944,15 +153953,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "{0} event{1}{2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fleet-safety"
     ]
   },
   "{0} expired": {
@@ -154073,7 +154073,7 @@
       "routes/shipment"
     ]
   },
-  "{0} gallons of {1} bought in {2} on {3}{4} will be removed outright.": {
+  "{0} gallons of {1} bought in {2} on {3} {4} will be removed outright.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154281,7 +154281,7 @@
       "routes/ifta-return"
     ]
   },
-  "{0} miles in {1} on {2}{3} will be removed outright.": {
+  "{0} miles in {1} on {2} {3} will be removed outright.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154492,7 +154492,7 @@
       "apps/dash/_components"
     ]
   },
-  "{0} of {1}{2}": {
+  "{0} of {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154618,7 +154618,7 @@
       "routes/shipment"
     ]
   },
-  "{0} paid {1}{2}": {
+  "{0} paid {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154891,7 +154891,7 @@
       "routes/shipment"
     ]
   },
-  "{0} settled {1} across {2}{3} · {4}% ran past free time {5}": {
+  "{0} settled {1} across {2} {3} · {4}% ran past free time {5}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155000,7 +155000,7 @@
       "routes/reports"
     ]
   },
-  "{0} timesheet{1}{2}{3}": {
+  "{0} timesheet{1} {2} {3}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155201,6 +155201,78 @@
       "apps/dash/_components"
     ]
   },
+  "{0} {1} (override)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "{0} {1} / {2} versions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "{0} {1} already passed and no longer affect the schedule.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/recurring-shipment"
+    ]
+  },
+  "{0} {1} detected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} {1} in view": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "{0} {1} into {2} {3} dated {4}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "{0} {1} on {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/my-team"
+    ]
+  },
   "{0} {1} posted, {2} waiting.": {
     "sites": 1,
     "scope": [
@@ -155208,6 +155280,114 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "{0} {1} priced this shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "{0} {1} will be notified in Dash and by SMS that their time off ({2}) is approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "{0} {1} with no position": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/org-structure"
+    ]
+  },
+  "{0} {1} you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
+  "{0} {1} {2} . Failed shipments are excluded from the totals below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "{0} {1} · drag onto a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "{0} {1} · {2} gal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-purchase"
+    ]
+  },
+  "{0} {1} · {2} h taken {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/_components"
+    ]
+  },
+  "{0} {1} · {2} mi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "{0} {1} · {2} past free time {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0} {1} · {2} {3} · {4} each": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0} {1}m": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/service-failure"
     ]
   },
   "{0} · OpenID Connect": {
@@ -155237,7 +155417,7 @@
       "routes/fleet-safety"
     ]
   },
-  "{0} · since {1}{2}": {
+  "{0} · since {1} {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155301,7 +155481,7 @@
       "routes/shipment"
     ]
   },
-  "{0} · {1} · Q{2}{3}": {
+  "{0} · {1} · Q{2} {3}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155561,186 +155741,6 @@
       "routes/shipment"
     ]
   },
-  "{0}{1} (override)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "{0}{1} . You can generate the next occurrence from it instead of entering this shipment manually.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0}{1} / {2} versions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
-  "{0}{1} already passed and no longer affect the schedule.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/recurring-shipment"
-    ]
-  },
-  "{0}{1} detected": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{0}{1} in view": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0}{1} into {2}{3} dated {4}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
-  "{0}{1} on {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/my-team"
-    ]
-  },
-  "{0}{1} priced this shipment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "{0}{1} will be notified in Dash and by SMS that their time off ({2}) is approved.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "{0}{1} with no position": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/org-structure"
-    ]
-  },
-  "{0}{1} you": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
-    ]
-  },
-  "{0}{1} · drag onto a driver": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "{0}{1} · {2} gal": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fuel-purchase"
-    ]
-  },
-  "{0}{1} · {2} h taken {3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/dash/_components"
-    ]
-  },
-  "{0}{1} · {2} mi": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-jurisdiction-mileage"
-    ]
-  },
-  "{0}{1} · {2} past free time {3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0}{1} · {2} {3} · {4} each": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0}{1}m": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/service-failure"
-    ]
-  },
-  "{0}{1}{2} . Failed shipments are excluded from the totals below.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "{0}–{1}°F": {
     "sites": 1,
     "scope": [
@@ -155787,7 +155787,7 @@
       "routes/shipment"
     ]
   },
-  "· Amended by {0}{1}": {
+  "· Amended by {0} {1}": {
     "sites": 1,
     "scope": [
       "ts"

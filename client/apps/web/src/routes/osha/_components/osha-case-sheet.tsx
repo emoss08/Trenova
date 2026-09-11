@@ -96,7 +96,7 @@ function CaseDetail({
           {entry.recordable ? null : <Badge variant="secondary">{t("Off the log")}</Badge>}
         </div>
         <SheetDescription>
-          {t("Occurred {0}{1}", formatUnixDateMedium(entry.occurredAt), entry.reportedAt ? `, reported ${formatUnixDateMedium(entry.reportedAt)}` : "")}
+          {t("Occurred {0} {1}", formatUnixDateMedium(entry.occurredAt), entry.reportedAt ? `, reported ${formatUnixDateMedium(entry.reportedAt)}` : "")}
         </SheetDescription>
       </SheetHeader>
 

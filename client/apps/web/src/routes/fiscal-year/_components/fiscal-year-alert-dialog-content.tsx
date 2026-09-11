@@ -306,7 +306,7 @@ function SubledgerChecks({ checks }: { checks: FiscalYearSubledgerCheck[] }) {
             <span className="font-mono">{t("reconciled · {0}", formatMinor(check.glBalanceMinor))}</span>
           ) : (
             <span className="text-destructive font-mono">
-              {t("off by {0}{1}", formatMinor(check.differenceMinor), check.enforced ? "" : " (not enforced)")}
+              {t("off by {0} {1}", formatMinor(check.differenceMinor), check.enforced ? "" : " (not enforced)")}
             </span>
           )}
         </div>
@@ -346,7 +346,7 @@ function EntrySummary({
         <span className="font-mono text-xs">{formatMinor(entry.totalDebitMinor)}</span>
       </div>
       <p className="text-muted-foreground text-xs">
-        {t("{0}{1} into {2}{3} dated {4}", entry.lines.length, entry.lines.length === 1 ? "line" : "lines", entry.fiscalPeriodName, entry.createsPeriod ? " (created by this close)" : "", formatUnixDate(entry.accountingDate))}
+        {t("{0} {1} into {2} {3} dated {4}", entry.lines.length, entry.lines.length === 1 ? "line" : "lines", entry.fiscalPeriodName, entry.createsPeriod ? " (created by this close)" : "", formatUnixDate(entry.accountingDate))}
       </p>
     </div>
   );

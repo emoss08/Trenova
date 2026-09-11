@@ -157,7 +157,7 @@ function IftaMileageEntryEditPanel({
       title={t("Jurisdiction Mileage")}
       titleComponent={(record) => (
         <span>
-          {t("{0}{1} · {2} mi", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.miles)}
+          {t("{0} {1} · {2} mi", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.miles)}
         </span>
       )}
       queryKey={IFTA_MILEAGE_ENTRY_LIST_KEY}

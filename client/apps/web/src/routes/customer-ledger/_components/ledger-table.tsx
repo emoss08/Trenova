@@ -103,7 +103,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
         <TableFooter className="bg-muted/40">
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={4} className="py-2 text-right text-xs font-medium">
-              {t("Totals · {0}{1}", rows.length, rows.length === 1 ? "entry" : "entries")}
+              {t("Totals · {0} {1}", rows.length, rows.length === 1 ? "entry" : "entries")}
             </TableCell>
             <TableCell className="py-2 text-right">
               <AmountDisplay value={totals.charges} className="text-xs font-semibold" />

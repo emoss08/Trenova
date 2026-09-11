@@ -107,7 +107,7 @@ export function PoliciesCard() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{policy.title}</span>
                   <span className="text-muted-foreground block truncate text-xs">
-                    {t("v{0}{1}", policy.versionLabel, policy.acknowledgedAt
+                    {t("v{0} {1}", policy.versionLabel, policy.acknowledgedAt
                       ? ` · ${formatShiftDate(policy.acknowledgedAt)}`
                       : policy.summary
                         ? ` · ${policy.summary}`
@@ -181,7 +181,7 @@ function PolicyDrawer({
         <DrawerHeader>
           <DrawerTitle>{policy?.title}</DrawerTitle>
           <DrawerDescription>
-            {t("Version {0}{1}", policy?.versionLabel, policy?.effectiveFrom
+            {t("Version {0} {1}", policy?.versionLabel, policy?.effectiveFrom
               ? ` · in force from ${formatShiftDate(policy.effectiveFrom)}`
               : "")}
           </DrawerDescription>
@@ -225,7 +225,7 @@ function PolicyDrawer({
                   className="mt-0.5"
                 />
                 <span>
-                  {t("I have read {0}{1}", policy?.title ?? "this policy", needsSignature ? " and agree to it." : ".")}
+                  {t("I have read {0} {1}", policy?.title ?? "this policy", needsSignature ? " and agree to it." : ".")}
                 </span>
               </label>
               {needsSignature ? (

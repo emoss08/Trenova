@@ -342,7 +342,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           <Badge variant={voided ? "inactive" : "active"}>{voided ? "Voided" : "Sent"}</Badge>
         </span>
         <span className="text-muted-foreground tabular-nums">
-          {t("{0} timesheet{1}{2}{3}", run.timesheetCount, run.timesheetCount === 1 ? "" : "s", run.generatedAt ? `, sent ${formatShiftDate(run.generatedAt)}` : "", run.voidReason ? `. Voided: ${run.voidReason}` : "")}
+          {t("{0} timesheet{1} {2} {3}", run.timesheetCount, run.timesheetCount === 1 ? "" : "s", run.generatedAt ? `, sent ${formatShiftDate(run.generatedAt)}` : "", run.voidReason ? `. Voided: ${run.voidReason}` : "")}
         </span>
       </div>
       <div className="col-span-3 flex min-w-0 items-center gap-3 md:col-span-1">

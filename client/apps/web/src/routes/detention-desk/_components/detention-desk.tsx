@@ -94,7 +94,7 @@ export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
       {isFiltered && visible.length > 0 && (
         <div className="text-muted-foreground flex items-center gap-2 p-2 text-xs">
           <span className="tabular-nums">
-            {t("{0} of {1}{2}", visible.length, entries.length, pluralize("stop", entries.length))}
+            {t("{0} of {1} {2}", visible.length, entries.length, pluralize("stop", entries.length))}
           </span>
           <Button variant="link" size="xxs" className="h-auto p-0 text-xs" onClick={resetFilters}>
             {t("Clear filters")}

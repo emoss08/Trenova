@@ -261,7 +261,7 @@ export function CommentItem({
         {isResolved && !isEditing && (
           <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
             <CheckCircle2Icon className="size-3 text-emerald-500" />
-            {t("Resolved {0}{1}", comment.resolvedBy?.name ? ` by ${comment.resolvedBy.name}` : "", comment.resolvedAt != null &&
+            {t("Resolved {0} {1}", comment.resolvedBy?.name ? ` by ${comment.resolvedBy.name}` : "", comment.resolvedAt != null &&
               ` · ${formatDistanceToNow(fromUnixTime(comment.resolvedAt), { addSuffix: true })}`)}
           </div>
         )}

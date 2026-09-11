@@ -104,7 +104,7 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                   <span className="truncate text-xs font-medium">{item.member.name}</span>
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
                     <AwardIcon className="size-3" aria-hidden />
-                    {t("{0}{1} on {2}", item.years, item.years === 1 ? "year" : "years", formatUnixMonthDay(item.onDate))}
+                    {t("{0} {1} on {2}", item.years, item.years === 1 ? "year" : "years", formatUnixMonthDay(item.onDate))}
                   </span>
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs tabular-nums">

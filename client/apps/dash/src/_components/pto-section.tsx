@@ -240,7 +240,7 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
               className={cn("text-xs text-muted-foreground", overdrawn && "text-destructive")}
               data-testid="pto-request-days"
             >
-              {t("{0} day{1}{2}{3}", requestedDays, requestedDays === 1 ? "" : "s", available !== null
+              {t("{0} day{1} {2} {3}", requestedDays, requestedDays === 1 ? "" : "s", available !== null
                 ? ` · ${available.toFixed(available % 1 === 0 ? 0 : 2)} available`
                 : "", overdrawn
                 ? " — more than you have banked; your manager may still approve it if days accrue by then."
