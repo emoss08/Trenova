@@ -28,7 +28,6 @@ func TestRegistry_PacksCoverPricedCatalog(t *testing.T) {
 		PackDocumentAI,
 		PackDriverDash,
 		PackEDI,
-		PackExchangeRates,
 		PackProfessional,
 		PackSettlement,
 		PackVisibility,

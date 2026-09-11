@@ -9,7 +9,6 @@ const (
 	PackSettlement    = PackKey("settlement")
 	PackWorkforce     = PackKey("workforce")
 	PackEDI           = PackKey("edi")
-	PackExchangeRates = PackKey("exchange-rates")
 	PackDocumentAI    = PackKey("document-intelligence")
 )
 
@@ -18,7 +17,7 @@ func (p *StaticProvider) Packs() []Pack {
 		{
 			Key:         PackProfessional,
 			Name:        "Professional",
-			Description: "The core transportation management platform: shipments, dispatch, billing, accounting, fleet, and documents.",
+			Description: "The core transportation management platform: shipments, dispatch, billing, accounting, fleet, documents, and currency conversion.",
 			Features: []FeatureKey{
 				FeatureCoreTMS,
 				FeatureDispatch,
@@ -30,6 +29,7 @@ func (p *StaticProvider) Packs() []Pack {
 				FeatureAdministration,
 				FeatureGlobalSearch,
 				FeatureAPIKeys,
+				FeatureExchangeRateIntegration,
 				FeatureRealtimeNotifications,
 			},
 		},
@@ -113,15 +113,6 @@ func (p *StaticProvider) Packs() []Pack {
 			RequiresPacks: []PackKey{PackProfessional},
 			Features: []FeatureKey{
 				FeatureEDIIntegration,
-			},
-		},
-		{
-			Key:           PackExchangeRates,
-			Name:          "Exchange Rates",
-			Description:   "Provider-sourced currency conversion and settlement quoting for cross-border billing.",
-			RequiresPacks: []PackKey{PackProfessional},
-			Features: []FeatureKey{
-				FeatureExchangeRateIntegration,
 			},
 		},
 		{
