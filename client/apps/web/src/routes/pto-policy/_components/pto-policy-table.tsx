@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
@@ -19,6 +20,8 @@ import { getColumns } from "./pto-policy-columns";
 import { PTOPolicyPanel } from "./pto-policy-panel";
 
 export default function PTOPolicyTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const { allowed: canArchive } = usePermission(Resource.PTOPolicy, Operation.Archive);
@@ -35,7 +38,7 @@ export default function PTOPolicyTable() {
     async (rows: readonly PTOPolicyRow[]) => {
       const eligible = rows.filter((row) => row.status === "Active");
       if (eligible.length === 0) {
-        toast.info("Only active policies can be archived.");
+        toast.info(t("Only active policies can be archived."));
         return;
       }
       const outcome = await settleAll(eligible, (row) => archivePtoPolicy(row.id, row.version));
@@ -46,14 +49,14 @@ export default function PTOPolicyTable() {
       });
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const restoreRows = useCallback(
     async (rows: readonly PTOPolicyRow[]) => {
       const eligible = rows.filter((row) => row.status === "Inactive");
       if (eligible.length === 0) {
-        toast.info("Only inactive policies can be restored.");
+        toast.info(t("Only inactive policies can be restored."));
         return;
       }
       const outcome = await settleAll(eligible, (row) => restorePtoPolicy(row.id, row.version));
@@ -64,7 +67,7 @@ export default function PTOPolicyTable() {
       });
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const dockActions = useMemo<DockAction<PTOPolicyRow>[]>(() => {

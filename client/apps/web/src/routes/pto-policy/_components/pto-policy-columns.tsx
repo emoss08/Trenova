@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { ptoTypeChoices, statusChoices } from "@/lib/choices";
 import type { PTOPolicyRow } from "@/lib/graphql/pto-policy";
@@ -45,7 +46,7 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
           {row.original.code}
           {row.original.isDefault ? (
             <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
-              Default
+              {translate("Default")}
             </Badge>
           ) : null}
         </span>
