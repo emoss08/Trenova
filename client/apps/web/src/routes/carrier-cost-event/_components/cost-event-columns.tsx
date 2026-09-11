@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { CarrierCostEventStatusBadge } from "@trenova/shared/components/status-badge";
 import { carrierCostEventTypeChoices } from "@/lib/choices";
@@ -78,7 +79,7 @@ export function getColumns(): ColumnDef<CarrierCostEventRow>[] {
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">Amount</div>,
+      header: () => <div className="text-right">{translate("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay
