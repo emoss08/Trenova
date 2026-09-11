@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BatchSourceAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
@@ -32,6 +33,8 @@ function toCents(dollarStr: string): number {
 }
 
 export function ImportBatchForm() {
+  const t = useT();
+
   const { control } = useFormContext<ImportBatchFormValues>();
 
   const { fields, append, remove } = useFieldArray({
@@ -49,18 +52,18 @@ export function ImportBatchForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title="Batch Information"
-        description="Identify the source bank and a reference for this import"
+        title={t("Batch Information")}
+        description={t("Identify the source bank and a reference for this import")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <BatchSourceAutocompleteField
               control={control}
               name="source"
-              label="Source"
-              placeholder="e.g. Chase, Wells Fargo"
+              label={t("Source")}
+              placeholder={t("e.g. Chase, Wells Fargo")}
               rules={{ required: "Source is required" }}
-              description="The bank or institution this batch originates from."
+              description={t("The bank or institution this batch originates from.")}
               clearable
             />
           </FormControl>
@@ -68,18 +71,18 @@ export function ImportBatchForm() {
             <InputField
               control={control}
               name="reference"
-              label="Reference"
+              label={t("Reference")}
               rules={{ required: "Reference is required" }}
-              placeholder="e.g. Statement 2026-04"
-              description="A unique identifier for this batch, such as a statement number."
+              placeholder={t("e.g. Statement 2026-04")}
+              description={t("A unique identifier for this batch, such as a statement number.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Receipt Lines"
-        description="Individual bank receipts to import in this batch"
+        title={t("Receipt Lines")}
+        description={t("Individual bank receipts to import in this batch")}
         titleCount={fields.length}
         className="border-border border-t pt-4"
       >
@@ -88,10 +91,10 @@ export function ImportBatchForm() {
             <thead className="bg-muted/50 text-muted-foreground text-left">
               <tr>
                 <th className="w-10 px-3 py-2 text-xs font-medium">#</th>
-                <th className="px-3 py-2 text-xs font-medium">Date</th>
-                <th className="px-3 py-2 text-xs font-medium">Amount ($)</th>
-                <th className="px-3 py-2 text-xs font-medium">Reference #</th>
-                <th className="px-3 py-2 text-xs font-medium">Memo</th>
+                <th className="px-3 py-2 text-xs font-medium">{t("Date")}</th>
+                <th className="px-3 py-2 text-xs font-medium">{t("Amount ($)")}</th>
+                <th className="px-3 py-2 text-xs font-medium">{t("Reference #")}</th>
+                <th className="px-3 py-2 text-xs font-medium">{t("Memo")}</th>
                 <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
@@ -147,7 +150,7 @@ export function ImportBatchForm() {
                       render={({ field: f, fieldState }) => (
                         <Input
                           {...f}
-                          placeholder="Check #, txn ID..."
+                          placeholder={t("Check #, txn ID...")}
                           className={`h-8 text-xs ${fieldState.error ? "border-red-500" : ""}`}
                         />
                       )}
@@ -158,7 +161,7 @@ export function ImportBatchForm() {
                       control={control}
                       name={`receipts.${index}.memo`}
                       render={({ field: f }) => (
-                        <Input {...f} placeholder="Optional" className="h-8 text-xs" />
+                        <Input {...f} placeholder={t("Optional")} className="h-8 text-xs" />
                       )}
                     />
                   </td>
@@ -179,7 +182,7 @@ export function ImportBatchForm() {
             <tfoot className="bg-muted/30 border-t">
               <tr>
                 <td colSpan={2} className="px-3 py-2 text-right text-xs font-medium">
-                  Total
+                  {t("Total")}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <AmountDisplay value={totalCents} className="text-xs font-semibold" />
@@ -192,7 +195,7 @@ export function ImportBatchForm() {
 
         <Button type="button" variant="outline" size="sm" onClick={() => append({ ...EMPTY_LINE })}>
           <PlusIcon className="mr-1.5 size-3.5" />
-          Add Line
+          {t("Add Line")}
         </Button>
       </FormSection>
     </div>

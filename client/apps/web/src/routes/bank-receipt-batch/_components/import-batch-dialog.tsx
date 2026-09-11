@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -34,6 +35,8 @@ type ImportBatchDialogProps = {
 };
 
 export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -67,7 +70,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
     form,
     resourceName: "Import Batch",
     onSuccess: (result) => {
-      toast.success("Import batch created");
+      toast.success(t("Import batch created"));
       void queryClient.invalidateQueries({ queryKey: ["bankReceiptBatch"] });
       onOpenChange(false);
       reset();
@@ -110,9 +113,9 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Import Bank Receipts</DialogTitle>
+          <DialogTitle>{t("Import Bank Receipts")}</DialogTitle>
           <DialogDescription>
-            Create a batch of bank receipts to import for reconciliation.
+            {t("Create a batch of bank receipts to import for reconciliation.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -120,11 +123,11 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
             <ImportBatchForm />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
                 <UploadIcon className="mr-1.5 size-3.5" />
-                Import Batch
+                {t("Import Batch")}
               </Button>
             </DialogFooter>
           </Form>
