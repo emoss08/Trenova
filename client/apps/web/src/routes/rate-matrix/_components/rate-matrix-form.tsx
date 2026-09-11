@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormulaTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -9,13 +10,15 @@ import type { RateMatrix } from "@trenova/shared/types/rate";
 import { useFormContext } from "react-hook-form";
 
 export function RateMatrixForm() {
+  const t = useT();
+
   const { control } = useFormContext<RateMatrix>();
 
   return (
     <div className="space-y-6">
       <FormSection
-        title="General Information"
-        description="How this tariff grid is identified and whether it is live."
+        title={t("General Information")}
+        description={t("How this tariff grid is identified and whether it is live.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -24,9 +27,9 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="status"
-              label="Status"
-              placeholder="Status"
-              description="An inactive matrix stops pricing, and every lane pointing at it stops with it"
+              label={t("Status")}
+              placeholder={t("Status")}
+              description={t("An inactive matrix stops pricing, and every lane pointing at it stops with it")}
               options={statusChoices}
             />
           </FormControl>
@@ -35,9 +38,9 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="code"
-              label="Code"
-              placeholder="LTL-2025-Q3"
-              description="The short name lanes refer to"
+              label={t("Code")}
+              placeholder={t("LTL-2025-Q3")}
+              description={t("The short name lanes refer to")}
             />
           </FormControl>
           <FormControl>
@@ -45,26 +48,26 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="name"
-              label="Name"
-              placeholder="LTL base tariff, Q3 2025"
-              description="What this tariff is called out loud"
+              label={t("Name")}
+              placeholder={t("LTL base tariff, Q3 2025")}
+              description={t("What this tariff is called out loud")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Zone-to-zone base rates by weight break, published July 2025"
-              description="Where this tariff came from, so the next person knows what they are amending"
+              label={t("Description")}
+              placeholder={t("Zone-to-zone base rates by weight break, published July 2025")}
+              description={t("Where this tariff came from, so the next person knows what they are amending")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Pricing"
-        description="What the numbers in the grid mean and how a looked-up rate becomes a charge."
+        title={t("Pricing")}
+        description={t("What the numbers in the grid mean and how a looked-up rate becomes a charge.")}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -72,9 +75,9 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="formulaTemplateId"
-              label="Rating Method"
-              placeholder="Select rating method"
-              description="The formula template that says what each number in the grid means — the same grid is a per-mile tariff or a flat table depending on which template prices it"
+              label={t("Rating Method")}
+              placeholder={t("Select rating method")}
+              description={t("The formula template that says what each number in the grid means — the same grid is a per-mile tariff or a flat table depending on which template prices it")}
             />
           </FormControl>
           <FormControl>
@@ -82,9 +85,9 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="currency"
-              label="Currency"
-              placeholder="Select currency"
-              description="The currency the numbers in the grid are in, converted at rating time when it differs from the contract's"
+              label={t("Currency")}
+              placeholder={t("Select currency")}
+              description={t("The currency the numbers in the grid are in, converted at rating time when it differs from the contract's")}
               options={currencyChoices}
             />
           </FormControl>
@@ -93,9 +96,9 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="roundingMode"
-              label="Rounding Mode"
-              placeholder="Select rounding"
-              description="How a looked-up rate is rounded before it becomes a charge"
+              label={t("Rounding Mode")}
+              placeholder={t("Select rounding")}
+              description={t("How a looked-up rate is rounded before it becomes a charge")}
               options={rateRoundingModeChoices}
             />
           </FormControl>
@@ -104,9 +107,9 @@ export function RateMatrixForm() {
               control={control}
               rules={{ required: true }}
               name="roundingPrecision"
-              label="Rounding Precision"
+              label={t("Rounding Precision")}
               placeholder="2"
-              description="How many decimals survive the rounding"
+              description={t("How many decimals survive the rounding")}
             />
           </FormControl>
         </FormGroup>

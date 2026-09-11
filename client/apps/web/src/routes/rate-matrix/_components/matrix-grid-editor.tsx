@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -39,6 +40,8 @@ type MatrixGridEditorProps = {
  * saves separately from the matrix header, which the button says out loud.
  */
 export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
+  const t = useT();
+
   const { control } = useFormContext<RateMatrix>();
   const dimensions = (useWatch({ control, name: "dimensions" }) ?? []) as RateMatrixDimension[];
   const queryClient = useQueryClient();
@@ -146,17 +149,16 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
     mutationFn: () => apiService.rateMatrixService.replaceCells(rateMatrixId as string, cells),
     onSuccess: async () => {
       setDirty(false);
-      toast.success("Rates saved");
+      toast.success(t("Rates saved"));
       await queryClient.invalidateQueries({ queryKey: ["rate-matrix-cells", rateMatrixId] });
     },
-    onError: () => toast.error("Could not save the rates"),
+    onError: () => toast.error(t("Could not save the rates")),
   });
 
   if (!rateMatrixId) {
     return (
       <p className="text-muted-foreground text-sm">
-        Save the matrix first. Rates need something to belong to, and the axes above decide what
-        shape the grid takes.
+        {t("Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.")}
       </p>
     );
   }
@@ -164,8 +166,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   if (ordered.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        Add at least one axis before entering rates. Without one there is no coordinate to put a
-        number at.
+        {t("Add at least one axis before entering rates. Without one there is no coordinate to put a number at.")}
       </p>
     );
   }
@@ -174,7 +175,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <LoaderCircleIcon className="size-4 animate-spin" />
-        Loading rates
+        {t("Loading rates")}
       </div>
     );
   }
@@ -264,7 +265,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
                       ) : (
                         <span
                           className="text-muted-foreground block w-28 px-2 text-right text-xs"
-                          title="Nothing prices this coordinate — a lane landing here rates at nothing"
+                          title={t("Nothing prices this coordinate — a lane landing here rates at nothing")}
                         >
                           —
                         </span>
@@ -280,7 +281,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
 
       {grid.rows.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          This matrix has no rates yet. Every lane pointing at it prices nothing until it does.
+          {t("This matrix has no rates yet. Every lane pointing at it prices nothing until it does.")}
         </p>
       )}
 
@@ -296,10 +297,10 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
           ) : (
             <SaveIcon className="mr-1 size-3.5" />
           )}
-          Save rates
+          {t("Save rates")}
         </Button>
         <span className="text-muted-foreground text-xs">
-          Rates save on their own, separately from the rest of this form.
+          {t("Rates save on their own, separately from the rest of this form.")}
         </span>
       </div>
     </div>
