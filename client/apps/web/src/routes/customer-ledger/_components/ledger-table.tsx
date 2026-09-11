@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { SourceDrillDownLink } from "@/components/accounting/source-drill-down-link";
 import {
@@ -22,6 +23,8 @@ function eventLabel(eventType: string): string {
 }
 
 export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
+  const t = useT();
+
   const rows = useMemo(() => {
     let runningBalance = 0;
     return entries.map((entry, index) => {
@@ -49,13 +52,13 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="h-9 text-xs">Date</TableHead>
-            <TableHead className="h-9 text-xs">Document</TableHead>
-            <TableHead className="h-9 text-xs">Event</TableHead>
-            <TableHead className="h-9 text-xs">Source</TableHead>
-            <TableHead className="h-9 text-right text-xs">Debit</TableHead>
-            <TableHead className="h-9 text-right text-xs">Credit</TableHead>
-            <TableHead className="h-9 text-right text-xs">Balance</TableHead>
+            <TableHead className="h-9 text-xs">{t("Date")}</TableHead>
+            <TableHead className="h-9 text-xs">{t("Document")}</TableHead>
+            <TableHead className="h-9 text-xs">{t("Event")}</TableHead>
+            <TableHead className="h-9 text-xs">{t("Source")}</TableHead>
+            <TableHead className="h-9 text-right text-xs">{t("Debit")}</TableHead>
+            <TableHead className="h-9 text-right text-xs">{t("Credit")}</TableHead>
+            <TableHead className="h-9 text-right text-xs">{t("Balance")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -100,7 +103,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
         <TableFooter className="bg-muted/40">
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={4} className="py-2 text-right text-xs font-medium">
-              Totals · {rows.length} {rows.length === 1 ? "entry" : "entries"}
+              {t("Totals · {0}{1}", rows.length, rows.length === 1 ? "entry" : "entries")}
             </TableCell>
             <TableCell className="py-2 text-right">
               <AmountDisplay value={totals.charges} className="text-xs font-semibold" />

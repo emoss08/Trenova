@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -29,6 +30,8 @@ const LEDGER_COLUMNS = [
 ] as const;
 
 export function CustomerLedgerPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -103,7 +106,7 @@ export function CustomerLedgerPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleExport} disabled={!entries?.length}>
               <DownloadIcon className="size-4" />
-              Export
+              {t("Export")}
             </Button>
             <Button
               variant="outline"
@@ -111,7 +114,7 @@ export function CustomerLedgerPage() {
               onClick={() => void navigate(`/accounting/ar/customer-statement/${customerId}`)}
             >
               <FileTextIcon className="size-4" />
-              Statement
+              {t("Statement")}
             </Button>
             {canRecordPayment ? (
               <Button
@@ -121,7 +124,7 @@ export function CustomerLedgerPage() {
                 }
               >
                 <HandCoinsIcon className="size-4" />
-                Record Payment
+                {t("Record Payment")}
               </Button>
             ) : null}
           </div>
@@ -131,19 +134,19 @@ export function CustomerLedgerPage() {
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <div className="w-75">
-          <label className="text-2xs text-muted-foreground mb-1 block font-medium">Customer</label>
+          <label className="text-2xs text-muted-foreground mb-1 block font-medium">{t("Customer")}</label>
           <CustomerAutocompleteField
             control={filterForm.control}
             name="customerId"
-            placeholder="Select a customer..."
+            placeholder={t("Select a customer...")}
             clearable
           />
         </div>
 
         {!customerId ? (
           <EmptyTable
-            title="Pick a customer"
-            description="Choose a customer above and their receivables profile, running ledger and payment history are laid out here."
+            title={t("Pick a customer")}
+            description={t("Choose a customer above and their receivables profile, running ledger and payment history are laid out here.")}
             columns={LEDGER_COLUMNS}
           />
         ) : (
@@ -158,8 +161,8 @@ export function CustomerLedgerPage() {
               </div>
             ) : !entries || entries.length === 0 ? (
               <EmptyTable
-                title="No activity yet"
-                description="Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger."
+                title={t("No activity yet")}
+                description={t("Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.")}
                 columns={LEDGER_COLUMNS}
               />
             ) : (
