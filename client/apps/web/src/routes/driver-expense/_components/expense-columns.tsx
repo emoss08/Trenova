@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
@@ -76,7 +77,7 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
       header: "Receipt",
       cell: ({ row }) =>
         row.original.receiptDocumentId ? (
-          <Badge variant="secondary">Attached</Badge>
+          <Badge variant="secondary">{translate("Attached")}</Badge>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         ),
