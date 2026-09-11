@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { HeadcountRow, JobPositionRow } from "@/lib/graphql/org-structure";
 import { vacantPositions } from "@/lib/org-chart";
@@ -21,7 +22,9 @@ type BreakdownProps = {
  * how many CDLs a terminal holds, not how many desks.
  */
 function Breakdown({ rows, total, labelOf }: BreakdownProps) {
-  if (rows.length === 0) return <SectionPanelQuiet>Nobody on the roster.</SectionPanelQuiet>;
+  const t = useT();
+
+  if (rows.length === 0) return <SectionPanelQuiet>{t("Nobody on the roster.")}</SectionPanelQuiet>;
   return (
     <ul className="divide-y">
       {rows.map((row) => {
@@ -41,15 +44,15 @@ function Breakdown({ rows, total, labelOf }: BreakdownProps) {
                 <span className="truncate font-medium">{label}</span>
                 {row.drivers > 0 && row.drivers !== row.workers ? (
                   <span className="text-muted-foreground tabular-nums">
-                    · {row.drivers} driving
+                    {t("· {0} driving", row.drivers)}
                   </span>
                 ) : null}
                 {row.staff > 0 ? (
-                  <span className="text-muted-foreground tabular-nums">· {row.staff} staff</span>
+                  <span className="text-muted-foreground tabular-nums">{t("· {0} staff", row.staff)}</span>
                 ) : null}
                 {row.terminated > 0 ? (
                   <span className="text-muted-foreground tabular-nums">
-                    · {row.terminated} left
+                    {t("· {0} left", row.terminated)}
                   </span>
                 ) : null}
               </span>
@@ -93,23 +96,25 @@ export function OrgAside({
   canUpdate,
   onEdit,
 }: OrgAsideProps) {
+  const t = useT();
+
   const vacant = useMemo(() => vacantPositions(positions, byPosition), [positions, byPosition]);
   const shown = vacant.slice(0, SHOWN_LIMIT);
 
   return (
     <aside className="flex min-w-0 flex-col gap-4">
       <SectionPanel
-        title="By terminal"
+        title={t("By terminal")}
         icon={<Building2Icon />}
         hint={`${total} active`}
-        help="Active workers by the terminal they are assigned to, biggest first. Front-office users are not on this roster."
+        help={t("Active workers by the terminal they are assigned to, biggest first. Front-office users are not on this roster.")}
       >
         <Breakdown rows={byFleet} total={total} />
       </SectionPanel>
       <SectionPanel
-        title="By department"
+        title={t("By department")}
         icon={<LayersIcon />}
-        help="Active workers by the department of the position they hold. Somebody with no position is not counted here."
+        help={t("Active workers by the department of the position they hold. Somebody with no position is not counted here.")}
       >
         <Breakdown
           rows={byDepartment}
@@ -118,13 +123,13 @@ export function OrgAside({
         />
       </SectionPanel>
       <SectionPanel
-        title="Titles nobody holds yet"
+        title={t("Titles nobody holds yet")}
         icon={<BriefcaseIcon />}
-        help="Positions still open that nobody on either roster holds. Assign a worker or a user from the position's holders view."
+        help={t("Positions still open that nobody on either roster holds. Assign a worker or a user from the position's holders view.")}
         hint={vacant.length > 0 ? String(vacant.length) : undefined}
       >
         {vacant.length === 0 ? (
-          <SectionPanelQuiet>Every open title has at least one person in it.</SectionPanelQuiet>
+          <SectionPanelQuiet>{t("Every open title has at least one person in it.")}</SectionPanelQuiet>
         ) : (
           <>
             <ul className="divide-y">
@@ -138,7 +143,7 @@ export function OrgAside({
                   </span>
                   {canUpdate ? (
                     <Button size="xs" variant="ghost" onClick={() => onEdit(position)}>
-                      Edit
+                      {t("Edit")}
                     </Button>
                   ) : null}
                 </li>
@@ -146,7 +151,7 @@ export function OrgAside({
             </ul>
             {vacant.length > shown.length ? (
               <p className="text-muted-foreground text-2xs border-t px-3 py-1.5">
-                and {vacant.length - shown.length} more
+                {t("and {0} more", vacant.length - shown.length)}
               </p>
             ) : null}
           </>

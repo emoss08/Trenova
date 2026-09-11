@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { HeadcountRow, JobPositionRow } from "@/lib/graphql/org-structure";
 import {
   ancestorIds,
@@ -84,6 +85,8 @@ export function PositionTree({
   onMove,
   onOpenHolders,
 }: PositionTreeProps) {
+  const t = useT();
+
   const [query, setQuery] = useState("");
   const tree = useMemo(() => buildPositionTree(positions, byPosition), [positions, byPosition]);
   const all = useMemo(() => flattenTree(tree.roots), [tree.roots]);
@@ -164,44 +167,44 @@ export function PositionTree({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h3 id="org-chart-heading" className="sr-only">
-            Org chart
+            {t("Org chart")}
           </h3>
           <Input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Find a title, code or department"
-            aria-label="Find a position"
+            placeholder={t("Find a title, code or department")}
+            aria-label={t("Find a position")}
             leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             inputContainerClassName="w-72 max-w-full"
           />
-          <Button size="xs" variant="ghost" onClick={expandAll} aria-label="Expand all">
+          <Button size="xs" variant="ghost" onClick={expandAll} aria-label={t("Expand all")}>
             <ChevronsUpDownIcon className="size-3.5" />
-            Expand
+            {t("Expand")}
           </Button>
-          <Button size="xs" variant="ghost" onClick={collapseAll} aria-label="Collapse all">
+          <Button size="xs" variant="ghost" onClick={collapseAll} aria-label={t("Collapse all")}>
             <ChevronsDownUpIcon className="size-3.5" />
-            Collapse
+            {t("Collapse")}
           </Button>
           {tree.unplaced > 0 ? (
             <span className="text-muted-foreground text-xs tabular-nums">
-              {tree.unplaced} {tree.unplaced === 1 ? "person" : "people"} with no position
+              {t("{0}{1} with no position", tree.unplaced, tree.unplaced === 1 ? "person" : "people")}
             </span>
           ) : null}
         </div>
         {canCreate ? (
           <Button size="sm" onClick={() => onAdd(null)}>
             <PlusIcon className="size-3.5" />
-            Add a position
+            {t("Add a position")}
           </Button>
         ) : null}
       </div>
 
       {rows.length === 0 ? (
         <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">
-          <p>No position matches that.</p>
+          <p>{t("No position matches that.")}</p>
           <Button size="xs" variant="ghost" onClick={() => setQuery("")}>
-            Clear search
+            {t("Clear search")}
           </Button>
         </div>
       ) : (
@@ -212,7 +215,7 @@ export function PositionTree({
           onDragCancel={() => setDragging(null)}
         >
           <div className="bg-card overflow-hidden rounded-lg border">
-            <ul aria-label="Positions">
+            <ul aria-label={t("Positions")}>
               {rows.map((node) => (
                 <TreeRow
                   key={node.position.id}
@@ -237,8 +240,7 @@ export function PositionTree({
       )}
       {canUpdate ? (
         <p className="text-muted-foreground text-xs">
-          Drag a position onto the one it should report to, or use its menu. Drop it on the bar at
-          the bottom to make it top level.
+          {t("Drag a position onto the one it should report to, or use its menu. Drop it on the bar at the bottom to make it top level.")}
         </p>
       ) : null}
     </section>
@@ -275,6 +277,8 @@ function TreeRow({
   onMove,
   onOpenHolders,
 }: TreeRowProps) {
+  const t = useT();
+
   const { position } = node;
   const archived = position.status !== "Active";
   const hasChildren = node.children.length > 0;
@@ -371,9 +375,9 @@ function TreeRow({
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">{position.title}</span>
             <span className="text-muted-foreground text-xs tabular-nums">{position.code}</span>
-            {position.isDrivingPosition ? <Badge variant="info">Driving</Badge> : null}
-            {position.flsaExempt ? <Badge variant="secondary">Exempt</Badge> : null}
-            {archived ? <Badge variant="inactive">Archived</Badge> : null}
+            {position.isDrivingPosition ? <Badge variant="info">{t("Driving")}</Badge> : null}
+            {position.flsaExempt ? <Badge variant="secondary">{t("Exempt")}</Badge> : null}
+            {archived ? <Badge variant="inactive">{t("Archived")}</Badge> : null}
           </span>
           <span className="text-muted-foreground text-xs">
             {jobDepartmentLabel(position.department)}
@@ -391,7 +395,7 @@ function TreeRow({
           onClick={onOpenHolders}
           className="hover:bg-accent rounded-md px-1.5 py-0.5 text-right text-xs tabular-nums transition-colors"
           aria-label={`${position.title} headcount`}
-          title="Who holds it"
+          title={t("Who holds it")}
         >
           <span
             className={cn("font-mono font-medium", node.people === 0 && "text-muted-foreground")}
@@ -399,7 +403,7 @@ function TreeRow({
             {node.people}
           </span>
           {hasChildren ? (
-            <span className="text-muted-foreground"> · {node.rolledUp - node.people} below</span>
+            <span className="text-muted-foreground"> {t("· {0} below", node.rolledUp - node.people)}</span>
           ) : null}
         </button>
         {canCreate ? (
@@ -417,7 +421,7 @@ function TreeRow({
             >
               <PlusIcon className="size-3.5" />
             </TooltipTrigger>
-            <TooltipContent>Add a position reporting to this one</TooltipContent>
+            <TooltipContent>{t("Add a position reporting to this one")}</TooltipContent>
           </Tooltip>
         ) : null}
         {canUpdate ? (
@@ -436,23 +440,23 @@ function TreeRow({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuItem
-                title="Who holds it"
+                title={t("Who holds it")}
                 startContent={<UsersIcon className="size-3.5" />}
                 onClick={onOpenHolders}
               />
               <DropdownMenuItem
-                title="Edit"
+                title={t("Edit")}
                 startContent={<PencilLineIcon className="size-3.5" />}
                 onClick={onEdit}
               />
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuLabel>Move under</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("Move under")}</DropdownMenuLabel>
                 {position.reportsToPositionId ? (
-                  <DropdownMenuItem title="Nothing (top level)" onClick={() => onMove(null)} />
+                  <DropdownMenuItem title={t("Nothing (top level)")} onClick={() => onMove(null)} />
                 ) : null}
                 {moveTargets.length === 0 && !position.reportsToPositionId ? (
-                  <DropdownMenuItem title="Nowhere else to put it" disabled />
+                  <DropdownMenuItem title={t("Nowhere else to put it")} disabled />
                 ) : null}
                 {moveTargets.map((target) => (
                   <DropdownMenuItem
@@ -473,18 +477,20 @@ function TreeRow({
 }
 
 function TopLevelDropZone({ visible }: { visible: boolean }) {
+  const t = useT();
+
   const { setNodeRef, isOver } = useDroppable({ id: TOP_LEVEL });
   return (
     <div
       ref={setNodeRef}
-      aria-label="Make top level"
+      aria-label={t("Make top level")}
       className={cn(
         "text-muted-foreground border-t px-3 py-1.5 text-center text-xs transition-colors",
         visible ? "border-dashed" : "hidden",
         isOver && "bg-accent text-foreground",
       )}
     >
-      Drop here to make it top level
+      {t("Drop here to make it top level")}
     </div>
   );
 }

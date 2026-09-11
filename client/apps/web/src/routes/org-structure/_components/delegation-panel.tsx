@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   APPROVAL_DELEGATIONS_KEY,
@@ -47,6 +48,8 @@ function inForce(source: readonly ApprovalDelegationRow[], today: number): numbe
  * comes first in either list, because that is what somebody opens this for.
  */
 export function DelegationPanel() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.ApprovalDelegation, Operation.Read);
   const { allowed: canDelegate } = usePermission(Resource.ApprovalDelegation, Operation.Create);
@@ -62,13 +65,13 @@ export function DelegationPanel() {
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeApprovalDelegation(id),
     onSuccess: () => {
-      toast.success("Delegation called back", {
-        description: "It is kept on the list so approvals made under it can still be explained.",
+      toast.success(t("Delegation called back"), {
+        description: t("It is kept on the list so approvals made under it can still be explained."),
       });
       void queryClient.invalidateQueries({ queryKey: [APPROVAL_DELEGATIONS_KEY] });
     },
     onError: (error: Error) =>
-      toast.error("Could not call it back", { description: error.message }),
+      toast.error(t("Could not call it back"), { description: error.message }),
   });
 
   const rows = useMemo(() => {
@@ -111,11 +114,10 @@ export function DelegationPanel() {
         <div className="flex min-w-0 items-center gap-2">
           <HandshakeIcon className="text-muted-foreground size-3.5" aria-hidden />
           <h3 id="delegation-heading" className="text-sm font-medium">
-            Approval cover
+            {t("Approval cover")}
           </h3>
           <span className="text-muted-foreground hidden truncate text-xs md:inline">
-            Cover widens what the stand-in can act on; it never widens what the manager could
-            approve themselves.
+            {t("Cover widens what the stand-in can act on; it never widens what the manager could approve themselves.")}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -123,12 +125,12 @@ export function DelegationPanel() {
             items={viewItems}
             value={view}
             onValueChange={setView}
-            aria-label="Which cover to show"
+            aria-label={t("Which cover to show")}
           />
           {canDelegate ? (
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <PlusIcon className="size-3.5" />
-              Arrange cover
+              {t("Arrange cover")}
             </Button>
           ) : null}
         </div>
@@ -184,7 +186,7 @@ export function DelegationPanel() {
                   onClick={() => revokeMutation.mutate(delegation.id)}
                   aria-label={`Call back the delegation to ${delegation.delegate?.name ?? "them"}`}
                 >
-                  Call back
+                  {t("Call back")}
                 </Button>
               ) : null}
             </li>

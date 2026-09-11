@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import type {
@@ -35,6 +36,8 @@ export function OrgOverview({
   showCover,
   now,
 }: OrgOverviewProps) {
+  const t = useT();
+
   const people = useMemo(
     () => headcountSummary(headcount ?? { activeTotal: 0, driverTotal: 0, terminated: 0 }),
     [headcount],
@@ -61,22 +64,22 @@ export function OrgOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<UsersIcon className="size-[11px]" />}
-          label="People"
+          label={t("People")}
           info={
-            <InfoPopover title="People">
+            <InfoPopover title={t("People")}>
               {"Active workers plus users holding a position. Terminated workers are left out."}
             </InfoPopover>
           }
         />
         {headcount ? (
-          <NumberFlow value={people.people} className={VALUE_CLASS} aria-label="People" />
+          <NumberFlow value={people.people} className={VALUE_CLASS} aria-label={t("People")} />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
         <CompositionBar
           size="sm"
           className="mt-auto"
-          aria-label="Who they are"
+          aria-label={t("Who they are")}
           segments={[
             { key: "drivers", label: "Drivers", value: people.drivers },
             { key: "other", label: "Other workers", value: people.nonDriving },
@@ -88,9 +91,9 @@ export function OrgOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<BriefcaseIcon className="size-[11px]" />}
-          label="Positions"
+          label={t("Positions")}
           info={
-            <InfoPopover title="Positions">
+            <InfoPopover title={t("Positions")}>
               {
                 "Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted."
               }
@@ -98,7 +101,7 @@ export function OrgOverview({
           }
         />
         {positions ? (
-          <NumberFlow value={activePositions} className={VALUE_CLASS} aria-label="Positions" />
+          <NumberFlow value={activePositions} className={VALUE_CLASS} aria-label={t("Positions")} />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
@@ -110,9 +113,9 @@ export function OrgOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<Building2Icon className="size-[11px]" />}
-          label="Terminals"
+          label={t("Terminals")}
           info={
-            <InfoPopover title="Terminals">
+            <InfoPopover title={t("Terminals")}>
               {"Terminals with at least one active worker assigned."}
             </InfoPopover>
           }
@@ -121,7 +124,7 @@ export function OrgOverview({
           <NumberFlow
             value={headcount.byFleet.length}
             className={VALUE_CLASS}
-            aria-label="Terminals"
+            aria-label={t("Terminals")}
           />
         ) : (
           <Skeleton className="h-6.5 w-10" />
@@ -139,9 +142,9 @@ export function OrgOverview({
         <KpiCard span={2}>
           <KpiHeader
             icon={<HandshakeIcon className="size-[11px]" />}
-            label="Cover in force"
+            label={t("Cover in force")}
             info={
-              <InfoPopover title="Cover in force">
+              <InfoPopover title={t("Cover in force")}>
                 {
                   "Delegations running today. Ones scheduled to start later and ones that have ended do not count."
                 }
@@ -149,7 +152,7 @@ export function OrgOverview({
             }
           />
           {delegations ? (
-            <NumberFlow value={cover.active} className={VALUE_CLASS} aria-label="Cover in force" />
+            <NumberFlow value={cover.active} className={VALUE_CLASS} aria-label={t("Cover in force")} />
           ) : (
             <Skeleton className="h-6.5 w-10" />
           )}
