@@ -941,6 +941,10 @@ var InvoiceColumns = struct {
 	ShipmentID                Column // "shipment_id" → qualified: "inv.shipment_id"
 	OrderID                   Column // "order_id" → qualified: "inv.order_id"
 	CustomerID                Column // "customer_id" → qualified: "inv.customer_id"
+	Scope                     Column // "scope" → qualified: "inv.scope"
+	PeriodStart               Column // "period_start" → qualified: "inv.period_start"
+	PeriodEnd                 Column // "period_end" → qualified: "inv.period_end"
+	ShipmentCount             Column // "shipment_count" → qualified: "inv.shipment_count"
 	Number                    Column // "number" → qualified: "inv.number"
 	BillType                  Column // "bill_type" → qualified: "inv.bill_type"
 	Status                    Column // "status" → qualified: "inv.status"
@@ -1000,6 +1004,10 @@ var InvoiceColumns = struct {
 	ShipmentID:                NewColumn("shipment_id", "inv"),
 	OrderID:                   NewColumn("order_id", "inv"),
 	CustomerID:                NewColumn("customer_id", "inv"),
+	Scope:                     NewColumn("scope", "inv"),
+	PeriodStart:               NewColumn("period_start", "inv"),
+	PeriodEnd:                 NewColumn("period_end", "inv"),
+	ShipmentCount:             NewColumn("shipment_count", "inv"),
 	Number:                    NewColumn("number", "inv"),
 	BillType:                  NewColumn("bill_type", "inv"),
 	Status:                    NewColumn("status", "inv"),
@@ -1065,6 +1073,10 @@ var InvoiceFieldMap = map[string]string{
 	"shipmentId":                "shipment_id",
 	"orderId":                   "order_id",
 	"customerId":                "customer_id",
+	"scope":                     "scope",
+	"periodStart":               "period_start",
+	"periodEnd":                 "period_end",
+	"shipmentCount":             "shipment_count",
 	"number":                    "number",
 	"billType":                  "bill_type",
 	"status":                    "status",
@@ -1128,6 +1140,10 @@ var InvoiceInsertableColumns = []string{
 	"shipment_id",
 	"order_id",
 	"customer_id",
+	"scope",
+	"period_start",
+	"period_end",
+	"shipment_count",
 	"number",
 	"bill_type",
 	"status",
@@ -1263,6 +1279,10 @@ var InvoiceFilter = struct {
 	ShipmentID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
 	OrderID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderId" → DB: "order_id"
 	CustomerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	Scope                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scope" → DB: "scope"
+	PeriodStart               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodStart" → DB: "period_start"
+	PeriodEnd                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEnd" → DB: "period_end"
+	ShipmentCount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
 	Number                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
 	BillType                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
 	Status                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
@@ -1335,6 +1355,18 @@ var InvoiceFilter = struct {
 	},
 	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("customerId", op, value)
+	},
+	Scope: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("scope", op, value)
+	},
+	PeriodStart: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("periodStart", op, value)
+	},
+	PeriodEnd: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("periodEnd", op, value)
+	},
+	ShipmentCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentCount", op, value)
 	},
 	Number: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("number", op, value)

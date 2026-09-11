@@ -292,6 +292,9 @@
                 "id": {
                     "type": "string"
                 },
+                "invoiceId": {
+                    "type": "string"
+                },
                 "isAdjustmentOrigin": {
                     "type": "boolean"
                 },
@@ -6144,11 +6147,20 @@
                 "pdfDocumentId": {
                     "type": "string"
                 },
+                "periodEnd": {
+                    "type": "integer"
+                },
+                "periodStart": {
+                    "type": "integer"
+                },
                 "postedAt": {
                     "type": "integer"
                 },
                 "remittanceInstructions": {
                     "type": "string"
+                },
+                "scope": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.Scope"
                 },
                 "sendStatus": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus"
@@ -6170,6 +6182,9 @@
                 },
                 "shipmentBol": {
                     "type": "string"
+                },
+                "shipmentCount": {
+                    "type": "integer"
                 },
                 "shipmentId": {
                     "type": "string"
@@ -6296,6 +6311,21 @@
                 "PaymentTermNet60",
                 "PaymentTermNet90",
                 "PaymentTermDueOnReceipt"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.Scope": {
+            "enum": [
+                "Shipment",
+                "Order",
+                "Consolidated",
+                "Adjustment"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ScopeShipment",
+                "ScopeOrder",
+                "ScopeConsolidated",
+                "ScopeAdjustment"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus": {

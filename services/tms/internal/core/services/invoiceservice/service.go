@@ -557,20 +557,20 @@ func (s *Service) markBillingQueueItemPosted(
 		return nil, err
 	}
 
-	// For a grouped invoice, settle the sibling billing-queue items of the legs this
-	// invoice actually carries so none linger in Approved after the order is billed —
-	// without touching items that belong to other (still draft) invoices of the order.
-	if !entity.OrderID.IsNil() {
-		if _, sweepErr := s.billingQueueRepo.MarkPostedByOrderID(
-			ctx,
-			&repositories.MarkPostedByOrderRequest{
-				TenantInfo:  tenantInfo,
-				OrderID:     entity.OrderID,
-				ShipmentIDs: entity.LegShipmentIDs(),
-			},
-		); sweepErr != nil {
-			return nil, sweepErr
-		}
+	// Settle every sibling billing-queue item this invoice bills so none linger in
+	// Approved, without touching items that belong to other still-draft invoices.
+	// The order and shipment ids are only a fallback for rows written before the
+	// invoice back-link existed.
+	if _, sweepErr := s.billingQueueRepo.MarkPostedForInvoice(
+		ctx,
+		&repositories.MarkPostedForInvoiceRequest{
+			TenantInfo:  tenantInfo,
+			InvoiceID:   entity.ID,
+			OrderID:     entity.OrderID,
+			ShipmentIDs: entity.LegShipmentIDs(),
+		},
+	); sweepErr != nil {
+		return nil, sweepErr
 	}
 
 	return &postedBillingQueueResult{
@@ -801,7 +801,9 @@ func (s *Service) buildInvoiceEntity(
 		OrganizationID:     item.OrganizationID,
 		BusinessUnitID:     item.BusinessUnitID,
 		BillingQueueItemID: item.ID,
+		Scope:              invoice.ScopeShipment,
 		ShipmentID:         shp.ID,
+		ShipmentCount:      1,
 		CustomerID:         cus.ID,
 		OrderID:            orderIDFromOrder(ord),
 		OrderNumber:        orderNumberFromOrder(ord),
@@ -901,8 +903,10 @@ func (s *Service) buildInvoiceEntityForOrder(
 		OrganizationID:     anchor.OrganizationID,
 		BusinessUnitID:     anchor.BusinessUnitID,
 		BillingQueueItemID: anchor.ID,
+		Scope:              invoice.ScopeOrder,
 		OrderID:            ord.ID,
 		OrderNumber:        ord.OrderNumber,
+		ShipmentCount:      len(legs),
 		CustomerID:         cus.ID,
 		Number:             anchor.Number,
 		BillType:           anchor.BillType,
@@ -985,6 +989,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		OrganizationID:            item.OrganizationID,
 		BusinessUnitID:            item.BusinessUnitID,
 		BillingQueueItemID:        item.ID,
+		Scope:                     invoice.ScopeAdjustment,
 		CustomerID:                cus.ID,
 		Number:                    item.Number,
 		BillType:                  item.BillType,
@@ -1074,10 +1079,13 @@ func buildInvoiceLinesForShipment(
 		Amount:            freightAmount,
 	})
 
-	for idx, charge := range shp.AdditionalCharges {
+	lineNumber := startLineNumber
+	for _, charge := range shp.AdditionalCharges {
 		if charge == nil {
 			continue
 		}
+
+		lineNumber++
 
 		quantity := decimal.NewFromInt(int64(charge.Unit))
 		if quantity.LessThanOrEqual(decimal.Zero) {
@@ -1106,7 +1114,7 @@ func buildInvoiceLinesForShipment(
 			ShipmentID:        shp.ID,
 			ShipmentProNumber: shp.ProNumber,
 			ShipmentBOL:       shp.BOL,
-			LineNumber:        startLineNumber + idx + 1,
+			LineNumber:        lineNumber,
 			Type:              invoice.InvoiceLineTypeAccessorial,
 			Description:       description,
 			Quantity:          quantity,

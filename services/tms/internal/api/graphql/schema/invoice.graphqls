@@ -32,6 +32,21 @@ enum InvoiceSendStatus {
   Failed
 }
 
+"""
+What an invoice covers. Read this rather than inferring shape from which of
+shipmentId / orderId happens to be set.
+"""
+enum InvoiceScope {
+  """One shipment."""
+  Shipment
+  """Every billable leg of one order."""
+  Order
+  """A customer's shipments across a billing period, spanning orders."""
+  Consolidated
+  """A credit memo, rebill or reversal in a correction chain."""
+  Adjustment
+}
+
 type Invoice {
   id: ID!
   organizationId: ID!
@@ -41,6 +56,13 @@ type Invoice {
   orderId: ID
   orderNumber: String
   customerId: ID!
+  scope: InvoiceScope!
+  """Start of the period billed. Consolidated invoices only."""
+  periodStart: Timestamp
+  """End of the period billed. Consolidated invoices only."""
+  periodEnd: Timestamp
+  """Distinct shipments this invoice bills."""
+  shipmentCount: Int!
   number: String!
   billType: BillType!
   status: InvoiceStatus!

@@ -1823,7 +1823,10 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 		total = total.Add(shp.TotalChargeAmount.Decimal)
 	}
 
-	if !entity.OrderID.IsNil() {
+	// Anything wider than one shipment can carry unattributed lines, and dropping
+	// them here would under-bill the rebill. Keying this off a nil order id lost
+	// them for every consolidated invoice.
+	if entity.Scope != invoice.ScopeShipment {
 		for _, line := range entity.Lines {
 			if line == nil || !line.ShipmentID.IsNil() {
 				continue
@@ -2195,6 +2198,7 @@ func (s *Service) createCreditMemoInvoice(
 		OrganizationID:            sourceInvoice.OrganizationID,
 		BusinessUnitID:            sourceInvoice.BusinessUnitID,
 		BillingQueueItemID:        item.ID,
+		Scope:                     invoice.ScopeAdjustment,
 		ShipmentID:                sourceInvoice.ShipmentID,
 		OrderID:                   sourceInvoice.OrderID,
 		OrderNumber:               sourceInvoice.OrderNumber,

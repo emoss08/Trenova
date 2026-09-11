@@ -49,6 +49,10 @@ type Invoice struct {
 	ShipmentID                pulid.ID              `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
 	OrderID                   pulid.ID              `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
 	CustomerID                pulid.ID              `json:"customerId"                bun:"customer_id,type:VARCHAR(100),notnull"`
+	Scope                     Scope                 `json:"scope"                     bun:"scope,type:invoice_scope_enum,notnull,default:'Shipment'"`
+	PeriodStart               *int64                `json:"periodStart"               bun:"period_start,type:BIGINT,nullzero"`
+	PeriodEnd                 *int64                `json:"periodEnd"                 bun:"period_end,type:BIGINT,nullzero"`
+	ShipmentCount             int                   `json:"shipmentCount"             bun:"shipment_count,type:INTEGER,notnull"`
 	Number                    string                `json:"number"                    bun:"number,type:VARCHAR(100),notnull"`
 	BillType                  billingqueue.BillType `json:"billType"                  bun:"bill_type,type:VARCHAR(50),notnull"`
 	Status                    Status                `json:"status"                    bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
@@ -259,6 +263,10 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Invoice status is required"),
 			domainvalidation.ValidEnum[Status]("invalid invoice status"),
 		),
+		validation.Field(&i.Scope,
+			validation.Required.Error("Invoice scope is required"),
+			domainvalidation.ValidEnum[Scope]("invalid invoice scope"),
+		),
 		validation.Field(&i.PaymentTerm,
 			validation.Required.Error("Payment term is required"),
 			domainvalidation.ValidEnum[PaymentTerm]("invalid payment term"),
@@ -283,13 +291,7 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	if i.ShipmentID.IsNil() && i.OrderID.IsNil() {
-		multiErr.Add(
-			"shipmentId",
-			errortypes.ErrRequired,
-			"An invoice must be attached to a shipment or an order",
-		)
-	}
+	i.validateScope(multiErr)
 
 	if i.BillType == billingqueue.BillTypeCreditMemo {
 		if i.TotalAmount.GreaterThan(decimal.Zero) {
@@ -322,6 +324,51 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		}
 
 		line.Validate(multiErr, idx)
+	}
+}
+
+func (i *Invoice) validateScope(multiErr *errortypes.MultiError) {
+	switch i.Scope {
+	case ScopeShipment:
+		if i.ShipmentID.IsNil() {
+			multiErr.Add(
+				"shipmentId",
+				errortypes.ErrRequired,
+				"A shipment invoice must name the shipment it bills",
+			)
+		}
+	case ScopeOrder:
+		if i.OrderID.IsNil() {
+			multiErr.Add(
+				"orderId",
+				errortypes.ErrRequired,
+				"An order invoice must name the order it bills",
+			)
+		}
+	case ScopeConsolidated:
+		if len(i.LegShipmentIDs()) == 0 {
+			multiErr.Add(
+				"lines",
+				errortypes.ErrRequired,
+				"A consolidated invoice must bill at least one shipment",
+			)
+		}
+		if i.PeriodStart == nil || i.PeriodEnd == nil {
+			multiErr.Add(
+				"periodStart",
+				errortypes.ErrRequired,
+				"A consolidated invoice must state the period it covers",
+			)
+		}
+	case ScopeAdjustment:
+		if i.CorrectionGroupID.IsNil() && i.SupersedesInvoiceID.IsNil() &&
+			i.SourceInvoiceAdjustmentID.IsNil() {
+			multiErr.Add(
+				"correctionGroupId",
+				errortypes.ErrRequired,
+				"An adjustment invoice must belong to a correction chain",
+			)
+		}
 	}
 }
 

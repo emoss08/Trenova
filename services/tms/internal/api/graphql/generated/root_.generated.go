@@ -4264,12 +4264,16 @@ type ComplexityRoot struct {
 		OrganizationID       func(childComplexity int) int
 		OtherAmount          func(childComplexity int) int
 		PaymentTerm          func(childComplexity int) int
+		PeriodEnd            func(childComplexity int) int
+		PeriodStart          func(childComplexity int) int
 		PostedAt             func(childComplexity int) int
+		Scope                func(childComplexity int) int
 		SendStatus           func(childComplexity int) int
 		SentAt               func(childComplexity int) int
 		ServiceDate          func(childComplexity int) int
 		SettlementStatus     func(childComplexity int) int
 		ShipmentBOL          func(childComplexity int) int
+		ShipmentCount        func(childComplexity int) int
 		ShipmentID           func(childComplexity int) int
 		ShipmentProNumber    func(childComplexity int) int
 		Status               func(childComplexity int) int
@@ -28929,12 +28933,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.PaymentTerm(childComplexity), true
+	case "Invoice.periodEnd":
+		if e.ComplexityRoot.Invoice.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.PeriodEnd(childComplexity), true
+	case "Invoice.periodStart":
+		if e.ComplexityRoot.Invoice.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.PeriodStart(childComplexity), true
 	case "Invoice.postedAt":
 		if e.ComplexityRoot.Invoice.PostedAt == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Invoice.PostedAt(childComplexity), true
+	case "Invoice.scope":
+		if e.ComplexityRoot.Invoice.Scope == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.Scope(childComplexity), true
 	case "Invoice.sendStatus":
 		if e.ComplexityRoot.Invoice.SendStatus == nil {
 			break
@@ -28965,6 +28987,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.ShipmentBOL(childComplexity), true
+	case "Invoice.shipmentCount":
+		if e.ComplexityRoot.Invoice.ShipmentCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ShipmentCount(childComplexity), true
 	case "Invoice.shipmentId":
 		if e.ComplexityRoot.Invoice.ShipmentID == nil {
 			break
@@ -69333,6 +69361,21 @@ enum InvoiceSendStatus {
   Failed
 }
 
+"""
+What an invoice covers. Read this rather than inferring shape from which of
+shipmentId / orderId happens to be set.
+"""
+enum InvoiceScope {
+  """One shipment."""
+  Shipment
+  """Every billable leg of one order."""
+  Order
+  """A customer's shipments across a billing period, spanning orders."""
+  Consolidated
+  """A credit memo, rebill or reversal in a correction chain."""
+  Adjustment
+}
+
 type Invoice {
   id: ID!
   organizationId: ID!
@@ -69342,6 +69385,13 @@ type Invoice {
   orderId: ID
   orderNumber: String
   customerId: ID!
+  scope: InvoiceScope!
+  """Start of the period billed. Consolidated invoices only."""
+  periodStart: Timestamp
+  """End of the period billed. Consolidated invoices only."""
+  periodEnd: Timestamp
+  """Distinct shipments this invoice bills."""
+  shipmentCount: Int!
   number: String!
   billType: BillType!
   status: InvoiceStatus!
@@ -86637,6 +86687,14 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_orderNumber(ctx, field)
 	case "customerId":
 		return ec.fieldContext_Invoice_customerId(ctx, field)
+	case "scope":
+		return ec.fieldContext_Invoice_scope(ctx, field)
+	case "periodStart":
+		return ec.fieldContext_Invoice_periodStart(ctx, field)
+	case "periodEnd":
+		return ec.fieldContext_Invoice_periodEnd(ctx, field)
+	case "shipmentCount":
+		return ec.fieldContext_Invoice_shipmentCount(ctx, field)
 	case "number":
 		return ec.fieldContext_Invoice_number(ctx, field)
 	case "billType":

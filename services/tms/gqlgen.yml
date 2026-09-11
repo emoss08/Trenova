@@ -1269,6 +1269,9 @@ models:
   InvoiceStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.Status
+  InvoiceScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.Scope
   InvoicePaymentTerm:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.PaymentTerm

@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql/errcode"
@@ -15,6 +16,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
+
+// The protocol error codes live in a process-global registry that only
+// NewServer populates in production. Without this the presenter tests pass or
+// fail on test ordering, because every test in the package is parallel and only
+// the query-limit tests happened to register them.
+func TestMain(m *testing.M) {
+	registerQueryLimitErrorCodes()
+	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
+	os.Exit(m.Run())
+}
 
 func presenterTestConfig() *config.Config {
 	return &config.Config{

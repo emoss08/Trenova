@@ -31957,6 +31957,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "invoiceId": {
+                    "type": "string"
+                },
                 "isAdjustmentOrigin": {
                     "type": "boolean"
                 },
@@ -37809,11 +37812,20 @@ const docTemplate = `{
                 "pdfDocumentId": {
                     "type": "string"
                 },
+                "periodEnd": {
+                    "type": "integer"
+                },
+                "periodStart": {
+                    "type": "integer"
+                },
                 "postedAt": {
                     "type": "integer"
                 },
                 "remittanceInstructions": {
                     "type": "string"
+                },
+                "scope": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.Scope"
                 },
                 "sendStatus": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus"
@@ -37835,6 +37847,9 @@ const docTemplate = `{
                 },
                 "shipmentBol": {
                     "type": "string"
+                },
+                "shipmentCount": {
+                    "type": "integer"
                 },
                 "shipmentId": {
                     "type": "string"
@@ -37960,6 +37975,21 @@ const docTemplate = `{
                 "PaymentTermNet60",
                 "PaymentTermNet90",
                 "PaymentTermDueOnReceipt"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.Scope": {
+            "type": "string",
+            "enum": [
+                "Shipment",
+                "Order",
+                "Consolidated",
+                "Adjustment"
+            ],
+            "x-enum-varnames": [
+                "ScopeShipment",
+                "ScopeOrder",
+                "ScopeConsolidated",
+                "ScopeAdjustment"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus": {

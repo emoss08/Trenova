@@ -204,6 +204,8 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode'
                 id:
                     type: string
+                invoiceId:
+                    type: string
                 isAdjustmentOrigin:
                     type: boolean
                 number:
@@ -4373,10 +4375,16 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_document.Document'
                 pdfDocumentId:
                     type: string
+                periodEnd:
+                    type: integer
+                periodStart:
+                    type: integer
                 postedAt:
                     type: integer
                 remittanceInstructions:
                     type: string
+                scope:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_invoice.Scope'
                 sendStatus:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus'
                 sentAt:
@@ -4391,6 +4399,8 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
                 shipmentBol:
                     type: string
+                shipmentCount:
+                    type: integer
                 shipmentId:
                     type: string
                 shipmentProNumber:
@@ -4479,6 +4489,18 @@ components:
                 - PaymentTermNet60
                 - PaymentTermNet90
                 - PaymentTermDueOnReceipt
+        github_com_emoss08_trenova_internal_core_domain_invoice.Scope:
+            enum:
+                - Shipment
+                - Order
+                - Consolidated
+                - Adjustment
+            type: string
+            x-enum-varnames:
+                - ScopeShipment
+                - ScopeOrder
+                - ScopeConsolidated
+                - ScopeAdjustment
         github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus:
             enum:
                 - NotSent

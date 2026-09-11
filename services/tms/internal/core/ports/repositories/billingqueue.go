@@ -23,14 +23,23 @@ type GetBillingQueueStatsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
-// MarkPostedByOrderRequest scopes the posting sweep to the billing-queue items of the
-// legs actually carried on the posted invoice. ShipmentIDs empty falls back to every
-// non-terminal item of the order (legacy invoices without line attribution). Canceled
-// items are never swept.
-type MarkPostedByOrderRequest struct {
+// MarkPostedForInvoiceRequest sweeps the billing-queue items an invoice actually
+// billed. InvoiceID is the real predicate; OrderID and ShipmentIDs are a fallback for
+// rows written before the invoice back-link existed and which the migration could not
+// link with confidence. Canceled items are never swept.
+type MarkPostedForInvoiceRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
+	InvoiceID   pulid.ID              `json:"-"`
 	OrderID     pulid.ID              `json:"-"`
 	ShipmentIDs []pulid.ID            `json:"-"`
+}
+
+// AttachInvoiceRequest links every billing-queue item an invoice bills back to it, so
+// the posting sweep and the double-bill guard can both work from one exact predicate.
+type AttachInvoiceRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	ItemIDs    []pulid.ID            `json:"-"`
 }
 
 type BillingQueueRepository interface {
@@ -56,9 +65,13 @@ type BillingQueueRepository interface {
 		shipmentID pulid.ID,
 		billType billingqueue.BillType,
 	) (bool, error)
-	MarkPostedByOrderID(
+	MarkPostedForInvoice(
 		ctx context.Context,
-		req *MarkPostedByOrderRequest,
+		req *MarkPostedForInvoiceRequest,
+	) (int64, error)
+	AttachInvoice(
+		ctx context.Context,
+		req *AttachInvoiceRequest,
 	) (int64, error)
 	GetStatusCounts(
 		ctx context.Context,

@@ -7196,12 +7196,19 @@ type Invoice {
   organizationId: ID!
   otherAmount: Decimal!
   paymentTerm: InvoicePaymentTerm!
+  """End of the period billed. Consolidated invoices only."""
+  periodEnd: Timestamp
+  """Start of the period billed. Consolidated invoices only."""
+  periodStart: Timestamp
   postedAt: Timestamp
+  scope: InvoiceScope!
   sendStatus: InvoiceSendStatus!
   sentAt: Timestamp
   serviceDate: Timestamp
   settlementStatus: InvoiceSettlementStatus!
   shipmentBol: String!
+  """Distinct shipments this invoice bills."""
+  shipmentCount: Int!
   shipmentId: ID
   shipmentProNumber: String!
   status: InvoiceStatus!
@@ -7258,6 +7265,21 @@ enum InvoicePaymentTerm {
   Net45
   Net60
   Net90
+}
+
+"""
+What an invoice covers. Read this rather than inferring shape from which of
+shipmentId / orderId happens to be set.
+"""
+enum InvoiceScope {
+  """A credit memo, rebill or reversal in a correction chain."""
+  Adjustment
+  """A customer's shipments across a billing period, spanning orders."""
+  Consolidated
+  """Every billable leg of one order."""
+  Order
+  """One shipment."""
+  Shipment
 }
 
 enum InvoiceSendStatus {

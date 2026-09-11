@@ -29,6 +29,7 @@ func (s *Service) createReplacementDraftInvoice(
 		OrganizationID:     sourceInvoice.OrganizationID,
 		BusinessUnitID:     sourceInvoice.BusinessUnitID,
 		BillingQueueItemID: item.ID,
+		Scope:              invoice.ScopeAdjustment,
 		ShipmentID:         sourceInvoice.ShipmentID,
 		CustomerID:         sourceInvoice.CustomerID,
 		Number:             item.Number,
