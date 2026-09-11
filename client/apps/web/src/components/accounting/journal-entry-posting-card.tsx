@@ -84,7 +84,7 @@ export function JournalEntryPostingCard({
       {open ? (
         <div className="border-t px-3 pt-2.5 pb-3">
           {entry.description ? (
-            <p className="text-muted-foreground mb-2 text-xs">{entry.description}</p>
+            <p className="text-muted-foreground mb-2 text-xs">{t(entry.description)}</p>
           ) : null}
           {entry.lines?.length ? (
             <JournalLineItemsTable

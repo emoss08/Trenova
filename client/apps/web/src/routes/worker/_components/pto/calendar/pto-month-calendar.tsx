@@ -447,6 +447,8 @@ function LegendChip({
   hidden: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -465,7 +467,7 @@ function LegendChip({
         className={cn("size-1.5 shrink-0 rounded-full", entry.dotClass, hidden && "opacity-40")}
         aria-hidden
       />
-      <span>{entry.label}</span>
+      <span>{t(entry.label)}</span>
       <span className="text-muted-foreground tabular-nums">{entry.count}</span>
     </button>
   );

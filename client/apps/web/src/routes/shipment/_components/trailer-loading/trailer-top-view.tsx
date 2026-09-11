@@ -248,7 +248,7 @@ export function TrailerTopView({
                       textAnchor="middle"
                       className="fill-primary text-[8px] font-semibold"
                     >
-                      {divider.label}
+                      {t(divider.label)}
                     </text>
                   </g>
                 );

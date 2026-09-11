@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CommentBodyRenderer,
   type CommentBodyEntityRefAttrs,
@@ -13,6 +14,8 @@ const ENTITY_REF_BASE_PATHS: Record<string, string> = {
 };
 
 export function CommentBody({ comment }: { comment: LocalShipmentComment }) {
+  const t = useT();
+
   const navigate = useNavigate();
 
   const handleEntityRefClick = useCallback(
@@ -36,7 +39,7 @@ export function CommentBody({ comment }: { comment: LocalShipmentComment }) {
           className="cursor-pointer rounded bg-violet-500/10 px-0.5 font-medium text-violet-500 hover:bg-violet-500/20"
           onClick={() => handleEntityRefClick(attrs)}
         >
-          #{attrs.label}
+          #{t(attrs.label)}
         </button>
       )}
     />

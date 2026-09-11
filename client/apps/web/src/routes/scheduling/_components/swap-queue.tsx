@@ -144,7 +144,7 @@ function SwapRow({
             <span className="text-muted-foreground">
               → {nameOf(swap.counterpartyWorker) ?? "whoever the office finds"}
             </span>
-            <Badge variant={tone.variant}>{tone.label}</Badge>
+            <Badge variant={tone.variant}>{t(tone.label)}</Badge>
           </span>
           <span className="text-muted-foreground tabular-nums">
             {t("Giving up {0} {1}", formatShiftDate(swap.shiftDate), swap.counterpartyShiftDate

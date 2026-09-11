@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo } from "react";
 import { Link } from "react-router";
@@ -150,6 +151,8 @@ const SecondaryInfoLink = memo(
 export function EntityRefCell<TEntity, TParent extends Record<string, any>>(
   props: EntityRefCellProps<TEntity, TParent>,
 ) {
+  const t = useT();
+
   const { entity, config, parent } = props;
 
   if (!entity) {
@@ -176,7 +179,7 @@ export function EntityRefCell<TEntity, TParent extends Record<string, any>>(
       />
       {secondaryInfo && (
         <div className="text-2xs text-muted-foreground flex items-center gap-1">
-          {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
+          {secondaryInfo.label && <span>{t(secondaryInfo.label)}:</span>}
           <SecondaryInfoLink
             id={config.getId(secondaryInfo.entity)}
             displayText={secondaryInfo.displayText}
@@ -202,6 +205,8 @@ interface NestedEntityRefCellProps<TEntity, TParent> {
 export function NestedEntityRefCell<TEntity, TParent extends Record<string, any>>(
   props: NestedEntityRefCellProps<TEntity, TParent>,
 ) {
+  const t = useT();
+
   const { getValue, row, config } = props;
   const entity = getValue();
 
@@ -230,7 +235,7 @@ export function NestedEntityRefCell<TEntity, TParent extends Record<string, any>
 
       {secondaryInfo && (
         <div className="text-2xs text-muted-foreground flex items-center gap-1">
-          {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
+          {secondaryInfo.label && <span>{t(secondaryInfo.label)}:</span>}
           {clickable ? (
             <SecondaryInfoLink
               id={config.getId(secondaryInfo.entity)}

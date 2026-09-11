@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 import { cn } from "@trenova/shared/lib/utils";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,6 +17,8 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ title, description, icons = [], action, className }: EmptyStateProps) {
+  const t = useT();
+
   return (
     <div
       className={cn(
@@ -58,7 +61,7 @@ export function EmptyState({ title, description, icons = [], action, className }
       {action && (
         <Button onClick={action.onClick} variant="outline" size="sm" className="mt-4">
           {action.icon && React.createElement(action.icon, { className: "size-4" })}
-          {action.label}
+          {t(action.label)}
         </Button>
       )}
     </div>

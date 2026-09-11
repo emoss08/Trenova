@@ -113,6 +113,8 @@ const ActivityViewSelect = memo(function ActivityViewSelect({
   value: ActivityViewValue;
   onValueChange: (value: ActivityViewValue) => void;
 }) {
+  const t = useT();
+
   return (
     <Select
       value={value}
@@ -125,7 +127,7 @@ const ActivityViewSelect = memo(function ActivityViewSelect({
       <SelectContent>
         {activityViewOptions.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </SelectItem>
         ))}
       </SelectContent>

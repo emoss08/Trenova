@@ -118,7 +118,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                   <SelectContent>
                     {REPORT_PARAMETER_TYPE_CHOICES.map((choice) => (
                       <SelectItem key={choice.value} value={choice.value}>
-                        {choice.label}
+                        {t(choice.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -140,7 +140,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                     <SelectContent>
                       {REPORT_REF_ENTITY_CHOICES.map((choice) => (
                         <SelectItem key={choice.value} value={choice.value}>
-                          {choice.label}
+                          {t(choice.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>

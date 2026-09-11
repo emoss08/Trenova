@@ -100,6 +100,8 @@ interface AiToolCallHeaderProps {
 }
 
 function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
+  const t = useT();
+
   const { name, state, isOpen } = useToolCallContext();
 
   const stateConfig = React.useMemo(() => {
@@ -161,7 +163,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
           )}
         >
           {stateConfig.icon}
-          {stateConfig.label}
+          {t(stateConfig.label)}
         </span>
       </div>
       {children}

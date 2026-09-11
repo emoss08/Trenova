@@ -860,7 +860,7 @@ function MatchDetail({
                 {(assignment.accessorials ?? []).map((accessorial) => (
                   <div key={accessorial.id} className="flex justify-between pl-3">
                     <span className="text-muted-foreground truncate">
-                      {accessorial.description}
+                      {t(accessorial.description)}
                     </span>
                     <span className="tabular-nums">
                       {formatCurrency(Number(accessorial.amount ?? 0), currency)}

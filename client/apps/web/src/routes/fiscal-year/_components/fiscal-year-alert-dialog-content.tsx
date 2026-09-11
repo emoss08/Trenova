@@ -300,7 +300,7 @@ function SubledgerChecks({ checks }: { checks: FiscalYearSubledgerCheck[] }) {
           data-slot="subledger-check"
         >
           <span className="text-muted-foreground">
-            {check.label} ({check.accountCode})
+            {t(check.label)} ({check.accountCode})
           </span>
           {check.reconciled ? (
             <span className="font-mono">{t("reconciled · {0}", formatMinor(check.glBalanceMinor))}</span>

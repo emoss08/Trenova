@@ -300,7 +300,7 @@ export default function SchedulingConsole() {
                 return (
                   <span key={state} className="flex items-center gap-1.5">
                     <span className={cn("size-2 rounded-full", tone.dot)} aria-hidden />
-                    <span className="text-muted-foreground">{tone.label}</span>
+                    <span className="text-muted-foreground">{t(tone.label)}</span>
                   </span>
                 );
               })}

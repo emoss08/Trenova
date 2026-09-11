@@ -92,7 +92,7 @@ export function JournalEntryDetailPage() {
               </div>
               <span className="text-muted-foreground text-sm">{accountingDate}</span>
             </div>
-            {entry.description && <CardDescription>{entry.description}</CardDescription>}
+            {entry.description && <CardDescription>{t(entry.description)}</CardDescription>}
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">

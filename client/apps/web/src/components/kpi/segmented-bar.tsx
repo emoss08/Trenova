@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 export type Segment = {
   label: string;
   value: number;
@@ -9,6 +10,8 @@ type SegmentedBarProps = {
 };
 
 export function SegmentedBar({ segments }: SegmentedBarProps) {
+  const t = useT();
+
   const total = segments.reduce((sum, segment) => sum + segment.value, 0) || 1;
 
   return (
@@ -36,7 +39,7 @@ export function SegmentedBar({ segments }: SegmentedBarProps) {
               className="size-[5px] rounded-[1px]"
               style={{ background: segment.color }}
             />
-            {segment.label}{" "}
+            {t(segment.label)}{" "}
             <span className="text-foreground/70 font-mono tabular-nums">{segment.value}</span>
           </span>
         ))}

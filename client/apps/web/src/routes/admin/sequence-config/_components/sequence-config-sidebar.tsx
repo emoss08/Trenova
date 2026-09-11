@@ -24,7 +24,7 @@ export function SequenceConfigSidebar({ value, onChange, indexByType }: SidebarP
           {sidebarGroups.map((group) => (
             <li key={group.label}>
               <div className="text-muted-foreground mb-1.5 px-2 text-[11px] font-medium tracking-wide uppercase">
-                {group.label}
+                {t(group.label)}
               </div>
               <ul className="flex flex-col gap-0.5">
                 {group.items.map((type) => (

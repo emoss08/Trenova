@@ -147,7 +147,7 @@ function SegmentDetail({
                     {segment.segmentId}
                     {String(element.position).padStart(2, "0")}
                   </TableCell>
-                  <TableCell>{element.label}</TableCell>
+                  <TableCell>{t(element.label)}</TableCell>
                   <TableCell className="font-mono text-xs wrap-break-word">
                     <div>{element.empty ? "[empty]" : element.value}</div>
                     {element.components.length > 1 ? (

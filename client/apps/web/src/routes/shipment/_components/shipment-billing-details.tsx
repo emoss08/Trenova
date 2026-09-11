@@ -110,6 +110,8 @@ const CREDIT_STATUS_CONFIG: Record<
 };
 
 function CreditHoldAlert({ customerId }: { customerId: string }) {
+  const t = useT();
+
   const { data: billingProfile } = useQuery({
     ...queries.customer.getBillingProfile(customerId),
     enabled: !!customerId,
@@ -125,7 +127,7 @@ function CreditHoldAlert({ customerId }: { customerId: string }) {
   return (
     <Alert variant={config.variant} className="mb-3">
       <Icon className="size-4" />
-      <AlertTitle>{config.label}</AlertTitle>
+      <AlertTitle>{t(config.label)}</AlertTitle>
       <AlertDescription>
         {billingProfile.creditHoldReason ||
           (billingProfile.creditStatus === "Warning"

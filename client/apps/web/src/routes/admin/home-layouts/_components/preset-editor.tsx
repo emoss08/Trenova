@@ -251,7 +251,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               <SelectContent>
                 {responsibilityItems.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -276,7 +276,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                   <SelectContent>
                     {previewItems.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {t(item.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -236,7 +236,7 @@ export function CommentsToolbar({
               className="border-border bg-muted text-2xs hover:bg-accent flex items-center gap-1 rounded-full border px-2 py-0.5 transition-colors"
               onClick={pill.onRemove}
             >
-              {pill.label}
+              {t(pill.label)}
               <XIcon className="size-2.5" />
             </button>
           ))}

@@ -56,7 +56,7 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
               className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
             >
               <Icon className="size-3 shrink-0" />
-              <span className="truncate">{definition.label}</span>
+              <span className="truncate">{t(definition.label)}</span>
             </Link>
           ))}
         </div>
@@ -174,6 +174,8 @@ export function JumpBackInWidget({ widget }: WidgetProps) {
  * than pretending one list exists.
  */
 export function SavedViewsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const targets = [
     { label: "Shipment board views", href: "/shipment-management/shipments" },
     { label: "Report views", href: "/reports" },
@@ -189,7 +191,7 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
             to={target.href}
             className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
           >
-            {target.label}
+            {t(target.label)}
           </Link>
         ))}
       </div>
@@ -222,7 +224,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
         <div className="flex flex-col gap-0.5">
           {notifications.map((notification) => (
             <div key={notification.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
-              <span className="truncate text-xs font-medium">{notification.title}</span>
+              <span className="truncate text-xs font-medium">{t(notification.title)}</span>
               <span className="text-muted-foreground truncate text-[10px]">
                 {notification.message}
               </span>

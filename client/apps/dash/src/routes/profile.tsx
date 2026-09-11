@@ -114,7 +114,7 @@ export function DashProfilePage() {
               )}
             >
               <option.icon className="size-4" />
-              {option.label}
+              {t(option.label)}
             </button>
           ))}
         </div>

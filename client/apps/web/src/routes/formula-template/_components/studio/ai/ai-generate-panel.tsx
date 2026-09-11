@@ -320,7 +320,7 @@ export function AiGeneratePanel({
                             <div className="min-w-0 space-y-0.5">
                               <p className="font-medium">{scenario.name}</p>
                               {scenario.description && (
-                                <p className="text-muted-foreground">{scenario.description}</p>
+                                <p className="text-muted-foreground">{t(scenario.description)}</p>
                               )}
                               {scenario.valid && typeof scenario.expectedAmount === "number" ? (
                                 <p className="font-mono tabular-nums">

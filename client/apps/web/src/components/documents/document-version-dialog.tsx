@@ -135,7 +135,7 @@ function VersionCompare({ selected, current }: { selected: Document; current: Do
       <tbody className="divide-border divide-y">
         {fields.map((f) => (
           <tr key={f.label}>
-            <td className="text-muted-foreground py-1 pr-3">{f.label}</td>
+            <td className="text-muted-foreground py-1 pr-3">{t(f.label)}</td>
             <td className="py-1 pr-3">{f.selected}</td>
             <td className="text-muted-foreground py-1">{f.current}</td>
           </tr>

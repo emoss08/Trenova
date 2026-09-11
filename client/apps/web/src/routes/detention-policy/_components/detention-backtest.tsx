@@ -72,6 +72,8 @@ function RiskChip({ tone, children }: { tone: "warn" | "bad" | "neutral"; childr
  * ratio is read faster than a subtraction.
  */
 function RevenueComparison({ result }: { result: BacktestResult }) {
+  const t = useT();
+
   const scale = Math.max(result.proposedRevenue, result.baselineRevenue, 1);
 
   const rows = [
@@ -93,7 +95,7 @@ function RevenueComparison({ result }: { result: BacktestResult }) {
     <div className="flex flex-col gap-2">
       {rows.map((row) => (
         <div key={row.key} className="flex items-center gap-3">
-          <span className="text-2xs text-muted-foreground w-20 shrink-0">{row.label}</span>
+          <span className="text-2xs text-muted-foreground w-20 shrink-0">{t(row.label)}</span>
           <div className="bg-muted h-1.5 min-w-0 flex-1 overflow-hidden rounded-full">
             <m.div
               className={cn("h-full rounded-full", row.className)}

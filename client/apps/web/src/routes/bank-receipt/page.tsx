@@ -169,7 +169,7 @@ export function BankReceiptPage() {
                 <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {STATUS_FILTERS.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -111,7 +111,7 @@ export function DashNotificationsPage() {
                             unread ? "font-semibold" : "font-medium",
                           )}
                         >
-                          {notification.title}
+                          {t(notification.title)}
                         </span>
                         <span className="shrink-0 text-xs text-muted-foreground">
                           {notificationTime(notification.createdAt)}

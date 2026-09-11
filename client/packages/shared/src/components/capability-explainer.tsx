@@ -64,7 +64,7 @@ function RuleExplanation({ rule }: { rule: ResolvedCapabilityRule }) {
   return (
     <li className="px-4 py-3">
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-xs font-medium">{rule.label}</p>
+        <p className="text-xs font-medium">{t(rule.label)}</p>
         <span className={cn("text-[11px] font-medium", enforcementTone(rule.enforcement))}>
           {enforcementLabel(rule.enforcement)}
         </span>

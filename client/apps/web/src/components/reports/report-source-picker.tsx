@@ -277,6 +277,8 @@ function toSavedRow(
 }
 
 function PickerRow({ row }: { row: Row }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -300,7 +302,7 @@ function PickerRow({ row }: { row: Row }) {
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-xs font-medium">{row.name}</span>
         {row.description && (
-          <span className="text-muted-foreground truncate text-[11px]">{row.description}</span>
+          <span className="text-muted-foreground truncate text-[11px]">{t(row.description)}</span>
         )}
       </span>
       {row.meta && (

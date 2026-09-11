@@ -189,6 +189,8 @@ function useLocationGeofence() {
 }
 
 export function LocationGeofenceControls({ className }: { className?: string }) {
+  const t = useT();
+
   const { geofenceType, handleTypeChange } = useLocationGeofence();
 
   return (
@@ -210,7 +212,7 @@ export function LocationGeofenceControls({ className }: { className?: string }) 
             )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />
-            {choice.label}
+            {t(choice.label)}
           </button>
         );
       })}

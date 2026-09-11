@@ -154,7 +154,7 @@ function PendingChangeNotice() {
   return (
     <div className="border-border bg-muted/30 mt-3 rounded-lg border p-3 text-xs">
       <div className="flex items-center justify-between gap-2">
-        <Badge variant={tone.variant}>{tone.label}</Badge>
+        <Badge variant={tone.variant}>{t(tone.label)}</Badge>
         {pending ? (
           <Button
             variant="ghost"

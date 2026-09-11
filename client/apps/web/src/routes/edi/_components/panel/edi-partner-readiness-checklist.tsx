@@ -91,7 +91,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
                 <CircleIcon className="text-muted-foreground size-4 shrink-0" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm">{item.label}</p>
+                <p className="text-sm">{t(item.label)}</p>
                 {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
               </div>
               {link && (
@@ -101,7 +101,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
                   className="shrink-0"
                   render={<Link to={link.to} />}
                 >
-                  {link.label}
+                  {t(link.label)}
                 </Button>
               )}
             </div>

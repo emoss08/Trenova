@@ -70,7 +70,7 @@ function FeasibilityRow({
           {selected && <CheckIcon className="text-brand size-3 shrink-0" />}
           {duty && (
             <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
-              {duty.label}
+              {t(duty.label)}
             </Badge>
           )}
           {driver.tractorCode && (
@@ -83,7 +83,7 @@ function FeasibilityRow({
           )}
         </div>
         <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
-          {verdict.label}
+          {t(verdict.label)}
         </Badge>
       </div>
       <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums">

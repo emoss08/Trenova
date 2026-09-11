@@ -113,7 +113,7 @@ function SearchSyntaxHelper() {
                   {item.syntax}
                 </code>
                 <div>
-                  <p className="text-foreground">{item.description}</p>
+                  <p className="text-foreground">{t(item.description)}</p>
                   <p className="text-muted-foreground text-xs">
                     {t("e.g.,")} <code className="font-mono">{item.example}</code>
                   </p>

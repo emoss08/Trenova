@@ -413,7 +413,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               onClick={() => applyPreset(preset.slug)}
             >
               <ProviderLogo name={preset.name} />
-              <span className="font-medium">{preset.label}</span>
+              <span className="font-medium">{t(preset.label)}</span>
             </button>
           ))}
         </div>

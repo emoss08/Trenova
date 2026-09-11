@@ -91,7 +91,7 @@ export function StarterTemplatePicker() {
               >
                 <span className="text-xs font-semibold">{standard.name}</span>
                 <span className="text-muted-foreground text-2xs font-normal">
-                  {standard.description}
+                  {t(standard.description)}
                 </span>
               </Button>
             ))}

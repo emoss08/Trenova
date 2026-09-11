@@ -110,7 +110,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
                   key={leg.id}
                   className="flex items-center justify-between rounded-md border px-2 py-1 text-sm"
                 >
-                  <span className="truncate font-mono">{leg.label}</span>
+                  <span className="truncate font-mono">{t(leg.label)}</span>
                   <Button
                     type="button"
                     variant="ghost"

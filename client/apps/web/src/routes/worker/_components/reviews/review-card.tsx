@@ -73,7 +73,7 @@ export function ReviewCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">{review.title}</p>
+          <p className="text-sm font-semibold">{t(review.title)}</p>
           <p className="text-muted-foreground text-[11px]">
             {formatUnixDate(review.periodStart)} – {formatUnixDate(review.periodEnd)}
             {review.reviewer?.name ? ` · ${review.reviewer.name}` : ""}
@@ -98,7 +98,7 @@ export function ReviewCard({
         <ul className="flex flex-col gap-1.5">
           {review.ratings.map((rating) => (
             <li key={rating.key} className="flex items-center gap-2 text-xs">
-              <span className="min-w-40 truncate">{rating.label}</span>
+              <span className="min-w-40 truncate">{t(rating.label)}</span>
               <span className="flex items-center gap-0.5" aria-hidden>
                 {[1, 2, 3, 4, 5].map((mark) => (
                   <span
@@ -132,7 +132,7 @@ export function ReviewCard({
           {review.goals.map((goal) => (
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="text-muted-foreground size-3.5" />
-              <span>{goal.title}</span>
+              <span>{t(goal.title)}</span>
               <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>

@@ -115,7 +115,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Badge variant={standing.tone}>{standing.label}</Badge>
+              <Badge variant={standing.tone}>{t(standing.label)}</Badge>
               {file.standing.returnToDuty !== "NotRequired" ? (
                 <Badge variant="secondary">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
               ) : null}

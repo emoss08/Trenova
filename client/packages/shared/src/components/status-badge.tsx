@@ -181,11 +181,13 @@ export function PermissionScopeBadge({ scope }: { scope?: string }) {
 }
 
 export function PTOTypeBadge({ type }: { type: PTOType }) {
+  const t = useT();
+
   const meta = ptoTypeMeta(type);
 
   return (
     <Badge variant={meta.badgeVariant} className="max-h-5">
-      {meta.label}
+      {t(meta.label)}
     </Badge>
   );
 }

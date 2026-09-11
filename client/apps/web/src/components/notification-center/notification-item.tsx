@@ -121,7 +121,7 @@ export function NotificationItem({
               isUnread ? "text-foreground font-medium" : "text-muted-foreground",
             )}
           >
-            {notification.title}
+            {t(notification.title)}
           </p>
           <span className="flex shrink-0 items-center gap-1.5">
             <span className="text-2xs text-muted-foreground/60 whitespace-nowrap tabular-nums">

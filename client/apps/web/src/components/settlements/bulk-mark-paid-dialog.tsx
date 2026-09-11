@@ -81,7 +81,7 @@ export function BulkMarkPaidDialog({
                   variant={paymentMethod === method.value ? "default" : "outline"}
                   onClick={() => setPaymentMethod(method.value)}
                 >
-                  {method.label}
+                  {t(method.label)}
                 </Button>
               ))}
             </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -19,6 +20,8 @@ export function CommentOptionPill<T extends string>({
   options: ReadonlyArray<GenericSelectOption<T>>;
   onChange: (value: T) => void;
 }) {
+  const t = useT();
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
@@ -62,7 +65,7 @@ export function CommentOptionPill<T extends string>({
                 style={{ backgroundColor: option.color }}
               />
             )}
-            <span className="truncate">{option.label}</span>
+            <span className="truncate">{t(option.label)}</span>
             {option.value === value && <CheckIcon className="ml-auto size-3 shrink-0" />}
           </button>
         ))}

@@ -100,7 +100,7 @@ export function DeskToolbar({
                   : "text-muted-foreground hover:text-foreground border-transparent",
               )}
             >
-              {filter.label}
+              {t(filter.label)}
               <span className="text-muted-foreground ml-1.5 tabular-nums">{count}</span>
             </button>
           );
@@ -147,7 +147,7 @@ export function DeskToolbar({
                 size="sm"
                 className="text-muted-foreground hover:text-foreground gap-1 px-2 text-xs"
               >
-                {activeSort.label}
+                {t(activeSort.label)}
                 <ChevronDownIcon className="size-3" />
               </Button>
             }
@@ -160,7 +160,7 @@ export function DeskToolbar({
               {DESK_SORTS.map((option) => (
                 <DropdownMenuRadioItem key={option.id} value={option.id}>
                   <span className="flex flex-col">
-                    <span>{option.label}</span>
+                    <span>{t(option.label)}</span>
                     <span className="text-2xs text-muted-foreground">{option.hint}</span>
                   </span>
                 </DropdownMenuRadioItem>

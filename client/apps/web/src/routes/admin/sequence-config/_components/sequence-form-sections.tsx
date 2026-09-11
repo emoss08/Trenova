@@ -181,7 +181,7 @@ export function DateComponentsSection({ index }: SectionProps) {
                             : "border-input bg-background text-foreground hover:bg-muted",
                         )}
                       >
-                        <span className="leading-none font-medium">{option.label}</span>
+                        <span className="leading-none font-medium">{t(option.label)}</span>
                         <span className="text-2xs text-muted-foreground">{option.example}</span>
                       </button>
                     );

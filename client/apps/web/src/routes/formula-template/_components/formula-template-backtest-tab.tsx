@@ -304,8 +304,8 @@ export default function FormulaTemplateBacktestTab({
                   : "border-border bg-background hover:bg-muted/50",
               )}
             >
-              <p className="text-xs font-medium">{option.label}</p>
-              <p className="text-2xs text-muted-foreground mt-0.5">{option.description}</p>
+              <p className="text-xs font-medium">{t(option.label)}</p>
+              <p className="text-2xs text-muted-foreground mt-0.5">{t(option.description)}</p>
             </button>
           ))}
         </div>

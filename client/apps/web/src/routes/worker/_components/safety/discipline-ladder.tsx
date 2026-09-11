@@ -158,7 +158,7 @@ export function DisciplineLadder({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                    {meta.label}
+                    {t(meta.label)}
                     <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
                       {DISCIPLINARY_STATUS_LABELS[status] ?? status}
                     </Badge>

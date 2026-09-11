@@ -131,7 +131,7 @@ export function ConsoleToolbar({
                 : "bg-background text-muted-foreground hover:text-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
@@ -162,7 +162,7 @@ export function ConsoleToolbar({
               )}
             >
               <option.Icon className="size-3" aria-hidden />
-              {option.label}
+              {t(option.label)}
             </button>
           ))}
         </div>

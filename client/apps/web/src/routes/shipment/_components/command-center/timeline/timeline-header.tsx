@@ -52,7 +52,7 @@ export function TimelineHeader({
             style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
           >
             <span className="truncate text-[10px] font-semibold tracking-wide uppercase">
-              {day.label}
+              {t(day.label)}
             </span>
           </div>
         ))}
@@ -63,7 +63,7 @@ export function TimelineHeader({
               className="font-table text-muted-foreground absolute -translate-x-1/2 text-[9px] tabular-nums"
               style={{ left: tick.x, top: DAY_LABEL_HEIGHT_PX + 3 }}
             >
-              {tick.label}
+              {t(tick.label)}
             </span>
           ))}
         {nowInRange && (

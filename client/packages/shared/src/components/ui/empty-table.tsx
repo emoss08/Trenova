@@ -70,7 +70,7 @@ export function EmptyTable({
           >
             {columns.map((column) => (
               <span key={column.label} className={cn("truncate", column.numeric && "text-right")}>
-                {column.label}
+                {t(column.label)}
               </span>
             ))}
           </div>

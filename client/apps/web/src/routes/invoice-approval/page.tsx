@@ -228,7 +228,7 @@ export function InvoiceApprovalPage() {
                 <SelectItem value="all">{t("All adjustment types")}</SelectItem>
                 {adjustmentKindChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -505,7 +505,7 @@ function ApprovalDetail({
                   {detail.lines.map((line) => (
                     <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
                       <td className="text-2xs px-3 py-2 font-mono">{line.lineNumber}</td>
-                      <td className="px-3 py-2 text-xs">{line.description}</td>
+                      <td className="px-3 py-2 text-xs">{t(line.description)}</td>
                       <td className="px-3 py-2 text-right text-xs tabular-nums">
                         {formatCurrency(Number(line.creditAmount))}
                       </td>

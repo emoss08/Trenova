@@ -77,6 +77,8 @@ type HealthDotProps = {
 };
 
 function HealthDot({ category, meta }: HealthDotProps) {
+  const t = useT();
+
   return (
     <Tooltip>
       <TooltipTrigger
@@ -91,10 +93,10 @@ function HealthDot({ category, meta }: HealthDotProps) {
       >
         <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", meta.dotClass)} />
         <span className="sr-only">{category}: </span>
-        {meta.label}
+        {t(meta.label)}
       </TooltipTrigger>
       <TooltipContent>
-        {category} · {meta.label}
+        {category} · {t(meta.label)}
       </TooltipContent>
     </Tooltip>
   );

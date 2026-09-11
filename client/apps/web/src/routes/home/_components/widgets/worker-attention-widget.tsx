@@ -85,7 +85,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
               to={rosterViewHref(line.view)}
               className="hover:bg-muted/60 flex items-center justify-between rounded px-1.5 py-1 text-xs transition-colors"
             >
-              <span className={cn(line.count === 0 && "text-muted-foreground")}>{line.label}</span>
+              <span className={cn(line.count === 0 && "text-muted-foreground")}>{t(line.label)}</span>
               <span
                 className={cn(
                   "font-semibold tabular-nums",

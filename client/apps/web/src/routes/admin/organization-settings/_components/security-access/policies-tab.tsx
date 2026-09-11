@@ -139,7 +139,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
                         style={{ backgroundColor: option?.color }}
                       />
                     ) : null}
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -64,7 +64,7 @@ function AttentionRows() {
       <WorkspaceGroupLabel>{t("Needs attention")}</WorkspaceGroupLabel>
       {rows.map(({ row, count }) => (
         <WorkspaceNavRow key={row.key} to={row.path} active={isRouteActive(pathname, row.path)} sub>
-          <WorkspaceRowLabel>{row.label}</WorkspaceRowLabel>
+          <WorkspaceRowLabel>{t(row.label)}</WorkspaceRowLabel>
           <AttentionCountBadge attention={count > 0 ? { count, tone: row.tone } : undefined} />
         </WorkspaceNavRow>
       ))}

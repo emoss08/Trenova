@@ -116,7 +116,7 @@ function AgingSnapshot() {
           return (
             <div key={bucket.key} className="flex items-center gap-2 text-xs">
               <span className={`size-2 shrink-0 rounded-full ${bucket.dotClass}`} />
-              <span className="text-muted-foreground w-10">{bucket.label}</span>
+              <span className="text-muted-foreground w-10">{t(bucket.label)}</span>
               <span className="flex-1 text-right font-medium tabular-nums">
                 {formatCurrency(amount)}
               </span>

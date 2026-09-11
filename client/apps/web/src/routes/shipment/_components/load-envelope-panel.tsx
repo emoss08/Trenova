@@ -218,7 +218,7 @@ function EnvelopeBody({
             <ul className="space-y-0.5">
               {escorts.map((escort) => (
                 <li key={escort.role} className="text-muted-foreground text-xs">
-                  <span className="text-foreground">{escort.label}</span>
+                  <span className="text-foreground">{t(escort.label)}</span>
                   {escort.stateCodes.length > 0 && ` — required by ${escort.stateCodes.join(", ")}`}
                 </li>
               ))}
@@ -235,7 +235,7 @@ function EnvelopeBody({
             <ul className="space-y-0.5">
               {restrictions.map((restriction) => (
                 <li key={restriction.kind} className="text-muted-foreground text-xs">
-                  <span className="text-foreground">{restriction.label}</span> —{" "}
+                  <span className="text-foreground">{t(restriction.label)}</span> —{" "}
                   {restriction.stateCodes.join(", ")}
                 </li>
               ))}
@@ -368,7 +368,7 @@ function DimensionTile({ row }: { row: DimensionRow }) {
       )}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="text-2xs text-muted-foreground font-medium">{row.label}</span>
+        <span className="text-2xs text-muted-foreground font-medium">{t(row.label)}</span>
         {row.headroom !== null &&
           (row.exceeded ? (
             <span className="bg-destructive/15 text-2xs text-destructive rounded-full px-1.5 py-px font-semibold tabular-nums">

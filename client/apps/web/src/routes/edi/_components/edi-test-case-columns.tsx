@@ -14,7 +14,7 @@ export function getTestCaseColumns(): ColumnDef<EDITestCaseTableRow>[] {
         <div className="min-w-0">
           <div className="truncate font-medium">{row.original.name}</div>
           {row.original.description ? (
-            <div className="text-muted-foreground truncate text-xs">{row.original.description}</div>
+            <div className="text-muted-foreground truncate text-xs">{translate(row.original.description)}</div>
           ) : null}
         </div>
       ),

@@ -54,7 +54,7 @@ export function PayFlowExplainer() {
           <div key={step.title} className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5 text-xs font-semibold">
               <step.icon className="text-muted-foreground size-3.5" />
-              {step.title}
+              {t(step.title)}
             </div>
             <p className="text-muted-foreground text-[11px] leading-relaxed">{step.body}</p>
           </div>

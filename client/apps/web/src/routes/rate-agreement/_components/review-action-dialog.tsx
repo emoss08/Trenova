@@ -172,10 +172,10 @@ export function ReviewActionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
-            {config.title}
+            {t(config.title)}
             {agreement?.name && <span className="text-muted-foreground">— {agreement.name}</span>}
           </DialogTitle>
-          <DialogDescription>{config.description}</DialogDescription>
+          <DialogDescription>{t(config.description)}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-1.5 py-2">

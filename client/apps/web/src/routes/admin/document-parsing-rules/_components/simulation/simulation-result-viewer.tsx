@@ -188,7 +188,7 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
               <ul className="space-y-1 text-sm">
                 {analysis.conflicts?.map((c, i) => (
                   <li key={i} className="text-destructive">
-                    <span className="font-medium">{c.label}:</span> {c.values.join(" vs ")}
+                    <span className="font-medium">{t(c.label)}:</span> {c.values.join(" vs ")}
                   </li>
                 ))}
               </ul>

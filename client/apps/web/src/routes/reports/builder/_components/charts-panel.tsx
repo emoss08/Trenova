@@ -84,7 +84,7 @@ function CoordinateField({
         <SelectContent>
           {items.map((choice) => (
             <SelectItem key={choice.id} value={choice.id}>
-              {choice.label}
+              {t(choice.label)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -197,7 +197,7 @@ function ChartEditor({
             <SelectContent>
               {REPORT_CHART_TYPE_CHOICES.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -246,7 +246,7 @@ function ChartEditor({
               <SelectContent>
                 {axisChoices.map((choice) => (
                   <SelectItem key={choice.id} value={choice.id}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -278,7 +278,7 @@ function ChartEditor({
                 <SelectItem value={NONE}>{t("No comparison")}</SelectItem>
                 {measures.map((choice) => (
                   <SelectItem key={choice.id} value={choice.id}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -303,7 +303,7 @@ function ChartEditor({
                   checked={seriesIds.includes(choice.id)}
                   onCheckedChange={(checked) => toggleSeries(choice.id, Boolean(checked))}
                 />
-                <span className="truncate">{choice.label}</span>
+                <span className="truncate">{t(choice.label)}</span>
               </label>
             ))}
           </div>
@@ -417,7 +417,7 @@ function ChartEditor({
               <SelectItem value={NONE}>{t("None")}</SelectItem>
               {measures.map((choice) => (
                 <SelectItem key={choice.id} value={choice.id}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>

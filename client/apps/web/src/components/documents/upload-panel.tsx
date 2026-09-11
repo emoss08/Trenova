@@ -583,7 +583,7 @@ export function UploadPanel({
                               : "text-muted-foreground hover:bg-muted hover:text-foreground",
                           )}
                         >
-                          {tab.label}
+                          {t(tab.label)}
                           {tab.count > 0 && <span className="ml-1">({tab.count})</span>}
                         </button>
                       ))}

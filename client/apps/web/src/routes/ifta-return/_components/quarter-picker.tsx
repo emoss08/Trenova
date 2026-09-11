@@ -73,7 +73,7 @@ export function QuarterPicker({
           <SelectContent>
             {yearItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
-                {item.label}
+                {t(item.label)}
               </SelectItem>
             ))}
           </SelectContent>

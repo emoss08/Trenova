@@ -43,7 +43,7 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold">{t("Qualification file")}</h3>
-          <Badge variant={chip.variant}>{chip.label}</Badge>
+          <Badge variant={chip.variant}>{t(chip.label)}</Badge>
           <InfoPopover title={t("Qualification file")}>
             <p>
               {t("Each credential type holds one active credential per worker; renewing files a new one and archives the old. Health is graded from the expiry against the type's renewal window: Valid, Expiring soon while inside the window, Expired once past it, and Missing when nothing active is on file.")}

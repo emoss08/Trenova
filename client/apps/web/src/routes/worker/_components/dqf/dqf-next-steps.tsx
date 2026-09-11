@@ -58,7 +58,7 @@ export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
                   {index + 1}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{step.label}</span>
+                  <span className="block truncate text-sm font-medium">{t(step.label)}</span>
                   <span className="text-muted-foreground block truncate text-xs">
                     {step.detail}
                   </span>

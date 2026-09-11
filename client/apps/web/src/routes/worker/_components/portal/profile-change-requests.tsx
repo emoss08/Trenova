@@ -91,7 +91,7 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
                   <span className="text-muted-foreground tabular-nums">
                     {t("Asked {0}", formatShiftDate(request.submittedAt))}
                   </span>
-                  <Badge variant={tone.variant}>{tone.label}</Badge>
+                  <Badge variant={tone.variant}>{t(tone.label)}</Badge>
                 </span>
                 {pending ? (
                   <span className="flex items-center gap-1.5">
@@ -145,11 +145,13 @@ function ChangeList({
   changes: readonly FieldChange[];
   className?: string;
 }) {
+  const t = useT();
+
   return (
     <dl className={cn("grid grid-cols-[auto_1fr] gap-x-3 gap-y-1", className)}>
       {changes.map((change) => (
         <div key={change.field} className="contents">
-          <dt className="text-muted-foreground">{change.label}</dt>
+          <dt className="text-muted-foreground">{t(change.label)}</dt>
           <dd className="flex min-w-0 flex-wrap items-center gap-1.5 tabular-nums">
             <span className="text-muted-foreground line-through decoration-muted-foreground/50">
               {shown(change.from)}

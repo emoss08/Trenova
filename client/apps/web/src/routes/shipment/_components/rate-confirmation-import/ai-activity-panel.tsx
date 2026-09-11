@@ -159,7 +159,7 @@ function SuggestionButton({
         onClick={() => setIsInputOpen(true)}
         className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
       >
-        {suggestion.label}
+        {t(suggestion.label)}
       </button>
     );
   }
@@ -171,7 +171,7 @@ function SuggestionButton({
         onClick={() => onAction?.(suggestion.action!)}
         className="text-2xs rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-left font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
       >
-        {suggestion.label}
+        {t(suggestion.label)}
       </button>
     );
   }
@@ -227,7 +227,7 @@ function SuggestionButton({
         }}
         className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
       >
-        {suggestion.label}
+        {t(suggestion.label)}
       </button>
     );
   }
@@ -238,7 +238,7 @@ function SuggestionButton({
       onClick={() => void onSend(suggestion.prompt)}
       className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border px-2.5 py-1.5 text-left transition-colors"
     >
-      {suggestion.label}
+      {t(suggestion.label)}
     </button>
   );
 }

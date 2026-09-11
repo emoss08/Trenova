@@ -132,7 +132,7 @@ function TimelineItem({
       </span>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold">{meta.label}</span>
+        <span className="text-sm font-semibold">{t(meta.label)}</span>
         <span className="text-muted-foreground text-xs">
           {formatUnixDateMedium(event.effectiveAt)}
         </span>
@@ -164,7 +164,7 @@ function TimelineItem({
               key={pair.key}
               className="bg-muted/50 border-border flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px]"
             >
-              <span className="text-muted-foreground">{pair.label}:</span>
+              <span className="text-muted-foreground">{t(pair.label)}:</span>
               {pair.from ? <span className="line-through opacity-70">{pair.from}</span> : null}
               {pair.from && pair.to ? (
                 <ArrowRightIcon aria-hidden className="text-muted-foreground size-3" />

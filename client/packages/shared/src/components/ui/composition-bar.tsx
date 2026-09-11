@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { m, useReducedMotion } from "motion/react";
 
@@ -39,6 +40,8 @@ export function CompositionBar({
   className,
   "aria-label": ariaLabel,
 }: CompositionBarProps) {
+  const t = useT();
+
   const reduceMotion = useReducedMotion();
   const sum = segments.reduce((acc, segment) => acc + Math.max(0, segment.value), 0);
   const denominator = Math.max(total ?? sum, sum, 0);
@@ -87,7 +90,7 @@ export function CompositionBar({
                   segment.className ?? DEFAULT_FILLS[index % DEFAULT_FILLS.length],
                 )}
               />
-              <dt>{segment.label}</dt>
+              <dt>{t(segment.label)}</dt>
               <dd className="font-medium text-foreground tabular-nums">
                 {formatValue(segment.value)}
               </dd>

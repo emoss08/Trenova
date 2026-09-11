@@ -557,7 +557,7 @@ function VersionItem({
                             badge.color,
                           )}
                         >
-                          {badge.label}
+                          {t(badge.label)}
                         </span>
                       }
                     />
@@ -781,9 +781,9 @@ function VersionItem({
                       option.color,
                     )}
                   >
-                    {option.label}
+                    {t(option.label)}
                   </span>
-                  <span className="text-muted-foreground mt-0.5 text-xs">{option.description}</span>
+                  <span className="text-muted-foreground mt-0.5 text-xs">{t(option.description)}</span>
                 </label>
               </div>
             ))}

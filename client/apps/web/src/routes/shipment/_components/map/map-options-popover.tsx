@@ -83,7 +83,7 @@ export function MapOptionsPopover({
                   onChange={() => onMapStyleChange(opt.id)}
                   className="accent-brand"
                 />
-                {opt.label}
+                {t(opt.label)}
               </label>
             ))}
           </div>
@@ -100,7 +100,7 @@ export function MapOptionsPopover({
                   onCheckedChange={() => onToggleOverlay(opt.id)}
                 />
                 <opt.icon className="text-muted-foreground size-3.5" />
-                {opt.label}
+                {t(opt.label)}
               </label>
             ))}
           </div>

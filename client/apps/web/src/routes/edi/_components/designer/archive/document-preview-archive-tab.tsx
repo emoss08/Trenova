@@ -600,7 +600,7 @@ function ServiceFailure214SettingsEditor({
               checked={Boolean(settings[field.key])}
               onCheckedChange={(checked) => updateSettings({ [field.key]: checked === true })}
             />
-            <span className="truncate">{field.label}</span>
+            <span className="truncate">{t(field.label)}</span>
           </label>
         ))}
       </div>

@@ -46,7 +46,7 @@ function NotificationRow({
               isUnread ? "text-foreground font-medium" : "text-muted-foreground",
             )}
           >
-            {notification.title}
+            {t(notification.title)}
           </p>
           {isUnread && <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", config.dot)} />}
         </div>

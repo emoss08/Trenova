@@ -121,7 +121,7 @@ export function InvoiceReconciliationPage() {
                 <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {statusChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -275,7 +275,7 @@ export function InvoiceReconciliationPage() {
                         {detailQuery.data.lines.map((line) => (
                           <tr key={line.id} className="border-t">
                             <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-                            <td className="px-4 py-3">{line.description}</td>
+                            <td className="px-4 py-3">{t(line.description)}</td>
                             <td className="px-4 py-3 text-right">
                               {formatCurrency(Number(line.creditAmount))}
                             </td>

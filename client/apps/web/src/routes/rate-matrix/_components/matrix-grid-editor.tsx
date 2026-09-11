@@ -202,7 +202,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
                   <SelectContent>
                     {buckets.map((bucket) => (
                       <SelectItem key={bucket.key} value={bucket.key}>
-                        {bucket.label}
+                        {t(bucket.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -238,7 +238,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
                   key={column.key}
                   className="text-muted-foreground border-b px-3 py-2 text-left text-xs font-medium whitespace-nowrap"
                 >
-                  {column.label}
+                  {t(column.label)}
                 </th>
               ))}
             </tr>
@@ -247,7 +247,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
             {grid.rows.map((row) => (
               <tr key={row.key}>
                 <th className="border-b px-3 py-2 text-left text-xs font-medium whitespace-nowrap">
-                  {row.label}
+                  {t(row.label)}
                 </th>
                 {grid.columns.map((column) => {
                   const cell = grid.cells.get(coordinateKey(row.key, column.key));

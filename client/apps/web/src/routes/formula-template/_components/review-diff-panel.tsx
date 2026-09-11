@@ -76,7 +76,7 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
             <ul className="divide-y rounded-md border text-xs">
               {rows.map((row) => (
                 <li key={row.path} className="flex items-center justify-between gap-3 px-3 py-1.5">
-                  <span className="font-medium">{row.label}</span>
+                  <span className="font-medium">{t(row.label)}</span>
                   <span className="text-muted-foreground truncate font-mono">{row.summary}</span>
                 </li>
               ))}

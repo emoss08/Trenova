@@ -119,7 +119,7 @@ export function SaveReportDialog({
                 <SelectContent>
                   {REPORT_CATEGORY_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -140,7 +140,7 @@ export function SaveReportDialog({
                 <SelectContent>
                   {REPORT_FORMAT_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -161,7 +161,7 @@ export function SaveReportDialog({
                 <SelectContent>
                   {VISIBILITY_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -182,7 +182,7 @@ export function SaveReportDialog({
                 <SelectContent>
                   {STATUS_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>

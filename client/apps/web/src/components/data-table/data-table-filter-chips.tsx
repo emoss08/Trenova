@@ -116,7 +116,7 @@ export default function DataTableFilterChips({
             key={single.id}
             label={
               <span className="max-w-64 truncate">
-                <span className="font-medium">{single.label}</span>{" "}
+                <span className="font-medium">{t(single.label)}</span>{" "}
                 <span className="text-muted-foreground">{getOperatorLabel(single.operator)}</span>
                 {value && <span className="font-medium"> {value}</span>}
               </span>

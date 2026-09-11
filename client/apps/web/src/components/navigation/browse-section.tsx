@@ -20,9 +20,11 @@ import { useMemo, useState } from "react";
 import { useLocation } from "react-router";
 
 function NavItemRow({ item, activePath }: { item: NavItem; activePath: string | null }) {
+  const t = useT();
+
   return (
     <SidebarNavLink to={item.path} active={item.path === activePath} disabled={item.disabled}>
-      <span className="truncate">{item.label}</span>
+      <span className="truncate">{t(item.label)}</span>
       {item.badge ? (
         <span className="ml-auto flex items-center gap-1">
           <NavItemBadge badge={item.badge} />
@@ -36,6 +38,8 @@ function NavItemRow({ item, activePath }: { item: NavItem; activePath: string | 
 }
 
 function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: string | null }) {
+  const t = useT();
+
   const hasActiveChild = group.items.some((item) => item.path === activePath);
   const [open, setOpen] = useState(hasActiveChild || group.defaultOpen || false);
 
@@ -51,7 +55,7 @@ function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: s
               hasActiveChild && "text-foreground font-medium",
             )}
           >
-            <span className="truncate">{group.label}</span>
+            <span className="truncate">{t(group.label)}</span>
             <ChevronsUpDownIcon
               className={cn("size-3 shrink-0 transition-transform", open && "rotate-180")}
             />
@@ -76,6 +80,8 @@ function AdminLinkGroups({
   links: SidebarLink[];
   activePath: string | null;
 }) {
+  const t = useT();
+
   const grouped = useMemo(() => {
     const groups = new Map<string, SidebarLink[]>();
     for (const link of links) {
@@ -104,7 +110,7 @@ function AdminLinkGroups({
               active={link.href === activePath}
               disabled={link.disabled}
             >
-              <span className="truncate">{link.title}</span>
+              <span className="truncate">{t(link.title)}</span>
               {link.includeBetaTag && <BetaTag className="ml-auto" />}
             </SidebarNavLink>
           ))}
@@ -127,6 +133,8 @@ function ModuleSection({
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
 }) {
+  const t = useT();
+
   const Icon = module.icon;
   const isActive = currentPath !== "/" && isRouteActive(currentPath, module.basePath);
 
@@ -143,7 +151,7 @@ function ModuleSection({
             )}
           >
             <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
-            <span className="min-w-0 flex-1 truncate text-left">{module.label}</span>
+            <span className="min-w-0 flex-1 truncate text-left">{t(module.label)}</span>
             <ChevronRightIcon
               className={cn(
                 "text-muted-foreground size-3.5 shrink-0 transition-transform",
@@ -217,7 +225,7 @@ export function BrowseSection() {
               className="h-7"
             >
               <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
-              <span className="truncate">{module.label}</span>
+              <span className="truncate">{t(module.label)}</span>
             </SidebarNavLink>
           );
         }

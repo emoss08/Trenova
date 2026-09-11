@@ -133,7 +133,7 @@ export function TileEditorDialog({
               <SelectContent>
                 {REPORT_TILE_KIND_CHOICES.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -208,7 +208,7 @@ export function TileEditorDialog({
                   <SelectContent>
                     {measures.map((output) => (
                       <SelectItem key={output.id} value={output.id}>
-                        {output.label}
+                        {t(output.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>

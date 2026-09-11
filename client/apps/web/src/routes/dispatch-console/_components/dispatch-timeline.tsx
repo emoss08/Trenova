@@ -260,6 +260,8 @@ function DriverLaneRow({
   onSelectDriver: (workerId: string) => void;
   onSelectMove: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const { driver } = row;
   const isBlocked = driver.availability === "Blocked";
   const { setNodeRef, isOver, active } = useDroppable({
@@ -312,7 +314,7 @@ function DriverLaneRow({
             {driver.firstName} {driver.lastName}
           </span>
           <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
-            {driver.tractorCode || "No tractor"} · {availability.label}
+            {driver.tractorCode || "No tractor"} · {t(availability.label)}
           </span>
         </div>
       </button>
@@ -517,7 +519,7 @@ export function DispatchTimeline({
                 style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
               >
                 <span className="truncate text-[10px] font-semibold tracking-wide uppercase">
-                  {day.label}
+                  {t(day.label)}
                 </span>
               </div>
             ))}
@@ -528,7 +530,7 @@ export function DispatchTimeline({
                   className="font-table text-muted-foreground absolute -translate-x-1/2 text-[9px] tabular-nums"
                   style={{ left: tick.x, top: DAY_LABEL_HEIGHT_PX + 3 }}
                 >
-                  {tick.label}
+                  {t(tick.label)}
                 </span>
               ))}
             {nowInRange && (

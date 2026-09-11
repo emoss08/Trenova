@@ -256,7 +256,7 @@ function PermissionRow({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -460,7 +460,7 @@ function AddPermissionDialog({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -651,7 +651,7 @@ function CreatePermissionRow({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -836,7 +836,7 @@ function CreateAddPermissionDialog({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

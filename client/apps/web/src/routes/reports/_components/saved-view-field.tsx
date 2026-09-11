@@ -150,7 +150,7 @@ export function SavedViewField({
           <SelectContent>
             {choices.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
+                {t(choice.label)}
               </SelectItem>
             ))}
           </SelectContent>

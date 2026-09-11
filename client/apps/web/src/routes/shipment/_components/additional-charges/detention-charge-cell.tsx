@@ -70,7 +70,7 @@ export function DetentionChargeLabel({
       {risk && (
         <Tooltip>
           <TooltipTrigger>
-            <span className={cn("text-2xs rounded px-1 py-0.5", risk.className)}>{risk.label}</span>
+            <span className={cn("text-2xs rounded px-1 py-0.5", risk.className)}>{t(risk.label)}</span>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={6}>
             <p className="max-w-56 text-xs">{risk.detail}</p>

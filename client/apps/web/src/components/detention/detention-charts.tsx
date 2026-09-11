@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { m } from "motion/react";
 import { useState } from "react";
@@ -31,6 +32,8 @@ export function ShareBreakdown({
   className?: string;
   trackClassName?: string;
 }) {
+  const t = useT();
+
   const [pinned, setPinned] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const active = pinned ?? hovered;
@@ -82,7 +85,7 @@ export function ShareBreakdown({
             )}
           >
             <span className={cn("size-2 shrink-0 rounded-full", segment.className)} />
-            <span className="font-medium">{segment.label}</span>
+            <span className="font-medium">{t(segment.label)}</span>
             {segment.caption ? <span className="tabular-nums">{segment.caption}</span> : null}
             <span className="tabular-nums opacity-60">
               {Math.round((segment.value / total) * 100)}%

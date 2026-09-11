@@ -159,7 +159,7 @@ export function SettlementQueue({
                     : "text-muted-foreground hover:bg-muted",
                 )}
               >
-                {chip.label} {count > 0 && <span className="tabular-nums">{count}</span>}
+                {t(chip.label)} {count > 0 && <span className="tabular-nums">{count}</span>}
               </button>
             );
           })}

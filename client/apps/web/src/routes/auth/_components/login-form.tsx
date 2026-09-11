@@ -232,6 +232,8 @@ function AudienceToggle({
   value: AuthAudience;
   onChange: (audience: AuthAudience) => void;
 }) {
+  const t = useT();
+
   const trackRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, width: 0 });
 
@@ -280,7 +282,7 @@ function AudienceToggle({
           )}
         >
           <option.icon className="size-[15px]" />
-          {option.label}
+          {t(option.label)}
         </button>
       ))}
     </div>

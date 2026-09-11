@@ -139,7 +139,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
                         )
                       }
                     />
-                    {enumValue.label}
+                    {t(enumValue.label)}
                   </label>
                 ))}
               </div>

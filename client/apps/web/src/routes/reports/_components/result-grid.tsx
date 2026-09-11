@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import {
@@ -122,6 +123,8 @@ export function ResultGrid({
   density = "default",
   className,
 }: ResultGridProps) {
+  const t = useT();
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowHeight = ROW_HEIGHT[density];
 
@@ -165,7 +168,7 @@ export function ResultGrid({
                   )}
                   title={column.label}
                 >
-                  <span className="truncate">{column.label}</span>
+                  <span className="truncate">{t(column.label)}</span>
                   {active &&
                     (sort?.direction === "asc" ? (
                       <ArrowUpIcon className="size-3 shrink-0" />

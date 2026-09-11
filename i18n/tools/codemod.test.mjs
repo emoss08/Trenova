@@ -175,3 +175,35 @@ test("still treats whitespace between elements as layout", () => {
   const result = run(`export function B() {\n  return <div>\n  <A />\n  <B />\n</div>;\n}\n`);
   assert.equal(result.changed, false);
 });
+
+test("labels mode translates label maps at render, not at definition", () => {
+  const out = transformSource(
+    `export function Nav({ items }: any) {\n  return <ul>{items.map((item: any) => (<li key={item.label}><span>{item.label}</span></li>))}</ul>;\n}\n`,
+    "s.tsx",
+    { labels: true },
+  ).output;
+  assert.match(out, /<span>\{t\(item\.label\)\}<\/span>/);
+  assert.match(out, /key=\{item\.label\}/, "a key is an identity, not a caption");
+});
+
+test("labels mode is off by default", () => {
+  const result = transformSource(
+    `export function Nav({ item }: any) {\n  return <span>{item.label}</span>;\n}\n`,
+    "s.tsx",
+  );
+  assert.equal(result.changed, false);
+});
+
+test("adds a binding to a second component in an already-migrated file", () => {
+  // Whether `t` is bound is a property of the function, not of the file. A file migrated in
+  // an earlier pass can still contain a component that needs its own binding.
+  const out = transformSource(
+    `import { useT } from "@trenova/shared/i18n/use-t";\n` +
+      `export function First() {\n  const t = useT();\n  return <b>{t("Save")}</b>;\n}\n` +
+      `export function Second({ item }: any) {\n  return <b>{item.label}</b>;\n}\n`,
+    "s.tsx",
+    { labels: true },
+  ).output;
+  assert.equal(out.match(/const t = useT\(\);/g).length, 2);
+  assert.equal(out.match(/i18n\/use-t/g).length, 1, "the import is per file");
+});

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { CHIP_FILTERS, type ChipFilterId } from "./saved-views";
 import { useCommandCenterUrl } from "./url-state";
@@ -18,6 +19,8 @@ const CHIP_TONE: Record<ChipFilterId, { on: string; off: string }> = {
 };
 
 export function FilterChipRow() {
+  const t = useT();
+
   const [{ chips }, setUrl] = useCommandCenterUrl();
 
   const toggle = (chip: ChipFilterId) => {
@@ -41,7 +44,7 @@ export function FilterChipRow() {
               isOn ? tone.on : tone.off,
             )}
           >
-            <span>{chip.label}</span>
+            <span>{t(chip.label)}</span>
             {isOn && <span aria-hidden>×</span>}
           </button>
         );

@@ -174,7 +174,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 {version.status}
               </Badge>
               {version.label && (
-                <span className="text-muted-foreground text-sm">{version.label}</span>
+                <span className="text-muted-foreground text-sm">{t(version.label)}</span>
               )}
             </div>
             {isDraft && canActivate && (

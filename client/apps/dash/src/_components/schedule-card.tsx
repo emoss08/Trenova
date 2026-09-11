@@ -181,7 +181,7 @@ export function ScheduleCard() {
             </p>
           </div>
           <Badge variant={rotaStateTone(focused.state).variant}>
-            {rotaStateTone(focused.state).label}
+            {t(rotaStateTone(focused.state).label)}
           </Badge>
         </div>
       ) : null}
@@ -235,7 +235,7 @@ export function ScheduleCard() {
                     <span className="font-medium tabular-nums">
                       {formatShiftDate(swap.shiftDate)}
                     </span>
-                    <Badge variant={tone.variant}>{tone.label}</Badge>
+                    <Badge variant={tone.variant}>{t(tone.label)}</Badge>
                     {swap.counterpartyName ? (
                       <span className="text-muted-foreground">
                         {swap.outgoing ? "to" : "from"} {swap.counterpartyName}

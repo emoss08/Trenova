@@ -65,7 +65,7 @@ export function ExpensesSection() {
           {expenses.data.map((expense) => (
             <li key={expense.id} className="px-4 py-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="min-w-0 truncate text-sm font-medium">{expense.description}</p>
+                <p className="min-w-0 truncate text-sm font-medium">{t(expense.description)}</p>
                 <span className="shrink-0 text-sm font-semibold tabular-nums">
                   <AmountDisplay value={expense.amountMinor} currency={expense.currencyCode} />
                 </span>

@@ -8,6 +8,8 @@ import { ProfitabilityBreakdownPopover } from "../../profitability/profitability
 type FinancialRow = { label: string; value: string; bold?: boolean; tone?: string };
 
 function RowList({ rows }: { rows: FinancialRow[] }) {
+  const t = useT();
+
   return (
     <dl className="grid grid-cols-1 gap-1 text-[11px]">
       {rows.map((row) => (
@@ -18,7 +20,7 @@ function RowList({ rows }: { rows: FinancialRow[] }) {
             row.bold ? "border-border mt-1 border-t pt-2" : "",
           )}
         >
-          <dt className="text-muted-foreground">{row.label}</dt>
+          <dt className="text-muted-foreground">{t(row.label)}</dt>
           <dd
             className={cn("font-table tabular-nums", row.bold ? "font-semibold" : "font-medium")}
             style={row.tone ? { color: row.tone } : undefined}

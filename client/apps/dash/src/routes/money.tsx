@@ -202,7 +202,7 @@ function DisputeItem({ dispute }: DisputeItemProps) {
         </p>
         <DisputeStatusBadge status={dispute.status} />
       </div>
-      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{dispute.description}</p>
+      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{t(dispute.description)}</p>
       {dispute.resolutionNote ? (
         <p className="mt-2 rounded-md border-l-0 border-border text-xs text-foreground">
           <span className="text-muted-foreground">{t("Carrier response:")}</span> {dispute.resolutionNote}

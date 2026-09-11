@@ -170,7 +170,7 @@ export function getColumns(): ColumnDef<ServiceFailureRow>[] {
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{row.original.reasonCode.code}</span>
             <span className="text-2xs text-muted-foreground truncate">
-              {row.original.reasonCode.label}
+              {translate(row.original.reasonCode.label)}
             </span>
           </div>
         ) : (

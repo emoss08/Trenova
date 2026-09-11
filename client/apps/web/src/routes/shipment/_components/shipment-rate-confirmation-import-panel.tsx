@@ -441,9 +441,9 @@ export function ShipmentRateConfirmationImportPanel({
                       >
                         {isComplete ? <CheckCircle2Icon className="size-4" /> : index + 1}
                       </div>
-                      <CardTitle>{step.label}</CardTitle>
+                      <CardTitle>{t(step.label)}</CardTitle>
                     </div>
-                    <CardDescription>{step.description}</CardDescription>
+                    <CardDescription>{t(step.description)}</CardDescription>
                   </CardHeader>
                 </Card>
               );
@@ -526,9 +526,9 @@ export function ShipmentRateConfirmationImportPanel({
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <SparklesIcon className="size-4" />
-                  <CardTitle>{processStatus.title}</CardTitle>
+                  <CardTitle>{t(processStatus.title)}</CardTitle>
                 </div>
-                <CardDescription>{processStatus.description}</CardDescription>
+                <CardDescription>{t(processStatus.description)}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <Progress

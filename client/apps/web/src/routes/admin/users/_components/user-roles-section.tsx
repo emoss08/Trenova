@@ -125,6 +125,8 @@ type RoleRowProps = {
 };
 
 function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
+  const t = useT();
+
   return (
     <label
       className={cn(
@@ -138,7 +140,7 @@ function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
           <span className="text-sm font-medium">{role.name}</span>
         </div>
         {role.description && (
-          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{role.description}</p>
+          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{t(role.description)}</p>
         )}
       </div>
     </label>

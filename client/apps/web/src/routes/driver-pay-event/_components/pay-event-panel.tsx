@@ -43,7 +43,7 @@ export function PayEventPanel({
             <tbody>
               {(row.components ?? []).map((component, index) => (
                 <tr key={`${component.kind}-${index}`} className="border-t">
-                  <td className="px-3 py-2 font-medium">{component.description}</td>
+                  <td className="px-3 py-2 font-medium">{t(component.description)}</td>
                   <td className="text-muted-foreground px-3 py-2 text-right tabular-nums">
                     {Number(component.quantity) > 0
                       ? `${Number(component.quantity).toLocaleString()} × ${Number(

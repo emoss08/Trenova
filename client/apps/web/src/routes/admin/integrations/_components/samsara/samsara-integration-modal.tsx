@@ -77,7 +77,7 @@ export function SamsaraIntegrationModal({
                           className="cursor-pointer"
                         >
                           <item.icon className="size-4" />
-                          <span>{item.label}</span>
+                          <span>{t(item.label)}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}

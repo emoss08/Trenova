@@ -107,7 +107,7 @@ function Identity({ overview }: { overview: WorkerOverview }) {
             <h3 className="truncate text-base font-semibold tracking-tight">
               {worker.firstName} {worker.lastName}
             </h3>
-            <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+            <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
             <InfoPopover title={t("Standing")}>
               <p>
                 {t("Status moves only through employment events on the Timeline tab. Dispatch says whether the worker can be assigned today; a leave or a suspension holds them until it ends.")}
@@ -164,7 +164,7 @@ function Attention({
             return (
               <div key={group.severity} className="divide-border divide-y">
                 <p className="text-2xs text-muted-foreground bg-muted/40 px-3 py-1 font-medium uppercase">
-                  {meta.label}
+                  {t(meta.label)}
                 </p>
                 {group.items.map((concern) => (
                   <button
@@ -291,6 +291,8 @@ function MetricCard({
   children?: React.ReactNode;
   onOpen: () => void;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -315,7 +317,7 @@ function MetricCard({
         <span className="text-muted-foreground truncate text-[11px]">{detail}</span>
         {state ? (
           <Badge variant={state.variant} className="shrink-0">
-            {state.label}
+            {t(state.label)}
           </Badge>
         ) : null}
       </div>

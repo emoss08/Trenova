@@ -109,7 +109,7 @@ export function OrderChargesSection() {
                   className="grid grid-cols-12 items-center gap-2 px-4 py-2 text-sm"
                 >
                   <span className="col-span-7 flex items-center gap-2">
-                    <span className="truncate">{charge.description}</span>
+                    <span className="truncate">{t(charge.description)}</span>
                     {invoiced && (
                       <Badge variant="outline" className="shrink-0">
                         {t("Invoiced")}

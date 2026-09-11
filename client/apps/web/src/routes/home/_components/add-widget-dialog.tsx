@@ -298,8 +298,8 @@ function WidgetGallery({
               {groups.map(({ category: entry, widgets: options }) => (
                 <section key={entry.key} className="flex flex-col gap-2">
                   <header className="flex items-baseline gap-2">
-                    <h3 className="cc-label text-foreground">{entry.label}</h3>
-                    <p className="text-2xs text-muted-foreground truncate">{entry.description}</p>
+                    <h3 className="cc-label text-foreground">{t(entry.label)}</h3>
+                    <p className="text-2xs text-muted-foreground truncate">{t(entry.description)}</p>
                   </header>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {options.map((option) => (
@@ -412,7 +412,7 @@ function CategoryRail({
               tab.count === 0 && "pointer-events-none opacity-40",
             )}
           >
-            <span className="min-w-0 flex-1 truncate">{tab.label}</span>
+            <span className="min-w-0 flex-1 truncate">{t(tab.label)}</span>
             <span
               className={cn(
                 "shrink-0 text-[10px] tabular-nums",
@@ -487,7 +487,7 @@ function WidgetCard({
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex min-w-0 items-center gap-1.5">
-              <span className="min-w-0 flex-1 truncate text-xs font-medium">{option.label}</span>
+              <span className="min-w-0 flex-1 truncate text-xs font-medium">{t(option.label)}</span>
               {onCanvas > 0 && (
                 <Badge
                   variant="outline"
@@ -498,7 +498,7 @@ function WidgetCard({
               )}
             </span>
             <span className="text-muted-foreground line-clamp-2 text-[11px] leading-snug">
-              {option.description}
+              {t(option.description)}
             </span>
           </span>
         </span>

@@ -136,7 +136,7 @@ export function DashLayout() {
                     />
                   ) : null}
                   <tab.icon className="size-5" strokeWidth={isActive ? 2.2 : 1.8} />
-                  {tab.label}
+                  {t(tab.label)}
                 </>
               )}
             </NavLink>

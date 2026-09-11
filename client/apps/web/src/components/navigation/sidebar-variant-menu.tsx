@@ -65,8 +65,8 @@ export function SidebarLayoutSubmenu() {
                 className="cursor-pointer"
               >
                 <span className="flex flex-col">
-                  <span className="text-sm">{option.label}</span>
-                  <span className="text-2xs text-muted-foreground">{option.description}</span>
+                  <span className="text-sm">{t(option.label)}</span>
+                  <span className="text-2xs text-muted-foreground">{t(option.description)}</span>
                 </span>
               </DropdownMenuRadioItem>
             ))}

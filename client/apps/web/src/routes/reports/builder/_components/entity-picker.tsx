@@ -16,6 +16,8 @@ function EntityTile({
   index: number;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const accessibleFields = entity.fields.filter((field) => field.accessible).length;
 
   return (
@@ -33,7 +35,7 @@ function EntityTile({
     >
       <CategoryTile category={entity.category} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{entity.label}</p>
+        <p className="truncate text-sm font-medium">{t(entity.label)}</p>
         <p className="text-muted-foreground truncate text-xs">
           {entity.description || `${accessibleFields} fields`}
         </p>

@@ -192,7 +192,7 @@ function BreakdownResultTable({
             <div className="min-w-0">
               <span className="font-mono text-xs">{item.name}</span>
               {item.label && (
-                <span className="text-muted-foreground ml-2 text-xs">{item.label}</span>
+                <span className="text-muted-foreground ml-2 text-xs">{t(item.label)}</span>
               )}
             </div>
             {item.error ? (

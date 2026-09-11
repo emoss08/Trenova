@@ -85,6 +85,8 @@ export function AgingDistributionBar({
   totals: AgingBucketTotals;
   className?: string;
 }) {
+  const t = useT();
+
   const totalOpen = totals.totalOpenMinor;
   if (totalOpen <= 0) return null;
 
@@ -114,7 +116,7 @@ export function AgingDistributionBar({
               className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]"
             >
               <span className={cn("size-2 rounded-full", bucket.dotClass)} />
-              {bucket.label} · {share.toFixed(0)}%
+              {t(bucket.label)} · {share.toFixed(0)}%
             </span>
           );
         })}

@@ -144,7 +144,7 @@ export function InvoiceSidebar({
               <SelectItem value="all">{t("All Statuses")}</SelectItem>
               {invoiceStatusChoices.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -163,7 +163,7 @@ export function InvoiceSidebar({
               <SelectItem value="all">{t("All Bill Types")}</SelectItem>
               {billTypeChoices.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -167,7 +167,7 @@ export function UnassignedQueueList({
                   PILL_TONE[priority.tone],
                 )}
               >
-                {priority.label}
+                {t(priority.label)}
               </span>
             </div>
             <div className="text-muted-foreground flex items-center justify-between gap-2 text-[10px]">

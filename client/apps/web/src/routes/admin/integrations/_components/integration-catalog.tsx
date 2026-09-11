@@ -132,6 +132,8 @@ type CatalogItemCardProps = {
 };
 
 function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCardProps) {
+  const t = useT();
+
   const logoSize = getCatalogLogoSize(item.type);
 
   return (
@@ -156,7 +158,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
                       href={link.url}
                       className="hover:text-foreground inline-flex items-center gap-1"
                     >
-                      {link.label}
+                      {t(link.label)}
                     </ExternalLink>
                   ))}
                 </div>
@@ -297,7 +299,7 @@ export function IntegrationCatalogCard() {
                   <SelectGroup>
                     {sortOptions.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {t(item.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -317,7 +319,7 @@ export function IntegrationCatalogCard() {
                   <SelectGroup>
                     {categoryOptions.map((category) => (
                       <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                        {t(category.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -337,7 +339,7 @@ export function IntegrationCatalogCard() {
                   <SelectGroup>
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {t(option.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -364,7 +366,7 @@ export function IntegrationCatalogCard() {
                 <section key={group.key} className="space-y-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                      {group.label}
+                      {t(group.label)}
                     </h2>
                     <span className="text-muted-foreground/70 text-xs">
                       {group.items.length}{" "}

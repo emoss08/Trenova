@@ -25,6 +25,8 @@ function actorName(review: FormulaTemplateReview): string {
 }
 
 function ReviewEntry({ review }: { review: FormulaTemplateReview }) {
+  const t = useT();
+
   const decision = describeReviewDecision(review.decision);
   return (
     <li className="flex items-start justify-between gap-3 px-3 py-1.5 text-xs">
@@ -34,7 +36,7 @@ function ReviewEntry({ review }: { review: FormulaTemplateReview }) {
             variant="outline"
             className={cn("text-2xs border-transparent px-1 py-0", TONE_CLASSES[decision.tone])}
           >
-            {decision.label}
+            {t(decision.label)}
           </Badge>
           <span className="font-medium">{actorName(review)}</span>
         </div>

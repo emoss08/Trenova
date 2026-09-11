@@ -131,7 +131,7 @@ function CaseDetail({
         ) : null}
 
         <Section title={t("What happened")}>
-          <p className="text-xs leading-relaxed">{entry.description}</p>
+          <p className="text-xs leading-relaxed">{t(entry.description)}</p>
           <dl className="mt-2 text-xs">
             <Row label={t("Where")}>{entry.location?.trim() || null}</Row>
             <Row label={t("Body part")}>{entry.bodyPart?.trim() || null}</Row>

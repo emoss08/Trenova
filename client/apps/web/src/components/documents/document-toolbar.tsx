@@ -98,7 +98,7 @@ export function DocumentToolbar({
         <SelectContent>
           {fileTypeOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.label)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -116,7 +116,7 @@ export function DocumentToolbar({
           <SelectContent>
             {sortFieldOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectContent>

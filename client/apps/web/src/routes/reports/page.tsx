@@ -90,6 +90,8 @@ function FilterSelect({
   onValueChange: (value: string) => void;
   ariaLabel: string;
 }) {
+  const t = useT();
+
   return (
     <Select
       items={items}
@@ -107,7 +109,7 @@ function FilterSelect({
         <SelectGroup>
           {items.map((item) => (
             <SelectItem key={item.value} value={item.value}>
-              {item.label}
+              {t(item.label)}
             </SelectItem>
           ))}
         </SelectGroup>
@@ -208,7 +210,7 @@ export function ReportsPage() {
               <SelectGroup>
                 {sortChoices.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </SelectItem>
                 ))}
               </SelectGroup>

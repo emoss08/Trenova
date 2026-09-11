@@ -55,6 +55,8 @@ function SelectField<T extends string>({
   placeholder?: string;
   onChange: (value: T | undefined) => void;
 }) {
+  const t = useT();
+
   const items = [{ value: NONE, label: placeholder ?? "Default" }, ...choices];
 
   return (
@@ -74,7 +76,7 @@ function SelectField<T extends string>({
         <SelectContent>
           {items.map((item) => (
             <SelectItem key={item.value} value={item.value}>
-              {item.label}
+              {t(item.label)}
             </SelectItem>
           ))}
         </SelectContent>

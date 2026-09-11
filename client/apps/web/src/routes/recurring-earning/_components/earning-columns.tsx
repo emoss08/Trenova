@@ -86,7 +86,7 @@ export function getColumns(): ColumnDef<RecurringEarningRow>[] {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <span className="text-xs">{row.original.description}</span>,
+      cell: ({ row }) => <span className="text-xs">{translate(row.original.description)}</span>,
       size: 220,
       meta: { apiField: "description" },
     },

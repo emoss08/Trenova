@@ -279,7 +279,7 @@ export function TimeClockPanel({
                       <span className="font-medium">{t("This week")}</span>
                       {weekSheet ? (
                         <Badge variant={timesheetStatusTone(weekSheet.status).variant}>
-                          {timesheetStatusTone(weekSheet.status).label}
+                          {t(timesheetStatusTone(weekSheet.status).label)}
                         </Badge>
                       ) : null}
                     </span>

@@ -283,7 +283,7 @@ export function GenerateTableDialog({
                     <tr className="text-muted-foreground text-left text-xs">
                       <th className="px-3 py-1.5 font-medium">{t("From")}</th>
                       <th className="px-3 py-1.5 font-medium">{t("Up To")}</th>
-                      <th className="px-3 py-1.5 font-medium">{valueMeta.label}</th>
+                      <th className="px-3 py-1.5 font-medium">{t(valueMeta.label)}</th>
                     </tr>
                   </thead>
                   <tbody>

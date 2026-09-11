@@ -167,7 +167,7 @@ function PolicyCard({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{policy.title}</p>
+          <p className="truncate text-sm font-medium">{t(policy.title)}</p>
           <p className="text-muted-foreground truncate text-xs">
             {policy.summary || `${policy.code} · from ${formatShiftDate(policy.effectiveFrom)}`}
           </p>

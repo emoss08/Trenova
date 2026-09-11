@@ -38,6 +38,8 @@ function ScriptPresetPicker({
   disabled?: boolean;
   onApply: (preset: EDIScriptPreset) => void;
 }) {
+  const t = useT();
+
   if (presets.length === 0) return null;
   return (
     <div className="bg-muted/20 space-y-2 rounded-md border p-2">
@@ -53,9 +55,9 @@ function ScriptPresetPicker({
           >
             <CopyPlusIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
             <span className="min-w-0">
-              <span className="block text-xs font-medium">{preset.label}</span>
+              <span className="block text-xs font-medium">{t(preset.label)}</span>
               <span className="text-muted-foreground block text-xs leading-snug">
-                {preset.description}
+                {t(preset.description)}
               </span>
             </span>
           </button>

@@ -297,6 +297,8 @@ function ActionButton({
 }
 
 function StatusPipeline({ doc }: { doc: Document }) {
+  const t = useT();
+
   const stages = [
     { label: "Upload", status: "Active" as const },
     { label: "Preview", status: doc.previewStatus },
@@ -314,10 +316,10 @@ function StatusPipeline({ doc }: { doc: Document }) {
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-[10px] font-medium tracking-wide uppercase">{stage.label}</span>
+              <span className="text-[10px] font-medium tracking-wide uppercase">{t(stage.label)}</span>
             </TooltipTrigger>
             <TooltipContent>
-              {stage.label}: {stage.status}
+              {t(stage.label)}: {stage.status}
             </TooltipContent>
           </Tooltip>
         </div>

@@ -155,7 +155,7 @@ function RuleSetCard({
           </div>
           {ruleSet.description && (
             <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-              {ruleSet.description}
+              {t(ruleSet.description)}
             </p>
           )}
         </div>

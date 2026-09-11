@@ -69,7 +69,7 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
               className={cn("size-1.5 rounded-full", TIMING_DOT_CLASS[timing.tone])}
               aria-hidden
             />
-            {timing.label}
+            {t(timing.label)}
           </span>
         </Fact>
         {pto.balanceAfterDays != null ? (
@@ -143,7 +143,7 @@ export function PTODayList({ items, dayUnix }: PTODayListProps) {
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-xs font-medium">{ptoWorkerName(pto)}</p>
                   <p className="text-muted-foreground truncate text-[11px] tabular-nums">
-                    {meta.label} · {formatRange(pto.startDate, pto.endDate)}
+                    {t(meta.label)} · {formatRange(pto.startDate, pto.endDate)}
                     {pto.status === "Requested" ? " · awaiting decision" : ""}
                   </p>
                 </div>

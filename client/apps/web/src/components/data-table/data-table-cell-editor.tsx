@@ -180,7 +180,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
             <SelectGroup>
               {(filterOptions ?? []).map((option) => (
                 <SelectItem key={String(option.value)} value={String(option.value)}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SelectGroup>

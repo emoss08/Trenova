@@ -363,7 +363,7 @@ function MetricPicker({
                   disabled={disabled}
                   onCheckedChange={() => toggle(metric.key)}
                 />
-                <span className="truncate">{metric.label}</span>
+                <span className="truncate">{t(metric.label)}</span>
               </label>
             );
           })}
@@ -525,7 +525,7 @@ function ReportConfig({
               <SelectContent>
                 {measures.map((output) => (
                   <SelectItem key={output.id} value={output.id}>
-                    {output.label}
+                    {t(output.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -614,7 +614,7 @@ function DashboardPicker({
               <span className="truncate text-xs font-medium">{entry.name}</span>
               {entry.description && (
                 <span className="text-muted-foreground truncate text-[11px]">
-                  {entry.description}
+                  {t(entry.description)}
                 </span>
               )}
             </button>

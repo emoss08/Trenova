@@ -242,7 +242,7 @@ function PickupsList({
             </div>
             {pickup.status === "unassigned" || pickup.status === "tentative" ? (
               <Badge variant={PICKUP_STATUS[pickup.status].variant}>
-                {PICKUP_STATUS[pickup.status].label}
+                {t(PICKUP_STATUS[pickup.status].label)}
               </Badge>
             ) : (
               <span className="text-muted-foreground max-w-20 truncate font-mono text-[10px]">

@@ -79,7 +79,7 @@ export function TerminalsPanel({
                       <span className="truncate font-medium">{terminal.code || "No terminal"}</span>
                       {terminal.description ? (
                         <span className="text-muted-foreground truncate">
-                          {terminal.description}
+                          {t(terminal.description)}
                         </span>
                       ) : null}
                     </span>

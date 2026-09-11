@@ -164,7 +164,7 @@ export function PTOFilterPopover({
                   });
                 }}
               >
-                {preset.label}
+                {t(preset.label)}
               </Button>
             ))}
           </div>

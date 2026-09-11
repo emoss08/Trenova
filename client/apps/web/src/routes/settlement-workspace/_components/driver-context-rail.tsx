@@ -373,7 +373,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
           {list.map((earning) => (
             <li key={earning.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium">{earning.description}</p>
+                <p className="truncate text-[11px] font-medium">{t(earning.description)}</p>
                 <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={earning.amountMinor} currency="USD" /> ·{" "}
                   {earning.frequency === "Monthly" ? "monthly" : "every settlement"}
@@ -474,7 +474,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
           {list.map((deduction) => (
             <li key={deduction.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium">{deduction.description}</p>
+                <p className="truncate text-[11px] font-medium">{t(deduction.description)}</p>
                 <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={deduction.amountMinor} currency="USD" /> ·{" "}
                   {deduction.frequency === "Monthly" ? "monthly" : "every settlement"}

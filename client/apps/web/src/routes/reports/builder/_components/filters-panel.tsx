@@ -137,7 +137,7 @@ function FilterRow({
         <SelectContent>
           {operators.map((op) => (
             <SelectItem key={op.value} value={op.value}>
-              {op.label}
+              {t(op.label)}
             </SelectItem>
           ))}
         </SelectContent>

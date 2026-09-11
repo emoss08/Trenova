@@ -81,7 +81,7 @@ export function EDIOverview() {
               className="h-6 px-2 text-xs"
               onClick={() => setSinceHours(option.sinceHours)}
             >
-              {option.label}
+              {t(option.label)}
             </Button>
           ))}
         </div>

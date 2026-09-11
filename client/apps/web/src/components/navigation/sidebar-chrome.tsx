@@ -135,6 +135,8 @@ function PageLink({
   attention: ModuleAttention | undefined;
   onNavigate?: () => void;
 }) {
+  const t = useT();
+
   return (
     <WorkspaceNavRow
       to={item.path}
@@ -143,7 +145,7 @@ function PageLink({
       sub={sub}
       onClick={onNavigate}
     >
-      <WorkspaceRowLabel>{item.label}</WorkspaceRowLabel>
+      <WorkspaceRowLabel>{t(item.label)}</WorkspaceRowLabel>
       <AttentionCountBadge attention={attention} />
       {item.includeBetaTag && <BetaTag className="ml-auto" />}
     </WorkspaceNavRow>
@@ -181,7 +183,7 @@ export function ModulePageList({
     <div className={cn("flex flex-col gap-0.5", className)}>
       {view.sections.map((section, index) => (
         <div key={section.id} className="flex flex-col gap-0.5">
-          {section.label !== null && <WorkspaceGroupLabel>{section.label}</WorkspaceGroupLabel>}
+          {section.label !== null && <WorkspaceGroupLabel>{t(section.label)}</WorkspaceGroupLabel>}
           {section.label === null && index > 0 && <div className="h-1.5" aria-hidden />}
           {section.items.map((item) => (
             <PageLink

@@ -312,12 +312,14 @@ function ActiveViolationAlert({ state }: { state: WorkerHosState }) {
 }
 
 function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
+  const t = useT();
+
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-2.5">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{toTitleCase(violation.violationType)}</p>
         {violation.description ? (
-          <p className="text-muted-foreground truncate text-xs">{violation.description}</p>
+          <p className="text-muted-foreground truncate text-xs">{t(violation.description)}</p>
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -402,7 +404,7 @@ function DayPillButton({
           : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
-      {slot.label}
+      {t(slot.label)}
       {slot.dailyLog?.isCertified ? (
         <span
           aria-label={t("Certified")}
@@ -581,7 +583,7 @@ function EldGraph({
               className="bg-foreground text-background pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md px-3 py-1.5 text-xs shadow-md"
               style={{ left: hover.x, top: hover.y - 8 }}
             >
-              <p className="font-medium">{hoveredMeta.label}</p>
+              <p className="font-medium">{t(hoveredMeta.label)}</p>
               <p className="text-background/80 tabular-nums">
                 {formatUnixTime(hovered.startSec)} –{" "}
                 {hovered.ongoing ? "Ongoing" : formatUnixTime(hovered.endSec)} ·{" "}
@@ -645,7 +647,7 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
           key={chip.label}
           className="border-border flex items-center gap-1.5 rounded-md border px-2 py-1"
         >
-          <span className="text-muted-foreground text-[11px]">{chip.label}</span>
+          <span className="text-muted-foreground text-[11px]">{t(chip.label)}</span>
           <span className="text-xs font-medium tabular-nums">{chip.value}</span>
         </div>
       ))}
@@ -662,6 +664,8 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
 }
 
 function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: number }) {
+  const t = useT();
+
   const meta = getDutyStatusMeta(entry.hosStatusType);
   const endAt = entry.logEndAt ?? null;
   const durationMs = Math.max((endAt ?? nowCap) - entry.logStartAt, 0) * 1000;
@@ -669,7 +673,7 @@ function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: n
   return (
     <li className="flex items-center gap-3 px-4 py-2.5">
       <div className="w-36 shrink-0">
-        <Badge variant={meta.variant}>{meta.label}</Badge>
+        <Badge variant={meta.variant}>{t(meta.label)}</Badge>
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm tabular-nums">
@@ -834,6 +838,8 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
 }
 
 function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const hasFields = submission.fields.length > 0;
 
@@ -869,7 +875,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           <dl className="border-border bg-muted/20 grid grid-cols-1 gap-x-4 gap-y-2 border-t px-4 py-3 sm:grid-cols-2">
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
-                <dt className="text-muted-foreground text-[11px]">{field.label}</dt>
+                <dt className="text-muted-foreground text-[11px]">{t(field.label)}</dt>
                 <dd className="text-sm break-words">{field.value || "—"}</dd>
               </div>
             ))}
@@ -956,7 +962,7 @@ function HosLiveState({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+        <Badge variant={statusMeta.variant}>{t(statusMeta.label)}</Badge>
         {state.currentVehicleId ? (
           <Badge variant="outline" className="gap-1">
             <TruckIcon className="size-3" />

@@ -96,7 +96,7 @@ function ClockHero({ state }: { state: MyHosState }) {
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-        <Badge variant={duty.variant}>{duty.label}</Badge>
+        <Badge variant={duty.variant}>{t(duty.label)}</Badge>
         {state.currentVehicleId ? (
           <span className="inline-flex max-w-40 items-center gap-1 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
             <TruckIcon className="size-3.5 shrink-0" />
@@ -188,6 +188,8 @@ function RecentLogsSection({ enabled }: { enabled: boolean }) {
 }
 
 function ViolationRow({ violation }: { violation: MyHosViolation }) {
+  const t = useT();
+
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
@@ -198,7 +200,7 @@ function ViolationRow({ violation }: { violation: MyHosViolation }) {
         </p>
         {violation.description ? (
           <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-            {violation.description}
+            {t(violation.description)}
           </p>
         ) : null}
       </div>

@@ -136,7 +136,7 @@ function DayTile({
     >
       <span className="flex items-baseline justify-between gap-1 leading-none">
         <span className={cn("truncate text-[11px] font-medium", isToday && "text-primary")}>
-          {day.label}
+          {t(day.label)}
         </span>
         <span className="text-muted-foreground text-[10px] tabular-nums">{dateNumber}</span>
       </span>
@@ -180,7 +180,7 @@ function DayTile({
                 aria-hidden
               />
               <span className="truncate">{ptoWorkerName(pto)}</span>
-              <span className="opacity-70">· {ptoTypeMeta(pto.type).label}</span>
+              <span className="opacity-70">· {t(ptoTypeMeta(pto.type).label)}</span>
             </li>
           ))}
         </ul>

@@ -202,7 +202,7 @@ export function PTOReasonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogTitle>{t(copy.title)}</DialogTitle>
           <DialogDescription>
             {copy.description(ptoIds.length)}
             {skipped > 0

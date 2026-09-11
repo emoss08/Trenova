@@ -305,7 +305,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {tab.label}
+                  {t(tab.label)}
                   {tabCounts[tab.key] > 0 && (
                     <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1 tabular-nums">
                       {tabCounts[tab.key]}

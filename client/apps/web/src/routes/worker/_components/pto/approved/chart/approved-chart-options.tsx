@@ -43,7 +43,7 @@ export function ApprovedChartOptions({
           <SelectContent>
             {APPROVED_PTO_COLOR_SCHEMES.map((scheme) => (
               <SelectItem key={scheme.value} value={scheme.value} className="text-xs">
-                {scheme.label}
+                {t(scheme.label)}
               </SelectItem>
             ))}
           </SelectContent>

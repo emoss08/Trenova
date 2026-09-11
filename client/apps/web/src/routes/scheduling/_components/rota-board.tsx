@@ -443,7 +443,7 @@ function RotaCell({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-56">
         <p className="font-medium">
-          {tone.label} · {formatShiftDate(day.date)}
+          {t(tone.label)} · {formatShiftDate(day.date)}
         </p>
         {day.scheduled ? (
           <p className="text-muted-foreground">

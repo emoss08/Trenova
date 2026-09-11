@@ -105,7 +105,7 @@ export function PoliciesCard() {
                   <PenLineIcon className="text-muted-foreground size-4 shrink-0" />
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{policy.title}</span>
+                  <span className="block truncate font-medium">{t(policy.title)}</span>
                   <span className="text-muted-foreground block truncate text-xs">
                     {t("v{0} {1}", policy.versionLabel, policy.acknowledgedAt
                       ? ` · ${formatShiftDate(policy.acknowledgedAt)}`
@@ -115,7 +115,7 @@ export function PoliciesCard() {
                   </span>
                 </span>
                 <Badge variant={tone.variant} className="shrink-0">
-                  {tone.label}
+                  {t(tone.label)}
                 </Badge>
                 <ChevronRightIcon className="text-muted-foreground size-4 shrink-0" />
               </button>

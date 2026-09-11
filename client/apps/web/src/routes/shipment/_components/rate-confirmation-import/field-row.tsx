@@ -79,7 +79,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         role="row"
       >
         <div className={cn("size-1.5 shrink-0 rounded-full", style.dot)} />
-        <span className="text-muted-foreground/50 text-xs">{field.label}</span>
+        <span className="text-muted-foreground/50 text-xs">{t(field.label)}</span>
         <span className="text-muted-foreground/30 text-xs italic">{t("Not extracted")}</span>
         <Button
           variant="ghost"
@@ -109,7 +109,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-2">
-              <span className="text-2xs text-muted-foreground shrink-0">{field.label}</span>
+              <span className="text-2xs text-muted-foreground shrink-0">{t(field.label)}</span>
               {isEditing ? (
                 <Input
                   ref={inputRef}

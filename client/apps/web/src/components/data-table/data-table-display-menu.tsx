@@ -85,7 +85,7 @@ export default function DataTableDisplayMenu({
                       )}
                     >
                       <option.icon className="size-3.5" />
-                      {option.label}
+                      {t(option.label)}
                     </button>
                   );
                 })}

@@ -41,7 +41,7 @@ export function JournalLineItemsTable({
                   <span className="font-mono">{line.glAccountId}</span>
                 )}
               </td>
-              <td className="px-3 py-2 text-xs">{line.description}</td>
+              <td className="px-3 py-2 text-xs">{t(line.description)}</td>
               <td className="px-3 py-2 text-right">
                 {line.debitAmount > 0 ? (
                   <AmountDisplay value={line.debitAmount} className="text-xs" />

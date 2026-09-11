@@ -98,7 +98,7 @@ function TimeSelect({
       <SelectContent className="max-h-64" alignItemWithTrigger={false}>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -189,7 +189,7 @@ export function CronCadenceField<T extends FieldValues>({
           <SelectContent>
             {FREQUENCY_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -212,7 +212,7 @@ export function CronCadenceField<T extends FieldValues>({
               <SelectContent className="max-h-64" alignItemWithTrigger={false}>
                 {DAY_OF_MONTH_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -240,7 +240,7 @@ export function CronCadenceField<T extends FieldValues>({
               active={parts.weekdays.includes(chip.value)}
               onClick={() => toggleWeekday(chip.value)}
             >
-              {chip.label}
+              {t(chip.label)}
             </CadenceToggleChip>
           ))}
         </div>

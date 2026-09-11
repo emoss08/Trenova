@@ -178,7 +178,7 @@ export function RunReportDialog({
               <SelectContent>
                 {REPORT_FORMAT_CHOICES.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -547,6 +547,8 @@ export function EquipmentTypeAutocompleteField<T extends FieldValues>({
 export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/equipment-manufacturers/select-options/"
@@ -556,10 +558,10 @@ export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span className="w-full truncate">{option.label}</span>
+          <span className="w-full truncate">{t(option.label)}</span>
           {option.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -708,7 +710,7 @@ export function WorkerAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {selectOptionMetaString(option, "fleetCode") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {t("Fleet: {0}", selectOptionMetaString(option, "fleetCode"))}
@@ -724,6 +726,8 @@ export function WorkerAutocompleteField<T extends FieldValues>({
 export function ShipmentAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/shipments/select-options/"
@@ -733,7 +737,7 @@ export function ShipmentAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span className="w-full truncate">{option.label}</span>
+          <span className="w-full truncate">{t(option.label)}</span>
           {(selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")) && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")}
@@ -749,6 +753,8 @@ export function ShipmentAutocompleteField<T extends FieldValues>({
 export function OrderAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/orders/select-options/"
@@ -758,10 +764,10 @@ export function OrderAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span className="w-full truncate">{option.label}</span>
+          <span className="w-full truncate">{t(option.label)}</span>
           {option.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -885,6 +891,8 @@ export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
 export function GLAccountAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/gl-accounts/select-options/"
@@ -895,10 +903,10 @@ export function GLAccountAutocompleteField<T extends FieldValues>({
       }
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -911,6 +919,8 @@ export function GLAccountAutocompleteField<T extends FieldValues>({
 export function GLAccountMultiSelectAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/gl-accounts/select-options/"
@@ -921,10 +931,10 @@ export function GLAccountMultiSelectAutocompleteField<T extends FieldValues>({
       }
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -967,6 +977,8 @@ export function AccountTypeAutocompleteField<T extends FieldValues>({
 export function LocationAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/locations/select-options/"
@@ -984,7 +996,7 @@ export function LocationAutocompleteField<T extends FieldValues>({
             <span>{code ? `${code} - ${option.label}` : option.label}</span>
             {option.description && (
               <span className="text-2xs text-muted-foreground w-full truncate">
-                {option.description}
+                {t(option.description)}
               </span>
             )}
           </div>
@@ -1404,6 +1416,8 @@ export function ControlledFormulaTemplateAutocompleteField({
   placeholder = "Search templates...",
   ...props
 }: ControlledGraphQLAutocompleteFieldProps) {
+  const t = useT();
+
   return (
     <ControlledAutocompleteField<GraphQLSelectOption>
       label={label}
@@ -1414,10 +1428,10 @@ export function ControlledFormulaTemplateAutocompleteField({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -1430,6 +1444,8 @@ export function ControlledFormulaTemplateAutocompleteField({
 export function FormulaTemplateAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/formula-templates/select-options/"
@@ -1439,10 +1455,10 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -1482,6 +1498,8 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
 export function DistanceProfileAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/distance-profiles/select-options/"
@@ -1492,7 +1510,7 @@ export function DistanceProfileAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full min-w-0 flex-col items-start">
-          <span className="w-full truncate">{option.label}</span>
+          <span className="w-full truncate">{t(option.label)}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
             {selectOptionMetaString(option, "routingType")} ·{" "}
             {selectOptionMetaString(option, "distanceUnits")}
@@ -1579,6 +1597,8 @@ export function DocumentMultiSelectAutocompleteField<T extends FieldValues>({
 export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/service-failure-reason-codes/select-options/"
@@ -1588,10 +1608,10 @@ export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span className="w-full truncate font-medium">{option.label}</span>
+          <span className="w-full truncate font-medium">{t(option.label)}</span>
           {option.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -1615,7 +1635,7 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {selectOptionMetaString(option, "class") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {t("Class {0}", selectOptionMetaString(option, "class"))}
@@ -1631,6 +1651,8 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
 export function CommodityAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/commodities/select-options/"
@@ -1640,10 +1662,10 @@ export function CommodityAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -1670,7 +1692,7 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
         return (
           <div className="flex size-full flex-col items-start">
             <span className="flex items-center gap-1.5">
-              {option.label}
+              {t(option.label)}
               {selectOptionMetaBoolean(option, "isCurrent") && (
                 <span className="inline-flex items-center rounded border border-green-600/30 bg-green-600/20 px-1 py-px text-[10px] font-medium text-green-700 dark:text-green-400">
                   {t("Current")}
@@ -1696,6 +1718,8 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
 export function FiscalPeriodAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fiscal-periods/"
@@ -1709,7 +1733,7 @@ export function FiscalPeriodAutocompleteField<T extends FieldValues>({
         return (
           <div className="flex size-full flex-col items-start">
             <span className="flex items-center gap-1.5">
-              {option.label}
+              {t(option.label)}
               {status && status !== "Open" && (
                 <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
                   {status}
@@ -1745,6 +1769,8 @@ export function BatchSourceAutocompleteField<T extends FieldValues>({
 export function FuelIndexAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fuel-indices/select-options/"
@@ -1761,7 +1787,7 @@ export function FuelIndexAutocompleteField<T extends FieldValues>({
         return (
           <div className="flex size-full flex-col items-start">
             <span className="flex items-center gap-1.5">
-              {option.label}
+              {t(option.label)}
               {region && (
                 <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
                   {region}
@@ -1770,7 +1796,7 @@ export function FuelIndexAutocompleteField<T extends FieldValues>({
             </span>
             {option?.description && (
               <span className="text-2xs text-muted-foreground w-full truncate">
-                {option.description}
+                {t(option.description)}
                 {fuelType ? ` · ${fuelType}` : ""}
               </span>
             )}
@@ -1785,6 +1811,8 @@ export function FuelIndexAutocompleteField<T extends FieldValues>({
 export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fuel-surcharge-programs/select-options/"
@@ -1794,7 +1822,7 @@ export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -1883,6 +1911,8 @@ export function EquipmentTypeMultiSelectField<T extends FieldValues>({
 export function DetentionPolicyAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/detention-policies/select-options/"
@@ -1892,7 +1922,7 @@ export function DetentionPolicyAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {selectOptionMetaString(option, "code") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {selectOptionMetaString(option, "code")}
@@ -1908,6 +1938,8 @@ export function DetentionPolicyAutocompleteField<T extends FieldValues>({
 export function AccessorialChargeAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/accessorial-charges/select-options/"
@@ -1917,10 +1949,10 @@ export function AccessorialChargeAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>
@@ -1933,6 +1965,8 @@ export function AccessorialChargeAutocompleteField<T extends FieldValues>({
 export function RateZoneAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/rate-zones/select-options/"
@@ -1942,7 +1976,7 @@ export function RateZoneAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {(option.description || selectOptionMetaString(option, "code")) && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description || selectOptionMetaString(option, "code")}
@@ -1958,6 +1992,8 @@ export function RateZoneAutocompleteField<T extends FieldValues>({
 export function RateMatrixAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/rate-matrices/select-options/"
@@ -1967,7 +2003,7 @@ export function RateMatrixAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           {(option.description || selectOptionMetaString(option, "code")) && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description || selectOptionMetaString(option, "code")}
@@ -1983,6 +2019,8 @@ export function RateMatrixAutocompleteField<T extends FieldValues>({
 export function RateAgreementAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/rate-agreements/select-options/"
@@ -1992,7 +2030,7 @@ export function RateAgreementAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
             {option.description || selectOptionMetaString(option, "code")}
           </span>
@@ -2018,6 +2056,8 @@ export function JobPositionAutocompleteField<T extends FieldValues>({
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
   driving: boolean;
 }) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/job-positions/select-options/"
@@ -2030,7 +2070,7 @@ export function JobPositionAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
             {selectOptionMetaString(option, "code")}
             {selectOptionMetaString(option, "department")
@@ -2089,7 +2129,7 @@ export function WorkerPolicyAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
             {t("{0} · v {1}", selectOptionMetaString(option, "code"), selectOptionMetaString(option, "versionLabel"))}
           </span>
@@ -2107,6 +2147,8 @@ const fuelCardSelectOptionsGraphQL = {
 export function FuelCardAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fuel-cards/select-options/"
@@ -2116,7 +2158,7 @@ export function FuelCardAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.label}</span>
+          <span>{t(option.label)}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
             {selectOptionMetaString(option, "provider")}
             {selectOptionMetaString(option, "lastFour")
@@ -2137,6 +2179,8 @@ const iftaFuelTypeSelectOptionsGraphQL = {
 export function IftaFuelTypeAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       graphql={iftaFuelTypeSelectOptionsGraphQL}
@@ -2144,10 +2188,10 @@ export function IftaFuelTypeAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span className="w-full truncate">{option.label}</span>
+          <span className="w-full truncate">{t(option.label)}</span>
           {option.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {t(option.description)}
             </span>
           )}
         </div>

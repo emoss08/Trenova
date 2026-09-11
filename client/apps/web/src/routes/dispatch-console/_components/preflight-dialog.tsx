@@ -281,7 +281,7 @@ export function PreflightDialog({
                   />
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className={cn("text-xs leading-none font-semibold", banner.iconClass)}>
-                      {verdict.label}
+                      {t(verdict.label)}
                     </span>
                     <span className="text-foreground/80 text-[11px] leading-snug">
                       {lead.message}

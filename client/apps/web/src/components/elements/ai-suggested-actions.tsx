@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 
 interface Suggestion {
@@ -14,6 +15,8 @@ interface AiSuggestedActionsProps {
 }
 
 function AiSuggestedActions({ suggestions, onSelect, className }: AiSuggestedActionsProps) {
+  const t = useT();
+
   return (
     <div
       data-slot="ai-suggested-actions"
@@ -29,7 +32,7 @@ function AiSuggestedActions({ suggestions, onSelect, className }: AiSuggestedAct
             animationDelay: `${index * 50}ms`,
           }}
         >
-          {suggestion.label}
+          {t(suggestion.label)}
         </button>
       ))}
     </div>

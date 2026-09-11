@@ -144,9 +144,9 @@ export function InvoiceAdjustmentTypeSelector({
                     isSelected ? "text-foreground" : "text-foreground",
                   )}
                 >
-                  {type.label}
+                  {t(type.label)}
                 </p>
-                <p className="text-muted-foreground text-xs">{type.description}</p>
+                <p className="text-muted-foreground text-xs">{t(type.description)}</p>
               </div>
               <div
                 className={cn(
@@ -184,7 +184,7 @@ export function InvoiceAdjustmentTypeSelector({
                     onSelectionChange?.();
                   }}
                 >
-                  {strategy.label}
+                  {t(strategy.label)}
                 </button>
               );
             })}
@@ -350,7 +350,7 @@ function InvoiceAdjustmentLineEditorRow({
           <span className="bg-muted text-2xs text-muted-foreground inline-flex size-5 shrink-0 items-center justify-center rounded font-medium">
             {previewLine?.lineNumber ?? index + 1}
           </span>
-          <p className="truncate text-sm font-medium">{line.description}</p>
+          <p className="truncate text-sm font-medium">{t(line.description)}</p>
         </div>
         <div className="text-2xs text-muted-foreground mt-1.5 ml-7 flex flex-wrap items-center gap-x-3 gap-y-0.5">
           <span>{t("{0} original", formatCurrency(originalAmount))}</span>

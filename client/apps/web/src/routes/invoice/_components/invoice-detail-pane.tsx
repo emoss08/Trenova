@@ -214,7 +214,7 @@ export default function InvoiceDetailPane({
                     {invoice.lines.map((line) => (
                       <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
                         <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-                        <td className="px-4 py-3">{line.description}</td>
+                        <td className="px-4 py-3">{t(line.description)}</td>
                         <td className="px-4 py-3">
                           <Badge variant={LINE_TYPE_VARIANTS[line.type]}>{line.type}</Badge>
                         </td>

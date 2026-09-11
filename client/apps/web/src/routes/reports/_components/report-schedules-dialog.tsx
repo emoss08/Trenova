@@ -418,7 +418,7 @@ function TimeSelect({
       <SelectContent className="max-h-64" alignItemWithTrigger={false}>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -470,7 +470,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
           <SelectContent>
             {FREQUENCY_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -490,7 +490,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
               <SelectContent className="max-h-64" alignItemWithTrigger={false}>
                 {DAY_OF_MONTH_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -524,7 +524,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
               active={parts.weekdays.includes(chip.value)}
               onClick={() => toggleWeekday(chip.value)}
             >
-              {chip.label}
+              {t(chip.label)}
             </ToggleChip>
           ))}
         </m.div>
@@ -577,7 +577,7 @@ function FormatChipsField({ control }: { control: Control<ScheduleFormValues> })
               )
             }
           >
-            {choice.label}
+            {t(choice.label)}
           </ToggleChip>
         ))}
       </div>
@@ -628,9 +628,9 @@ function ScheduleForm({
           groups={timezoneGroupedChoices}
           renderOption={(option) => (
             <span className="flex w-full items-center justify-between gap-3">
-              <span>{option.label}</span>
+              <span>{t(option.label)}</span>
               {option.description && (
-                <span className="text-muted-foreground text-xs">{option.description}</span>
+                <span className="text-muted-foreground text-xs">{t(option.description)}</span>
               )}
             </span>
           )}

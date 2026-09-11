@@ -436,7 +436,7 @@ function FieldAssertionRow({
             >
               {FIELD_ASSERTION_OPERATOR_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </option>
               ))}
             </select>
@@ -507,7 +507,7 @@ function FieldAssertionRow({
       </div>
 
       {operatorMeta && (
-        <p className="text-2xs text-muted-foreground mt-2">{operatorMeta.description}</p>
+        <p className="text-2xs text-muted-foreground mt-2">{t(operatorMeta.description)}</p>
       )}
     </div>
   );

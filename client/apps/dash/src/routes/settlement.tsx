@@ -163,7 +163,7 @@ export function DashSettlementPage() {
             {group.lines.map((line) => (
               <li key={line.id} className="flex items-center gap-2 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{line.description}</p>
+                  <p className="truncate text-sm">{t(line.description)}</p>
                   <p className="text-xs text-muted-foreground">{lineDetail(line)}</p>
                 </div>
                 <span className="text-sm font-medium tabular-nums">

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 
 const ENTRIES: { label: string; color: string }[] = [
@@ -8,6 +9,8 @@ const ENTRIES: { label: string; color: string }[] = [
 ];
 
 export function ShipmentMapLegend({ className }: { className?: string }) {
+  const t = useT();
+
   return (
     <div
       className={cn(
@@ -25,7 +28,7 @@ export function ShipmentMapLegend({ className }: { className?: string }) {
             className="mb-0.5 inline-block size-2 rounded-full"
             style={{ background: e.color }}
           />
-          {e.label}
+          {t(e.label)}
         </span>
       ))}
     </div>

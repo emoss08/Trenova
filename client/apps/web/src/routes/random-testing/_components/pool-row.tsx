@@ -81,7 +81,7 @@ export function PoolRow({
           {t("{0} · {1}% drug · {2}% alcohol · {3}", randomPeriodLabel(pool.period), pool.drugRatePercent, pool.alcoholRatePercent, drivers)}
         </p>
         {pool.description ? (
-          <p className="text-muted-foreground truncate text-xs">{pool.description}</p>
+          <p className="text-muted-foreground truncate text-xs">{t(pool.description)}</p>
         ) : null}
       </div>
 
@@ -101,7 +101,7 @@ export function PoolRow({
                   />
                 }
               >
-                {slot.label}
+                {t(slot.label)}
               </TooltipTrigger>
               <TooltipContent className="text-xs">
                 {slot.key} · {SLOT_STATE_LABELS[slot.state]}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { getAvailableResources, type ResourceDefinition } from "@/lib/role-api";
@@ -76,6 +77,8 @@ export function RoleTemplateSelector({
   selectedTemplate,
   onSelectTemplate,
 }: RoleTemplateSelectorProps) {
+  const t = useT();
+
   const { data: resourceCategories = [] } = useQuery({
     queryKey: ["permission-resources"],
     queryFn: getAvailableResources,
@@ -115,7 +118,7 @@ export function RoleTemplateSelector({
                 </Button>
               }
             />
-            <TooltipContent className="text-xs">{template.description}</TooltipContent>
+            <TooltipContent className="text-xs">{t(template.description)}</TooltipContent>
           </Tooltip>
         );
       })}

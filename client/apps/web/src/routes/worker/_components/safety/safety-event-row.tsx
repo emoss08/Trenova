@@ -198,7 +198,7 @@ export function SafetyEventRow({
           <RowActionsMenu label={`Actions for ${headline}`} actions={actions} />
         </div>
 
-        <p className="text-sm">{event.description}</p>
+        <p className="text-sm">{t(event.description)}</p>
 
         {event.fineAmount || event.costAmount || event.pointsExpireAt || event.document ? (
           <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">

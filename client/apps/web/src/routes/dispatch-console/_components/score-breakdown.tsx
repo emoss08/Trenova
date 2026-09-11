@@ -91,7 +91,7 @@ export function ScoreBreakdown({
                   {flat.map((factor) => (
                     <li key={factor.key} className="flex flex-col gap-px">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-muted-foreground text-[11px]">{factor.label}</span>
+                        <span className="text-muted-foreground text-[11px]">{t(factor.label)}</span>
                         <span className="text-muted-foreground/60 text-[10px] tabular-nums">
                           +0.0
                         </span>
@@ -122,12 +122,14 @@ function FactorRow({
   index: number;
   reducedMotion: boolean;
 }) {
+  const t = useT();
+
   const share = maxContribution > 0 ? (factor.contribution / maxContribution) * 100 : 0;
 
   return (
     <li className="flex flex-col gap-0.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] font-medium">{factor.label}</span>
+        <span className="text-[11px] font-medium">{t(factor.label)}</span>
         <span className="text-muted-foreground text-[11px] font-medium tabular-nums">
           +{factor.contribution.toFixed(1)}
         </span>

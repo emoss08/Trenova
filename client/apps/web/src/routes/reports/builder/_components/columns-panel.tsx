@@ -120,7 +120,7 @@ function ComputedOperandField({
         <SelectContent>
           {choices.map((choice) => (
             <SelectItem key={choice.value} value={choice.value}>
-              {choice.label}
+              {t(choice.label)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -198,7 +198,7 @@ function ComputedColumnBody({
           <SelectContent>
             {REPORT_COMPUTED_OP_CHOICES.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
+                {t(choice.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -227,7 +227,7 @@ function ComputedColumnBody({
           <SelectContent>
             {REPORT_COMPUTED_FORMAT_CHOICES.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
+                {t(choice.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -413,7 +413,7 @@ function SortableColumnRow({
                   <SelectItem value="none">{t("Exact")}</SelectItem>
                   {REPORT_DATE_BUCKET_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>

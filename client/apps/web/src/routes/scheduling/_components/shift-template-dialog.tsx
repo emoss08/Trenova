@@ -221,7 +221,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                                 "border-border bg-muted text-foreground",
                             )}
                           >
-                            {preset.label}
+                            {t(preset.label)}
                           </button>
                         ))}
                       </div>

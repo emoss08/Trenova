@@ -71,6 +71,8 @@ const SEVERITY_TEXT: Record<HosClockSeverity, string> = {
 };
 
 function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: boolean }) {
+  const t = useT();
+
   const severity = rowSeverity(state);
   const duty = (state.dutyStatus && DUTY_STATUS[state.dutyStatus]) || UNKNOWN_DUTY;
 
@@ -101,7 +103,7 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
           </Link>
         </div>
         <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-[8.5px]">
-          {duty.label}
+          {t(duty.label)}
         </Badge>
       </div>
       <HosClockGauges

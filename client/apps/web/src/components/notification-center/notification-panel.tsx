@@ -239,7 +239,7 @@ export default function NotificationPanel({
           groups.map((group) => (
             <div key={group.label}>
               <p className="text-2xs text-muted-foreground/70 px-4 pt-3 pb-1 font-medium tracking-wider uppercase">
-                {group.label}
+                {t(group.label)}
               </p>
               <AnimatePresence initial={false}>
                 {group.items.map((notification) => (

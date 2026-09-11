@@ -27,6 +27,8 @@ function AttentionRow({
   count: number;
   currentPath: string;
 }) {
+  const t = useT();
+
   const hasWork = count > 0;
 
   return (
@@ -37,7 +39,7 @@ function AttentionRow({
           hasWork ? ATTENTION_TONE_DOT_CLASSES[row.tone] : "bg-muted-foreground/40",
         )}
       />
-      <span className="min-w-0 flex-1 truncate">{row.label}</span>
+      <span className="min-w-0 flex-1 truncate">{t(row.label)}</span>
       <span className="text-2xs text-muted-foreground/70">{row.module}</span>
       <Badge
         variant={hasWork ? TONE_BADGE_VARIANTS[row.tone] : "secondary"}

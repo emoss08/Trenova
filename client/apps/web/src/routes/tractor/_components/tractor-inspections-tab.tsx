@@ -140,7 +140,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="outline">{toTitleCase(inspection.inspectionType)}</Badge>
-          <Badge variant={safetyMeta.variant}>{safetyMeta.label}</Badge>
+          <Badge variant={safetyMeta.variant}>{t(safetyMeta.label)}</Badge>
           {inspection.signed ? (
             <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
               <CheckIcon className="size-3" />
@@ -154,7 +154,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
             <span key={part.key} className="flex items-center gap-1">
               <span aria-hidden>·</span>
               {part.isLocation ? <MapPinIcon className="size-3" /> : null}
-              <span className="truncate tabular-nums">{part.label}</span>
+              <span className="truncate tabular-nums">{t(part.label)}</span>
             </span>
           ))}
         </div>

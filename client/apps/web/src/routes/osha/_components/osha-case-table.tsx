@@ -274,7 +274,7 @@ export function OshaCaseTable({
                       )}
                     </td>
                     <td className="max-w-64 px-2 py-2 align-middle">
-                      <span className="block truncate">{entry.description}</span>
+                      <span className="block truncate">{t(entry.description)}</span>
                       {entry.bodyPart?.trim() ? (
                         <span className="text-muted-foreground block truncate text-2xs">
                           {entry.bodyPart.trim()}

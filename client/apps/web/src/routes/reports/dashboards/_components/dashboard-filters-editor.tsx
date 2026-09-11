@@ -101,7 +101,7 @@ function SelectedFilter({
             <SelectContent>
               {operators.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -155,7 +155,7 @@ function CustomFieldPicker({
             <SelectContent>
               {entityChoices.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>

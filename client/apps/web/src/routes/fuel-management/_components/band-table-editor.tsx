@@ -699,7 +699,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                     <th className="w-10 px-3 py-2 text-center font-medium">#</th>
                     <th className="px-2 py-2 font-medium">{t("Fuel Price From")}</th>
                     <th className="px-2 py-2 font-medium">{t("Up To (not incl.)")}</th>
-                    <th className="px-2 py-2 font-medium">{meta.header}</th>
+                    <th className="px-2 py-2 font-medium">{t(meta.header)}</th>
                     <th className="w-16 px-2 py-2" />
                   </tr>
                 </thead>

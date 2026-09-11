@@ -123,7 +123,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="text-muted-foreground truncate">{line.name}</span>
                 <Badge variant="outline" className={badge.className}>
-                  {badge.label}
+                  {t(badge.label)}
                 </Badge>
               </span>
               <span className="shrink-0 font-medium tabular-nums">

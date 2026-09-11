@@ -451,7 +451,7 @@ export function DetentionPolicyPreview() {
           <Card className="gap-0 overflow-hidden rounded-lg p-0">
             <div className="border-border flex items-baseline justify-between gap-3 border-b px-4 py-2.5">
               <p className="truncate text-xs font-medium">{definition.headline}</p>
-              <p className="text-2xs text-muted-foreground shrink-0">{definition.description}</p>
+              <p className="text-2xs text-muted-foreground shrink-0">{t(definition.description)}</p>
             </div>
 
             {active.isError ? (

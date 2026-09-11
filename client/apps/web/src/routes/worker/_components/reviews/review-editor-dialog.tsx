@@ -308,7 +308,7 @@ function EditDraft({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{review.title}</DialogTitle>
+          <DialogTitle>{t(review.title)}</DialogTitle>
           <DialogDescription>
             {t("Rate every item from 1 to 5 and write the summary the worker will read. Nothing reaches them until you submit.")}
           </DialogDescription>

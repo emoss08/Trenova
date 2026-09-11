@@ -95,7 +95,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
                 className="flex items-baseline justify-between gap-3"
               >
                 <div className="flex flex-col">
-                  <span className="text-xs">{component.label}</span>
+                  <span className="text-xs">{t(component.label)}</span>
                   {component.basis && (
                     <span className="text-2xs text-muted-foreground">{component.basis}</span>
                   )}
@@ -116,7 +116,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
           </p>
           {trace?.guardrails?.map((guardrail) => (
             <p key={guardrail.kind} className="text-2xs text-muted-foreground">
-              {guardrail.label}
+              {t(guardrail.label)}
               {guardrail.applied
                 ? ` applied — ${formatCurrency(Number(guardrail.rawAmount ?? 0))} became ${formatCurrency(Number(guardrail.amount ?? 0))}.`
                 : " did not apply."}

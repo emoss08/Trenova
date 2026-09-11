@@ -255,7 +255,7 @@ export function CapacityRail({
                     : "text-muted-foreground hover:bg-muted",
                 )}
               >
-                {option.label} {count > 0 && <span className="tabular-nums">{count}</span>}
+                {t(option.label)} {count > 0 && <span className="tabular-nums">{count}</span>}
               </button>
             );
           })}

@@ -60,6 +60,8 @@ function AiTaskList({
   children,
   className,
 }: AiTaskListProps) {
+  const t = useT();
+
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
 
   const isControlled = controlledOpen !== undefined;
@@ -134,7 +136,7 @@ function AiTaskList({
               ? children
               : tasks.map((task) => (
                   <AiTaskListItem key={task.id} status={task.status} description={task.description}>
-                    {task.title}
+                    {t(task.title)}
                   </AiTaskListItem>
                 ))}
           </div>

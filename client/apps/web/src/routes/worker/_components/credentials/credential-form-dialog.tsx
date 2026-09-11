@@ -279,8 +279,8 @@ export function CredentialFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
-          <DialogDescription>{copy.description}</DialogDescription>
+          <DialogTitle>{t(copy.title)}</DialogTitle>
+          <DialogDescription>{t(copy.description)}</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <Form

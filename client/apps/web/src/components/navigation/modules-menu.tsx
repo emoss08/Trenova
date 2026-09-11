@@ -37,6 +37,8 @@ function ModuleItem({
   attention: ModuleAttention | undefined;
   onNavigate: () => void;
 }) {
+  const t = useT();
+
   return (
     <Link
       to={view.landingPath}
@@ -52,7 +54,7 @@ function ModuleItem({
         </span>
         {view.module.description && (
           <span className="text-muted-foreground mt-0.5 line-clamp-2 text-2xs leading-snug">
-            {view.module.description}
+            {t(view.module.description)}
           </span>
         )}
       </span>
@@ -73,10 +75,12 @@ function DomainColumn({
   activeModuleId: ModuleId | null;
   onNavigate: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border flex min-w-0 flex-col gap-0.5 px-2 pt-3 pb-2.5 first:pl-3 not-first:border-l">
       <span className="text-muted-foreground px-1.5 pb-1.5 text-xs font-medium tracking-wide select-none uppercase">
-        {domain.label}
+        {t(domain.label)}
       </span>
       {domain.modules.map((module) => {
         const view = views.get(module.id);
@@ -195,7 +199,7 @@ function ShortcutsColumn({
                 <ClockIcon className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
               }
             >
-              {page.title}
+              {t(page.title)}
             </SideRow>
           ))
         )}

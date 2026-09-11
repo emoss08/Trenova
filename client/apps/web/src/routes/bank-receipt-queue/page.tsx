@@ -232,7 +232,7 @@ export function BankReceiptQueuePage() {
                 <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {workItemStatusChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -534,7 +534,7 @@ function WorkItemDetail({
                     <SelectContent>
                       {resolutionTypeChoices.map((choice) => (
                         <SelectItem key={choice.value} value={choice.value}>
-                          {choice.label}
+                          {t(choice.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>

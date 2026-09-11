@@ -106,10 +106,10 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogTitle>{t(copy.title)}</DialogTitle>
           <DialogDescription>
-            {item ? <span className="font-medium">{item.label}. </span> : null}
-            {copy.description}
+            {item ? <span className="font-medium">{t(item.label)}. </span> : null}
+            {t(copy.description)}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

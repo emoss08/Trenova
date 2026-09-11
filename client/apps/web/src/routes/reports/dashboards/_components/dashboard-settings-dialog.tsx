@@ -89,7 +89,7 @@ export function DashboardSettingsDialog({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {entry.label}
+              {t(entry.label)}
               {tab === entry.key && (
                 <span className="bg-primary absolute inset-x-1 -bottom-px h-0.5 rounded-full" />
               )}

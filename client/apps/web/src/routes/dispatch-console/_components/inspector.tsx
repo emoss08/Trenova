@@ -69,7 +69,7 @@ function CandidateRow({
           <span className="truncate text-xs font-medium">{candidate.workerName}</span>
         </div>
         <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
-          {verdict.label}
+          {t(verdict.label)}
         </Badge>
       </div>
 

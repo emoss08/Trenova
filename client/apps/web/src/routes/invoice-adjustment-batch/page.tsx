@@ -124,7 +124,7 @@ export function InvoiceAdjustmentBatchPage() {
                 <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {statusChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

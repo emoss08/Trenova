@@ -137,7 +137,9 @@ function literalFromAttributeValue(value) {
   return null;
 }
 
-export function transformSource(source, filePath) {
+const LABEL_PROPS = new Set(["label", "description", "title", "header"]);
+
+export function transformSource(source, filePath, { labels = false } = {}) {
   let ast;
   try {
     ast = parse(source, { sourceType: "module", plugins: PARSER_PLUGINS });
@@ -152,7 +154,6 @@ export function transformSource(source, filePath) {
   let needsTranslate = false;
   const consumed = new Set();
 
-  const alreadyHasHook = /\buseT\s*\(/.test(source);
   const alreadyImportsHook = source.includes("i18n/use-t");
   const alreadyImportsTranslate = source.includes("i18n/runtime");
 
@@ -173,6 +174,28 @@ export function transformSource(source, filePath) {
 
   visit(ast.program, null, (node, parent, stack, deps) => {
     switch (node.type) {
+      case "JSXExpressionContainer": {
+        // Label maps are module-level consts that evaluate once at import, so the English
+        // text stays in the data as the key and the translation happens here, at render.
+        // Only children are rewritten, never attributes: `key={group.label}` is an identity
+        // and must keep its original value.
+        if (!labels) return;
+        if (parent === null) return;
+        if (parent.type !== "JSXElement" && parent.type !== "JSXFragment") return;
+
+        const expr = node.expression;
+        if (expr.type !== "MemberExpression" || expr.computed) return;
+        if (expr.property.type !== "Identifier" || !LABEL_PROPS.has(expr.property.name)) return;
+
+        const call = callFor(stack, deps);
+        edits.push({
+          start: expr.start,
+          end: expr.end,
+          text: `${call}(${source.slice(expr.start, expr.end)})`,
+        });
+        return;
+      }
+
       case "JSXElement":
       case "JSXFragment": {
         for (const run of foldableRuns(node.children)) {
@@ -282,8 +305,13 @@ export function transformSource(source, filePath) {
   // translate here would be wrong — inside a component it would freeze the text in whatever
   // language first rendered — so the arrow is given a body instead.
   const hookInserts = [];
-  if (!alreadyHasHook) {
+  {
     for (const fn of hookTargets) {
+      // Whether a binding exists is a property of the function, not of the file. A file can
+      // already hold `const t = useT()` in one component and still need one in the next,
+      // which is exactly what a second codemod pass over migrated code runs into.
+      if (declaresT(fn)) continue;
+
       if (fn.body.type === "BlockStatement") {
         // A directive prologue ("use client", "use no memo") is only a directive while it
         // is the first statement. Inserting above it silently demotes it to a bare string
@@ -349,6 +377,25 @@ export function transformSource(source, filePath) {
 
 // expandParens widens a range over any balanced parentheses that wrap it, so a concise
 // arrow body written across lines is treated as the single expression it is.
+// declaresT reports whether a function body already binds `t` from useT(), looking only at
+// its own statements so a nested component's binding is not mistaken for this one's.
+function declaresT(fn) {
+  if (fn.body.type !== "BlockStatement") return false;
+
+  for (const statement of fn.body.body) {
+    if (statement.type !== "VariableDeclaration") continue;
+    for (const declarator of statement.declarations) {
+      if (declarator.id.type !== "Identifier" || declarator.id.name !== "t") continue;
+      const init = declarator.init;
+      if (init === null || init === undefined) continue;
+      if (init.type === "CallExpression" && init.callee.type === "Identifier" && init.callee.name === "useT") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function expandParens(source, start, end) {
   let from = start;
   let to = end;
@@ -375,7 +422,7 @@ function firstImportOffset(source) {
   return match ? match.index : 0;
 }
 
-export async function runCodemod(repoRoot, targetDir, { dryRun }) {
+export async function runCodemod(repoRoot, targetDir, { dryRun, labels = false }) {
   let files = 0;
   let changedFiles = 0;
   let replacements = 0;
@@ -384,7 +431,7 @@ export async function runCodemod(repoRoot, targetDir, { dryRun }) {
   for await (const file of walkFiles(join(repoRoot, targetDir))) {
     files += 1;
     const source = await readFile(file, "utf8");
-    const result = transformSource(source, relative(repoRoot, file));
+    const result = transformSource(source, relative(repoRoot, file), { labels });
 
     for (const s of result.skipped ?? []) skipped.push({ ...s, file: relative(repoRoot, file) });
     if (!result.changed) continue;

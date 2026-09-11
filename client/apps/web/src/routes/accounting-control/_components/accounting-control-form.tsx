@@ -214,7 +214,7 @@ function JournalPolicyCard() {
                             toggleEvent(option.value, Boolean(nextChecked))
                           }
                         />
-                        <span>{option.label}</span>
+                        <span>{t(option.label)}</span>
                       </label>
                     );
                   })}

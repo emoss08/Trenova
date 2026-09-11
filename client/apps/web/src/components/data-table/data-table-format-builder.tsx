@@ -134,7 +134,7 @@ function RuleValueInput({
           <SelectGroup>
             {column.filterOptions.map((option) => (
               <SelectItem key={String(option.value)} value={String(option.value)}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -280,7 +280,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                         <SelectGroup>
                           {formatColumns.map((col) => (
                             <SelectItem key={col.field} value={col.field}>
-                              {col.label}
+                              {t(col.label)}
                             </SelectItem>
                           ))}
                         </SelectGroup>

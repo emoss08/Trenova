@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Fragment, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 
@@ -46,7 +47,7 @@ function attrString(node: BodyNode, key: string): string {
 function defaultMention(attrs: CommentBodyMentionAttrs, key: string): ReactNode {
   return (
     <span key={key} className="rounded bg-blue-500/10 px-0.5 font-medium text-blue-500">
-      @{attrs.label}
+      @{translate(attrs.label)}
     </span>
   );
 }
@@ -54,7 +55,7 @@ function defaultMention(attrs: CommentBodyMentionAttrs, key: string): ReactNode 
 function defaultEntityRef(attrs: CommentBodyEntityRefAttrs, key: string): ReactNode {
   return (
     <span key={key} className="rounded bg-violet-500/10 px-0.5 font-medium text-violet-500">
-      #{attrs.label}
+      #{translate(attrs.label)}
     </span>
   );
 }

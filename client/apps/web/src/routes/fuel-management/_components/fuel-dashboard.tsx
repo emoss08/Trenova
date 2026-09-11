@@ -229,7 +229,7 @@ function PriceTrendChart({
               onClick={() => onRangeChange(option.value)}
               className="h-7 px-2 text-xs"
             >
-              {option.label}
+              {t(option.label)}
             </Button>
           ))}
         </div>

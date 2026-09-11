@@ -162,7 +162,7 @@ export function SettlementQueue({
                     "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400",
                 )}
               >
-                {chip.label} {count > 0 && <span className="tabular-nums">{count}</span>}
+                {t(chip.label)} {count > 0 && <span className="tabular-nums">{count}</span>}
               </button>
             );
           })}

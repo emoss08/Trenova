@@ -98,7 +98,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
             ? ` by ${`${expense.worker.firstName} ${expense.worker.lastName}`.trim()}`
             : "")}
         </p>
-        <p className="mt-3 text-sm whitespace-pre-wrap">{expense.description}</p>
+        <p className="mt-3 text-sm whitespace-pre-wrap">{t(expense.description)}</p>
         {expense.payCode ? (
           <p className="text-muted-foreground mt-2 text-xs">
             {t("Pay code:")} <span className="font-mono">{expense.payCode.code}</span>

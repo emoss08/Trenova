@@ -210,7 +210,7 @@ export function BriefingBar({
                       <span className="font-table text-foreground font-medium tabular-nums">
                         {chip.count}
                       </span>
-                      <span>{chip.label}</span>
+                      <span>{t(chip.label)}</span>
                       <ArrowRightIcon className="-ml-0.5 size-2.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                     </Link>
                   </m.span>

@@ -25,6 +25,8 @@ const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "active" | "warning">
 };
 
 function TenderChip({ move }: { move: DispatchBoardMove }) {
+  const t = useT();
+
   const summary = move.liveTender;
   if (!summary) return null;
 
@@ -39,7 +41,7 @@ function TenderChip({ move }: { move: DispatchBoardMove }) {
   return (
     <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded px-1 text-[9px]">
       <SendIcon className="mr-0.5 size-2.5" aria-hidden />
-      {meta.label}
+      {t(meta.label)}
       {countdown ? ` · ${countdown}` : ""}
     </Badge>
   );
@@ -191,7 +193,7 @@ function UrgencyColumn({
     <div className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1">
       <header className="flex items-center gap-1.5 border-b px-2 py-1.5" title={meta.description}>
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
-        <span className="text-[10.5px] font-semibold tracking-wide uppercase">{meta.label}</span>
+        <span className="text-[10.5px] font-semibold tracking-wide uppercase">{t(meta.label)}</span>
         <span className="text-muted-foreground ml-auto text-[10.5px] tabular-nums">
           {moves.length}
         </span>

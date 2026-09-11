@@ -331,7 +331,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         const meta = safetyRatingMeta(profile.safetyRating);
         return (
           <div className="flex items-center gap-2">
-            <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+            <Badge variant={meta.badgeVariant}>{translate(meta.label)}</Badge>
             <span className="text-muted-foreground text-xs tabular-nums">
               {profile.safetyScore}
             </span>
@@ -362,7 +362,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         const meta = drugAlcoholStatusMeta(status);
         return (
           <Badge variant={meta.tone} title={meta.detail}>
-            {meta.label}
+            {translate(meta.label)}
           </Badge>
         );
       },

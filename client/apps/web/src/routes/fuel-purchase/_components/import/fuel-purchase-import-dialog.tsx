@@ -140,7 +140,7 @@ function StepIndicator({ current }: { current: (typeof STEPS)[number]["id"] }) {
               index <= currentIndex ? "text-foreground font-medium" : "text-muted-foreground"
             }
           >
-            {index + 1}. {step.label}
+            {index + 1}. {t(step.label)}
           </span>
           {index < STEPS.length - 1 ? <span className="text-muted-foreground">›</span> : null}
         </li>
@@ -150,6 +150,8 @@ function StepIndicator({ current }: { current: (typeof STEPS)[number]["id"] }) {
 }
 
 function SummaryChips({ batch }: { batch: FuelPurchaseImportBatch }) {
+  const t = useT();
+
   const summary = batch.summary;
   if (!summary) return null;
   const chips: Array<{ label: string; value: string }> = [
@@ -168,7 +170,7 @@ function SummaryChips({ batch }: { batch: FuelPurchaseImportBatch }) {
     <div className="flex flex-wrap gap-1.5">
       {chips.map((chip) => (
         <Badge key={chip.label} variant="secondary" className="gap-1 px-2 py-0.5 text-[11px]">
-          <span className="text-muted-foreground">{chip.label}</span>
+          <span className="text-muted-foreground">{t(chip.label)}</span>
           <span className="tabular-nums">{chip.value}</span>
         </Badge>
       ))}

@@ -392,6 +392,8 @@ function ResourceRow({
   onToggleAll,
   onUpdateDataScope,
 }: ResourceRowProps) {
+  const t = useT();
+
   const isGranted = !!permission;
   const operationCount = permission?.operations.length || 0;
   const totalOperations = resource.operations.length;
@@ -456,7 +458,7 @@ function ResourceRow({
                   </button>
                 }
               />
-              <TooltipContent className="text-xs">{op.description}</TooltipContent>
+              <TooltipContent className="text-xs">{t(op.description)}</TooltipContent>
             </Tooltip>
           );
         })}
@@ -474,7 +476,7 @@ function ResourceRow({
           <SelectContent>
             {dataScopeChoices.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
+                {t(choice.label)}
               </SelectItem>
             ))}
           </SelectContent>

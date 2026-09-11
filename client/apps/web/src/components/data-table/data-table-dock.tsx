@@ -187,7 +187,7 @@ export function DataTableDock<TData extends RowData>({
                                       style={{ backgroundColor: option.color }}
                                     />
                                   )}
-                                  <span>{option.label}</span>
+                                  <span>{t(option.label)}</span>
                                 </CommandItem>
                               ))}
                             </CommandGroup>

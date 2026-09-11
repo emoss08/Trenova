@@ -182,10 +182,10 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
             }}
           >
             <span className="flex min-w-0 flex-1 flex-col items-start">
-              <span className="w-full truncate">{item.label}</span>
+              <span className="w-full truncate">{translate(item.label)}</span>
               {item.description && (
                 <span className="w-full truncate text-2xs text-muted-foreground">
-                  {item.description}
+                  {translate(item.description)}
                 </span>
               )}
             </span>

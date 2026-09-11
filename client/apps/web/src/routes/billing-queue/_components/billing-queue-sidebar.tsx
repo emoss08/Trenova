@@ -268,7 +268,7 @@ export function BillingQueueSidebar({
                         <SelectItem value="all">{t("All Statuses")}</SelectItem>
                         {billingQueueStatusChoices.map((choice) => (
                           <SelectItem key={choice.value} value={choice.value}>
-                            {choice.label}
+                            {t(choice.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -292,7 +292,7 @@ export function BillingQueueSidebar({
                         <SelectItem value="all">{t("All Bill Types")}</SelectItem>
                         {billTypeChoices.map((choice) => (
                           <SelectItem key={choice.value} value={choice.value}>
-                            {choice.label}
+                            {t(choice.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>

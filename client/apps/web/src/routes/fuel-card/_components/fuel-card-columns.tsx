@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fuelCardProviderChoices, fuelCardStatusChoices } from "@/lib/choices";
@@ -32,7 +33,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     {
       accessorKey: "label",
       header: "Label",
-      cell: ({ row }) => <span className="font-medium">{row.original.label}</span>,
+      cell: ({ row }) => <span className="font-medium">{translate(row.original.label)}</span>,
       meta: {
         apiField: "label",
         filterable: true,

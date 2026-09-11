@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
@@ -11,8 +12,10 @@ const moveStatusVariants: Record<string, { label: string; variant: BadgeVariant 
 };
 
 export function LoadStatusBadge({ status }: { status: string }) {
+  const t = useT();
+
   const entry = moveStatusVariants[status] ?? { label: status, variant: "secondary" };
-  return <Badge variant={entry.variant}>{entry.label}</Badge>;
+  return <Badge variant={entry.variant}>{t(entry.label)}</Badge>;
 }
 
 const disputeStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
@@ -24,8 +27,10 @@ const disputeStatusVariants: Record<string, { label: string; variant: BadgeVaria
 };
 
 export function DisputeStatusBadge({ status }: { status: string }) {
+  const t = useT();
+
   const entry = disputeStatusVariants[status] ?? { label: status, variant: "secondary" };
-  return <Badge variant={entry.variant}>{entry.label}</Badge>;
+  return <Badge variant={entry.variant}>{t(entry.label)}</Badge>;
 }
 
 export const disputeCategoryLabels: Record<string, string> = {
@@ -44,8 +49,10 @@ const ptoStatusVariants: Record<string, { label: string; variant: BadgeVariant }
 };
 
 export function PtoStatusBadge({ status }: { status: string }) {
+  const t = useT();
+
   const entry = ptoStatusVariants[status] ?? { label: status, variant: "secondary" };
-  return <Badge variant={entry.variant}>{entry.label}</Badge>;
+  return <Badge variant={entry.variant}>{t(entry.label)}</Badge>;
 }
 
 export const ptoTypeLabels: Record<string, string> = {
@@ -67,6 +74,8 @@ const expenseStatusVariants: Record<string, { label: string; variant: BadgeVaria
 };
 
 export function ExpenseStatusBadge({ status }: { status: string }) {
+  const t = useT();
+
   const entry = expenseStatusVariants[status] ?? { label: status, variant: "secondary" };
-  return <Badge variant={entry.variant}>{entry.label}</Badge>;
+  return <Badge variant={entry.variant}>{t(entry.label)}</Badge>;
 }

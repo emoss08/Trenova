@@ -161,7 +161,7 @@ function VersionList({
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{t("Version {0}", v.versionNumber)}</span>
-                  {v.label && <span className="text-muted-foreground text-xs">{v.label}</span>}
+                  {v.label && <span className="text-muted-foreground text-xs">{t(v.label)}</span>}
                 </div>
                 <div className="text-muted-foreground flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1">

@@ -22,7 +22,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.description && (
               <p className="text-2xs text-muted-foreground line-clamp-1">
-                {row.original.description}
+                {translate(row.original.description)}
               </p>
             )}
           </div>

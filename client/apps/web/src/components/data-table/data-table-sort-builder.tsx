@@ -303,7 +303,7 @@ function SortableSortRow({
         <SelectContent>
           {availableForThis.map((col) => (
             <SelectItem key={col.apiField} value={col.apiField}>
-              {col.label}
+              {t(col.label)}
             </SelectItem>
           ))}
         </SelectContent>

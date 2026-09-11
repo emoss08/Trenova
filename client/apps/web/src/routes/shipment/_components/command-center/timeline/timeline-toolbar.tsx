@@ -161,7 +161,7 @@ export function TimelineToolbar({
                 : "bg-background text-muted-foreground hover:text-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
@@ -188,7 +188,7 @@ export function TimelineToolbar({
             >
               {SORT_OPTIONS.map((option) => (
                 <DropdownMenuRadioItem key={option.id} value={option.id}>
-                  {option.label}
+                  {t(option.label)}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -245,7 +245,7 @@ export function TimelineToolbar({
               className="text-muted-foreground inline-flex items-center gap-1 text-[10px]"
             >
               <span className={cn("size-1.5 rounded-full", item.dotClass)} />
-              {item.label}
+              {t(item.label)}
             </span>
           ))}
         </div>

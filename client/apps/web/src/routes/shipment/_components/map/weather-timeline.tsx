@@ -185,7 +185,7 @@ export function WeatherTimeline({
               }
             >
               <activeOption.icon className="fill-foreground text-foreground size-4" />
-              <span>{activeOption.label}</span>
+              <span>{t(activeOption.label)}</span>
               <ChevronDownIcon className="text-muted-foreground size-3" />
             </PopoverTrigger>
             <PopoverContent
@@ -203,8 +203,8 @@ export function WeatherTimeline({
                 >
                   <opt.icon className="fill-foreground text-foreground mt-px size-4 shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">{opt.label}</div>
-                    <div className="text-2xs text-muted-foreground">{opt.description}</div>
+                    <div className="text-sm font-medium">{t(opt.label)}</div>
+                    <div className="text-2xs text-muted-foreground">{t(opt.description)}</div>
                   </div>
                 </button>
               ))}
@@ -293,7 +293,7 @@ export function WeatherTimeline({
                         : "translateX(-50%)",
                 }}
               >
-                {tick.label}
+                {t(tick.label)}
               </span>
             ))}
           </div>

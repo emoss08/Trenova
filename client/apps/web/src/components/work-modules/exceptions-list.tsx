@@ -158,7 +158,7 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-[11px] font-semibold">{it.title}</span>
+                <span className="truncate text-[11px] font-semibold">{t(it.title)}</span>
                 <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
                   {it.time}
                 </span>

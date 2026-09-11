@@ -143,7 +143,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
               <div className="mt-1 flex items-center gap-1.5">
                 <CarrierCostEventStatusBadge status={event.status as CarrierCostEventStatus} />
                 <span className="text-muted-foreground truncate text-[10px]">
-                  {event.description}
+                  {t(event.description)}
                 </span>
               </div>
             </li>

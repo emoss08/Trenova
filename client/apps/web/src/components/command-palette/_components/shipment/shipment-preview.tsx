@@ -128,7 +128,7 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {details.map((d) => (
                 <div key={d.label} className="flex flex-col">
-                  <span className="text-2xs text-muted-foreground">{d.label}</span>
+                  <span className="text-2xs text-muted-foreground">{t(d.label)}</span>
                   <span className="text-xs font-medium">{d.value}</span>
                 </div>
               ))}
@@ -168,7 +168,7 @@ function MoveCard({ move }: { move: ShipmentMove }) {
           )}
         </div>
         <Badge variant={config.variant} className="text-2xs">
-          {config.label}
+          {t(config.label)}
         </Badge>
       </div>
       <div className="relative flex flex-col">

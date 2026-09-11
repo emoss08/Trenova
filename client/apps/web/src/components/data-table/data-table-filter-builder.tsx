@@ -470,6 +470,8 @@ function FilterRow({
   onRemove,
   isNested = false,
 }: FilterRowProps) {
+  const t = useT();
+
   const operators = getOperatorsForVariant(filter.filterType);
   const needsValue = operatorRequiresValue(filter.operator);
 
@@ -501,13 +503,13 @@ function FilterRow({
 
       <Select value={filter.field} onValueChange={(val) => onFieldChange(filter.id, val ?? "")}>
         <SelectTrigger className="w-28">
-          <SelectValue>{filter.label}</SelectValue>
+          <SelectValue>{t(filter.label)}</SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
             {columns.map((col) => (
               <SelectItem key={col.id} value={col.id}>
-                {col.label}
+                {t(col.label)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -586,7 +588,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
             <SelectGroup>
               {filterOptions.map((option) => (
                 <SelectItem key={String(option.value)} value={option.value as string}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -604,7 +606,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
           <SelectGroup>
             {filterOptions.map((option) => (
               <SelectItem key={String(option.value)} value={option.value as string}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectGroup>

@@ -113,7 +113,7 @@ function EnumMultiSelect({
                   )
                 }
               />
-              {choice.label}
+              {t(choice.label)}
             </label>
           ))}
         </div>
@@ -236,7 +236,7 @@ export function FilterValueEditor({
         <SelectContent>
           {field.enumValues.map((enumValue) => (
             <SelectItem key={enumValue.value} value={enumValue.value}>
-              {enumValue.label}
+              {t(enumValue.label)}
             </SelectItem>
           ))}
         </SelectContent>

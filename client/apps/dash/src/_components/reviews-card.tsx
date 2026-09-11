@@ -88,7 +88,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
     <li data-testid={`dash-review-${review.id}`} className="rounded-xl border border-border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium">{review.title}</p>
+          <p className="text-sm font-medium">{t(review.title)}</p>
           <p className="text-[11px] text-muted-foreground">
             {formatUnixDate(review.periodStart)} – {formatUnixDate(review.periodEnd)}
             {review.reviewer?.name ? ` · ${review.reviewer.name}` : ""}
@@ -109,7 +109,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
       <ul className="mt-2 flex flex-col gap-1">
         {review.ratings.map((rating) => (
           <li key={rating.key} className="flex items-center gap-2 text-xs">
-            <span className="min-w-32 truncate">{rating.label}</span>
+            <span className="min-w-32 truncate">{t(rating.label)}</span>
             <span className="flex items-center gap-0.5" aria-hidden>
               {[1, 2, 3, 4, 5].map((mark) => (
                 <span
@@ -135,7 +135,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
           {review.goals.map((goal) => (
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="size-3.5 text-muted-foreground" />
-              <span>{goal.title}</span>
+              <span>{t(goal.title)}</span>
               <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>

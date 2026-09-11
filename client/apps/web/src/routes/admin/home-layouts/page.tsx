@@ -167,7 +167,7 @@ function PresetRow({
         </div>
 
         {preset.description && (
-          <p className="text-2xs text-muted-foreground truncate">{preset.description}</p>
+          <p className="text-2xs text-muted-foreground truncate">{t(preset.description)}</p>
         )}
 
         <p className="text-2xs text-muted-foreground">

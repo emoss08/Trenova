@@ -136,7 +136,7 @@ export function OrgAside({
               {shown.map((position) => (
                 <li key={position.id} className="flex items-center justify-between gap-2 px-3 py-2">
                   <span className="flex min-w-0 flex-col leading-tight">
-                    <span className="truncate text-xs font-medium">{position.title}</span>
+                    <span className="truncate text-xs font-medium">{t(position.title)}</span>
                     <span className="text-muted-foreground text-2xs">
                       {position.code} · {jobDepartmentLabel(position.department)}
                     </span>

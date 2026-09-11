@@ -98,7 +98,7 @@ export function DocumentsBlock({
         ) : (
           docRows.map((row) => (
             <div key={row.id} className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground truncate">{row.label}</span>
+              <span className="text-muted-foreground truncate">{t(row.label)}</span>
               {row.matchedDocumentCount > 0 ? (
                 <span className="font-table text-success max-w-32 truncate text-right text-[10.5px] tabular-nums">
                   {getUploadedCountLabel(row.matchedDocumentCount)}

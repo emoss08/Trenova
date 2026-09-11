@@ -57,7 +57,7 @@ function CannedReportCard({
             </span>
           </div>
           <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
-            {report.description}
+            {t(report.description)}
           </p>
         </div>
       </div>

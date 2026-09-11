@@ -105,7 +105,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
                 <dt className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground text-[11px]">{field.label}</span>
+                  <span className="text-muted-foreground text-[11px]">{t(field.label)}</span>
                   {field.type ? (
                     <span className="bg-muted text-muted-foreground rounded px-1 py-px text-[9.5px] font-medium">
                       {field.type}

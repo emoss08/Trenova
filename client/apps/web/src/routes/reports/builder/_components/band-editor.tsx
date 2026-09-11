@@ -100,7 +100,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
           <SelectContent>
             {MODE_CHOICES.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
+                {t(choice.label)}
               </SelectItem>
             ))}
           </SelectContent>

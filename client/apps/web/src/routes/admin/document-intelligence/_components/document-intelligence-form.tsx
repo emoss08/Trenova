@@ -284,8 +284,8 @@ function ShipmentDraftCard() {
                     className="mt-0.5"
                   />
                   <div className="grid gap-1">
-                    <Label>{option.label}</Label>
-                    <p className="text-2xs text-muted-foreground">{option.description}</p>
+                    <Label>{t(option.label)}</Label>
+                    <p className="text-2xs text-muted-foreground">{t(option.description)}</p>
                   </div>
                 </div>
               );

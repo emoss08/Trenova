@@ -183,7 +183,7 @@ function SectionsEditor({
                       )
                     }
                   />
-                  <span className="truncate text-xs font-medium">{definition.label}</span>
+                  <span className="truncate text-xs font-medium">{t(definition.label)}</span>
                   {!definition.hideable && (
                     <span className="text-2xs text-muted-foreground/70">{t("Always visible")}</span>
                   )}

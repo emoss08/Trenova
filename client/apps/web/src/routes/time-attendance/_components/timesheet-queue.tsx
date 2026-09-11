@@ -346,7 +346,7 @@ function QueueRow({
             <span className="text-muted-foreground tabular-nums">
               {t("Week of {0}", formatShiftDate(sheet.periodStart))}
             </span>
-            <Badge variant={tone.variant}>{tone.label}</Badge>
+            <Badge variant={tone.variant}>{t(tone.label)}</Badge>
           </span>
           <span className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-2">
             {waited !== null ? (
@@ -442,7 +442,7 @@ function TimesheetSheet({
         <SheetHeader className="pr-10">
           <SheetTitle className="flex items-center gap-2">
             {sheet ? sheetWorkerName(sheet) : "Timesheet"}
-            {tone ? <Badge variant={tone.variant}>{tone.label}</Badge> : null}
+            {tone ? <Badge variant={tone.variant}>{t(tone.label)}</Badge> : null}
           </SheetTitle>
           <SheetDescription>
             {sheet

@@ -1,0 +1,79 @@
+{
+  "$comment": [
+    "Freight and TMS terms that must be translated the same way everywhere.",
+    "This is the one file in i18n/ a human may want to edit: catalogs are generated, but",
+    "terminology is a judgement call. zh-TW is Taiwan usage, not a character conversion of",
+    "zh-CN — the two differ in vocabulary (資訊/信息, 網路/网络), not only in script.",
+    "es targets Latin American Spanish, since that is where US cross-border freight runs."
+  ],
+
+  "documents": {
+    "Bill of Lading": { "es": "Conocimiento de embarque", "zh-TW": "提單", "zh-CN": "提单" },
+    "BOL": { "es": "BOL", "zh-TW": "提單", "zh-CN": "提单" },
+    "Proof of Delivery": { "es": "Comprobante de entrega", "zh-TW": "送達證明", "zh-CN": "送达证明" },
+    "POD": { "es": "POD", "zh-TW": "送達證明", "zh-CN": "送达证明" },
+    "Rate Confirmation": { "es": "Confirmación de tarifa", "zh-TW": "運價確認書", "zh-CN": "运价确认书" },
+    "Invoice": { "es": "Factura", "zh-TW": "發票", "zh-CN": "发票" },
+    "Settlement": { "es": "Liquidación", "zh-TW": "結算", "zh-CN": "结算" }
+  },
+
+  "operations": {
+    "Shipment": { "es": "Envío", "zh-TW": "運單", "zh-CN": "运单" },
+    "Load": { "es": "Carga", "zh-TW": "貨載", "zh-CN": "货载" },
+    "Move": { "es": "Tramo", "zh-TW": "運程", "zh-CN": "运程" },
+    "Stop": { "es": "Parada", "zh-TW": "停靠點", "zh-CN": "停靠点" },
+    "Dispatch": { "es": "Despacho", "zh-TW": "調度", "zh-CN": "调度" },
+    "Deadhead": { "es": "Recorrido en vacío", "zh-TW": "空駛", "zh-CN": "空驶" },
+    "Detention": { "es": "Demoras", "zh-TW": "滯留費", "zh-CN": "滞留费" },
+    "Dwell": { "es": "Tiempo de permanencia", "zh-TW": "停留時間", "zh-CN": "停留时间" },
+    "Tender": { "es": "Oferta de carga", "zh-TW": "派車要約", "zh-CN": "派车要约" },
+    "Accessorial": { "es": "Cargo accesorio", "zh-TW": "附加費", "zh-CN": "附加费" },
+    "Lane": { "es": "Ruta", "zh-TW": "路線", "zh-CN": "路线" },
+    "LTL": { "es": "LTL (carga parcial)", "zh-TW": "零擔運輸", "zh-CN": "零担运输" },
+    "FTL": { "es": "FTL (carga completa)", "zh-TW": "整車運輸", "zh-CN": "整车运输" }
+  },
+
+  "equipment": {
+    "Tractor": { "es": "Tractocamión", "zh-TW": "牽引車", "zh-CN": "牵引车" },
+    "Trailer": { "es": "Remolque", "zh-TW": "拖車", "zh-CN": "挂车" },
+    "Equipment Type": { "es": "Tipo de equipo", "zh-TW": "設備類型", "zh-CN": "设备类型" },
+    "Odometer": { "es": "Odómetro", "zh-TW": "里程表", "zh-CN": "里程表" }
+  },
+
+  "people": {
+    "Worker": { "es": "Trabajador", "zh-TW": "駕駛員", "zh-CN": "司机" },
+    "Driver": { "es": "Conductor", "zh-TW": "駕駛員", "zh-CN": "司机" },
+    "Carrier": { "es": "Transportista", "zh-TW": "承運業者", "zh-CN": "承运商" },
+    "Broker": { "es": "Agente de carga", "zh-TW": "貨運經紀", "zh-CN": "货运经纪" },
+    "Shipper": { "es": "Remitente", "zh-TW": "托運人", "zh-CN": "托运人" },
+    "Consignee": { "es": "Destinatario", "zh-TW": "收貨人", "zh-CN": "收货人" },
+    "Customer": { "es": "Cliente", "zh-TW": "客戶", "zh-CN": "客户" }
+  },
+
+  "compliance": {
+    "Hazmat": { "es": "Materiales peligrosos", "zh-TW": "危險品", "zh-CN": "危险品" },
+    "Hours of Service": { "es": "Horas de servicio", "zh-TW": "工時規定", "zh-CN": "工时规定" },
+    "HOS": { "es": "HOS", "zh-TW": "工時規定", "zh-CN": "工时规定" },
+    "IFTA": { "es": "IFTA", "zh-TW": "IFTA", "zh-CN": "IFTA" },
+    "DOT Number": { "es": "Número DOT", "zh-TW": "DOT 編號", "zh-CN": "DOT 编号" },
+    "Endorsement": { "es": "Endoso", "zh-TW": "駕照註記", "zh-CN": "驾照签注" }
+  },
+
+  "ui": {
+    "Save": { "es": "Guardar", "zh-TW": "儲存", "zh-CN": "保存" },
+    "Cancel": { "es": "Cancelar", "zh-TW": "取消", "zh-CN": "取消" },
+    "Delete": { "es": "Eliminar", "zh-TW": "刪除", "zh-CN": "删除" },
+    "Edit": { "es": "Editar", "zh-TW": "編輯", "zh-CN": "编辑" },
+    "Create": { "es": "Crear", "zh-TW": "建立", "zh-CN": "创建" },
+    "Search": { "es": "Buscar", "zh-TW": "搜尋", "zh-CN": "搜索" },
+    "Settings": { "es": "Configuración", "zh-TW": "設定", "zh-CN": "设置" },
+    "Status": { "es": "Estado", "zh-TW": "狀態", "zh-CN": "状态" },
+    "Required": { "es": "Obligatorio", "zh-TW": "必填", "zh-CN": "必填项" }
+  },
+
+  "notes": {
+    "zh-TW vs zh-CN": "Taiwan uses 資訊/網路/程式/設定/儲存/搜尋/建立; the mainland uses 信息/网络/程序/设置/保存/搜索/创建. Never produce zh-TW by converting zh-CN characters.",
+    "Worker vs Driver": "Trenova's domain entity is Worker, which covers drivers and non-driving staff. In zh both render as 駕駛員/司机 only where the context is actually driving; otherwise use 員工/员工.",
+    "Tone": "Spanish uses usted-implied impersonal forms, not tú. Chinese uses plain declarative forms without 請 except in confirmations."
+  }
+}

@@ -748,7 +748,7 @@ function SettlementLines({
                   {lines.map((line) => (
                     <tr key={line.id ?? `${line.lineNumber}`} className="border-b last:border-b-0">
                       <td className="px-3 py-2">
-                        <span className="font-medium">{line.description}</span>
+                        <span className="font-medium">{t(line.description)}</span>
                         {line.proNumber && (
                           <span className="text-muted-foreground ml-2 font-mono">
                             {line.proNumber}
@@ -840,7 +840,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
       <ol className="flex flex-col gap-1">
         {events.map((event) => (
           <li key={event.label} className="flex justify-between text-xs">
-            <span>{event.label}</span>
+            <span>{t(event.label)}</span>
             <span className="text-muted-foreground">{formatDate(event.at)}</span>
           </li>
         ))}

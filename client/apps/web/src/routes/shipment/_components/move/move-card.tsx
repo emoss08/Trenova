@@ -188,7 +188,7 @@ export function MoveCard({
     <div className="bg-card rounded-lg border">
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+          <Badge variant={statusConfig.variant}>{t(statusConfig.label)}</Badge>
           {move?.loaded && <Badge variant="secondary">{t("Loaded")}</Badge>}
           {move?.distance ? (
             <span className="text-muted-foreground text-xs">{t("{0} mi", move.distance)}</span>

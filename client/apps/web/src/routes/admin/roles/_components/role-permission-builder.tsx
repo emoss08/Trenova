@@ -330,7 +330,7 @@ export function RolePermissionBuilder({
               </div>
               <span className="text-xs font-medium">{template.name}</span>
               <span className="text-muted-foreground text-[10px] leading-tight">
-                {template.description}
+                {t(template.description)}
               </span>
             </button>
           ))}
@@ -497,7 +497,7 @@ function ResourceRow({
               )}
             </div>
             {resource.description && (
-              <p className="text-muted-foreground truncate text-xs">{resource.description}</p>
+              <p className="text-muted-foreground truncate text-xs">{t(resource.description)}</p>
             )}
           </div>
           {isGranted && (
@@ -580,7 +580,7 @@ function ResourceRow({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -98,7 +98,7 @@ export function CalculationReceipt({
               )}
             >
               <div className="min-w-0">
-                <p className={cn("text-xs", isFinal && "font-medium")}>{step.label}</p>
+                <p className={cn("text-xs", isFinal && "font-medium")}>{t(step.label)}</p>
                 {step.detail && <p className="text-2xs text-muted-foreground">{step.detail}</p>}
                 {step.term && <p className="text-2xs text-muted-foreground/70">{step.term}</p>}
               </div>

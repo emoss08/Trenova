@@ -42,6 +42,8 @@ export function AttentionWidget({ widget, data }: WidgetProps) {
 }
 
 function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number }) {
+  const t = useT();
+
   const hasWork = count > 0;
 
   return (
@@ -55,7 +57,7 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
           hasWork ? ATTENTION_TONE_DOT_CLASSES[row.tone] : "bg-muted-foreground/40",
         )}
       />
-      <span className="min-w-0 flex-1 truncate text-xs">{row.label}</span>
+      <span className="min-w-0 flex-1 truncate text-xs">{t(row.label)}</span>
       <span
         className={cn(
           "font-table text-[10.5px] tabular-nums",
@@ -343,6 +345,8 @@ export function EDIAttentionWidget({ widget, data }: WidgetProps) {
  * have to invent.
  */
 export function ExpiringCredentialsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const targets = [
     {
       label: "Driver licenses & medical cards",
@@ -361,7 +365,7 @@ export function ExpiringCredentialsWidget({ widget }: WidgetProps) {
             to={target.href}
             className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
           >
-            {target.label}
+            {t(target.label)}
           </Link>
         ))}
       </div>

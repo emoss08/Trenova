@@ -114,7 +114,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
             <SelectContent>
               {HAVING_OPERATORS.map((op) => (
                 <SelectItem key={op.value} value={op.value}>
-                  {op.label}
+                  {t(op.label)}
                 </SelectItem>
               ))}
             </SelectContent>

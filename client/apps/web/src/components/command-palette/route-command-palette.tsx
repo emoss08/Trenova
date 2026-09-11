@@ -301,7 +301,7 @@ export function RouteCommandPalette() {
                 className="bg-muted text-2xs text-foreground hover:bg-muted/80 inline-flex h-5 items-center gap-1 rounded-full border px-2 py-0 font-medium transition-colors"
                 aria-label={`Clear ${activeEntityOption.label} record filter`}
               >
-                <span>{activeEntityOption.label}</span>
+                <span>{t(activeEntityOption.label)}</span>
                 <X className="size-3" />
               </button>
             </div>
@@ -324,7 +324,7 @@ export function RouteCommandPalette() {
                         : "text-foreground hover:bg-muted",
                     )}
                   >
-                    {option.label}
+                    {t(option.label)}
                   </button>
                 ))}
               </div>

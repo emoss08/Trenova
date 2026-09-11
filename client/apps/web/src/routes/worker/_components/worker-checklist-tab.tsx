@@ -240,7 +240,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
               <SelectContent>
                 {startableOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

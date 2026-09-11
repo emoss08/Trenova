@@ -155,7 +155,7 @@ export function ChecklistItemRow({
               status !== "Pending" && status !== "Done" && "line-through",
             )}
           >
-            {item.label}
+            {t(item.label)}
           </span>
           {!item.required ? (
             <span className="text-2xs text-muted-foreground uppercase">{t("Optional")}</span>
@@ -171,7 +171,7 @@ export function ChecklistItemRow({
           {pending && item.overdue ? <Badge variant="inactive">{t("Overdue")}</Badge> : null}
         </div>
         {item.description ? (
-          <p className="text-muted-foreground text-xs">{item.description}</p>
+          <p className="text-muted-foreground text-xs">{t(item.description)}</p>
         ) : null}
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
           <span>{CHECKLIST_ITEM_KIND_LABELS[kind]}</span>

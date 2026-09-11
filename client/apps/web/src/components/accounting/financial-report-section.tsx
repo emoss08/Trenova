@@ -15,7 +15,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
 
   return (
     <div className={cn("space-y-1", className)}>
-      <h3 className="text-sm font-semibold">{section.label}</h3>
+      <h3 className="text-sm font-semibold">{t(section.label)}</h3>
       <div className="overflow-hidden rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground text-left">

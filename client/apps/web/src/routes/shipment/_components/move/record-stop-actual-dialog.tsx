@@ -77,7 +77,7 @@ export function RecordStopActualDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogTitle>{t(copy.title)}</DialogTitle>
           <DialogDescription>
             {stopDescription ? `${stopDescription} — ${copy.description}` : copy.description}
           </DialogDescription>
@@ -109,7 +109,7 @@ export function RecordStopActualDialog({
             loadingText={t("Recording...")}
             onClick={handleConfirm}
           >
-            {copy.title}
+            {t(copy.title)}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -114,7 +114,7 @@ export function DeleteDefinitionDialog({
             ) : (
               <span>
                 {t("Are you sure you want to delete the custom field \"")}
-                <strong>{definition.label}</strong>{t("\"? This action cannot be undone.")}
+                <strong>{t(definition.label)}</strong>{t("\"? This action cannot be undone.")}
               </span>
             )}
           </AlertDialogDescription>

@@ -62,7 +62,7 @@ export function SafetyCard() {
           <ShieldCheckIcon className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">{t("Safety")}</h2>
         </div>
-        <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+        <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
       </div>
 
       <div className="mt-3 flex items-center gap-3">
@@ -107,7 +107,7 @@ export function SafetyCard() {
             <li key={recognition.id} className="flex items-start gap-2">
               <AwardIcon className="mt-0.5 size-4 shrink-0 text-amber-500" />
               <div className="min-w-0">
-                <p className="text-sm font-medium">{recognition.title}</p>
+                <p className="text-sm font-medium">{t(recognition.title)}</p>
                 {recognition.message ? (
                   <p className="text-xs text-muted-foreground">{recognition.message}</p>
                 ) : null}

@@ -33,11 +33,11 @@ export function OshaEmptyLog({ title, description, action, className }: OshaEmpt
         action ? (
           "to" in action ? (
             <Button variant="outline" size="sm" render={<Link to={action.to} />}>
-              {action.label}
+              {t(action.label)}
             </Button>
           ) : (
             <Button variant="outline" size="sm" onClick={action.onClick}>
-              {action.label}
+              {t(action.label)}
             </Button>
           )
         ) : null

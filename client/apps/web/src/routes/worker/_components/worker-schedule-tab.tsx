@@ -219,7 +219,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                   <span className="flex items-center gap-2">
                     <span className="w-24 font-medium">{label}</span>
                     {tone ? (
-                      <Badge variant={tone.variant}>{tone.label}</Badge>
+                      <Badge variant={tone.variant}>{t(tone.label)}</Badge>
                     ) : (
                       <span className="text-muted-foreground">{t("Nothing said")}</span>
                     )}
@@ -269,7 +269,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                         {formatShiftDate(swap.shiftDate)}
                       </span>
                     </span>
-                    <Badge variant={tone.variant}>{tone.label}</Badge>
+                    <Badge variant={tone.variant}>{t(tone.label)}</Badge>
                   </li>
                 );
               })}

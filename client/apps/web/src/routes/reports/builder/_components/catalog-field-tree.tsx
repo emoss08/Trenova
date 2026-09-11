@@ -42,6 +42,8 @@ function FieldRow({
   onSelect: () => void;
   disabled: boolean;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -57,7 +59,7 @@ function FieldRow({
     >
       <span className="flex min-w-0 items-center gap-1.5">
         {!field.accessible && <LockIcon className="size-3 shrink-0" />}
-        <span className="truncate">{field.label}</span>
+        <span className="truncate">{t(field.label)}</span>
       </span>
       <span className="flex shrink-0 items-center gap-1">
         <Badge
@@ -93,6 +95,8 @@ function EntityFields({
   filterFields?: (field: ReportCatalogField, crossesToMany: boolean) => boolean;
   depth: number;
 }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const visibleFields = entity.fields.filter((field) => {
@@ -146,7 +150,7 @@ function EntityFields({
               ) : (
                 <ChevronRightIcon className="size-3.5 shrink-0" />
               )}
-              <span className="truncate">{edge.label}</span>
+              <span className="truncate">{t(edge.label)}</span>
               {edge.cardinality !== "one" && (
                 <Badge variant="outline" className="text-[10px]">
                   many

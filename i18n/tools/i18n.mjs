@@ -445,7 +445,8 @@ switch (command) {
       process.exit(1);
     }
     const write = process.argv.includes("--write");
-    const result = await runCodemod(repoRoot, target, { dryRun: !write });
+    const labels = process.argv.includes("--labels");
+    const result = await runCodemod(repoRoot, target, { dryRun: !write, labels });
     console.log(
       `i18n: ${write ? "rewrote" : "would rewrite"} ${result.changedFiles}/${result.files} files, ` +
         `${result.replacements} literals wrapped`,

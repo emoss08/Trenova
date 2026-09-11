@@ -116,7 +116,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
             ? ` by ${`${dispute.worker.firstName} ${dispute.worker.lastName}`.trim()}`
             : "")}
         </p>
-        <p className="mt-3 text-sm whitespace-pre-wrap">{dispute.description}</p>
+        <p className="mt-3 text-sm whitespace-pre-wrap">{t(dispute.description)}</p>
       </div>
 
       {dispute.settlement ? (
@@ -141,7 +141,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
               <Separator className="my-2" />
               <p className="text-muted-foreground text-xs font-medium uppercase">{t("Disputed line")}</p>
               <div className="mt-1 flex items-center justify-between text-sm">
-                <span>{dispute.settlementLine.description}</span>
+                <span>{t(dispute.settlementLine.description)}</span>
                 <AmountDisplay value={dispute.settlementLine.amountMinor} />
               </div>
             </>

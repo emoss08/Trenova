@@ -248,7 +248,7 @@ function MappingSourceInput({
         renderOption={(option) => (
           <div className="flex size-full flex-col items-start">
             <span className="w-full truncate font-medium">{option.code}</span>
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.label}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{t(option.label)}</span>
           </div>
         )}
       />

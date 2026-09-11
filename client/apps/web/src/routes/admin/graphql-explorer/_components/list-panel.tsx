@@ -303,7 +303,7 @@ export function ListPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {option.label}
+              {t(option.label)}
               <span
                 className={cn(
                   "text-2xs tabular-nums",
@@ -347,7 +347,7 @@ export function ListPanel({
                   {item.type === "header" ? (
                     <div className="flex h-full items-end px-2 pb-1">
                       <span className="text-2xs text-muted-foreground/60 font-medium tracking-wider uppercase">
-                        {item.label} · {item.count}
+                        {t(item.label)} · {item.count}
                       </span>
                     </div>
                   ) : item.type === "operation" ? (

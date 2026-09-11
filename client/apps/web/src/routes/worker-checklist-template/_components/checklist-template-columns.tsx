@@ -68,7 +68,7 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
           <span>{row.original.name}</span>
           {row.original.description ? (
             <span className="text-muted-foreground max-w-md truncate text-xs">
-              {row.original.description}
+              {translate(row.original.description)}
             </span>
           ) : null}
         </div>

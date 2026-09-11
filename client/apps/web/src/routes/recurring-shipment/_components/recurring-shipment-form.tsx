@@ -162,9 +162,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               groups={timezoneGroupedChoices}
               renderOption={(option) => (
                 <span className="flex w-full items-center justify-between gap-3">
-                  <span>{option.label}</span>
+                  <span>{t(option.label)}</span>
                   {option.description && (
-                    <span className="text-muted-foreground text-xs">{option.description}</span>
+                    <span className="text-muted-foreground text-xs">{t(option.description)}</span>
                   )}
                 </span>
               )}

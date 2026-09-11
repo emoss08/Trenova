@@ -297,10 +297,10 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                     // isReadOnly={isDisabled}
                     renderOption={(option) => (
                       <span className="flex w-full items-center justify-between gap-3">
-                        <span>{option.label}</span>
+                        <span>{t(option.label)}</span>
                         {option.description && (
                           <span className="text-muted-foreground text-xs">
-                            {option.description}
+                            {t(option.description)}
                           </span>
                         )}
                       </span>

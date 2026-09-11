@@ -83,7 +83,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
               <SelectContent>
                 {REPORT_RULE_OP_CHOICES.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -125,7 +125,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
                   <SelectItem key={choice.value} value={choice.value}>
                     <span className="flex items-center gap-2">
                       <span className={cn("size-2 rounded-full", TONE_SWATCH[choice.value])} />
-                      {choice.label}
+                      {t(choice.label)}
                     </span>
                   </SelectItem>
                 ))}

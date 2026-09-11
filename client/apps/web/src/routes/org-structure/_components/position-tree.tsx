@@ -373,7 +373,7 @@ function TreeRow({
         ) : null}
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="truncate text-sm font-medium">{position.title}</span>
+            <span className="truncate text-sm font-medium">{t(position.title)}</span>
             <span className="text-muted-foreground text-xs tabular-nums">{position.code}</span>
             {position.isDrivingPosition ? <Badge variant="info">{t("Driving")}</Badge> : null}
             {position.flsaExempt ? <Badge variant="secondary">{t("Exempt")}</Badge> : null}

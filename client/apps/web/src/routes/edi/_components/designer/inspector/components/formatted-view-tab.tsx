@@ -69,7 +69,7 @@ export default function FormattedViewTab({
                         {segment.segmentId}
                         {String(element.position).padStart(2, "0")}
                       </span>
-                      <span className="truncate">{element.label}</span>
+                      <span className="truncate">{t(element.label)}</span>
                       <span className="font-mono wrap-break-word">
                         {element.empty ? (
                           <span className="text-muted-foreground">{t("[empty]")}</span>

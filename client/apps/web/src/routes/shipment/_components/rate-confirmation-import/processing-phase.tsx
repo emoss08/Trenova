@@ -233,7 +233,7 @@ export function ProcessingPhase({
                           step.state === "error" && "text-destructive",
                         )}
                       >
-                        {step.label}
+                        {t(step.label)}
                       </span>
                     </div>
                   </m.div>

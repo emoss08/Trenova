@@ -131,7 +131,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
                     />
                   </span>
                 </div>
-                <p className="text-muted-foreground mt-1">{injury.description}</p>
+                <p className="text-muted-foreground mt-1">{t(injury.description)}</p>
                 <p className="text-muted-foreground mt-1">
                   {illnessTypeLabel(injury.illnessType)}
                   {injury.bodyPart ? ` · ${injury.bodyPart}` : ""}

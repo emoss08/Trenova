@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -24,8 +25,10 @@ export const disputeCategoryLabels: Record<string, string> = {
 };
 
 export function SettlementDisputeStatusBadge({ status }: { status: string }) {
+  const t = useT();
+
   const meta = disputeStatusMeta[status] ?? { label: status, variant: "secondary" as const };
-  return <Badge variant={meta.variant}>{meta.label}</Badge>;
+  return <Badge variant={meta.variant}>{t(meta.label)}</Badge>;
 }
 
 function formatDate(unix: number): string {
@@ -92,7 +95,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
       header: "Description",
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 max-w-96 text-xs">
-          {row.original.description}
+          {translate(row.original.description)}
         </span>
       ),
       size: 320,

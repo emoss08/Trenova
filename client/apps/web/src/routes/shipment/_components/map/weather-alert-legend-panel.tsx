@@ -65,7 +65,7 @@ export function WeatherAlertLegendPanel({
                       className="inline-block size-3 shrink-0 rounded-sm"
                       style={{ backgroundColor: config.stroke }}
                     />
-                    <span className="text-foreground text-xs">{config.label}</span>
+                    <span className="text-foreground text-xs">{t(config.label)}</span>
                   </div>
                   <span className="text-2xs text-muted-foreground tabular-nums">{count}</span>
                 </div>

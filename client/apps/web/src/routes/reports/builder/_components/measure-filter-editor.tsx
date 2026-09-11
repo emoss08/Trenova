@@ -104,7 +104,7 @@ function ScopedFieldPicker({
                       })
                     }
                   >
-                    <span className="truncate">{field.label}</span>
+                    <span className="truncate">{t(field.label)}</span>
                   </button>
                 ))}
             </div>
@@ -223,7 +223,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
                 <SelectContent>
                   {operators.map((op) => (
                     <SelectItem key={op.value} value={op.value}>
-                      {op.label}
+                      {t(op.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>

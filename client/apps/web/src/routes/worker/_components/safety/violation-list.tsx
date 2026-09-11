@@ -91,7 +91,7 @@ export function ViolationList({
                     {violation.code}
                   </span>
                 ) : null}
-                <span className="truncate">{violation.description}</span>
+                <span className="truncate">{t(violation.description)}</span>
                 {violation.outOfService ? <Badge variant="inactive">{t("OOS")}</Badge> : null}
               </span>
               <span className="flex shrink-0 items-center gap-1">

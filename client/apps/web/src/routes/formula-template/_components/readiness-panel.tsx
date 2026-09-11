@@ -19,12 +19,14 @@ const STATUS_STYLES: Record<
 };
 
 function CheckRow({ check }: { check: ReadinessCheck }) {
+  const t = useT();
+
   const { icon: Icon, className } = STATUS_STYLES[check.status];
   return (
     <li className="flex items-start gap-2 px-3 py-1.5 text-xs">
       <Icon className={cn("mt-0.5 size-3.5 shrink-0", className)} aria-hidden />
       <div className="min-w-0">
-        <span className="font-medium">{check.label}</span>
+        <span className="font-medium">{t(check.label)}</span>
         {check.detail && (
           <span
             className={cn("text-muted-foreground", check.status === "fail" && "text-destructive")}

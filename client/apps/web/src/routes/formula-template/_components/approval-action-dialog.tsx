@@ -184,10 +184,10 @@ export function ApprovalActionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
-            {config.title}
+            {t(config.title)}
             {template?.name && <span className="text-muted-foreground">— {template.name}</span>}
           </DialogTitle>
-          <DialogDescription>{config.description}</DialogDescription>
+          <DialogDescription>{t(config.description)}</DialogDescription>
         </DialogHeader>
 
         {gated && open && template?.id && (

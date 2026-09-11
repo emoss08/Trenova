@@ -66,7 +66,7 @@ export function SortLimitPanel({
               <SelectContent>
                 {choices.map((choice) => (
                   <SelectItem key={choice.id} value={choice.id}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -217,7 +217,7 @@ export function ExploreView({
                         checked={!hidden.has(column.id)}
                         onCheckedChange={(checked) => toggleColumn(column.id, Boolean(checked))}
                       />
-                      <span className="truncate">{column.label}</span>
+                      <span className="truncate">{t(column.label)}</span>
                     </label>
                   ))}
                 </div>

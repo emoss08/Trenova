@@ -180,7 +180,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                 health.tone === "success" && "animate-pulse",
               )}
             />
-            {health.label}
+            {t(health.label)}
           </span>
         )}
       </div>

@@ -51,7 +51,7 @@ export function SafetyScorecardCard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold">{t("Safety")}</h3>
-          <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+          <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
           <InfoPopover title={t("Safety score")}>
             <p>
               {t("The score starts at 100 and loses 5 for each active point, 10 for each preventable accident, 15 for each out-of-service order and 5 for each disciplinary action still active. Event counts cover the last twelve months.")}

@@ -135,6 +135,8 @@ type RoleAssignmentRowProps = {
 };
 
 function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmentRowProps) {
+  const t = useT();
+
   const role = assignment.role;
 
   const expiresText = assignment.expiresAt
@@ -155,7 +157,7 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
         <div className="flex-1">
           <p className="text-sm font-medium">{role?.name ?? "Unknown Role"}</p>
           {role?.description && (
-            <p className="text-muted-foreground mt-1 text-xs">{role.description}</p>
+            <p className="text-muted-foreground mt-1 text-xs">{t(role.description)}</p>
           )}
           <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs">
             <span>{assignedText}</span>

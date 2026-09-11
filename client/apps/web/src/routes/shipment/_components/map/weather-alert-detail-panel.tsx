@@ -130,7 +130,7 @@ export function WeatherAlertDetailPanel({
             {props.description && (
               <>
                 <div className="px-3 py-2">
-                  <p className="text-foreground text-xs leading-relaxed">{props.description}</p>
+                  <p className="text-foreground text-xs leading-relaxed">{t(props.description)}</p>
                 </div>
                 <Separator className="mx-3" />
               </>
