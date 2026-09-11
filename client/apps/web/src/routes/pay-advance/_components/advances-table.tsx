@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -25,6 +26,8 @@ import { getColumns } from "./advance-columns";
 import { AdvancePanel } from "./advance-panel";
 
 export default function AdvancesTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const [writeOffRows, setWriteOffRows] = useState<PayAdvanceRow[]>([]);
@@ -36,12 +39,12 @@ export default function AdvancesTable() {
       (row) => row.status === "Outstanding" || row.status === "PartiallyRecovered",
     );
     if (eligible.length === 0) {
-      toast.info("Only outstanding or partially recovered advances can be written off.");
+      toast.info(t("Only outstanding or partially recovered advances can be written off."));
       return;
     }
     setWriteOffRows(eligible);
     setReason("");
-  }, []);
+  }, [t]);
 
   const confirmWriteOff = useCallback(async () => {
     setPending(true);
@@ -88,28 +91,27 @@ export default function AdvancesTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Write off {writeOffRows.length} advance{writeOffRows.length === 1 ? "" : "s"}
+              {t("Write off {0} advance{1}", writeOffRows.length, writeOffRows.length === 1 ? "" : "s")}
             </DialogTitle>
             <DialogDescription>
-              Forgives each advance&apos;s remaining balance — nothing more is recovered from
-              settlements. This cannot be undone, and the reason is recorded on every advance.
+              {t("Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="e.g. Driver terminated — balance uncollectible"
+            placeholder={t("e.g. Driver terminated — balance uncollectible")}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setWriteOffRows([])}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               variant="destructive"
               disabled={reason.trim() === "" || pending}
               onClick={() => void confirmWriteOff()}
             >
-              Write Off
+              {t("Write Off")}
             </Button>
           </DialogFooter>
         </DialogContent>
