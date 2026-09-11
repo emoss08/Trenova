@@ -151,15 +151,18 @@ func TestFormatPluralWithSurroundingText(t *testing.T) {
 func TestTranslateFallsBackToSource(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Email is required", Translate(ES, "Email is required"))
-	assert.Equal(t, "Email is required", Translate(EN, "Email is required"))
+	const untranslated = "A message no catalog will ever carry"
+
+	assert.Equal(t, untranslated, Translate(ES, untranslated))
+	assert.Equal(t, untranslated, Translate(EN, untranslated))
 	assert.Equal(t, "", Translate(ES, ""))
 }
 
 func TestTranslateFormatsFallback(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, `Delete "Route 9"?`, Translate(ZhTW, `Delete "{0}"?`, "Route 9"),
+	assert.Equal(t, `Discard "Route 9" without saving?`,
+		Translate(ZhTW, `Discard "{0}" without saving?`, "Route 9"),
 		"an untranslated message must still interpolate its arguments")
 }
 
