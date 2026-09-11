@@ -4,6 +4,7 @@ import {
   CancelOrderDocument,
   CloseOrderDocument,
   CreateInvoiceFromOrderDocument,
+  CreateInvoiceFromShipmentsDocument,
   CreateOrderDocument,
   DetachOrderShipmentDocument,
   OrderDetailDocument,
@@ -15,6 +16,7 @@ import {
   type CancelOrderMutation,
   type CloseOrderMutation,
   type CreateInvoiceFromOrderMutation,
+  type CreateInvoiceFromShipmentsMutation,
   type DetachOrderShipmentMutation,
   type OrderDetailQuery,
   type OrderInput,
@@ -129,6 +131,18 @@ export async function createInvoiceFromOrder(
   });
 
   return data.createInvoiceFromOrder;
+}
+
+export async function createInvoiceFromShipments(
+  shipmentIds: string[],
+): Promise<CreateInvoiceFromShipmentsMutation["createInvoiceFromShipments"]> {
+  const data = await requestGraphQL({
+    document: CreateInvoiceFromShipmentsDocument,
+    operationName: "CreateInvoiceFromShipments",
+    variables: { shipmentIds },
+  });
+
+  return data.createInvoiceFromShipments;
 }
 
 export async function addOrderCharge(

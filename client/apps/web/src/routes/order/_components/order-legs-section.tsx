@@ -11,14 +11,20 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { FormSection } from "@trenova/shared/components/ui/form";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { createInvoiceFromOrder, detachOrderShipment, fetchOrderDetail } from "@/lib/graphql/order";
+import {
+  createInvoiceFromShipments,
+  detachOrderShipment,
+  fetchOrderDetail,
+} from "@/lib/graphql/order";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FileTextIcon, PackageIcon, PlusIcon, Trash2Icon, TruckIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -34,6 +40,8 @@ export function OrderLegsSection() {
   const invalidateOrders = useOrderInvalidation();
   const invalidateInvoices = useOrderInvoiceInvalidation();
   const [addLegOpen, setAddLegOpen] = useState(false);
+  const [checkedLegIds, setCheckedLegIds] = useState<ReadonlySet<string>>(new Set());
+  const [confirmSingleLeg, setConfirmSingleLeg] = useState(false);
   const [legPendingDetach, setLegPendingDetach] = useState<{
     id: string;
     proNumber: string;
@@ -61,30 +69,74 @@ export function OrderLegsSection() {
   });
 
   const { mutate: createInvoice, isPending: isCreatingInvoice } = useMutation({
-    mutationFn: () => createInvoiceFromOrder(orderId!),
+    mutationFn: (shipmentIds: string[]) => createInvoiceFromShipments(shipmentIds),
     onSuccess: (invoice) => {
       invalidateInvoices();
+      invalidateOrders();
+      setCheckedLegIds(new Set());
       toast.success("Invoice created", {
         description: `Invoice ${invoice.number} was created from this order.`,
       });
     },
     onError: (error) =>
       toast.error("Failed to create invoice", {
-        description: graphQLErrorMessage(error, "The grouped invoice could not be created."),
+        description: graphQLErrorMessage(error, "The invoice could not be created."),
       }),
+    onSettled: () => setConfirmSingleLeg(false),
   });
+
+  const legs = useMemo(() => order?.legs ?? [], [order?.legs]);
+  const invoiceableLegs = useMemo(
+    () => legs.filter((leg) => INVOICEABLE_LEG_STATUSES.has(leg.status)),
+    [legs],
+  );
+
+  const selectedIds = useMemo(
+    () => invoiceableLegs.filter((leg) => checkedLegIds.has(leg.id)).map((leg) => leg.id),
+    [invoiceableLegs, checkedLegIds],
+  );
 
   if (!orderId) {
     return null;
   }
 
-  const legs = order?.legs ?? [];
   const currency = order?.currencyCode ?? "USD";
   const membershipLocked = ORDER_STATUSES_LOCKED_FOR_LEGS.has(order?.status ?? "");
   const activeLegs = legs.filter((leg) => leg.status !== "Canceled");
-  const canCreateInvoice =
-    activeLegs.length > 0 && activeLegs.every((leg) => INVOICEABLE_LEG_STATUSES.has(leg.status));
   const legsSubtotal = activeLegs.reduce((sum, leg) => sum + Number(leg.totalChargeAmount), 0);
+
+  const allInvoiceableChecked =
+    invoiceableLegs.length > 0 && invoiceableLegs.every((leg) => checkedLegIds.has(leg.id));
+
+  function toggleAllInvoiceable() {
+    setCheckedLegIds(
+      allInvoiceableChecked ? new Set() : new Set(invoiceableLegs.map((leg) => leg.id)),
+    );
+  }
+
+  function toggleLeg(legId: string) {
+    setCheckedLegIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(legId)) {
+        next.delete(legId);
+      } else {
+        next.add(legId);
+      }
+      return next;
+    });
+  }
+
+  // A lone leg takes the single-shipment path, which mints its own billing-queue
+  // item rather than joining a grouped invoice, so it is worth confirming.
+  function submitInvoice() {
+    if (selectedIds.length === 1) {
+      setConfirmSingleLeg(true);
+      return;
+    }
+    createInvoice(selectedIds);
+  }
+
+  const legLabel = selectedIds.length === 1 ? "leg" : "legs";
 
   return (
     <>
@@ -106,53 +158,90 @@ export function OrderLegsSection() {
         {legs.length > 0 ? (
           <div className="rounded-lg border">
             <div className="border-border text-2xs text-muted-foreground grid grid-cols-12 gap-2 border-b px-4 py-2 uppercase">
-              <span className="col-span-3">Pro Number</span>
+              <span className="col-span-3 flex items-center gap-2">
+                {!membershipLocked && invoiceableLegs.length > 0 && (
+                  <Checkbox
+                    checked={allInvoiceableChecked}
+                    onCheckedChange={toggleAllInvoiceable}
+                    aria-label="Select all invoiceable legs"
+                  />
+                )}
+                Pro Number
+              </span>
               <span className="col-span-3">Status</span>
               <span className="col-span-2 text-right">Freight</span>
               <span className="col-span-3 text-right">Total</span>
               <span className="col-span-1" />
             </div>
             <div className="divide-y">
-              {legs.map((leg) => (
-                <div
-                  key={leg.id}
-                  className="grid grid-cols-12 items-center gap-2 px-4 py-2 text-sm"
-                >
-                  <span className="col-span-3 font-mono">
-                    <Link
-                      to={`/shipment-management/shipments?item=${leg.id}`}
-                      className="hover:underline"
-                    >
-                      {leg.proNumber}
-                    </Link>
-                  </span>
-                  <span className="col-span-3">
-                    <ShipmentStatusBadge status={leg.status} />
-                  </span>
-                  <span className="col-span-2 text-right tabular-nums">
-                    {formatCurrency(Number(leg.freightChargeAmount), currency)}
-                  </span>
-                  <span className="col-span-3 text-right tabular-nums">
-                    {formatCurrency(Number(leg.totalChargeAmount), currency)}
-                  </span>
-                  <span className="col-span-1 flex justify-end">
-                    {!membershipLocked && leg.status !== "Invoiced" && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isDetaching}
-                        onClick={() =>
-                          setLegPendingDetach({ id: leg.id, proNumber: leg.proNumber })
-                        }
-                        aria-label="Detach leg"
+              {legs.map((leg) => {
+                const invoiceable = INVOICEABLE_LEG_STATUSES.has(leg.status);
+                return (
+                  <div
+                    key={leg.id}
+                    className="grid grid-cols-12 items-center gap-2 px-4 py-2 text-sm"
+                  >
+                    <span className="col-span-3 flex items-center gap-2 font-mono">
+                      {!membershipLocked &&
+                        (invoiceable ? (
+                          <Checkbox
+                            checked={checkedLegIds.has(leg.id)}
+                            onCheckedChange={() => toggleLeg(leg.id)}
+                            aria-label={`Select leg ${leg.proNumber}`}
+                          />
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span className="inline-flex" tabIndex={0}>
+                                  <Checkbox
+                                    disabled
+                                    checked={false}
+                                    aria-label={`Leg ${leg.proNumber} cannot be invoiced`}
+                                  />
+                                </span>
+                              }
+                            />
+                            <TooltipContent>
+                              A leg that is {leg.status} cannot be invoiced.
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                      <Link
+                        to={`/shipment-management/shipments?item=${leg.id}`}
+                        className="hover:underline"
                       >
-                        <Trash2Icon className="text-destructive size-3.5" />
-                      </Button>
-                    )}
-                  </span>
-                </div>
-              ))}
+                        {leg.proNumber}
+                      </Link>
+                    </span>
+                    <span className="col-span-3">
+                      <ShipmentStatusBadge status={leg.status} />
+                    </span>
+                    <span className="col-span-2 text-right tabular-nums">
+                      {formatCurrency(Number(leg.freightChargeAmount), currency)}
+                    </span>
+                    <span className="col-span-3 text-right tabular-nums">
+                      {formatCurrency(Number(leg.totalChargeAmount), currency)}
+                    </span>
+                    <span className="col-span-1 flex justify-end">
+                      {!membershipLocked && leg.status !== "Invoiced" && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={isDetaching}
+                          onClick={() =>
+                            setLegPendingDetach({ id: leg.id, proNumber: leg.proNumber })
+                          }
+                          aria-label="Detach leg"
+                        >
+                          <Trash2Icon className="text-destructive size-3.5" />
+                        </Button>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
             <div className="border-border grid grid-cols-12 gap-2 border-t px-4 py-2 text-sm font-medium">
               <span className="col-span-8">Legs subtotal</span>
@@ -186,20 +275,27 @@ export function OrderLegsSection() {
               type="button"
               className="w-fit"
               size="sm"
-              disabled={!canCreateInvoice}
+              disabled={selectedIds.length === 0}
               isLoading={isCreatingInvoice}
               loadingText="Creating invoice..."
-              onClick={() => createInvoice()}
+              onClick={submitInvoice}
             >
               <FileTextIcon className="mr-1.5 size-3.5" />
-              Create grouped invoice
+              {selectedIds.length > 0
+                ? `Create invoice from ${selectedIds.length} ${legLabel}`
+                : "Create invoice"}
             </Button>
-            {!canCreateInvoice && (
+            {invoiceableLegs.length === 0 ? (
               <p className="text-2xs text-muted-foreground">
-                Every active leg must be ready to invoice or completed before a grouped invoice can
-                be created. Canceled legs are excluded.
+                No leg is ready to invoice yet. A leg must be completed or ready to invoice before
+                it can be billed.
               </p>
-            )}
+            ) : selectedIds.length === 0 ? (
+              <p className="text-2xs text-muted-foreground">
+                Select the legs to bill. Legs billed together become one invoice with a charge block
+                per leg.
+              </p>
+            ) : null}
           </div>
         )}
       </FormSection>
@@ -220,6 +316,24 @@ export function OrderLegsSection() {
             <AlertDialogCancel>Keep leg</AlertDialogCancel>
             <AlertDialogAction onClick={() => legPendingDetach && detachLeg(legPendingDetach.id)}>
               Detach leg
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmSingleLeg} onOpenChange={setConfirmSingleLeg}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bill this leg on its own invoice?</AlertDialogTitle>
+            <AlertDialogDescription>
+              One leg produces a standalone invoice rather than a grouped one covering the order.
+              The order&apos;s remaining legs will have to be billed separately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => createInvoice(selectedIds)}>
+              Create invoice
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

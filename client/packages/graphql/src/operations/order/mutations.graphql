@@ -25,6 +25,13 @@ mutation CreateInvoiceFromOrder($orderId: ID!) {
   }
 }
 
+mutation CreateInvoiceFromShipments($shipmentIds: [ID!]!) {
+  createInvoiceFromShipments(shipmentIds: $shipmentIds) {
+    id
+    number
+  }
+}
+
 mutation CreateOrder($input: OrderInput!) {
   createOrder(input: $input) {
     id

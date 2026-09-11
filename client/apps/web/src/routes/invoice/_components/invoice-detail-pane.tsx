@@ -27,7 +27,6 @@ import { apiService } from "@/services/api";
 import type {
   Invoice,
   InvoiceEmailAttempt,
-  InvoiceLineType,
   InvoiceSendPlan,
   InvoiceSendStatus,
 } from "@trenova/shared/types/invoice";
@@ -46,6 +45,7 @@ import { lazy, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
+import { InvoiceChargesTab } from "./invoice-charges-tab";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
 
 const ShipmentRouteMap = lazy(() =>
@@ -115,6 +115,9 @@ export default function InvoiceDetailPane({
   const shipment = invoice.shipment;
   const customer = invoice.customer;
   const totalAmount = Number(invoice.totalAmount ?? 0);
+  const billedShipmentCount = new Set(
+    (invoice.lines ?? []).map((line) => line.shipmentId).filter(Boolean),
+  ).size;
   const customerName = customer?.name ?? invoice.billToName;
   const isCurrentVersion =
     !invoice.correctionGroupId ||
@@ -156,10 +159,15 @@ export default function InvoiceDetailPane({
           <MetadataCell label="Due Date" value={formatUnixDate(invoice.dueDate)} />
           <MetadataCell label="Payment Terms" value={invoice.paymentTerm} />
           <MetadataCell label="Bill Type" value={invoice.billType} />
-          {invoice.shipmentProNumber ? (
+          {billedShipmentCount > 1 ? (
+            <MetadataCell label="Shipments" value={String(billedShipmentCount)} />
+          ) : null}
+          {billedShipmentCount <= 1 && invoice.shipmentProNumber ? (
             <MetadataCell label="PRO Number" value={invoice.shipmentProNumber} />
           ) : null}
-          {invoice.shipmentBol ? <MetadataCell label="BOL" value={invoice.shipmentBol} /> : null}
+          {billedShipmentCount <= 1 && invoice.shipmentBol ? (
+            <MetadataCell label="BOL" value={invoice.shipmentBol} />
+          ) : null}
         </div>
       </div>
 
@@ -193,76 +201,7 @@ export default function InvoiceDetailPane({
         </TabsContent>
 
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <div className="border-border overflow-hidden rounded-xl border">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 text-muted-foreground text-left">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Line</th>
-                      <th className="px-4 py-3 font-medium">Description</th>
-                      <th className="px-4 py-3 font-medium">Type</th>
-                      <th className="px-4 py-3 text-right font-medium">Quantity</th>
-                      <th className="px-4 py-3 text-right font-medium">Unit Price</th>
-                      <th className="px-4 py-3 text-right font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoice.lines.map((line) => (
-                      <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
-                        <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-                        <td className="px-4 py-3">{line.description}</td>
-                        <td className="px-4 py-3">
-                          <Badge variant={LINE_TYPE_VARIANTS[line.type]}>{line.type}</Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {Number(line.quantity ?? 0)}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {formatCurrency(Number(line.unitPrice ?? 0), invoice.currencyCode)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium tabular-nums">
-                          {formatCurrency(Number(line.amount ?? 0), invoice.currencyCode)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-muted/30 border-t">
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="text-muted-foreground px-4 py-2.5 text-right text-sm"
-                      >
-                        Subtotal
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-sm tabular-nums">
-                        {formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="text-muted-foreground px-4 py-2.5 text-right text-sm"
-                      >
-                        Other Charges
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-sm tabular-nums">
-                        {formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
-                      </td>
-                    </tr>
-                    <tr className="border-t">
-                      <td colSpan={5} className="px-4 py-3 text-right text-sm font-semibold">
-                        Total
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-bold tabular-nums">
-                        {formatCurrency(totalAmount, invoice.currencyCode)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          </ScrollArea>
+          <InvoiceChargesTab invoice={invoice} />
         </TabsContent>
         <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
           <div className="flex h-full flex-col">
@@ -878,11 +817,6 @@ function MetadataCell({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-const LINE_TYPE_VARIANTS: Record<InvoiceLineType, BadgeVariant> = {
-  Freight: "info",
-  Accessorial: "purple",
-};
 
 const SEND_STATUS_VARIANTS: Record<InvoiceSendStatus, BadgeVariant> = {
   NotSent: "outline",

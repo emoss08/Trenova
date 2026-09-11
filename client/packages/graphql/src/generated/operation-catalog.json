@@ -1,5 +1,5 @@
 {
-  "operationCount": 697,
+  "operationCount": 698,
   "fragmentCount": 168,
   "operations": [
     {
@@ -3023,6 +3023,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation CreateInvoiceFromOrder($orderId: ID!) {\n  createInvoiceFromOrder(orderId: $orderId) {\n    id\n    number\n  }\n}"
+    },
+    {
+      "name": "CreateInvoiceFromShipments",
+      "kind": "mutation",
+      "domain": "order",
+      "sourceFile": "src/operations/order/mutations.graphql",
+      "hash": "sha256:26b58cc44955437e597ff8babe71dc1881d79b412c04fbf79882dbe45b7e23d5",
+      "rootFields": [
+        "createInvoiceFromShipments"
+      ],
+      "variables": [
+        {
+          "name": "shipmentIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation CreateInvoiceFromShipments($shipmentIds: [ID!]!) {\n  createInvoiceFromShipments(shipmentIds: $shipmentIds) {\n    id\n    number\n  }\n}"
     },
     {
       "name": "CreateJobPosition",
