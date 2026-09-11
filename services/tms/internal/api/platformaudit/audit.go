@@ -24,7 +24,7 @@ type Findings struct {
 	PackReach            []PackReach
 }
 
-func graphQLSurface(feature platformcatalog.Feature) []string {
+func graphQLSurface(feature *platformcatalog.Feature) []string {
 	surface := make([]string, 0, len(feature.GraphQLSources)+len(feature.GraphQLRootFields))
 	for _, source := range feature.GraphQLSources {
 		surface = append(surface, string(source))
@@ -53,7 +53,9 @@ func Audit(in Input) Findings {
 		MigrationLostGraphQL: map[platformcatalog.FeatureKey][]string{},
 	}
 
-	for _, feature := range in.Registry.ListFeatures() {
+	features := in.Registry.ListFeatures()
+	for i := range features {
+		feature := &features[i]
 		surface := graphQLSurface(feature)
 
 		if _, ok := sellable[feature.Key]; !ok {
@@ -143,7 +145,7 @@ func packReach(
 			if !ok {
 				continue
 			}
-			entry.GraphQLSources += len(graphQLSurface(feature))
+			entry.GraphQLSources += len(graphQLSurface(&feature))
 		}
 		reach = append(reach, entry)
 	}

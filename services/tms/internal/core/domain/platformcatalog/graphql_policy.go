@@ -31,7 +31,7 @@ var selectOptionResourceOwners = map[string]FeatureKey{
 	"EDI_TEMPLATE":                 FeatureEDIIntegration,
 	"EDI_TRANSACTION_SET":          FeatureEDIIntegration,
 	"EDI_TRANSFER":                 FeatureEDIIntegration,
-	"EMAIL_PROFILE":                FeatureCoreTMS,
+	"EMAIL_PROFILE":                FeatureAdministration,
 	"EQUIPMENT_MANUFACTURER":       FeatureFleetMaintenance,
 	"EQUIPMENT_TYPE":               FeatureFleetMaintenance,
 	"FISCAL_PERIOD":                FeatureAccounting,

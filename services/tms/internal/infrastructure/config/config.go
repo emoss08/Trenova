@@ -1304,7 +1304,7 @@ type PlatformControlPlaneConfig struct {
 	TenantSyncInterval       time.Duration     `mapstructure:"tenantSyncInterval"`
 	FailOpenOnError          bool              `mapstructure:"failOpenOnError"`
 	MaxProvisioningBodyBytes int64             `mapstructure:"maxProvisioningBodyBytes" validate:"omitempty,min=1024"`
-	GraphQLAccessMode        GraphQLAccessMode `mapstructure:"graphqlAccessMode"         validate:"omitempty,oneof=disabled observe enforce"`
+	GraphQLAccessMode        GraphQLAccessMode `mapstructure:"graphqlAccessMode"        validate:"omitempty,oneof=disabled observe enforce"`
 	DisableLegacyGrants      bool              `mapstructure:"disableLegacyGrants"`
 }
 
