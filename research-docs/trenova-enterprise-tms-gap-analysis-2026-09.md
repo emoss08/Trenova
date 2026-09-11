@@ -211,7 +211,6 @@ credits AP.
 | No live ETA | `CandidateScore.ProjectedArrival` is dispatch-time only; nothing on shipment or stop | Cannot answer "where is my load and when will it arrive"; no ETA-vs-appointment slip detection |
 | No dock or appointment scheduling | `domain/location/location.go` has no operating hours, doors, capacity, or slots | Appointment windows exist on the stop, but nothing schedules against facility capacity |
 | Fiscal close does no accounting | `fiscalyearservice.Close` flips status and audits; `DefaultRetainedEarningsAccountID` is validated but never written to | No closing entries, no retained-earnings roll-up, no opening-balance carryforward |
-| No consolidated invoicing | `InvoiceLine` carries per-line shipment references, but there is zero grouping logic | Blocks LTL and any statement-billed customer |
 | No tax on invoices | Invoice has Subtotal, Other, and Total only; no tax code, rate, jurisdiction, or line | Blocks Canada GST/HST and any taxable accessorial |
 | Native MFA unimplemented | `iam.MFAAuthenticator` models TOTP and WebAuthn; only `ListMFAAuthenticators` exists. `authservice/service.go:883` only reads `amr` claims from an IdP | A customer without SSO cannot enforce 2FA; SOC2 blocker |
 | SAML modeled but disabled | `iamservice/service.go:124` — "SAML providers cannot be managed until SAML sign-in is available" | Large shippers and 3PLs still require SAML |

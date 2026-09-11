@@ -42,6 +42,17 @@ type InvoiceContext struct {
 	CommodityRows []CommodityRow
 	ChargeRows    []ChargeRow
 
+	// ShipmentRows lists the freight on an invoice covering more than one
+	// shipment, and is empty on a single-shipment invoice. Shipper, Consignee and
+	// CommodityRows are the inverse — populated for one shipment, empty for many —
+	// so a template branches on whichever is present.
+	ShipmentRows []ShipmentRow
+	// ShipmentCount is how many shipments this invoice bills, blank unless more
+	// than one.
+	ShipmentCount string
+	// Period is the billing window a consolidated invoice covers, blank otherwise.
+	Period string
+
 	Subtotal   string
 	Other      string
 	Total      string
@@ -73,6 +84,26 @@ type ChargeRow struct {
 	Description string
 	Quantity    string
 	UnitPrice   string
+	Amount      string
+	// ProNumber attributes the charge to its shipment on an invoice that bills
+	// several, and is blank on one that bills a single shipment.
+	ProNumber string
+}
+
+// ShipmentRow is one shipment on an invoice that bills several.
+//
+// It is a line about a shipment rather than a block describing it: a month of
+// LTL is dozens of shipments, and repeating a shipper, a consignee and a
+// commodity table for each produces a document nobody reads. What a customer
+// checks at statement level is which shipments are on the bill, the lane, and
+// what each cost.
+type ShipmentRow struct {
+	ProNumber   string
+	BOL         string
+	PONumber    string
+	ServiceDate string
+	Origin      string
+	Destination string
 	Amount      string
 }
 
@@ -215,7 +246,34 @@ func newInvoiceSampleContext() any {
 				Amount:      "175.00",
 			},
 		},
-		Subtotal:   "USD 2,001.24",
+		// The sample carries both freight shapes, which no real invoice does: one
+		// shipment fills Shipper, Consignee and CommodityRows, and several fill
+		// ShipmentRows instead. It is the variable exerciser, and a template author
+		// previewing a consolidated layout has to see rows in it — an empty
+		// collection would render nothing and hide a typo inside the range.
+		ShipmentRows: []ShipmentRow{
+			{
+				ProNumber:   sampleProNumber,
+				BOL:         sampleBOL,
+				PONumber:    "PO-5591004",
+				ServiceDate: "2026-07-12",
+				Origin:      "Austin, TX",
+				Destination: "Fort Worth, TX",
+				Amount:      "2,338.74",
+			},
+			{
+				ProNumber:   "PRO-77402",
+				BOL:         "BOL-77402",
+				PONumber:    "PO-5591118",
+				ServiceDate: "2026-07-19",
+				Origin:      "Austin, TX",
+				Destination: "Waco, TX",
+				Amount:      "1,104.60",
+			},
+		},
+		ShipmentCount: "2",
+		Period:        "2026-07-01 - 2026-08-01",
+		Subtotal:      "USD 2,001.24",
 		Other:      "USD 337.50",
 		Total:      sampleTotalAmount,
 		BalanceDue: sampleTotalAmount,
@@ -388,7 +446,52 @@ func (r *Registry) registerBillingKinds() {
 						Type:        VariableString,
 						Description: "Extended amount for the line.",
 					},
+					{
+						Path:        "ProNumber",
+						Type:        VariableString,
+						Description: "Pro number of the shipment this charge belongs to. Blank when the invoice bills only one shipment.",
+					},
 				},
+			},
+			{
+				Path:        "ShipmentRows",
+				Type:        VariableCollection,
+				Description: "The shipments on a consolidated invoice, one row each. Empty when the invoice bills a single shipment, where Shipper, Consignee and CommodityRows describe the freight instead.",
+				Fields: []VariableDefinition{
+					{Path: "ProNumber", Type: VariableString, Description: "Pro number."},
+					{Path: "BOL", Type: VariableString, Description: "Bill of lading number."},
+					{Path: "PONumber", Type: VariableString, Description: "Customer purchase order number."},
+					{
+						Path:        "ServiceDate",
+						Type:        VariableString,
+						Description: "Delivery date.",
+					},
+					{
+						Path:        "Origin",
+						Type:        VariableString,
+						Description: "City and state the freight was picked up in.",
+					},
+					{
+						Path:        "Destination",
+						Type:        VariableString,
+						Description: "City and state the freight was delivered to.",
+					},
+					{
+						Path:        "Amount",
+						Type:        VariableString,
+						Description: "What this shipment contributes to the invoice total.",
+					},
+				},
+			},
+			{
+				Path:        "ShipmentCount",
+				Type:        VariableString,
+				Description: "How many shipments this invoice bills. Blank unless there is more than one.",
+			},
+			{
+				Path:        "Period",
+				Type:        VariableString,
+				Description: "The billing period a consolidated invoice covers. Blank on an invoice that is not billed on a cycle.",
 			},
 			{
 				Path:        "Terms",

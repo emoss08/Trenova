@@ -45,6 +45,27 @@ type FreightInvoicePayload struct {
 	TotalAmount        decimal.NullDecimal    `json:"totalAmount"`
 	LineCharges        []FreightInvoiceCharge `json:"lineCharges,omitempty"`
 	ReferenceNumbers   map[string]string      `json:"referenceNumbers,omitempty"`
+
+	// Shipments lists the freight on an invoice that bills more than one, and is
+	// empty on a single-shipment invoice, where ShipmentID, BOL and ProNumber at
+	// the top already say what the invoice covers.
+	//
+	// X12 210 is one shipment per transaction set, and this renderer emits one ST
+	// per payload, so a consolidated invoice goes out as a single ST carrying a
+	// reference loop for each shipment. That is widely accepted in practice but is
+	// not strictly conformant; a partner who needs one ST per shipment has to be
+	// billed per shipment instead, which their billing profile can say.
+	Shipments []FreightInvoiceShipment `json:"shipments,omitempty"`
+}
+
+// FreightInvoiceShipment identifies one shipment on a consolidated invoice.
+type FreightInvoiceShipment struct {
+	ShipmentID   pulid.ID            `json:"shipmentId,omitempty"`
+	ProNumber    string              `json:"proNumber,omitempty"`
+	BOL          string              `json:"bol,omitempty"`
+	PONumber     string              `json:"poNumber,omitempty"`
+	DeliveryDate int64               `json:"deliveryDate,omitempty"`
+	Amount       decimal.NullDecimal `json:"amount"`
 }
 
 type FreightInvoiceCharge struct {
@@ -54,6 +75,12 @@ type FreightInvoiceCharge struct {
 	Amount      decimal.Decimal     `json:"amount"`
 	Rate        decimal.NullDecimal `json:"rate"`
 	Weight      *int64              `json:"weight,omitempty"`
+	// ShipmentID, ProNumber and BOL attribute the charge on an invoice that bills
+	// several shipments. Blank on one that bills a single shipment, where the
+	// header already answers it.
+	ShipmentID pulid.ID `json:"shipmentId,omitempty"`
+	ProNumber  string   `json:"proNumber,omitempty"`
+	BOL        string   `json:"bol,omitempty"`
 }
 
 type ShipmentStatusPayload struct {

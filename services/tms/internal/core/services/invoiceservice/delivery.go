@@ -57,10 +57,21 @@ var invoiceTemplateVariablePattern = regexp.MustCompile(
 )
 
 type invoiceDeliveryProfile struct {
-	Customer       *customer.Customer
-	Email          *customer.CustomerEmailProfile
-	Organization   *tenant.Organization
-	Shipment       *shipment.Shipment
+	Customer     *customer.Customer
+	Email        *customer.CustomerEmailProfile
+	Organization *tenant.Organization
+
+	// Shipment is the one shipment this invoice is about, and is nil for an
+	// invoice that covers several. Every consumer that reads it — the email
+	// context, the Shipper and Consignee blocks, the commodity table — is asking
+	// a question that only has an answer for a single shipment.
+	Shipment *shipment.Shipment
+
+	// Shipments is the group of shipments the invoice bills, one flat row each.
+	// Populated only when there is more than one, which is what a document keys
+	// off to print a manifest instead of freight detail.
+	Shipments []*repositories.ShipmentSummary
+
 	BillingControl *tenant.BillingControl
 }
 
@@ -1449,6 +1460,61 @@ func (s *Service) resolveDeliveryProfile(
 	}, params)
 }
 
+// resolveDeliveryShipments loads whichever shape of freight this invoice bills.
+//
+// The header ShipmentID is only set on a single-shipment invoice, so reading it
+// alone left a grouped invoice with no shipment at all — which is how every
+// grouped invoice went out with an empty Shipper, an empty Consignee and no
+// commodity rows. The lines are the authority on what an invoice covers, and
+// LegShipmentIDs falls back to the header for the single case, so both shapes
+// resolve from one source.
+//
+// One shipment still loads in full, because that is what the email context and
+// the freight detail need. Several load as flat summaries instead: a document
+// listing forty shipments prints a line about each, and fetching forty whole
+// shipments to render forty lines would be forty round trips for data it throws
+// away.
+func resolveDeliveryShipments(
+	ctx context.Context,
+	shipmentRepo repositories.ShipmentRepository,
+	result *invoiceDeliveryProfile,
+	params resolveDeliveryProfileParams,
+) error {
+	legIDs := params.Entity.LegShipmentIDs()
+
+	switch len(legIDs) {
+	case 0:
+		return nil
+
+	case 1:
+		shp, err := shipmentRepo.GetByID(
+			ctx,
+			expandedShipmentByIDRequest(legIDs[0], params.TenantInfo),
+		)
+		if err != nil && !errortypes.IsNotFoundError(err) {
+			return err
+		}
+		if shp != nil {
+			result.Shipment = shp
+		}
+		return nil
+
+	default:
+		summaries, err := shipmentRepo.ListSummariesByIDs(
+			ctx,
+			&repositories.ListShipmentSummariesRequest{
+				TenantInfo:  params.TenantInfo,
+				ShipmentIDs: legIDs,
+			},
+		)
+		if err != nil && !errortypes.IsNotFoundError(err) {
+			return err
+		}
+		result.Shipments = summaries
+		return nil
+	}
+}
+
 func resolveDeliveryProfileWith(
 	ctx context.Context,
 	repos deliveryProfileRepos,
@@ -1493,16 +1559,9 @@ func resolveDeliveryProfileWith(
 			}
 		}
 	}
-	if params.IncludeShipmentDetails && repos.shipmentRepo != nil && entity.ShipmentID.IsNotNil() {
-		shp, err := repos.shipmentRepo.GetByID(
-			ctx,
-			expandedShipmentByIDRequest(entity.ShipmentID, params.TenantInfo),
-		)
-		if err != nil && !errortypes.IsNotFoundError(err) {
+	if params.IncludeShipmentDetails && repos.shipmentRepo != nil {
+		if err := resolveDeliveryShipments(ctx, repos.shipmentRepo, result, params); err != nil {
 			return nil, err
-		}
-		if shp != nil {
-			result.Shipment = shp
 		}
 	}
 	if params.IncludeBillingControl && repos.billingRepo != nil {

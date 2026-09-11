@@ -70,6 +70,23 @@ func Base210Segments(
 			b.field(1, "Reference Qualifier", "invoice.referenceNumbers.qualifier", "BM"),
 			b.field(2, "Reference Identification", "invoice.bol", ""),
 		}),
+		// One reference loop per shipment on a consolidated invoice, and nothing at
+		// all on a single-shipment one, where segment 60 above already carries the
+		// BOL. Without it a receiver has an invoice total with no way to tell which
+		// of their loads it settles.
+		b.segment(
+			65,
+			"N9",
+			"Shipment Reference",
+			"invoice.shipments",
+			false,
+			[]edi.TemplateElement{
+				b.el(1, "Reference Qualifier", edi.TemplateElementSourceConstant, "BM"),
+				b.repeat(2, "Bill of Lading", "bol", ""),
+				b.el(3, "Pro Number Qualifier", edi.TemplateElementSourceConstant, "CN"),
+				b.repeat(4, "Pro Number", "proNumber", ""),
+			},
+		),
 		b.segment(70, "G62", "Date Time", "", false, []edi.TemplateElement{
 			b.el(1, "Date Qualifier", edi.TemplateElementSourceConstant, "86"),
 			b.field(2, "Invoice Date", "invoice.invoiceDate", ""),
@@ -105,6 +122,9 @@ func Base210Segments(
 			[]edi.TemplateElement{
 				b.repeat(1, "Lading Line Item Number", "sequence", ""),
 				b.repeat(2, "Description", "description", ""),
+				// Blank on a single-shipment invoice, so the segment is unchanged
+				// for every 210 that is not consolidated.
+				b.repeat(3, "Pro Number", "proNumber", ""),
 			},
 		),
 		b.segment(

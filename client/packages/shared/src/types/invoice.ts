@@ -190,8 +190,13 @@ export const invoiceSchema = z.object({
   id: z.string(),
   billingQueueItemId: z.string(),
   shipmentId: nullableStringSchema,
-    detail: invoiceDetailSchema.default("Detailed"),
-    sectionBy: invoiceSectionKeySchema.default("Shipment"),
+  detail: invoiceDetailSchema.default("Detailed"),
+  sectionBy: invoiceSectionKeySchema.default("Shipment"),
+  /**
+   * Why this invoice was cut for a customer whose freight was supposed to
+   * accumulate onto a statement. Empty on every ordinary invoice.
+   */
+  offCycleReason: nullableStringSchema,
   orderId: nullableStringSchema,
   customerId: z.string(),
   number: z.string(),
