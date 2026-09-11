@@ -1287,15 +1287,38 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 
 const defaultControlPlaneMaxProvisioningBodyBytes int64 = 1 << 20
 
+type GraphQLAccessMode string
+
+const (
+	GraphQLAccessModeDisabled GraphQLAccessMode = "disabled"
+	GraphQLAccessModeObserve  GraphQLAccessMode = "observe"
+	GraphQLAccessModeEnforce  GraphQLAccessMode = "enforce"
+)
+
 type PlatformControlPlaneConfig struct {
-	Enabled                  bool          `mapstructure:"enabled"`
-	Endpoint                 string        `mapstructure:"endpoint"                 validate:"omitempty,url,no_trailing_slash"`
-	APIKey                   string        `mapstructure:"apiKey"`
-	Timeout                  time.Duration `mapstructure:"timeout"`
-	HeartbeatInterval        time.Duration `mapstructure:"heartbeatInterval"`
-	TenantSyncInterval       time.Duration `mapstructure:"tenantSyncInterval"`
-	FailOpenOnError          bool          `mapstructure:"failOpenOnError"`
-	MaxProvisioningBodyBytes int64         `mapstructure:"maxProvisioningBodyBytes" validate:"omitempty,min=1024"`
+	Enabled                  bool              `mapstructure:"enabled"`
+	Endpoint                 string            `mapstructure:"endpoint"                 validate:"omitempty,url,no_trailing_slash"`
+	APIKey                   string            `mapstructure:"apiKey"`
+	Timeout                  time.Duration     `mapstructure:"timeout"`
+	HeartbeatInterval        time.Duration     `mapstructure:"heartbeatInterval"`
+	TenantSyncInterval       time.Duration     `mapstructure:"tenantSyncInterval"`
+	FailOpenOnError          bool              `mapstructure:"failOpenOnError"`
+	MaxProvisioningBodyBytes int64             `mapstructure:"maxProvisioningBodyBytes" validate:"omitempty,min=1024"`
+	GraphQLAccessMode        GraphQLAccessMode `mapstructure:"graphqlAccessMode"        validate:"omitempty,oneof=disabled observe enforce"`
+	DisableLegacyGrants      bool              `mapstructure:"disableLegacyGrants"`
+}
+
+func (c *PlatformControlPlaneConfig) HonorLegacyGrants() bool {
+	return !c.DisableLegacyGrants
+}
+
+func (c *PlatformControlPlaneConfig) GetGraphQLAccessMode() GraphQLAccessMode {
+	switch c.GraphQLAccessMode {
+	case GraphQLAccessModeDisabled, GraphQLAccessModeObserve, GraphQLAccessModeEnforce:
+		return c.GraphQLAccessMode
+	default:
+		return GraphQLAccessModeDisabled
+	}
 }
 
 func (c *PlatformControlPlaneConfig) GetMaxProvisioningBodyBytes() int64 {
