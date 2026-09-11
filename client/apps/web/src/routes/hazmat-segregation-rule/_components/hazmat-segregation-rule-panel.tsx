@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -15,6 +16,8 @@ export function HazmatSegregationRulePanel({
   mode,
   row,
 }: DataTablePanelProps<HazmatSegregationRule>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(hazmatSegregationRuleSchema),
     defaultValues: {
@@ -40,7 +43,7 @@ export function HazmatSegregationRulePanel({
         onOpenChange={onOpenChange}
         url="/hazmat-segregation-rules/"
         queryKey="hazmat-segregation-rule-list"
-        title="Hazmat Segregation Rule"
+        title={t("Hazmat Segregation Rule")}
         fieldKey="name"
         formComponent={<HazmatSegregationRuleForm />}
         row={row}
@@ -56,7 +59,7 @@ export function HazmatSegregationRulePanel({
       form={form}
       url="/hazmat-segregation-rules/"
       queryKey="hazmat-segregation-rule-list"
-      title="Hazmat Segregation Rule"
+      title={t("Hazmat Segregation Rule")}
       formComponent={<HazmatSegregationRuleForm />}
     />
   );
