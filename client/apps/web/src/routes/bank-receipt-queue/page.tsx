@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -50,6 +51,8 @@ const STATUS_VARIANTS: Record<
 };
 
 export function BankReceiptQueuePage() {
+  const t = useT();
+
   const [selectedWorkItemId, setSelectedWorkItemId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,18 +142,18 @@ export function BankReceiptQueuePage() {
       apiService.bankReceiptWorkItemService.assign(id, userId),
     onSuccess: () => {
       invalidateAll();
-      toast.success("Work item assigned");
+      toast.success(t("Work item assigned"));
     },
-    onError: () => toast.error("Failed to assign work item"),
+    onError: () => toast.error(t("Failed to assign work item")),
   });
 
   const startReviewMutation = useMutation({
     mutationFn: async (id: string) => apiService.bankReceiptWorkItemService.startReview(id),
     onSuccess: () => {
       invalidateAll();
-      toast.success("Review started");
+      toast.success(t("Review started"));
     },
-    onError: () => toast.error("Failed to start review"),
+    onError: () => toast.error(t("Failed to start review")),
   });
 
   const resolveMutation = useMutation({
@@ -165,9 +168,9 @@ export function BankReceiptQueuePage() {
     }) => apiService.bankReceiptWorkItemService.resolve(id, { resolutionType, resolutionNote }),
     onSuccess: () => {
       invalidateAll();
-      toast.success("Work item resolved");
+      toast.success(t("Work item resolved"));
     },
-    onError: () => toast.error("Failed to resolve work item"),
+    onError: () => toast.error(t("Failed to resolve work item")),
   });
 
   const dismissMutation = useMutation({
@@ -175,9 +178,9 @@ export function BankReceiptQueuePage() {
       apiService.bankReceiptWorkItemService.dismiss(id, { resolutionNote }),
     onSuccess: () => {
       invalidateAll();
-      toast.success("Work item dismissed");
+      toast.success(t("Work item dismissed"));
     },
-    onError: () => toast.error("Failed to dismiss work item"),
+    onError: () => toast.error(t("Failed to dismiss work item")),
   });
 
   return (
@@ -190,7 +193,7 @@ export function BankReceiptQueuePage() {
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
           <SummaryCard
-            label="Open"
+            label={t("Open")}
             value={String(
               (summaryQuery.data?.activeWorkItemCount ?? 0) -
                 (summaryQuery.data?.assignedWorkItemCount ?? 0) -
@@ -198,14 +201,14 @@ export function BankReceiptQueuePage() {
             )}
           />
           <SummaryCard
-            label="Assigned"
+            label={t("Assigned")}
             value={String(summaryQuery.data?.assignedWorkItemCount ?? 0)}
           />
           <SummaryCard
-            label="In Review"
+            label={t("In Review")}
             value={String(summaryQuery.data?.inReviewWorkItemCount ?? 0)}
           />
-          <SummaryCard label="Exceptions" value={String(summaryQuery.data?.exceptionCount ?? 0)} />
+          <SummaryCard label={t("Exceptions")} value={String(summaryQuery.data?.exceptionCount ?? 0)} />
         </div>
       }
       sidebar={
@@ -214,7 +217,7 @@ export function BankReceiptQueuePage() {
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search reference, ID..."
+              placeholder={t("Search reference, ID...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
@@ -223,10 +226,10 @@ export function BankReceiptQueuePage() {
               onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
             >
               <SelectTrigger className="h-7 text-xs">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder={t("All statuses")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {workItemStatusChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
                     {choice.label}
@@ -278,9 +281,9 @@ export function BankReceiptQueuePage() {
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5">
                       {row.assignedToUserId ? (
-                        <span className="text-2xs text-muted-foreground">Assigned</span>
+                        <span className="text-2xs text-muted-foreground">{t("Assigned")}</span>
                       ) : (
-                        <span className="text-2xs text-muted-foreground">Unassigned</span>
+                        <span className="text-2xs text-muted-foreground">{t("Unassigned")}</span>
                       )}
                     </div>
                   </button>
@@ -289,7 +292,7 @@ export function BankReceiptQueuePage() {
               {isFetchingNextPage ? (
                 <div className="flex items-center justify-center py-4">
                   <TextShimmer className="font-mono text-sm" duration={1}>
-                    Loading more...
+                    {t("Loading more...")}
                   </TextShimmer>
                 </div>
               ) : null}
@@ -303,8 +306,8 @@ export function BankReceiptQueuePage() {
           {!selectedRow ? (
             <BillingDetailUnselected
               layout="cards"
-              title="Nothing open"
-              description="Pick a work item from the list to review the receipt behind it and settle it."
+              title={t("Nothing open")}
+              description={t("Pick a work item from the list to review the receipt behind it and settle it.")}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -349,6 +352,8 @@ function WorkItemDetail({
     typeof useMutation<BankReceiptWorkItem, Error, { id: string; resolutionNote: string }>
   >;
 }) {
+  const t = useT();
+
   const [resolutionType, setResolutionType] = useState<ResolutionType | "">("");
   const [resolutionNote, setResolutionNote] = useState("");
   const [showResolveForm, setShowResolveForm] = useState(false);
@@ -366,34 +371,34 @@ function WorkItemDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{workItem.id}</h2>
-          <p className="text-muted-foreground text-sm">Bank Receipt: {workItem.bankReceiptId}</p>
+          <p className="text-muted-foreground text-sm">{t("Bank Receipt: {0}", workItem.bankReceiptId)}</p>
         </div>
         <Badge variant={STATUS_VARIANTS[workItem.status]}>{STATUS_LABELS[workItem.status]}</Badge>
       </div>
 
       {receipt ? (
         <div className="bg-card rounded-lg border p-3">
-          <SectionLabel>Bank Receipt Info</SectionLabel>
+          <SectionLabel>{t("Bank Receipt Info")}</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-            <PropertyCell label="Receipt Date">
+            <PropertyCell label={t("Receipt Date")}>
               <span className="text-xs font-medium">{formatUnixDate(receipt.receiptDate)}</span>
             </PropertyCell>
-            <PropertyCell label="Amount">
+            <PropertyCell label={t("Amount")}>
               <span className="text-xs font-medium tabular-nums">
                 {formatCurrency(receipt.amountMinor / 100)}
               </span>
             </PropertyCell>
-            <PropertyCell label="Reference">
+            <PropertyCell label={t("Reference")}>
               <span className="text-xs font-medium">{receipt.referenceNumber}</span>
             </PropertyCell>
-            <PropertyCell label="Memo">
+            <PropertyCell label={t("Memo")}>
               <span className="text-xs font-medium">{receipt.memo || "—"}</span>
             </PropertyCell>
-            <PropertyCell label="Status">
+            <PropertyCell label={t("Status")}>
               <Badge variant="secondary">{receipt.status}</Badge>
             </PropertyCell>
             {receipt.exceptionReason ? (
-              <PropertyCell label="Exception Reason">
+              <PropertyCell label={t("Exception Reason")}>
                 <span className="text-xs font-medium text-red-600 dark:text-red-400">
                   {receipt.exceptionReason}
                 </span>
@@ -407,13 +412,13 @@ function WorkItemDetail({
 
       {workItem.assignedToUserId ? (
         <div className="bg-card rounded-lg border p-3">
-          <SectionLabel>Assignment</SectionLabel>
+          <SectionLabel>{t("Assignment")}</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-            <PropertyCell label="Assigned To">
+            <PropertyCell label={t("Assigned To")}>
               <span className="text-xs font-medium">{workItem.assignedToUserId}</span>
             </PropertyCell>
             {workItem.assignedAt ? (
-              <PropertyCell label="Assigned At">
+              <PropertyCell label={t("Assigned At")}>
                 <span className="text-xs font-medium">
                   {formatUnixDateTime(workItem.assignedAt)}
                 </span>
@@ -425,10 +430,10 @@ function WorkItemDetail({
 
       {workItem.status === "Resolved" || workItem.status === "Dismissed" ? (
         <div className="bg-card rounded-lg border p-3">
-          <SectionLabel>Resolution</SectionLabel>
+          <SectionLabel>{t("Resolution")}</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             {workItem.resolutionType ? (
-              <PropertyCell label="Resolution Type">
+              <PropertyCell label={t("Resolution Type")}>
                 <span className="text-xs font-medium">
                   {resolutionTypeChoices.find((c) => c.value === workItem.resolutionType)?.label ??
                     workItem.resolutionType}
@@ -436,12 +441,12 @@ function WorkItemDetail({
               </PropertyCell>
             ) : null}
             {workItem.resolvedByUserId ? (
-              <PropertyCell label="Resolved By">
+              <PropertyCell label={t("Resolved By")}>
                 <span className="text-xs font-medium">{workItem.resolvedByUserId}</span>
               </PropertyCell>
             ) : null}
             {workItem.resolvedAt ? (
-              <PropertyCell label="Resolved At">
+              <PropertyCell label={t("Resolved At")}>
                 <span className="text-xs font-medium">
                   {formatUnixDateTime(workItem.resolvedAt)}
                 </span>
@@ -457,7 +462,7 @@ function WorkItemDetail({
       ) : null}
 
       <div className="bg-card rounded-lg border p-3">
-        <SectionLabel>Actions</SectionLabel>
+        <SectionLabel>{t("Actions")}</SectionLabel>
         <div className="mt-2">
           {workItem.status === "Open" ? (
             <div className="flex items-center gap-2">
@@ -468,7 +473,7 @@ function WorkItemDetail({
                 disabled={assignMutation.isPending}
               >
                 <UserPlusIcon className="size-3.5" />
-                Assign to Me
+                {t("Assign to Me")}
               </Button>
             </div>
           ) : null}
@@ -482,7 +487,7 @@ function WorkItemDetail({
                 disabled={startReviewMutation.isPending}
               >
                 <PlayIcon className="size-3.5" />
-                Start Review
+                {t("Start Review")}
               </Button>
             </div>
           ) : null}
@@ -501,7 +506,7 @@ function WorkItemDetail({
                     }}
                   >
                     <ShieldCheckIcon className="size-3.5" />
-                    Resolve
+                    {t("Resolve")}
                   </Button>
                   <Button
                     size="sm"
@@ -512,7 +517,7 @@ function WorkItemDetail({
                       setShowResolveForm(false);
                     }}
                   >
-                    Dismiss
+                    {t("Dismiss")}
                   </Button>
                 </div>
               ) : null}
@@ -524,7 +529,7 @@ function WorkItemDetail({
                     onValueChange={(value) => setResolutionType(value as ResolutionType)}
                   >
                     <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Select resolution type" />
+                      <SelectValue placeholder={t("Select resolution type")} />
                     </SelectTrigger>
                     <SelectContent>
                       {resolutionTypeChoices.map((choice) => (
@@ -537,7 +542,7 @@ function WorkItemDetail({
                   <Textarea
                     value={resolutionNote}
                     onChange={(e) => setResolutionNote(e.target.value)}
-                    placeholder="Resolution notes..."
+                    placeholder={t("Resolution notes...")}
                     className="min-h-[80px] text-xs"
                   />
                   <div className="flex items-center gap-2">
@@ -554,7 +559,7 @@ function WorkItemDetail({
                         })
                       }
                     >
-                      Confirm Resolution
+                      {t("Confirm Resolution")}
                     </Button>
                     <Button
                       size="sm"
@@ -566,7 +571,7 @@ function WorkItemDetail({
                         setResolutionNote("");
                       }}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                   </div>
                 </div>
@@ -577,7 +582,7 @@ function WorkItemDetail({
                   <Textarea
                     value={resolutionNote}
                     onChange={(e) => setResolutionNote(e.target.value)}
-                    placeholder="Dismissal reason..."
+                    placeholder={t("Dismissal reason...")}
                     className="min-h-[80px] text-xs"
                   />
                   <div className="flex items-center gap-2">
@@ -593,7 +598,7 @@ function WorkItemDetail({
                         })
                       }
                     >
-                      Confirm Dismiss
+                      {t("Confirm Dismiss")}
                     </Button>
                     <Button
                       size="sm"
@@ -604,7 +609,7 @@ function WorkItemDetail({
                         setResolutionNote("");
                       }}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                   </div>
                 </div>
@@ -614,7 +619,7 @@ function WorkItemDetail({
 
           {workItem.status === "Resolved" || workItem.status === "Dismissed" ? (
             <p className="text-muted-foreground text-xs">
-              This work item has been {workItem.status.toLowerCase()}. No further actions available.
+              {t("This work item has been {0}. No further actions available.", workItem.status.toLowerCase())}
             </p>
           ) : null}
         </div>
