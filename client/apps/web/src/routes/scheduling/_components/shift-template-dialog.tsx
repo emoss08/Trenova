@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -92,6 +93,8 @@ function defaultsFor(template: ShiftTemplateRow | null): ShiftTemplateFormValues
  * draws, so what is being built is never a surprise.
  */
 export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTemplateDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(template);
   const form = useForm<ShiftTemplateFormValues>({
@@ -160,15 +163,13 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit the shift" : "Add a shift"}</DialogTitle>
           <DialogDescription>
-            A shift is the days somebody works and when. A rotation longer than a week makes an A/B
-            pair one shift with two assignments rather than two near-identical shifts.
+            {t("A shift is the days somebody works and when. A rotation longer than a week makes an A/B pair one shift with two assignments rather than two near-identical shifts.")}
           </DialogDescription>
         </DialogHeader>
         {isEdit ? (
           <Alert variant="warning">
             <AlertDescription>
-              The rota is drawn from this pattern every time it is read, so changing the days, start
-              or length redraws every week for everyone assigned, past weeks included.
+              {t("The rota is drawn from this pattern every time it is read, so changing the days, start or length redraws every week for everyone assigned, past weeks included.")}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -186,27 +187,27 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                   <InputField<ShiftTemplateFormValues>
                     control={control}
                     name="code"
-                    label="Code"
-                    placeholder="e.g. DAY-A"
+                    label={t("Code")}
+                    placeholder={t("e.g. DAY-A")}
                     rules={{ required: true }}
-                    description="A short tag the board labels the shift with; it is stored in upper case."
+                    description={t("A short tag the board labels the shift with; it is stored in upper case.")}
                   />
                 </FormControl>
                 <FormControl>
                   <InputField<ShiftTemplateFormValues>
                     control={control}
                     name="name"
-                    label="Name"
-                    placeholder="e.g. Weekday days"
+                    label={t("Name")}
+                    placeholder={t("e.g. Weekday days")}
                     rules={{ required: true }}
-                    description="The name dispatchers and drivers see on the rota and on assignments."
+                    description={t("The name dispatchers and drivers see on the rota and on assignments.")}
                   />
                 </FormControl>
 
                 <FormControl cols="full">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Label>Working days</Label>
+                      <Label>{t("Working days")}</Label>
                       <div className="flex flex-wrap gap-1">
                         {DAY_MASK_PRESETS.map((preset) => (
                           <button
@@ -258,65 +259,65 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                   <InputField<ShiftTemplateFormValues>
                     control={control}
                     name="startTime"
-                    label="Starts at"
+                    label={t("Starts at")}
                     type="time"
                     step={300}
                     placeholder="06:00"
                     rules={{ required: true }}
-                    description="The clock time each working day begins; the finish is worked out from the length."
+                    description={t("The clock time each working day begins; the finish is worked out from the length.")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField<ShiftTemplateFormValues>
                     control={control}
                     name="durationHours"
-                    label="Length (hours)"
+                    label={t("Length (hours)")}
                     step={0.25}
                     min={0.25}
                     max={24}
                     placeholder="10"
                     rules={{ required: true }}
-                    description="How many hours each working day runs, in quarter-hour steps and at most a day."
+                    description={t("How many hours each working day runs, in quarter-hour steps and at most a day.")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField<ShiftTemplateFormValues>
                     control={control}
                     name="cycleWeeks"
-                    label="Rotation (weeks)"
+                    label={t("Rotation (weeks)")}
                     min={1}
                     max={8}
                     placeholder="1"
                     rules={{ required: true }}
-                    description="1 works every week; 2 alternates, which is how an A/B pair is built from one shift."
+                    description={t("1 works every week; 2 alternates, which is how an A/B pair is built from one shift.")}
                   />
                 </FormControl>
                 <FormControl>
                   <SelectField<ShiftTemplateFormValues>
                     control={control}
                     name="status"
-                    label="Status"
+                    label={t("Status")}
                     options={STATUS_OPTIONS}
-                    placeholder="Pick a status"
+                    placeholder={t("Pick a status")}
                     rules={{ required: true }}
-                    description="A retired shift cannot be assigned, and retiring is refused while anybody is still on it."
+                    description={t("A retired shift cannot be assigned, and retiring is refused while anybody is still on it.")}
                   />
                 </FormControl>
                 <FormControl>
                   <ColorField<ShiftTemplateFormValues>
                     control={control}
                     name="color"
-                    label="Colour"
-                    description="Shown on the rota in this colour so the shift is recognisable at a glance."
+                    label={t("Colour")}
+                    description={t("Shown on the rota in this colour so the shift is recognisable at a glance.")}
                   />
                 </FormControl>
                 <FormControl cols="full">
                   <TextareaField<ShiftTemplateFormValues>
                     control={control}
                     name="description"
-                    label="Description"
-                    placeholder="e.g. Overnight line-haul out of the Dallas yard"
-                    description="Notes for whoever schedules against the shift, such as what it covers or where it starts."
+                    label={t("Description")}
+                    placeholder={t("e.g. Overnight line-haul out of the Dallas yard")}
+                    description={t("Notes for whoever schedules against the shift, such as what it covers or where it starts.")}
                   />
                 </FormControl>
               </FormGroup>
@@ -336,7 +337,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
                 {isEdit ? "Save" : "Add shift"}
@@ -370,15 +371,17 @@ function ShiftPreview({
   cycleWeeks: number;
   retired: boolean;
 }) {
+  const t = useT();
+
   return (
     <aside
       className={cn(
         "bg-muted/30 flex h-fit flex-col gap-3 rounded-lg border p-3 md:sticky md:top-0",
         retired && "opacity-70",
       )}
-      aria-label="Shift preview"
+      aria-label={t("Shift preview")}
     >
-      <p className="text-muted-foreground text-[11px] font-medium uppercase">On the board</p>
+      <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("On the board")}</p>
       <div className="flex items-center gap-2">
         <span className="bg-accent grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold">
           {code.trim().slice(0, 3).toUpperCase() || "—"}
@@ -426,8 +429,7 @@ function ShiftPreview({
         <div className="flex items-center gap-2">
           <CalendarDaysIcon className="text-muted-foreground size-3.5 shrink-0" />
           <dd className="tabular-nums">
-            {selectedDays.length} day{selectedDays.length === 1 ? "" : "s"} ·{" "}
-            {formatHours(weeklyMinutes)} a week
+            {t("{0} day{1} · {2} a week", selectedDays.length, selectedDays.length === 1 ? "" : "s", formatHours(weeklyMinutes))}
           </dd>
         </div>
         <div className="flex items-center gap-2">
@@ -436,7 +438,7 @@ function ShiftPreview({
         </div>
       </dl>
 
-      {retired ? <Badge variant="inactive">Retired</Badge> : null}
+      {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
     </aside>
   );
 }

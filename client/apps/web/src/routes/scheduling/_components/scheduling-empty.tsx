@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { DAY_LABELS } from "@trenova/shared/lib/scheduling";
@@ -28,6 +29,8 @@ export function RotaEmpty({
   onClearFilters,
   className,
 }: EmptyProps & { onClearFilters?: () => void }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -38,7 +41,7 @@ export function RotaEmpty({
         onClearFilters ? (
           <Button variant="outline" size="sm" onClick={onClearFilters}>
             <XIcon className="size-3.5" />
-            Clear filters
+            {t("Clear filters")}
           </Button>
         ) : null
       }
@@ -99,6 +102,8 @@ export function ShiftsEmpty({
   onCreate,
   className,
 }: EmptyProps & { onCreate?: () => void }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -109,7 +114,7 @@ export function ShiftsEmpty({
         onCreate ? (
           <Button variant="outline" size="sm" onClick={onCreate}>
             <PlusIcon className="size-3.5" />
-            Add a shift
+            {t("Add a shift")}
           </Button>
         ) : null
       }

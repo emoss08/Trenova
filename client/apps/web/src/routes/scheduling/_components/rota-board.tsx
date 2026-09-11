@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { type RotaBoard, type RotaBoardDay, type RotaBoardRow } from "@/lib/graphql/scheduling";
 import {
   coverageByDay,
@@ -52,6 +53,8 @@ export function RotaBoard({
   density = "comfortable",
   onSelectDay,
 }: RotaBoardProps) {
+  const t = useT();
+
   const columns = rota.rows[0]?.days ?? [];
   const today = getTodayDate();
   const todayIndex = todayColumnIndex(columns, today);
@@ -83,7 +86,7 @@ export function RotaBoard({
                 compact ? "w-40 py-1" : "w-56 py-2",
               )}
             >
-              Worker
+              {t("Worker")}
             </th>
             {columns.map((day, index) => (
               <th
@@ -103,7 +106,7 @@ export function RotaBoard({
                 compact ? "py-1" : "py-2",
               )}
             >
-              Week
+              {t("Week")}
             </th>
           </tr>
           <tr>
@@ -111,7 +114,7 @@ export function RotaBoard({
               scope="row"
               className="bg-background sticky left-0 z-30 border-t border-b px-3 py-1 text-left align-middle text-[11px] font-medium"
             >
-              <span className="text-muted-foreground">Cover</span>
+              <span className="text-muted-foreground">{t("Cover")}</span>
             </th>
             {columns.map((day, index) => (
               <td
@@ -125,7 +128,7 @@ export function RotaBoard({
               </td>
             ))}
             <td className="bg-background text-muted-foreground border-t border-b px-3 py-1 text-right align-middle text-[11px] tabular-nums">
-              {rows.length} of {rota.rows.length}
+              {t("{0} of {1}", rows.length, rota.rows.length)}
             </td>
           </tr>
         </thead>
@@ -225,6 +228,8 @@ function WeekTotal({
   summary: ReturnType<typeof summariseRotaRow>;
   compact: boolean;
 }) {
+  const t = useT();
+
   const conflicts =
     summary.conflicts > 0 ? (
       <Badge variant="inactive" className={cn("gap-1", !compact && "mt-0.5")}>
@@ -234,7 +239,7 @@ function WeekTotal({
     ) : null;
   const total = (
     <span className="font-medium">
-      {summary.scheduledDays}d
+      {t("{0}d", summary.scheduledDays)}
       <span className="text-muted-foreground font-normal">
         {" "}
         · {formatHours(summary.hours * 60)}
@@ -369,6 +374,8 @@ function RotaCell({
   compact: boolean;
   onSelect?: (row: RotaBoardRow, day: RotaBoardDay) => void;
 }) {
+  const t = useT();
+
   const tone = rotaStateTone(day.state);
   const interactive = Boolean(onSelect);
   const height = mode === "block" && !compact ? "h-8" : CELL_HEIGHT[mode];
@@ -445,16 +452,16 @@ function RotaCell({
         ) : null}
         {day.preference ? (
           <p className="text-muted-foreground">
-            Stated: {AVAILABILITY_TONES[day.preference]?.label ?? day.preference}
+            {t("Stated: {0}", AVAILABILITY_TONES[day.preference]?.label ?? day.preference)}
           </p>
         ) : null}
         {day.assignmentCount > 0 ? (
           <p className="text-muted-foreground">
-            {day.assignmentCount} load{day.assignmentCount === 1 ? "" : "s"} already assigned
+            {t("{0} load{1} already assigned", day.assignmentCount, day.assignmentCount === 1 ? "" : "s")}
           </p>
         ) : null}
         {day.isConflict ? (
-          <p className="text-destructive">Rostered on a day they cannot work</p>
+          <p className="text-destructive">{t("Rostered on a day they cannot work")}</p>
         ) : null}
       </TooltipContent>
     </Tooltip>

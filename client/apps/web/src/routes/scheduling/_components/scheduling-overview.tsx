@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import type { RotaBoard, ShiftSwapRow } from "@/lib/graphql/scheduling";
@@ -31,6 +32,8 @@ type SchedulingOverviewProps = {
  * the board draws, so the strip and the grid never disagree.
  */
 export function SchedulingOverview({ rota, swaps, today, showSwaps }: SchedulingOverviewProps) {
+  const t = useT();
+
   const rows = rota?.rows;
   const composition = useMemo(() => rotaComposition(rows ?? []), [rows]);
   const coverage = useMemo(() => coverageByDay(rows ?? []), [rows]);
@@ -44,9 +47,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
       <KpiCard span={2}>
         <KpiHeader
           icon={<UsersIcon className="size-[11px]" />}
-          label="On the board"
+          label={t("On the board")}
           info={
-            <InfoPopover title="On the board">
+            <InfoPopover title={t("On the board")}>
               {
                 "Rows on the rota for these weeks: everyone on a pattern or with a shift, plus people with nothing rostered, so the gaps show."
               }
@@ -54,14 +57,14 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           }
         />
         {rota ? (
-          <NumberFlow value={rota.rows.length} className={VALUE_CLASS} aria-label="On the board" />
+          <NumberFlow value={rota.rows.length} className={VALUE_CLASS} aria-label={t("On the board")} />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
         <CompositionBar
           size="sm"
           className="mt-auto"
-          aria-label="Person-days on the board"
+          aria-label={t("Person-days on the board")}
           segments={[
             { key: "working", label: "Working", value: composition.working },
             { key: "off", label: "Off", value: composition.off },
@@ -73,9 +76,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
       <KpiCard span={2}>
         <KpiHeader
           icon={<CalendarCheckIcon className="size-[11px]" />}
-          label="Cover today"
+          label={t("Cover today")}
           info={
-            <InfoPopover title="Cover today">
+            <InfoPopover title={t("Cover today")}>
               {
                 "How many people have a shift today, read against the busiest day on the board. The ring is relative because a small yard and a large terminal share no number."
               }
@@ -90,16 +93,16 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
                 size={40}
                 strokeWidth={4}
                 tone="brand"
-                aria-label="Share of today's rostered people who can work"
+                aria-label={t("Share of today's rostered people who can work")}
               />
               <div className="flex items-baseline gap-1">
                 <NumberFlow
                   value={todayCover.covered}
                   className={VALUE_CLASS}
-                  aria-label="Cover today"
+                  aria-label={t("Cover today")}
                 />
                 <span className="text-muted-foreground font-mono text-[11px]">
-                  of {todayCover.expected}
+                  {t("of {0}", todayCover.expected)}
                 </span>
               </div>
             </div>
@@ -119,9 +122,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
       <KpiCard span={2}>
         <KpiHeader
           icon={<AlertTriangleIcon className="size-[11px]" />}
-          label="Conflicts"
+          label={t("Conflicts")}
           info={
-            <InfoPopover title="Conflicts">
+            <InfoPopover title={t("Conflicts")}>
               {
                 "Rostered days the person cannot work: time off, leave or a stated unavailability won over the pattern."
               }
@@ -132,7 +135,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           <NumberFlow
             value={conflicts}
             className={cn(VALUE_CLASS, conflicts > 0 && "text-destructive")}
-            aria-label="Conflicts"
+            aria-label={t("Conflicts")}
           />
         ) : (
           <Skeleton className="h-6.5 w-10" />
@@ -150,9 +153,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
         <KpiCard span={2}>
           <KpiHeader
             icon={<RepeatIcon className="size-[11px]" />}
-            label="Swaps waiting on you"
+            label={t("Swaps waiting on you")}
             info={
-              <InfoPopover title="Swaps waiting on you">
+              <InfoPopover title={t("Swaps waiting on you")}>
                 {
                   "Shift swaps the colleague has accepted that still need an office decision. Ones the colleague has not answered are not counted."
                 }
@@ -163,7 +166,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
             <NumberFlow
               value={swapSummary.awaitingOffice}
               className={VALUE_CLASS}
-              aria-label="Swaps waiting on you"
+              aria-label={t("Swaps waiting on you")}
             />
           ) : (
             <Skeleton className="h-6.5 w-10" />

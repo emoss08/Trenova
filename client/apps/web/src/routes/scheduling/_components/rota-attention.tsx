@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RotaBoardRow } from "@/lib/graphql/scheduling";
 import {
   rotaConflicts,
@@ -34,6 +35,8 @@ type RotaAttentionProps = {
  * cells and badges; this is the same three as a list somebody can work down.
  */
 export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) {
+  const t = useT();
+
   const conflicts = useMemo(() => rotaConflicts(rows), [rows]);
   const unrostered = useMemo(() => unrosteredWorkers(rows), [rows]);
   const swapSummary = useMemo(() => summarizeSwaps(swaps ?? []), [swaps]);
@@ -52,7 +55,7 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
             <CircleCheckIcon className="text-muted-foreground size-3.5" aria-hidden />
           )}
           <h3 id="rota-attention-heading" className="text-sm font-medium">
-            Needs a look
+            {t("Needs a look")}
           </h3>
           {total > 0 ? (
             <Badge variant="inactive" className="text-2xs h-4 px-1 tabular-nums">
@@ -63,14 +66,14 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
         {swapSummary.awaitingOffice > 0 && onOpenSwaps ? (
           <Button size="xs" variant="outline" onClick={onOpenSwaps}>
             <RepeatIcon className="size-3" />
-            {swapSummary.awaitingOffice} swap{swapSummary.awaitingOffice === 1 ? "" : "s"} to decide
+            {t("{0} swap{1} to decide", swapSummary.awaitingOffice, swapSummary.awaitingOffice === 1 ? "" : "s")}
           </Button>
         ) : null}
       </header>
 
       {total === 0 ? (
         <p className="text-muted-foreground px-3 py-3 text-sm">
-          Everyone on the board has a shift they can work, and nothing is waiting on you.
+          {t("Everyone on the board has a shift they can work, and nothing is waiting on you.")}
         </p>
       ) : (
         <AttentionList conflicts={conflicts} unrostered={unrostered} />

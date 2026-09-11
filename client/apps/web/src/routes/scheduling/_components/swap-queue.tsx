@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchShiftSwapRequests,
@@ -31,6 +32,8 @@ type Scope = "open" | "all";
  * covering, which is why Accepted is a waiting room rather than a done deal.
  */
 export function SwapQueue() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canApprove } = usePermission(Resource.ShiftSwap, Operation.Approve);
   const { allowed: canReject } = usePermission(Resource.ShiftSwap, Operation.Reject);
@@ -67,17 +70,16 @@ export function SwapQueue() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground max-w-2xl text-xs">
-          A swap needs two acceptances: the colleague&apos;s and the office&apos;s. Only a swap the
-          colleague has accepted is yours to decide.
+          {t("A swap needs two acceptances: the colleague's and the office's. Only a swap the colleague has accepted is yours to decide.")}
           {decidable > 0 ? (
-            <span className="text-foreground font-medium"> {decidable} waiting on you.</span>
+            <span className="text-foreground font-medium"> {t("{0} waiting on you.", decidable)}</span>
           ) : null}
         </p>
         <SegmentedControl<Scope>
           items={scopeItems}
           value={scope}
           onValueChange={setScope}
-          aria-label="Which swaps to show"
+          aria-label={t("Which swaps to show")}
         />
       </div>
 
@@ -123,6 +125,8 @@ function SwapRow({
   busy: boolean;
   onDecide: (status: "Approved" | "Rejected") => void;
 }) {
+  const t = useT();
+
   const tone = SWAP_STATUS_TONES[swap.status] ?? SWAP_STATUS_TONES.Withdrawn;
   const decidable = swap.status === "Accepted";
 
@@ -143,14 +147,13 @@ function SwapRow({
             <Badge variant={tone.variant}>{tone.label}</Badge>
           </span>
           <span className="text-muted-foreground tabular-nums">
-            Giving up {formatShiftDate(swap.shiftDate)}
-            {swap.counterpartyShiftDate
+            {t("Giving up {0}{1}", formatShiftDate(swap.shiftDate), swap.counterpartyShiftDate
               ? ` · taking ${formatShiftDate(swap.counterpartyShiftDate)}`
-              : ""}
+              : "")}
           </span>
           {swap.reason ? <span className="text-muted-foreground">“{swap.reason}”</span> : null}
           {swap.responseNote ? (
-            <span className="text-muted-foreground">Response: {swap.responseNote}</span>
+            <span className="text-muted-foreground">{t("Response: {0}", swap.responseNote)}</span>
           ) : null}
         </div>
       </div>
@@ -165,18 +168,18 @@ function SwapRow({
               onClick={() => onDecide("Rejected")}
             >
               <XIcon className="size-3.5" />
-              Reject
+              {t("Reject")}
             </Button>
           ) : null}
           {canDecide.approve ? (
             <Button size="sm" disabled={busy} onClick={() => onDecide("Approved")}>
               <CheckIcon className="size-3.5" />
-              Approve
+              {t("Approve")}
             </Button>
           ) : null}
         </div>
       ) : isSwapOpen(swap.status) ? (
-        <span className="text-muted-foreground shrink-0">Waiting on the colleague</span>
+        <span className="text-muted-foreground shrink-0">{t("Waiting on the colleague")}</span>
       ) : null}
     </li>
   );

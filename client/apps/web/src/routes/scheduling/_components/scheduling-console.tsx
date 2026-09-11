@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FleetCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePermission } from "@/hooks/use-permission";
@@ -73,6 +74,8 @@ const LEGEND_STATES = ["Scheduled", "Assigned", "TimeOff", "Leave", "Unavailable
 const EMPTY_TEMPLATES: ShiftTemplateRow[] = [];
 
 export default function SchedulingConsole() {
+  const t = useT();
+
   const { allowed: canReadRota } = usePermission(Resource.WorkerSchedule, Operation.Read);
   const { allowed: canReadShifts } = usePermission(Resource.ShiftTemplate, Operation.Read);
   const { allowed: canCreateShift } = usePermission(Resource.ShiftTemplate, Operation.Create);
@@ -143,13 +146,13 @@ export default function SchedulingConsole() {
           {canReadRota ? (
             <TabsTrigger value="rota">
               <CalendarRangeIcon className="size-3.5" />
-              Rota
+              {t("Rota")}
             </TabsTrigger>
           ) : null}
           {canReadShifts ? (
             <TabsTrigger value="shifts">
               <ClockIcon className="size-3.5" />
-              Shifts
+              {t("Shifts")}
               {stats.active > 0 ? (
                 <Badge variant="secondary" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                   {stats.active}
@@ -160,7 +163,7 @@ export default function SchedulingConsole() {
           {canReadSwaps ? (
             <TabsTrigger value="swaps">
               <RepeatIcon className="size-3.5" />
-              Swaps
+              {t("Swaps")}
               {awaitingOffice > 0 ? (
                 <Badge variant="warning" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                   {awaitingOffice}
@@ -183,7 +186,7 @@ export default function SchedulingConsole() {
                     size="sm"
                     variant="outline"
                     onClick={() => setWeekStart(addRotaWeeks(weekStart, -1))}
-                    aria-label="Previous week"
+                    aria-label={t("Previous week")}
                   >
                     <ChevronLeftIcon className="size-3.5" />
                   </Button>
@@ -194,7 +197,7 @@ export default function SchedulingConsole() {
                     size="sm"
                     variant="outline"
                     onClick={() => setWeekStart(addRotaWeeks(weekStart, 1))}
-                    aria-label="Next week"
+                    aria-label={t("Next week")}
                   >
                     <ChevronRightIcon className="size-3.5" />
                   </Button>
@@ -203,15 +206,15 @@ export default function SchedulingConsole() {
                     variant="ghost"
                     onClick={() => setWeekStart(startOfRotaWeek(Math.floor(Date.now() / 1000)))}
                   >
-                    Today
+                    {t("Today")}
                   </Button>
                 </div>
                 <Input
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Find a name, shift or terminal"
-                  aria-label="Find on the board"
+                  placeholder={t("Find a name, shift or terminal")}
+                  aria-label={t("Find on the board")}
                   leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
                   inputContainerClassName="min-w-48 flex-1"
                 />
@@ -222,7 +225,7 @@ export default function SchedulingConsole() {
                     <FleetCodeAutocompleteField<FilterValues>
                       control={filterForm.control}
                       name="fleetCodeId"
-                      placeholder="All fleets"
+                      placeholder={t("All fleets")}
                       clearable
                     />
                   </div>
@@ -232,14 +235,14 @@ export default function SchedulingConsole() {
                   value={weeks}
                   onValueChange={setWeeks}
                   className="h-7"
-                  aria-label="Weeks on the board"
+                  aria-label={t("Weeks on the board")}
                 />
                 <SegmentedControl<RotaDensity>
                   items={DENSITY_ITEMS}
                   value={density}
                   className="h-7"
                   onValueChange={setStoredDensity}
-                  aria-label="Board density"
+                  aria-label={t("Board density")}
                 />
                 <Tooltip>
                   <TooltipTrigger
@@ -253,9 +256,9 @@ export default function SchedulingConsole() {
                     }
                   >
                     <UsersIcon className="size-3.5" />
-                    My team
+                    {t("My team")}
                   </TooltipTrigger>
-                  <TooltipContent>Only the people you answer for</TooltipContent>
+                  <TooltipContent>{t("Only the people you answer for")}</TooltipContent>
                 </Tooltip>
               </div>
             </div>
@@ -271,8 +274,8 @@ export default function SchedulingConsole() {
                 />
                 {visibleRows.length === 0 ? (
                   <RotaEmpty
-                    title="Nobody matches that"
-                    description="Nothing on the board fits the search. Clear it to see the whole week again."
+                    title={t("Nobody matches that")}
+                    description={t("Nothing on the board fits the search. Clear it to see the whole week again.")}
                     onClearFilters={() => setSearch("")}
                   />
                 ) : (
@@ -281,7 +284,7 @@ export default function SchedulingConsole() {
               </>
             ) : (
               <RotaEmpty
-                title="Nobody on the board"
+                title={t("Nobody on the board")}
                 description={
                   boardFiltered
                     ? "Nobody in that team or fleet is on a shift this week. Clear the filter to see everyone, or put a worker on a shift from their Schedule tab."
@@ -302,8 +305,7 @@ export default function SchedulingConsole() {
                 );
               })}
               <span className="text-muted-foreground ml-auto">
-                A ringed cell is a conflict. The small number is loads dispatch already assigned.
-                The cover row counts who can work each day.
+                {t("A ringed cell is a conflict. The small number is loads dispatch already assigned. The cover row counts who can work each day.")}
               </span>
             </div>
           </TabsContent>
@@ -314,27 +316,25 @@ export default function SchedulingConsole() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <p className="text-muted-foreground max-w-2xl text-xs">
-                  A pattern is a mask of working days plus a start and a length. An A/B pair is a
-                  single two-week shift and two assignments at different offsets — not two
-                  near-identical shifts.
+                  {t("A pattern is a mask of working days plus a start and a length. An A/B pair is a single two-week shift and two assignments at different offsets — not two near-identical shifts.")}
                 </p>
                 {templatesQuery.data ? (
-                  <p className="text-xs tabular-nums" aria-label="Pattern summary">
+                  <p className="text-xs tabular-nums" aria-label={t("Pattern summary")}>
                     <span className="font-medium">{stats.active}</span>
-                    <span className="text-muted-foreground"> active · </span>
+                    <span className="text-muted-foreground"> {t("active ·")} </span>
                     <span className="font-medium">{stats.onPatterns}</span>
-                    <span className="text-muted-foreground"> people on a pattern</span>
+                    <span className="text-muted-foreground"> {t("people on a pattern")}</span>
                     {stats.averageWeeklyMinutes != null ? (
                       <>
                         <span className="text-muted-foreground"> · </span>
                         <span className="font-medium">
                           {formatHours(stats.averageWeeklyMinutes)}
                         </span>
-                        <span className="text-muted-foreground"> a week on average</span>
+                        <span className="text-muted-foreground"> {t("a week on average")}</span>
                       </>
                     ) : null}
                     {stats.retired > 0 ? (
-                      <span className="text-muted-foreground"> · {stats.retired} retired</span>
+                      <span className="text-muted-foreground"> {t("· {0} retired", stats.retired)}</span>
                     ) : null}
                   </p>
                 ) : null}
@@ -342,7 +342,7 @@ export default function SchedulingConsole() {
               {canCreateShift ? (
                 <Button size="sm" onClick={() => setDialog({ template: null })}>
                   <PlusIcon className="size-3.5" />
-                  Add a shift
+                  {t("Add a shift")}
                 </Button>
               ) : null}
             </div>
@@ -355,8 +355,8 @@ export default function SchedulingConsole() {
               </div>
             ) : templates.length === 0 ? (
               <ShiftsEmpty
-                title="No shifts yet"
-                description="A shift is a pattern of days and hours. Add one, then put workers on it from their Schedule tab and the board fills in."
+                title={t("No shifts yet")}
+                description={t("A shift is a pattern of days and hours. Add one, then put workers on it from their Schedule tab and the board fills in.")}
                 onCreate={canCreateShift ? () => setDialog({ template: null }) : undefined}
               />
             ) : (
@@ -390,6 +390,8 @@ export default function SchedulingConsole() {
 }
 
 function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: () => void }) {
+  const t = useT();
+
   const days = dayMaskToDays(template.daysOfWeek);
   const retired = template.status !== "Active";
   const weekMinutes = weeklyShiftMinutes(template.daysOfWeek, template.durationMinutes);
@@ -419,9 +421,9 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {retired ? <Badge variant="inactive">Retired</Badge> : null}
+          {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
           <Badge variant={template.activeAssignmentCount > 0 ? "active" : "secondary"}>
-            {template.activeAssignmentCount} on it
+            {t("{0} on it", template.activeAssignmentCount)}
           </Badge>
         </div>
       </div>
@@ -446,7 +448,7 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground tabular-nums">
           {formatShiftWindow(template.startMinute, template.durationMinutes)}
-          <span className="text-foreground"> · {formatHours(weekMinutes)} a week</span>
+          <span className="text-foreground"> {t("· {0} a week", formatHours(weekMinutes))}</span>
         </span>
         {onEdit ? (
           <Button
@@ -456,7 +458,7 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
             onClick={onEdit}
             aria-label={`Edit ${template.name}`}
           >
-            Edit
+            {t("Edit")}
           </Button>
         ) : null}
       </div>
