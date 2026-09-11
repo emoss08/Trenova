@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -133,6 +134,8 @@ interface WorkerEditPanelProps {
 }
 
 export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
@@ -194,8 +197,8 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
       return { previousRecord, newValues };
     },
     onSuccess: () => {
-      toast.success("Changes have been saved", {
-        description: "Worker updated successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Worker updated successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: ["worker-list"] });
 
@@ -279,13 +282,13 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
               }
             >
               <XIcon className="size-4" />
-              <span className="sr-only">Close panel</span>
+              <span className="sr-only">{t("Close panel")}</span>
             </Dialog.Close>
           </div>
 
           {!row ? (
             <div className="flex-1 p-4">
-              <ComponentLoader message="Loading Worker..." />
+              <ComponentLoader message={t("Loading Worker...")} />
             </div>
           ) : (
             <FormProvider {...form}>
@@ -349,7 +352,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -365,7 +368,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                     <TabsContent value="employment" className="p-4">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <h3 className="text-sm font-semibold">Employment</h3>
+                          <h3 className="text-sm font-semibold">{t("Employment")}</h3>
                           <p className="text-muted-foreground text-xs">
                             {employmentView === "details"
                               ? "Dates, licence and medical details on the record."
@@ -376,7 +379,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           items={EMPLOYMENT_VIEWS}
                           value={employmentView}
                           onValueChange={showEmploymentView}
-                          aria-label="Employment view"
+                          aria-label={t("Employment view")}
                         />
                       </div>
                       {employmentView === "details" ? (
@@ -385,7 +388,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         <Suspense
                           fallback={
                             <div className="flex items-center justify-center py-12">
-                              <ComponentLoader message="Loading..." />
+                              <ComponentLoader message={t("Loading...")} />
                             </div>
                           }
                         >
@@ -408,7 +411,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -419,7 +422,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -430,7 +433,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -441,7 +444,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -452,7 +455,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -463,7 +466,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -477,7 +480,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -488,7 +491,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -499,7 +502,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -510,7 +513,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -521,7 +524,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -532,7 +535,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -543,7 +546,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -554,7 +557,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12">
-                            <ComponentLoader message="Loading..." />
+                            <ComponentLoader message={t("Loading...")} />
                           </div>
                         }
                       >
@@ -569,14 +572,14 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
 
           <div className="border-border bg-muted/30 flex items-center justify-end gap-2 border-t px-4 py-3">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <SplitButton
               options={SAVE_OPTIONS}
               selectedOption={defaultAction}
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               formId="worker-edit-form"
             />
           </div>

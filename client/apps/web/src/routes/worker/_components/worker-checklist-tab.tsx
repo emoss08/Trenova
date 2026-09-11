@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -55,6 +56,8 @@ type NoteState = { mode: ItemNoteMode; item: WorkerChecklistItemRow };
  * ends up with two of each.
  */
 export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canStart } = usePermission(Resource.WorkerChecklist, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerChecklist, Operation.Update);
   const { allowed: canCancel } = usePermission(Resource.WorkerChecklist, Operation.Cancel);
@@ -122,25 +125,25 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not complete item", { description: error.message }),
+      toast.error(t("Could not complete item"), { description: error.message }),
   });
   const reopen = useMutation({
     mutationFn: (item: WorkerChecklistItemRow) => reopenWorkerChecklistItem(item.id, item.version),
     onSuccess: () => {
-      toast.success("Item reopened");
+      toast.success(t("Item reopened"));
       void invalidate();
     },
-    onError: (error: Error) => toast.error("Could not reopen item", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Could not reopen item"), { description: error.message }),
   });
   const cancel = useMutation({
     mutationFn: (checklist: WorkerChecklistRow) =>
       cancelWorkerChecklist({ id: checklist.id, version: checklist.version }),
     onSuccess: () => {
-      toast.success("Checklist cancelled");
+      toast.success(t("Checklist cancelled"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not cancel checklist", { description: error.message }),
+      toast.error(t("Could not cancel checklist"), { description: error.message }),
   });
   const start = useMutation({
     mutationFn: (id: string) => startWorkerChecklist({ workerId, templateId: id }),
@@ -150,7 +153,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not start checklist", { description: error.message }),
+      toast.error(t("Could not start checklist"), { description: error.message }),
   });
 
   const busyItemId = complete.isPending
@@ -190,19 +193,15 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
           help={
             <>
               <p>
-                Onboarding starts when a hire is recorded and offboarding when a termination is;
-                only a custom checklist is started by hand.
+                {t("Onboarding starts when a hire is recorded and offboarding when a termination is; only a custom checklist is started by hand.")}
               </p>
               <p>
-                Credential, document and portal-access items settle themselves whenever the
-                checklist is read and the evidence exists: an active, unexpired credential of that
-                type, a document of that type on file, or Dash access granted (removed, for
-                offboarding). Once every required item is settled the checklist closes on its own.
+                {t("Credential, document and portal-access items settle themselves whenever the checklist is read and the evidence exists: an active, unexpired credential of that type, a document of that type on file, or Dash access granted (removed, for offboarding). Once every required item is settled the checklist closes on its own.")}
               </p>
             </>
           }
         >
-          In progress
+          {t("In progress")}
         </SectionHeading>
         {currentOpen.length === 0 ? (
           <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-xs">
@@ -211,8 +210,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
               {checklists.length === 0 ? "No checklists yet" : "Nothing in progress"}
             </p>
             <p>
-              Onboarding starts when a hire is recorded and offboarding when a termination is.
-              Anything else is started below.
+              {t("Onboarding starts when a hire is recorded and offboarding when a termination is. Anything else is started below.")}
             </p>
           </div>
         ) : (
@@ -225,9 +223,9 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       {canStart && startable.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium">Start a checklist by hand</p>
+            <p className="text-sm font-medium">{t("Start a checklist by hand")}</p>
             <p className="text-muted-foreground text-xs">
-              For anything the employment events do not start on their own.
+              {t("For anything the employment events do not start on their own.")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -236,8 +234,8 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
               items={startableOptions}
               onValueChange={(value) => setTemplateId(value as string)}
             >
-              <SelectTrigger className="h-8 w-52 text-xs" aria-label="Start a checklist">
-                <SelectValue placeholder="Choose a checklist" />
+              <SelectTrigger className="h-8 w-52 text-xs" aria-label={t("Start a checklist")}>
+                <SelectValue placeholder={t("Choose a checklist")} />
               </SelectTrigger>
               <SelectContent>
                 {startableOptions.map((option) => (
@@ -254,7 +252,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
               onClick={() => start.mutate(templateId)}
             >
               <PlayIcon className="size-3.5" />
-              Start
+              {t("Start")}
             </Button>
           </div>
         </div>
@@ -272,13 +270,13 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
             <ChevronDownIcon
               className={cn("size-3.5 transition-transform", historyOpen && "rotate-180")}
             />
-            History ({historyCount})
+            {t("History ({0})", historyCount)}
           </Button>
           {historyOpen ? (
             <>
               {currentClosed.length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  <SectionHeading>This employment</SectionHeading>
+                  <SectionHeading>{t("This employment")}</SectionHeading>
                   {currentClosed.map((checklist) => (
                     <ChecklistCard key={checklist.id} checklist={checklist} {...cardProps} />
                   ))}
@@ -350,6 +348,8 @@ function describeCycle(cycle: EmploymentCycle): string {
  * steps behind it are done and steps ahead are outlines.
  */
 function EmploymentProcess({ cycle }: { cycle: EmploymentCycle<WorkerChecklistRow> }) {
+  const t = useT();
+
   const stage = cycleStage(cycle);
   const stageIndex = CYCLE_STEPS.indexOf(stage);
   const running = cycle.checklists.find((row) => row.status === "Open");
@@ -357,10 +357,10 @@ function EmploymentProcess({ cycle }: { cycle: EmploymentCycle<WorkerChecklistRo
   return (
     <div data-testid="employment-process" className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-sm font-semibold">Employment</h3>
+        <h3 className="text-sm font-semibold">{t("Employment")}</h3>
         <p className="text-muted-foreground text-xs">{describeCycle(cycle)}</p>
       </div>
-      <ol className="flex items-center gap-2" aria-label="Employment stages">
+      <ol className="flex items-center gap-2" aria-label={t("Employment stages")}>
         {CYCLE_STEPS.map((step, index) => {
           const done = index < stageIndex;
           const active = index === stageIndex;

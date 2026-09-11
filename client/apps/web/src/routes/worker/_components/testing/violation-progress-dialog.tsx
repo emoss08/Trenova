@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -51,6 +52,8 @@ export function ViolationProgressDialog({
   workerId,
   violation,
 }: ViolationProgressDialogProps) {
+  const t = useT();
+
   const invalidate = useTestingInvalidation(workerId);
   const form = useForm<ViolationProgressFormValues>({
     resolver: zodResolver(violationProgressFormSchema) as Resolver<ViolationProgressFormValues>,
@@ -85,7 +88,7 @@ export function ViolationProgressDialog({
       });
     },
     onSuccess: (saved) => {
-      toast.success("Return-to-duty record updated", {
+      toast.success(t("Return-to-duty record updated"), {
         description: `Now at: ${dotViolationStatusLabel(saved.status).toLowerCase()}.`,
       });
       void invalidate();
@@ -97,10 +100,9 @@ export function ViolationProgressDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Return-to-duty process</DialogTitle>
+          <DialogTitle>{t("Return-to-duty process")}</DialogTitle>
           <DialogDescription>
-            The stage is read off what has been recorded, so it can never drift from the file
-            underneath it.
+            {t("The stage is read off what has been recorded, so it can never drift from the file underneath it.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -115,9 +117,7 @@ export function ViolationProgressDialog({
               <FormControl cols="full">
                 <Alert>
                   <AlertDescription>
-                    The driver returns to duty once a return-to-duty test is recorded and passed —
-                    that is done from the test list, not here. Follow-up testing then runs with the
-                    driver back at work.
+                    {t("The driver returns to duty once a return-to-duty test is recorded and passed — that is done from the test list, not here. Follow-up testing then runs with the driver back at work.")}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -125,73 +125,73 @@ export function ViolationProgressDialog({
                 <InputField<ViolationProgressFormValues>
                   control={control}
                   name="sapName"
-                  label="Substance abuse professional"
-                  placeholder="Name of the SAP"
-                  description="The substance abuse professional handling the evaluation and follow-up plan."
+                  label={t("Substance abuse professional")}
+                  placeholder={t("Name of the SAP")}
+                  description={t("The substance abuse professional handling the evaluation and follow-up plan.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<ViolationProgressFormValues>
                   control={control}
                   name="sapReferredAt"
-                  label="Referred on"
-                  placeholder="MM/DD/YYYY"
-                  description="When the driver was given the SAP referral."
+                  label={t("Referred on")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the driver was given the SAP referral.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<ViolationProgressFormValues>
                   control={control}
                   name="sapEvaluationCompletedAt"
-                  label="Evaluation completed"
-                  placeholder="MM/DD/YYYY"
-                  description="A passed return-to-duty test only releases the driver once this date is set."
+                  label={t("Evaluation completed")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("A passed return-to-duty test only releases the driver once this date is set.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<ViolationProgressFormValues>
                   control={control}
                   name="reportedToClearinghouseAt"
-                  label="Reported to the Clearinghouse"
-                  placeholder="MM/DD/YYYY"
-                  description="When the violation was reported to the Clearinghouse."
+                  label={t("Reported to the Clearinghouse")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the violation was reported to the Clearinghouse.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField<ViolationProgressFormValues>
                   control={control}
                   name="followUpTestCount"
-                  placeholder="e.g. 6"
-                  label="Follow-up tests required"
-                  description="At least six in the first twelve months (49 CFR 382.311)."
+                  placeholder={t("e.g. 6")}
+                  label={t("Follow-up tests required")}
+                  description={t("At least six in the first twelve months (49 CFR 382.311).")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<ViolationProgressFormValues>
                   control={control}
                   name="followUpEndsAt"
-                  label="Follow-up programme ends"
-                  placeholder="MM/DD/YYYY"
-                  description="When the SAP's follow-up plan ends; it may run up to five years after the return to duty."
+                  label={t("Follow-up programme ends")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the SAP's follow-up plan ends; it may run up to five years after the return to duty.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<ViolationProgressFormValues>
                   control={control}
                   name="notes"
-                  placeholder="e.g. Driver began treatment on 3/12"
-                  description="Internal notes kept with the violation."
-                  label="Notes"
+                  placeholder={t("e.g. Driver began treatment on 3/12")}
+                  description={t("Internal notes kept with the violation.")}
+                  label={t("Notes")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Save
+                {t("Save")}
               </Button>
             </DialogFooter>
           </Form>

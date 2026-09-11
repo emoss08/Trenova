@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatPtoDays } from "@trenova/shared/lib/pto";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
@@ -57,6 +58,8 @@ export function useWorkerPtoInvalidation(workerId: string) {
 }
 
 export function WorkerPTOBalances({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canAssign } = usePermission(Resource.PTOPolicy, Operation.Assign);
   const { allowed: canManage } = usePermission(Resource.WorkerPTO, Operation.Manage);
   const invalidate = useWorkerPtoInvalidation(workerId);
@@ -82,13 +85,13 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
   const accrual = useMutation({
     mutationFn: () => runPtoAccrual({ workerId }),
     onSuccess: (result) => {
-      toast.success("Accrual run complete", {
+      toast.success(t("Accrual run complete"), {
         description: `${result.entriesPosted} posted, ${result.entriesCapped} capped, ${result.entriesSkipped} already posted.`,
       });
       void invalidate();
     },
     onError: (error: Error) => {
-      toast.error("Accrual run failed", { description: error.message });
+      toast.error(t("Accrual run failed"), { description: error.message });
     },
   });
 
@@ -106,16 +109,13 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-semibold">Balances</h3>
-            <InfoPopover title="Balances">
+            <h3 className="text-sm font-semibold">{t("Balances")}</h3>
+            <InfoPopover title={t("Balances")}>
               <p>
-                Kept in days and built from the ledger: accruals post from the policy on its
-                schedule, approved time off draws down, adjustments correct by hand. Available is
-                the balance less requests still awaiting a decision.
+                {t("Kept in days and built from the ledger: accruals post from the policy on its schedule, approved time off draws down, adjustments correct by hand. Available is the balance less requests still awaiting a decision.")}
               </p>
               <p>
-                A cap on the policy, or on the worker&apos;s tenure tier, stops accrual above it. A
-                policy marked informational shows the figures without holding requests to them.
+                {t("A cap on the policy, or on the worker's tenure tier, stops accrual above it. A policy marked informational shows the figures without holding requests to them.")}
               </p>
             </InfoPopover>
           </div>
@@ -132,23 +132,23 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button size="sm" variant="ghost" className="size-8" aria-label="Balance actions">
+                  <Button size="sm" variant="ghost" className="size-8" aria-label={t("Balance actions")}>
                     <EllipsisIcon />
                   </Button>
                 }
               />
               <DropdownMenuContent side="bottom" align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel>Manage</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("Manage")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    title="Adjust balance"
-                    description="Post a manual correction"
+                    title={t("Adjust balance")}
+                    description={t("Post a manual correction")}
                     onClick={() => setAdjustOpen(true)}
                   />
                   <DropdownMenuItem
-                    title="Run accrual now"
-                    description="Post anything due since the last run"
+                    title={t("Run accrual now")}
+                    description={t("Post anything due since the last run")}
                     onClick={() => accrual.mutate()}
                   />
                 </DropdownMenuGroup>
@@ -163,9 +163,9 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
       ) : (
         <div className="rounded-lg border border-dashed p-5 text-center">
           <ScaleIcon className="text-muted-foreground mx-auto size-6" />
-          <p className="mt-2 text-sm font-medium">No PTO policy assigned</p>
+          <p className="mt-2 text-sm font-medium">{t("No PTO policy assigned")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            Time off is not tracked against a balance until this worker is enrolled in a policy.
+            {t("Time off is not tracked against a balance until this worker is enrolled in a policy.")}
           </p>
         </div>
       )}
@@ -193,26 +193,29 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
 }
 
 function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) {
+  const t = useT();
+
   if (!assignment?.ptoPolicy) {
-    return <p className="text-muted-foreground text-xs">Not enrolled in a policy.</p>;
+    return <p className="text-muted-foreground text-xs">{t("Not enrolled in a policy.")}</p>;
   }
   return (
     <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
       <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
         {assignment.ptoPolicy.code}
       </Badge>
-      {assignment.ptoPolicy.name} · since {formatUnixDateMedium(assignment.effectiveFrom)}
-      {!assignment.ptoPolicy.enforceBalance ? " · informational" : ""}
+      {t("{0} · since {1}{2}", assignment.ptoPolicy.name, formatUnixDateMedium(assignment.effectiveFrom), !assignment.ptoPolicy.enforceBalance ? " · informational" : "")}
     </p>
   );
 }
 
 function BalanceCards({ balances }: { balances: WorkerPTOBalanceView[] }) {
+  const t = useT();
+
   const tracked = balances.filter((balance) => balance.tracked);
   if (tracked.length === 0) {
     return (
       <p className="text-muted-foreground text-xs">
-        The assigned policy does not track any PTO type yet.
+        {t("The assigned policy does not track any PTO type yet.")}
       </p>
     );
   }
@@ -226,6 +229,8 @@ function BalanceCards({ balances }: { balances: WorkerPTOBalanceView[] }) {
 }
 
 function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
+  const t = useT();
+
   const max = balance.maxBalanceDays ? Number(balance.maxBalanceDays) : null;
   const ratio = max && max > 0 ? Math.min(1, Math.max(0, Number(balance.balanceDays) / max)) : null;
   const available = Number(balance.availableDays);
@@ -241,7 +246,7 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
         </p>
         {!balance.enforced ? (
           <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-            Not enforced
+            {t("Not enforced")}
           </Badge>
         ) : null}
       </div>
@@ -255,13 +260,13 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
         <span className="text-muted-foreground ml-1 text-xs font-normal">available</span>
       </p>
       <dl className="text-muted-foreground mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-        <dt>Balance</dt>
+        <dt>{t("Balance")}</dt>
         <dd className="text-right tabular-nums">{formatPtoDays(balance.balanceDays)}</dd>
-        <dt>Pending</dt>
+        <dt>{t("Pending")}</dt>
         <dd className="text-right tabular-nums">{formatPtoDays(balance.pendingDays)}</dd>
-        <dt>Accrued YTD</dt>
+        <dt>{t("Accrued YTD")}</dt>
         <dd className="text-right tabular-nums">{formatPtoDays(balance.accruedYtdDays)}</dd>
-        <dt>Used YTD</dt>
+        <dt>{t("Used YTD")}</dt>
         <dd className="text-right tabular-nums">{formatPtoDays(balance.usedYtdDays)}</dd>
       </dl>
       {ratio !== null ? (
@@ -270,14 +275,13 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
             <div className="bg-primary h-full rounded-full" style={{ width: `${ratio * 100}%` }} />
           </div>
           <p className="text-muted-foreground mt-0.5 text-[10px]">
-            Cap {formatPtoDays(balance.maxBalanceDays ?? "0")} days
+            {t("Cap {0} days", formatPtoDays(balance.maxBalanceDays ?? "0"))}
           </p>
         </div>
       ) : null}
       {balance.nextAccrual ? (
         <p className="text-muted-foreground mt-2 flex items-center gap-1 text-[11px]">
-          <CalendarSyncIcon className="size-3" />+{formatPtoDays(balance.nextAccrual.nominalDays)}{" "}
-          on {formatUnixDateMedium(balance.nextAccrual.effectiveAt)}
+          <CalendarSyncIcon className="size-3" />{t("+{0} on {1}", formatPtoDays(balance.nextAccrual.nominalDays), formatUnixDateMedium(balance.nextAccrual.effectiveAt))}
         </p>
       ) : null}
     </div>
@@ -291,6 +295,8 @@ function entryTone(entry: WorkerPTOLedgerEntry): string {
 }
 
 function LedgerTable({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const [cursor, setCursor] = useState<string | null>(null);
   const [pages, setPages] = useState<WorkerPTOLedgerEntry[][]>([]);
 
@@ -334,24 +340,24 @@ function LedgerTable({ workerId }: { workerId: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <h4 className="text-sm font-semibold">Ledger</h4>
+      <h4 className="text-sm font-semibold">{t("Ledger")}</h4>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-xs">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">Date</th>
-              <th className="px-3 py-2 text-left font-medium">Type</th>
-              <th className="px-3 py-2 text-left font-medium">Entry</th>
-              <th className="px-3 py-2 text-right font-medium">Days</th>
-              <th className="px-3 py-2 text-right font-medium">Balance</th>
-              <th className="px-3 py-2 text-left font-medium">Note</th>
+              <th className="px-3 py-2 text-left font-medium">{t("Date")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("Type")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("Entry")}</th>
+              <th className="px-3 py-2 text-right font-medium">{t("Days")}</th>
+              <th className="px-3 py-2 text-right font-medium">{t("Balance")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("Note")}</th>
             </tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-muted-foreground px-3 py-6 text-center">
-                  No ledger entries yet. Accruals post nightly from the effective date.
+                  {t("No ledger entries yet. Accruals post nightly from the effective date.")}
                 </td>
               </tr>
             ) : (
@@ -390,7 +396,7 @@ function LedgerTable({ workerId }: { workerId: string }) {
       </div>
       {query.data?.hasNextPage ? (
         <Button size="sm" variant="ghost" className="self-center" onClick={loadMore}>
-          Load more
+          {t("Load more")}
         </Button>
       ) : null}
     </div>
@@ -398,9 +404,11 @@ function LedgerTable({ workerId }: { workerId: string }) {
 }
 
 function AssignmentHistory({ assignments }: { assignments: PTOPolicyAssignment[] }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-1">
-      <h4 className="text-sm font-semibold">Policy history</h4>
+      <h4 className="text-sm font-semibold">{t("Policy history")}</h4>
       <ul className="text-muted-foreground flex flex-col gap-0.5 text-xs">
         {assignments.map((assignment) => (
           <li key={assignment.id} className="flex items-center gap-2">

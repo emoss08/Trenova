@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome } from "@/lib/bulk-outcome";
@@ -49,6 +50,8 @@ const REASON_MODE: Record<Exclude<PTOBulkAction, "Approve">, PTOReasonDialogMode
 };
 
 export default function PTODataTable() {
+  const t = useT();
+
   const columns = useMemo(() => getColumns(), []);
   const invalidate = usePTOInvalidation();
   const { allowed: canApprove } = usePermission(Resource.WorkerPTO, Operation.Approve);
@@ -90,13 +93,13 @@ export default function PTODataTable() {
       await invalidate();
       setPendingApproval(null);
     } catch (error) {
-      toast.error("Failed to approve PTO", {
+      toast.error(t("Failed to approve PTO"), {
         description: error instanceof Error ? error.message : "Please try again.",
       });
     } finally {
       setApproving(false);
     }
-  }, [invalidate, pendingApproval]);
+  }, [invalidate, pendingApproval, t]);
 
   const dockActions = useMemo<DockAction<WorkerPTORow>[]>(() => {
     const actions: DockAction<WorkerPTORow>[] = [];
@@ -193,17 +196,16 @@ export default function PTODataTable() {
               <CircleCheckIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>
-              Approve {approvalCount} PTO request{approvalCount === 1 ? "" : "s"}
+              {t("Approve {0} PTO request{1}", approvalCount, approvalCount === 1 ? "" : "s")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Workers are notified in Dash and by SMS once their time off is approved.
-              {pendingApproval && pendingApproval.skipped > 0
+              {t("Workers are notified in Dash and by SMS once their time off is approved. {0}", pendingApproval && pendingApproval.skipped > 0
                 ? ` ${pendingApproval.skipped} selected request${pendingApproval.skipped === 1 ? " is" : "s are"} not eligible and will be skipped.`
-                : ""}
+                : "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={approving}>Back</AlertDialogCancel>
+            <AlertDialogCancel disabled={approving}>{t("Back")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={approving}
               onClick={(event) => {

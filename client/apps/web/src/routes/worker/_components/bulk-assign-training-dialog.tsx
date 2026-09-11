@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -55,6 +56,8 @@ export function BulkAssignTrainingDialog({
   onOpenChange,
   workers,
 }: BulkAssignTrainingDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["training-courses", "active"],
@@ -112,11 +115,9 @@ export function BulkAssignTrainingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Assign training</DialogTitle>
+          <DialogTitle>{t("Assign training")}</DialogTitle>
           <DialogDescription>
-            Opens the courses you choose for {workers.length} selected{" "}
-            {workers.length === 1 ? "worker" : "workers"}. Anyone who already has a course open
-            keeps the assignment they have.
+            {t("Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.", workers.length, workers.length === 1 ? "worker" : "workers")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -130,13 +131,13 @@ export function BulkAssignTrainingDialog({
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium">Courses</span>
+                  <span className="text-sm font-medium">{t("Courses")}</span>
                   <ScrollArea className="max-h-56 rounded-md border p-2">
                     {isLoading ? (
-                      <p className="text-muted-foreground p-2 text-sm">Loading courses...</p>
+                      <p className="text-muted-foreground p-2 text-sm">{t("Loading courses...")}</p>
                     ) : courses.length === 0 ? (
                       <p className="text-muted-foreground p-2 text-sm">
-                        No active courses to assign.
+                        {t("No active courses to assign.")}
                       </p>
                     ) : (
                       <div className="flex flex-col gap-1">
@@ -169,18 +170,18 @@ export function BulkAssignTrainingDialog({
                 <AutoCompleteDateField<FormValues>
                   control={control}
                   name="dueAt"
-                  label="Due date"
-                  placeholder="Each course's own default"
-                  description="Leave empty to use the due-days each course already sets."
+                  label={t("Due date")}
+                  placeholder={t("Each course's own default")}
+                  description={t("Leave empty to use the due-days each course already sets.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<FormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Annual hazmat refresher"
-                  description="Copied onto every training record this run creates."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Annual hazmat refresher")}
+                  description={t("Copied onto every training record this run creates.")}
                   maxLength={4000}
                 />
               </FormControl>
@@ -189,8 +190,7 @@ export function BulkAssignTrainingDialog({
                   <Alert className="py-2">
                     <InfoIcon className="size-4" />
                     <AlertDescription>
-                      This opens up to {workers.length * Math.max(selectedCourseIds.length, 1)}{" "}
-                      assignments and notifies every driver affected.
+                      {t("This opens up to {0} assignments and notifies every driver affected.", workers.length * Math.max(selectedCourseIds.length, 1))}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -198,10 +198,10 @@ export function BulkAssignTrainingDialog({
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Assigning...">
-                Assign to {workers.length}
+              <Button type="submit" isLoading={isPending} loadingText={t("Assigning...")}>
+                {t("Assign to {0}", workers.length)}
               </Button>
             </DialogFooter>
           </Form>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -67,6 +68,8 @@ export function ReviewEditorDialog(props: ReviewEditorDialogProps) {
 }
 
 function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) {
+  const t = useT();
+
   const invalidate = useReviewInvalidation(workerId);
   const templatesQuery = useQuery({
     queryKey: [REVIEW_TEMPLATES_KEY],
@@ -119,7 +122,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
         periodEnd: values.periodEnd,
       }),
     onSuccess: (saved) => {
-      toast.success("Review started", {
+      toast.success(t("Review started"), {
         description: `${saved.ratings.length} item${saved.ratings.length === 1 ? "" : "s"} to rate. It stays a draft until you submit it.`,
       });
       void invalidate();
@@ -131,10 +134,9 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Start a review</DialogTitle>
+          <DialogTitle>{t("Start a review")}</DialogTitle>
           <DialogDescription>
-            The template decides what gets rated. Items are copied onto the review, so later
-            template edits will not rewrite it.
+            {t("The template decides what gets rated. Items are copied onto the review, so later template edits will not rewrite it.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -150,7 +152,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                 <SelectField<CreateReviewFormValues>
                   control={control}
                   name="templateId"
-                  label="Template"
+                  label={t("Template")}
                   placeholder={templatesQuery.isLoading ? "Loading..." : "Select a template"}
                   options={templates.map((template) => ({
                     value: template.id,
@@ -171,44 +173,44 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                 <AutoCompleteDateField<CreateReviewFormValues>
                   control={control}
                   name="periodStart"
-                  label="Period from"
-                  placeholder="A year ago"
+                  label={t("Period from")}
+                  placeholder={t("A year ago")}
                   rules={{ required: true }}
-                  description="The first day of the work being reviewed."
+                  description={t("The first day of the work being reviewed.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<CreateReviewFormValues>
                   control={control}
                   name="periodEnd"
-                  label="Period to"
-                  placeholder="Today"
+                  label={t("Period to")}
+                  placeholder={t("Today")}
                   rules={{ required: true }}
-                  description="The last day being reviewed; it also dates the default title."
+                  description={t("The last day being reviewed; it also dates the default title.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <InputField<CreateReviewFormValues>
                   control={control}
                   name="title"
-                  label="Title"
-                  placeholder="e.g. Annual driver review"
+                  label={t("Title")}
+                  placeholder={t("e.g. Annual driver review")}
                   maxLength={120}
-                  description="Leave blank to use the template name and the period end date."
+                  description={t("Leave blank to use the template name and the period end date.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
                 isLoading={isPending}
-                loadingText="Starting..."
+                loadingText={t("Starting...")}
                 disabled={templates.length === 0}
               >
-                Start review
+                {t("Start review")}
               </Button>
             </DialogFooter>
           </Form>
@@ -224,6 +226,8 @@ function EditDraft({
   workerId,
   review,
 }: ReviewEditorDialogProps & { review: PerformanceReviewRow }) {
+  const t = useT();
+
   const invalidate = useReviewInvalidation(workerId);
 
   const defaults = useMemo<ReviewDraftFormValues>(
@@ -292,8 +296,8 @@ function EditDraft({
         version: review.version,
       }),
     onSuccess: () => {
-      toast.success("Draft saved", {
-        description: "Submit it when you are ready for the worker to sign off.",
+      toast.success(t("Draft saved"), {
+        description: t("Submit it when you are ready for the worker to sign off."),
       });
       void invalidate();
       onOpenChange(false);
@@ -306,8 +310,7 @@ function EditDraft({
         <DialogHeader>
           <DialogTitle>{review.title}</DialogTitle>
           <DialogDescription>
-            Rate every item from 1 to 5 and write the summary the worker will read. Nothing reaches
-            them until you submit.
+            {t("Rate every item from 1 to 5 and write the summary the worker will read. Nothing reaches them until you submit.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -326,30 +329,30 @@ function EditDraft({
                   <TextareaField<ReviewDraftFormValues>
                     control={control}
                     name="summary"
-                    label="Summary"
-                    placeholder="The overall picture, in the words you would use to their face"
+                    label={t("Summary")}
+                    placeholder={t("The overall picture, in the words you would use to their face")}
                     maxLength={4000}
-                    description="The first thing the worker reads once the review is submitted."
+                    description={t("The first thing the worker reads once the review is submitted.")}
                   />
                 </FormControl>
                 <FormControl cols="full">
                   <TextareaField<ReviewDraftFormValues>
                     control={control}
                     name="strengths"
-                    label="Strengths"
-                    placeholder="e.g. Clean inspections and on-time deliveries all year"
+                    label={t("Strengths")}
+                    placeholder={t("e.g. Clean inspections and on-time deliveries all year")}
                     maxLength={4000}
-                    description="Specific things the worker should keep doing."
+                    description={t("Specific things the worker should keep doing.")}
                   />
                 </FormControl>
                 <FormControl cols="full">
                   <TextareaField<ReviewDraftFormValues>
                     control={control}
                     name="improvements"
-                    label="Where to improve"
-                    placeholder="e.g. Log fuel receipts the same day"
+                    label={t("Where to improve")}
+                    placeholder={t("e.g. Log fuel receipts the same day")}
                     maxLength={4000}
-                    description="Where the worker should focus before the next review."
+                    description={t("Where the worker should focus before the next review.")}
                   />
                 </FormControl>
               </FormGroup>
@@ -357,10 +360,10 @@ function EditDraft({
             </div>
             <DialogFooter className="border-border border-t pt-3">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Saving...">
-                Save draft
+              <Button type="submit" isLoading={isPending} loadingText={t("Saving...")}>
+                {t("Save draft")}
               </Button>
             </DialogFooter>
           </Form>
@@ -371,6 +374,8 @@ function EditDraft({
 }
 
 function RatingsSection() {
+  const t = useT();
+
   const { control } = useFormContext<ReviewDraftFormValues>();
   const ratings = useWatch({ control, name: "ratings" });
   const score = useMemo(
@@ -382,9 +387,9 @@ function RatingsSection() {
     <section className="flex flex-col gap-2 py-2">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">Ratings</h3>
+          <h3 className="text-sm font-semibold">{t("Ratings")}</h3>
           <p className="text-muted-foreground text-xs">
-            Weighted by the template; the score updates as you go.
+            {t("Weighted by the template; the score updates as you go.")}
           </p>
         </div>
         <span className="text-lg font-semibold tabular-nums">
@@ -401,6 +406,8 @@ function RatingsSection() {
 }
 
 function RatingRow({ index, label, weight }: { index: number; label: string; weight: number }) {
+  const t = useT();
+
   const { control, setValue } = useFormContext<ReviewDraftFormValues>();
   const score = useWatch({ control, name: `ratings.${index}.score` });
 
@@ -409,7 +416,7 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">
           {label}
-          <span className="text-muted-foreground ml-1.5 text-[11px]">weight {weight}</span>
+          <span className="text-muted-foreground ml-1.5 text-[11px]">{t("weight {0}", weight)}</span>
         </p>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((mark) => (
@@ -441,16 +448,18 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
       <TextareaField<ReviewDraftFormValues>
         control={control}
         name={`ratings.${index}.comment`}
-        label="Comment"
-        placeholder="Optional — what you saw"
+        label={t("Comment")}
+        placeholder={t("Optional — what you saw")}
         maxLength={2000}
-        description="The example behind the score; kept with the rating."
+        description={t("The example behind the score; kept with the rating.")}
       />
     </div>
   );
 }
 
 function GoalsSection() {
+  const t = useT();
+
   const { control } = useFormContext<ReviewDraftFormValues>();
   const goals = useFieldArray({ control, name: "goals" });
 
@@ -458,9 +467,9 @@ function GoalsSection() {
     <section className="flex flex-col gap-2 py-2">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">Goals</h3>
+          <h3 className="text-sm font-semibold">{t("Goals")}</h3>
           <p className="text-muted-foreground text-xs">
-            What the worker is aiming at before the next review.
+            {t("What the worker is aiming at before the next review.")}
           </p>
         </div>
         <Button
@@ -470,7 +479,7 @@ function GoalsSection() {
           onClick={() => goals.append({ id: null, title: "", dueAt: null, status: "Open" })}
         >
           <PlusIcon className="size-3.5" />
-          Add goal
+          {t("Add goal")}
         </Button>
       </div>
       {goals.fields.map((field, index) => (
@@ -481,24 +490,24 @@ function GoalsSection() {
           <InputField<ReviewDraftFormValues>
             control={control}
             name={`goals.${index}.title`}
-            label="Goal"
-            placeholder="e.g. Zero late expense submissions this quarter"
-            description="One outcome the worker can be measured against."
+            label={t("Goal")}
+            placeholder={t("e.g. Zero late expense submissions this quarter")}
+            description={t("One outcome the worker can be measured against.")}
           />
           <AutoCompleteDateField<ReviewDraftFormValues>
             control={control}
             name={`goals.${index}.dueAt`}
-            label="By"
-            placeholder="No date"
-            description="When the goal should be met."
+            label={t("By")}
+            placeholder={t("No date")}
+            description={t("When the goal should be met.")}
           />
           <SelectField<ReviewDraftFormValues>
             control={control}
             name={`goals.${index}.status`}
-            label="Status"
-            placeholder="Pick a status"
+            label={t("Status")}
+            placeholder={t("Pick a status")}
             options={GOAL_STATUS_OPTIONS}
-            description="Where the goal stands right now."
+            description={t("Where the goal stands right now.")}
           />
           <Button
             type="button"

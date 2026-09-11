@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -38,6 +39,8 @@ const invitationStatusVariants: Record<string, React.ComponentProps<typeof Badge
 };
 
 export default function WorkerPortalTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -71,7 +74,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const revoke = useMutation({
     mutationFn: () => revokeWorkerPortalAccess(workerId),
     onSuccess: async () => {
-      toast.success("Portal access revoked");
+      toast.success(t("Portal access revoked"));
       setConfirmRevoke(false);
       setInviteUrl(null);
       await invalidate();
@@ -99,7 +102,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   if (!data) {
     return (
       <p className="text-muted-foreground py-8 text-center text-sm">
-        Portal status could not be loaded.
+        {t("Portal status could not be loaded.")}
       </p>
     );
   }
@@ -112,14 +115,14 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <SmartphoneIcon className="text-muted-foreground size-4" />
-            <p className="text-sm font-semibold">Dash access</p>
+            <p className="text-sm font-semibold">{t("Dash access")}</p>
           </div>
           {data.linked ? (
-            <Badge variant="active">Linked</Badge>
+            <Badge variant="active">{t("Linked")}</Badge>
           ) : hasPending ? (
-            <Badge variant="warning">Invited</Badge>
+            <Badge variant="warning">{t("Invited")}</Badge>
           ) : (
-            <Badge variant="secondary">Not set up</Badge>
+            <Badge variant="secondary">{t("Not set up")}</Badge>
           )}
         </div>
 
@@ -128,7 +131,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
             <p className="font-medium">{data.portalUser.name}</p>
             <p className="text-muted-foreground text-xs">{data.portalUser.emailAddress}</p>
             <p className="text-muted-foreground text-xs">
-              Last sign-in: {formatDate(data.portalUser.lastLoginAt)}
+              {t("Last sign-in: {0}", formatDate(data.portalUser.lastLoginAt))}
             </p>
             <Button
               variant="outline"
@@ -136,15 +139,14 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
               className="text-destructive mt-2 w-fit"
               onClick={() => setConfirmRevoke(true)}
             >
-              Revoke access
+              {t("Revoke access")}
             </Button>
           </div>
         ) : hasPending && data.pendingInvitation ? (
           <div className="mt-3 flex flex-col gap-1 text-sm">
             <p className="text-muted-foreground text-xs">
-              Invitation sent to{" "}
-              <span className="text-foreground font-medium">{data.pendingInvitation.email}</span> —
-              expires {formatDate(data.pendingInvitation.expiresAt)}.
+              {t("Invitation sent to")}{" "}
+              <span className="text-foreground font-medium">{data.pendingInvitation.email}</span> {t("— expires {0}.", formatDate(data.pendingInvitation.expiresAt))}
             </p>
             <Button
               variant="outline"
@@ -159,15 +161,14 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         ) : (
           <div className="mt-3 flex flex-col gap-2">
             <p className="text-muted-foreground text-xs">
-              Invite this driver to Dash so they can see their loads, settlement statements, pay
-              history, and raise pay questions from their phone.
+              {t("Invite this driver to Dash so they can see their loads, settlement statements, pay history, and raise pay questions from their phone.")}
             </p>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="portal-invite-email">Email (optional override)</Label>
+              <Label htmlFor="portal-invite-email">{t("Email (optional override)")}</Label>
               <Input
                 id="portal-invite-email"
                 type="email"
-                placeholder="Defaults to the worker's email on file"
+                placeholder={t("Defaults to the worker's email on file")}
                 value={inviteEmail}
                 onChange={(event) => setInviteEmail(event.target.value)}
               />
@@ -196,7 +197,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
       {data.invitations.length > 0 ? (
         <div className="border-border rounded-lg border">
           <p className="text-muted-foreground px-4 pt-3 text-xs font-medium uppercase">
-            Invitation history
+            {t("Invitation history")}
           </p>
           <ul className="divide-border divide-y">
             {data.invitations.map((invitation: PortalInvitationRow) => (
@@ -207,11 +208,9 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm">{invitation.email}</p>
                   <p className="text-muted-foreground text-xs">
-                    Sent {formatDate(invitation.createdAt)}
-                    {invitation.invitedBy ? ` by ${invitation.invitedBy.name}` : ""}
-                    {invitation.acceptedAt
+                    {t("Sent {0}{1}{2}", formatDate(invitation.createdAt), invitation.invitedBy ? ` by ${invitation.invitedBy.name}` : "", invitation.acceptedAt
                       ? ` · accepted ${formatDate(invitation.acceptedAt)}`
-                      : ""}
+                      : "")}
                   </p>
                 </div>
                 <Badge variant={invitationStatusVariants[invitation.status] ?? "secondary"}>
@@ -230,14 +229,13 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
       <AlertDialog open={confirmRevoke} onOpenChange={setConfirmRevoke}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke portal access?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Revoke portal access?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              The driver&apos;s Dash login is deactivated immediately and any pending invitations
-              are canceled. Their settlement history stays intact, and you can re-invite them later.
+              {t("The driver's Dash login is deactivated immediately and any pending invitations are canceled. Their settlement history stays intact, and you can re-invite them later.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep access</AlertDialogCancel>
+            <AlertDialogCancel>{t("Keep access")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90 text-white"
               disabled={revoke.isPending}

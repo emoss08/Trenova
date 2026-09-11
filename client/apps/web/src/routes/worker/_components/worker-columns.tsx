@@ -1,4 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableDriverTypeBadge } from "@/components/editable-driver-type-badge";
 import { EditableWorkerTypeBadge } from "@/components/editable-worker-type-badge";
@@ -30,6 +32,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 function WorkerTypeCell({ row }: { row: WorkerRow }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const handleTypeChange = useCallback(
@@ -43,9 +47,9 @@ function WorkerTypeCell({ row }: { row: WorkerRow }) {
         queryKey: ["worker-list"],
       });
 
-      toast.success("Worker type updated successfully");
+      toast.success(t("Worker type updated successfully"));
     },
-    [row.id, queryClient],
+    [row.id, queryClient, t],
   );
 
   return (
@@ -58,6 +62,8 @@ function WorkerTypeCell({ row }: { row: WorkerRow }) {
 }
 
 function DriverTypeCell({ row }: { row: WorkerRow }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const handleDriverTypeChange = useCallback(
@@ -71,9 +77,9 @@ function DriverTypeCell({ row }: { row: WorkerRow }) {
         queryKey: ["worker-list"],
       });
 
-      toast.success("Driver type updated successfully");
+      toast.success(t("Driver type updated successfully"));
     },
-    [row.id, queryClient],
+    [row.id, queryClient, t],
   );
 
   return (
@@ -136,9 +142,9 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
             <Badge
               variant="outline"
               className="border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:text-amber-400"
-              title="On leave"
+              title={translate("On leave")}
             >
-              {WORKER_LEAVE_TYPE_LABELS[row.original.leaveType]} leave
+              {translate("{0} leave", WORKER_LEAVE_TYPE_LABELS[row.original.leaveType])}
             </Badge>
           ) : null}
         </span>
@@ -380,7 +386,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       cell: ({ row }) => {
         const expiry = row.original.profile?.nextCredentialExpiry;
         if (!expiry) {
-          return <p className="text-muted-foreground">Nothing expiring</p>;
+          return <p className="text-muted-foreground">{translate("Nothing expiring")}</p>;
         }
         const days = Math.ceil((expiry - getTodayDate()) / 86_400);
         return (

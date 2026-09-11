@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField, type TextareaPreset } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { notifyBulkOutcome } from "@/lib/bulk-outcome";
@@ -122,6 +123,8 @@ export function PTOReasonDialog({
   skipped = 0,
   onCompleted,
 }: PTOReasonDialogProps) {
+  const t = useT();
+
   const invalidate = usePTOInvalidation();
   const copy = MODE_COPY[mode];
   const schema = mode === "cancel" ? ptoCancelRequestSchema : ptoReasonRequestSchema;
@@ -221,8 +224,8 @@ export function PTOReasonDialog({
                   control={control}
                   rules={{ required: mode === "reject" }}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. No coverage for those dates"
+                  label={t("Reason")}
+                  placeholder={t("e.g. No coverage for those dates")}
                   description={copy.reasonDescription}
                   presets={copy.presets}
                   maxLength={255}
@@ -231,7 +234,7 @@ export function PTOReasonDialog({
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Back
+                {t("Back")}
               </Button>
               <Button
                 type="button"

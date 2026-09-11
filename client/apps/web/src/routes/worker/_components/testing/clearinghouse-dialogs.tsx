@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -65,6 +66,8 @@ function emptyQuery(): ClearinghouseQueryFormValues {
 }
 
 export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryDialogProps) {
+  const t = useT();
+
   const invalidate = useTestingInvalidation(workerId);
   const form = useForm<ClearinghouseQueryFormValues>({
     resolver: zodResolver(clearinghouseQueryFormSchema) as Resolver<ClearinghouseQueryFormValues>,
@@ -99,8 +102,8 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
         notes: values.notes ?? undefined,
       }),
     onSuccess: () => {
-      toast.success("Query logged", {
-        description: "Record the answer here once the Clearinghouse responds.",
+      toast.success(t("Query logged"), {
+        description: t("Record the answer here once the Clearinghouse responds."),
       });
       void invalidate();
       onOpenChange(false);
@@ -111,10 +114,9 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Log a Clearinghouse query</DialogTitle>
+          <DialogTitle>{t("Log a Clearinghouse query")}</DialogTitle>
           <DialogDescription>
-            A full query before the driver&apos;s first dispatch, and a limited query every twelve
-            months after (49 CFR 382 Subpart G).
+            {t("A full query before the driver's first dispatch, and a limited query every twelve months after (49 CFR 382 Subpart G).")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -130,10 +132,10 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                 <SelectField<ClearinghouseQueryFormValues>
                   control={control}
                   name="queryType"
-                  label="Query"
+                  label={t("Query")}
                   options={TYPE_OPTIONS}
-                  placeholder="Pick a query type"
-                  description="A full query needs the driver's specific consent; a limited query runs on the general consent on file."
+                  placeholder={t("Pick a query type")}
+                  description={t("A full query needs the driver's specific consent; a limited query runs on the general consent on file.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -141,9 +143,9 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                 <AutoCompleteDateField<ClearinghouseQueryFormValues>
                   control={control}
                   name="requestedAt"
-                  label="Requested on"
-                  placeholder="MM/DD/YYYY"
-                  description="The date the query was submitted to the Clearinghouse."
+                  label={t("Requested on")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("The date the query was submitted to the Clearinghouse.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -151,8 +153,8 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                 <AutoCompleteDateField<ClearinghouseQueryFormValues>
                   control={control}
                   name="consentObtainedAt"
-                  label="Consent obtained"
-                  placeholder="MM/DD/YYYY"
+                  label={t("Consent obtained")}
+                  placeholder={t("MM/DD/YYYY")}
                   rules={{ required: isFull }}
                   description={
                     isFull
@@ -165,37 +167,37 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                 <AutoCompleteDateField<ClearinghouseQueryFormValues>
                   control={control}
                   name="consentExpiresAt"
-                  label="Consent expires"
-                  placeholder="MM/DD/YYYY"
-                  description="When the consent on file lapses; a new one is needed before the next query."
+                  label={t("Consent expires")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the consent on file lapses; a new one is needed before the next query.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<ClearinghouseQueryFormValues>
                   control={control}
                   name="reference"
-                  label="Reference"
-                  placeholder="Clearinghouse query reference"
-                  description="The query ID the Clearinghouse assigned, for matching the answer when it comes back."
+                  label={t("Reference")}
+                  placeholder={t("Clearinghouse query reference")}
+                  description={t("The query ID the Clearinghouse assigned, for matching the answer when it comes back.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<ClearinghouseQueryFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Anything an auditor should know about this query"
-                  description="Internal notes kept with the query."
+                  label={t("Notes")}
+                  placeholder={t("Anything an auditor should know about this query")}
+                  description={t("Internal notes kept with the query.")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Log query
+                {t("Log query")}
               </Button>
             </DialogFooter>
           </Form>
@@ -223,6 +225,8 @@ function emptyAnswer(): ClearinghouseAnswerFormValues {
 }
 
 export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: AnswerQueryDialogProps) {
+  const t = useT();
+
   const invalidate = useTestingInvalidation(workerId);
   const form = useForm<ClearinghouseAnswerFormValues>({
     resolver: zodResolver(clearinghouseAnswerFormSchema) as Resolver<ClearinghouseAnswerFormValues>,
@@ -258,7 +262,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
       });
     },
     onSuccess: (saved) => {
-      toast.success("Answer recorded", {
+      toast.success(t("Answer recorded"), {
         description:
           saved.result === "ViolationsFound" || saved.result === "ConsentDenied"
             ? "The driver is prohibited from safety-sensitive duty."
@@ -273,7 +277,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Record the Clearinghouse answer</DialogTitle>
+          <DialogTitle>{t("Record the Clearinghouse answer")}</DialogTitle>
           <DialogDescription>
             {query ? clearinghouseQueryTypeLabel(query.queryType) : null}
           </DialogDescription>
@@ -291,10 +295,10 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                 <SelectField<ClearinghouseAnswerFormValues>
                   control={control}
                   name="result"
-                  label="Answer"
+                  label={t("Answer")}
                   options={RESULT_OPTIONS}
-                  placeholder="Pick an answer"
-                  description="Violations found or consent denied prohibits the driver from safety-sensitive duty at once."
+                  placeholder={t("Pick an answer")}
+                  description={t("Violations found or consent denied prohibits the driver from safety-sensitive duty at once.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -302,9 +306,9 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                 <AutoCompleteDateField<ClearinghouseAnswerFormValues>
                   control={control}
                   name="completedAt"
-                  label="Answered on"
-                  placeholder="MM/DD/YYYY"
-                  description="When the Clearinghouse returned the answer; the next annual query is due twelve months on."
+                  label={t("Answered on")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the Clearinghouse returned the answer; the next annual query is due twelve months on.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -313,9 +317,9 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   <NumberField<ClearinghouseAnswerFormValues>
                     control={control}
                     name="violationCount"
-                    label="Violations returned"
-                    placeholder="e.g. 1"
-                    description="How many violations the Clearinghouse reported."
+                    label={t("Violations returned")}
+                    placeholder={t("e.g. 1")}
+                    description={t("How many violations the Clearinghouse reported.")}
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -324,28 +328,28 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                 <InputField<ClearinghouseAnswerFormValues>
                   control={control}
                   name="reference"
-                  label="Reference"
-                  placeholder="Clearinghouse response reference"
-                  description="The query ID on the Clearinghouse response."
+                  label={t("Reference")}
+                  placeholder={t("Clearinghouse response reference")}
+                  description={t("The query ID on the Clearinghouse response.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<ClearinghouseAnswerFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Driver notified and taken off the board"
-                  description="Internal notes kept with the answer."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Driver notified and taken off the board")}
+                  description={t("Internal notes kept with the answer.")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Record answer
+                {t("Record answer")}
               </Button>
             </DialogFooter>
           </Form>

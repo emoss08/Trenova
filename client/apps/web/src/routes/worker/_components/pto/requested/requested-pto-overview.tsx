@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
@@ -19,6 +20,8 @@ import {
 import { UpcomingPTOCard } from "./upcoming-pto-card";
 
 export function RequestedPTOOverview() {
+  const t = useT();
+
   const [searchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
   const user = useAuthStore((state) => state.user);
 
@@ -126,7 +129,7 @@ export function RequestedPTOOverview() {
               className="flex items-center justify-center py-4"
             >
               <TextShimmer className="font-mono text-sm" duration={1}>
-                Loading more...
+                {t("Loading more...")}
               </TextShimmer>
             </div>
           )}
@@ -157,6 +160,8 @@ function RequestedPTOOverviewOuter({ children }: { children: React.ReactNode }) 
 }
 
 function RequestedPTOHeader() {
+  const t = useT();
+
   const [, setSearchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
   const { defaultValues } = usePTOFilters();
 
@@ -186,7 +191,7 @@ function RequestedPTOHeader() {
   }, [defaultValues, setSearchParams]);
 
   return (
-    <HeaderContent title="Requested PTO">
+    <HeaderContent title={t("Requested PTO")}>
       <PTOFilterPopover
         defaultValues={defaultValues}
         onSubmit={handleFilterSubmit}

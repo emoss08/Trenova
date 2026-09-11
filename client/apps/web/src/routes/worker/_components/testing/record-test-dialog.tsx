@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -70,6 +71,8 @@ export function RecordTestDialog({
   drawEntryId = null,
   defaultSubstance = "Drug",
 }: RecordTestDialogProps) {
+  const t = useT();
+
   const invalidate = useTestingInvalidation(workerId);
   const form = useForm<DOTTestFormValues>({
     resolver: zodResolver(dotTestFormSchema) as Resolver<DOTTestFormValues>,
@@ -112,8 +115,8 @@ export function RecordTestDialog({
         drawEntryId: values.drawEntryId ?? undefined,
       }),
     onSuccess: () => {
-      toast.success("Test recorded", {
-        description: "Record the result here once the laboratory or MRO reports back.",
+      toast.success(t("Test recorded"), {
+        description: t("Record the result here once the laboratory or MRO reports back."),
       });
       void invalidate();
       onOpenChange(false);
@@ -124,10 +127,9 @@ export function RecordTestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Record a collection</DialogTitle>
+          <DialogTitle>{t("Record a collection")}</DialogTitle>
           <DialogDescription>
-            One record per substance analysed. A collection covering both drug and alcohol is two
-            records, because only the drug half has a medical review officer.
+            {t("One record per substance analysed. A collection covering both drug and alcohol is two records, because only the drug half has a medical review officer.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -143,10 +145,10 @@ export function RecordTestDialog({
                 <SelectField<DOTTestFormValues>
                   control={control}
                   name="testType"
-                  label="Reason for the test"
+                  label={t("Reason for the test")}
                   options={TYPE_OPTIONS}
-                  placeholder="Pick a reason"
-                  description="Reasonable suspicion and post-accident tests must say what prompted them."
+                  placeholder={t("Pick a reason")}
+                  description={t("Reasonable suspicion and post-accident tests must say what prompted them.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -154,10 +156,10 @@ export function RecordTestDialog({
                 <SelectField<DOTTestFormValues>
                   control={control}
                   name="substance"
-                  label="What is analysed"
+                  label={t("What is analysed")}
                   options={SUBSTANCE_OPTIONS}
-                  placeholder="Pick a substance"
-                  description="Drug results go through an MRO; alcohol results are graded by the concentration."
+                  placeholder={t("Pick a substance")}
+                  description={t("Drug results go through an MRO; alcohol results are graded by the concentration.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -167,9 +169,9 @@ export function RecordTestDialog({
                   <TextareaField<DOTTestFormValues>
                     control={control}
                     name="reason"
-                    label="What prompted it"
-                    placeholder="What the supervisor observed, or the accident that triggered the collection"
-                    description="Kept with the test as the documented basis for ordering it."
+                    label={t("What prompted it")}
+                    placeholder={t("What the supervisor observed, or the accident that triggered the collection")}
+                    description={t("Kept with the test as the documented basis for ordering it.")}
                     rules={{ required: true }}
                     maxLength={2000}
                   />
@@ -180,72 +182,72 @@ export function RecordTestDialog({
                 <AutoCompleteDateField<DOTTestFormValues>
                   control={control}
                   name="scheduledAt"
-                  label="Scheduled for"
-                  placeholder="MM/DD/YYYY"
-                  description="When the driver is due at the collection site."
+                  label={t("Scheduled for")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the driver is due at the collection site.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<DOTTestFormValues>
                   control={control}
                   name="collectedAt"
-                  label="Collected on"
-                  placeholder="MM/DD/YYYY"
-                  description="Entering a date marks the specimen as collected; leave it blank if it has not been taken yet."
+                  label={t("Collected on")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("Entering a date marks the specimen as collected; leave it blank if it has not been taken yet.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<DOTTestFormValues>
                   control={control}
                   name="collectionSite"
-                  label="Collection site"
-                  placeholder="e.g. Concentra, Joliet IL"
-                  description="Where the specimen was collected."
+                  label={t("Collection site")}
+                  placeholder={t("e.g. Concentra, Joliet IL")}
+                  description={t("Where the specimen was collected.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<DOTTestFormValues>
                   control={control}
                   name="collectorName"
-                  label="Collector"
-                  placeholder="Name of the collector"
-                  description="The collector who took the specimen, as named on the CCF."
+                  label={t("Collector")}
+                  placeholder={t("Name of the collector")}
+                  description={t("The collector who took the specimen, as named on the CCF.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<DOTTestFormValues>
                   control={control}
                   name="specimenId"
-                  label="Specimen ID"
-                  placeholder="CCF specimen number"
-                  description="The specimen ID from the custody and control form, for matching the laboratory report."
+                  label={t("Specimen ID")}
+                  placeholder={t("CCF specimen number")}
+                  description={t("The specimen ID from the custody and control form, for matching the laboratory report.")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField<DOTTestFormValues>
                   control={control}
                   name="isDot"
-                  label="DOT test"
-                  description="Turn off for a company-policy test that is not made under 49 CFR 382."
+                  label={t("DOT test")}
+                  description={t("Turn off for a company-policy test that is not made under 49 CFR 382.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<DOTTestFormValues>
                   control={control}
                   name="notes"
-                  placeholder="e.g. Driver escorted to the site"
-                  description="Internal notes kept with the test record."
-                  label="Notes"
+                  placeholder={t("e.g. Driver escorted to the site")}
+                  description={t("Internal notes kept with the test record.")}
+                  label={t("Notes")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Record
+                {t("Record")}
               </Button>
             </DialogFooter>
           </Form>

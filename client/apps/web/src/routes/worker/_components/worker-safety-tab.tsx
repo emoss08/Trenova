@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   deleteWorkerRecognition,
@@ -44,6 +45,8 @@ type DialogState =
   | { kind: "recognition" };
 
 export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canRecord } = usePermission(Resource.WorkerSafetyEvent, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerSafetyEvent, Operation.Update);
   const { allowed: canClose } = usePermission(Resource.WorkerSafetyEvent, Operation.Close);
@@ -99,39 +102,39 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
     mutationFn: (event: WorkerSafetyEventRow) =>
       reviewWorkerSafetyEvent({ id: event.id, version: event.version }),
     onSuccess: () => {
-      toast.success("Marked under review");
+      toast.success(t("Marked under review"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not update event", { description: error.message }),
+      toast.error(t("Could not update event"), { description: error.message }),
   });
   const reopen = useMutation({
     mutationFn: (event: WorkerSafetyEventRow) =>
       reopenWorkerSafetyEvent({ id: event.id, version: event.version }),
     onSuccess: () => {
-      toast.success("Event reopened");
+      toast.success(t("Event reopened"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not reopen event", { description: error.message }),
+      toast.error(t("Could not reopen event"), { description: error.message }),
   });
   const remove = useMutation({
     mutationFn: (event: WorkerSafetyEventRow) => deleteWorkerSafetyEvent(event.id),
     onSuccess: () => {
-      toast.success("Event deleted");
+      toast.success(t("Event deleted"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not delete event", { description: error.message }),
+      toast.error(t("Could not delete event"), { description: error.message }),
   });
   const removeRecognition = useMutation({
     mutationFn: (recognition: WorkerRecognitionRow) => deleteWorkerRecognition(recognition.id),
     onSuccess: () => {
-      toast.success("Recognition removed");
+      toast.success(t("Recognition removed"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not remove recognition", { description: error.message }),
+      toast.error(t("Could not remove recognition"), { description: error.message }),
   });
 
   const permissions = useMemo<SafetyEventPermissions>(
@@ -159,7 +162,7 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
   if (!scorecard || !ladder) {
     return (
       <p className="text-muted-foreground text-sm">
-        The safety record could not be loaded. Try again in a moment.
+        {t("The safety record could not be loaded. Try again in a moment.")}
       </p>
     );
   }
@@ -180,14 +183,14 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">Events</h4>
+          <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{t("Events")}</h4>
           <p className="text-muted-foreground truncate text-xs">
-            Accidents, incidents, near misses, citations and inspections. Open ones first.
+            {t("Accidents, incidents, near misses, citations and inspections. Open ones first.")}
           </p>
         </div>
         {events.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-6 text-center text-xs">
-            Nothing on record
+            {t("Nothing on record")}
           </p>
         ) : (
           <ol className="animate-in fade-in-0 rounded-lg border p-4 duration-200">

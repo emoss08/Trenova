@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -8,6 +9,8 @@ import { formatPtoDays, PTOLiabilityDialog } from "./pto-liability-dialog";
 import { ptoBalanceSummaryQuery, ptoLiabilityReportQuery } from "./pto-queries";
 
 export function PTOBalanceSummaryCard() {
+  const t = useT();
+
   const { allowed: canManage } = usePermission(Resource.WorkerPTO, Operation.Manage);
   const [reportOpen, setReportOpen] = useState(false);
   const { data, isLoading, isError } = useQuery(ptoBalanceSummaryQuery());
@@ -29,31 +32,31 @@ export function PTOBalanceSummaryCard() {
         className="mb-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-5"
         data-testid="pto-balance-summary"
       >
-        <SummaryTile label="Workers on a policy" value={data.workersTracked.toLocaleString()} />
+        <SummaryTile label={t("Workers on a policy")} value={data.workersTracked.toLocaleString()} />
         <SummaryTile
-          label="Not enrolled"
+          label={t("Not enrolled")}
           value={data.workersUnassigned.toLocaleString()}
           hint={
             data.workersUnassigned > 0 ? (
               <Link to="/hr/pto-policies" className="underline">
-                Manage policies
+                {t("Manage policies")}
               </Link>
             ) : undefined
           }
         />
         <SummaryTile
-          label="Banked days"
+          label={t("Banked days")}
           value={formatPtoDays(data.totalBalanceDays)}
-          hint="across all tracked balances"
+          hint={t("across all tracked balances")}
         />
         <SummaryTile
-          label="Pending days"
+          label={t("Pending days")}
           value={formatPtoDays(data.totalPendingDays)}
-          hint="awaiting a decision"
+          hint={t("awaiting a decision")}
         />
         {canManage ? (
           <SummaryTile
-            label="Owed on exit"
+            label={t("Owed on exit")}
             value={liability.data ? formatPtoDays(liability.data.liabilityDays) : "—"}
             hint={
               <button
@@ -62,7 +65,7 @@ export function PTOBalanceSummaryCard() {
                 onClick={() => setReportOpen(true)}
                 data-testid="pto-liability-open"
               >
-                View liability report
+                {t("View liability report")}
               </button>
             }
           />

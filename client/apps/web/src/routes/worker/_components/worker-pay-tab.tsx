@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { AssignPayProfileDialog } from "@/components/pay/assign-pay-profile-dialog";
 import { PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
@@ -33,6 +34,8 @@ function formatDate(unix?: number | null): string {
 import { WorkerBenefitsSection } from "./benefits/worker-benefits-section";
 
 export default function WorkerPayTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [assignOpen, setAssignOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -67,10 +70,9 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">Pay Profile</h3>
+          <h3 className="text-sm font-semibold">{t("Pay Profile")}</h3>
           <p className="text-muted-foreground text-xs">
-            Pay accrues automatically from delivered shipments using the assignment in effect on the
-            delivery date. Manage shared profiles under Payroll &rarr; Pay Profiles.
+            {t("Pay accrues automatically from delivered shipments using the assignment in effect on the delivery date. Manage shared profiles under Payroll → Pay Profiles.")}
           </p>
         </div>
         <Button size="sm" onClick={() => setAssignOpen(true)}>
@@ -84,11 +86,9 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       ) : (
         <div className="rounded-lg border border-dashed p-6 text-center">
           <CircleDollarSign className="text-muted-foreground mx-auto size-6" />
-          <p className="mt-2 text-sm font-medium">No pay profile assigned</p>
+          <p className="mt-2 text-sm font-medium">{t("No pay profile assigned")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            This driver will not accrue pay for delivered shipments until a profile is assigned.
-            Assign a shared profile and add driver-specific rate overrides if their rates differ
-            from the template.
+            {t("This driver will not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and add driver-specific rate overrides if their rates differ from the template.")}
           </p>
         </div>
       )}
@@ -97,19 +97,18 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground text-[11px] font-medium uppercase">
-              Unsettled Earnings
+              {t("Unsettled Earnings")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
             </p>
             <p className="text-muted-foreground text-[11px]">
-              {earnings.accruedEventCount} pay event
-              {earnings.accruedEventCount === 1 ? "" : "s"} awaiting settlement
+              {t("{0} pay event {1} awaiting settlement", earnings.accruedEventCount, earnings.accruedEventCount === 1 ? "" : "s")}
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground text-[11px] font-medium uppercase">
-              Outstanding Advances
+              {t("Outstanding Advances")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay
@@ -118,18 +117,18 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
               />
             </p>
             <p className="text-muted-foreground text-[11px]">
-              Recovered automatically from the next settlement
+              {t("Recovered automatically from the next settlement")}
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground text-[11px] font-medium uppercase">
-              Escrow Balance
+              {t("Escrow Balance")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.escrowBalanceMinor} />
             </p>
             <p className="text-muted-foreground text-[11px]">
-              Ledger under Payroll &rarr; Escrow Accounts
+              {t("Ledger under Payroll → Escrow Accounts")}
             </p>
           </div>
         </div>
@@ -138,16 +137,16 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       {(history ?? []).length > 0 && (
         <div>
           <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-            Assignment History
+            {t("Assignment History")}
           </h4>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-xs">
               <thead className="bg-muted/50 text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Profile</th>
-                  <th className="px-3 py-2 font-medium">Effective</th>
-                  <th className="px-3 py-2 text-right font-medium">Split</th>
-                  <th className="px-3 py-2 text-right font-medium">Overrides</th>
+                  <th className="px-3 py-2 font-medium">{t("Profile")}</th>
+                  <th className="px-3 py-2 font-medium">{t("Effective")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("Split")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("Overrides")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -199,6 +198,8 @@ function CurrentAssignmentCard({
   assignment: EffectiveWorkerPayAssignment;
   onEnd: () => void;
 }) {
+  const t = useT();
+
   const profile = assignment.payProfile;
   const overrideMap = new Map(
     (assignment.rateOverrides ?? []).map((override) => [override.componentId, override.rate]),
@@ -215,9 +216,8 @@ function CurrentAssignmentCard({
           />
         )}
         <span className="text-muted-foreground text-xs">
-          since {formatDate(assignment.effectiveFrom)}
-          {Number(assignment.splitPercent) !== 100 &&
-            ` · ${Number(assignment.splitPercent)}% split`}
+          {t("since {0}{1}", formatDate(assignment.effectiveFrom), Number(assignment.splitPercent) !== 100 &&
+            ` · ${Number(assignment.splitPercent)}% split`)}
         </span>
         <Button
           size="sm"
@@ -225,7 +225,7 @@ function CurrentAssignmentCard({
           className="ml-auto text-red-600 dark:text-red-400"
           onClick={onEnd}
         >
-          End Assignment
+          {t("End Assignment")}
         </Button>
       </div>
 
@@ -234,9 +234,9 @@ function CurrentAssignmentCard({
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-1.5 font-medium">Component</th>
-                <th className="px-3 py-1.5 text-right font-medium">Profile Rate</th>
-                <th className="px-3 py-1.5 text-right font-medium">This Driver</th>
+                <th className="px-3 py-1.5 font-medium">{t("Component")}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t("Profile Rate")}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t("This Driver")}</th>
               </tr>
             </thead>
             <tbody>
@@ -249,7 +249,7 @@ function CurrentAssignmentCard({
                       {component.description || `${component.kind} (${component.method})`}
                       {(component.bands?.length ?? 0) > 0 && (
                         <span className="text-muted-foreground ml-1">
-                          ({component.bands?.length} bands)
+                          {t("({0} bands)", component.bands?.length)}
                         </span>
                       )}
                     </td>
@@ -260,8 +260,7 @@ function CurrentAssignmentCard({
                     <td className="px-3 py-1.5 text-right font-medium tabular-nums">
                       {override != null ? (
                         <span className="text-blue-600 dark:text-blue-400">
-                          {Number(override)}
-                          {suffix} (override)
+                          {t("{0}{1} (override)", Number(override), suffix)}
                         </span>
                       ) : (
                         <>
@@ -279,16 +278,15 @@ function CurrentAssignmentCard({
       )}
       {profile != null && profile.guaranteedPeriodMinimumMinor > 0 && (
         <p className="text-muted-foreground mt-2 text-[11px]">
-          Guaranteed minimum <AmountDisplay value={profile.guaranteedPeriodMinimumMinor} /> per pay
-          period — a top-up line is added automatically when period gross falls below the floor.
+          {t("Guaranteed minimum")} <AmountDisplay value={profile.guaranteedPeriodMinimumMinor} /> {t("per pay period — a top-up line is added automatically when period gross falls below the floor.")}
         </p>
       )}
       <p className="text-muted-foreground mt-2 text-[11px]">
-        Need different rates for this driver? Use{" "}
+        {t("Need different rates for this driver? Use")}{" "}
         <Link to="/payroll/pay-profiles" className="underline">
-          shared profiles
+          {t("shared profiles")}
         </Link>{" "}
-        with per-driver overrides instead of creating one profile per driver.
+        {t("with per-driver overrides instead of creating one profile per driver.")}
       </p>
     </div>
   );
@@ -305,10 +303,12 @@ function EndAssignmentDialog({
   assignmentId: string;
   onEnded: () => void;
 }) {
+  const t = useT();
+
   const mutation = useMutation({
     mutationFn: () => endWorkerPayAssignment({ assignmentId, endDate: getTodayDate() }),
     onSuccess: () => {
-      toast.success("Pay assignment ended");
+      toast.success(t("Pay assignment ended"));
       onOpenChange(false);
       onEnded();
     },
@@ -319,22 +319,21 @@ function EndAssignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>End pay assignment</DialogTitle>
+          <DialogTitle>{t("End pay assignment")}</DialogTitle>
           <DialogDescription>
-            The assignment ends today. The driver stops accruing pay for shipments delivered after
-            today until a new profile is assigned; already-accrued pay events are kept.
+            {t("The assignment ends today. The driver stops accruing pay for shipments delivered after today until a new profile is assigned; already-accrued pay events are kept.")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant="destructive"
             disabled={mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            End Assignment
+            {t("End Assignment")}
           </Button>
         </DialogFooter>
       </DialogContent>

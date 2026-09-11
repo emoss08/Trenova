@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -102,6 +103,8 @@ function defaultsFor(event?: WorkerSafetyEventRow | null): SafetyEventFormValues
 }
 
 export function SafetyEventDialog({ open, onOpenChange, workerId, event }: SafetyEventDialogProps) {
+  const t = useT();
+
   const invalidate = useSafetyInvalidation(workerId);
   const isEdit = Boolean(event);
   const form = useForm<SafetyEventFormValues>({
@@ -230,10 +233,10 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <SelectField<SafetyEventFormValues>
                   control={control}
                   name="kind"
-                  label="What happened"
+                  label={t("What happened")}
                   options={KIND_OPTIONS}
-                  placeholder="Pick an event type"
-                  description="Sets which fields apply and what the points suggestion starts from."
+                  placeholder={t("Pick an event type")}
+                  description={t("Sets which fields apply and what the points suggestion starts from.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -241,10 +244,10 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <SelectField<SafetyEventFormValues>
                   control={control}
                   name="severity"
-                  label="Severity"
+                  label={t("Severity")}
                   options={SEVERITY_OPTIONS}
-                  placeholder="Pick a severity"
-                  description="Drives the suggested points; more severe events count for more on the scorecard."
+                  placeholder={t("Pick a severity")}
+                  description={t("Drives the suggested points; more severe events count for more on the scorecard.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -252,9 +255,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <AutoCompleteDateField<SafetyEventFormValues>
                   control={control}
                   name="occurredAt"
-                  placeholder="MM/DD/YYYY"
-                  description="Points roll off two years after this date, not after the date you record it."
-                  label="When"
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("Points roll off two years after this date, not after the date you record it.")}
+                  label={t("When")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -262,18 +265,18 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <InputField<SafetyEventFormValues>
                   control={control}
                   name="location"
-                  label="Where"
-                  placeholder="e.g. I-80 WB, Joliet IL"
-                  description="Where it happened, so the event can be matched to an inspection report or citation."
+                  label={t("Where")}
+                  placeholder={t("e.g. I-80 WB, Joliet IL")}
+                  description={t("Where it happened, so the event can be matched to an inspection report or citation.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<SafetyEventFormValues>
                   control={control}
                   name="description"
-                  label="What happened"
-                  placeholder="Plain description of the event, as it would read in a file review"
-                  description="The narrative of the event as it will read in the driver's file and to an auditor."
+                  label={t("What happened")}
+                  placeholder={t("Plain description of the event, as it would read in a file review")}
+                  description={t("The narrative of the event as it will read in the driver's file and to an auditor.")}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -285,10 +288,10 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                     <SelectField<SafetyEventFormValues>
                       control={control}
                       name="inspectionResult"
-                      label="Outcome"
+                      label={t("Outcome")}
                       options={RESULT_OPTIONS}
-                      placeholder="Pick an outcome"
-                      description="Only a failed or out-of-service inspection carries points; a clean one records none."
+                      placeholder={t("Pick an outcome")}
+                      description={t("Only a failed or out-of-service inspection carries points; a clean one records none.")}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -296,10 +299,10 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                     <SelectField<SafetyEventFormValues>
                       control={control}
                       name="inspectionLevel"
-                      label="Level"
+                      label={t("Level")}
                       options={LEVEL_OPTIONS}
-                      placeholder="Pick a level"
-                      description="The North American Standard inspection level from the report, 1 to 6."
+                      placeholder={t("Pick a level")}
+                      description={t("The North American Standard inspection level from the report, 1 to 6.")}
                       isClearable
                     />
                   </FormControl>
@@ -311,8 +314,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   <SwitchField<SafetyEventFormValues>
                     control={control}
                     name="preventable"
-                    label="Preventable"
-                    description="Could the driver reasonably have avoided it? This drives the scorecard penalty."
+                    label={t("Preventable")}
+                    description={t("Could the driver reasonably have avoided it? This drives the scorecard penalty.")}
                     position="left"
                     outlined
                   />
@@ -323,8 +326,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <NumberField<SafetyEventFormValues>
                   control={control}
                   name="points"
-                  placeholder="e.g. 3"
-                  label="Points"
+                  placeholder={t("e.g. 3")}
+                  label={t("Points")}
                   min={0}
                   description={
                     suggested.data == null
@@ -337,17 +340,17 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <InputField<SafetyEventFormValues>
                   control={control}
                   name="referenceNumber"
-                  label="Reference"
-                  placeholder="Citation or report number"
-                  description="The citation, report or claim number, so the event can be matched to its paperwork."
+                  label={t("Reference")}
+                  placeholder={t("Citation or report number")}
+                  description={t("The citation, report or claim number, so the event can be matched to its paperwork.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<SafetyEventFormValues>
                   control={control}
                   name="fineAmount"
-                  label="Fine"
-                  description="Any fine assessed against the driver or the carrier for this event."
+                  label={t("Fine")}
+                  description={t("Any fine assessed against the driver or the carrier for this event.")}
                   placeholder="0.00"
                   sideText="$"
                 />
@@ -356,8 +359,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 <InputField<SafetyEventFormValues>
                   control={control}
                   name="costAmount"
-                  label="Cost to the carrier"
-                  description="What the event cost the carrier in damage, towing, cargo or claims."
+                  label={t("Cost to the carrier")}
+                  description={t("What the event cost the carrier in damage, towing, cargo or claims.")}
                   placeholder="0.00"
                   sideText="$"
                 />
@@ -365,9 +368,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Saving...">
+              <Button type="submit" isLoading={isPending} loadingText={t("Saving...")}>
                 {isEdit ? "Save changes" : "Record event"}
               </Button>
             </DialogFooter>

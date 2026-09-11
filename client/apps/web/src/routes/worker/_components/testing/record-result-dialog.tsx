@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -59,6 +60,8 @@ export function RecordResultDialog({
   workerId,
   test,
 }: RecordResultDialogProps) {
+  const t = useT();
+
   const invalidate = useTestingInvalidation(workerId);
   const form = useForm<DOTTestResultFormValues>({
     resolver: zodResolver(dotTestResultFormSchema) as Resolver<DOTTestResultFormValues>,
@@ -101,7 +104,7 @@ export function RecordResultDialog({
       const violation = ["Positive", "Refusal", "Adulterated", "Substituted"].includes(
         saved.result,
       );
-      toast.success("Result recorded", {
+      toast.success(t("Result recorded"), {
         description: violation
           ? "A violation has been opened. The driver is prohibited from safety-sensitive duty until the return-to-duty process is complete."
           : `Filed as ${dotTestResultLabel(saved.result).toLowerCase()}.`,
@@ -115,7 +118,7 @@ export function RecordResultDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Record the result</DialogTitle>
+          <DialogTitle>{t("Record the result")}</DialogTitle>
           <DialogDescription>
             {test
               ? `${dotTestTypeLabel(test.testType)} · ${
@@ -139,9 +142,9 @@ export function RecordResultDialog({
                     <InputField<DOTTestResultFormValues>
                       control={control}
                       name="alcoholConcentration"
-                      label="Concentration"
+                      label={t("Concentration")}
                       placeholder="0.000"
-                      description="The breath alcohol concentration from the confirmation test; it decides the result on its own."
+                      description={t("The breath alcohol concentration from the confirmation test; it decides the result on its own.")}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -161,10 +164,10 @@ export function RecordResultDialog({
                 <SelectField<DOTTestResultFormValues>
                   control={control}
                   name="result"
-                  label="Result"
+                  label={t("Result")}
                   options={RESULT_OPTIONS}
-                  placeholder="Pick a result"
-                  description="A positive, refusal, adulterated or substituted result opens a violation and prohibits the driver at once."
+                  placeholder={t("Pick a result")}
+                  description={t("A positive, refusal, adulterated or substituted result opens a violation and prohibits the driver at once.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -172,9 +175,9 @@ export function RecordResultDialog({
                 <AutoCompleteDateField<DOTTestResultFormValues>
                   control={control}
                   name="resultAt"
-                  label="Reported on"
-                  placeholder="MM/DD/YYYY"
-                  description="When the laboratory or MRO reported the result; it also fills the collection date if none was recorded."
+                  label={t("Reported on")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the laboratory or MRO reported the result; it also fills the collection date if none was recorded.")}
                 />
               </FormControl>
 
@@ -184,27 +187,27 @@ export function RecordResultDialog({
                     <InputField<DOTTestResultFormValues>
                       control={control}
                       name="labName"
-                      label="Laboratory"
-                      placeholder="HHS-certified laboratory"
-                      description="The HHS-certified laboratory that analysed the specimen."
+                      label={t("Laboratory")}
+                      placeholder={t("HHS-certified laboratory")}
+                      description={t("The HHS-certified laboratory that analysed the specimen.")}
                     />
                   </FormControl>
                   <FormControl>
                     <InputField<DOTTestResultFormValues>
                       control={control}
                       name="mroName"
-                      label="Medical review officer"
-                      placeholder="Name of the MRO"
-                      description="The medical review officer who verified the laboratory result."
+                      label={t("Medical review officer")}
+                      placeholder={t("Name of the MRO")}
+                      description={t("The medical review officer who verified the laboratory result.")}
                     />
                   </FormControl>
                   <FormControl>
                     <AutoCompleteDateField<DOTTestResultFormValues>
                       control={control}
                       name="mroVerifiedAt"
-                      label="MRO verified on"
-                      placeholder="MM/DD/YYYY"
-                      description="When the MRO verified the result; a drug result is not final until then."
+                      label={t("MRO verified on")}
+                      placeholder={t("MM/DD/YYYY")}
+                      description={t("When the MRO verified the result; a drug result is not final until then.")}
                     />
                   </FormControl>
                 </>
@@ -214,19 +217,19 @@ export function RecordResultDialog({
                 <TextareaField<DOTTestResultFormValues>
                   control={control}
                   name="notes"
-                  placeholder="e.g. Split specimen requested"
-                  description="Internal notes kept with the test record."
-                  label="Notes"
+                  placeholder={t("e.g. Split specimen requested")}
+                  description={t("Internal notes kept with the test record.")}
+                  label={t("Notes")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Record result
+                {t("Record result")}
               </Button>
             </DialogFooter>
           </Form>

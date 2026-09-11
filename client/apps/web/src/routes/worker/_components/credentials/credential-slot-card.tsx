@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { WorkerCredentialSummaryItem } from "@/lib/graphql/worker-credential";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { CredentialHealthBadge } from "@trenova/shared/components/credential-health-badge";
@@ -47,6 +48,8 @@ export function CredentialSlotRow({
   onVerify,
   onArchive,
 }: CredentialSlotRowProps) {
+  const t = useT();
+
   const { credentialType: type, credential, health } = item;
   const verified = Boolean(credential?.verifiedAt);
   const caption = [
@@ -119,11 +122,11 @@ export function CredentialSlotRow({
             verified ? (
               <span className="flex shrink-0 items-center gap-1">
                 <ShieldCheckIcon className="size-3" />
-                <span>Verified</span>
-                {credential.verifiedBy?.name ? <span>by {credential.verifiedBy.name}</span> : null}
+                <span>{t("Verified")}</span>
+                {credential.verifiedBy?.name ? <span>{t("by {0}", credential.verifiedBy.name)}</span> : null}
               </span>
             ) : (
-              <span className="shrink-0">Unverified</span>
+              <span className="shrink-0">{t("Unverified")}</span>
             )
           ) : null}
           {credential?.document ? (
@@ -147,7 +150,7 @@ export function CredentialSlotRow({
             <p className="text-muted-foreground">{describeDaysUntil(item.daysUntilExpiry)}</p>
           </>
         ) : (
-          <p className="text-muted-foreground">Nothing on file</p>
+          <p className="text-muted-foreground">{t("Nothing on file")}</p>
         )}
       </div>
 

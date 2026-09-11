@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -95,6 +96,8 @@ function DaysPreview({
   endDate: number;
   excludePtoId?: string;
 }) {
+  const t = useT();
+
   const hasDates = !!startDate && !!endDate && endDate >= startDate;
   const ready = hasDates && !!workerId;
   const debounced = useDebounce({ workerId, ptoType, startDate, endDate }, 400);
@@ -132,7 +135,7 @@ function DaysPreview({
   return (
     <div className="flex flex-col gap-0.5">
       <p className="text-muted-foreground text-xs" data-testid="pto-days-preview">
-        {days} day{days === 1 ? "" : "s"} · {formatRange(startDate, endDate)}
+        {t("{0} day{1} · {2}", days, days === 1 ? "" : "s", formatRange(startDate, endDate))}
       </p>
       {result?.tracked ? (
         <p
@@ -149,6 +152,8 @@ function DaysPreview({
 }
 
 function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
+  const t = useT();
+
   const decision = ptoDecision(pto);
 
   return (
@@ -156,22 +161,21 @@ function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
       <div className="flex items-center gap-2">
         <PTOStatusBadge status={pto.status} />
         <span className="text-muted-foreground text-xs">
-          Only requested time off can be edited.
+          {t("Only requested time off can be edited.")}
         </span>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-        <dt className="text-muted-foreground">Worker</dt>
+        <dt className="text-muted-foreground">{t("Worker")}</dt>
         <dd>
           {pto.worker?.firstName} {pto.worker?.lastName}
         </dd>
-        <dt className="text-muted-foreground">Type</dt>
+        <dt className="text-muted-foreground">{t("Type")}</dt>
         <dd>{pto.type}</dd>
-        <dt className="text-muted-foreground">Dates</dt>
+        <dt className="text-muted-foreground">{t("Dates")}</dt>
         <dd className="tabular-nums">
-          {formatRange(pto.startDate, pto.endDate)} ({inclusiveDays(pto.startDate, pto.endDate)}{" "}
-          days)
+          {t("{0} ({1} days)", formatRange(pto.startDate, pto.endDate), inclusiveDays(pto.startDate, pto.endDate))}
         </dd>
-        <dt className="text-muted-foreground">Reason</dt>
+        <dt className="text-muted-foreground">{t("Reason")}</dt>
         <dd>{pto.reason}</dd>
         {decision ? (
           <>
@@ -198,6 +202,8 @@ export function PTOFormDialog({
   lockWorker = false,
   onSaved,
 }: PTOFormDialogProps) {
+  const t = useT();
+
   const invalidate = usePTOInvalidation();
   const isEdit = !!pto?.id;
   const editable = !isEdit || pto?.status === "Requested";
@@ -290,7 +296,7 @@ export function PTOFormDialog({
             <ReadOnlyPTO pto={pto} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Close
+                {t("Close")}
               </Button>
             </DialogFooter>
           </>
@@ -308,10 +314,10 @@ export function PTOFormDialog({
                   <WorkerAutocompleteField<PTOFormValues>
                     control={control}
                     name="workerId"
-                    label="Worker"
+                    label={t("Worker")}
                     rules={{ required: true }}
-                    placeholder="Select worker"
-                    description="The worker taking time off."
+                    placeholder={t("Select worker")}
+                    description={t("The worker taking time off.")}
                     disabled={isEdit || lockWorker}
                   />
                 </FormControl>
@@ -319,31 +325,31 @@ export function PTOFormDialog({
                   <SelectField<PTOFormValues>
                     control={control}
                     name="type"
-                    label="Type"
+                    label={t("Type")}
                     rules={{ required: true }}
                     options={ptoTypeChoices}
-                    placeholder="Select type"
-                    description="Decides which balance the days are taken from."
+                    placeholder={t("Select type")}
+                    description={t("Decides which balance the days are taken from.")}
                   />
                 </FormControl>
                 <FormControl>
                   <AutoCompleteDateField<PTOFormValues>
                     control={control}
                     name="startDate"
-                    label="First day"
+                    label={t("First day")}
                     rules={{ required: true }}
-                    placeholder="First day off"
-                    description="The first day off; weekends count only if the policy says so."
+                    placeholder={t("First day off")}
+                    description={t("The first day off; weekends count only if the policy says so.")}
                   />
                 </FormControl>
                 <FormControl>
                   <AutoCompleteDateField<PTOFormValues>
                     control={control}
                     name="endDate"
-                    label="Last day"
+                    label={t("Last day")}
                     rules={{ required: true }}
-                    placeholder="Last day off"
-                    description="The last day off, counted inclusively."
+                    placeholder={t("Last day off")}
+                    description={t("The last day off, counted inclusively.")}
                   />
                 </FormControl>
                 {hasDateRange ? (
@@ -361,17 +367,17 @@ export function PTOFormDialog({
                   <TextareaField<PTOFormValues>
                     control={control}
                     name="reason"
-                    label="Reason"
+                    label={t("Reason")}
                     rules={{ required: true }}
-                    placeholder="e.g. Family wedding"
+                    placeholder={t("e.g. Family wedding")}
                     maxLength={255}
-                    description="Seen by whoever reviews the request."
+                    description={t("Seen by whoever reviews the request.")}
                   />
                 </FormControl>
               </FormGroup>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   type="button"

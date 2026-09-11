@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -42,6 +43,8 @@ type FieldChange = ProfileChangeRequestRow["changes"][number];
  * approval applies exactly that.
  */
 export function ProfileChangeRequests({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.ProfileChangeRequest, Operation.Read);
   const { allowed: canApprove } = usePermission(Resource.ProfileChangeRequest, Operation.Approve);
   const { allowed: canReject } = usePermission(Resource.ProfileChangeRequest, Operation.Reject);
@@ -69,13 +72,12 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ClipboardPenIcon className="text-muted-foreground size-4" />
-          <h3 className="text-sm font-semibold">Profile changes</h3>
+          <h3 className="text-sm font-semibold">{t("Profile changes")}</h3>
         </div>
-        {pendingCount > 0 ? <Badge variant="warning">{pendingCount} waiting on you</Badge> : null}
+        {pendingCount > 0 ? <Badge variant="warning">{t("{0} waiting on you", pendingCount)}</Badge> : null}
       </div>
       <p className="text-muted-foreground mt-1 text-xs">
-        Changes the driver asked for from Dash. An approval writes exactly what is listed onto the
-        record — nothing else.
+        {t("Changes the driver asked for from Dash. An approval writes exactly what is listed onto the record — nothing else.")}
       </p>
 
       <ul className="mt-3 flex flex-col gap-2">
@@ -87,7 +89,7 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <span className="text-muted-foreground tabular-nums">
-                    Asked {formatShiftDate(request.submittedAt)}
+                    {t("Asked {0}", formatShiftDate(request.submittedAt))}
                   </span>
                   <Badge variant={tone.variant}>{tone.label}</Badge>
                 </span>
@@ -100,13 +102,13 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
                         onClick={() => setDeciding({ request, approve: false })}
                       >
                         <XIcon className="size-3" />
-                        Turn down
+                        {t("Turn down")}
                       </Button>
                     ) : null}
                     {canApprove ? (
                       <Button size="xs" onClick={() => setDeciding({ request, approve: true })}>
                         <CheckIcon className="size-3" />
-                        Approve
+                        {t("Approve")}
                       </Button>
                     ) : null}
                   </span>
@@ -115,7 +117,7 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
               <ChangeList changes={request.changes} className="mt-2" />
               {request.note ? <p className="text-muted-foreground mt-2">“{request.note}”</p> : null}
               {request.decisionNote ? (
-                <p className="text-muted-foreground mt-1">Office: {request.decisionNote}</p>
+                <p className="text-muted-foreground mt-1">{t("Office: {0}", request.decisionNote)}</p>
               ) : null}
             </li>
           );
@@ -170,6 +172,8 @@ function DecideDialog({
   workerId: string;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<DecideProfileChangeFormValues>({
     resolver: zodResolver(decideProfileChangeFormSchema) as Resolver<DecideProfileChangeFormValues>,
@@ -241,14 +245,14 @@ function DecideDialog({
                       ? "Anything the driver should know"
                       : "e.g. The address needs a unit number"
                   }
-                  description="Sent to the driver with the decision and kept on the request."
+                  description={t("Sent to the driver with the decision and kept on the request.")}
                   rules={{ required: !approve }}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"

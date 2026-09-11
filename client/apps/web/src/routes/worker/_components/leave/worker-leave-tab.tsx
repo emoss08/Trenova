@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -40,6 +41,8 @@ type DialogState =
   | { kind: "day"; leaveCase: LeaveCaseRow };
 
 export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.WorkerLeave, Operation.Read);
   const { allowed: canRecord } = usePermission(Resource.WorkerLeave, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerLeave, Operation.Update);
@@ -72,25 +75,25 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not decide the case", { description: error.message }),
+      toast.error(t("Could not decide the case"), { description: error.message }),
   });
 
   const close = useMutation({
     mutationFn: (id: string) => closeLeaveCase(id),
     onSuccess: () => {
-      toast.success("Leave case closed", {
-        description: "The days recorded against it stay drawn down; they were taken.",
+      toast.success(t("Leave case closed"), {
+        description: t("The days recorded against it stay drawn down; they were taken."),
       });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not close the case", { description: error.message }),
+      toast.error(t("Could not close the case"), { description: error.message }),
   });
 
   const requestCert = useMutation({
     mutationFn: (id: string) => requestLeaveCertification(id),
     onSuccess: (saved) => {
-      toast.success("Certification requested", {
+      toast.success(t("Certification requested"), {
         description: saved.certificationDueAt
           ? `Due ${formatUnixDate(saved.certificationDueAt)}.`
           : undefined,
@@ -98,27 +101,27 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not request certification", { description: error.message }),
+      toast.error(t("Could not request certification"), { description: error.message }),
   });
 
   const receiveCert = useMutation({
     mutationFn: (id: string) => recordLeaveCertification({ caseId: id, status: "Received" }),
     onSuccess: () => {
-      toast.success("Certification received");
+      toast.success(t("Certification received"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not record the certification", { description: error.message }),
+      toast.error(t("Could not record the certification"), { description: error.message }),
   });
 
   const removeDay = useMutation({
     mutationFn: (id: string) => deleteLeaveDay(id),
     onSuccess: () => {
-      toast.success("Day removed", { description: "The hours go back to the entitlement." });
+      toast.success(t("Day removed"), { description: t("The hours go back to the entitlement.") });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not remove the day", { description: error.message }),
+      toast.error(t("Could not remove the day"), { description: error.message }),
   });
 
   // Leave carries the reason somebody is off work and the certification behind
@@ -152,36 +155,30 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-medium">FMLA entitlement</h3>
-              <InfoPopover title="FMLA entitlement">
+              <h3 className="text-sm font-medium">{t("FMLA entitlement")}</h3>
+              <InfoPopover title={t("FMLA entitlement")}>
                 <p>
-                  Measured on read from the days recorded against this worker&apos;s cases, inside
-                  the window the measurement method sets. Only days on a case designated as FMLA
-                  draw it down: approving a case and designating it FMLA are separate decisions, so
-                  approved leave that was not designated is recorded but counts for nothing.
+                  {t("Measured on read from the days recorded against this worker's cases, inside the window the measurement method sets. Only days on a case designated as FMLA draw it down: approving a case and designating it FMLA are separate decisions, so approved leave that was not designated is recorded but counts for nothing.")}
                 </p>
                 <p>
-                  Exhausted means nothing is left. Days designated after the fact can push use past
-                  the entitlement; the remainder then reads zero rather than negative.
+                  {t("Exhausted means nothing is left. Days designated after the fact can push use past the entitlement; the remainder then reads zero rather than negative.")}
                 </p>
               </InfoPopover>
-              {entitlement.exhausted ? <Badge variant="inactive">Exhausted</Badge> : null}
+              {entitlement.exhausted ? <Badge variant="inactive">{t("Exhausted")}</Badge> : null}
               {entitlement.militaryCaregiver ? (
-                <Badge variant="info">Military caregiver — 26 weeks</Badge>
+                <Badge variant="info">{t("Military caregiver — 26 weeks")}</Badge>
               ) : null}
               {entitlement.eligibleOnTenure ? null : (
-                <Badge variant="warning">Under 12 months&apos; service</Badge>
+                <Badge variant="warning">{t("Under 12 months' service")}</Badge>
               )}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
-              {measurementMethodLabel(entitlement.method)} ·{" "}
-              {formatUnixDate(entitlement.window.from)} to{" "}
-              {formatUnixDate(entitlement.window.through)}
+              {t("{0} · {1} to {2}", measurementMethodLabel(entitlement.method), formatUnixDate(entitlement.window.from), formatUnixDate(entitlement.window.through))}
             </p>
           </div>
           {canRecord ? (
             <Button size="sm" onClick={() => setDialog({ kind: "case", leaveCase: null })}>
-              Open a case
+              {t("Open a case")}
             </Button>
           ) : null}
         </div>
@@ -190,34 +187,33 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
 
         <dl className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
           <Figure
-            label="Remaining"
+            label={t("Remaining")}
             value={`${formatLeaveHours(entitlement.remainingHours)} h`}
             detail={`${formatLeaveHours(entitlement.remainingWeeks)} weeks`}
           />
           <Figure
-            label="Used"
+            label={t("Used")}
             value={`${formatLeaveHours(entitlement.usedHours)} h`}
             detail={`${formatLeaveHours(entitlement.usedWeeks)} weeks`}
           />
           <Figure
-            label="Entitlement"
+            label={t("Entitlement")}
             value={`${formatLeaveHours(entitlement.totalHours)} h`}
             detail={`${formatLeaveHours(entitlement.totalWeeks)} weeks`}
           />
-          <Figure label="Months employed" value={String(entitlement.monthsEmployed)} />
+          <Figure label={t("Months employed")} value={String(entitlement.monthsEmployed)} />
         </dl>
 
         <p className="text-muted-foreground mt-3 text-[11px]">
-          The 1,250-hour half of the eligibility test is recorded on each case: there is no
-          timeclock here to answer it from.
+          {t("The 1,250-hour half of the eligibility test is recorded on each case: there is no timeclock here to answer it from.")}
         </p>
       </section>
 
       <section>
-        <h3 className="cc-label text-foreground mb-2">Cases</h3>
+        <h3 className="cc-label text-foreground mb-2">{t("Cases")}</h3>
         {file.cases.length === 0 ? (
           <p className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-            No leave case has been opened for this worker.
+            {t("No leave case has been opened for this worker.")}
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -230,17 +226,16 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                       {leaveCaseStatusLabel(leaveCase.status)}
                     </Badge>
                     {leaveCase.fmlaDesignated ? (
-                      <Badge variant="info">Designated FMLA</Badge>
+                      <Badge variant="info">{t("Designated FMLA")}</Badge>
                     ) : null}
                     <Badge variant="secondary">{leaveFrequencyLabel(leaveCase.frequency)}</Badge>
                     {leaveCase.certificationStatus === "NotRequired" ? null : (
                       <Badge variant={certificationTone(leaveCase.certificationStatus)}>
-                        Certification{" "}
-                        {certificationStatusLabel(leaveCase.certificationStatus).toLowerCase()}
+                        {t("Certification {0}", certificationStatusLabel(leaveCase.certificationStatus).toLowerCase())}
                       </Badge>
                     )}
                     {leaveCase.certificationLate ? (
-                      <Badge variant="inactive">Past the deadline</Badge>
+                      <Badge variant="inactive">{t("Past the deadline")}</Badge>
                     ) : null}
                   </span>
                   <span className="flex flex-wrap items-center gap-1">
@@ -257,7 +252,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                             })
                           }
                         >
-                          Approve &amp; designate
+                          {t("Approve & designate")}
                         </Button>
                         <Button
                           size="xs"
@@ -270,7 +265,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                             })
                           }
                         >
-                          Approve only
+                          {t("Approve only")}
                         </Button>
                         <Button
                           size="xs"
@@ -283,7 +278,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                             })
                           }
                         >
-                          Deny
+                          {t("Deny")}
                         </Button>
                       </>
                     ) : null}
@@ -293,7 +288,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                         variant="outline"
                         onClick={() => setDialog({ kind: "day", leaveCase })}
                       >
-                        Record a day
+                        {t("Record a day")}
                       </Button>
                     ) : null}
                     {canUpdate && leaveCase.certificationStatus === "NotRequired" ? (
@@ -303,7 +298,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                         isLoading={requestCert.isPending}
                         onClick={() => requestCert.mutate(leaveCase.id)}
                       >
-                        Request certification
+                        {t("Request certification")}
                       </Button>
                     ) : null}
                     {canUpdate && leaveCase.certificationStatus === "Requested" ? (
@@ -313,7 +308,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                         isLoading={receiveCert.isPending}
                         onClick={() => receiveCert.mutate(leaveCase.id)}
                       >
-                        Mark received
+                        {t("Mark received")}
                       </Button>
                     ) : null}
                     {canUpdate ? (
@@ -322,7 +317,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                         variant="ghost"
                         onClick={() => setDialog({ kind: "case", leaveCase })}
                       >
-                        Edit
+                        {t("Edit")}
                       </Button>
                     ) : null}
                     {canDecide &&
@@ -333,7 +328,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                         isLoading={close.isPending}
                         onClick={() => close.mutate(leaveCase.id)}
                       >
-                        Close
+                        {t("Close")}
                       </Button>
                     ) : null}
                   </span>
@@ -357,9 +352,9 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                       >
                         <span className="flex items-center gap-2">
                           <span className="tabular-nums">{formatUnixDate(entry.usedOn)}</span>
-                          <span className="tabular-nums">{formatLeaveHours(entry.hours)} h</span>
+                          <span className="tabular-nums">{t("{0} h", formatLeaveHours(entry.hours))}</span>
                           {entry.countsAgainstEntitlement ? null : (
-                            <Badge variant="secondary">Not counted</Badge>
+                            <Badge variant="secondary">{t("Not counted")}</Badge>
                           )}
                         </span>
                         {canUpdate ? (
@@ -369,7 +364,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                             isLoading={removeDay.isPending}
                             onClick={() => removeDay.mutate(entry.id)}
                           >
-                            Remove
+                            {t("Remove")}
                           </Button>
                         ) : null}
                       </li>

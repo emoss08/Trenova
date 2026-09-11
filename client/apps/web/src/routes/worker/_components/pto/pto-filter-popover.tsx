@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FleetCodeAutocompleteField,
   WorkerAutocompleteField,
@@ -30,6 +31,8 @@ export function PTOFilterPopover({
   onSubmit: (data: PTOFilter) => void;
   onReset: () => void;
 }) {
+  const t = useT();
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const datePresets = useMemo(() => getCommonDatePresets(), []);
 
@@ -70,7 +73,7 @@ export function PTOFilterPopover({
         render={
           <Button variant="outline" className="h-full">
             <FilterIcon className="size-4" />
-            <span className="text-xs">Filter</span>
+            <span className="text-xs">{t("Filter")}</span>
           </Button>
         }
       />
@@ -82,19 +85,19 @@ export function PTOFilterPopover({
                 <SelectField
                   control={form.control}
                   name="type"
-                  label="PTO Type"
-                  placeholder="Select type"
+                  label={t("PTO Type")}
+                  placeholder={t("Select type")}
                   options={ptoTypeOptions}
-                  description="Show only this kind of time off."
+                  description={t("Show only this kind of time off.")}
                 />
               </FormControl>
               <FormControl className="min-h-[2em]">
                 <WorkerAutocompleteField
                   control={form.control}
                   name="workerId"
-                  label="Worker"
-                  placeholder="Select worker"
-                  description="Show only this worker's time off."
+                  label={t("Worker")}
+                  placeholder={t("Select worker")}
+                  description={t("Show only this worker's time off.")}
                   clearable
                 />
               </FormControl>
@@ -102,9 +105,9 @@ export function PTOFilterPopover({
                 <FleetCodeAutocompleteField
                   control={form.control}
                   name="fleetCodeId"
-                  label="Fleet Code"
-                  placeholder="Select fleet code"
-                  description="Show only workers in this fleet."
+                  label={t("Fleet Code")}
+                  placeholder={t("Select fleet code")}
+                  description={t("Show only workers in this fleet.")}
                   clearable
                 />
               </FormControl>
@@ -112,34 +115,34 @@ export function PTOFilterPopover({
                 <AutoCompleteDateField
                   control={form.control}
                   name="startDate"
-                  label="Start Date"
-                  placeholder="Start date"
+                  label={t("Start Date")}
+                  placeholder={t("Start date")}
                   rules={{ required: true }}
-                  description="The earliest day of time off to include."
+                  description={t("The earliest day of time off to include.")}
                 />
               </FormControl>
               <FormControl className="min-h-[2em]">
                 <AutoCompleteDateField
                   control={form.control}
                   name="endDate"
-                  label="End Date"
-                  placeholder="End date"
+                  label={t("End Date")}
+                  placeholder={t("End date")}
                   rules={{ required: true }}
-                  description="The latest day of time off to include."
+                  description={t("The latest day of time off to include.")}
                 />
               </FormControl>
             </FormGroup>
             <div className="border-border flex justify-end gap-2 border-t p-2">
               <Button size="sm" variant="outline" onClick={handleReset}>
-                Reset
+                {t("Reset")}
               </Button>
               <Button size="sm" onClick={form.handleSubmit(handleSubmit)}>
-                Apply
+                {t("Apply")}
               </Button>
             </div>
           </div>
           <div className="flex flex-col border-l p-2">
-            <label className="mb-1 text-sm font-medium">Presets</label>
+            <label className="mb-1 text-sm font-medium">{t("Presets")}</label>
             {datePresets.map((preset) => (
               <Button
                 key={preset.label}

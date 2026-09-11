@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import type { EmploymentVerificationRow } from "@/lib/graphql/worker-dqf";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -53,6 +54,8 @@ export function EmployerRow({
   onEdit,
   onDelete,
 }: EmployerRowProps) {
+  const t = useT();
+
   const next = verificationNextStep(verification, now);
   const stage = stageIndex(verification.status);
   const settled = verificationSettled(verification.status);
@@ -131,10 +134,10 @@ export function EmployerRow({
           <Badge variant={verificationTone(verification.status)}>
             {verificationStatusLabel(verification.status)}
           </Badge>
-          {verification.wasDotRegulated ? null : <Badge variant="secondary">Non-DOT</Badge>}
+          {verification.wasDotRegulated ? null : <Badge variant="secondary">{t("Non-DOT")}</Badge>}
         </div>
 
-        <ol className="flex items-center gap-2" aria-label="Investigation progress">
+        <ol className="flex items-center gap-2" aria-label={t("Investigation progress")}>
           {STAGES.map((label, index) => {
             const done = index < stage || (index === stage && settled);
             const current = index === stage && !settled;
@@ -172,15 +175,14 @@ export function EmployerRow({
 
         {next.action === "wait" && next.dueAt ? (
           <p className="text-muted-foreground text-xs">
-            Waiting on the employer · chase again from {formatUnixDate(next.dueAt)}
+            {t("Waiting on the employer · chase again from {0}", formatUnixDate(next.dueAt))}
           </p>
         ) : next.action === "close" ? (
           <p className="text-xs">
-            No answer after {verification.followUpCount} chases. The good-faith effort is on record;
-            close it as no response.
+            {t("No answer after {0} chases. The good-faith effort is on record; close it as no response.", verification.followUpCount)}
           </p>
         ) : next.action === "drugAlcohol" ? (
-          <p className="text-xs">Answered without the drug and alcohol history (49 CFR 382.413).</p>
+          <p className="text-xs">{t("Answered without the drug and alcohol history (49 CFR 382.413).")}</p>
         ) : null}
 
         {verification.hadAccidents || verification.hadDrugAlcoholViolations ? (

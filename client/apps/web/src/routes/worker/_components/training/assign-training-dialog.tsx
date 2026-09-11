@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -52,6 +53,8 @@ export function AssignTrainingDialog({
   courseId,
   openCourseIds,
 }: AssignTrainingDialogProps) {
+  const t = useT();
+
   const invalidate = useTrainingInvalidation(workerId);
   const coursesQuery = useQuery({
     queryKey: [TRAINING_COURSES_KEY],
@@ -127,11 +130,9 @@ export function AssignTrainingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign a course</DialogTitle>
+          <DialogTitle>{t("Assign a course")}</DialogTitle>
           <DialogDescription>
-            The course appears on the driver&apos;s Training list in Dash. Self-serve courses
-            complete when the driver acknowledges them; scored and in-person courses wait for you to
-            record the result.
+            {t("The course appears on the driver's Training list in Dash. Self-serve courses complete when the driver acknowledges them; scored and in-person courses wait for you to record the result.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -147,8 +148,8 @@ export function AssignTrainingDialog({
                 <SelectField<AssignTrainingFormValues>
                   control={control}
                   name="courseId"
-                  label="Course"
-                  placeholder="Select a course"
+                  label={t("Course")}
+                  placeholder={t("Select a course")}
                   options={options}
                   rules={{ required: true }}
                   description={
@@ -163,8 +164,8 @@ export function AssignTrainingDialog({
                 <AutoCompleteDateField<AssignTrainingFormValues>
                   control={control}
                   name="dueAt"
-                  label="Due"
-                  placeholder="No due date"
+                  label={t("Due")}
+                  placeholder={t("No due date")}
                   description={
                     selected && selected.dueDaysAfterAssignment > 0
                       ? `Defaults to ${selected.dueDaysAfterAssignment} days from today.`
@@ -176,24 +177,24 @@ export function AssignTrainingDialog({
                 <TextareaField<AssignTrainingFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Anything the driver or the recorder should know"
+                  label={t("Notes")}
+                  placeholder={t("Anything the driver or the recorder should know")}
                   maxLength={1000}
-                  description="Saved on the training record."
+                  description={t("Saved on the training record.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
                 isLoading={isPending}
-                loadingText="Assigning..."
+                loadingText={t("Assigning...")}
                 disabled={courses.length === 0}
               >
-                Assign
+                {t("Assign")}
               </Button>
             </DialogFooter>
           </Form>

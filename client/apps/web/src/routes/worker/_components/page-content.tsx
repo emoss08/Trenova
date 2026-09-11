@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { CalendarIcon, UsersIcon } from "lucide-react";
@@ -20,6 +21,8 @@ export const workersPageTabParser = parseAsStringLiteral(tabValues)
   .withDefault("workers");
 
 export default function WorkersContent() {
+  const t = useT();
+
   const [tab, setTab] = useQueryState(WORKERS_PAGE_TAB_PARAM, workersPageTabParser);
 
   return (
@@ -31,11 +34,11 @@ export default function WorkersContent() {
       <TabsList variant="underline">
         <TabsTab value="workers">
           <UsersIcon size={16} aria-hidden="true" />
-          Workers
+          {t("Workers")}
         </TabsTab>
         <TabsTab value="pto">
           <CalendarIcon size={16} aria-hidden="true" />
-          Paid Time Off
+          {t("Paid Time Off")}
         </TabsTab>
       </TabsList>
       <TabsContent value="workers" className="flex flex-col gap-2">

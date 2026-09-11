@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
@@ -90,6 +91,8 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarProps) {
+  const t = useT();
+
   const user = useAuthStore((state) => state.user);
   const { allowed: canCreate } = usePermission(Resource.WorkerPTO, Operation.Create);
   const { year, month } = monthOf(filters.startDate);
@@ -275,7 +278,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
           <Button
             size="icon-xs"
             variant="ghost"
-            aria-label="Previous month"
+            aria-label={t("Previous month")}
             onClick={() => goToMonth(-1)}
           >
             <ChevronLeftIcon className="size-3.5" />
@@ -287,12 +290,12 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
             disabled={isCurrentMonth}
             onClick={goToToday}
           >
-            Today
+            {t("Today")}
           </Button>
           <Button
             size="icon-xs"
             variant="ghost"
-            aria-label="Next month"
+            aria-label={t("Next month")}
             onClick={() => goToMonth(1)}
           >
             <ChevronRightIcon className="size-3.5" />
@@ -303,7 +306,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
           <span className="text-muted-foreground font-normal tabular-nums">{year}</span>
         </h4>
         {query.isFetching && query.data ? (
-          <Spinner className="text-muted-foreground size-3" aria-label="Refreshing" />
+          <Spinner className="text-muted-foreground size-3" aria-label={t("Refreshing")} />
         ) : null}
 
         <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
@@ -329,8 +332,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
               </KbdGroup>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              Arrow keys move a month and T returns to today
-              {canCreate ? ". Drag across days to request time off." : "."}
+              {t("Arrow keys move a month and T returns to today {0}", canCreate ? ". Drag across days to request time off." : ".")}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -340,9 +342,9 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
         <CalendarSkeleton />
       ) : query.isError ? (
         <div className="border-border flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-lg border border-dashed">
-          <p className="text-destructive text-xs">Could not load the calendar.</p>
+          <p className="text-destructive text-xs">{t("Could not load the calendar.")}</p>
           <Button size="xs" variant="outline" onClick={() => void query.refetch()}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       ) : null}
@@ -356,7 +358,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
           >
             <div
               role="grid"
-              aria-label="PTO calendar"
+              aria-label={t("PTO calendar")}
               tabIndex={0}
               className="flex min-h-full flex-col outline-none select-none"
               data-testid="pto-calendar-grid"
@@ -571,6 +573,8 @@ function DayCell({
   onMouseDown: () => void;
   onMouseEnter: () => void;
 }) {
+  const t = useT();
+
   const firstOfMonth = day.date === 1;
 
   return (
@@ -609,7 +613,7 @@ function DayCell({
             data-testid="pto-selection-pill"
             className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold shadow-sm duration-150"
           >
-            {selectionDays} day{selectionDays === 1 ? "" : "s"}
+            {t("{0} day{1}", selectionDays, selectionDays === 1 ? "" : "s")}
           </span>
         ) : null}
       </div>
@@ -631,6 +635,8 @@ function DayOverflow({
   count: number;
   top: number;
 }) {
+  const t = useT();
+
   return (
     <Popover>
       <PopoverTrigger
@@ -645,7 +651,7 @@ function DayOverflow({
           />
         }
       >
-        +{count} more
+        {t("+{0} more", count)}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72">
         <PTODayList items={items} dayUnix={day.unix} />

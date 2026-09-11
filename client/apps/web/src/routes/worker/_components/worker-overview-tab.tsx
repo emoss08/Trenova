@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import {
   fetchWorkerOverview,
@@ -79,6 +80,8 @@ export default function WorkerOverviewTab({ workerId, onOpenTab }: WorkerOvervie
 }
 
 function Identity({ overview }: { overview: WorkerOverview }) {
+  const t = useT();
+
   const meta = workerStandingMeta(overview.standing);
   const { worker } = overview;
   const facts = [
@@ -105,16 +108,12 @@ function Identity({ overview }: { overview: WorkerOverview }) {
               {worker.firstName} {worker.lastName}
             </h3>
             <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
-            <InfoPopover title="Standing">
+            <InfoPopover title={t("Standing")}>
               <p>
-                Status moves only through employment events on the Timeline tab. Dispatch says
-                whether the worker can be assigned today; a leave or a suspension holds them until
-                it ends.
+                {t("Status moves only through employment events on the Timeline tab. Dispatch says whether the worker can be assigned today; a leave or a suspension holds them until it ends.")}
               </p>
               <p>
-                Compliance comes from the credential file and reads Non-compliant while a required
-                credential is expired or missing. Qualified is set when the onboarding checklist
-                closes with every required item settled.
+                {t("Compliance comes from the credential file and reads Non-compliant while a required credential is expired or missing. Qualified is set when the onboarding checklist closes with every required item settled.")}
               </p>
             </InfoPopover>
           </div>
@@ -123,10 +122,10 @@ function Identity({ overview }: { overview: WorkerOverview }) {
         </div>
       </div>
       <dl className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-1 text-xs">
-        <Fact label="Status" value={worker.status} />
-        <Fact label="Dispatch" value={worker.canBeAssigned ? "Assignable" : "Held"} />
-        <Fact label="Compliance" value={worker.profile?.complianceStatus ?? "—"} />
-        <Fact label="Qualified" value={worker.profile?.isQualified ? "Yes" : "No"} />
+        <Fact label={t("Status")} value={worker.status} />
+        <Fact label={t("Dispatch")} value={worker.canBeAssigned ? "Assignable" : "Held"} />
+        <Fact label={t("Compliance")} value={worker.profile?.complianceStatus ?? "—"} />
+        <Fact label={t("Qualified")} value={worker.profile?.isQualified ? "Yes" : "No"} />
       </dl>
     </div>
   );
@@ -148,13 +147,15 @@ function Attention({
   concerns: readonly WorkerConcern[];
   onOpenTab: (tab: string) => void;
 }) {
+  const t = useT();
+
   return (
     <section data-testid="overview-concerns" className="flex flex-col gap-2">
-      <SectionHeading count={concerns.length}>Needs attention</SectionHeading>
+      <SectionHeading count={concerns.length}>{t("Needs attention")}</SectionHeading>
       {concerns.length === 0 ? (
         <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed p-4 text-xs">
           <CheckIcon className="size-4" />
-          <span>Nothing needs attention right now.</span>
+          <span>{t("Nothing needs attention right now.")}</span>
         </div>
       ) : (
         <div className="divide-border divide-y rounded-lg border">
@@ -200,6 +201,8 @@ function RecordSections({
   overview: WorkerOverview;
   onOpenTab: (tab: string) => void;
 }) {
+  const t = useT();
+
   const cards = [
     overview.credentials ? (
       <CredentialsCard
@@ -243,7 +246,7 @@ function RecordSections({
 
   return (
     <section className="flex flex-col gap-2">
-      <SectionHeading>The record</SectionHeading>
+      <SectionHeading>{t("The record")}</SectionHeading>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{cards}</div>
     </section>
   );
@@ -327,6 +330,8 @@ function CredentialsCard({
   summary: OverviewCredentials;
   onOpen: () => void;
 }) {
+  const t = useT();
+
   const problems = summary.expiredCount + summary.missingCount;
   const state: CardState =
     problems > 0
@@ -338,7 +343,7 @@ function CredentialsCard({
   return (
     <MetricCard
       testId="overview-card-credentials"
-      title="Credentials"
+      title={t("Credentials")}
       icon={IdCardIcon}
       value={`${summary.validCount} of ${summary.requiredCount}`}
       unit="valid"
@@ -356,6 +361,8 @@ function CredentialsCard({
 }
 
 function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: () => void }) {
+  const t = useT();
+
   const problems = summary.expiredCount + summary.missingCount + summary.overdueCount;
   const soon = summary.dueCount + summary.expiringCount;
   const state: CardState =
@@ -368,7 +375,7 @@ function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: 
   return (
     <MetricCard
       testId="overview-card-training"
-      title="Training"
+      title={t("Training")}
       icon={GraduationCapIcon}
       value={`${summary.currentCount} of ${summary.requiredCount}`}
       unit="current"
@@ -387,6 +394,8 @@ function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: 
 }
 
 function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void }) {
+  const t = useT();
+
   const state: CardState =
     card.rating === "AtRisk"
       ? { variant: "inactive", label: "At risk" }
@@ -397,7 +406,7 @@ function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void
   return (
     <MetricCard
       testId="overview-card-safety"
-      title="Safety"
+      title={t("Safety")}
       icon={ShieldAlertIcon}
       value={String(card.score)}
       unit="score"
@@ -422,6 +431,8 @@ function ChecklistCard({
   checklist: OverviewChecklist;
   onOpen: () => void;
 }) {
+  const t = useT();
+
   const state: CardState =
     checklist.progress.overdue > 0
       ? { variant: "warning", label: `${checklist.progress.overdue} overdue` }
@@ -430,7 +441,7 @@ function ChecklistCard({
   return (
     <MetricCard
       testId="overview-card-checklist"
-      title="Checklist"
+      title={t("Checklist")}
       icon={ClipboardListIcon}
       value={`${checklist.progress.percent}%`}
       unit={checklist.name}
@@ -450,13 +461,15 @@ function PTOCard({
   balances: readonly OverviewPTOBalance[];
   onOpen: () => void;
 }) {
+  const t = useT();
+
   const tracked = balances.filter((balance) => balance.tracked);
   const lead = tracked[0];
 
   return (
     <MetricCard
       testId="overview-card-pto"
-      title="Time off"
+      title={t("Time off")}
       icon={CalendarRangeIcon}
       value={lead ? formatDays(lead.availableDays) : "—"}
       unit={lead ? `${lead.ptoType.toLowerCase()} days` : undefined}
@@ -489,6 +502,8 @@ function ReviewsCard({
   nextReviewAt: number | null;
   onOpen: () => void;
 }) {
+  const t = useT();
+
   const value = open ? "Open" : last?.overallScore ? formatScore(last.overallScore) : "—";
   const unit = open ? open.title : last?.overallScore ? "last score" : undefined;
   const detail = [
@@ -501,7 +516,7 @@ function ReviewsCard({
   return (
     <MetricCard
       testId="overview-card-reviews"
-      title="Reviews"
+      title={t("Reviews")}
       icon={ClipboardCheckIcon}
       value={value}
       unit={unit}
@@ -513,6 +528,8 @@ function ReviewsCard({
 }
 
 function AtAGlance({ overview }: { overview: WorkerOverview }) {
+  const t = useT();
+
   const { worker } = overview;
   const profile = worker.profile;
   const rows: [string, string][] = [
@@ -526,7 +543,7 @@ function AtAGlance({ overview }: { overview: WorkerOverview }) {
 
   return (
     <section className="flex flex-col gap-2">
-      <SectionHeading>At a glance</SectionHeading>
+      <SectionHeading>{t("At a glance")}</SectionHeading>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border p-3 text-xs sm:grid-cols-3">
         {rows.map(([label, value]) => (
           <div key={label} className="flex flex-col">

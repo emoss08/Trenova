@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -73,6 +74,8 @@ export function ViolationDialog({
   suggestedBasic,
   violation,
 }: ViolationDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(violation);
   const form = useForm<SafetyViolationFormValues>({
@@ -120,8 +123,7 @@ export function ViolationDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "Correct the violation" : "Cite a violation"}</DialogTitle>
           <DialogDescription>
-            One row per violation. A single inspection routinely cites several in different BASICs,
-            and only the rows can say which.
+            {t("One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -139,8 +141,8 @@ export function ViolationDialog({
                   name="basic"
                   label="BASIC"
                   options={BASIC_OPTIONS}
-                  placeholder="Pick a BASIC"
-                  description="The CSA category the violation is scored under; each BASIC has its own measure and threshold."
+                  placeholder={t("Pick a BASIC")}
+                  description={t("The CSA category the violation is scored under; each BASIC has its own measure and threshold.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -148,28 +150,28 @@ export function ViolationDialog({
                 <InputField<SafetyViolationFormValues>
                   control={control}
                   name="code"
-                  label="Violation code"
-                  placeholder="e.g. 395.8"
-                  description="From the inspection report, so it can be looked up."
+                  label={t("Violation code")}
+                  placeholder={t("e.g. 395.8")}
+                  description={t("From the inspection report, so it can be looked up.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField<SafetyViolationFormValues>
                   control={control}
                   name="severityWeight"
-                  placeholder="e.g. 5"
-                  label="Severity weight"
+                  placeholder={t("e.g. 5")}
+                  label={t("Severity weight")}
                   rules={{ required: true }}
-                  description="The FMCSA's published weight, 1 to 10."
+                  description={t("The FMCSA's published weight, 1 to 10.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <InputField<SafetyViolationFormValues>
                   control={control}
                   name="description"
-                  label="What was cited"
-                  placeholder="e.g. Brake out of adjustment on two axles"
-                  description="The violation as written on the inspection report."
+                  label={t("What was cited")}
+                  placeholder={t("e.g. Brake out of adjustment on two axles")}
+                  description={t("The violation as written on the inspection report.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -177,14 +179,14 @@ export function ViolationDialog({
                 <SwitchField<SafetyViolationFormValues>
                   control={control}
                   name="outOfService"
-                  label="Out of service"
-                  description="Adds two to the weight before the recency multiplier, the way the FMCSA scores it."
+                  label={t("Out of service")}
+                  description={t("Adds two to the weight before the recency multiplier, the way the FMCSA scores it.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
                 {isEdit ? "Save" : "Cite"}

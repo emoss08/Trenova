@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ShiftTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -90,6 +91,8 @@ export function AssignShiftDialog({
   workerId,
   onAssigned,
 }: AssignShiftDialogProps) {
+  const t = useT();
+
   const [preview, setPreview] = useState<ShiftPreview | null>(null);
   const form = useForm<AssignShiftFormValues>({
     resolver: zodResolver(assignShiftFormSchema) as Resolver<AssignShiftFormValues>,
@@ -119,7 +122,7 @@ export function AssignShiftDialog({
         notes: values.notes ?? undefined,
       }),
     onSuccess: () => {
-      toast.success("Put on the shift");
+      toast.success(t("Put on the shift"));
       onAssigned();
       onOpenChange(false);
     },
@@ -131,10 +134,9 @@ export function AssignShiftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Put on a shift</DialogTitle>
+          <DialogTitle>{t("Put on a shift")}</DialogTitle>
           <DialogDescription>
-            The shift in force is ended the day before this one starts, so the worker is never on
-            two patterns at once.
+            {t("The shift in force is ended the day before this one starts, so the worker is never on two patterns at once.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -150,11 +152,11 @@ export function AssignShiftDialog({
                 <ShiftTemplateAutocompleteField<AssignShiftFormValues>
                   control={control}
                   name="shiftTemplateId"
-                  label="Shift"
-                  placeholder="Search shifts"
+                  label={t("Shift")}
+                  placeholder={t("Search shifts")}
                   rules={{ required: true }}
                   onOptionChange={(option) => setPreview(previewOf(option))}
-                  description="Only shifts in force can be assigned."
+                  description={t("Only shifts in force can be assigned.")}
                 />
               </FormControl>
 
@@ -195,10 +197,10 @@ export function AssignShiftDialog({
                 <AutoCompleteDateField<AssignShiftFormValues>
                   control={control}
                   name="effectiveFrom"
-                  label="Effective from"
-                  placeholder="Today"
+                  label={t("Effective from")}
+                  placeholder={t("Today")}
                   rules={{ required: true }}
-                  description="The first day the worker is on this pattern."
+                  description={t("The first day the worker is on this pattern.")}
                 />
               </FormControl>
               {rotates ? (
@@ -206,7 +208,7 @@ export function AssignShiftDialog({
                   <NumberField<AssignShiftFormValues>
                     control={control}
                     name="cycleOffsetWeeks"
-                    label="Rotation offset (weeks)"
+                    label={t("Rotation offset (weeks)")}
                     placeholder="0"
                     description={`0 to ${(preview?.cycleWeeks ?? 1) - 1}. Two workers on the same shift at different offsets alternate.`}
                   />
@@ -216,19 +218,19 @@ export function AssignShiftDialog({
                 <TextareaField<AssignShiftFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Why they are on this shift"
-                  description="Kept on the assignment record."
+                  label={t("Notes")}
+                  placeholder={t("Why they are on this shift")}
+                  description={t("Kept on the assignment record.")}
                 />
               </FormControl>
             </FormGroup>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Assign
+                {t("Assign")}
               </Button>
             </DialogFooter>
           </Form>

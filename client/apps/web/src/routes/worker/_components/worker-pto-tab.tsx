@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { PTOStatusBadge, PTOTypeBadge } from "@trenova/shared/components/status-badge";
@@ -61,6 +62,8 @@ type RowActionState =
   | { kind: "reason"; pto: WorkerPTO; mode: PTOReasonDialogMode };
 
 export default function WorkerPTOTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canCreate } = usePermission(Resource.WorkerPTO, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerPTO, Operation.Update);
   const { allowed: canReject } = usePermission(Resource.WorkerPTO, Operation.Reject);
@@ -85,16 +88,15 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">Paid Time Off</h3>
+          <h3 className="text-sm font-semibold">{t("Paid Time Off")}</h3>
           <p className="text-muted-foreground text-xs">
-            Requests made here or from Dash wait in the approval queue until a dispatcher decides on
-            them.
+            {t("Requests made here or from Dash wait in the approval queue until a dispatcher decides on them.")}
           </p>
         </div>
         {canCreate ? (
           <Button size="sm" onClick={() => setRequestOpen(true)}>
             <CalendarPlusIcon className="size-3.5" />
-            Request PTO
+            {t("Request PTO")}
           </Button>
         ) : null}
       </div>
@@ -102,18 +104,17 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
       <WorkerPTOBalances workerId={workerId} />
 
       <div className="grid grid-cols-3 gap-2">
-        <SummaryTile label="Pending requests" value={summary.pending} />
-        <SummaryTile label="Upcoming approved days" value={summary.upcomingApprovedDays} />
-        <SummaryTile label="Approved days this year" value={summary.approvedDaysThisYear} />
+        <SummaryTile label={t("Pending requests")} value={summary.pending} />
+        <SummaryTile label={t("Upcoming approved days")} value={summary.upcomingApprovedDays} />
+        <SummaryTile label={t("Approved days this year")} value={summary.approvedDaysThisYear} />
       </div>
 
       {entries.length === 0 ? (
         <div className="rounded-lg border border-dashed p-6 text-center">
           <CalendarRangeIcon className="text-muted-foreground mx-auto size-6" />
-          <p className="mt-2 text-sm font-medium">No time off on record</p>
+          <p className="mt-2 text-sm font-medium">{t("No time off on record")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            Requests this worker makes in Dash, and any you enter here, will show up in this
-            history.
+            {t("Requests this worker makes in Dash, and any you enter here, will show up in this history.")}
           </p>
         </div>
       ) : (
@@ -121,11 +122,11 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
           <table className="w-full text-xs">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Dates</th>
-                <th className="px-3 py-2 text-left font-medium">Type</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
-                <th className="px-3 py-2 text-right font-medium">Days</th>
-                <th className="px-3 py-2 text-left font-medium">Decision</th>
+                <th className="px-3 py-2 text-left font-medium">{t("Dates")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("Type")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("Status")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Days")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("Decision")}</th>
                 <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
@@ -164,7 +165,7 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
                                 size="sm"
                                 variant="ghost"
                                 className="size-6"
-                                aria-label="PTO actions"
+                                aria-label={t("PTO actions")}
                               >
                                 <EllipsisIcon />
                               </Button>
@@ -172,19 +173,19 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
                           />
                           <DropdownMenuContent side="bottom" align="end">
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               {showEdit ? (
                                 <DropdownMenuItem
-                                  title="Edit"
-                                  description="Change the dates, type, or reason"
+                                  title={t("Edit")}
+                                  description={t("Change the dates, type, or reason")}
                                   onClick={() => setRowAction({ kind: "edit", pto: entry })}
                                 />
                               ) : null}
                               {showReject ? (
                                 <DropdownMenuItem
-                                  title="Reject"
-                                  description="Reject this PTO request"
+                                  title={t("Reject")}
+                                  description={t("Reject this PTO request")}
                                   color="danger"
                                   onClick={() =>
                                     setRowAction({ kind: "reason", pto: entry, mode: "reject" })
@@ -193,8 +194,8 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
                               ) : null}
                               {showCancel ? (
                                 <DropdownMenuItem
-                                  title="Cancel"
-                                  description="Withdraw this PTO request"
+                                  title={t("Cancel")}
+                                  description={t("Withdraw this PTO request")}
                                   color="warning"
                                   onClick={() =>
                                     setRowAction({ kind: "reason", pto: entry, mode: "cancel" })

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -65,6 +66,8 @@ type ItemNoteDialogProps = {
 };
 
 export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: ItemNoteDialogProps) {
+  const t = useT();
+
   const invalidate = useChecklistInvalidation(workerId);
   const copy = COPY[mode];
   const form = useForm<NoteValues>({
@@ -122,9 +125,9 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
                 <TextareaField<NoteValues>
                   control={control}
                   name="note"
-                  label="Note"
-                  placeholder="e.g. Completed at the previous terminal"
-                  description="Kept on the item so an auditor can see why it was not done."
+                  label={t("Note")}
+                  placeholder={t("e.g. Completed at the previous terminal")}
+                  description={t("Kept on the item so an auditor can see why it was not done.")}
                   rules={{ required: true }}
                   maxLength={500}
                 />
@@ -132,7 +135,7 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
             </FormGroup>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending || !item}>
                 {isPending ? "Saving..." : copy.submit}

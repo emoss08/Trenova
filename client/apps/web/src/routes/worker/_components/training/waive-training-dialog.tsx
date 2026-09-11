@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { waiveWorkerTraining, type WorkerTrainingRecordRow } from "@/lib/graphql/worker-training";
@@ -34,6 +35,8 @@ export function WaiveTrainingDialog({
   workerId,
   record,
 }: WaiveTrainingDialogProps) {
+  const t = useT();
+
   const invalidate = useTrainingInvalidation(workerId);
   const form = useForm<WaiveTrainingFormValues>({
     resolver: zodResolver(waiveTrainingFormSchema) as Resolver<WaiveTrainingFormValues>,
@@ -59,7 +62,7 @@ export function WaiveTrainingDialog({
     },
     onSuccess: (saved) => {
       toast.success(`${saved.course?.name ?? "Course"} waived`, {
-        description: "It counts as satisfied; the reason stays on the record.",
+        description: t("It counts as satisfied; the reason stays on the record."),
       });
       void invalidate();
       onOpenChange(false);
@@ -70,11 +73,9 @@ export function WaiveTrainingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Waive {record?.course?.name ?? "this course"}</DialogTitle>
+          <DialogTitle>{t("Waive {0}", record?.course?.name ?? "this course")}</DialogTitle>
           <DialogDescription>
-            Use this when the worker already meets the requirement another way — prior experience,
-            an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is
-            kept in the audit log with your reason.
+            {t("Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -90,20 +91,20 @@ export function WaiveTrainingDialog({
                 <TextareaField<WaiveTrainingFormValues>
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. Completed at previous carrier; certificate on file"
+                  label={t("Reason")}
+                  placeholder={t("e.g. Completed at previous carrier; certificate on file")}
                   rules={{ required: true }}
                   maxLength={255}
-                  description="Kept on the record and in the audit log."
+                  description={t("Kept on the record and in the audit log.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Waiving...">
-                Waive course
+              <Button type="submit" isLoading={isPending} loadingText={t("Waiving...")}>
+                {t("Waive course")}
               </Button>
             </DialogFooter>
           </Form>

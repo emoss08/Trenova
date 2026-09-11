@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   AVAILABILITY_PREFERENCES_KEY,
@@ -48,6 +49,8 @@ const PREFERENCE_ITEMS = [
  * about each weekday, and the swaps they are part of.
  */
 export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.WorkerSchedule, Operation.Read);
   const { allowed: canAssign } = usePermission(Resource.WorkerSchedule, Operation.Assign);
@@ -90,7 +93,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
   const { mutate: endAssignment, isPending: endingAssignment } = useMutation({
     mutationFn: (id: string) => endWorkerShiftAssignment(id, getTodayDate()),
     onSuccess: () => {
-      toast.success("Assignment ended");
+      toast.success(t("Assignment ended"));
       invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -139,10 +142,9 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
               </p>
               {current ? (
                 <p className="text-muted-foreground mt-1 text-xs tabular-nums">
-                  Since {formatShiftDate(current.effectiveFrom)}
-                  {current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
+                  {t("Since {0}{1}", formatShiftDate(current.effectiveFrom), current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
                     ? ` · week ${current.cycleOffsetWeeks + 1} of the rotation`
-                    : ""}
+                    : "")}
                 </p>
               ) : null}
             </div>
@@ -156,7 +158,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                   disabled={endingAssignment}
                   onClick={() => endAssignment(current.id)}
                 >
-                  End today
+                  {t("End today")}
                 </Button>
               ) : null}
               <Button size="sm" onClick={() => setAssignOpen(true)}>
@@ -196,10 +198,9 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
       </section>
 
       <section className="rounded-lg border p-4">
-        <h3 className="text-sm font-semibold">Stated availability</h3>
+        <h3 className="text-sm font-semibold">{t("Stated availability")}</h3>
         <p className="text-muted-foreground text-xs">
-          A statement, never a constraint. Dispatch can override it, and the rota shows where it did
-          rather than hiding the override.
+          {t("A statement, never a constraint. Dispatch can override it, and the rota shows where it did rather than hiding the override.")}
         </p>
 
         {preferencesQuery.isLoading ? (
@@ -220,7 +221,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                     {tone ? (
                       <Badge variant={tone.variant}>{tone.label}</Badge>
                     ) : (
-                      <span className="text-muted-foreground">Nothing said</span>
+                      <span className="text-muted-foreground">{t("Nothing said")}</span>
                     )}
                   </span>
                   <SegmentedControl<PreferenceChoice>
@@ -246,10 +247,10 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
         <section className="rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <RepeatIcon className="text-muted-foreground size-4" />
-            <h3 className="text-sm font-semibold">Swaps</h3>
+            <h3 className="text-sm font-semibold">{t("Swaps")}</h3>
           </div>
           {swaps.length === 0 ? (
-            <p className="text-muted-foreground mt-2 text-xs">No swap requests.</p>
+            <p className="text-muted-foreground mt-2 text-xs">{t("No swap requests.")}</p>
           ) : (
             <ul className="mt-2 flex flex-col gap-1 text-xs">
               {swaps.map((swap) => {

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { timezoneChoices } from "@/lib/choices";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
@@ -15,6 +16,8 @@ function getUserTimezoneLabel({ user }: { user: NonNullable<User> }) {
 }
 
 export function HeaderContent({ title, children }: { title: string; children: React.ReactNode }) {
+  const t = useT();
+
   const user = useAuthStore((state) => state.user);
   const userTimezoneLabel = getUserTimezoneLabel({ user: user! });
 
@@ -23,7 +26,7 @@ export function HeaderContent({ title, children }: { title: string; children: Re
       <div className="flex flex-col leading-tight">
         <h3 className="font-table text-lg font-medium">{title}</h3>
         <p className="text-muted-foreground text-xs">
-          Records shown in the timezone of <span>{userTimezoneLabel}</span>
+          {t("Records shown in the timezone of")} <span>{userTimezoneLabel}</span>
         </p>
       </div>
       <HeaderInner>{children}</HeaderInner>

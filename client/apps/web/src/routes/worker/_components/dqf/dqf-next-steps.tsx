@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DQFNextStep } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon, ChevronRightIcon } from "lucide-react";
@@ -23,10 +24,12 @@ const ACTION_HINTS: Record<string, string> = {
  * single act like sending a request.
  */
 export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
+  const t = useT();
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">Next steps</h4>
+        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{t("Next steps")}</h4>
         {steps.length > 0 ? (
           <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
             {steps.length}
@@ -36,7 +39,7 @@ export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
       {steps.length === 0 ? (
         <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-4 py-4 text-xs">
           <CheckIcon className="size-4" />
-          <span>Nothing left to do — the file is complete.</span>
+          <span>{t("Nothing left to do — the file is complete.")}</span>
         </div>
       ) : (
         <ol className="divide-border divide-y rounded-lg border">

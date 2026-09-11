@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Select,
   SelectContent,
@@ -25,17 +26,19 @@ export function ApprovedChartOptions({
   colorScheme: ApprovedPTOColorScheme;
   setColorScheme: (colorScheme: ApprovedPTOColorScheme) => void;
 }) {
+  const t = useT();
+
   return (
     <ChartOptionsOuter>
       <ChartOptionsInner>
-        <p className="text-muted-foreground text-sm">Color Scheme:</p>
+        <p className="text-muted-foreground text-sm">{t("Color Scheme:")}</p>
         <Select
           items={APPROVED_PTO_COLOR_SCHEMES}
           value={colorScheme}
           onValueChange={(v) => setColorScheme(v as ApprovedPTOColorScheme)}
         >
           <SelectTrigger className="h-8 w-37.5 text-xs">
-            <SelectValue placeholder="Color" />
+            <SelectValue placeholder={t("Color")} />
           </SelectTrigger>
           <SelectContent>
             {APPROVED_PTO_COLOR_SCHEMES.map((scheme) => (

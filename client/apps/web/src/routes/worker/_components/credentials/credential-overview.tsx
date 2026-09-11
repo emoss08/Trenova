@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import type { WorkerCredentialSummary } from "@/lib/graphql/worker-credential";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -32,6 +33,8 @@ export function requiredHealthyCount(summary: WorkerCredentialSummary): number {
  * plain numbers and the compliance badge is the only colour.
  */
 export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOverviewProps) {
+  const t = useT();
+
   const healthy = useMemo(() => requiredHealthyCount(summary), [summary]);
   const chip = COMPLIANCE_CHIP[summary.complianceStatus] ?? COMPLIANCE_CHIP.Pending;
 
@@ -39,25 +42,21 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
     <div data-testid="credential-overview" className="flex flex-col gap-4 rounded-lg border p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-sm font-semibold">Qualification file</h3>
+          <h3 className="text-sm font-semibold">{t("Qualification file")}</h3>
           <Badge variant={chip.variant}>{chip.label}</Badge>
-          <InfoPopover title="Qualification file">
+          <InfoPopover title={t("Qualification file")}>
             <p>
-              Each credential type holds one active credential per worker; renewing files a new one
-              and archives the old. Health is graded from the expiry against the type&apos;s renewal
-              window: Valid, Expiring soon while inside the window, Expired once past it, and
-              Missing when nothing active is on file.
+              {t("Each credential type holds one active credential per worker; renewing files a new one and archives the old. Health is graded from the expiry against the type's renewal window: Valid, Expiring soon while inside the window, Expired once past it, and Missing when nothing active is on file.")}
             </p>
             <p>
-              Expiring soon still counts as good standing. The file is Non-compliant while any
-              required credential is expired or missing.
+              {t("Expiring soon still counts as good standing. The file is Non-compliant while any required credential is expired or missing.")}
             </p>
           </InfoPopover>
         </div>
         {canCreate ? (
           <Button size="sm" onClick={onAdd}>
             <PlusIcon className="size-3.5" />
-            Add credential
+            {t("Add credential")}
           </Button>
         ) : null}
       </div>
@@ -77,9 +76,9 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
           </p>
         </div>
         <dl className="grid grid-cols-3 gap-x-6 text-xs">
-          <Count label="Expiring" value={summary.expiringCount} />
-          <Count label="Expired" value={summary.expiredCount} />
-          <Count label="Missing" value={summary.missingCount} />
+          <Count label={t("Expiring")} value={summary.expiringCount} />
+          <Count label={t("Expired")} value={summary.expiredCount} />
+          <Count label={t("Missing")} value={summary.missingCount} />
         </dl>
       </div>
     </div>
