@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -15,6 +16,8 @@ export function EquipmentManufacturerPanel({
   mode,
   row,
 }: DataTablePanelProps<EquipmentManufacturer>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(equipmentManufacturerSchema),
     defaultValues: {
@@ -33,7 +36,7 @@ export function EquipmentManufacturerPanel({
         form={form}
         url="/equipment-manufacturers/"
         queryKey="equipment-manufacturer-list"
-        title="Equipment Manufacturer"
+        title={t("Equipment Manufacturer")}
         fieldKey="name"
         formComponent={<EquipmentManufacturerForm />}
       />
@@ -47,7 +50,7 @@ export function EquipmentManufacturerPanel({
       form={form}
       url="/equipment-manufacturers/"
       queryKey="equipment-manufacturer-list"
-      title="Equipment Manufacturer"
+      title={t("Equipment Manufacturer")}
       formComponent={<EquipmentManufacturerForm />}
     />
   );
