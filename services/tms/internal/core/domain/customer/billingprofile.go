@@ -2,6 +2,7 @@ package customer
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
@@ -22,6 +23,8 @@ const (
 	maxInvoicePrefixLength   = 20
 	maxTaxExemptNumberLength = 50
 	currencyCodeLength       = 3
+
+	defaultConsolidationLookbackDays = 30
 )
 
 type CustomerBillingProfile struct {
@@ -31,8 +34,11 @@ type CustomerBillingProfile struct {
 	BusinessUnitID                            pulid.ID                                  `json:"businessUnitId"                            bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID                            pulid.ID                                  `json:"organizationId"                            bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 	CustomerID                                pulid.ID                                  `json:"customerId"                                bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
-	BillingCycleType                          BillingCycleType                          `json:"billingCycleType"                          bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
-	BillingCycleDayOfWeek                     *int8                                     `json:"billingCycleDayOfWeek"                     bun:"billing_cycle_day_of_week,type:SMALLINT,nullzero"`
+	InvoiceDelivery                           InvoiceDelivery                           `json:"invoiceDelivery"                           bun:"invoice_delivery,type:customer_invoice_delivery_enum,notnull,default:'PerShipment'"`
+	BillingCycle                              BillingCycle                              `json:"billingCycle"                              bun:"billing_cycle,type:customer_billing_cycle_enum,notnull,default:'Immediate'"`
+	BillingCycleAnchorDay                     int16                                     `json:"billingCycleAnchorDay"                     bun:"billing_cycle_anchor_day,type:SMALLINT,notnull,default:1"`
+	BillingCycleTimezone                      string                                    `json:"billingCycleTimezone"                      bun:"billing_cycle_timezone,type:VARCHAR(64),notnull,default:'UTC'"`
+	LastBilledPeriodEnd                       *int64                                    `json:"lastBilledPeriodEnd"                       bun:"last_billed_period_end,type:BIGINT,nullzero"`
 	PaymentTerm                               PaymentTerm                               `json:"paymentTerm"                               bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
 	HasBillingControlOverrides                bool                                      `json:"hasBillingControlOverrides"                bun:"has_billing_control_overrides,type:BOOLEAN,notnull"`
 	CreditLimit                               decimal.NullDecimal                       `json:"creditLimit"                               bun:"credit_limit,type:NUMERIC(12,2),nullzero"`
@@ -41,11 +47,14 @@ type CustomerBillingProfile struct {
 	EnforceCreditLimit                        bool                                      `json:"enforceCreditLimit"                        bun:"enforce_credit_limit,type:BOOLEAN,notnull"`
 	AutoCreditHold                            bool                                      `json:"autoCreditHold"                            bun:"auto_credit_hold,type:BOOLEAN,notnull"`
 	CreditHoldReason                          string                                    `json:"creditHoldReason"                          bun:"credit_hold_reason,type:TEXT,nullzero"`
-	InvoiceMethod                             InvoiceMethod                             `json:"invoiceMethod"                             bun:"invoice_method,type:invoice_method_enum,notnull,default:'Individual'"`
 	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"               bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull,default:true"`
-	AllowInvoiceConsolidation                 bool                                      `json:"allowInvoiceConsolidation"                 bun:"allow_invoice_consolidation,type:BOOLEAN,notnull"`
-	ConsolidationPeriodDays                   int8                                      `json:"consolidationPeriodDays"                   bun:"consolidation_period_days,type:INTEGER,notnull,default:7"`
-	ConsolidationGroupBy                      ConsolidationGroupBy                      `json:"consolidationGroupBy"                      bun:"consolidation_group_by,type:consolidation_group_by_enum,notnull,default:'None'"`
+	SplitBy                                   InvoiceSplitKey                           `json:"splitBy"                                   bun:"split_by,type:invoice_split_key_enum,notnull,default:'Customer'"`
+	SectionBy                                 InvoiceSectionKey                         `json:"sectionBy"                                 bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
+	InvoiceDetail                             InvoiceDetail                             `json:"invoiceDetail"                             bun:"invoice_detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
+	ConsolidationLookbackDays                 int16                                     `json:"consolidationLookbackDays"                 bun:"consolidation_lookback_days,type:SMALLINT,notnull,default:30"`
+	MinConsolidatedAmount                     decimal.NullDecimal                       `json:"minConsolidatedAmount"                     bun:"min_consolidated_amount,type:NUMERIC(19,4),nullzero"`
+	MinConsolidatedAmountMinor                *int64                                    `json:"minConsolidatedAmountMinor"                bun:"min_consolidated_amount_minor,type:BIGINT,nullzero"`
+	MaxShipmentsPerInvoice                    int16                                     `json:"maxShipmentsPerInvoice"                    bun:"max_shipments_per_invoice,type:SMALLINT,notnull"`
 	InvoiceNumberFormat                       InvoiceNumberFormat                       `json:"invoiceNumberFormat"                       bun:"invoice_number_format,type:invoice_number_format_enum,notnull,default:'Default'"`
 	CustomerInvoicePrefix                     string                                    `json:"customerInvoicePrefix"                     bun:"customer_invoice_prefix,type:VARCHAR(20),nullzero"`
 	InvoiceCopies                             int8                                      `json:"invoiceCopies"                             bun:"invoice_copies,type:SMALLINT,notnull,default:1"`
@@ -96,27 +105,64 @@ func (b *CustomerBillingProfile) GetID() string {
 
 func (b *CustomerBillingProfile) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(b,
-		validation.Field(&b.BillingCycleType,
-			domainvalidation.ValidEnum[BillingCycleType]("Billing cycle type is invalid"),
+		validation.Field(&b.InvoiceDelivery,
+			validation.Required.Error("Invoice delivery is required"),
+			domainvalidation.ValidEnum[InvoiceDelivery]("Invoice delivery is invalid"),
 		),
-		validation.Field(&b.BillingCycleDayOfWeek,
-			validation.Min(int8(0)).Error("Day of week must be between 0 and 6"),
-			validation.Max(int8(6)).Error("Day of week must be between 0 and 6"),
+		validation.Field(&b.BillingCycle,
+			validation.Required.Error("Billing cycle is required"),
+			domainvalidation.ValidEnum[BillingCycle]("Billing cycle is invalid"),
+		),
+		// The anchor means a weekday for the weekly cycles and a day of the month
+		// for the rest. Capped at 28 so a monthly anchor never silently shifts in
+		// February.
+		validation.Field(&b.BillingCycleAnchorDay,
+			validation.When(
+				b.BillingCycle == BillingCycleWeekly || b.BillingCycle == BillingCycleBiWeekly,
+				validation.Min(int16(0)).Error("Day of week must be between 0 and 6"),
+				validation.Max(int16(6)).Error("Day of week must be between 0 and 6"),
+			),
+			validation.When(
+				b.BillingCycle == BillingCycleSemiMonthly ||
+					b.BillingCycle == BillingCycleMonthly ||
+					b.BillingCycle == BillingCycleQuarterly,
+				validation.Min(int16(1)).Error("Day of month must be between 1 and 28"),
+				validation.Max(int16(28)).Error("Day of month must be between 1 and 28"),
+			),
+		),
+		// A period boundary evaluated in the wrong zone moves loads into the wrong
+		// month, so the zone is required rather than defaulted at read time.
+		validation.Field(&b.BillingCycleTimezone,
+			validation.Required.Error("Billing cycle timezone is required"),
+			validation.By(validTimezone),
+		),
+		validation.Field(&b.SplitBy,
+			validation.Required.Error("Invoice split key is required"),
+			domainvalidation.ValidEnum[InvoiceSplitKey]("Invoice split key is invalid"),
+		),
+		validation.Field(&b.SectionBy,
+			validation.Required.Error("Invoice section key is required"),
+			domainvalidation.ValidEnum[InvoiceSectionKey]("Invoice section key is invalid"),
+		),
+		validation.Field(&b.InvoiceDetail,
+			validation.Required.Error("Invoice detail is required"),
+			domainvalidation.ValidEnum[InvoiceDetail]("Invoice detail is invalid"),
+		),
+		validation.Field(&b.ConsolidationLookbackDays,
+			validation.Min(int16(0)).Error("Lookback cannot be negative"),
+			validation.Max(int16(365)).Error("Lookback cannot exceed a year"),
+		),
+		// Zero means unbounded. The ceiling is what one PDF and one EDI 210 can
+		// carry without becoming unusable.
+		validation.Field(&b.MaxShipmentsPerInvoice,
+			validation.Min(int16(0)).Error("Maximum shipments per invoice cannot be negative"),
+			validation.Max(int16(500)).Error("Maximum shipments per invoice cannot exceed 500"),
 		),
 		validation.Field(&b.PaymentTerm,
 			domainvalidation.ValidEnum[PaymentTerm]("Payment term is invalid"),
 		),
 		validation.Field(&b.CreditStatus,
 			domainvalidation.ValidEnum[CreditStatus]("Credit status is invalid"),
-		),
-		validation.Field(&b.InvoiceMethod,
-			domainvalidation.ValidEnum[InvoiceMethod]("Invoice method is invalid"),
-		),
-		validation.Field(&b.ConsolidationGroupBy,
-			domainvalidation.ValidEnum[ConsolidationGroupBy]("Consolidation grouping is invalid"),
-		),
-		validation.Field(&b.ConsolidationPeriodDays,
-			validation.Min(int8(1)).Error("Consolidation period must be at least one day"),
 		),
 		validation.Field(&b.InvoiceNumberFormat,
 			domainvalidation.ValidEnum[InvoiceNumberFormat]("Invoice number format is invalid"),
@@ -168,6 +214,36 @@ func (b *CustomerBillingProfile) Validate(multiErr *errortypes.MultiError) {
 			),
 		),
 	))
+
+	// The old model let a customer be weekly and per-shipment at once, which is
+	// two different answers to the same question. Neither half is meaningful
+	// without the other.
+	if b.InvoiceDelivery == InvoiceDeliveryConsolidated && !b.BillingCycle.IsPeriodic() {
+		multiErr.Add(
+			"billingCycle",
+			errortypes.ErrInvalid,
+			"A statement-billed customer needs a billing cycle longer than Immediate",
+		)
+	}
+	if b.InvoiceDelivery != InvoiceDeliveryConsolidated && b.BillingCycle.IsPeriodic() {
+		multiErr.Add(
+			"invoiceDelivery",
+			errortypes.ErrInvalid,
+			"A billing cycle longer than Immediate only applies to statement billing",
+		)
+	}
+}
+
+func validTimezone(value any) error {
+	name, ok := value.(string)
+	if !ok || name == "" {
+		return nil
+	}
+	if !timeutils.IsValidLocation(name) {
+		return errors.New("Billing cycle timezone must be a valid IANA time zone")
+	}
+
+	return nil
 }
 
 func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {
@@ -182,6 +258,14 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		CustomerID:                  customerID,
 		AutoSendInvoiceOnGeneration: true,
 		FuelSurchargeMode:           FuelSurchargeModeNone,
+		InvoiceDelivery:             InvoiceDeliveryPerShipment,
+		BillingCycle:                BillingCycleImmediate,
+		BillingCycleAnchorDay:       1,
+		BillingCycleTimezone:        "UTC",
+		SplitBy:                     InvoiceSplitKeyCustomer,
+		SectionBy:                   InvoiceSectionKeyShipment,
+		InvoiceDetail:               InvoiceDetailDetailed,
+		ConsolidationLookbackDays:   defaultConsolidationLookbackDays,
 		InvoiceAdjustmentSupportingDocumentPolicy: InvoiceAdjustmentSupportingDocumentPolicyInherit,
 	}
 }
@@ -205,6 +289,24 @@ func (b *CustomerBillingProfile) BeforeAppendModel(_ context.Context, query bun.
 	}
 	if b.FuelSurchargeMode == "" {
 		b.FuelSurchargeMode = FuelSurchargeModeNone
+	}
+	if b.InvoiceDelivery == "" {
+		b.InvoiceDelivery = InvoiceDeliveryPerShipment
+	}
+	if b.BillingCycle == "" {
+		b.BillingCycle = BillingCycleImmediate
+	}
+	if b.BillingCycleTimezone == "" {
+		b.BillingCycleTimezone = "UTC"
+	}
+	if b.SplitBy == "" {
+		b.SplitBy = InvoiceSplitKeyCustomer
+	}
+	if b.SectionBy == "" {
+		b.SectionBy = InvoiceSectionKeyShipment
+	}
+	if b.InvoiceDetail == "" {
+		b.InvoiceDetail = InvoiceDetailDetailed
 	}
 	if b.FuelSurchargeMode != FuelSurchargeModeProgram {
 		b.FuelSurchargeProgramID = nil

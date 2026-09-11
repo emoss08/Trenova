@@ -348,8 +348,11 @@ var CustomerBillingProfileColumns = struct {
 	BusinessUnitID                            Column // "business_unit_id" → qualified: "cbp.business_unit_id"
 	OrganizationID                            Column // "organization_id" → qualified: "cbp.organization_id"
 	CustomerID                                Column // "customer_id" → qualified: "cbp.customer_id"
-	BillingCycleType                          Column // "billing_cycle_type" → qualified: "cbp.billing_cycle_type"
-	BillingCycleDayOfWeek                     Column // "billing_cycle_day_of_week" → qualified: "cbp.billing_cycle_day_of_week"
+	InvoiceDelivery                           Column // "invoice_delivery" → qualified: "cbp.invoice_delivery"
+	BillingCycle                              Column // "billing_cycle" → qualified: "cbp.billing_cycle"
+	BillingCycleAnchorDay                     Column // "billing_cycle_anchor_day" → qualified: "cbp.billing_cycle_anchor_day"
+	BillingCycleTimezone                      Column // "billing_cycle_timezone" → qualified: "cbp.billing_cycle_timezone"
+	LastBilledPeriodEnd                       Column // "last_billed_period_end" → qualified: "cbp.last_billed_period_end"
 	PaymentTerm                               Column // "payment_term" → qualified: "cbp.payment_term"
 	HasBillingControlOverrides                Column // "has_billing_control_overrides" → qualified: "cbp.has_billing_control_overrides"
 	CreditLimit                               Column // "credit_limit" → qualified: "cbp.credit_limit"
@@ -358,11 +361,14 @@ var CustomerBillingProfileColumns = struct {
 	EnforceCreditLimit                        Column // "enforce_credit_limit" → qualified: "cbp.enforce_credit_limit"
 	AutoCreditHold                            Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
 	CreditHoldReason                          Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
-	InvoiceMethod                             Column // "invoice_method" → qualified: "cbp.invoice_method"
 	AutoSendInvoiceOnGeneration               Column // "auto_send_invoice_on_generation" → qualified: "cbp.auto_send_invoice_on_generation"
-	AllowInvoiceConsolidation                 Column // "allow_invoice_consolidation" → qualified: "cbp.allow_invoice_consolidation"
-	ConsolidationPeriodDays                   Column // "consolidation_period_days" → qualified: "cbp.consolidation_period_days"
-	ConsolidationGroupBy                      Column // "consolidation_group_by" → qualified: "cbp.consolidation_group_by"
+	SplitBy                                   Column // "split_by" → qualified: "cbp.split_by"
+	SectionBy                                 Column // "section_by" → qualified: "cbp.section_by"
+	InvoiceDetail                             Column // "invoice_detail" → qualified: "cbp.invoice_detail"
+	ConsolidationLookbackDays                 Column // "consolidation_lookback_days" → qualified: "cbp.consolidation_lookback_days"
+	MinConsolidatedAmount                     Column // "min_consolidated_amount" → qualified: "cbp.min_consolidated_amount"
+	MinConsolidatedAmountMinor                Column // "min_consolidated_amount_minor" → qualified: "cbp.min_consolidated_amount_minor"
+	MaxShipmentsPerInvoice                    Column // "max_shipments_per_invoice" → qualified: "cbp.max_shipments_per_invoice"
 	InvoiceNumberFormat                       Column // "invoice_number_format" → qualified: "cbp.invoice_number_format"
 	CustomerInvoicePrefix                     Column // "customer_invoice_prefix" → qualified: "cbp.customer_invoice_prefix"
 	InvoiceCopies                             Column // "invoice_copies" → qualified: "cbp.invoice_copies"
@@ -397,8 +403,11 @@ var CustomerBillingProfileColumns = struct {
 	BusinessUnitID:                  NewColumn("business_unit_id", "cbp"),
 	OrganizationID:                  NewColumn("organization_id", "cbp"),
 	CustomerID:                      NewColumn("customer_id", "cbp"),
-	BillingCycleType:                NewColumn("billing_cycle_type", "cbp"),
-	BillingCycleDayOfWeek:           NewColumn("billing_cycle_day_of_week", "cbp"),
+	InvoiceDelivery:                 NewColumn("invoice_delivery", "cbp"),
+	BillingCycle:                    NewColumn("billing_cycle", "cbp"),
+	BillingCycleAnchorDay:           NewColumn("billing_cycle_anchor_day", "cbp"),
+	BillingCycleTimezone:            NewColumn("billing_cycle_timezone", "cbp"),
+	LastBilledPeriodEnd:             NewColumn("last_billed_period_end", "cbp"),
 	PaymentTerm:                     NewColumn("payment_term", "cbp"),
 	HasBillingControlOverrides:      NewColumn("has_billing_control_overrides", "cbp"),
 	CreditLimit:                     NewColumn("credit_limit", "cbp"),
@@ -407,11 +416,14 @@ var CustomerBillingProfileColumns = struct {
 	EnforceCreditLimit:              NewColumn("enforce_credit_limit", "cbp"),
 	AutoCreditHold:                  NewColumn("auto_credit_hold", "cbp"),
 	CreditHoldReason:                NewColumn("credit_hold_reason", "cbp"),
-	InvoiceMethod:                   NewColumn("invoice_method", "cbp"),
 	AutoSendInvoiceOnGeneration:     NewColumn("auto_send_invoice_on_generation", "cbp"),
-	AllowInvoiceConsolidation:       NewColumn("allow_invoice_consolidation", "cbp"),
-	ConsolidationPeriodDays:         NewColumn("consolidation_period_days", "cbp"),
-	ConsolidationGroupBy:            NewColumn("consolidation_group_by", "cbp"),
+	SplitBy:                         NewColumn("split_by", "cbp"),
+	SectionBy:                       NewColumn("section_by", "cbp"),
+	InvoiceDetail:                   NewColumn("invoice_detail", "cbp"),
+	ConsolidationLookbackDays:       NewColumn("consolidation_lookback_days", "cbp"),
+	MinConsolidatedAmount:           NewColumn("min_consolidated_amount", "cbp"),
+	MinConsolidatedAmountMinor:      NewColumn("min_consolidated_amount_minor", "cbp"),
+	MaxShipmentsPerInvoice:          NewColumn("max_shipments_per_invoice", "cbp"),
 	InvoiceNumberFormat:             NewColumn("invoice_number_format", "cbp"),
 	CustomerInvoicePrefix:           NewColumn("customer_invoice_prefix", "cbp"),
 	InvoiceCopies:                   NewColumn("invoice_copies", "cbp"),
@@ -452,8 +464,11 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"businessUnitId":                            "business_unit_id",
 	"organizationId":                            "organization_id",
 	"customerId":                                "customer_id",
-	"billingCycleType":                          "billing_cycle_type",
-	"billingCycleDayOfWeek":                     "billing_cycle_day_of_week",
+	"invoiceDelivery":                           "invoice_delivery",
+	"billingCycle":                              "billing_cycle",
+	"billingCycleAnchorDay":                     "billing_cycle_anchor_day",
+	"billingCycleTimezone":                      "billing_cycle_timezone",
+	"lastBilledPeriodEnd":                       "last_billed_period_end",
 	"paymentTerm":                               "payment_term",
 	"hasBillingControlOverrides":                "has_billing_control_overrides",
 	"creditLimit":                               "credit_limit",
@@ -462,11 +477,14 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"enforceCreditLimit":                        "enforce_credit_limit",
 	"autoCreditHold":                            "auto_credit_hold",
 	"creditHoldReason":                          "credit_hold_reason",
-	"invoiceMethod":                             "invoice_method",
 	"autoSendInvoiceOnGeneration":               "auto_send_invoice_on_generation",
-	"allowInvoiceConsolidation":                 "allow_invoice_consolidation",
-	"consolidationPeriodDays":                   "consolidation_period_days",
-	"consolidationGroupBy":                      "consolidation_group_by",
+	"splitBy":                                   "split_by",
+	"sectionBy":                                 "section_by",
+	"invoiceDetail":                             "invoice_detail",
+	"consolidationLookbackDays":                 "consolidation_lookback_days",
+	"minConsolidatedAmount":                     "min_consolidated_amount",
+	"minConsolidatedAmountMinor":                "min_consolidated_amount_minor",
+	"maxShipmentsPerInvoice":                    "max_shipments_per_invoice",
 	"invoiceNumberFormat":                       "invoice_number_format",
 	"customerInvoicePrefix":                     "customer_invoice_prefix",
 	"invoiceCopies":                             "invoice_copies",
@@ -505,8 +523,11 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"customer_id",
-	"billing_cycle_type",
-	"billing_cycle_day_of_week",
+	"invoice_delivery",
+	"billing_cycle",
+	"billing_cycle_anchor_day",
+	"billing_cycle_timezone",
+	"last_billed_period_end",
 	"payment_term",
 	"has_billing_control_overrides",
 	"credit_limit",
@@ -515,11 +536,14 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"enforce_credit_limit",
 	"auto_credit_hold",
 	"credit_hold_reason",
-	"invoice_method",
 	"auto_send_invoice_on_generation",
-	"allow_invoice_consolidation",
-	"consolidation_period_days",
-	"consolidation_group_by",
+	"split_by",
+	"section_by",
+	"invoice_detail",
+	"consolidation_lookback_days",
+	"min_consolidated_amount",
+	"min_consolidated_amount_minor",
+	"max_shipments_per_invoice",
 	"invoice_number_format",
 	"customer_invoice_prefix",
 	"invoice_copies",
@@ -626,8 +650,11 @@ var CustomerBillingProfileFilter = struct {
 	BusinessUnitID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	CustomerID                                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
-	BillingCycleType                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleType" → DB: "billing_cycle_type"
-	BillingCycleDayOfWeek                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleDayOfWeek" → DB: "billing_cycle_day_of_week"
+	InvoiceDelivery                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDelivery" → DB: "invoice_delivery"
+	BillingCycle                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycle" → DB: "billing_cycle"
+	BillingCycleAnchorDay                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleAnchorDay" → DB: "billing_cycle_anchor_day"
+	BillingCycleTimezone                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleTimezone" → DB: "billing_cycle_timezone"
+	LastBilledPeriodEnd                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastBilledPeriodEnd" → DB: "last_billed_period_end"
 	PaymentTerm                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTerm" → DB: "payment_term"
 	HasBillingControlOverrides                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasBillingControlOverrides" → DB: "has_billing_control_overrides"
 	CreditLimit                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditLimit" → DB: "credit_limit"
@@ -636,11 +663,14 @@ var CustomerBillingProfileFilter = struct {
 	EnforceCreditLimit                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCreditLimit" → DB: "enforce_credit_limit"
 	AutoCreditHold                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
 	CreditHoldReason                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
-	InvoiceMethod                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceMethod" → DB: "invoice_method"
 	AutoSendInvoiceOnGeneration               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendInvoiceOnGeneration" → DB: "auto_send_invoice_on_generation"
-	AllowInvoiceConsolidation                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowInvoiceConsolidation" → DB: "allow_invoice_consolidation"
-	ConsolidationPeriodDays                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPeriodDays" → DB: "consolidation_period_days"
-	ConsolidationGroupBy                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupBy" → DB: "consolidation_group_by"
+	SplitBy                                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "splitBy" → DB: "split_by"
+	SectionBy                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sectionBy" → DB: "section_by"
+	InvoiceDetail                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDetail" → DB: "invoice_detail"
+	ConsolidationLookbackDays                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationLookbackDays" → DB: "consolidation_lookback_days"
+	MinConsolidatedAmount                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minConsolidatedAmount" → DB: "min_consolidated_amount"
+	MinConsolidatedAmountMinor                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minConsolidatedAmountMinor" → DB: "min_consolidated_amount_minor"
+	MaxShipmentsPerInvoice                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxShipmentsPerInvoice" → DB: "max_shipments_per_invoice"
 	InvoiceNumberFormat                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumberFormat" → DB: "invoice_number_format"
 	CustomerInvoicePrefix                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerInvoicePrefix" → DB: "customer_invoice_prefix"
 	InvoiceCopies                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceCopies" → DB: "invoice_copies"
@@ -683,11 +713,20 @@ var CustomerBillingProfileFilter = struct {
 	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("customerId", op, value)
 	},
-	BillingCycleType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("billingCycleType", op, value)
+	InvoiceDelivery: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceDelivery", op, value)
 	},
-	BillingCycleDayOfWeek: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("billingCycleDayOfWeek", op, value)
+	BillingCycle: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billingCycle", op, value)
+	},
+	BillingCycleAnchorDay: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billingCycleAnchorDay", op, value)
+	},
+	BillingCycleTimezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billingCycleTimezone", op, value)
+	},
+	LastBilledPeriodEnd: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastBilledPeriodEnd", op, value)
 	},
 	PaymentTerm: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("paymentTerm", op, value)
@@ -713,20 +752,29 @@ var CustomerBillingProfileFilter = struct {
 	CreditHoldReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("creditHoldReason", op, value)
 	},
-	InvoiceMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("invoiceMethod", op, value)
-	},
 	AutoSendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoSendInvoiceOnGeneration", op, value)
 	},
-	AllowInvoiceConsolidation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("allowInvoiceConsolidation", op, value)
+	SplitBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("splitBy", op, value)
 	},
-	ConsolidationPeriodDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("consolidationPeriodDays", op, value)
+	SectionBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sectionBy", op, value)
 	},
-	ConsolidationGroupBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("consolidationGroupBy", op, value)
+	InvoiceDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceDetail", op, value)
+	},
+	ConsolidationLookbackDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("consolidationLookbackDays", op, value)
+	},
+	MinConsolidatedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minConsolidatedAmount", op, value)
+	},
+	MinConsolidatedAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minConsolidatedAmountMinor", op, value)
+	},
+	MaxShipmentsPerInvoice: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxShipmentsPerInvoice", op, value)
 	},
 	InvoiceNumberFormat: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceNumberFormat", op, value)

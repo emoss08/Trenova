@@ -689,38 +689,24 @@ components:
                 - FreightClass300
                 - FreightClass400
                 - FreightClass500
-        github_com_emoss08_trenova_internal_core_domain_customer.BillingCycleType:
+        github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle:
             enum:
                 - Immediate
                 - Daily
                 - Weekly
                 - BiWeekly
+                - SemiMonthly
                 - Monthly
                 - Quarterly
-                - PerShipment
             type: string
             x-enum-varnames:
-                - BillingCycleTypeImmediate
-                - BillingCycleTypeDaily
-                - BillingCycleTypeWeekly
-                - BillingCycleTypeBiWeekly
-                - BillingCycleTypeMonthly
-                - BillingCycleTypeQuarterly
-                - BillingCycleTypePerShipment
-        github_com_emoss08_trenova_internal_core_domain_customer.ConsolidationGroupBy:
-            enum:
-                - None
-                - Location
-                - PONumber
-                - BOL
-                - Division
-            type: string
-            x-enum-varnames:
-                - ConsolidationGroupByNone
-                - ConsolidationGroupByLocation
-                - ConsolidationGroupByPONumber
-                - ConsolidationGroupByBOL
-                - ConsolidationGroupByDivision
+                - BillingCycleImmediate
+                - BillingCycleDaily
+                - BillingCycleWeekly
+                - BillingCycleBiWeekly
+                - BillingCycleSemiMonthly
+                - BillingCycleMonthly
+                - BillingCycleQuarterly
         github_com_emoss08_trenova_internal_core_domain_customer.CreditStatus:
             enum:
                 - Active
@@ -796,8 +782,6 @@ components:
             type: object
         github_com_emoss08_trenova_internal_core_domain_customer.CustomerBillingProfile:
             properties:
-                allowInvoiceConsolidation:
-                    type: boolean
                 applyLateCharges:
                     type: boolean
                 arAccount:
@@ -818,17 +802,17 @@ components:
                     type: boolean
                 billingCurrency:
                     type: string
-                billingCycleDayOfWeek:
+                billingCycle:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle'
+                billingCycleAnchorDay:
                     type: integer
-                billingCycleType:
-                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycleType'
+                billingCycleTimezone:
+                    type: string
                 billingNotes:
                     type: string
                 businessUnitId:
                     type: string
-                consolidationGroupBy:
-                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.ConsolidationGroupBy'
-                consolidationPeriodDays:
+                consolidationLookbackDays:
                     type: integer
                 countLateOnlyOnAppointmentStops:
                     type: boolean
@@ -874,12 +858,22 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceAdjustmentSupportingDocumentPolicy'
                 invoiceCopies:
                     type: integer
-                invoiceMethod:
-                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceMethod'
+                invoiceDelivery:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDelivery'
+                invoiceDetail:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail'
                 invoiceNumberFormat:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceNumberFormat'
+                lastBilledPeriodEnd:
+                    type: integer
                 lateChargeRate:
                     $ref: '#/components/schemas/decimal.NullDecimal'
+                maxShipmentsPerInvoice:
+                    type: integer
+                minConsolidatedAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                minConsolidatedAmountMinor:
+                    type: integer
                 organizationId:
                     type: string
                 paymentTerm:
@@ -894,6 +888,10 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_glaccount.GLAccount'
                 revenueAccountId:
                     type: string
+                sectionBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey'
+                splitBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey'
                 taxExempt:
                     type: boolean
                 taxExemptNumber:
@@ -960,16 +958,24 @@ components:
                 - InvoiceAdjustmentSupportingDocumentPolicyInherit
                 - InvoiceAdjustmentSupportingDocumentPolicyRequired
                 - InvoiceAdjustmentSupportingDocumentPolicyOptional
-        github_com_emoss08_trenova_internal_core_domain_customer.InvoiceMethod:
+        github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDelivery:
             enum:
-                - Individual
-                - Summary
-                - SummaryWithDetail
+                - PerShipment
+                - PerOrder
+                - Consolidated
             type: string
             x-enum-varnames:
-                - InvoiceMethodIndividual
-                - InvoiceMethodSummary
-                - InvoiceMethodSummaryWithDetail
+                - InvoiceDeliveryPerShipment
+                - InvoiceDeliveryPerOrder
+                - InvoiceDeliveryConsolidated
+        github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail:
+            enum:
+                - Detailed
+                - Summary
+            type: string
+            x-enum-varnames:
+                - InvoiceDetailDetailed
+                - InvoiceDetailSummary
         github_com_emoss08_trenova_internal_core_domain_customer.InvoiceNumberFormat:
             enum:
                 - Default
@@ -980,6 +986,36 @@ components:
                 - InvoiceNumberFormatDefault
                 - InvoiceNumberFormatCustomPrefix
                 - InvoiceNumberFormatPOBased
+        github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey:
+            enum:
+                - Shipment
+                - PONumber
+                - Origin
+                - Destination
+            type: string
+            x-enum-varnames:
+                - InvoiceSectionKeyShipment
+                - InvoiceSectionKeyPONumber
+                - InvoiceSectionKeyOrigin
+                - InvoiceSectionKeyDestination
+        github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey:
+            enum:
+                - Customer
+                - CustomerAndPONumber
+                - CustomerAndShipmentBOL
+                - CustomerAndOrder
+                - CustomerAndOrigin
+                - CustomerAndDestination
+                - CustomerAndServiceType
+            type: string
+            x-enum-varnames:
+                - InvoiceSplitKeyCustomer
+                - InvoiceSplitKeyCustomerAndPONumber
+                - InvoiceSplitKeyCustomerAndShipmentBOL
+                - InvoiceSplitKeyCustomerAndOrder
+                - InvoiceSplitKeyCustomerAndOrigin
+                - InvoiceSplitKeyCustomerAndDestination
+                - InvoiceSplitKeyCustomerAndServiceType
         github_com_emoss08_trenova_internal_core_domain_customer.PaymentTerm:
             enum:
                 - Net10

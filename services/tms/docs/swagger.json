@@ -976,42 +976,25 @@
                 "FreightClass500"
             ]
         },
-        "github_com_emoss08_trenova_internal_core_domain_customer.BillingCycleType": {
+        "github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle": {
             "enum": [
                 "Immediate",
                 "Daily",
                 "Weekly",
                 "BiWeekly",
+                "SemiMonthly",
                 "Monthly",
-                "Quarterly",
-                "PerShipment"
+                "Quarterly"
             ],
             "type": "string",
             "x-enum-varnames": [
-                "BillingCycleTypeImmediate",
-                "BillingCycleTypeDaily",
-                "BillingCycleTypeWeekly",
-                "BillingCycleTypeBiWeekly",
-                "BillingCycleTypeMonthly",
-                "BillingCycleTypeQuarterly",
-                "BillingCycleTypePerShipment"
-            ]
-        },
-        "github_com_emoss08_trenova_internal_core_domain_customer.ConsolidationGroupBy": {
-            "enum": [
-                "None",
-                "Location",
-                "PONumber",
-                "BOL",
-                "Division"
-            ],
-            "type": "string",
-            "x-enum-varnames": [
-                "ConsolidationGroupByNone",
-                "ConsolidationGroupByLocation",
-                "ConsolidationGroupByPONumber",
-                "ConsolidationGroupByBOL",
-                "ConsolidationGroupByDivision"
+                "BillingCycleImmediate",
+                "BillingCycleDaily",
+                "BillingCycleWeekly",
+                "BillingCycleBiWeekly",
+                "BillingCycleSemiMonthly",
+                "BillingCycleMonthly",
+                "BillingCycleQuarterly"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_customer.CreditStatus": {
@@ -1124,9 +1107,6 @@
         },
         "github_com_emoss08_trenova_internal_core_domain_customer.CustomerBillingProfile": {
             "properties": {
-                "allowInvoiceConsolidation": {
-                    "type": "boolean"
-                },
                 "applyLateCharges": {
                     "type": "boolean"
                 },
@@ -1157,11 +1137,14 @@
                 "billingCurrency": {
                     "type": "string"
                 },
-                "billingCycleDayOfWeek": {
+                "billingCycle": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle"
+                },
+                "billingCycleAnchorDay": {
                     "type": "integer"
                 },
-                "billingCycleType": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycleType"
+                "billingCycleTimezone": {
+                    "type": "string"
                 },
                 "billingNotes": {
                     "type": "string"
@@ -1169,10 +1152,7 @@
                 "businessUnitId": {
                     "type": "string"
                 },
-                "consolidationGroupBy": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.ConsolidationGroupBy"
-                },
-                "consolidationPeriodDays": {
+                "consolidationLookbackDays": {
                     "type": "integer"
                 },
                 "countLateOnlyOnAppointmentStops": {
@@ -1241,14 +1221,29 @@
                 "invoiceCopies": {
                     "type": "integer"
                 },
-                "invoiceMethod": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceMethod"
+                "invoiceDelivery": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDelivery"
+                },
+                "invoiceDetail": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail"
                 },
                 "invoiceNumberFormat": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceNumberFormat"
                 },
+                "lastBilledPeriodEnd": {
+                    "type": "integer"
+                },
                 "lateChargeRate": {
                     "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "maxShipmentsPerInvoice": {
+                    "type": "integer"
+                },
+                "minConsolidatedAmount": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "minConsolidatedAmountMinor": {
+                    "type": "integer"
                 },
                 "organizationId": {
                     "type": "string"
@@ -1270,6 +1265,12 @@
                 },
                 "revenueAccountId": {
                     "type": "string"
+                },
+                "sectionBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey"
+                },
+                "splitBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey"
                 },
                 "taxExempt": {
                     "type": "boolean"
@@ -1368,17 +1369,28 @@
                 "InvoiceAdjustmentSupportingDocumentPolicyOptional"
             ]
         },
-        "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceMethod": {
+        "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDelivery": {
             "enum": [
-                "Individual",
-                "Summary",
-                "SummaryWithDetail"
+                "PerShipment",
+                "PerOrder",
+                "Consolidated"
             ],
             "type": "string",
             "x-enum-varnames": [
-                "InvoiceMethodIndividual",
-                "InvoiceMethodSummary",
-                "InvoiceMethodSummaryWithDetail"
+                "InvoiceDeliveryPerShipment",
+                "InvoiceDeliveryPerOrder",
+                "InvoiceDeliveryConsolidated"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail": {
+            "enum": [
+                "Detailed",
+                "Summary"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "InvoiceDetailDetailed",
+                "InvoiceDetailSummary"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceNumberFormat": {
@@ -1392,6 +1404,42 @@
                 "InvoiceNumberFormatDefault",
                 "InvoiceNumberFormatCustomPrefix",
                 "InvoiceNumberFormatPOBased"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey": {
+            "enum": [
+                "Shipment",
+                "PONumber",
+                "Origin",
+                "Destination"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "InvoiceSectionKeyShipment",
+                "InvoiceSectionKeyPONumber",
+                "InvoiceSectionKeyOrigin",
+                "InvoiceSectionKeyDestination"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey": {
+            "enum": [
+                "Customer",
+                "CustomerAndPONumber",
+                "CustomerAndShipmentBOL",
+                "CustomerAndOrder",
+                "CustomerAndOrigin",
+                "CustomerAndDestination",
+                "CustomerAndServiceType"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "InvoiceSplitKeyCustomer",
+                "InvoiceSplitKeyCustomerAndPONumber",
+                "InvoiceSplitKeyCustomerAndShipmentBOL",
+                "InvoiceSplitKeyCustomerAndOrder",
+                "InvoiceSplitKeyCustomerAndOrigin",
+                "InvoiceSplitKeyCustomerAndDestination",
+                "InvoiceSplitKeyCustomerAndServiceType"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_customer.PaymentTerm": {

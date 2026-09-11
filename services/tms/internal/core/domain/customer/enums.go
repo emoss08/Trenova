@@ -1,17 +1,27 @@
 package customer
 
-type BillingCycleType string
+// InvoiceDelivery is how many invoices a customer's freight turns into:
+// one each, one per order, or one per billing period.
+type InvoiceDelivery string
 
 const (
-	BillingCycleTypeImmediate = BillingCycleType("Immediate")
-	BillingCycleTypeDaily     = BillingCycleType("Daily")
-	BillingCycleTypeWeekly    = BillingCycleType("Weekly")
-	BillingCycleTypeBiWeekly  = BillingCycleType("BiWeekly")
+	InvoiceDeliveryPerShipment  = InvoiceDelivery("PerShipment")
+	InvoiceDeliveryPerOrder     = InvoiceDelivery("PerOrder")
+	InvoiceDeliveryConsolidated = InvoiceDelivery("Consolidated")
+)
 
-	BillingCycleTypeMonthly = BillingCycleType("Monthly")
+// BillingCycle is how often a consolidated customer is billed. It answers only
+// the cadence question; what the period is split into is SplitBy.
+type BillingCycle string
 
-	BillingCycleTypeQuarterly   = BillingCycleType("Quarterly")
-	BillingCycleTypePerShipment = BillingCycleType("PerShipment")
+const (
+	BillingCycleImmediate   = BillingCycle("Immediate")
+	BillingCycleDaily       = BillingCycle("Daily")
+	BillingCycleWeekly      = BillingCycle("Weekly")
+	BillingCycleBiWeekly    = BillingCycle("BiWeekly")
+	BillingCycleSemiMonthly = BillingCycle("SemiMonthly")
+	BillingCycleMonthly     = BillingCycle("Monthly")
+	BillingCycleQuarterly   = BillingCycle("Quarterly")
 )
 
 type PaymentTerm string
@@ -52,22 +62,41 @@ const (
 	InvoiceNumberFormatPOBased      = InvoiceNumberFormat("POBased")
 )
 
-type ConsolidationGroupBy string
+// InvoiceSplitKey decides how many invoices a billing period yields. Customer
+// means one; every other member means one per distinct value of that key.
+//
+// There is deliberately no Division member: no division entity exists anywhere
+// in the domain, and a shipment carries no fleet code to stand in for one.
+type InvoiceSplitKey string
 
 const (
-	ConsolidationGroupByNone     = ConsolidationGroupBy("None")
-	ConsolidationGroupByLocation = ConsolidationGroupBy("Location")
-	ConsolidationGroupByPONumber = ConsolidationGroupBy("PONumber")
-	ConsolidationGroupByBOL      = ConsolidationGroupBy("BOL")
-	ConsolidationGroupByDivision = ConsolidationGroupBy("Division")
+	InvoiceSplitKeyCustomer               = InvoiceSplitKey("Customer")
+	InvoiceSplitKeyCustomerAndPONumber    = InvoiceSplitKey("CustomerAndPONumber")
+	InvoiceSplitKeyCustomerAndShipmentBOL = InvoiceSplitKey("CustomerAndShipmentBOL")
+	InvoiceSplitKeyCustomerAndOrder       = InvoiceSplitKey("CustomerAndOrder")
+	InvoiceSplitKeyCustomerAndOrigin      = InvoiceSplitKey("CustomerAndOrigin")
+	InvoiceSplitKeyCustomerAndDestination = InvoiceSplitKey("CustomerAndDestination")
+	InvoiceSplitKeyCustomerAndServiceType = InvoiceSplitKey("CustomerAndServiceType")
 )
 
-type InvoiceMethod string
+// InvoiceSectionKey decides how the lines inside one invoice are organised. It
+// never changes how many invoices there are.
+type InvoiceSectionKey string
 
 const (
-	InvoiceMethodIndividual        = InvoiceMethod("Individual")
-	InvoiceMethodSummary           = InvoiceMethod("Summary")
-	InvoiceMethodSummaryWithDetail = InvoiceMethod("SummaryWithDetail")
+	InvoiceSectionKeyShipment    = InvoiceSectionKey("Shipment")
+	InvoiceSectionKeyPONumber    = InvoiceSectionKey("PONumber")
+	InvoiceSectionKeyOrigin      = InvoiceSectionKey("Origin")
+	InvoiceSectionKeyDestination = InvoiceSectionKey("Destination")
+)
+
+// InvoiceDetail is how verbose each section is. It replaces the rendering half
+// of the old InvoiceMethod, whose other half was a delivery mode.
+type InvoiceDetail string
+
+const (
+	InvoiceDetailDetailed = InvoiceDetail("Detailed")
+	InvoiceDetailSummary  = InvoiceDetail("Summary")
 )
 
 type InvoiceAdjustmentSupportingDocumentPolicy string
@@ -84,15 +113,30 @@ const (
 	)
 )
 
-func (t BillingCycleType) IsValid() bool {
-	switch t {
-	case BillingCycleTypeImmediate, BillingCycleTypeDaily, BillingCycleTypeWeekly,
-		BillingCycleTypeBiWeekly, BillingCycleTypeMonthly, BillingCycleTypeQuarterly,
-		BillingCycleTypePerShipment:
+func (d InvoiceDelivery) IsValid() bool {
+	switch d {
+	case InvoiceDeliveryPerShipment, InvoiceDeliveryPerOrder, InvoiceDeliveryConsolidated:
 		return true
 	default:
 		return false
 	}
+}
+
+func (c BillingCycle) IsValid() bool {
+	switch c {
+	case BillingCycleImmediate, BillingCycleDaily, BillingCycleWeekly,
+		BillingCycleBiWeekly, BillingCycleSemiMonthly, BillingCycleMonthly,
+		BillingCycleQuarterly:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsPeriodic reports whether the cycle closes a period that has to be swept,
+// rather than billing the moment a shipment is approved.
+func (c BillingCycle) IsPeriodic() bool {
+	return c != "" && c != BillingCycleImmediate
 }
 
 func (t PaymentTerm) IsValid() bool {
@@ -133,19 +177,31 @@ func (f InvoiceNumberFormat) IsValid() bool {
 	}
 }
 
-func (g ConsolidationGroupBy) IsValid() bool {
-	switch g {
-	case ConsolidationGroupByNone, ConsolidationGroupByLocation, ConsolidationGroupByPONumber,
-		ConsolidationGroupByBOL, ConsolidationGroupByDivision:
+func (k InvoiceSplitKey) IsValid() bool {
+	switch k {
+	case InvoiceSplitKeyCustomer, InvoiceSplitKeyCustomerAndPONumber,
+		InvoiceSplitKeyCustomerAndShipmentBOL, InvoiceSplitKeyCustomerAndOrder,
+		InvoiceSplitKeyCustomerAndOrigin, InvoiceSplitKeyCustomerAndDestination,
+		InvoiceSplitKeyCustomerAndServiceType:
 		return true
 	default:
 		return false
 	}
 }
 
-func (m InvoiceMethod) IsValid() bool {
-	switch m {
-	case InvoiceMethodIndividual, InvoiceMethodSummary, InvoiceMethodSummaryWithDetail:
+func (k InvoiceSectionKey) IsValid() bool {
+	switch k {
+	case InvoiceSectionKeyShipment, InvoiceSectionKeyPONumber,
+		InvoiceSectionKeyOrigin, InvoiceSectionKeyDestination:
+		return true
+	default:
+		return false
+	}
+}
+
+func (d InvoiceDetail) IsValid() bool {
+	switch d {
+	case InvoiceDetailDetailed, InvoiceDetailSummary:
 		return true
 	default:
 		return false

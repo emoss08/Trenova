@@ -38,6 +38,21 @@ func LoadLocation(timezone string) *time.Location {
 	return loc
 }
 
+// IsValidLocation reports whether a timezone name resolves.
+//
+// LoadLocation deliberately swallows a bad name so rendering never fails, which
+// makes it useless for validating operator input. This is the validating twin:
+// use it at the write boundary so a bad zone is rejected once, rather than
+// silently becoming UTC on every later read.
+func IsValidLocation(timezone string) bool {
+	if timezone == "" {
+		return false
+	}
+	_, err := time.LoadLocation(timezone)
+
+	return err == nil
+}
+
 // FormatUnixDateIn renders a calendar date in the given timezone.
 //
 // The zone matters more than it looks: a shipment delivered at 19:00 Pacific is

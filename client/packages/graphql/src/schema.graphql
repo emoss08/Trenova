@@ -2125,6 +2125,17 @@ type Customer {
   version: Int!
 }
 
+"""How often a statement-billed customer is billed."""
+enum CustomerBillingCycle {
+  BiWeekly
+  Daily
+  Immediate
+  Monthly
+  Quarterly
+  SemiMonthly
+  Weekly
+}
+
 enum CustomerBillingCycleType {
   BiWeekly
   Daily
@@ -2136,7 +2147,7 @@ enum CustomerBillingCycleType {
 }
 
 type CustomerBillingProfile {
-  allowInvoiceConsolidation: Boolean!
+  allowInvoiceConsolidation: Boolean! @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   applyLateCharges: Boolean!
   arAccountId: ID
   autoApplyAccessorials: Boolean!
@@ -2146,12 +2157,21 @@ type CustomerBillingProfile {
   autoSendInvoiceOnGeneration: Boolean!
   autoTransfer: Boolean!
   billingCurrency: String!
-  billingCycleDayOfWeek: Int
-  billingCycleType: CustomerBillingCycleType!
+  billingCycle: CustomerBillingCycle!
+  """
+  Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer.
+  """
+  billingCycleAnchorDay: Int!
+  billingCycleDayOfWeek: Int @deprecated(reason: "Replaced by billingCycleAnchorDay, which also covers monthly and quarterly cycles. Removed in a later release.")
+  """IANA zone the period boundaries are evaluated in."""
+  billingCycleTimezone: String!
+  billingCycleType: CustomerBillingCycleType! @deprecated(reason: "Replaced by invoiceDelivery and billingCycle, which separate the delivery mode from the cadence. Removed in a later release.")
   billingNotes: String!
   businessUnitId: ID!
-  consolidationGroupBy: CustomerConsolidationGroupBy!
-  consolidationPeriodDays: Int!
+  consolidationGroupBy: CustomerConsolidationGroupBy! @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
+  """How far before the period start to sweep shipments approved late."""
+  consolidationLookbackDays: Int!
+  consolidationPeriodDays: Int! @deprecated(reason: "Split into billingCycle (cadence) and consolidationLookbackDays (how far back to sweep). Removed in a later release.")
   countLateOnlyOnAppointmentStops: Boolean!
   createdAt: Timestamp!
   creditBalance: Decimal!
@@ -2171,15 +2191,27 @@ type CustomerBillingProfile {
   id: ID!
   invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
   invoiceCopies: Int!
-  invoiceMethod: CustomerInvoiceMethod!
+  invoiceDelivery: CustomerInvoiceDelivery!
+  invoiceDetail: InvoiceDetail!
+  invoiceMethod: CustomerInvoiceMethod! @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
+  """
+  End of the last period billed, so a missed cycle catches up rather than skipping.
+  """
+  lastBilledPeriodEnd: Timestamp
   lateChargeRate: Decimal
+  """Zero means unbounded."""
+  maxShipmentsPerInvoice: Int!
+  """Below this, a group defers to the next period instead of billing."""
+  minConsolidatedAmount: Decimal
   organizationId: ID!
   paymentTerm: CustomerPaymentTerm!
   requireBOLNumber: Boolean!
   requireDeliveryNumber: Boolean!
   requirePONumber: Boolean!
   revenueAccountId: ID
+  sectionBy: InvoiceSectionKey!
+  splitBy: InvoiceSplitKey!
   taxExempt: Boolean!
   taxExemptNumber: String!
   updatedAt: Timestamp!
@@ -2256,6 +2288,18 @@ enum CustomerInvoiceAdjustmentSupportingDocumentPolicy {
   Inherit
   Optional
   Required
+}
+
+"""How many invoices a customer's freight turns into."""
+enum CustomerInvoiceDelivery {
+  """
+  One or more invoices per billing period, covering the period's shipments.
+  """
+  Consolidated
+  """One invoice per order, covering every billable leg."""
+  PerOrder
+  """One invoice per shipment."""
+  PerShipment
 }
 
 enum CustomerInvoiceMethod {
@@ -7224,6 +7268,12 @@ type InvoiceConnection {
   totalCount: Int
 }
 
+"""How verbose each section of a consolidated invoice is."""
+enum InvoiceDetail {
+  Detailed
+  Summary
+}
+
 enum InvoiceDisputeStatus {
   Disputed
   None
@@ -7282,6 +7332,16 @@ enum InvoiceScope {
   Shipment
 }
 
+"""
+How the lines inside one invoice are organised. Never changes how many there are.
+"""
+enum InvoiceSectionKey {
+  Destination
+  Origin
+  PONumber
+  Shipment
+}
+
 enum InvoiceSendStatus {
   Failed
   NotSent
@@ -7294,6 +7354,20 @@ enum InvoiceSettlementStatus {
   Paid
   PartiallyPaid
   Unpaid
+}
+
+"""
+How many invoices a billing period yields. Customer means one; every other
+member means one per distinct value of that key.
+"""
+enum InvoiceSplitKey {
+  Customer
+  CustomerAndDestination
+  CustomerAndOrder
+  CustomerAndOrigin
+  CustomerAndPONumber
+  CustomerAndServiceType
+  CustomerAndShipmentBOL
 }
 
 enum InvoiceStatus {

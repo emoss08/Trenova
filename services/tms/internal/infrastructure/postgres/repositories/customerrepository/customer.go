@@ -414,50 +414,57 @@ func (r *repository) saveBillingProfile(
 	billingProfile.OrganizationID = cus.OrganizationID
 	billingProfile.BusinessUnitID = cus.BusinessUnitID
 
+	cbp := buncolgen.CustomerBillingProfileColumns
+
 	if _, err := tx.NewInsert().
 		Model(billingProfile).
 		On("CONFLICT (customer_id, organization_id, business_unit_id) DO UPDATE").
-		Set("billing_cycle_type = EXCLUDED.billing_cycle_type").
-		Set("billing_cycle_day_of_week = EXCLUDED.billing_cycle_day_of_week").
-		Set("payment_term = EXCLUDED.payment_term").
-		Set("has_billing_control_overrides = EXCLUDED.has_billing_control_overrides").
-		Set("credit_limit = EXCLUDED.credit_limit").
-		Set("credit_balance = EXCLUDED.credit_balance").
-		Set("credit_status = EXCLUDED.credit_status").
-		Set("enforce_credit_limit = EXCLUDED.enforce_credit_limit").
-		Set("auto_credit_hold = EXCLUDED.auto_credit_hold").
-		Set("credit_hold_reason = EXCLUDED.credit_hold_reason").
-		Set("invoice_method = EXCLUDED.invoice_method").
-		Set("auto_send_invoice_on_generation = EXCLUDED.auto_send_invoice_on_generation").
-		Set("allow_invoice_consolidation = EXCLUDED.allow_invoice_consolidation").
-		Set("consolidation_period_days = EXCLUDED.consolidation_period_days").
-		Set("consolidation_group_by = EXCLUDED.consolidation_group_by").
-		Set("invoice_number_format = EXCLUDED.invoice_number_format").
-		Set("customer_invoice_prefix = EXCLUDED.customer_invoice_prefix").
-		Set("invoice_copies = EXCLUDED.invoice_copies").
-		Set("revenue_account_id = EXCLUDED.revenue_account_id").
-		Set("ar_account_id = EXCLUDED.ar_account_id").
-		Set("apply_late_charges = EXCLUDED.apply_late_charges").
-		Set("late_charge_rate = EXCLUDED.late_charge_rate").
-		Set("grace_period_days = EXCLUDED.grace_period_days").
-		Set("tax_exempt = EXCLUDED.tax_exempt").
-		Set("tax_exempt_number = EXCLUDED.tax_exempt_number").
-		Set("enforce_customer_billing_req = EXCLUDED.enforce_customer_billing_req").
-		Set("validate_customer_rates = EXCLUDED.validate_customer_rates").
-		Set("auto_transfer = EXCLUDED.auto_transfer").
-		Set("auto_mark_ready_to_bill = EXCLUDED.auto_mark_ready_to_bill").
-		Set("auto_bill = EXCLUDED.auto_bill").
-		Set("auto_apply_accessorials = EXCLUDED.auto_apply_accessorials").
-		Set("billing_currency = EXCLUDED.billing_currency").
-		Set("require_po_number = EXCLUDED.require_po_number").
-		Set("require_bol_number = EXCLUDED.require_bol_number").
-		Set("require_delivery_number = EXCLUDED.require_delivery_number").
-		Set("invoice_adjustment_supporting_document_policy = EXCLUDED.invoice_adjustment_supporting_document_policy").
-		Set("billing_notes = EXCLUDED.billing_notes").
-		Set("fuel_surcharge_mode = EXCLUDED.fuel_surcharge_mode").
-		Set("fuel_surcharge_program_id = EXCLUDED.fuel_surcharge_program_id").
-		Set("version = cbp.version + 1").
-		Set("updated_at = EXCLUDED.updated_at").
+		Set(cbp.InvoiceDelivery.SetExcluded()).
+		Set(cbp.BillingCycle.SetExcluded()).
+		Set(cbp.BillingCycleAnchorDay.SetExcluded()).
+		Set(cbp.BillingCycleTimezone.SetExcluded()).
+		Set(cbp.PaymentTerm.SetExcluded()).
+		Set(cbp.HasBillingControlOverrides.SetExcluded()).
+		Set(cbp.CreditLimit.SetExcluded()).
+		Set(cbp.CreditBalance.SetExcluded()).
+		Set(cbp.CreditStatus.SetExcluded()).
+		Set(cbp.EnforceCreditLimit.SetExcluded()).
+		Set(cbp.AutoCreditHold.SetExcluded()).
+		Set(cbp.CreditHoldReason.SetExcluded()).
+		Set(cbp.AutoSendInvoiceOnGeneration.SetExcluded()).
+		Set(cbp.SplitBy.SetExcluded()).
+		Set(cbp.SectionBy.SetExcluded()).
+		Set(cbp.InvoiceDetail.SetExcluded()).
+		Set(cbp.ConsolidationLookbackDays.SetExcluded()).
+		Set(cbp.MinConsolidatedAmount.SetExcluded()).
+		Set(cbp.MinConsolidatedAmountMinor.SetExcluded()).
+		Set(cbp.MaxShipmentsPerInvoice.SetExcluded()).
+		Set(cbp.InvoiceNumberFormat.SetExcluded()).
+		Set(cbp.CustomerInvoicePrefix.SetExcluded()).
+		Set(cbp.InvoiceCopies.SetExcluded()).
+		Set(cbp.RevenueAccountID.SetExcluded()).
+		Set(cbp.ARAccountID.SetExcluded()).
+		Set(cbp.ApplyLateCharges.SetExcluded()).
+		Set(cbp.LateChargeRate.SetExcluded()).
+		Set(cbp.GracePeriodDays.SetExcluded()).
+		Set(cbp.TaxExempt.SetExcluded()).
+		Set(cbp.TaxExemptNumber.SetExcluded()).
+		Set(cbp.EnforceCustomerBillingReq.SetExcluded()).
+		Set(cbp.ValidateCustomerRates.SetExcluded()).
+		Set(cbp.AutoTransfer.SetExcluded()).
+		Set(cbp.AutoMarkReadyToBill.SetExcluded()).
+		Set(cbp.AutoBill.SetExcluded()).
+		Set(cbp.AutoApplyAccessorials.SetExcluded()).
+		Set(cbp.BillingCurrency.SetExcluded()).
+		Set(cbp.RequirePONumber.SetExcluded()).
+		Set(cbp.RequireBOLNumber.SetExcluded()).
+		Set(cbp.RequireDeliveryNumber.SetExcluded()).
+		Set(cbp.InvoiceAdjustmentSupportingDocumentPolicy.SetExcluded()).
+		Set(cbp.BillingNotes.SetExcluded()).
+		Set(cbp.FuelSurchargeMode.SetExcluded()).
+		Set(cbp.FuelSurchargeProgramID.SetExcluded()).
+		Set(cbp.Version.SetExpr("cbp.version + 1")).
+		Set(cbp.UpdatedAt.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		log.Error("failed to save billing profile", zap.Error(err))
