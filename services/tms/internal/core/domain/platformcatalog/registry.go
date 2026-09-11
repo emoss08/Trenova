@@ -16,16 +16,22 @@ type RegistryParams struct {
 }
 
 type Registry struct {
-	products map[ProductKey]Product
-	features map[FeatureKey]Feature
-	meters   map[MeterKey]Meter
+	products          map[ProductKey]Product
+	features          map[FeatureKey]Feature
+	meters            map[MeterKey]Meter
+	packs             map[PackKey]Pack
+	graphQLSources    map[GraphQLSource]FeatureKey
+	graphQLRootFields map[string]FeatureKey
 }
 
 func NewRegistry(p RegistryParams) (*Registry, error) {
 	registry := &Registry{
-		products: make(map[ProductKey]Product),
-		features: make(map[FeatureKey]Feature),
-		meters:   make(map[MeterKey]Meter),
+		products:          make(map[ProductKey]Product),
+		features:          make(map[FeatureKey]Feature),
+		meters:            make(map[MeterKey]Meter),
+		packs:             make(map[PackKey]Pack),
+		graphQLSources:    make(map[GraphQLSource]FeatureKey),
+		graphQLRootFields: make(map[string]FeatureKey),
 	}
 
 	for _, provider := range p.Providers {
@@ -137,6 +143,126 @@ func (r *Registry) GetMeter(key MeterKey) (Meter, bool) {
 	return meter, ok
 }
 
+func (r *Registry) ListPacks() []Pack {
+	packs := make([]Pack, 0, len(r.packs))
+	for key := range r.packs {
+		packs = append(packs, r.packs[key])
+	}
+	slices.SortFunc(packs, func(a, b Pack) int {
+		return strings.Compare(string(a.Key), string(b.Key))
+	})
+
+	return packs
+}
+
+func (r *Registry) GetPack(key PackKey) (Pack, bool) {
+	pack, ok := r.packs[key]
+	return pack, ok
+}
+
+func (r *Registry) PackFeatureClosure(key PackKey) ([]FeatureKey, bool) {
+	pack, ok := r.packs[key]
+	if !ok {
+		return nil, false
+	}
+
+	resolved := make(map[FeatureKey]struct{}, len(pack.Features))
+	for _, featureKey := range pack.Features {
+		r.collectRequiredFeatures(featureKey, resolved)
+	}
+
+	closure := make([]FeatureKey, 0, len(resolved))
+	for featureKey := range resolved {
+		closure = append(closure, featureKey)
+	}
+	slices.SortFunc(closure, func(a, b FeatureKey) int {
+		return strings.Compare(string(a), string(b))
+	})
+
+	return closure, true
+}
+
+func (r *Registry) collectRequiredFeatures(
+	key FeatureKey,
+	resolved map[FeatureKey]struct{},
+) {
+	if _, seen := resolved[key]; seen {
+		return
+	}
+	feature, ok := r.features[key]
+	if !ok {
+		return
+	}
+	resolved[key] = struct{}{}
+
+	for _, required := range feature.RequiresFeatures {
+		r.collectRequiredFeatures(required, resolved)
+	}
+}
+
+func (r *Registry) AuthorizingFeatures(key FeatureKey) []FeatureKey {
+	feature, ok := r.features[key]
+	if !ok {
+		return []FeatureKey{key}
+	}
+
+	authorizing := make([]FeatureKey, 0, len(feature.LegacyGrantingFeatures)+1)
+	authorizing = append(authorizing, key)
+	for _, legacy := range feature.LegacyGrantingFeatures {
+		if legacy == key {
+			continue
+		}
+		authorizing = append(authorizing, legacy)
+	}
+
+	return authorizing
+}
+
+func (r *Registry) PolicyForGraphQLRootField(
+	operation string,
+	field string,
+	source GraphQLSource,
+) RoutePolicy {
+	rootField := GraphQLRootField{Operation: operation, Field: field}
+	if featureKey, ok := r.graphQLRootFields[rootField.Key()]; ok {
+		return RoutePolicy{AccessClass: RouteAccessClassProduct, FeatureKey: featureKey}
+	}
+
+	if graphQLSourceIsShell(source) {
+		return RoutePolicy{AccessClass: RouteAccessClassAccountShell}
+	}
+
+	if featureKey, ok := r.graphQLSources[source]; ok {
+		return RoutePolicy{AccessClass: RouteAccessClassProduct, FeatureKey: featureKey}
+	}
+
+	return RoutePolicy{AccessClass: RouteAccessClassUnclassified}
+}
+
+func (r *Registry) UnclassifiedGraphQLSources(sources []GraphQLSource) []GraphQLSource {
+	unclassified := make([]GraphQLSource, 0)
+	seen := make(map[GraphQLSource]struct{}, len(sources))
+	for _, source := range sources {
+		if _, duplicate := seen[source]; duplicate {
+			continue
+		}
+		seen[source] = struct{}{}
+
+		if graphQLSourceIsShell(source) {
+			continue
+		}
+		if _, ok := r.graphQLSources[source]; ok {
+			continue
+		}
+		unclassified = append(unclassified, source)
+	}
+	slices.SortFunc(unclassified, func(a, b GraphQLSource) int {
+		return strings.Compare(string(a), string(b))
+	})
+
+	return unclassified
+}
+
 func (r *Registry) FeaturesByProduct(productKey ProductKey) []Feature {
 	features := make([]Feature, 0, len(r.features))
 	for key := range r.features {
@@ -164,7 +290,75 @@ func (r *Registry) Validate() error {
 		return err
 	}
 
+	if err := r.validatePacks(); err != nil {
+		return err
+	}
+
 	return r.validateRoutes()
+}
+
+func (r *Registry) validatePacks() error {
+	for key, pack := range r.packs {
+		if key == "" {
+			return errors.New("platform catalog pack key is required")
+		}
+		if len(pack.Features) == 0 {
+			return fmt.Errorf("platform catalog pack %q must reference at least one feature", key)
+		}
+
+		seen := make(map[FeatureKey]struct{}, len(pack.Features))
+		for _, featureKey := range pack.Features {
+			if _, ok := r.features[featureKey]; !ok {
+				return fmt.Errorf(
+					"platform catalog pack %q references missing feature %q",
+					key,
+					featureKey,
+				)
+			}
+			if _, duplicate := seen[featureKey]; duplicate {
+				return fmt.Errorf(
+					"platform catalog pack %q lists feature %q more than once",
+					key,
+					featureKey,
+				)
+			}
+			seen[featureKey] = struct{}{}
+		}
+
+		if err := r.validatePackClosure(key, pack, seen); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validatePackClosure(
+	key PackKey,
+	pack Pack,
+	included map[FeatureKey]struct{},
+) error {
+	if !pack.Standalone {
+		return nil
+	}
+
+	for _, featureKey := range pack.Features {
+		closure := make(map[FeatureKey]struct{})
+		r.collectRequiredFeatures(featureKey, closure)
+
+		for required := range closure {
+			if _, ok := included[required]; !ok {
+				return fmt.Errorf(
+					"platform catalog standalone pack %q includes feature %q which requires missing feature %q",
+					key,
+					featureKey,
+					required,
+				)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *Registry) registerProvider(provider CatalogProvider) error {
@@ -182,6 +376,10 @@ func (r *Registry) registerProvider(provider CatalogProvider) error {
 			return fmt.Errorf("platform catalog duplicate feature %q", feature.Key)
 		}
 		r.features[feature.Key] = feature
+
+		if err := r.registerGraphQLOwnership(feature); err != nil {
+			return err
+		}
 	}
 
 	for _, meter := range provider.Meters() {
@@ -189,6 +387,62 @@ func (r *Registry) registerProvider(provider CatalogProvider) error {
 			return fmt.Errorf("platform catalog duplicate meter %q", meter.Key)
 		}
 		r.meters[meter.Key] = meter
+	}
+
+	packProvider, ok := provider.(PackProvider)
+	if !ok {
+		return nil
+	}
+
+	for _, pack := range packProvider.Packs() {
+		if _, exists := r.packs[pack.Key]; exists {
+			return fmt.Errorf("platform catalog duplicate pack %q", pack.Key)
+		}
+		r.packs[pack.Key] = pack
+	}
+
+	return nil
+}
+
+func (r *Registry) registerGraphQLOwnership(feature Feature) error {
+	for _, source := range feature.GraphQLSources {
+		if graphQLSourceIsShell(source) {
+			return fmt.Errorf(
+				"platform catalog feature %q claims GraphQL shell source %q",
+				feature.Key,
+				source,
+			)
+		}
+		if owner, exists := r.graphQLSources[source]; exists {
+			return fmt.Errorf(
+				"platform catalog GraphQL source %q is assigned to both feature %q and feature %q",
+				source,
+				owner,
+				feature.Key,
+			)
+		}
+		r.graphQLSources[source] = feature.Key
+	}
+
+	for _, field := range feature.GraphQLRootFields {
+		if field.Operation != GraphQLOperationQuery &&
+			field.Operation != GraphQLOperationMutation {
+			return fmt.Errorf(
+				"platform catalog feature %q GraphQL root field %q has invalid operation %q",
+				feature.Key,
+				field.Field,
+				field.Operation,
+			)
+		}
+		if owner, exists := r.graphQLRootFields[field.Key()]; exists {
+			return fmt.Errorf(
+				"platform catalog GraphQL root field %q is assigned to both feature %q and feature %q",
+				field.Key(),
+				owner,
+				feature.Key,
+			)
+		}
+		r.graphQLRootFields[field.Key()] = feature.Key
 	}
 
 	return nil
@@ -246,6 +500,10 @@ func (r *Registry) validateFeatures() error {
 			return err
 		}
 
+		if err := r.validateLegacyGrantingFeatures(key, feature.LegacyGrantingFeatures); err != nil {
+			return err
+		}
+
 		if err := r.validateFeatureMeters(key, feature.Meters); err != nil {
 			return err
 		}
@@ -267,6 +525,29 @@ func (r *Registry) validateRequiredFeatures(
 				"platform catalog feature %q requires missing feature %q",
 				featureKey,
 				requiredKey,
+			)
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validateLegacyGrantingFeatures(
+	featureKey FeatureKey,
+	legacyKeys []FeatureKey,
+) error {
+	for _, legacyKey := range legacyKeys {
+		if legacyKey == featureKey {
+			return fmt.Errorf(
+				"platform catalog feature %q cannot be legacy granted by itself",
+				featureKey,
+			)
+		}
+		if _, ok := r.features[legacyKey]; !ok {
+			return fmt.Errorf(
+				"platform catalog feature %q is legacy granted by missing feature %q",
+				featureKey,
+				legacyKey,
 			)
 		}
 	}

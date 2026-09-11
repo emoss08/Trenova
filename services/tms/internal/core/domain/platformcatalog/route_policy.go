@@ -10,6 +10,16 @@ var accountShellRoutes = mergeRouteRefs(
 	realtimeShellRoutes,
 	platformCatalogShellRoutes,
 	usStateShellRoutes,
+	graphQLTransportShellRoutes,
+)
+
+var graphQLTransportShellRoutes = mergeRouteRefs(
+	routeRefsFor("GET",
+		"/graphql",
+	),
+	routeRefsFor("POST",
+		"/graphql",
+	),
 )
 
 var currentUserShellRoutes = mergeRouteRefs(

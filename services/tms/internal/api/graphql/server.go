@@ -25,6 +25,7 @@ type ServerParams struct {
 	Resolver      *resolver.Resolver
 	Observability *ObservabilityExtension
 	CostBudget    *CostBudgetExtension
+	FeatureAccess *FeatureAccessExtension
 }
 
 func NewServer(p ServerParams) *gqlhandler.Server {
@@ -39,6 +40,7 @@ func NewServer(p ServerParams) *gqlhandler.Server {
 	srv.Use(operationDepthLimit{max: querycost.MaxOperationDepth})
 	srv.Use(extension.FixedComplexityLimit(querycost.MaxOperationCost))
 	srv.Use(p.CostBudget)
+	srv.Use(p.FeatureAccess)
 	srv.Use(p.Observability)
 
 	if devToolingEnabled(p.Config) {
