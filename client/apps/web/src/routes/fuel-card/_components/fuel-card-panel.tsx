@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -69,6 +70,8 @@ function FuelCardCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<FuelCardFormValues>({
     resolver: zodResolver(fuelCardFormSchema) as Resolver<FuelCardFormValues>,
     defaultValues: buildFuelCardDefaults(null),
@@ -78,8 +81,8 @@ function FuelCardCreatePanel({
     <FormCreatePanel<FuelCardFormValues, FuelCardRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Fuel Card"
-      description="Register a card so imported statements and hand-keyed purchases can be tied to the driver and unit that fuelled with it."
+      title={t("Fuel Card")}
+      description={t("Register a card so imported statements and hand-keyed purchases can be tied to the driver and unit that fuelled with it.")}
       queryKey={FUEL_CARD_LIST_KEY}
       form={form}
       size="md"
@@ -101,6 +104,8 @@ function FuelCardEditPanel({
   onOpenChange: (open: boolean) => void;
   row: FuelCardRow;
 }) {
+  const t = useT();
+
   const formRow = { ...row, ...buildFuelCardDefaults(row) } as unknown as FuelCardRow &
     Record<string, unknown>;
   const form = useForm<FuelCardFormValues>({
@@ -113,7 +118,7 @@ function FuelCardEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Fuel Card"
+      title={t("Fuel Card")}
       fieldKey="label"
       queryKey={FUEL_CARD_LIST_KEY}
       form={form}
