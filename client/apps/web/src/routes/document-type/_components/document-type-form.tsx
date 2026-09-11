@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -8,6 +9,8 @@ import type { DocumentType } from "@trenova/shared/types/document-type";
 import { useFormContext } from "react-hook-form";
 
 export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<DocumentType>();
 
   return (
@@ -17,9 +20,9 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="code"
-          label="Code"
-          placeholder="Code"
-          description="A unique code for this document type"
+          label={t("Code")}
+          placeholder={t("Code")}
+          description={t("A unique code for this document type")}
           maxLength={10}
           disabled={disabled}
         />
@@ -29,9 +32,9 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Name"
-          placeholder="Name"
-          description="The name of the document type"
+          label={t("Name")}
+          placeholder={t("Name")}
+          description={t("The name of the document type")}
           maxLength={100}
           disabled={disabled}
         />
@@ -41,9 +44,9 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="documentClassification"
-          label="Classification"
-          placeholder="Classification"
-          description="The classification level of documents"
+          label={t("Classification")}
+          placeholder={t("Classification")}
+          description={t("The classification level of documents")}
           options={documentClassificationChoices}
           isReadOnly={disabled}
         />
@@ -53,9 +56,9 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="documentCategory"
-          label="Category"
-          placeholder="Category"
-          description="The category of documents"
+          label={t("Category")}
+          placeholder={t("Category")}
+          description={t("The category of documents")}
           options={documentCategoryChoices}
           isReadOnly={disabled}
         />
@@ -64,8 +67,8 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
         <ColorField
           control={control}
           name="color"
-          label="Color"
-          description="The color associated with this document type"
+          label={t("Color")}
+          description={t("The color associated with this document type")}
           disabled={disabled}
         />
       </FormControl>
@@ -73,9 +76,9 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
         <TextareaField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Description"
-          description="A description of the document type"
+          label={t("Description")}
+          placeholder={t("Description")}
+          description={t("A description of the document type")}
           disabled={disabled}
         />
       </FormControl>
