@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -12,6 +13,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 function StatusCell({ row }: { row: TractorRow }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -25,9 +28,9 @@ function StatusCell({ row }: { row: TractorRow }) {
         queryKey: ["tractor-list"],
       });
 
-      toast.success("Tractor status updated successfully");
+      toast.success(t("Tractor status updated successfully"));
     },
-    [row.id, queryClient],
+    [row.id, queryClient, t],
   );
 
   return (

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { VehicleInspection } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
@@ -69,12 +70,14 @@ function InspectionsEmptyState({
 }
 
 function InspectionsErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
       <OctagonAlertIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{message}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
@@ -114,6 +117,8 @@ function DefectRow({ defect }: { defect: InspectionDefect }) {
 }
 
 function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
+  const t = useT();
+
   const safetyMeta = getSafetyStatusMeta(inspection.safetyStatus);
   const hasUnresolved = inspection.unresolvedDefectCount > 0;
   const hasDefects = inspection.defectCount > 0;
@@ -139,7 +144,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
           {inspection.signed ? (
             <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
               <CheckIcon className="size-3" />
-              Signed
+              {t("Signed")}
             </span>
           ) : null}
         </div>
@@ -163,7 +168,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
             {hasUnresolved ? ` · ${inspection.unresolvedDefectCount} unresolved` : ""}
           </span>
         ) : (
-          <span className="text-muted-foreground text-xs">No defects</span>
+          <span className="text-muted-foreground text-xs">{t("No defects")}</span>
         )}
       </div>
     </>
@@ -208,6 +213,8 @@ function InspectionRow({ inspection }: { inspection: VehicleInspection }) {
 }
 
 export default function TractorInspectionsTab({ tractorId }: { tractorId?: string }) {
+  const t = useT();
+
   const statusQuery = useQuery({
     ...queries.telematics.status(),
     staleTime: 5 * 60 * 1000,
@@ -228,7 +235,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   if (statusQuery.isError) {
     return (
       <InspectionsErrorState
-        message="Telematics status could not be loaded"
+        message={t("Telematics status could not be loaded")}
         onRetry={() => void statusQuery.refetch()}
       />
     );
@@ -238,8 +245,8 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
     return (
       <InspectionsEmptyState
         icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
-        title="Telematics not connected"
-        description="Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor."
+        title={t("Telematics not connected")}
+        description={t("Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor.")}
         action={
           <Button
             variant="outline"
@@ -247,7 +254,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
             className="mt-3"
             render={<Link to="/admin/integrations?type=Samsara" />}
           >
-            Open Integrations
+            {t("Open Integrations")}
           </Button>
         }
       />
@@ -261,7 +268,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   if (inspectionsQuery.isError) {
     return (
       <InspectionsErrorState
-        message="Inspections could not be loaded"
+        message={t("Inspections could not be loaded")}
         onRetry={() => void inspectionsQuery.refetch()}
       />
     );
@@ -271,8 +278,8 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
     return (
       <InspectionsEmptyState
         icon={<ClipboardCheckIcon className="text-muted-foreground mx-auto size-6" />}
-        title="No inspections reported for this tractor."
-        description="Driver vehicle inspection reports appear here once Samsara reports pre-trip and post-trip inspections."
+        title={t("No inspections reported for this tractor.")}
+        description={t("Driver vehicle inspection reports appear here once Samsara reports pre-trip and post-trip inspections.")}
       />
     );
   }
@@ -280,9 +287,9 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h3 className="text-sm font-semibold">Inspections</h3>
+        <h3 className="text-sm font-semibold">{t("Inspections")}</h3>
         <p className="text-muted-foreground text-xs">
-          Driver vehicle inspection reports (DVIR) and defect history for this tractor.
+          {t("Driver vehicle inspection reports (DVIR) and defect history for this tractor.")}
         </p>
       </div>
       <div className="border-border overflow-hidden rounded-lg border">

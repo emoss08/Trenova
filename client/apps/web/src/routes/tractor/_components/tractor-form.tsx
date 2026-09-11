@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   EquipmentManufacturerAutocompleteField,
   EquipmentTypeAutocompleteField,
@@ -20,6 +21,8 @@ import { statusSchema } from "@trenova/shared/types/helpers";
 import { type Control, useFormContext } from "react-hook-form";
 
 function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
+  const t = useT();
+
   return (
     <FormGroup cols={2} className="pb-2">
       <FormControl>
@@ -28,9 +31,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
           options={equipmentStatusChoices}
           rules={{ required: true }}
           name="status"
-          label="Status"
-          placeholder="Status"
-          description="Indicates the current operational status of the tractor."
+          label={t("Status")}
+          placeholder={t("Status")}
+          description={t("Indicates the current operational status of the tractor.")}
         />
       </FormControl>
       <FormControl>
@@ -38,9 +41,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
           control={control}
           rules={{ required: true }}
           name="code"
-          label="Code"
-          placeholder="Code"
-          description="A unique code identifying the tractor."
+          label={t("Code")}
+          placeholder={t("Code")}
+          description={t("A unique code identifying the tractor.")}
           maxLength={50}
         />
       </FormControl>
@@ -48,10 +51,10 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <EquipmentTypeAutocompleteField<Tractor>
           name="equipmentTypeId"
           control={control}
-          label="Equipment Type"
+          label={t("Equipment Type")}
           rules={{ required: true }}
-          placeholder="Equipment Type"
-          description="The type of equipment the tractor is categorized under."
+          placeholder={t("Equipment Type")}
+          description={t("The type of equipment the tractor is categorized under.")}
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Tractor],
           }}
@@ -61,10 +64,10 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <EquipmentManufacturerAutocompleteField<Tractor>
           name="equipmentManufacturerId"
           control={control}
-          label="Equip. Manufacturer"
+          label={t("Equip. Manufacturer")}
           rules={{ required: true }}
-          placeholder="Equip. Manufacturer"
-          description="The manufacturer of the tractor's equipment."
+          placeholder={t("Equip. Manufacturer")}
+          description={t("The manufacturer of the tractor's equipment.")}
           extraSearchParams={{
             status: statusSchema.enum.Active,
           }}
@@ -74,9 +77,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <InputField
           control={control}
           name="model"
-          label="Model"
-          placeholder="Model"
-          description="The specific model of the tractor."
+          label={t("Model")}
+          placeholder={t("Model")}
+          description={t("The specific model of the tractor.")}
           maxLength={50}
         />
       </FormControl>
@@ -84,9 +87,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <InputField
           control={control}
           name="make"
-          label="Make"
-          placeholder="Make"
-          description="The manufacturer of the tractor."
+          label={t("Make")}
+          placeholder={t("Make")}
+          description={t("The manufacturer of the tractor.")}
           maxLength={50}
         />
       </FormControl>
@@ -94,9 +97,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <NumberField
           control={control}
           name="year"
-          label="Year"
-          placeholder="Year"
-          description="The production year of the tractor."
+          label={t("Year")}
+          placeholder={t("Year")}
+          description={t("The production year of the tractor.")}
         />
       </FormControl>
       <FormControl>
@@ -104,9 +107,9 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
           name="fleetCodeId"
           control={control}
           clearable
-          label="Fleet Code"
-          placeholder="Fleet Code"
-          description="The fleet code associated with the tractor."
+          label={t("Fleet Code")}
+          placeholder={t("Fleet Code")}
+          description={t("The fleet code associated with the tractor.")}
         />
       </FormControl>
     </FormGroup>
@@ -114,16 +117,18 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
 }
 
 function RegistrationInformationSection({ control }: { control: Control<Tractor> }) {
+  const t = useT();
+
   return (
-    <FormSection title="Registration Information" className="border-t py-2">
+    <FormSection title={t("Registration Information")} className="border-t py-2">
       <FormGroup cols={2}>
         <FormControl>
           <InputField
             control={control}
             name="vin"
-            label="VIN"
-            placeholder="VIN"
-            description="The Vehicle Identification Number (VIN) of the tractor."
+            label={t("VIN")}
+            placeholder={t("VIN")}
+            description={t("The Vehicle Identification Number (VIN) of the tractor.")}
             maxLength={17}
           />
         </FormControl>
@@ -131,9 +136,9 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
           <InputField
             control={control}
             name="registrationNumber"
-            label="Registration Number"
-            placeholder="Registration Number"
-            description="The unique registration number assigned to the tractor."
+            label={t("Registration Number")}
+            placeholder={t("Registration Number")}
+            description={t("The unique registration number assigned to the tractor.")}
             maxLength={50}
           />
         </FormControl>
@@ -141,27 +146,27 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
           <UsStateAutocompleteField
             control={control}
             name="stateId"
-            label="License State"
-            placeholder="License State"
-            description="The U.S. state where the tractor is licensed."
+            label={t("License State")}
+            placeholder={t("License State")}
+            description={t("The U.S. state where the tractor is licensed.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="registrationExpiry"
-            label="Registration Expiry"
-            description="The expiration date of the tractor's registration."
-            placeholder="Registration Expiry"
+            label={t("Registration Expiry")}
+            description={t("The expiration date of the tractor's registration.")}
+            placeholder={t("Registration Expiry")}
           />
         </FormControl>
         <FormControl cols="full">
           <InputField
             control={control}
             name="licensePlateNumber"
-            label="License Plate Number"
-            placeholder="License Plate Number"
-            description="The license plate number associated with the tractor."
+            label={t("License Plate Number")}
+            placeholder={t("License Plate Number")}
+            description={t("The license plate number associated with the tractor.")}
             maxLength={50}
           />
         </FormControl>
@@ -171,16 +176,18 @@ function RegistrationInformationSection({ control }: { control: Control<Tractor>
 }
 
 function TelematicsSection({ control }: { control: Control<Tractor> }) {
+  const t = useT();
+
   return (
-    <FormSection title="Telematics" className="border-t py-2">
+    <FormSection title={t("Telematics")} className="border-t py-2">
       <FormGroup cols={1}>
         <FormControl cols="full">
           <InputField
             control={control}
             name="externalId"
-            label="Samsara Vehicle ID"
-            placeholder="Samsara Vehicle ID"
-            description="Links this tractor to its Samsara vehicle for live telematics. Leave blank to auto-match by VIN."
+            label={t("Samsara Vehicle ID")}
+            placeholder={t("Samsara Vehicle ID")}
+            description={t("Links this tractor to its Samsara vehicle for live telematics. Leave blank to auto-match by VIN.")}
             maxLength={100}
           />
         </FormControl>
@@ -190,26 +197,28 @@ function TelematicsSection({ control }: { control: Control<Tractor> }) {
 }
 
 function FuelTaxSection({ control }: { control: Control<Tractor> }) {
+  const t = useT();
+
   return (
-    <FormSection title="Fuel & IFTA" className="border-t py-2">
+    <FormSection title={t("Fuel & IFTA")} className="border-t py-2">
       <FormGroup cols={1}>
         <FormControl>
           <IftaFuelTypeAutocompleteField<Tractor>
             control={control}
             name="fuelType"
-            label="Fuel Type"
+            label={t("Fuel Type")}
             rules={{ required: true }}
-            placeholder="Select a fuel type"
-            description="The fuel this unit burns. Its miles land on this fuel type's lines of the quarterly IFTA return."
+            placeholder={t("Select a fuel type")}
+            description={t("The fuel this unit burns. Its miles land on this fuel type's lines of the quarterly IFTA return.")}
           />
         </FormControl>
         <FormControl>
           <SwitchField
             control={control}
             name="iftaQualified"
-            label="IFTA qualified"
-            description="Count this unit's miles and fuel on the quarterly return."
-            tooltip="Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction."
+            label={t("IFTA qualified")}
+            description={t("Count this unit's miles and fuel on the quarterly return.")}
+            tooltip={t("Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.")}
             position="left"
             outlined
           />
@@ -220,17 +229,19 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
 }
 
 function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
+  const t = useT();
+
   return (
-    <FormSection title="Worker Assignment" className="border-t py-2">
+    <FormSection title={t("Worker Assignment")} className="border-t py-2">
       <FormGroup cols={2}>
         <FormControl>
           <WorkerAutocompleteField<Tractor>
             name="primaryWorkerId"
             control={control}
-            label="Primary Worker"
+            label={t("Primary Worker")}
             rules={{ required: true }}
-            placeholder="Select Primary Worker"
-            description="The primary worker assigned to this tractor."
+            placeholder={t("Select Primary Worker")}
+            description={t("The primary worker assigned to this tractor.")}
           />
         </FormControl>
         <FormControl>
@@ -238,9 +249,9 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
             name="secondaryWorkerId"
             control={control}
             clearable
-            label="Secondary Worker"
-            placeholder="Select Secondary Worker"
-            description="An optional secondary worker assigned to this tractor."
+            label={t("Secondary Worker")}
+            placeholder={t("Select Secondary Worker")}
+            description={t("An optional secondary worker assigned to this tractor.")}
           />
         </FormControl>
       </FormGroup>
