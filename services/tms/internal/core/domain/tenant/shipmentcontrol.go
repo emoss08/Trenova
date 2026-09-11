@@ -34,9 +34,9 @@ type ShipmentControl struct {
 	UseDetentionPolicyEngine     bool      `json:"useDetentionPolicyEngine"     bun:"use_detention_policy_engine,type:BOOLEAN,notnull"`
 	DefaultDetentionPolicyID     *pulid.ID `json:"defaultDetentionPolicyId"     bun:"default_detention_policy_id,type:VARCHAR(100),nullzero"`
 	TrackCustomerRejections      bool      `json:"trackCustomerRejections"      bun:"track_customer_rejections,type:BOOLEAN,notnull"`
-	CheckForDuplicateBOLs        bool      `json:"checkForDuplicateBols"        bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
+	CheckForDuplicateBOLs        bool      `json:"checkForDuplicateBols"        bun:"check_for_duplicate_bols,type:BOOLEAN,notnull"`
 	AllowMoveRemovals            bool      `json:"allowMoveRemovals"            bun:"allow_move_removals,type:BOOLEAN,notnull,default:true"`
-	CheckHazmatSegregation       bool      `json:"checkHazmatSegregation"       bun:"check_hazmat_segregation,type:BOOLEAN,notnull,default:true"`
+	CheckHazmatSegregation       bool      `json:"checkHazmatSegregation"       bun:"check_hazmat_segregation,type:BOOLEAN,notnull"`
 	Version                      int64     `json:"version"                      bun:"version,type:BIGINT"`
 	CreatedAt                    int64     `json:"createdAt"                    bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                    int64     `json:"updatedAt"                    bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

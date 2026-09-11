@@ -449,11 +449,14 @@ func (s *AdminAccountSeed) createOrganizationControls(
 	params organizationControlSeedParams,
 ) error {
 	accountingControl := &tenant.AccountingControl{
-		ID:             pulid.MustNew("ac_"),
-		OrganizationID: params.org.ID,
-		BusinessUnitID: params.org.BusinessUnitID,
-		CreatedAt:      params.now,
-		UpdatedAt:      params.now,
+		ID:                              pulid.MustNew("ac_"),
+		OrganizationID:                  params.org.ID,
+		BusinessUnitID:                  params.org.BusinessUnitID,
+		RequireManualJEApproval:         true,
+		RequirePeriodCloseApproval:      true,
+		NotifyOnReconciliationException: true,
+		CreatedAt:                       params.now,
+		UpdatedAt:                       params.now,
 	}
 	if _, err := params.tx.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
 		return fmt.Errorf("create accounting control: %w", err)
@@ -467,6 +470,10 @@ func (s *AdminAccountSeed) createOrganizationControls(
 		OrganizationID:               params.org.ID,
 		BusinessUnitID:               params.org.BusinessUnitID,
 		BillingQueueTransferSchedule: tenant.TransferScheduleContinuous,
+		ShowDueDateOnInvoice:         true,
+		ShowBalanceDueOnInvoice:      true,
+		NotifyOnBillingExceptions:    true,
+		RequireRateOverrideReason:    true,
 		CreatedAt:                    params.now,
 		UpdatedAt:                    params.now,
 	}
@@ -513,11 +520,13 @@ func (s *AdminAccountSeed) createOrganizationControls(
 	}
 
 	shipmentControl := &tenant.ShipmentControl{
-		ID:             pulid.MustNew("sc_"),
-		OrganizationID: params.org.ID,
-		BusinessUnitID: params.org.BusinessUnitID,
-		CreatedAt:      params.now,
-		UpdatedAt:      params.now,
+		ID:                     pulid.MustNew("sc_"),
+		OrganizationID:         params.org.ID,
+		BusinessUnitID:         params.org.BusinessUnitID,
+		CheckForDuplicateBOLs:  true,
+		CheckHazmatSegregation: true,
+		CreatedAt:              params.now,
+		UpdatedAt:              params.now,
 	}
 	if _, err := params.tx.NewInsert().Model(shipmentControl).Exec(ctx); err != nil {
 		return fmt.Errorf("create shipment control: %w", err)

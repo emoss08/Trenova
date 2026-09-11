@@ -27,8 +27,8 @@ type BillingControl struct {
 	DefaultPaymentTerm                    PaymentTerm                    `json:"defaultPaymentTerm"                    bun:"default_payment_term,type:payment_term_enum,notnull,default:'Net30'"`
 	DefaultInvoiceTerms                   string                         `json:"defaultInvoiceTerms"                   bun:"default_invoice_terms,type:TEXT,nullzero"`
 	DefaultInvoiceFooter                  string                         `json:"defaultInvoiceFooter"                  bun:"default_invoice_footer,type:TEXT,nullzero"`
-	ShowDueDateOnInvoice                  bool                           `json:"showDueDateOnInvoice"                  bun:"show_due_date_on_invoice,type:BOOLEAN,notnull,default:true"`
-	ShowBalanceDueOnInvoice               bool                           `json:"showBalanceDueOnInvoice"               bun:"show_balance_due_on_invoice,type:BOOLEAN,notnull,default:true"`
+	ShowDueDateOnInvoice                  bool                           `json:"showDueDateOnInvoice"                  bun:"show_due_date_on_invoice,type:BOOLEAN,notnull"`
+	ShowBalanceDueOnInvoice               bool                           `json:"showBalanceDueOnInvoice"               bun:"show_balance_due_on_invoice,type:BOOLEAN,notnull"`
 	ReadyToBillAssignmentMode             ReadyToBillAssignmentMode      `json:"readyToBillAssignmentMode"             bun:"ready_to_bill_assignment_mode,type:ready_to_bill_assignment_mode_enum,notnull,default:'ManualOnly'"`
 	BillingQueueTransferMode              BillingQueueTransferMode       `json:"billingQueueTransferMode"              bun:"billing_queue_transfer_mode,type:billing_queue_transfer_mode_enum,notnull,default:'ManualOnly'"`
 	BillingQueueTransferSchedule          TransferSchedule               `json:"billingQueueTransferSchedule"          bun:"billing_queue_transfer_schedule,type:transfer_schedule_enum,default:'Continuous'"`
@@ -40,7 +40,7 @@ type BillingControl struct {
 	ShipmentBillingRequirementEnforcement EnforcementLevel               `json:"shipmentBillingRequirementEnforcement" bun:"shipment_billing_requirement_enforcement,type:enforcement_level_enum,notnull,default:'Block'"`
 	RateValidationEnforcement             EnforcementLevel               `json:"rateValidationEnforcement"             bun:"rate_validation_enforcement,type:enforcement_level_enum,notnull,default:'RequireReview'"`
 	BillingExceptionDisposition           BillingExceptionDisposition    `json:"billingExceptionDisposition"           bun:"billing_exception_disposition,type:billing_exception_disposition_enum,notnull,default:'RouteToBillingReview'"`
-	NotifyOnBillingExceptions             bool                           `json:"notifyOnBillingExceptions"             bun:"notify_on_billing_exceptions,type:BOOLEAN,notnull,default:true"`
+	NotifyOnBillingExceptions             bool                           `json:"notifyOnBillingExceptions"             bun:"notify_on_billing_exceptions,type:BOOLEAN,notnull"`
 	RateVarianceTolerancePercent          decimal.Decimal                `json:"rateVarianceTolerancePercent"          bun:"rate_variance_tolerance_percent,type:NUMERIC(9,6),notnull,default:0.000000"`
 	RateVarianceAutoResolutionMode        RateVarianceAutoResolutionMode `json:"rateVarianceAutoResolutionMode"        bun:"rate_variance_auto_resolution_mode,type:rate_variance_auto_resolution_mode_enum,notnull,default:'Disabled'"`
 
@@ -51,7 +51,7 @@ type BillingControl struct {
 	// yet sees no change at all.
 	UnratedShipmentDisposition UnratedShipmentDisposition `json:"unratedShipmentDisposition" bun:"unrated_shipment_disposition,type:unrated_shipment_disposition_enum,notnull,default:'FallbackFormulaTemplate'"`
 	FallbackFormulaTemplateID  *pulid.ID                  `json:"fallbackFormulaTemplateId"  bun:"fallback_formula_template_id,type:VARCHAR(100),nullzero"`
-	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason"  bun:"require_rate_override_reason,type:BOOLEAN,notnull,default:true"`
+	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason"  bun:"require_rate_override_reason,type:BOOLEAN,notnull"`
 	EnforceMarginFloor         bool                       `json:"enforceMarginFloor"         bun:"enforce_margin_floor,type:BOOLEAN,notnull,default:false"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`

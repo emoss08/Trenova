@@ -23,7 +23,7 @@ type AgentControl struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 
-	ShadowMode          bool `json:"shadowMode"          bun:"shadow_mode,type:BOOLEAN,notnull,default:true"`
+	ShadowMode          bool `json:"shadowMode"          bun:"shadow_mode,type:BOOLEAN,notnull"`
 	BillingAgentEnabled bool `json:"billingAgentEnabled" bun:"billing_agent_enabled,type:BOOLEAN,notnull"`
 	// DispatchAgentEnabled gates the auto-assign agent separately from the billing agent,
 	// so enabling one never enables the other.
