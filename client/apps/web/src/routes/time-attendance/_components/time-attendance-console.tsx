@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -20,6 +21,8 @@ import { TimesheetQueue } from "./timesheet-queue";
 const CLOCK_TICK_MS = 30_000;
 
 export default function TimeAttendanceConsole() {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.Timesheet, Operation.Read);
   const { allowed: canExport } = usePermission(Resource.Timesheet, Operation.Export);
   const [teamOnly, setTeamOnly] = useState(false);
@@ -58,7 +61,7 @@ export default function TimeAttendanceConsole() {
         <TabsList variant="underline">
           <TabsTrigger value="clock">
             <TimerIcon className="size-3.5" />
-            Clock
+            {t("Clock")}
             {onClockCount > 0 ? (
               <Badge variant="secondary" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                 {onClockCount}
@@ -67,7 +70,7 @@ export default function TimeAttendanceConsole() {
           </TabsTrigger>
           <TabsTrigger value="timesheets">
             <ClipboardCheckIcon className="size-3.5" />
-            Timesheets
+            {t("Timesheets")}
             {awaitingCount > 0 ? (
               <Badge variant="warning" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                 {awaitingCount}
@@ -77,7 +80,7 @@ export default function TimeAttendanceConsole() {
           {canExport ? (
             <TabsTrigger value="payroll">
               <BanknoteIcon className="size-3.5" />
-              Payroll
+              {t("Payroll")}
             </TabsTrigger>
           ) : null}
         </TabsList>

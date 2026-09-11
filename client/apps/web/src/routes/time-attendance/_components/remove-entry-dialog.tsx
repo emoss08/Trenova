@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { deleteTimeEntry } from "@/lib/graphql/timesheet";
@@ -42,6 +43,8 @@ export type RemoveEntryDialogProps = {
  * deserves an answer.
  */
 export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntryDialogProps) {
+  const t = useT();
+
   const form = useForm<RemoveTimeEntryFormValues>({
     resolver: zodResolver(removeTimeEntryFormSchema) as Resolver<RemoveTimeEntryFormValues>,
     defaultValues: { reason: "" },
@@ -62,7 +65,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
     resourceName: "Entry",
     mutationFn: (values) => deleteTimeEntry({ id: entry?.id ?? "", reason: values.reason }),
     onSuccess: () => {
-      toast.success("Entry removed");
+      toast.success(t("Entry removed"));
       onRemoved();
       onOpenChange(false);
     },
@@ -81,7 +84,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
     <Dialog open={entry !== null} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Remove this entry</DialogTitle>
+          <DialogTitle>{t("Remove this entry")}</DialogTitle>
           <DialogDescription>
             {entry
               ? `${formatHours(entry.paidMinutes)} from ${when} comes off the week. The reason is kept.`
@@ -90,8 +93,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
         </DialogHeader>
         <Alert variant="warning">
           <AlertDescription>
-            The entry is deleted outright and cannot be restored; the week&apos;s totals are worked
-            out again from the punches that are left.
+            {t("The entry is deleted outright and cannot be restored; the week's totals are worked out again from the punches that are left.")}
           </AlertDescription>
         </Alert>
         <FormProvider {...form}>
@@ -107,19 +109,19 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
                 <InputField<RemoveTimeEntryFormValues>
                   control={control}
                   name="reason"
-                  label="Why"
-                  placeholder="e.g. Duplicate punch"
-                  description="Kept in the audit trail so the missing hours can be explained later."
+                  label={t("Why")}
+                  placeholder={t("e.g. Duplicate punch")}
+                  description={t("Kept in the audit trail so the missing hours can be explained later.")}
                   rules={{ required: true }}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Keep it
+                {t("Keep it")}
               </Button>
               <Button type="submit" variant="destructive" isLoading={isPending}>
-                Remove
+                {t("Remove")}
               </Button>
             </DialogFooter>
           </Form>

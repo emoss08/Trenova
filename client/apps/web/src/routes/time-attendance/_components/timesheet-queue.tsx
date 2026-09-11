@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -113,6 +114,8 @@ function sheetWorkerName(sheet: {
  * approving it is approving those numbers, not whatever the punches say now.
  */
 export function TimesheetQueue({ now }: { now: number }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canApprove } = usePermission(Resource.Timesheet, Operation.Approve);
   const { allowed: canSubmit } = usePermission(Resource.Timesheet, Operation.Submit);
@@ -171,7 +174,7 @@ export function TimesheetQueue({ now }: { now: number }) {
           items={segmentItems}
           value={segment}
           onValueChange={setSegment}
-          aria-label="Timesheet status"
+          aria-label={t("Timesheet status")}
         />
         <div className="flex flex-wrap items-end gap-2">
           <FormProvider {...filterForm}>
@@ -181,8 +184,8 @@ export function TimesheetQueue({ now }: { now: number }) {
                   <WorkerAutocompleteField<FilterValues>
                     control={filterForm.control}
                     name="workerId"
-                    placeholder="Any worker"
-                    description="Shows only this person's weeks; clear it to see everyone."
+                    placeholder={t("Any worker")}
+                    description={t("Shows only this person's weeks; clear it to see everyone.")}
                     clearable
                   />
                 </FormControl>
@@ -196,7 +199,7 @@ export function TimesheetQueue({ now }: { now: number }) {
             aria-pressed={teamOnly}
           >
             <UsersIcon className="size-3.5" />
-            My team
+            {t("My team")}
           </Button>
         </div>
       </div>
@@ -308,6 +311,8 @@ function QueueRow({
   onOpen: () => void;
   onDecide: (status: "Submitted" | "Approved" | "Rejected") => void;
 }) {
+  const t = useT();
+
   const tone = timesheetStatusTone(sheet.status);
   const actions = timesheetActionsFor(sheet.status, { isOwner: false, canApprove });
   const name = sheetWorkerName(sheet);
@@ -339,7 +344,7 @@ function QueueRow({
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">{name}</span>
             <span className="text-muted-foreground tabular-nums">
-              Week of {formatShiftDate(sheet.periodStart)}
+              {t("Week of {0}", formatShiftDate(sheet.periodStart))}
             </span>
             <Badge variant={tone.variant}>{tone.label}</Badge>
           </span>
@@ -371,7 +376,7 @@ function QueueRow({
           </span>
           {sheet.overtimeMinutes > 0 ? (
             <span className="text-muted-foreground block tabular-nums">
-              {formatHours(sheet.overtimeMinutes)} overtime
+              {t("{0} overtime", formatHours(sheet.overtimeMinutes))}
             </span>
           ) : null}
         </span>
@@ -387,13 +392,13 @@ function QueueRow({
               onClick={() => onDecide("Rejected")}
             >
               <UndoIcon className="size-3.5" />
-              Send back
+              {t("Send back")}
             </Button>
           ) : null}
           {actions.includes("approve") ? (
             <Button size="sm" disabled={busy} onClick={() => onDecide("Approved")}>
               <CheckIcon className="size-3.5" />
-              Approve
+              {t("Approve")}
             </Button>
           ) : null}
           {actions.includes("submit") && canSubmit ? (
@@ -404,7 +409,7 @@ function QueueRow({
               onClick={() => onDecide("Submitted")}
             >
               <SendIcon className="size-3.5" />
-              Hand over
+              {t("Hand over")}
             </Button>
           ) : null}
         </div>
@@ -420,6 +425,8 @@ function TimesheetSheet({
   id: string | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const detail = useQuery({
     queryKey: [TIMESHEET_KEY, id],
     queryFn: ({ signal }) => fetchTimesheet(id as string, { signal }),
@@ -459,11 +466,11 @@ function TimesheetSheet({
                   {formatHours(sheet.totalMinutes)}
                 </span>
                 <span className="text-muted-foreground text-xs tabular-nums">
-                  {sheet.entryCount} punch{sheet.entryCount === 1 ? "" : "es"}
+                  {t("{0} punch{1}", sheet.entryCount, sheet.entryCount === 1 ? "" : "es")}
                 </span>
               </div>
               <CompositionBar
-                aria-label="Hours by kind"
+                aria-label={t("Hours by kind")}
                 formatValue={formatHours}
                 segments={hourSegments(sheet)}
               />
@@ -477,10 +484,10 @@ function TimesheetSheet({
               </p>
             ) : null}
 
-            <section aria-label="Punches" className="flex flex-col gap-1.5">
-              <h4 className="text-muted-foreground text-xs font-medium">Punches</h4>
+            <section aria-label={t("Punches")} className="flex flex-col gap-1.5">
+              <h4 className="text-muted-foreground text-xs font-medium">{t("Punches")}</h4>
               {(sheet.entries?.length ?? 0) === 0 ? (
-                <p className="text-muted-foreground text-xs">No punches on this week.</p>
+                <p className="text-muted-foreground text-xs">{t("No punches on this week.")}</p>
               ) : (
                 <ol className="flex flex-col">
                   {(sheet.entries ?? []).map((entry) => (
@@ -513,8 +520,7 @@ function TimesheetSheet({
                         {formatHours(entry.paidMinutes)}
                         {entry.breakMinutes > 0 ? (
                           <span className="text-muted-foreground">
-                            {" "}
-                            · {entry.breakMinutes}m break
+                            {t("· {0}m break", entry.breakMinutes)}
                           </span>
                         ) : null}
                       </span>
@@ -536,6 +542,8 @@ function TimesheetSheet({
  * so an uneven week shows its shape before its numbers are read.
  */
 function TimeCard({ sheet }: { sheet: TimesheetDetail }) {
+  const t = useT();
+
   const days = useMemo(
     () => weekCardDays(sheet.entries ?? [], sheet.periodStart, sheet.periodEnd),
     [sheet.entries, sheet.periodStart, sheet.periodEnd],
@@ -544,7 +552,7 @@ function TimeCard({ sheet }: { sheet: TimesheetDetail }) {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div role="group" aria-label="Time card" className="grid grid-cols-7 gap-1">
+    <div role="group" aria-label={t("Time card")} className="grid grid-cols-7 gap-1">
       {days.map((day, index) => {
         const label = formatCardDay(day.startsAt);
         return (

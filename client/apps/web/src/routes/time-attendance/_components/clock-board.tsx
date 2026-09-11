@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { OpenTimeEntryRow } from "@/lib/graphql/timesheet";
 import { isOverlong, rankRunning } from "@/lib/time-attendance";
 import {
@@ -62,6 +63,8 @@ export function ClockBoard({
   onPick,
   selectedWorkerId,
 }: ClockBoardProps) {
+  const t = useT();
+
   const ranked = useMemo(() => rankRunning(entries ?? [], now), [entries, now]);
   const overlong = ranked.filter((row) => isOverlong(row.runningMinutes)).length;
   const runningMinutes = ranked.reduce((sum, row) => sum + row.runningMinutes, 0);
@@ -75,7 +78,7 @@ export function ClockBoard({
         <div className="flex flex-wrap items-center gap-2">
           <TimerIcon className="text-muted-foreground size-3.5" aria-hidden />
           <h3 id="clock-board-heading" className="text-sm font-medium">
-            On the clock now
+            {t("On the clock now")}
           </h3>
           {ranked.length > 0 ? (
             <Badge variant="secondary" className="text-2xs h-4 px-1 tabular-nums">
@@ -84,13 +87,13 @@ export function ClockBoard({
           ) : null}
           {ranked.length > 0 ? (
             <span className="text-muted-foreground text-xs tabular-nums">
-              {formatHours(runningMinutes)} running between them
+              {t("{0} running between them", formatHours(runningMinutes))}
             </span>
           ) : null}
           {overlong > 0 ? (
             <span className="text-warning-foreground flex items-center gap-1 text-xs">
               <AlertTriangleIcon className="size-3" aria-hidden />
-              {overlong} past 12h
+              {t("{0} past 12h", overlong)}
             </span>
           ) : null}
         </div>
@@ -101,7 +104,7 @@ export function ClockBoard({
           onClick={() => onTeamOnlyChange(!teamOnly)}
         >
           <UsersIcon className="size-3" />
-          My team
+          {t("My team")}
         </Button>
       </header>
 
@@ -112,7 +115,7 @@ export function ClockBoard({
         </div>
       ) : ranked.length === 0 ? (
         <p className="text-muted-foreground px-3 py-3 text-sm">
-          Nobody is punched in{teamOnly ? " on your team" : ""} right now.
+          {t("Nobody is punched in{0} right now.", teamOnly ? " on your team" : "")}
         </p>
       ) : (
         <BoardList
@@ -143,6 +146,8 @@ function BoardList({
   onPick,
   selectedWorkerId,
 }: BoardListProps) {
+  const t = useT();
+
   const reduceMotion = useReducedMotion();
   const [settled, setSettled] = useState(false);
 
@@ -202,8 +207,7 @@ function BoardList({
                     </span>
                   ) : null}
                   <span className="text-muted-foreground text-xs tabular-nums">
-                    since {formatPunchTime(entry.clockedInAt)}
-                    {entry.source !== "Clock" ? ` · ${entry.source}` : ""}
+                    {t("since {0}{1}", formatPunchTime(entry.clockedInAt), entry.source !== "Clock" ? ` · ${entry.source}` : "")}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
@@ -250,7 +254,7 @@ function BoardList({
                   aria-label={`Clock out ${name}`}
                 >
                   <SquareIcon className="size-3" />
-                  Clock out
+                  {t("Clock out")}
                 </Button>
               ) : null}
             </span>

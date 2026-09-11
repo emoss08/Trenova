@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStat } from "@/components/kpi/kpi-stat";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -63,6 +64,8 @@ function hourSegments(totals: {
  * reads worse in an audit than a period somebody was paid for twice.
  */
 export function PayrollPanel() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canExport } = usePermission(Resource.Timesheet, Operation.Export);
   const [period, setPeriod] = useState<PeriodValue>("1");
@@ -120,7 +123,7 @@ export function PayrollPanel() {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-6 gap-3">
         <KpiStat
-          label="Ready to run"
+          label={t("Ready to run")}
           value={String(readySheets.length)}
           tone={readySheets.length > 0 ? "success" : "muted"}
           icon={<ClipboardCheckIcon className="size-[11px]" />}
@@ -131,7 +134,7 @@ export function PayrollPanel() {
           }
         />
         <KpiStat
-          label="Hours in the run"
+          label={t("Hours in the run")}
           value={formatHours(readySummary.totalMinutes)}
           icon={<TimerIcon className="size-[11px]" />}
           sub={
@@ -141,7 +144,7 @@ export function PayrollPanel() {
           }
         />
         <KpiStat
-          label="Runs sent"
+          label={t("Runs sent")}
           value={String(live.length)}
           icon={<BanknoteIcon className="size-[11px]" />}
           sub={runs.length > live.length ? `${runs.length - live.length} voided` : "None voided"}
@@ -155,11 +158,10 @@ export function PayrollPanel() {
         <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <div className="flex min-w-0 flex-col gap-0.5">
             <h3 id="run-payroll-heading" className="text-sm font-medium">
-              Run payroll
+              {t("Run payroll")}
             </h3>
             <p className="text-muted-foreground text-xs">
-              Every approved week in the period that has not gone out yet. The weeks lock to the
-              run, so the same period cannot be sent twice.
+              {t("Every approved week in the period that has not gone out yet. The weeks lock to the run, so the same period cannot be sent twice.")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -167,14 +169,14 @@ export function PayrollPanel() {
               items={PERIOD_ITEMS}
               value={period}
               onValueChange={setPeriod}
-              aria-label="Payroll period length"
+              aria-label={t("Payroll period length")}
             />
             <div className="flex items-center gap-1">
               <Button
                 size="icon-sm"
                 variant="outline"
                 onClick={() => setPeriodStart(addRotaWeeks(periodStart, -weeks))}
-                aria-label="Earlier period"
+                aria-label={t("Earlier period")}
               >
                 <ChevronLeftIcon className="size-3.5" />
               </Button>
@@ -185,7 +187,7 @@ export function PayrollPanel() {
                 size="icon-sm"
                 variant="outline"
                 onClick={() => setPeriodStart(addRotaWeeks(periodStart, weeks))}
-                aria-label="Later period"
+                aria-label={t("Later period")}
               >
                 <ChevronRightIcon className="size-3.5" />
               </Button>
@@ -211,13 +213,12 @@ export function PayrollPanel() {
           </div>
         ) : readySheets.length === 0 ? (
           <p className="text-muted-foreground px-4 py-3 text-xs">
-            No approved week in this period is waiting to be sent. Move the period, or approve some
-            weeks first.
+            {t("No approved week in this period is waiting to be sent. Move the period, or approve some weeks first.")}
           </p>
         ) : (
           <>
             <ul
-              aria-label="Timesheets in the run"
+              aria-label={t("Timesheets in the run")}
               className="max-h-72 divide-y overflow-y-auto text-xs"
             >
               {readySheets.map((sheet) => (
@@ -232,7 +233,7 @@ export function PayrollPanel() {
                         : sheet.workerId}
                     </span>
                     <span className="text-muted-foreground tabular-nums">
-                      Week of {formatShiftDate(sheet.periodStart)}
+                      {t("Week of {0}", formatShiftDate(sheet.periodStart))}
                     </span>
                   </span>
                   <CompositionBar
@@ -246,8 +247,7 @@ export function PayrollPanel() {
                     {formatHours(sheet.totalMinutes)}
                     {sheet.overtimeMinutes > 0 ? (
                       <span className="text-muted-foreground">
-                        {" "}
-                        · {formatHours(sheet.overtimeMinutes)} OT
+                        {t("· {0} OT", formatHours(sheet.overtimeMinutes))}
                       </span>
                     ) : null}
                   </span>
@@ -258,7 +258,7 @@ export function PayrollPanel() {
               <CompositionBar
                 size="sm"
                 className="max-w-md min-w-0 flex-1"
-                aria-label="Hours in the run"
+                aria-label={t("Hours in the run")}
                 formatValue={formatHours}
                 segments={hourSegments(readySummary)}
               />
@@ -272,7 +272,7 @@ export function PayrollPanel() {
 
       <section aria-labelledby="payroll-runs-heading" className="flex flex-col gap-2">
         <h3 id="payroll-runs-heading" className="text-sm font-medium">
-          Runs
+          {t("Runs")}
         </h3>
         {exports.isLoading ? (
           <div className="flex flex-col gap-2">
@@ -281,8 +281,8 @@ export function PayrollPanel() {
           </div>
         ) : runs.length === 0 ? (
           <PayrollRunsEmpty
-            title="No payroll runs yet"
-            description="Approve some weeks, pick the period, and run it. Each run is kept with the file it produced."
+            title={t("No payroll runs yet")}
+            description={t("Approve some weeks, pick the period, and run it. Each run is kept with the file it produced.")}
           />
         ) : (
           <ul className="bg-card divide-y overflow-hidden rounded-lg border">
@@ -299,6 +299,8 @@ export function PayrollPanel() {
 }
 
 function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void }) {
+  const t = useT();
+
   const [downloading, setDownloading] = useState(false);
   const voided = run.status === "Voided";
   const total = run.regularMinutes + run.overtimeMinutes + run.paidLeaveMinutes;
@@ -340,9 +342,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           <Badge variant={voided ? "inactive" : "active"}>{voided ? "Voided" : "Sent"}</Badge>
         </span>
         <span className="text-muted-foreground tabular-nums">
-          {run.timesheetCount} timesheet{run.timesheetCount === 1 ? "" : "s"}
-          {run.generatedAt ? `, sent ${formatShiftDate(run.generatedAt)}` : ""}
-          {run.voidReason ? `. Voided: ${run.voidReason}` : ""}
+          {t("{0} timesheet{1}{2}{3}", run.timesheetCount, run.timesheetCount === 1 ? "" : "s", run.generatedAt ? `, sent ${formatShiftDate(run.generatedAt)}` : "", run.voidReason ? `. Voided: ${run.voidReason}` : "")}
         </span>
       </div>
       <div className="col-span-3 flex min-w-0 items-center gap-3 md:col-span-1">
@@ -350,7 +350,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           size="sm"
           showLegend={false}
           className="min-w-0 flex-1"
-          aria-label="Hours in the run"
+          aria-label={t("Hours in the run")}
           formatValue={formatHours}
           segments={hourSegments(run)}
         />
@@ -365,10 +365,10 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
             onClick={() => void download()}
           >
             <DownloadIcon className="size-3.5" />
-            CSV
+            {t("CSV")}
           </Button>
           <Button size="sm" variant="ghost" onClick={onVoid}>
-            Void
+            {t("Void")}
           </Button>
         </div>
       ) : (

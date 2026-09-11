@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -64,6 +65,8 @@ export function RecordEntryDialog({
   entry,
   onRecorded,
 }: RecordEntryDialogProps) {
+  const t = useT();
+
   const [initialValues] = useState(() =>
     manualEntryDefaults(entry ?? null, {
       dayStart: getTodayDate(),
@@ -129,8 +132,7 @@ export function RecordEntryDialog({
             ) : null}
           </DialogTitle>
           <DialogDescription>
-            A period recorded by hand is marked as such, and the reason is kept with it. Hours can
-            only be changed while the week is still open.
+            {t("A period recorded by hand is marked as such, and the reason is kept with it. Hours can only be changed while the week is still open.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -152,7 +154,7 @@ export function RecordEntryDialog({
             </span>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">Would be paid</p>
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Would be paid")}</p>
             <p className="font-mono text-xl leading-none font-semibold tabular-nums">
               {formatHours(paidMinutes)}
             </p>
@@ -172,9 +174,9 @@ export function RecordEntryDialog({
                 <AutoCompleteDateTimeField<RecordTimeEntryFormValues>
                   control={control}
                   name="clockedInAt"
-                  label="Started"
-                  placeholder="Pick a date and time"
-                  description="When the worker started, in your own time zone."
+                  label={t("Started")}
+                  placeholder={t("Pick a date and time")}
+                  description={t("When the worker started, in your own time zone.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -182,9 +184,9 @@ export function RecordEntryDialog({
                 <AutoCompleteDateTimeField<RecordTimeEntryFormValues>
                   control={control}
                   name="clockedOutAt"
-                  label="Finished"
-                  placeholder="Pick a date and time"
-                  description="When the worker finished; it has to be after the start."
+                  label={t("Finished")}
+                  placeholder={t("Pick a date and time")}
+                  description={t("When the worker finished; it has to be after the start.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -193,13 +195,13 @@ export function RecordEntryDialog({
                   <NumberField<RecordTimeEntryFormValues>
                     control={control}
                     name="breakMinutes"
-                    label="Unpaid break (minutes)"
+                    label={t("Unpaid break (minutes)")}
                     placeholder="0"
-                    description="Taken off the period before it is paid."
+                    description={t("Taken off the period before it is paid.")}
                     min={0}
                     step={5}
                   />
-                  <div className="flex flex-wrap gap-1 pb-0.5" aria-label="Common breaks">
+                  <div className="flex flex-wrap gap-1 pb-0.5" aria-label={t("Common breaks")}>
                     {BREAK_PRESETS.map((minutes) => (
                       <button
                         key={minutes}
@@ -228,25 +230,25 @@ export function RecordEntryDialog({
                   control={control}
                   name="reason"
                   label={entry ? "Why it is being corrected" : "Why it is being recorded by hand"}
-                  placeholder="e.g. Missed clock-out"
+                  placeholder={t("e.g. Missed clock-out")}
                   rules={{ required: true }}
-                  description="Kept with the record and shown on the timesheet."
+                  description={t("Kept with the record and shown on the timesheet.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<RecordTimeEntryFormValues>
                   control={control}
                   name="note"
-                  label="Note"
-                  placeholder="e.g. Yard shift covering for Ben"
-                  description="Optional; anything worth knowing about the period, such as the job or site."
+                  label={t("Note")}
+                  placeholder={t("e.g. Yard shift covering for Ben")}
+                  description={t("Optional; anything worth knowing about the period, such as the job or site.")}
                 />
               </FormControl>
             </FormGroup>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending} disabled={!workerId}>
                 {entry ? "Save correction" : "Record"}
