@@ -25,6 +25,11 @@ platform:
     # observe: check and log denials without blocking, to size the blast radius before enforcing.
     # enforce: deny unentitled or unmapped root fields with 403 FEATURE_NOT_ENTITLED.
     graphqlAccessMode: disabled
+    # Legacy grants let a tenant provisioned before the workforce/settlement/driver-portal
+    # split keep reaching those surfaces through the feature key it already holds.
+    # Set to true once the control plane issues the new keys; until then the packs that
+    # own those features are reachable by any tenant holding tms.core.
+    disableLegacyGrants: false
 
 # HTTP Server configuration
 server:

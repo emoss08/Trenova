@@ -45,11 +45,12 @@ type Feature struct {
 }
 
 type Pack struct {
-	Key         PackKey      `json:"key"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Standalone  bool         `json:"standalone"`
-	Features    []FeatureKey `json:"features"`
+	Key           PackKey      `json:"key"`
+	Name          string       `json:"name"`
+	Description   string       `json:"description"`
+	Standalone    bool         `json:"standalone"`
+	RequiresPacks []PackKey    `json:"requiresPacks,omitempty"`
+	Features      []FeatureKey `json:"features"`
 }
 
 type GraphQLRootField struct {

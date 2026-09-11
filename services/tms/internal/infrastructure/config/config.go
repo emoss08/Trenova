@@ -1305,6 +1305,11 @@ type PlatformControlPlaneConfig struct {
 	FailOpenOnError          bool              `mapstructure:"failOpenOnError"`
 	MaxProvisioningBodyBytes int64             `mapstructure:"maxProvisioningBodyBytes" validate:"omitempty,min=1024"`
 	GraphQLAccessMode        GraphQLAccessMode `mapstructure:"graphqlAccessMode"         validate:"omitempty,oneof=disabled observe enforce"`
+	DisableLegacyGrants      bool              `mapstructure:"disableLegacyGrants"`
+}
+
+func (c *PlatformControlPlaneConfig) HonorLegacyGrants() bool {
+	return !c.DisableLegacyGrants
 }
 
 func (c *PlatformControlPlaneConfig) GetGraphQLAccessMode() GraphQLAccessMode {

@@ -8,6 +8,8 @@ const (
 	PackDriverDash    = PackKey("driver-dash")
 	PackSettlement    = PackKey("settlement")
 	PackWorkforce     = PackKey("workforce")
+	PackIntegrations  = PackKey("integrations")
+	PackDocumentAI    = PackKey("document-intelligence")
 )
 
 func (p *StaticProvider) Packs() []Pack {
@@ -26,6 +28,7 @@ func (p *StaticProvider) Packs() []Pack {
 				FeatureWorkforceCore,
 				FeatureAdministration,
 				FeatureGlobalSearch,
+				FeatureAPIKeys,
 				FeatureRealtimeNotifications,
 			},
 		},
@@ -60,9 +63,10 @@ func (p *StaticProvider) Packs() []Pack {
 			},
 		},
 		{
-			Key:         PackDriverDash,
-			Name:        "Driver Dash",
-			Description: "The driver-facing portal for loads, pay, hours of service, documents, and time-off requests.",
+			Key:           PackDriverDash,
+			Name:          "Driver Dash",
+			Description:   "The driver-facing portal for loads, pay, hours of service, documents, and time-off requests.",
+			RequiresPacks: []PackKey{PackProfessional},
 			Features: []FeatureKey{
 				FeatureDriverPortal,
 				FeatureWorkforceCore,
@@ -72,9 +76,10 @@ func (p *StaticProvider) Packs() []Pack {
 			},
 		},
 		{
-			Key:         PackSettlement,
-			Name:        "Settlement",
-			Description: "Driver and carrier settlement runs, escrow, advances, deductions, and dispute handling.",
+			Key:           PackSettlement,
+			Name:          "Settlement",
+			Description:   "Driver and carrier settlement runs, escrow, advances, deductions, and dispute handling.",
+			RequiresPacks: []PackKey{PackProfessional},
 			Features: []FeatureKey{
 				FeatureSettlement,
 				FeatureWorkforceCore,
@@ -98,6 +103,25 @@ func (p *StaticProvider) Packs() []Pack {
 				FeatureAdministration,
 				FeatureGlobalSearch,
 				FeatureRealtimeNotifications,
+			},
+		},
+		{
+			Key:           PackIntegrations,
+			Name:          "Integrations",
+			Description:   "EDI trading-partner exchange and exchange-rate sourcing.",
+			RequiresPacks: []PackKey{PackProfessional},
+			Features: []FeatureKey{
+				FeatureEDIIntegration,
+				FeatureExchangeRateIntegration,
+			},
+		},
+		{
+			Key:         PackDocumentAI,
+			Name:        "Document Intelligence",
+			Description: "OCR-backed document classification, extraction, and review.",
+			Features: []FeatureKey{
+				FeatureDocumentManagement,
+				FeatureDocumentIntelligence,
 			},
 		},
 	}

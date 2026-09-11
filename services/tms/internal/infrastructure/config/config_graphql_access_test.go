@@ -2,6 +2,20 @@ package config
 
 import "testing"
 
+func TestHonorLegacyGrants(t *testing.T) {
+	t.Parallel()
+
+	cfg := &PlatformControlPlaneConfig{}
+	if !cfg.HonorLegacyGrants() {
+		t.Fatal("legacy grants must be honored by default")
+	}
+
+	cfg.DisableLegacyGrants = true
+	if cfg.HonorLegacyGrants() {
+		t.Fatal("legacy grants must be off when disableLegacyGrants is set")
+	}
+}
+
 func TestGetGraphQLAccessMode(t *testing.T) {
 	t.Parallel()
 
