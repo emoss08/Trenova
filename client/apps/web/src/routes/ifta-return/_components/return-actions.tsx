@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { buildCsv, downloadCsv } from "@/lib/data-table-export";
 import {
   canFinalize,
@@ -41,6 +42,8 @@ type ReturnActionsProps = {
 };
 
 export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
+  const t = useT();
+
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const generate = useGenerateIftaReturn(period);
   const recompute = useRecomputeIftaReturn(period);
@@ -55,8 +58,8 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
       buildCsv(iftaReturnCsvRows(ret), IFTA_RETURN_CSV_COLUMNS),
       iftaReturnCsvFilename(ret),
     );
-    toast.success("Worksheet exported", {
-      description: "Every line, each fuel type's subtotal and the grand total, as the form reads.",
+    toast.success(t("Worksheet exported"), {
+      description: t("Every line, each fuel type's subtotal and the grand total, as the form reads."),
     });
   };
 
@@ -75,7 +78,7 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
           size="sm"
           onClick={() => recompute.mutate({ id: ret.id, version: ret.version })}
           disabled={recompute.isPending}
-          title="Rebuild every line from the miles, fuel and rates on file now."
+          title={t("Rebuild every line from the miles, fuel and rates on file now.")}
         >
           <RefreshCwIcon className="size-3.5" />
           {recompute.isPending ? "Recomputing..." : "Recompute"}
@@ -95,42 +98,42 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
           }
         >
           <LockIcon className="size-3.5" />
-          Finalize…
+          {t("Finalize…")}
         </Button>
       ) : null}
 
       {transitions.has("reopen") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("reopen")}>
           <LockOpenIcon className="size-3.5" />
-          Reopen…
+          {t("Reopen…")}
         </Button>
       ) : null}
 
       {transitions.has("markFiled") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("markFiled")}>
           <SendIcon className="size-3.5" />
-          Mark filed…
+          {t("Mark filed…")}
         </Button>
       ) : null}
 
       {transitions.has("amend") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("amend")}>
           <FilePlus2Icon className="size-3.5" />
-          Amend…
+          {t("Amend…")}
         </Button>
       ) : null}
 
       {transitions.has("export") ? (
         <Button variant="outline" size="sm" onClick={onExport} disabled={!ret}>
           <DownloadIcon className="size-3.5" />
-          Export CSV
+          {t("Export CSV")}
         </Button>
       ) : null}
 
       {transitions.has("delete") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("delete")}>
           <Trash2Icon className="size-3.5" />
-          Delete draft…
+          {t("Delete draft…")}
         </Button>
       ) : null}
 

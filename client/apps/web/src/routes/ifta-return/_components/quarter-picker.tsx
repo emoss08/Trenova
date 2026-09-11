@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { IftaPeriod } from "@/lib/graphql/ifta-return";
 import { iftaYearOptions, periodInclusiveEnd, type IftaPeriodKey } from "@/lib/ifta-return";
 import { IftaReturnStatusBadge } from "@trenova/shared/components/status-badge";
@@ -47,6 +48,8 @@ export function QuarterPicker({
   amendmentNumber,
   detail,
 }: QuarterPickerProps) {
+  const t = useT();
+
   const years = useMemo(
     () => iftaYearOptions(new Date().getFullYear(), period.year),
     [period.year],
@@ -64,7 +67,7 @@ export function QuarterPicker({
           items={yearItems}
           onValueChange={(value) => onPeriodChange({ ...period, year: Number(value) })}
         >
-          <SelectTrigger aria-label="Year" className="h-7 w-24 text-xs">
+          <SelectTrigger aria-label={t("Year")} className="h-7 w-24 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -81,14 +84,14 @@ export function QuarterPicker({
           onValueChange={(value) => {
             if (isQuarterValue(value)) onPeriodChange({ ...period, quarter: Number(value) });
           }}
-          aria-label="Quarter"
+          aria-label={t("Quarter")}
         />
         {status ? (
           <IftaReturnStatusBadge status={status} />
         ) : (
-          <Badge variant="outline">Not generated</Badge>
+          <Badge variant="outline">{t("Not generated")}</Badge>
         )}
-        {amendmentNumber > 0 ? <Badge variant="purple">Amendment {amendmentNumber}</Badge> : null}
+        {amendmentNumber > 0 ? <Badge variant="purple">{t("Amendment {0}", amendmentNumber)}</Badge> : null}
       </div>
       {detail ? (
         <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
@@ -97,7 +100,7 @@ export function QuarterPicker({
             {formatUnixDate(detail.start)} – {formatUnixDate(periodInclusiveEnd(detail.end))}
           </span>
           <span aria-hidden>·</span>
-          <span>Due {formatUnixDate(detail.dueDate)}</span>
+          <span>{t("Due {0}", formatUnixDate(detail.dueDate))}</span>
         </p>
       ) : null}
     </div>

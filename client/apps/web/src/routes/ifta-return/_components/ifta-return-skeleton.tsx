@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -13,8 +14,10 @@ const LINE_ROW_WIDTHS = ["w-8", "w-10", "w-8", "w-10", "w-8", "w-12"] as const;
 const LINE_COLUMN_COUNT = 7;
 
 export function IftaReturnSkeleton() {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading the return">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading the return")}>
       <div className="contents" aria-hidden>
         <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-5">
           {TILE_LABEL_WIDTHS.map((width, index) => (
@@ -36,7 +39,7 @@ export function IftaReturnSkeleton() {
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-md border">
-              <table aria-label="Return lines" className="w-full">
+              <table aria-label={t("Return lines")} className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
                     {Array.from({ length: LINE_COLUMN_COUNT }, (_, index) => (

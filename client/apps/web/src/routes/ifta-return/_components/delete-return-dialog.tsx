@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { deleteIftaReturn } from "@/lib/graphql/ifta-return";
 import { quarterLabel, type IftaPeriodKey, type IftaReturnView } from "@/lib/ifta-return";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,14 +25,16 @@ type DeleteReturnDialogProps = {
 };
 
 export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteReturnDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isDraft = ret.status === "Draft";
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => deleteIftaReturn(ret.id, ret.version),
     onSuccess: async () => {
-      toast.success("Draft deleted", {
-        description: "Nothing else changed: the miles, fuel and rates it was built from are kept.",
+      toast.success(t("Draft deleted"), {
+        description: t("Nothing else changed: the miles, fuel and rates it was built from are kept."),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -46,22 +49,20 @@ export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteRe
           <AlertDialogMedia className="bg-destructive/10 text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Delete the {quarterLabel(period)} draft?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Delete the {0} draft?", quarterLabel(period))}</AlertDialogTitle>
           <AlertDialogDescription>
             <span className="block">
-              The worksheet and every jurisdiction line on it are removed outright. The miles, fuel
-              purchases and rates it was built from are untouched, so generating the quarter again
-              rebuilds it from the same data.
+              {t("The worksheet and every jurisdiction line on it are removed outright. The miles, fuel purchases and rates it was built from are untouched, so generating the quarter again rebuilds it from the same data.")}
             </span>
             {isDraft ? null : (
               <span className="mt-2 block">
-                Only a draft can be deleted. This return is {ret.status.toLowerCase()}.
+                {t("Only a draft can be deleted. This return is {0}.", ret.status.toLowerCase())}
               </span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Keep the draft</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("Keep the draft")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() => mutate()}

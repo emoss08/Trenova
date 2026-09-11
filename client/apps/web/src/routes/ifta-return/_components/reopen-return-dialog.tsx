@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { reopenIftaReturn, type IftaReturn } from "@/lib/graphql/ifta-return";
@@ -43,6 +44,8 @@ type ReopenReturnDialogProps = {
 };
 
 export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenReturnDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<ReopenReturnValues>({
     resolver: zodResolver(reopenReturnSchema) as Resolver<ReopenReturnValues>,
@@ -65,9 +68,9 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
     mutationFn: (values) =>
       reopenIftaReturn({ id: ret.id, version: ret.version, reason: values.reason.trim() }),
     onSuccess: async () => {
-      toast.success("Return reopened", {
+      toast.success(t("Return reopened"), {
         description:
-          "It is a draft again and recomputes with the data on file. The reason is kept with the return.",
+          t("It is a draft again and recomputes with the data on file. The reason is kept with the return."),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -87,11 +90,9 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
             }}
           >
             <DialogHeader>
-              <DialogTitle>Reopen the {quarterLabel(period)} return?</DialogTitle>
+              <DialogTitle>{t("Reopen the {0} return?", quarterLabel(period))}</DialogTitle>
               <DialogDescription>
-                The worksheet unlocks and its figures move with the data again, so anything already
-                reported to the base jurisdiction can drift from what is on file. The reason is kept
-                with the return and shown in its audit trail.
+                {t("The worksheet unlocks and its figures move with the data again, so anything already reported to the base jurisdiction can drift from what is on file. The reason is kept with the return and shown in its audit trail.")}
               </DialogDescription>
             </DialogHeader>
             <FormGroup cols={1} className="mt-4">
@@ -99,11 +100,11 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
                 <TextareaField
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. Oklahoma published its Q2 rate after we finalized"
+                  label={t("Reason")}
+                  placeholder={t("e.g. Oklahoma published its Q2 rate after we finalized")}
                   rules={{ required: true }}
                   maxLength={REOPEN_REASON_MAX}
-                  description="Between 10 and 500 characters, kept with the return as the record of why it was unlocked."
+                  description={t("Between 10 and 500 characters, kept with the return as the record of why it was unlocked.")}
                 />
               </FormControl>
             </FormGroup>
@@ -114,7 +115,7 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
                 onClick={() => onOpenChange(false)}
                 disabled={isPending}
               >
-                Keep it finalized
+                {t("Keep it finalized")}
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Reopening..." : "Reopen return"}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { IftaReturnLine } from "@/lib/graphql/ifta-return";
 import {
   formatIftaMeasure,
@@ -79,6 +80,8 @@ function TotalsCells({ totals }: { totals: IftaLineTotals }) {
 }
 
 function LineRow({ line }: { line: IftaReturnLine }) {
+  const t = useT();
+
   const missingRate = line.rateMissing && line.isIftaMember;
 
   return (
@@ -92,9 +95,9 @@ function LineRow({ line }: { line: IftaReturnLine }) {
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{line.jurisdiction.code}</span>
           <span className="text-muted-foreground text-xs">{line.jurisdiction.name}</span>
-          {missingRate ? <Badge variant="inactive">No rate</Badge> : null}
-          {line.isIftaMember ? null : <Badge variant="outline">Non-member</Badge>}
-          {line.jurisdiction.hasSurcharge ? <Badge variant="outline">Surcharge</Badge> : null}
+          {missingRate ? <Badge variant="inactive">{t("No rate")}</Badge> : null}
+          {line.isIftaMember ? null : <Badge variant="outline">{t("Non-member")}</Badge>}
+          {line.jurisdiction.hasSurcharge ? <Badge variant="outline">{t("Surcharge")}</Badge> : null}
         </div>
       </TableCell>
       <TableCell className="text-right tabular-nums" title={milesBreakdown(line)}>
@@ -118,7 +121,7 @@ function LineRow({ line }: { line: IftaReturnLine }) {
       <TableCell className="text-right tabular-nums">
         {missingRate ? (
           <Link to={ADD_RATE_PATH} className="text-brand text-xs font-medium hover:underline">
-            Add rate
+            {t("Add rate")}
           </Link>
         ) : line.ratePerGallon ? (
           formatIftaMeasure(line.ratePerGallon, RATE_SCALE)
@@ -140,16 +143,17 @@ function LineRow({ line }: { line: IftaReturnLine }) {
 }
 
 export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
+  const t = useT();
+
   const groups = groupLinesByFuelType(ret.lines);
   const grandTotal = sumLines(ret.lines);
 
   return (
     <Card className="rounded-md">
       <CardHeader>
-        <CardTitle className="text-sm font-semibold">Jurisdiction lines</CardTitle>
+        <CardTitle className="text-sm font-semibold">{t("Jurisdiction lines")}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints
-          them; money is in {ret.currencyCode}, and a negative figure is a credit.
+          {t("One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.", ret.currencyCode)}
         </p>
       </CardHeader>
       <CardContent>
@@ -157,16 +161,16 @@ export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Jurisdiction</TableHead>
-                <TableHead className="text-right">Total miles</TableHead>
-                <TableHead className="text-right">Taxable miles</TableHead>
-                <TableHead className="text-right">Tax-paid gal</TableHead>
-                <TableHead className="text-right">Taxable gal</TableHead>
-                <TableHead className="text-right">Net taxable gal</TableHead>
-                <TableHead className="text-right">Rate</TableHead>
-                <TableHead className="text-right">Tax due</TableHead>
-                <TableHead className="text-right">Surcharge</TableHead>
-                <TableHead className="text-right">Line total</TableHead>
+                <TableHead>{t("Jurisdiction")}</TableHead>
+                <TableHead className="text-right">{t("Total miles")}</TableHead>
+                <TableHead className="text-right">{t("Taxable miles")}</TableHead>
+                <TableHead className="text-right">{t("Tax-paid gal")}</TableHead>
+                <TableHead className="text-right">{t("Taxable gal")}</TableHead>
+                <TableHead className="text-right">{t("Net taxable gal")}</TableHead>
+                <TableHead className="text-right">{t("Rate")}</TableHead>
+                <TableHead className="text-right">{t("Tax due")}</TableHead>
+                <TableHead className="text-right">{t("Surcharge")}</TableHead>
+                <TableHead className="text-right">{t("Line total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -176,8 +180,7 @@ export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
                     colSpan={COLUMN_COUNT}
                     className="text-muted-foreground py-6 text-center text-xs"
                   >
-                    No jurisdiction carried miles or fuel in this quarter. Attribute the
-                    quarter&apos;s moves, or record the miles by hand, then recompute.
+                    {t("No jurisdiction carried miles or fuel in this quarter. Attribute the quarter's moves, or record the miles by hand, then recompute.")}
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -193,7 +196,7 @@ export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
                   ))}
                   <TableRow className="border-t-2">
                     <TableCell className="text-xs font-semibold">
-                      {IFTA_FUEL_TYPE_LABELS[group.fuelType]} subtotal
+                      {t("{0} subtotal", IFTA_FUEL_TYPE_LABELS[group.fuelType])}
                     </TableCell>
                     <TotalsCells totals={group.subtotal} />
                   </TableRow>
@@ -202,7 +205,7 @@ export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell className="text-xs font-semibold">Total</TableCell>
+                <TableCell className="text-xs font-semibold">{t("Total")}</TableCell>
                 <TotalsCells totals={grandTotal} />
               </TableRow>
             </TableFooter>
