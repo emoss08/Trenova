@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
@@ -8,11 +9,13 @@ const CarrierSettlementControlForm = lazy(
 );
 
 export function CarrierSettlementControlPage() {
+  const t = useT();
+
   return (
     <AdminPageLayout>
       <PageHeader
-        title="Carrier Settlement Control"
-        description="Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts"
+        title={t("Carrier Settlement Control")}
+        description={t("Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts")}
       />
       <SuspenseLoader>
         <div className="p-4">

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { GLAccountAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -32,6 +33,8 @@ import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "
 import { toast } from "sonner";
 
 export default function CarrierSettlementControlForm() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["carrier-settlement-control"],
@@ -76,7 +79,7 @@ export default function CarrierSettlementControlForm() {
           values.defaultPurchasedTransportationAccountId || undefined,
       }),
     onSuccess: (_, values) => {
-      toast.success("Carrier settlement control updated");
+      toast.success(t("Carrier settlement control updated"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["carrier-settlement-control"] });
     },
@@ -97,7 +100,7 @@ export default function CarrierSettlementControlForm() {
           <WorkflowCard />
           <MatchingCard />
           <PostingAccountsCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -105,13 +108,15 @@ export default function CarrierSettlementControlForm() {
 }
 
 function PayPeriodCard() {
+  const t = useT();
+
   const { control } = useFormContext<CarrierSettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pay Period</CardTitle>
+        <CardTitle>{t("Pay Period")}</CardTitle>
         <CardDescription>
-          Defines the carrier settlement cycle and when purchased-transportation cost accrues.
+          {t("Defines the carrier settlement cycle and when purchased-transportation cost accrues.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,28 +125,28 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="payPeriodFrequency"
-              label="Frequency"
+              label={t("Frequency")}
               options={payPeriodFrequencyChoices}
               rules={{ required: true }}
-              description="How often carriers are settled — weekly is the industry norm for brokered freight."
+              description={t("How often carriers are settled — weekly is the industry norm for brokered freight.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="periodEndDayOfWeek"
-              label="Period End Day"
+              label={t("Period End Day")}
               options={weekdayChoices}
               rules={{ required: true }}
-              description="The pay period closes at the start of this day."
+              description={t("The pay period closes at the start of this day.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="payDelayDays"
-              label="Pay Delay (days)"
-              description="Days between the period end and the settlement pay date."
+              label={t("Pay Delay (days)")}
+              description={t("Days between the period end and the settlement pay date.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -149,10 +154,10 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="payTrigger"
-              label="Pay Trigger"
+              label={t("Pay Trigger")}
               options={settlementPayTriggerChoices}
               rules={{ required: true }}
-              description="The shipment milestone at which carrier cost accrues into the settlement pool."
+              description={t("The shipment milestone at which carrier cost accrues into the settlement pool.")}
             />
           </FormControl>
         </FormGroup>
@@ -162,13 +167,15 @@ function PayPeriodCard() {
 }
 
 function WorkflowCard() {
+  const t = useT();
+
   const { control } = useFormContext<CarrierSettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Workflow Automation</CardTitle>
+        <CardTitle>{t("Workflow Automation")}</CardTitle>
         <CardDescription>
-          Automate the routine AP run so reviewers focus on exceptions.
+          {t("Automate the routine AP run so reviewers focus on exceptions.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -177,16 +184,16 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoGenerateBatches"
-              label="Auto-Generate Batches"
-              description="Generate a carrier settlement batch automatically when each pay period closes."
+              label={t("Auto-Generate Batches")}
+              description={t("Generate a carrier settlement batch automatically when each pay period closes.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="autoPostOnApprove"
-              label="Auto-Post on Approval"
-              description="Approving a settlement immediately posts it to the general ledger, collapsing two steps into one."
+              label={t("Auto-Post on Approval")}
+              description={t("Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.")}
             />
           </FormControl>
         </FormGroup>
@@ -196,15 +203,16 @@ function WorkflowCard() {
 }
 
 function MatchingCard() {
+  const t = useT();
+
   const { control } = useFormContext<CarrierSettlementControlFormValues>();
   const autoMatchInboundInvoices = useWatch({ control, name: "autoMatchInboundInvoices" });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invoice Matching</CardTitle>
+        <CardTitle>{t("Invoice Matching")}</CardTitle>
         <CardDescription>
-          Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a
-          variance.
+          {t("Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -213,11 +221,11 @@ function MatchingCard() {
             <NumberField
               control={control}
               name="varianceTolerance"
-              label="Variance Tolerance"
-              sideText="USD"
+              label={t("Variance Tolerance")}
+              sideText={t("USD")}
               decimalScale={2}
               fixedDecimalScale
-              description="Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review."
+              description={t("Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review.")}
             />
           </FormControl>
         </FormGroup>
@@ -226,17 +234,17 @@ function MatchingCard() {
             <SwitchField
               control={control}
               name="autoMatchInboundInvoices"
-              label="Auto-Match Inbound Invoices"
-              description="Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace."
+              label={t("Auto-Match Inbound Invoices")}
+              description={t("Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace.")}
             />
           </FormControl>
           <FormControl className={autoMatchInboundInvoices ? undefined : "pl-6 opacity-60"}>
             <SwitchField
               control={control}
               name="autoAcceptWithinTolerance"
-              label="Auto-Accept Within Tolerance"
+              label={t("Auto-Accept Within Tolerance")}
               disabled={!autoMatchInboundInvoices}
-              description="Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match."
+              description={t("Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.")}
             />
           </FormControl>
         </FormGroup>
@@ -246,14 +254,15 @@ function MatchingCard() {
 }
 
 function PostingAccountsCard() {
+  const t = useT();
+
   const { control } = useFormContext<CarrierSettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Posting Accounts</CardTitle>
+        <CardTitle>{t("Posting Accounts")}</CardTitle>
         <CardDescription>
-          GL defaults for carrier settlement postings — posting debits purchased transportation and
-          credits accounts payable; blank falls back to the accounting control defaults.
+          {t("GL defaults for carrier settlement postings — posting debits purchased transportation and credits accounts payable; blank falls back to the accounting control defaults.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -262,18 +271,18 @@ function PostingAccountsCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultApAccountId"
-              label="Accounts Payable Account"
+              label={t("Accounts Payable Account")}
               clearable
-              description="The AP account credited when a settlement posts and debited when it is paid."
+              description={t("The AP account credited when a settlement posts and debited when it is paid.")}
             />
           </FormControl>
           <FormControl>
             <GLAccountAutocompleteField
               control={control}
               name="defaultPurchasedTransportationAccountId"
-              label="Purchased Transportation Account"
+              label={t("Purchased Transportation Account")}
               clearable
-              description="The expense account debited for carrier cost when a settlement posts."
+              description={t("The expense account debited for carrier cost when a settlement posts.")}
             />
           </FormControl>
         </FormGroup>
