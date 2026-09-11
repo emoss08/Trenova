@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -28,6 +29,8 @@ import { FormProvider, useForm, useFormContext, type Resolver } from "react-hook
 import { toast } from "sonner";
 
 export default function SettlementControlForm() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["settlement-control"],
@@ -73,7 +76,7 @@ export default function SettlementControlForm() {
         escrowInterestFrequencyMonths: values.escrowInterestFrequencyMonths,
       }),
     onSuccess: (_, values) => {
-      toast.success("Settlement control updated");
+      toast.success(t("Settlement control updated"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["settlement-control"] });
     },
@@ -94,7 +97,7 @@ export default function SettlementControlForm() {
           <WorkflowCard />
           <ExceptionCard />
           <EscrowCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -102,13 +105,15 @@ export default function SettlementControlForm() {
 }
 
 function PayPeriodCard() {
+  const t = useT();
+
   const { control } = useFormContext<SettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pay Period</CardTitle>
+        <CardTitle>{t("Pay Period")}</CardTitle>
         <CardDescription>
-          Defines the settlement cycle and when drivers earn pay for a shipment.
+          {t("Defines the settlement cycle and when drivers earn pay for a shipment.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -117,28 +122,28 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="payPeriodFrequency"
-              label="Frequency"
+              label={t("Frequency")}
               options={payPeriodFrequencyChoices}
               rules={{ required: true }}
-              description="How often drivers are settled — weekly is the industry norm for asset carriers."
+              description={t("How often drivers are settled — weekly is the industry norm for asset carriers.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="periodEndDayOfWeek"
-              label="Period End Day"
+              label={t("Period End Day")}
               options={weekdayChoices}
               rules={{ required: true }}
-              description="The pay period closes at the start of this day."
+              description={t("The pay period closes at the start of this day.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="payDelayDays"
-              label="Pay Delay (days)"
-              description="Days between the period end and the settlement pay date."
+              label={t("Pay Delay (days)")}
+              description={t("Days between the period end and the settlement pay date.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -146,10 +151,10 @@ function PayPeriodCard() {
             <SelectField
               control={control}
               name="payTrigger"
-              label="Pay Trigger"
+              label={t("Pay Trigger")}
               options={settlementPayTriggerChoices}
               rules={{ required: true }}
-              description="The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load."
+              description={t("The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.")}
             />
           </FormControl>
         </FormGroup>
@@ -159,13 +164,15 @@ function PayPeriodCard() {
 }
 
 function WorkflowCard() {
+  const t = useT();
+
   const { control } = useFormContext<SettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Workflow Automation</CardTitle>
+        <CardTitle>{t("Workflow Automation")}</CardTitle>
         <CardDescription>
-          Exception-driven review: automate the clean 90% and focus reviewers on anomalies.
+          {t("Exception-driven review: automate the clean 90% and focus reviewers on anomalies.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -174,40 +181,40 @@ function WorkflowCard() {
             <SwitchField
               control={control}
               name="autoGenerateBatches"
-              label="Auto-Generate Batches"
-              description="Generate a settlement batch automatically when each pay period closes."
+              label={t("Auto-Generate Batches")}
+              description={t("Generate a settlement batch automatically when each pay period closes.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="autoApproveClean"
-              label="Auto-Approve Clean Settlements"
-              description="Settlements without exceptions skip manual review and go straight to approved."
+              label={t("Auto-Approve Clean Settlements")}
+              description={t("Settlements without exceptions skip manual review and go straight to approved.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="autoAttachAccruals"
-              label="Auto-Attach New Pay to Open Drafts"
-              description="As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed."
+              label={t("Auto-Attach New Pay to Open Drafts")}
+              description={t("As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="autoPostOnApprove"
-              label="Auto-Post on Approval"
-              description="Approving a settlement immediately posts it to the general ledger, collapsing two steps into one."
+              label={t("Auto-Post on Approval")}
+              description={t("Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowNegativeNet"
-              label="Allow Negative Net (Carry Forward)"
-              description="When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries."
+              label={t("Allow Negative Net (Carry Forward)")}
+              description={t("When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.")}
             />
           </FormControl>
         </FormGroup>
@@ -217,13 +224,15 @@ function WorkflowCard() {
 }
 
 function ExceptionCard() {
+  const t = useT();
+
   const { control } = useFormContext<SettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Exception Detection</CardTitle>
+        <CardTitle>{t("Exception Detection")}</CardTitle>
         <CardDescription>
-          Settlements deviating from a driver&apos;s recent history are flagged for review.
+          {t("Settlements deviating from a driver's recent history are flagged for review.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -232,17 +241,17 @@ function ExceptionCard() {
             <NumberField
               control={control}
               name="varianceThresholdPct"
-              label="Variance Threshold"
+              label={t("Variance Threshold")}
               sideText="%"
-              description="Flag when net pay deviates from the trailing average by more than this percentage."
+              description={t("Flag when net pay deviates from the trailing average by more than this percentage.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="varianceLookbackWeeks"
-              label="Lookback (settlements)"
-              description="Number of prior settlements used to compute the trailing average."
+              label={t("Lookback (settlements)")}
+              description={t("Number of prior settlements used to compute the trailing average.")}
             />
           </FormControl>
         </FormGroup>
@@ -252,13 +261,15 @@ function ExceptionCard() {
 }
 
 function EscrowCard() {
+  const t = useT();
+
   const { control } = useFormContext<SettlementControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Escrow Interest</CardTitle>
+        <CardTitle>{t("Escrow Interest")}</CardTitle>
         <CardDescription>
-          49 CFR 376.12(k) requires interest on owner-operator escrow at least quarterly.
+          {t("49 CFR 376.12(k) requires interest on owner-operator escrow at least quarterly.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -267,19 +278,19 @@ function EscrowCard() {
             <NumberField
               control={control}
               name="defaultEscrowInterestRate"
-              label="Default Annual Interest Rate"
+              label={t("Default Annual Interest Rate")}
               sideText="%"
               decimalScale={2}
               fixedDecimalScale
-              description="Applied to new escrow accounts unless overridden per account."
+              description={t("Applied to new escrow accounts unless overridden per account.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="escrowInterestFrequencyMonths"
-              label="Accrual Frequency (months)"
-              description="1–3 months; quarterly is the regulatory maximum interval."
+              label={t("Accrual Frequency (months)")}
+              description={t("1–3 months; quarterly is the regulatory maximum interval.")}
             />
           </FormControl>
         </FormGroup>
