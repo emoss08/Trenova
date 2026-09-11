@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { CarrierSettlementBatchStatusBadge } from "@trenova/shared/components/status-badge";
 import { carrierSettlementBatchStatusChoices } from "@/lib/choices";
@@ -78,7 +79,7 @@ export function getColumns(): ColumnDef<CarrierSettlementBatchRow>[] {
     },
     {
       accessorKey: "settlementCount",
-      header: () => <div className="text-right">Settlements</div>,
+      header: () => <div className="text-right">{translate("Settlements")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.settlementCount}</div>
       ),
@@ -94,7 +95,7 @@ export function getColumns(): ColumnDef<CarrierSettlementBatchRow>[] {
     },
     {
       accessorKey: "totalGrossMinor",
-      header: () => <div className="text-right">Total Gross</div>,
+      header: () => <div className="text-right">{translate("Total Gross")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -115,7 +116,7 @@ export function getColumns(): ColumnDef<CarrierSettlementBatchRow>[] {
     },
     {
       accessorKey: "totalNetMinor",
-      header: () => <div className="text-right">Total Net</div>,
+      header: () => <div className="text-right">{translate("Total Net")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

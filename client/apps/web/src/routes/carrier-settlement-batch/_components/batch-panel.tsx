@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { InputField } from "@/components/fields/input-field";
@@ -55,6 +56,8 @@ function GenerateBatchPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<GenerateCarrierBatchFormValues>({
     resolver: zodResolver(
@@ -73,21 +76,21 @@ function GenerateBatchPanel({
     <FormCreatePanel<GenerateCarrierBatchFormValues, CarrierSettlementBatchRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Carrier Settlement Batch"
-      description="Creates a draft settlement for every carrier with pending cost events in the current period."
+      title={t("Carrier Settlement Batch")}
+      description={t("Creates a draft settlement for every carrier with pending cost events in the current period.")}
       queryKey="carrier-settlement-batch-list"
       form={form}
       notice={
         period ? (
           <div className="bg-muted/30 rounded-lg border p-3 text-sm">
             <p className="text-muted-foreground text-[11px] font-medium uppercase">
-              Current Pay Period
+              {t("Current Pay Period")}
             </p>
             <p className="mt-1 font-medium">
               {formatSettlementDate(period.periodStart)} – {formatSettlementDate(period.periodEnd)}
             </p>
             <p className="text-muted-foreground text-xs">
-              Pays on {formatSettlementDate(period.payDate)}
+              {t("Pays on {0}", formatSettlementDate(period.payDate))}
             </p>
           </div>
         ) : undefined
@@ -98,21 +101,21 @@ function GenerateBatchPanel({
             <InputField
               control={control}
               name="name"
-              label="Batch Name"
-              placeholder="Defaults to the pay period end date"
-              description="A label for this AP run; if left blank it is named after the period end date."
+              label={t("Batch Name")}
+              placeholder={t("Defaults to the pay period end date")}
+              description={t("A label for this AP run; if left blank it is named after the period end date.")}
             />
           </FormControl>
           <FormControl>
             <TextareaField
               control={control}
               name="notes"
-              label="Notes"
-              description="Anything reviewers should know about this run, e.g. an off-cycle correction."
+              label={t("Notes")}
+              description={t("Anything reviewers should know about this run, e.g. an off-cycle correction.")}
             />
           </FormControl>
           <p className="text-muted-foreground text-xs">
-            Settlements can auto-post on approval based on your carrier settlement control policy.
+            {t("Settlements can auto-post on approval based on your carrier settlement control policy.")}
           </p>
         </FormGroup>
       }
@@ -134,6 +137,8 @@ function GenerateBatchPanel({
 }
 
 function BatchDetail({ batchId }: { batchId: string }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     queryKey: ["carrier-settlement-batch-detail", batchId],
     queryFn: ({ signal }) => fetchCarrierSettlementBatchDetail(batchId, { signal }),
@@ -149,7 +154,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
       anchor.download = `carrier-settlement-batch-${batchId}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast.success("Remittance CSV downloaded");
+      toast.success(t("Remittance CSV downloaded"));
     },
     onError: (error: Error) => toast.error(error.message || "Export failed"),
   });
@@ -168,8 +173,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <CarrierSettlementBatchStatusBadge status={data.status as CarrierSettlementBatchStatus} />
         <span className="text-muted-foreground text-xs">
-          {formatSettlementDate(data.periodStart)} – {formatSettlementDate(data.periodEnd)} · pays{" "}
-          {formatSettlementDate(data.payDate)}
+          {t("{0} – {1} · pays {2}", formatSettlementDate(data.periodStart), formatSettlementDate(data.periodEnd), formatSettlementDate(data.payDate))}
         </span>
         <Button
           size="sm"
@@ -179,23 +183,23 @@ function BatchDetail({ batchId }: { batchId: string }) {
           onClick={() => exportMutation.mutate()}
         >
           <Download className="size-3.5" />
-          Export Remittance CSV
+          {t("Export Remittance CSV")}
         </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Settlements</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Settlements")}</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Total Gross</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Total Gross")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Total Net</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Total Net")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}
@@ -210,11 +214,11 @@ function BatchDetail({ batchId }: { batchId: string }) {
         <table className="w-full text-xs">
           <thead className="bg-muted/50 text-left">
             <tr>
-              <th className="px-3 py-2 font-medium">Settlement</th>
-              <th className="px-3 py-2 font-medium">Carrier</th>
-              <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2 text-right font-medium">Gross</th>
-              <th className="px-3 py-2 text-right font-medium">Net</th>
+              <th className="px-3 py-2 font-medium">{t("Settlement")}</th>
+              <th className="px-3 py-2 font-medium">{t("Carrier")}</th>
+              <th className="px-3 py-2 font-medium">{t("Status")}</th>
+              <th className="px-3 py-2 text-right font-medium">{t("Gross")}</th>
+              <th className="px-3 py-2 text-right font-medium">{t("Net")}</th>
             </tr>
           </thead>
           <tbody>
