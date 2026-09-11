@@ -242,12 +242,19 @@ function renderConsole(
 }
 
 beforeEach(() => {
-  vi.spyOn(Date, "now").mockReturnValue(NOW * 1000);
+  // The whole Date has to move, not just Date.now: the delegation panel dates
+  // itself with getTodayDate, which builds a `new Date()`, and a spy on
+  // Date.now leaves that reading the wall clock — which quietly turned every
+  // fixture below into a fixture about the day the file was written. Only Date
+  // is faked, so the timers userEvent and waitFor run on stay real.
+  vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+  vi.setSystemTime(NOW * 1000);
 });
 
 afterEach(() => {
   cleanup();
   permissions.denied.clear();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.clearAllMocks();
 });
