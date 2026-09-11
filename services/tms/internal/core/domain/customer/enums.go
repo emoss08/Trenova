@@ -139,6 +139,27 @@ func (c BillingCycle) IsPeriodic() bool {
 	return c != "" && c != BillingCycleImmediate
 }
 
+// Describe is the cadence in the words a biller would use, for the places a
+// message has to name it mid-sentence.
+func (c BillingCycle) Describe() string {
+	switch c {
+	case BillingCycleDaily:
+		return "daily"
+	case BillingCycleWeekly:
+		return "weekly"
+	case BillingCycleBiWeekly:
+		return "bi-weekly"
+	case BillingCycleSemiMonthly:
+		return "semi-monthly"
+	case BillingCycleMonthly:
+		return "monthly"
+	case BillingCycleQuarterly:
+		return "quarterly"
+	default:
+		return "per-shipment"
+	}
+}
+
 func (t PaymentTerm) IsValid() bool {
 	switch t {
 	case PaymentTermNet10, PaymentTermNet15, PaymentTermNet30, PaymentTermNet45,

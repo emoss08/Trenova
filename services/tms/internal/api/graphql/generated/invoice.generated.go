@@ -363,6 +363,29 @@ func (ec *executionContext) fieldContext_Invoice_sectionBy(_ context.Context, fi
 	return graphql.NewScalarFieldContext("Invoice", field, false, false, errors.New("field of type InvoiceSectionKey does not have child fields"))
 }
 
+func (ec *executionContext) _Invoice_offCycleReason(ctx context.Context, field graphql.CollectedField, obj *invoice.Invoice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Invoice_offCycleReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OffCycleReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Invoice_offCycleReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Invoice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _Invoice_number(ctx context.Context, field graphql.CollectedField, obj *invoice.Invoice) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1590,6 +1613,11 @@ func (ec *executionContext) _Invoice(ctx context.Context, sel ast.SelectionSet, 
 		case "sectionBy":
 			out.Values[i] = ec._Invoice_sectionBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "offCycleReason":
+			out.Values[i] = ec._Invoice_offCycleReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "number":

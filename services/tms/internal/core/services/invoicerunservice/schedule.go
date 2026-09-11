@@ -54,6 +54,38 @@ func PeriodsDue(profile *customer.CustomerBillingProfile, now int64) []Period {
 	return periods
 }
 
+// CurrentPeriod is the window a statement is accumulating into right now: the
+// open period, which has not closed and so has not been billed.
+//
+// The end is always the customer's own next scheduled boundary, never "now plus
+// a cycle". Billing a statement early is allowed, but it must not move the
+// cadence — a customer who asked to be billed on the 1st is still billed on the
+// 1st after an off-cycle bill on the 14th, and the rest of the month accrues to
+// the same period they were expecting.
+//
+// The start is the later of that boundary and the billing watermark, so freight
+// already carried by an off-cycle invoice never shows up as still owing.
+func CurrentPeriod(profile *customer.CustomerBillingProfile, now int64) (Period, bool) {
+	if profile == nil || profile.InvoiceDelivery != customer.InvoiceDeliveryConsolidated {
+		return Period{}, false
+	}
+	if !profile.BillingCycle.IsPeriodic() {
+		return Period{}, false
+	}
+
+	loc := timeutils.LoadLocation(profile.BillingCycleTimezone)
+	nowT := time.Unix(now, 0).In(loc)
+
+	boundary := periodStartOnOrBefore(profile, loc, nowT)
+	period := Period{Start: boundary.Unix(), End: advance(profile, boundary).Unix()}
+
+	if wm := profile.LastBilledPeriodEnd; wm != nil && *wm > period.Start && *wm < period.End {
+		period.Start = *wm
+	}
+
+	return period, true
+}
+
 // periodCursor is where the walk starts: the boundary after the last period
 // billed, or the current period's own start for a profile that has never billed.
 func periodCursor(

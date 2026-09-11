@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/shopspring/decimal"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -77,6 +78,107 @@ type CancelInvoiceRunRequest struct {
 	TenantInfo pagination.TenantInfo
 	RunID      pulid.ID
 	Reason     string
+}
+
+// ListOpenStatementsRequest asks what every statement-billed customer has
+// accumulated so far in the period they are currently in.
+//
+// CustomerID narrows to one customer. IncludeShipments fills in each group's
+// members, which the list view does not need and the detail view does.
+type ListOpenStatementsRequest struct {
+	TenantInfo       pagination.TenantInfo
+	CustomerID       pulid.ID
+	IncludeShipments bool
+}
+
+// StatementShipment is one delivered, approved, uninvoiced shipment sitting on
+// an open statement.
+type StatementShipment struct {
+	BillingQueueItemID pulid.ID        `json:"billingQueueItemId"`
+	ShipmentID         pulid.ID        `json:"shipmentId"`
+	OrderID            pulid.ID        `json:"orderId,omitempty"`
+	ProNumber          string          `json:"proNumber"`
+	BOL                string          `json:"bol"`
+	PONumber           string          `json:"poNumber"`
+	OrderNumber        string          `json:"orderNumber"`
+	ServiceDate        *int64          `json:"serviceDate"`
+	Amount             decimal.Decimal `json:"amount"`
+}
+
+// StatementGroup is one invoice the statement will produce when it bills.
+//
+// It exists before anything is persisted: the split key is applied to the live
+// candidate set every time the statement is read, so a biller watching a
+// statement accumulate sees the invoices it would cut right now.
+type StatementGroup struct {
+	Key           string               `json:"key"`
+	Label         string               `json:"label"`
+	ShipmentCount int                  `json:"shipmentCount"`
+	TotalAmount   decimal.Decimal      `json:"totalAmount"`
+	BelowMinimum  bool                 `json:"belowMinimum"`
+	Shipments     []*StatementShipment `json:"shipments,omitempty"`
+}
+
+// OpenStatement is one customer's current billing period as it stands right now.
+//
+// Nothing here is persisted. The period comes from the customer's own schedule,
+// the members from the live billing queue, and the split from their profile — so
+// the statement is always current and a shipment approved a minute ago is on it
+// a minute later, with no job to wait for.
+type OpenStatement struct {
+	CustomerID     pulid.ID `json:"customerId"`
+	CustomerName   string   `json:"customerName"`
+	CustomerCode   string   `json:"customerCode"`
+	CustomerStatus string   `json:"customerStatus"`
+
+	Cycle                 customer.BillingCycle `json:"cycle"`
+	BillingCycleAnchorDay int16                 `json:"billingCycleAnchorDay"`
+	BillingCycleTimezone  string                `json:"billingCycleTimezone"`
+	PeriodStart           int64                 `json:"periodStart"`
+	PeriodEnd             int64                 `json:"periodEnd"`
+	LastBilledPeriodEnd   *int64                `json:"lastBilledPeriodEnd"`
+
+	ShipmentCount int             `json:"shipmentCount"`
+	InvoiceCount  int             `json:"invoiceCount"`
+	TotalAmount   decimal.Decimal `json:"totalAmount"`
+	CurrencyCode  string          `json:"currencyCode"`
+
+	SplitBy       customer.InvoiceSplitKey   `json:"splitBy"`
+	SectionBy     customer.InvoiceSectionKey `json:"sectionBy"`
+	Detail        customer.InvoiceDetail     `json:"detail"`
+	MinimumAmount decimal.NullDecimal        `json:"minimumAmount"`
+	AutoBill      bool                       `json:"autoBill"`
+
+	// BelowMinimum means every group is under the customer's floor, so billing
+	// today would produce nothing and the freight would roll into next period.
+	BelowMinimum bool `json:"belowMinimum"`
+
+	Groups []*StatementGroup `json:"groups,omitempty"`
+}
+
+// BillStatementNowRequest bills an open period before it closes.
+//
+// Reason is required and recorded. Billing off-cycle is allowed — a customer
+// closing their books early, a credit hold about to bite — but it is a deviation
+// from what the customer agreed to, so the next person to look has to be able to
+// see who decided it and why.
+type BillStatementNowRequest struct {
+	TenantInfo pagination.TenantInfo
+	CustomerID pulid.ID
+	Reason     string
+	// Exclude holds back shipments the biller pulled off the statement before
+	// billing, keyed by billing-queue item because that is the only id an open
+	// statement has — nothing is persisted until it bills. They stay approved and
+	// uninvoiced, so the next period picks them up.
+	Exclude []StatementExclusion
+}
+
+// StatementExclusion pulls one shipment off a statement at billing time. The
+// reason rides along for the same reason ItemExclusion's does: next period's
+// biller has to be able to see why.
+type StatementExclusion struct {
+	BillingQueueItemID pulid.ID
+	Reason             string
 }
 
 // InvoiceRunSweepResult is what one pass of the scheduled sweep did.

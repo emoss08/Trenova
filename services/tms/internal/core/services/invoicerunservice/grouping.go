@@ -100,6 +100,63 @@ func discriminated(customerID, raw, labelFormat, missingLabel string) GroupKeyRe
 	}
 }
 
+// CandidateGroup is one proposed invoice: the members that would sit on it and
+// the settings that shape it.
+type CandidateGroup struct {
+	Key     string
+	Label   string
+	Part    int
+	Parts   int
+	First   *repositories.ConsolidationCandidate
+	Members []*repositories.ConsolidationCandidate
+}
+
+// GroupCandidates is the whole split decision: which invoices a set of eligible
+// queue items becomes, under each customer's own split key and cap.
+//
+// Shared by the run builder and the open-statements view on purpose. A biller
+// watching a statement accumulate must see the same invoices the run will
+// actually produce; two implementations of "how does this split" would drift,
+// and the drift would only surface as a surprise on billing day.
+//
+// Insertion order is preserved so members keep the query's ordering — customer,
+// then service date, then PRO — and the same input always yields the same
+// proposal.
+func GroupCandidates(candidates []*repositories.ConsolidationCandidate) []CandidateGroup {
+	ordered := make([]string, 0, len(candidates))
+	byKey := make(map[string][]*repositories.ConsolidationCandidate, len(candidates))
+	labels := make(map[string]string, len(candidates))
+	settings := make(map[string]*repositories.ConsolidationCandidate, len(candidates))
+
+	for _, candidate := range candidates {
+		result := GroupKeyFor(candidate.SplitBy, candidate)
+		if _, seen := byKey[result.Key]; !seen {
+			ordered = append(ordered, result.Key)
+			labels[result.Key] = result.Label
+			settings[result.Key] = candidate
+		}
+		byKey[result.Key] = append(byKey[result.Key], candidate)
+	}
+
+	groups := make([]CandidateGroup, 0, len(ordered))
+	for _, key := range ordered {
+		first := settings[key]
+		parts := SplitOversized(byKey[key], int(first.MaxShipmentsPerInvoice))
+		for i, part := range parts {
+			groups = append(groups, CandidateGroup{
+				Key:     PartKey(key, i+1, len(parts)),
+				Label:   PartLabel(labels[key], i+1, len(parts)),
+				Part:    i + 1,
+				Parts:   len(parts),
+				First:   first,
+				Members: part,
+			})
+		}
+	}
+
+	return groups
+}
+
 // SplitOversized breaks a group that exceeds the customer's cap into numbered
 // parts, preserving order.
 //

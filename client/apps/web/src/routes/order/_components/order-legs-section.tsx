@@ -28,6 +28,10 @@ import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import {
+  OffCycleInvoiceDialog,
+  offCycleWarningFrom,
+} from "@/components/billing/off-cycle-invoice-dialog";
 import { AddLegDialog } from "./add-leg-dialog";
 import { useOrderInvalidation, useOrderInvoiceInvalidation } from "./use-order-invalidation";
 
@@ -42,6 +46,7 @@ export function OrderLegsSection() {
   const [addLegOpen, setAddLegOpen] = useState(false);
   const [checkedLegIds, setCheckedLegIds] = useState<ReadonlySet<string>>(new Set());
   const [confirmSingleLeg, setConfirmSingleLeg] = useState(false);
+  const [offCycleWarning, setOffCycleWarning] = useState<string | null>(null);
   const [legPendingDetach, setLegPendingDetach] = useState<{
     id: string;
     proNumber: string;
@@ -69,8 +74,10 @@ export function OrderLegsSection() {
   });
 
   const { mutate: createInvoice, isPending: isCreatingInvoice } = useMutation({
-    mutationFn: (shipmentIds: string[]) => createInvoiceFromShipments(shipmentIds),
+    mutationFn: ({ shipmentIds, reason }: { shipmentIds: string[]; reason?: string }) =>
+      createInvoiceFromShipments(shipmentIds, reason),
     onSuccess: (invoice) => {
+      setOffCycleWarning(null);
       invalidateInvoices();
       invalidateOrders();
       setCheckedLegIds(new Set());
@@ -78,10 +85,18 @@ export function OrderLegsSection() {
         description: `Invoice ${invoice.number} was created from this order.`,
       });
     },
-    onError: (error) =>
+    onError: (error) => {
+      // Not a failure: the customer is on a statement and the server is asking
+      // whether the biller really means to take this freight off it.
+      const warning = offCycleWarningFrom(error);
+      if (warning) {
+        setOffCycleWarning(warning);
+        return;
+      }
       toast.error("Failed to create invoice", {
         description: graphQLErrorMessage(error, "The invoice could not be created."),
-      }),
+      });
+    },
     onSettled: () => setConfirmSingleLeg(false),
   });
 
@@ -133,7 +148,7 @@ export function OrderLegsSection() {
       setConfirmSingleLeg(true);
       return;
     }
-    createInvoice(selectedIds);
+    createInvoice({ shipmentIds: selectedIds });
   }
 
   const legLabel = selectedIds.length === 1 ? "leg" : "legs";
@@ -332,12 +347,22 @@ export function OrderLegsSection() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => createInvoice(selectedIds)}>
+            <AlertDialogAction onClick={() => createInvoice({ shipmentIds: selectedIds })}>
               Create invoice
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <OffCycleInvoiceDialog
+        open={offCycleWarning !== null}
+        warning={offCycleWarning}
+        pending={isCreatingInvoice}
+        onOpenChange={(next) => {
+          if (!next) setOffCycleWarning(null);
+        }}
+        onConfirm={(reason) => createInvoice({ shipmentIds: selectedIds, reason })}
+      />
 
       <AddLegDialog
         open={addLegOpen}

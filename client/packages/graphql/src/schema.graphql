@@ -7239,6 +7239,11 @@ type Invoice {
   isAdjustmentArtifact: Boolean!
   lines: [InvoiceLine!]
   number: String!
+  """
+  Why this invoice was cut for a customer whose freight was supposed to
+  accumulate onto a periodic statement. Null on every ordinary invoice.
+  """
+  offCycleReason: String
   order: Order
   orderId: ID
   orderNumber: String
@@ -8120,8 +8125,14 @@ type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
-  createInvoiceFromOrder(orderId: ID!): Invoice!
-  createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
+  createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice!
+  """
+  Bills the given shipments. offCycleReason is required only when the customer
+  is on a periodic statement, where invoicing freight on its own takes it off
+  that statement; omitting it there fails with a validation error on
+  `offCycleReason` so the client can ask for one.
+  """
+  createInvoiceFromShipments(offCycleReason: String, shipmentIds: [ID!]!): Invoice!
   createJobPosition(input: JobPositionInput!): JobPosition!
   """
   Posts a driver update on one of the signed-in driver's loads. Recorded as a

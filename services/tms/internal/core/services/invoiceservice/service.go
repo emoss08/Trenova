@@ -220,13 +220,20 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 
+	// The last gate before an invoice exists, so it cannot be bypassed by any of
+	// the paths that reach this one.
+	if err = guardStatementCadence(dependencies.Customer, req.OffCycleReason); err != nil {
+		return nil, err
+	}
+
 	entity := s.buildInvoiceEntity(&buildInvoiceParams{
-		Anchor:   item,
-		Scope:    invoice.ScopeShipment,
-		Customer: dependencies.Customer,
-		Control:  dependencies.BillingControl,
-		Legs:     legsFromShipment(dependencies.Shipment),
-		Order:    dependencies.Order,
+		Anchor:         item,
+		Scope:          invoice.ScopeShipment,
+		Customer:       dependencies.Customer,
+		Control:        dependencies.BillingControl,
+		Legs:           legsFromShipment(dependencies.Shipment),
+		Order:          dependencies.Order,
+		OffCycleReason: offCycleReasonFor(dependencies.Customer, req.OffCycleReason),
 	})
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
@@ -792,6 +799,9 @@ type buildInvoiceParams struct {
 	PeriodEnd    *int64
 	InvoiceDate  int64
 	Number       string
+	// OffCycleReason is set only when this invoice takes freight off a customer's
+	// periodic statement.
+	OffCycleReason string
 }
 
 // buildInvoiceEntity builds every shape of invoice from its legs.
@@ -883,6 +893,7 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 		AppliedAmount:      decimal.Zero,
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 		DisputeStatus:      invoice.DisputeStatusNone,
+		OffCycleReason:     p.OffCycleReason,
 		Lines:              lines,
 	}
 

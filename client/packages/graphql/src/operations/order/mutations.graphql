@@ -18,15 +18,15 @@ mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {
   }
 }
 
-mutation CreateInvoiceFromOrder($orderId: ID!) {
-  createInvoiceFromOrder(orderId: $orderId) {
+mutation CreateInvoiceFromOrder($orderId: ID!, $offCycleReason: String) {
+  createInvoiceFromOrder(orderId: $orderId, offCycleReason: $offCycleReason) {
     id
     number
   }
 }
 
-mutation CreateInvoiceFromShipments($shipmentIds: [ID!]!) {
-  createInvoiceFromShipments(shipmentIds: $shipmentIds) {
+mutation CreateInvoiceFromShipments($shipmentIds: [ID!]!, $offCycleReason: String) {
+  createInvoiceFromShipments(shipmentIds: $shipmentIds, offCycleReason: $offCycleReason) {
     id
     number
   }

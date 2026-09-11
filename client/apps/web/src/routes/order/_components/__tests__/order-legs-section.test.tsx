@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { OrderLegsSection } from "../order-legs-section";
 
 const mocks = vi.hoisted(() => ({
@@ -85,7 +86,7 @@ describe("OrderLegsSection leg selection", () => {
     await user.click(button);
 
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1", "shp_3"]),
+      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1", "shp_3"], undefined),
     );
     expect(mocks.createInvoiceFromOrder).not.toHaveBeenCalled();
   });
@@ -105,7 +106,7 @@ describe("OrderLegsSection leg selection", () => {
     await user.click(screen.getByRole("button", { name: /Create invoice from 2 legs/ }));
 
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1", "shp_2"]),
+      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1", "shp_2"], undefined),
     );
     expect(mocks.createInvoiceFromOrder).not.toHaveBeenCalled();
   });
@@ -132,7 +133,7 @@ describe("OrderLegsSection leg selection", () => {
     // A lone leg is confirmed first because it produces a standalone invoice.
     await user.click(screen.getByRole("button", { name: "Create invoice" }));
 
-    await waitFor(() => expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"]));
+    await waitFor(() => expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined));
   });
 
   it("confirms before billing a single leg on its own invoice", async () => {
@@ -153,7 +154,7 @@ describe("OrderLegsSection leg selection", () => {
     expect(mocks.createInvoiceFromShipments).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Create invoice" }));
-    await waitFor(() => expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"]));
+    await waitFor(() => expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined));
   });
 
   it("keeps the invoice button disabled until something is selected", async () => {
@@ -167,5 +168,94 @@ describe("OrderLegsSection leg selection", () => {
     await screen.findByText("PRO-1");
 
     expect(screen.getByRole("button", { name: /Create invoice/ })).toBeDisabled();
+  });
+});
+
+describe("OrderLegsSection statement cadence guard", () => {
+  /** What the API returns when the customer is on a periodic statement. */
+  function cadenceRefusal() {
+    return {
+      getFieldErrors: (field?: string) =>
+        [
+          {
+            field: "offCycleReason",
+            message: "Acme Freight is billed on a monthly statement.",
+          },
+        ].filter((e) => field === undefined || e.field === field),
+    };
+  }
+
+  beforeEach(() => {
+    mocks.fetchOrderDetail.mockResolvedValue({
+      status: "InTransit",
+      currencyCode: "USD",
+      legs: [leg("shp_1", "PRO-1", "Completed"), leg("shp_2", "PRO-2", "Completed")],
+    });
+  });
+
+  // The refusal is a prompt, not a failure: it must open the reason dialog rather
+  // than surface as an error toast the biller can only give up on.
+  it("asks for a reason instead of failing when the customer is on a statement", async () => {
+    const user = userEvent.setup();
+    mocks.createInvoiceFromShipments.mockRejectedValueOnce(cadenceRefusal());
+
+    renderSection(<Harness />);
+    await screen.findByText("PRO-1");
+
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-1" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-2" }));
+    await user.click(screen.getByRole("button", { name: /Create invoice from 2 legs/ }));
+
+    expect(
+      await screen.findByText("Acme Freight is billed on a monthly statement."),
+    ).toBeInTheDocument();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("retries with the reason the biller typed", async () => {
+    const user = userEvent.setup();
+    mocks.createInvoiceFromShipments
+      .mockRejectedValueOnce(cadenceRefusal())
+      .mockResolvedValueOnce({ id: "inv_1", number: "INV-1" });
+
+    renderSection(<Harness />);
+    await screen.findByText("PRO-1");
+
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-1" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-2" }));
+    await user.click(screen.getByRole("button", { name: /Create invoice from 2 legs/ }));
+
+    await screen.findByText("Acme Freight is billed on a monthly statement.");
+    await user.type(
+      screen.getByLabelText(/reason for invoicing outside the statement/i),
+      "Billing to the broker",
+    );
+    await user.click(screen.getByRole("button", { name: /invoice anyway/i }));
+
+    await waitFor(() =>
+      expect(mocks.createInvoiceFromShipments).toHaveBeenLastCalledWith(
+        ["shp_1", "shp_2"],
+        "Billing to the broker",
+      ),
+    );
+  });
+
+  // A real failure still has to read as one, or the biller types a reason at a
+  // problem no reason can fix.
+  it("still reports an ordinary failure as an error", async () => {
+    const user = userEvent.setup();
+    mocks.createInvoiceFromShipments.mockRejectedValueOnce(new Error("network down"));
+
+    renderSection(<Harness />);
+    await screen.findByText("PRO-1");
+
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-1" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-2" }));
+    await user.click(screen.getByRole("button", { name: /Create invoice from 2 legs/ }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(
+      screen.queryByLabelText(/reason for invoicing outside the statement/i),
+    ).not.toBeInTheDocument();
   });
 });

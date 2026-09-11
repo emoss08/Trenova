@@ -246,6 +246,18 @@ func validTimezone(value any) error {
 	return nil
 }
 
+// IsStatementBilled reports whether this customer's freight accumulates onto a
+// periodic statement rather than being invoiced as it is approved.
+//
+// Both halves are required because either alone is meaningless: a consolidated
+// customer on an Immediate cycle has no period to accumulate into, and a
+// per-shipment customer on a monthly cycle has nothing to accumulate. The
+// profile's cross-field validation makes both combinations unreachable; this
+// method states the invariant at every read site rather than repeating it.
+func (b *CustomerBillingProfile) IsStatementBilled() bool {
+	return b.InvoiceDelivery == InvoiceDeliveryConsolidated && b.BillingCycle.IsPeriodic()
+}
+
 func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {
 	return b.FuelSurchargeMode == FuelSurchargeModeProgram &&
 		b.FuelSurchargeProgramID != nil && !b.FuelSurchargeProgramID.IsNil()

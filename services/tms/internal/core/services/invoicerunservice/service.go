@@ -205,33 +205,11 @@ func (s *Service) buildGroups(
 		return nil, err
 	}
 
-	// Insertion order is preserved so a group's members keep the query's ordering
-	// — customer, then service date, then PRO — and a re-preview of the same input
-	// produces the same proposal.
-	ordered := make([]string, 0, len(candidates))
-	byKey := make(map[string][]*repositories.ConsolidationCandidate, len(candidates))
-	labels := make(map[string]string, len(candidates))
-	settings := make(map[string]*repositories.ConsolidationCandidate, len(candidates))
+	proposed := GroupCandidates(candidates)
 
-	for _, candidate := range candidates {
-		result := GroupKeyFor(candidate.SplitBy, candidate)
-		if _, seen := byKey[result.Key]; !seen {
-			ordered = append(ordered, result.Key)
-			labels[result.Key] = result.Label
-			settings[result.Key] = candidate
-		}
-		byKey[result.Key] = append(byKey[result.Key], candidate)
-	}
-
-	groups := make([]*invoicerun.InvoiceRunGroup, 0, len(ordered))
-	for _, key := range ordered {
-		members := byKey[key]
-		first := settings[key]
-
-		parts := SplitOversized(members, int(first.MaxShipmentsPerInvoice))
-		for i, part := range parts {
-			groups = append(groups, s.newGroup(run, key, labels[key], first, part, i+1, len(parts)))
-		}
+	groups := make([]*invoicerun.InvoiceRunGroup, 0, len(proposed))
+	for _, group := range proposed {
+		groups = append(groups, s.newGroup(run, group))
 	}
 
 	return groups, nil
@@ -239,18 +217,18 @@ func (s *Service) buildGroups(
 
 func (s *Service) newGroup(
 	run *invoicerun.InvoiceRun,
-	key, label string,
-	first *repositories.ConsolidationCandidate,
-	members []*repositories.ConsolidationCandidate,
-	part, totalParts int,
+	proposed CandidateGroup,
 ) *invoicerun.InvoiceRunGroup {
+	first := proposed.First
+	members := proposed.Members
+
 	group := &invoicerun.InvoiceRunGroup{
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
 		RunID:          run.ID,
 		CustomerID:     first.CustomerID,
-		GroupKey:       PartKey(key, part, totalParts),
-		GroupLabel:     PartLabel(label, part, totalParts),
+		GroupKey:       proposed.Key,
+		GroupLabel:     proposed.Label,
 		SplitBy:        first.SplitBy,
 		Status:         invoicerun.GroupStatusPending,
 		CurrencyCode:   first.CurrencyCode,

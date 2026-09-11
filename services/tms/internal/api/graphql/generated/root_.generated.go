@@ -4270,6 +4270,7 @@ type ComplexityRoot struct {
 		IsAdjustmentArtifact func(childComplexity int) int
 		Lines                func(childComplexity int) int
 		Number               func(childComplexity int) int
+		OffCycleReason       func(childComplexity int) int
 		Order                func(childComplexity int) int
 		OrderID              func(childComplexity int) int
 		OrderNumber          func(childComplexity int) int
@@ -4768,8 +4769,8 @@ type ComplexityRoot struct {
 		CreateFuelSurchargeProgram            func(childComplexity int, input gqlmodel.FuelSurchargeProgramInput) int
 		CreateHomeLayoutPreset                func(childComplexity int, input gqlmodel.SaveHomeLayoutPresetInput) int
 		CreateIFTAMileageEntry                func(childComplexity int, input gqlmodel.IFTAMileageEntryInput) int
-		CreateInvoiceFromOrder                func(childComplexity int, orderID string) int
-		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string) int
+		CreateInvoiceFromOrder                func(childComplexity int, orderID string, offCycleReason *string) int
+		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string, offCycleReason *string) int
 		CreateJobPosition                     func(childComplexity int, input gqlmodel.JobPositionInput) int
 		CreateMyLoadComment                   func(childComplexity int, input gqlmodel.CreateMyLoadCommentInput) int
 		CreateOrder                           func(childComplexity int, input gqlmodel.OrderInput) int
@@ -28982,6 +28983,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.Number(childComplexity), true
+	case "Invoice.offCycleReason":
+		if e.ComplexityRoot.Invoice.OffCycleReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.OffCycleReason(childComplexity), true
 	case "Invoice.order":
 		if e.ComplexityRoot.Invoice.Order == nil {
 			break
@@ -31889,7 +31896,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CreateInvoiceFromOrder(childComplexity, args["orderId"].(string)), true
+		return e.ComplexityRoot.Mutation.CreateInvoiceFromOrder(childComplexity, args["orderId"].(string), args["offCycleReason"].(*string)), true
 	case "Mutation.createInvoiceFromShipments":
 		if e.ComplexityRoot.Mutation.CreateInvoiceFromShipments == nil {
 			break
@@ -31900,7 +31907,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CreateInvoiceFromShipments(childComplexity, args["shipmentIds"].([]string)), true
+		return e.ComplexityRoot.Mutation.CreateInvoiceFromShipments(childComplexity, args["shipmentIds"].([]string), args["offCycleReason"].(*string)), true
 	case "Mutation.createJobPosition":
 		if e.ComplexityRoot.Mutation.CreateJobPosition == nil {
 			break
@@ -69562,6 +69569,11 @@ type Invoice {
   detail: InvoiceDetail!
   """How the lines on this invoice are organised for the reader."""
   sectionBy: InvoiceSectionKey!
+  """
+  Why this invoice was cut for a customer whose freight was supposed to
+  accumulate onto a periodic statement. Null on every ordinary invoice.
+  """
+  offCycleReason: String
   number: String!
   billType: BillType!
   status: InvoiceStatus!
@@ -69631,8 +69643,14 @@ extend type Query {
 }
 
 extend type Mutation {
-  createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
-  createInvoiceFromOrder(orderId: ID!): Invoice!
+  """
+  Bills the given shipments. offCycleReason is required only when the customer
+  is on a periodic statement, where invoicing freight on its own takes it off
+  that statement; omitting it there fails with a validation error on
+  ` + "`" + `offCycleReason` + "`" + ` so the client can ask for one.
+  """
+  createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
+  createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
 }
 `, BuiltIn: false},
 	{Name: "../schema/journal_entry.graphqls", Input: `type JournalEntryLineAccount {
@@ -86891,6 +86909,8 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_detail(ctx, field)
 	case "sectionBy":
 		return ec.fieldContext_Invoice_sectionBy(ctx, field)
+	case "offCycleReason":
+		return ec.fieldContext_Invoice_offCycleReason(ctx, field)
 	case "number":
 		return ec.fieldContext_Invoice_number(ctx, field)
 	case "billType":

@@ -32,7 +32,10 @@ func (s *Service) SweepDueSchedules(
 	ctx context.Context,
 	actor *servicesports.RequestActor,
 ) (*servicesports.InvoiceRunSweepResult, error) {
-	schedules, err := s.customerRepo.ListDueBillingSchedules(ctx)
+	schedules, err := s.customerRepo.ListDueBillingSchedules(
+		ctx,
+		&repositories.ListBillingSchedulesRequest{},
+	)
 	if err != nil {
 		return nil, err
 	}

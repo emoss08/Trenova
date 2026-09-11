@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *invoiceResolver) SubtotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error) {
@@ -46,7 +47,7 @@ func (r *invoiceLineResolver) Amount(ctx context.Context, obj *invoice.InvoiceLi
 	return obj.Amount.String(), nil
 }
 
-func (r *mutationResolver) CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string) (*invoice.Invoice, error) {
+func (r *mutationResolver) CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -64,14 +65,15 @@ func (r *mutationResolver) CreateInvoiceFromShipments(ctx context.Context, shipm
 	return r.invoiceService.CreateFromShipments(
 		ctx,
 		&services.CreateInvoiceFromShipmentsRequest{
-			ShipmentIDs: ids,
-			TenantInfo:  tenantInfo(authCtx),
+			ShipmentIDs:    ids,
+			TenantInfo:     tenantInfo(authCtx),
+			OffCycleReason: stringutils.FromPtr(offCycleReason),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
 }
 
-func (r *mutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID string) (*invoice.Invoice, error) {
+func (r *mutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -85,8 +87,9 @@ func (r *mutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID s
 	return r.invoiceService.CreateFromOrder(
 		ctx,
 		&services.CreateInvoiceFromOrderRequest{
-			OrderID:    id,
-			TenantInfo: tenantInfo(authCtx),
+			OrderID:        id,
+			TenantInfo:     tenantInfo(authCtx),
+			OffCycleReason: stringutils.FromPtr(offCycleReason),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)

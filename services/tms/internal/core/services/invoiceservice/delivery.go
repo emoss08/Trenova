@@ -151,12 +151,23 @@ func (s *Service) CreateFromShipments(
 		return nil, err
 	}
 
+	if err = guardStatementCadence(cus, req.OffCycleReason); err != nil {
+		return nil, err
+	}
+
 	number, err := s.generateInvoiceNumber(ctx, req.TenantInfo, billingProfileOf(cus))
 	if err != nil {
 		return nil, err
 	}
 
-	return s.createSingleShipmentInvoice(ctx, req.TenantInfo, shp, number, actor)
+	return s.createSingleShipmentInvoice(
+		ctx,
+		req.TenantInfo,
+		shp,
+		number,
+		offCycleReasonFor(cus, req.OffCycleReason),
+		actor,
+	)
 }
 
 func (s *Service) createSingleShipmentInvoice(
@@ -164,6 +175,7 @@ func (s *Service) createSingleShipmentInvoice(
 	tenantInfo pagination.TenantInfo,
 	shp *shipment.Shipment,
 	number string,
+	offCycleReason string,
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
 	var created *invoice.Invoice
@@ -186,6 +198,7 @@ func (s *Service) createSingleShipmentInvoice(
 			&servicesports.CreateInvoiceFromBillingQueueRequest{
 				BillingQueueItemID: queueItem.ID,
 				TenantInfo:         tenantInfo,
+				OffCycleReason:     offCycleReason,
 			},
 			actor,
 		)
@@ -320,9 +333,10 @@ func (s *Service) groupedInvoiceFromShipments(
 	}
 
 	return s.CreateFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
-		OrderID:     orderID,
-		ShipmentIDs: req.ShipmentIDs,
-		TenantInfo:  req.TenantInfo,
+		OrderID:        orderID,
+		ShipmentIDs:    req.ShipmentIDs,
+		TenantInfo:     req.TenantInfo,
+		OffCycleReason: req.OffCycleReason,
 	}, actor)
 }
 
@@ -456,14 +470,19 @@ func (s *Service) createOrderInvoiceTx(
 		return nil, txErr
 	}
 
+	if txErr = guardStatementCadence(cus, req.OffCycleReason); txErr != nil {
+		return nil, txErr
+	}
+
 	entity := s.buildInvoiceEntity(&buildInvoiceParams{
-		Anchor:       anchor,
-		Scope:        invoice.ScopeOrder,
-		Customer:     cus,
-		Control:      control,
-		Legs:         legs,
-		Order:        ord,
-		OrderCharges: charges,
+		Anchor:         anchor,
+		Scope:          invoice.ScopeOrder,
+		Customer:       cus,
+		Control:        control,
+		Legs:           legs,
+		Order:          ord,
+		OrderCharges:   charges,
+		OffCycleReason: offCycleReasonFor(cus, req.OffCycleReason),
 	})
 	if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {
 		return nil, multiErr

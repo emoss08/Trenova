@@ -948,6 +948,7 @@ var InvoiceColumns = struct {
 	ShipmentCount             Column // "shipment_count" → qualified: "inv.shipment_count"
 	Detail                    Column // "detail" → qualified: "inv.detail"
 	SectionBy                 Column // "section_by" → qualified: "inv.section_by"
+	OffCycleReason            Column // "off_cycle_reason" → qualified: "inv.off_cycle_reason"
 	Number                    Column // "number" → qualified: "inv.number"
 	BillType                  Column // "bill_type" → qualified: "inv.bill_type"
 	Status                    Column // "status" → qualified: "inv.status"
@@ -1014,6 +1015,7 @@ var InvoiceColumns = struct {
 	ShipmentCount:             NewColumn("shipment_count", "inv"),
 	Detail:                    NewColumn("detail", "inv"),
 	SectionBy:                 NewColumn("section_by", "inv"),
+	OffCycleReason:            NewColumn("off_cycle_reason", "inv"),
 	Number:                    NewColumn("number", "inv"),
 	BillType:                  NewColumn("bill_type", "inv"),
 	Status:                    NewColumn("status", "inv"),
@@ -1086,6 +1088,7 @@ var InvoiceFieldMap = map[string]string{
 	"shipmentCount":             "shipment_count",
 	"detail":                    "detail",
 	"sectionBy":                 "section_by",
+	"offCycleReason":            "off_cycle_reason",
 	"number":                    "number",
 	"billType":                  "bill_type",
 	"status":                    "status",
@@ -1156,6 +1159,7 @@ var InvoiceInsertableColumns = []string{
 	"shipment_count",
 	"detail",
 	"section_by",
+	"off_cycle_reason",
 	"number",
 	"bill_type",
 	"status",
@@ -1298,6 +1302,7 @@ var InvoiceFilter = struct {
 	ShipmentCount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
 	Detail                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detail" → DB: "detail"
 	SectionBy                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sectionBy" → DB: "section_by"
+	OffCycleReason            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "offCycleReason" → DB: "off_cycle_reason"
 	Number                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
 	BillType                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
 	Status                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
@@ -1391,6 +1396,9 @@ var InvoiceFilter = struct {
 	},
 	SectionBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sectionBy", op, value)
+	},
+	OffCycleReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("offCycleReason", op, value)
 	},
 	Number: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("number", op, value)

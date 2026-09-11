@@ -68,6 +68,7 @@ var InvoiceRunColumns = struct {
 	TotalAmount      Column // "total_amount" → qualified: "invrun.total_amount"
 	TotalAmountMinor Column // "total_amount_minor" → qualified: "invrun.total_amount_minor"
 	FailureReason    Column // "failure_reason" → qualified: "invrun.failure_reason"
+	OffCycleReason   Column // "off_cycle_reason" → qualified: "invrun.off_cycle_reason"
 	BuiltByID        Column // "built_by_id" → qualified: "invrun.built_by_id"
 	BuiltAt          Column // "built_at" → qualified: "invrun.built_at"
 	CommittedByID    Column // "committed_by_id" → qualified: "invrun.committed_by_id"
@@ -97,6 +98,7 @@ var InvoiceRunColumns = struct {
 	TotalAmount:      NewColumn("total_amount", "invrun"),
 	TotalAmountMinor: NewColumn("total_amount_minor", "invrun"),
 	FailureReason:    NewColumn("failure_reason", "invrun"),
+	OffCycleReason:   NewColumn("off_cycle_reason", "invrun"),
 	BuiltByID:        NewColumn("built_by_id", "invrun"),
 	BuiltAt:          NewColumn("built_at", "invrun"),
 	CommittedByID:    NewColumn("committed_by_id", "invrun"),
@@ -132,6 +134,7 @@ var InvoiceRunFieldMap = map[string]string{
 	"totalAmount":      "total_amount",
 	"totalAmountMinor": "total_amount_minor",
 	"failureReason":    "failure_reason",
+	"offCycleReason":   "off_cycle_reason",
 	"builtById":        "built_by_id",
 	"builtAt":          "built_at",
 	"committedById":    "committed_by_id",
@@ -165,6 +168,7 @@ var InvoiceRunInsertableColumns = []string{
 	"total_amount",
 	"total_amount_minor",
 	"failure_reason",
+	"off_cycle_reason",
 	"built_by_id",
 	"built_at",
 	"committed_by_id",
@@ -260,6 +264,7 @@ var InvoiceRunFilter = struct {
 	TotalAmount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
 	TotalAmountMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmountMinor" → DB: "total_amount_minor"
 	FailureReason    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureReason" → DB: "failure_reason"
+	OffCycleReason   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "offCycleReason" → DB: "off_cycle_reason"
 	BuiltByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "builtById" → DB: "built_by_id"
 	BuiltAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "builtAt" → DB: "built_at"
 	CommittedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "committedById" → DB: "committed_by_id"
@@ -326,6 +331,9 @@ var InvoiceRunFilter = struct {
 	},
 	FailureReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("failureReason", op, value)
+	},
+	OffCycleReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("offCycleReason", op, value)
 	},
 	BuiltByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("builtById", op, value)

@@ -246,8 +246,8 @@ func (_c *MockCustomerRepository_GetBillingProfile_Call) RunAndReturn(run func(c
 }
 
 // ListDueBillingSchedules provides a mock function for the type MockCustomerRepository
-func (_mock *MockCustomerRepository) ListDueBillingSchedules(ctx context.Context) ([]*repositories.DueBillingSchedule, error) {
-	ret := _mock.Called(ctx)
+func (_mock *MockCustomerRepository) ListDueBillingSchedules(ctx context.Context, req *repositories.ListBillingSchedulesRequest) ([]*repositories.DueBillingSchedule, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListDueBillingSchedules")
@@ -255,18 +255,18 @@ func (_mock *MockCustomerRepository) ListDueBillingSchedules(ctx context.Context
 
 	var r0 []*repositories.DueBillingSchedule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*repositories.DueBillingSchedule, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListBillingSchedulesRequest) ([]*repositories.DueBillingSchedule, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*repositories.DueBillingSchedule); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListBillingSchedulesRequest) []*repositories.DueBillingSchedule); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*repositories.DueBillingSchedule)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListBillingSchedulesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -280,17 +280,22 @@ type MockCustomerRepository_ListDueBillingSchedules_Call struct {
 
 // ListDueBillingSchedules is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockCustomerRepository_Expecter) ListDueBillingSchedules(ctx any) *MockCustomerRepository_ListDueBillingSchedules_Call {
-	return &MockCustomerRepository_ListDueBillingSchedules_Call{Call: _e.mock.On("ListDueBillingSchedules", ctx)}
+//   - req *repositories.ListBillingSchedulesRequest
+func (_e *MockCustomerRepository_Expecter) ListDueBillingSchedules(ctx any, req any) *MockCustomerRepository_ListDueBillingSchedules_Call {
+	return &MockCustomerRepository_ListDueBillingSchedules_Call{Call: _e.mock.On("ListDueBillingSchedules", ctx, req)}
 }
 
-func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) Run(run func(ctx context.Context)) *MockCustomerRepository_ListDueBillingSchedules_Call {
+func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) Run(run func(ctx context.Context, req *repositories.ListBillingSchedulesRequest)) *MockCustomerRepository_ListDueBillingSchedules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		run(arg0)
+		var arg1 *repositories.ListBillingSchedulesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListBillingSchedulesRequest)
+		}
+		run(arg0, arg1)
 	})
 	return _c
 }
@@ -300,7 +305,7 @@ func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) Return(dueBilling
 	return _c
 }
 
-func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) RunAndReturn(run func(ctx context.Context) ([]*repositories.DueBillingSchedule, error)) *MockCustomerRepository_ListDueBillingSchedules_Call {
+func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListBillingSchedulesRequest) ([]*repositories.DueBillingSchedule, error)) *MockCustomerRepository_ListDueBillingSchedules_Call {
 	_c.Call.Return(run)
 	return _c
 }

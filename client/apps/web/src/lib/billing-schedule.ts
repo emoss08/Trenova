@@ -1,3 +1,4 @@
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type {
   BillingCycle,
   InvoiceDelivery,
@@ -15,6 +16,36 @@ export type BillingSchedule = {
   invoiceDetail: InvoiceDetail;
   maxShipmentsPerInvoice: number;
 };
+
+const CADENCE_LABELS: Record<BillingCycle, string> = {
+  Immediate: "Per shipment",
+  Daily: "Daily",
+  Weekly: "Weekly",
+  BiWeekly: "Bi-weekly",
+  SemiMonthly: "Semi-monthly",
+  Monthly: "Monthly",
+  Quarterly: "Quarterly",
+};
+
+/** The cadence as a chip label — two words at most, for a card or a badge. */
+export function cadenceLabel(cycle: BillingCycle): string {
+  return CADENCE_LABELS[cycle] ?? "Per shipment";
+}
+
+const SPLIT_LABELS: Record<InvoiceSplitKey, string> = {
+  Customer: "One invoice",
+  CustomerAndPONumber: "One per PO",
+  CustomerAndShipmentBOL: "One per BOL",
+  CustomerAndOrder: "One per order",
+  CustomerAndOrigin: "One per pickup",
+  CustomerAndDestination: "One per delivery",
+  CustomerAndServiceType: "One per service type",
+};
+
+/** How the period splits, short enough to sit next to a number. */
+export function splitLabel(splitBy: InvoiceSplitKey): string {
+  return SPLIT_LABELS[splitBy] ?? SPLIT_LABELS.Customer;
+}
 
 const ORDINAL_SUFFIXES = ["th", "st", "nd", "rd"];
 
@@ -97,4 +128,35 @@ export function describeBillingSchedule(schedule: BillingSchedule): string {
   }
 
   return parts.join(" ");
+}
+
+/**
+ * "Mar 1 – Apr 1" for a half-open period.
+ *
+ * The end is exclusive on the wire, so it is shown as the boundary the freight
+ * stops at rather than being decremented by a day — a biller reading "Mar 1 –
+ * Mar 31" would reasonably expect a 31 March delivery to be on it, and it is
+ * not.
+ */
+export function periodRange(periodStart: number, periodEnd: number): string {
+  return `${formatUnixDateMedium(periodStart)} – ${formatUnixDateMedium(periodEnd)}`;
+}
+
+/**
+ * How long until a statement bills, in the words a biller uses.
+ *
+ * A boundary already in the past is said out loud rather than clamped: it means
+ * the scheduled sweep has not caught up, which is worth seeing.
+ */
+export function billsInLabel(periodEnd: number, nowSeconds: number): string {
+  const seconds = periodEnd - nowSeconds;
+  if (seconds <= 0) return "Due now";
+
+  const days = Math.floor(seconds / 86_400);
+  if (days >= 2) return `Bills in ${days} days`;
+  if (days === 1) return "Bills tomorrow";
+
+  const hours = Math.floor(seconds / 3_600);
+  if (hours >= 2) return `Bills in ${hours} hours`;
+  return "Bills within the hour";
 }

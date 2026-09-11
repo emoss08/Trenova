@@ -4403,6 +4403,11 @@ components:
                     type: string
                 number:
                     type: string
+                offCycleReason:
+                    description: |-
+                        OffCycleReason is why this invoice was cut for a customer whose freight was
+                        supposed to accumulate onto a statement. Empty on every ordinary invoice.
+                    type: string
                 order:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_order.Order'
                 orderId:
@@ -4640,6 +4645,13 @@ components:
                 itemCount:
                     type: integer
                 number:
+                    type: string
+                offCycleReason:
+                    description: |-
+                        OffCycleReason is why this run billed a period before its boundary. Empty
+                        on the ordinary path. It is kept on the run rather than only in the audit
+                        log because the next biller looking at the customer's history needs to see
+                        why a month has two invoices without going hunting for it.
                     type: string
                 organization:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.Organization'
@@ -11321,6 +11333,56 @@ components:
                 user:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.User'
             type: object
+        github_com_emoss08_trenova_internal_core_ports_services.OpenStatement:
+            properties:
+                autoBill:
+                    type: boolean
+                belowMinimum:
+                    description: |-
+                        BelowMinimum means every group is under the customer's floor, so billing
+                        today would produce nothing and the freight would roll into next period.
+                    type: boolean
+                billingCycleAnchorDay:
+                    type: integer
+                billingCycleTimezone:
+                    type: string
+                currencyCode:
+                    type: string
+                customerCode:
+                    type: string
+                customerId:
+                    type: string
+                customerName:
+                    type: string
+                customerStatus:
+                    type: string
+                cycle:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle'
+                detail:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail'
+                groups:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.StatementGroup'
+                    type: array
+                invoiceCount:
+                    type: integer
+                lastBilledPeriodEnd:
+                    type: integer
+                minimumAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                periodEnd:
+                    type: integer
+                periodStart:
+                    type: integer
+                sectionBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey'
+                shipmentCount:
+                    type: integer
+                splitBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey'
+                totalAmount:
+                    type: number
+            type: object
         github_com_emoss08_trenova_internal_core_ports_services.OrgSummary:
             properties:
                 id:
@@ -11581,6 +11643,44 @@ components:
                 - ShopStrategyBestMargin
                 - ShopStrategyGuideRank
                 - ShopStrategyFastestAccept
+        github_com_emoss08_trenova_internal_core_ports_services.StatementGroup:
+            properties:
+                belowMinimum:
+                    type: boolean
+                key:
+                    type: string
+                label:
+                    type: string
+                shipmentCount:
+                    type: integer
+                shipments:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.StatementShipment'
+                    type: array
+                totalAmount:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_internal_core_ports_services.StatementShipment:
+            properties:
+                amount:
+                    type: number
+                billingQueueItemId:
+                    type: string
+                bol:
+                    type: string
+                orderId:
+                    type: string
+                orderNumber:
+                    type: string
+                poNumber:
+                    type: string
+                proNumber:
+                    type: string
+                serviceDate:
+                    type: integer
+                shipmentId:
+                    type: string
+            type: object
         github_com_emoss08_trenova_internal_core_ports_services.UpdateAPIKeyRequest:
             properties:
                 description:
@@ -14209,6 +14309,15 @@ components:
                         type: string
                     type: array
             type: object
+        internal_api_handlers_invoicerunhandler.billStatementRequest:
+            properties:
+                exclude:
+                    items:
+                        $ref: '#/components/schemas/internal_api_handlers_invoicerunhandler.statementExclusionRequest'
+                    type: array
+                reason:
+                    type: string
+            type: object
         internal_api_handlers_invoicerunhandler.cancelRequest:
             properties:
                 reason:
@@ -14255,6 +14364,13 @@ components:
                     type: integer
                 periodStart:
                     type: integer
+            type: object
+        internal_api_handlers_invoicerunhandler.statementExclusionRequest:
+            properties:
+                billingQueueItemId:
+                    type: string
+                reason:
+                    type: string
             type: object
         internal_api_handlers_jurisdictionrulehandler.verifyBody:
             properties:
@@ -17349,6 +17465,135 @@ paths:
             summary: Post an invoice
             tags:
                 - Invoices
+    /billing/statements/:
+        get:
+            operationId: listOpenStatements
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.OpenStatement'
+                                type: array
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List open statements
+            tags:
+                - Invoice Run
+    /billing/statements/{customerID}/:
+        get:
+            operationId: getOpenStatement
+            parameters:
+                - description: Customer ID
+                  in: path
+                  name: customerID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.OpenStatement'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+            security:
+                - BearerAuth: []
+            summary: Get one customer's open statement
+            tags:
+                - Invoice Run
+    /billing/statements/{customerID}/bill/:
+        post:
+            operationId: billStatementNow
+            parameters:
+                - description: Customer ID
+                  in: path
+                  name: customerID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_invoicerunhandler.billStatementRequest'
+                description: Reason for billing early
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.CommitInvoiceRunResult'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+            security:
+                - BearerAuth: []
+            summary: Bill an open statement before its cycle closes
+            tags:
+                - Invoice Run
     /carriers/:
         get:
             operationId: listCarriers

@@ -57,8 +57,15 @@ type InvoiceRun struct {
 	TotalAmount      decimal.Decimal `json:"totalAmount"      bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
 	TotalAmountMinor int64           `json:"totalAmountMinor" bun:"total_amount_minor,type:BIGINT,notnull"`
 
-	FailureReason string   `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`
-	BuiltByID     pulid.ID `json:"builtById"     bun:"built_by_id,type:VARCHAR(100),nullzero"`
+	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`
+
+	// OffCycleReason is why this run billed a period before its boundary. Empty
+	// on the ordinary path. It is kept on the run rather than only in the audit
+	// log because the next biller looking at the customer's history needs to see
+	// why a month has two invoices without going hunting for it.
+	OffCycleReason string `json:"offCycleReason" bun:"off_cycle_reason,type:TEXT,nullzero"`
+
+	BuiltByID pulid.ID `json:"builtById" bun:"built_by_id,type:VARCHAR(100),nullzero"`
 	BuiltAt       *int64   `json:"builtAt"       bun:"built_at,type:BIGINT,nullzero"`
 	CommittedByID pulid.ID `json:"committedById" bun:"committed_by_id,type:VARCHAR(100),nullzero"`
 	CommittedAt   *int64   `json:"committedAt"   bun:"committed_at,type:BIGINT,nullzero"`

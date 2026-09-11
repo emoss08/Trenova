@@ -3421,6 +3421,174 @@ const docTemplate = `{
                 }
             }
         },
+        "/billing/statements/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoice Run"
+                ],
+                "summary": "List open statements",
+                "operationId": "listOpenStatements",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.OpenStatement"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/statements/{customerID}/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoice Run"
+                ],
+                "summary": "Get one customer's open statement",
+                "operationId": "getOpenStatement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Customer ID",
+                        "name": "customerID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.OpenStatement"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/statements/{customerID}/bill/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoice Run"
+                ],
+                "summary": "Bill an open statement before its cycle closes",
+                "operationId": "billStatementNow",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Customer ID",
+                        "name": "customerID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Reason for billing early",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.billStatementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CommitInvoiceRunResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/carriers/": {
             "get": {
                 "security": [
@@ -38188,6 +38356,10 @@ const docTemplate = `{
                 "number": {
                     "type": "string"
                 },
+                "offCycleReason": {
+                    "description": "OffCycleReason is why this invoice was cut for a customer whose freight was\nsupposed to accumulate onto a statement. Empty on every ordinary invoice.",
+                    "type": "string"
+                },
                 "order": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_order.Order"
                 },
@@ -38524,6 +38696,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "number": {
+                    "type": "string"
+                },
+                "offCycleReason": {
+                    "description": "OffCycleReason is why this run billed a period before its boundary. Empty\non the ordinary path. It is kept on the run rather than only in the audit\nlog because the next biller looking at the customer's history needs to see\nwhy a month has two invoices without going hunting for it.",
                     "type": "string"
                 },
                 "organization": {
@@ -47944,6 +48120,78 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.OpenStatement": {
+            "type": "object",
+            "properties": {
+                "autoBill": {
+                    "type": "boolean"
+                },
+                "belowMinimum": {
+                    "description": "BelowMinimum means every group is under the customer's floor, so billing\ntoday would produce nothing and the freight would roll into next period.",
+                    "type": "boolean"
+                },
+                "billingCycleAnchorDay": {
+                    "type": "integer"
+                },
+                "billingCycleTimezone": {
+                    "type": "string"
+                },
+                "currencyCode": {
+                    "type": "string"
+                },
+                "customerCode": {
+                    "type": "string"
+                },
+                "customerId": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerStatus": {
+                    "type": "string"
+                },
+                "cycle": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle"
+                },
+                "detail": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail"
+                },
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.StatementGroup"
+                    }
+                },
+                "invoiceCount": {
+                    "type": "integer"
+                },
+                "lastBilledPeriodEnd": {
+                    "type": "integer"
+                },
+                "minimumAmount": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "periodEnd": {
+                    "type": "integer"
+                },
+                "periodStart": {
+                    "type": "integer"
+                },
+                "sectionBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey"
+                },
+                "shipmentCount": {
+                    "type": "integer"
+                },
+                "splitBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey"
+                },
+                "totalAmount": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.OrgSummary": {
             "type": "object",
             "properties": {
@@ -48315,6 +48563,64 @@ const docTemplate = `{
                 "ShopStrategyGuideRank",
                 "ShopStrategyFastestAccept"
             ]
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.StatementGroup": {
+            "type": "object",
+            "properties": {
+                "belowMinimum": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "shipmentCount": {
+                    "type": "integer"
+                },
+                "shipments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.StatementShipment"
+                    }
+                },
+                "totalAmount": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.StatementShipment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "billingQueueItemId": {
+                    "type": "string"
+                },
+                "bol": {
+                    "type": "string"
+                },
+                "orderId": {
+                    "type": "string"
+                },
+                "orderNumber": {
+                    "type": "string"
+                },
+                "poNumber": {
+                    "type": "string"
+                },
+                "proNumber": {
+                    "type": "string"
+                },
+                "serviceDate": {
+                    "type": "integer"
+                },
+                "shipmentId": {
+                    "type": "string"
+                }
+            }
         },
         "github_com_emoss08_trenova_internal_core_ports_services.UpdateAPIKeyRequest": {
             "type": "object",
@@ -52167,6 +52473,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api_handlers_invoicerunhandler.billStatementRequest": {
+            "type": "object",
+            "properties": {
+                "exclude": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.statementExclusionRequest"
+                    }
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_api_handlers_invoicerunhandler.cancelRequest": {
             "type": "object",
             "properties": {
@@ -52237,6 +52557,17 @@ const docTemplate = `{
                 },
                 "periodStart": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_api_handlers_invoicerunhandler.statementExclusionRequest": {
+            "type": "object",
+            "properties": {
+                "billingQueueItemId": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
                 }
             }
         },

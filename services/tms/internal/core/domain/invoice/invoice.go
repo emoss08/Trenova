@@ -60,6 +60,9 @@ type Invoice struct {
 	// they were already sent reads.
 	Detail                    customer.InvoiceDetail     `json:"detail"    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
 	SectionBy                 customer.InvoiceSectionKey `json:"sectionBy" bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
+	// OffCycleReason is why this invoice was cut for a customer whose freight was
+	// supposed to accumulate onto a statement. Empty on every ordinary invoice.
+	OffCycleReason string `json:"offCycleReason" bun:"off_cycle_reason,type:TEXT,nullzero"`
 	Number                    string                     `json:"number"                    bun:"number,type:VARCHAR(100),notnull"`
 	BillType                  billingqueue.BillType      `json:"billType"                  bun:"bill_type,type:VARCHAR(50),notnull"`
 	Status                    Status                     `json:"status"                    bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`

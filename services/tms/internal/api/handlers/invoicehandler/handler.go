@@ -113,10 +113,15 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 
 type createFromShipmentsRequest struct {
 	ShipmentIDs []pulid.ID `json:"shipmentIds"`
+	// OffCycleReason is required only when the customer is on a periodic
+	// statement, and is what the client sends back after the biller confirms the
+	// deviation.
+	OffCycleReason string `json:"offCycleReason"`
 }
 
 type createFromOrderRequest struct {
-	OrderID pulid.ID `json:"orderId"`
+	OrderID        pulid.ID `json:"orderId"`
+	OffCycleReason string   `json:"offCycleReason"`
 }
 
 type updateDraftRequest struct {
@@ -211,7 +216,8 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 	entity, err := h.service.CreateFromShipments(
 		c.Request.Context(),
 		&services.CreateInvoiceFromShipmentsRequest{
-			ShipmentIDs: req.ShipmentIDs,
+			ShipmentIDs:    req.ShipmentIDs,
+			OffCycleReason: req.OffCycleReason,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,
 				BuID:  authCtx.BusinessUnitID,
@@ -238,7 +244,8 @@ func (h *Handler) createFromOrder(c *gin.Context) {
 	entity, err := h.service.CreateFromOrder(
 		c.Request.Context(),
 		&services.CreateInvoiceFromOrderRequest{
-			OrderID: req.OrderID,
+			OrderID:        req.OrderID,
+			OffCycleReason: req.OffCycleReason,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,
 				BuID:  authCtx.BusinessUnitID,

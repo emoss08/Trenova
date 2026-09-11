@@ -70,6 +70,11 @@ type Invoice {
   detail: InvoiceDetail!
   """How the lines on this invoice are organised for the reader."""
   sectionBy: InvoiceSectionKey!
+  """
+  Why this invoice was cut for a customer whose freight was supposed to
+  accumulate onto a periodic statement. Null on every ordinary invoice.
+  """
+  offCycleReason: String
   number: String!
   billType: BillType!
   status: InvoiceStatus!
@@ -139,6 +144,12 @@ extend type Query {
 }
 
 extend type Mutation {
-  createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
-  createInvoiceFromOrder(orderId: ID!): Invoice!
+  """
+  Bills the given shipments. offCycleReason is required only when the customer
+  is on a periodic statement, where invoicing freight on its own takes it off
+  that statement; omitting it there fails with a validation error on
+  `offCycleReason` so the client can ask for one.
+  """
+  createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
+  createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
 }
