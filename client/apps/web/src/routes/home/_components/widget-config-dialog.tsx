@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ReportSourcePicker, type ReportSource } from "@/components/reports/report-source-picker";
 import { useReportCatalog, useReportDashboards } from "@/hooks/use-reports";
 import type { HomeMetricOption, HomeWidget, HomeWidgetOption } from "@/lib/graphql/home-layout";
@@ -63,6 +64,8 @@ export function WidgetConfigDialog({
   onSave,
   onCancel,
 }: WidgetConfigDialogProps) {
+  const t = useT();
+
   const [draft, setDraft] = useState<HomeWidget>(widget);
   const kind = option?.configKind ?? "none";
   const { icon: Icon } = widgetVisualFor(widget.key);
@@ -87,9 +90,9 @@ export function WidgetConfigDialog({
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-3.5">
           <Field
-            label="Title"
+            label={t("Title")}
             htmlFor="widget-title"
-            hint="Leave blank to use the widget’s own name."
+            hint={t("Leave blank to use the widget’s own name.")}
           >
             <Input
               id="widget-title"
@@ -103,7 +106,7 @@ export function WidgetConfigDialog({
 
           {kind === "none" && (
             <p className="text-muted-foreground text-xs">
-              This widget draws itself — there is nothing else to choose.
+              {t("This widget draws itself — there is nothing else to choose.")}
             </p>
           )}
 
@@ -128,11 +131,11 @@ export function WidgetConfigDialog({
           {kind === "queue" && (
             <ConfigNumberField
               id="widget-limit"
-              label="Rows to show"
+              label={t("Rows to show")}
               value={draft.config.limit ?? null}
               min={0}
               max={50}
-              hint="Leave empty to show as many as fit."
+              hint={t("Leave empty to show as many as fit.")}
               onChange={(value) => patchConfig({ limit: value })}
             />
           )}
@@ -140,11 +143,11 @@ export function WidgetConfigDialog({
           {kind === "trend" && (
             <ConfigNumberField
               id="widget-window"
-              label="Window (days)"
+              label={t("Window (days)")}
               value={draft.config.windowDays ?? null}
               min={0}
               max={365}
-              hint="Leave empty to use the organization default."
+              hint={t("Leave empty to use the organization default.")}
               onChange={(value) => patchConfig({ windowDays: value })}
             />
           )}
@@ -160,7 +163,7 @@ export function WidgetConfigDialog({
 
           {kind === "text" && (
             <Field
-              label="Announcement"
+              label={t("Announcement")}
               htmlFor="widget-text"
               hint={`${(draft.config.text ?? "").length} / ${MAX_ANNOUNCEMENT}`}
             >
@@ -168,7 +171,7 @@ export function WidgetConfigDialog({
                 id="widget-text"
                 rows={5}
                 maxLength={MAX_ANNOUNCEMENT}
-                placeholder="What everyone on this home screen should read first."
+                placeholder={t("What everyone on this home screen should read first.")}
                 value={draft.config.text ?? ""}
                 onChange={(event) => patchConfig({ text: event.target.value || null })}
               />
@@ -181,10 +184,10 @@ export function WidgetConfigDialog({
             {blocker}
           </p>
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={blocker != null} onClick={() => onSave(draft)}>
-            Save
+            {t("Save")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -287,6 +290,8 @@ function MetricPicker({
   max: number;
   onChange: (next: string[]) => void;
 }) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const term = search.trim().toLowerCase();
 
@@ -309,7 +314,7 @@ function MetricPicker({
     return (
       <Field label={max === 1 ? "Metric" : "Metrics"}>
         <p className="border-border text-muted-foreground rounded-md border border-dashed px-3 py-4 text-center text-xs">
-          No metrics are available to you on this organization.
+          {t("No metrics are available to you on this organization.")}
         </p>
       </Field>
     );
@@ -321,7 +326,7 @@ function MetricPicker({
         <Label>{max === 1 ? "Metric" : "Metrics"}</Label>
         {max > 1 && (
           <span className="text-2xs text-muted-foreground ml-auto tabular-nums">
-            {selected.length} of {max} chosen
+            {t("{0} of {1} chosen", selected.length, max)}
           </span>
         )}
       </div>
@@ -330,8 +335,8 @@ function MetricPicker({
         {metrics.length > 8 && (
           <div className="border-border/70 border-b p-2">
             <Input
-              aria-label="Search metrics"
-              placeholder="Search metrics…"
+              aria-label={t("Search metrics")}
+              placeholder={t("Search metrics…")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
@@ -365,7 +370,7 @@ function MetricPicker({
 
           {visible.length === 0 && (
             <p className="text-muted-foreground col-span-full px-2 py-6 text-center text-xs">
-              No metric matches “{search.trim()}”.
+              {t("No metric matches “{0}”.", search.trim())}
             </p>
           )}
         </div>
@@ -397,6 +402,8 @@ function ReportConfig({
   config: HomeWidget["config"];
   onPatch: (patch: Partial<HomeWidget["config"]>) => void;
 }) {
+  const t = useT();
+
   const shows = reportShows(config);
 
   const tile = useMemo<ReportDashboardTile | null>(
@@ -453,14 +460,14 @@ function ReportConfig({
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <Label id="widget-report-label">Report</Label>
+        <Label id="widget-report-label">{t("Report")}</Label>
         <ReportSourcePicker labelledBy="widget-report-label" value={source} onChange={setSource} />
       </div>
 
       {tile && (
-        <Field label="Shows as">
+        <Field label={t("Shows as")}>
           <SegmentedControl
-            aria-label="How this report is drawn"
+            aria-label={t("How this report is drawn")}
             fullWidth
             value={shows}
             onValueChange={setShows}
@@ -474,10 +481,10 @@ function ReportConfig({
       )}
 
       {tile && shows === "chart" && (
-        <Field label="Chart">
+        <Field label={t("Chart")}>
           {charts.length === 0 ? (
             <p className="text-muted-foreground text-xs">
-              This report has no charts yet — add one in the report builder.
+              {t("This report has no charts yet — add one in the report builder.")}
             </p>
           ) : (
             <Select
@@ -501,10 +508,10 @@ function ReportConfig({
       )}
 
       {tile && shows === "kpi" && (
-        <Field label="Measure">
+        <Field label={t("Measure")}>
           {measures.length === 0 ? (
             <p className="text-muted-foreground text-xs">
-              This report returns no measures to show as a single number.
+              {t("This report returns no measures to show as a single number.")}
             </p>
           ) : (
             <Select
@@ -513,7 +520,7 @@ function ReportConfig({
               items={measures.map((output) => ({ value: output.id, label: output.label }))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a measure" />
+                <SelectValue placeholder={t("Choose a measure")} />
               </SelectTrigger>
               <SelectContent>
                 {measures.map((output) => (
@@ -530,11 +537,11 @@ function ReportConfig({
       {tile && shows === "table" && (
         <ConfigNumberField
           id="widget-report-limit"
-          label="Rows to show"
+          label={t("Rows to show")}
           value={config.limit ?? null}
           min={0}
           max={50}
-          hint="Leave empty to use the report’s own limit."
+          hint={t("Leave empty to use the report’s own limit.")}
           onChange={(limit) => onPatch({ limit })}
         />
       )}
@@ -549,6 +556,8 @@ function DashboardPicker({
   dashboardId: string | null;
   onChange: (dashboardId: string | null) => void;
 }) {
+  const t = useT();
+
   const dashboards = useReportDashboards();
   const [search, setSearch] = useState("");
   const term = search.trim().toLowerCase();
@@ -566,7 +575,7 @@ function DashboardPicker({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label id="widget-dashboard-label">Dashboard</Label>
+      <Label id="widget-dashboard-label">{t("Dashboard")}</Label>
       <div
         aria-labelledby="widget-dashboard-label"
         className="border-border bg-background flex flex-col rounded-md border"
@@ -574,8 +583,8 @@ function DashboardPicker({
         {(dashboards.data ?? []).length > 6 && (
           <div className="border-border/70 border-b p-2">
             <Input
-              aria-label="Search dashboards"
-              placeholder="Search dashboards…"
+              aria-label={t("Search dashboards")}
+              placeholder={t("Search dashboards…")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
@@ -585,7 +594,7 @@ function DashboardPicker({
 
         <div
           role="listbox"
-          aria-label="Dashboards"
+          aria-label={t("Dashboards")}
           className="flex max-h-52 min-h-24 flex-col gap-1 overflow-y-auto p-1.5"
         >
           {visible.map((entry) => (

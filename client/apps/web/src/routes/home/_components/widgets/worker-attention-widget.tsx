@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   fetchWorkerRosterAttention,
   WORKER_ROSTER_ATTENTION_KEY,
@@ -27,6 +28,8 @@ type Line = {
  * can never disagree.
  */
 export function WorkerAttentionWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     queryKey: [WORKER_ROSTER_ATTENTION_KEY],
     queryFn: ({ signal }) => fetchWorkerRosterAttention({ signal }),
@@ -72,7 +75,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
     <WidgetShell title={widget.title || "Workforce Attention"} href="/hr/workers">
       {allClear ? (
         <p className="text-muted-foreground px-1.5 py-2 text-xs">
-          Every active worker is compliant, in date and off the watch list.
+          {t("Every active worker is compliant, in date and off the watch list.")}
         </p>
       ) : (
         <div className="flex flex-col gap-0.5">
@@ -101,23 +104,23 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
         <>
           <dl className="border-border/60 mt-2 grid grid-cols-3 gap-x-2 border-t pt-2">
             <Standing
-              label="Reviews to sign"
+              label={t("Reviews to sign")}
               value={String(data.reviewsAwaitingSignOff)}
               muted={data.reviewsAwaitingSignOff === 0}
             />
             <Standing
-              label="PTO liability"
+              label={t("PTO liability")}
               value={`${formatPtoDayTotal(data.ptoLiabilityDays)} days`}
               muted={Number(data.ptoLiabilityDays) === 0}
             />
             <Standing
-              label="Certifications owed"
+              label={t("Certifications owed")}
               value={String(data.leaveCertificationsOutstanding)}
               muted={data.leaveCertificationsOutstanding === 0}
             />
           </dl>
           <p className="text-muted-foreground mt-1.5 px-1.5 text-[11px]">
-            {data.activeWorkers} active {data.activeWorkers === 1 ? "worker" : "workers"}
+            {t("{0} active {1}", data.activeWorkers, data.activeWorkers === 1 ? "worker" : "workers")}
           </p>
         </>
       ) : null}

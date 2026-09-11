@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import {
   useHomeLayout,
@@ -55,6 +56,8 @@ function sameWidgets(a: HomeWidget[], b: HomeWidget[]): boolean {
 }
 
 export function Home() {
+  const t = useT();
+
   const layoutQuery = useHomeLayout();
   const layout = layoutQuery.data ?? DEFAULT_HOME_LAYOUT;
 
@@ -108,7 +111,7 @@ export function Home() {
       });
       setDraft(null);
       setEditing(false);
-      toast.success("Home screen saved");
+      toast.success(t("Home screen saved"));
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not save your home screen"));
     }
@@ -129,7 +132,7 @@ export function Home() {
 
   return (
     <>
-      <Metadata title="Home" description="Your work, your numbers, and where to go next." />
+      <Metadata title={t("Home")} description={t("Your work, your numbers, and where to go next.")} />
 
       <BriefingBar
         attention={data.attention}
@@ -189,9 +192,11 @@ function DivergenceChip({
   pending: boolean;
   onReset: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border/70 bg-card text-2xs text-muted-foreground flex flex-wrap items-center gap-1.5 self-start rounded-full border py-0.5 pr-1 pl-2.5">
-      <span>Customized{presetName ? ` from ${presetName}` : ""}</span>
+      <span>{t("Customized{0}", presetName ? ` from ${presetName}` : "")}</span>
       <Button
         variant="ghost"
         size="xxs"
@@ -200,7 +205,7 @@ function DivergenceChip({
         disabled={pending}
       >
         <Undo2Icon className="size-2.5" />
-        Reset
+        {t("Reset")}
       </Button>
     </div>
   );

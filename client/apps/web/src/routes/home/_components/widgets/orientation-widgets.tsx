@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { buildCommandHref } from "@/components/command-palette/route-command-data";
 import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionCommand } from "@/config/navigation.types";
@@ -18,6 +19,8 @@ import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget
 import type { WidgetProps } from "../widget-registry";
 
 export function QuickActionsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const { data: preferences } = useSidebarPreferences();
 
@@ -42,7 +45,7 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
   return (
     <WidgetShell title={widget.title || "Quick Actions"}>
       {actions.length === 0 ? (
-        <WidgetEmpty>Pick your quick actions from the sidebar settings.</WidgetEmpty>
+        <WidgetEmpty>{t("Pick your quick actions from the sidebar settings.")}</WidgetEmpty>
       ) : (
         <div className="grid grid-cols-2 gap-1.5">
           {actions.map(({ definition, icon: Icon, href }) => (
@@ -63,6 +66,8 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
 }
 
 export function FavoritesWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const { data: favorites, isLoading } = useQuery(queries.pageFavorite.all());
 
   return (
@@ -73,7 +78,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
       {isLoading ? (
         <WidgetSkeleton />
       ) : !favorites || favorites.length === 0 ? (
-        <WidgetEmpty>Star a page to pin it here.</WidgetEmpty>
+        <WidgetEmpty>{t("Star a page to pin it here.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-0.5">
           {favorites.map((favorite) => (
@@ -142,11 +147,13 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
 }
 
 export function ActivityWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   return (
     <WidgetShell
       title={widget.title || "Activity"}
       href="/admin/audit-logs"
-      hrefLabel="Open audit log"
+      hrefLabel={t("Open audit log")}
     >
       <ActivityRows limit={widget.config.limit ?? 10} mineOnly={false} />
     </WidgetShell>
@@ -191,6 +198,8 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
 }
 
 export function NotificationsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const limit = widget.config.limit ?? 8;
   const { data: notifications, isLoading } = useQuery({
     ...queries.notification.feed({ first: limit, unreadOnly: true }),
@@ -208,7 +217,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
       {isLoading ? (
         <WidgetSkeleton />
       ) : !notifications || notifications.length === 0 ? (
-        <WidgetEmpty>You&rsquo;re all caught up.</WidgetEmpty>
+        <WidgetEmpty>{t("You’re all caught up.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-0.5">
           {notifications.map((notification) => (

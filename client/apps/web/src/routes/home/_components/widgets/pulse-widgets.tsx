@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ChartContainer,
   ChartTooltip,
@@ -16,12 +17,14 @@ const SHIPMENTS_HREF = "/shipment-management/shipments";
 const RECEIVABLES_HREF = "/accounting/ar/aging";
 
 export function KPIWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const metric = widget.config.metric ? resolveMetric(widget.config.metric, data) : null;
 
   if (!widget.config.metric) {
     return (
       <WidgetShell title={widget.title || "Metric"} scroll={false}>
-        <WidgetNeedsSetup message="Choose the metric this tile shows." />
+        <WidgetNeedsSetup message={t("Choose the metric this tile shows.")} />
       </WidgetShell>
     );
   }
@@ -40,6 +43,8 @@ export function KPIWidget({ widget, data }: WidgetProps) {
 }
 
 export function KPIRowWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const configured = widget.config.metrics ?? [];
   const metrics = configured
     .map((key) => resolveMetric(key, data))
@@ -54,7 +59,7 @@ export function KPIRowWidget({ widget, data }: WidgetProps) {
         {loading ? (
           <WidgetSkeleton rows={2} />
         ) : (
-          <WidgetNeedsSetup message="Choose the metrics this strip shows." />
+          <WidgetNeedsSetup message={t("Choose the metrics this strip shows.")} />
         )}
       </WidgetShell>
     );
@@ -73,32 +78,34 @@ export function KPIRowWidget({ widget, data }: WidgetProps) {
 }
 
 export function ARSnapshotWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const overview = data.receivables?.overview;
 
   return (
     <WidgetShell
       title={widget.title || "Receivables"}
       href={RECEIVABLES_HREF}
-      hrefLabel="Open aging"
+      hrefLabel={t("Open aging")}
       scroll={false}
     >
       {data.receivablesLoading ? (
         <WidgetSkeleton rows={2} />
       ) : !data.receivables ? (
-        <WidgetEmpty>Receivables data is unavailable.</WidgetEmpty>
+        <WidgetEmpty>{t("Receivables data is unavailable.")}</WidgetEmpty>
       ) : (
         <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
-          <Figure label="Open" value={formatCurrency((overview?.totalOpenMinor ?? 0) / 100)} />
+          <Figure label={t("Open")} value={formatCurrency((overview?.totalOpenMinor ?? 0) / 100)} />
           <Figure
-            label="Overdue"
+            label={t("Overdue")}
             value={formatCurrency((overview?.overdueMinor ?? 0) / 100)}
             tone="danger"
           />
           <Figure
-            label="Unapplied"
+            label={t("Unapplied")}
             value={formatCurrency((overview?.unappliedCashMinor ?? 0) / 100)}
           />
-          <Figure label="DSO" value={`${(data.receivables.currentDsoDays ?? 0).toFixed(1)}d`} />
+          <Figure label={t("DSO")} value={`${(data.receivables.currentDsoDays ?? 0).toFixed(1)}d`} />
         </div>
       )}
     </WidgetShell>
@@ -127,6 +134,8 @@ const REVENUE_CHART_CONFIG = {
 } as const;
 
 export function RevenueTrendWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const points = data.shipmentAnalytics.revenueToday.sparkline;
   // Roughly six labels regardless of how many points the window holds — a
   // label per hour reads as noise at this size.
@@ -136,13 +145,13 @@ export function RevenueTrendWidget({ widget, data }: WidgetProps) {
     <WidgetShell
       title={widget.title || "Revenue & Volume"}
       href={SHIPMENTS_HREF}
-      hrefLabel="Open shipments"
+      hrefLabel={t("Open shipments")}
       scroll={false}
     >
       {data.shipmentAnalyticsLoading ? (
         <WidgetSkeleton rows={4} />
       ) : points.length === 0 ? (
-        <WidgetEmpty>No revenue recorded in this window.</WidgetEmpty>
+        <WidgetEmpty>{t("No revenue recorded in this window.")}</WidgetEmpty>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <div className="flex items-baseline gap-2">
@@ -190,13 +199,15 @@ export function RevenueTrendWidget({ widget, data }: WidgetProps) {
 }
 
 export function OnTimeGoalWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const onTime = data.shipmentAnalytics.onTimePercent;
 
   return (
     <WidgetShell
       title={widget.title || "On-Time Goal"}
       href={SHIPMENTS_HREF}
-      hrefLabel="Open shipments"
+      hrefLabel={t("Open shipments")}
       scroll={false}
     >
       {data.shipmentAnalyticsLoading ? (
@@ -214,7 +225,7 @@ export function OnTimeGoalWidget({ widget, data }: WidgetProps) {
             </span>
           </RingGauge>
           <span className="text-2xs text-muted-foreground">
-            Target {onTime.target}% · 7-day {onTime.sevenDayPercent.toFixed(1)}%
+            {t("Target {0}% · 7-day {1}%", onTime.target, onTime.sevenDayPercent.toFixed(1))}
           </span>
         </div>
       )}
@@ -223,6 +234,8 @@ export function OnTimeGoalWidget({ widget, data }: WidgetProps) {
 }
 
 export function FleetStatusWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const breakdown = data.shipmentAnalytics.activeShipments.breakdown;
   const rows = [
     { label: "In transit", value: breakdown.inTransit, color: "var(--brand)" },
@@ -237,7 +250,7 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
       {data.shipmentAnalyticsLoading ? (
         <WidgetSkeleton rows={4} />
       ) : total === 0 ? (
-        <WidgetEmpty>Nothing moving right now.</WidgetEmpty>
+        <WidgetEmpty>{t("Nothing moving right now.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-2">
           <div className="bg-muted flex h-1.5 overflow-hidden rounded-full">
@@ -265,7 +278,7 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
             to={SHIPMENTS_HREF}
             className="text-2xs text-muted-foreground hover:text-foreground pt-1"
           >
-            {total} active loads
+            {t("{0} active loads", total)}
           </Link>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -140,6 +141,8 @@ export function BriefingBar({
   saving,
   onCustomize,
 }: BriefingBarProps) {
+  const t = useT();
+
   const user = useAuthStore((state) => state.user);
   const clock = useUserClock();
   const chips = buildChips(attention, analytics, analyticsReady);
@@ -190,7 +193,7 @@ export function BriefingBar({
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="text-xs font-medium"
                 >
-                  {total} {total === 1 ? "item needs" : "items need"} you
+                  {t("{0}{1} you", total, total === 1 ? "item needs" : "items need")}
                 </m.span>
                 {chips.map((chip, index) => (
                   <m.span
@@ -237,12 +240,12 @@ export function BriefingBar({
                 render={
                   <Button variant="outline" size="sm" disabled>
                     <LockIcon className="size-3.5" />
-                    Customize
+                    {t("Customize")}
                   </Button>
                 }
               />
               <TooltipContent side="bottom">
-                Your administrator manages this home screen.
+                {t("Your administrator manages this home screen.")}
               </TooltipContent>
             </Tooltip>
           ) : (

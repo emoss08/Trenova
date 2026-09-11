@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ExceptionsList } from "@/components/work-modules/exceptions-list";
 import { UnassignedQueueList } from "@/components/work-modules/unassigned-queue-list";
 import {
@@ -68,6 +69,8 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
 }
 
 export function UnassignedWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const [summary, setSummary] = useState({
     totalCount: undefined as number | undefined,
@@ -86,12 +89,12 @@ export function UnassignedWidget({ widget }: WidgetProps) {
       actions={
         summary.pendingRevenue > 0 ? (
           <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
-            {formatCurrency(summary.pendingRevenue)} waiting
+            {t("{0} waiting", formatCurrency(summary.pendingRevenue))}
           </span>
         ) : undefined
       }
       href={SHIPMENTS_HREF}
-      hrefLabel="Open dispatch board"
+      hrefLabel={t("Open dispatch board")}
     >
       <UnassignedQueueList
         limit={widget.config.limit ?? undefined}
@@ -103,6 +106,8 @@ export function UnassignedWidget({ widget }: WidgetProps) {
 }
 
 export function ExceptionsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const [count, setCount] = useState(0);
 
@@ -116,7 +121,7 @@ export function ExceptionsWidget({ widget }: WidgetProps) {
       title={widget.title || "Exceptions"}
       badge={<WidgetCount value={count} tone={count > 0 ? "danger" : "muted"} />}
       href={SHIPMENTS_HREF}
-      hrefLabel="Open dispatch board"
+      hrefLabel={t("Open dispatch board")}
       bodyClassName="p-0"
     >
       <ExceptionsList
@@ -129,6 +134,8 @@ export function ExceptionsWidget({ widget }: WidgetProps) {
 }
 
 export function DetentionWatchWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const all = data.shipmentAnalytics.detentionWatchlist.items;
   // A limit of 0 means "as many as fit", matching the queue lists.
   const items = all.slice(0, widget.config.limit || undefined);
@@ -142,7 +149,7 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
       {data.shipmentAnalyticsLoading ? (
         <WidgetSkeleton />
       ) : items.length === 0 ? (
-        <WidgetEmpty>Nothing dwelling past threshold.</WidgetEmpty>
+        <WidgetEmpty>{t("Nothing dwelling past threshold.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-0.5">
           {items.map((item) => (
@@ -170,6 +177,8 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
 }
 
 export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const all = data.shipmentAnalytics.tomorrowsPickups.pickups;
   const items = all.slice(0, widget.config.limit || undefined);
 
@@ -182,7 +191,7 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
       {data.shipmentAnalyticsLoading ? (
         <WidgetSkeleton rows={5} />
       ) : items.length === 0 ? (
-        <WidgetEmpty>No pickups scheduled for tomorrow.</WidgetEmpty>
+        <WidgetEmpty>{t("No pickups scheduled for tomorrow.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-0.5">
           {items.map((item) => (
@@ -238,6 +247,8 @@ function CountWidget({
   emptyMessage: string;
   tone: "danger" | "warning" | "brand";
 }) {
+  const t = useT();
+
   return (
     <WidgetShell title={title} href={href} hrefLabel={hrefLabel} scroll={false}>
       {loading ? (
@@ -255,7 +266,7 @@ function CountWidget({
           >
             {count}
           </span>
-          <span className="text-2xs text-muted-foreground">waiting on you</span>
+          <span className="text-2xs text-muted-foreground">{t("waiting on you")}</span>
         </div>
       )}
     </WidgetShell>
@@ -263,56 +274,64 @@ function CountWidget({
 }
 
 export function MyApprovalsWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   return (
     <CountWidget
       title={widget.title || "My Approvals"}
       count={data.attention?.pendingApprovals ?? undefined}
       loading={data.attentionLoading}
       href="/billing/pending-approvals"
-      hrefLabel="Open approvals"
-      emptyMessage="Nothing waiting on your approval."
+      hrefLabel={t("Open approvals")}
+      emptyMessage={t("Nothing waiting on your approval.")}
       tone="brand"
     />
   );
 }
 
 export function BillingQueueWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   return (
     <CountWidget
       title={widget.title || "Billing Queue"}
       count={data.attention?.billingQueue ?? undefined}
       loading={data.attentionLoading}
       href="/billing/queue"
-      hrefLabel="Open billing queue"
-      emptyMessage="The billing queue is clear."
+      hrefLabel={t("Open billing queue")}
+      emptyMessage={t("The billing queue is clear.")}
       tone="brand"
     />
   );
 }
 
 export function ServiceFailuresWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   return (
     <CountWidget
       title={widget.title || "Service Failures"}
       count={data.attention?.serviceFailures ?? undefined}
       loading={data.attentionLoading}
       href="/shipment-management/service-failures"
-      hrefLabel="Open service failures"
-      emptyMessage="No open service failures."
+      hrefLabel={t("Open service failures")}
+      emptyMessage={t("No open service failures.")}
       tone="danger"
     />
   );
 }
 
 export function EDIAttentionWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   return (
     <CountWidget
       title={widget.title || "EDI Needs Attention"}
       count={data.attention?.ediAttention ?? undefined}
       loading={data.attentionLoading}
       href="/edi/overview"
-      hrefLabel="Open EDI"
-      emptyMessage="EDI is running clean."
+      hrefLabel={t("Open EDI")}
+      emptyMessage={t("EDI is running clean.")}
       tone="warning"
     />
   );

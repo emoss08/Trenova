@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   HomeWidgetCatalog,
   HomeWidgetCategory,
@@ -125,6 +126,8 @@ function WidgetGallery({
   onAdd,
   onClose,
 }: WidgetGalleryProps) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState(ALL_CATEGORIES);
   const [justAdded, setJustAdded] = useState<string | null>(null);
@@ -238,8 +241,8 @@ function WidgetGallery({
         <Input
           ref={searchRef}
           autoFocus
-          aria-label="Search widgets"
-          placeholder="Search widgets by name or what they show…"
+          aria-label={t("Search widgets")}
+          placeholder={t("Search widgets by name or what they show…")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           onKeyDown={(event) => {
@@ -256,7 +259,7 @@ function WidgetGallery({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Clear search"
+                aria-label={t("Clear search")}
                 className="size-6"
                 onClick={() => {
                   setSearch("");
@@ -324,17 +327,18 @@ function WidgetGallery({
 }
 
 function GalleryHeader({ used, max, onClose }: { used: number; max: number; onClose: () => void }) {
+  const t = useT();
+
   return (
     <DialogHeader className="border-border/70 flex-row items-start gap-4 border-b px-4 py-3">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <DialogTitle>Add a widget</DialogTitle>
+        <DialogTitle>{t("Add a widget")}</DialogTitle>
         <DialogDescription className="text-xs">
-          Pick what this home screen opens on. Everything here is already scoped to what you are
-          allowed to see.
+          {t("Pick what this home screen opens on. Everything here is already scoped to what you are allowed to see.")}
         </DialogDescription>
       </div>
       <SlotMeter used={used} max={max} />
-      <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={onClose}>
+      <Button variant="ghost" size="icon-sm" aria-label={t("Close")} onClick={onClose}>
         <XIcon />
       </Button>
     </DialogHeader>
@@ -347,6 +351,8 @@ function GalleryHeader({ used, max, onClose }: { used: number; max: number; onCl
  * the card they wanted refuses to be added.
  */
 function SlotMeter({ used, max }: { used: number; max: number }) {
+  const t = useT();
+
   const share = max > 0 ? Math.min(used / max, 1) : 0;
   const nearlyFull = max - used <= 3;
 
@@ -357,8 +363,7 @@ function SlotMeter({ used, max }: { used: number; max: number }) {
           className={cn("font-medium", nearlyFull ? "text-warning-foreground" : "text-foreground")}
         >
           {used}
-        </span>{" "}
-        of {max} widgets
+        </span>{t("of {0} widgets", max)}
       </span>
       <span className="bg-muted h-1 w-28 overflow-hidden rounded-full">
         <span
@@ -382,9 +387,11 @@ function CategoryRail({
   value: string;
   onChange: (key: string) => void;
 }) {
+  const t = useT();
+
   return (
     <nav
-      aria-label="Widget categories"
+      aria-label={t("Widget categories")}
       className="border-border/70 bg-muted/25 hidden w-44 shrink-0 flex-col gap-0.5 border-r p-2 sm:flex"
     >
       {tabs.map((tab) => {
@@ -436,6 +443,8 @@ function WidgetCard({
   onAdd: () => void;
   onMove: (from: HTMLElement, direction: FocusDirection) => void;
 }) {
+  const t = useT();
+
   const { icon: Icon, shape } = widgetVisualFor(option.key);
   const needsSetup = option.configKind !== "none" && option.configKind !== "queue";
 
@@ -497,11 +506,10 @@ function WidgetCard({
       <TooltipContent side="top" className="max-w-56">
         <span className="flex flex-col gap-0.5">
           <span>
-            Lands {option.defaultW} columns wide and {option.defaultH} rows tall. Resize it on the
-            canvas.
+            {t("Lands {0} columns wide and {1} rows tall. Resize it on the canvas.", option.defaultW, option.defaultH)}
           </span>
           {needsSetup && (
-            <span className="text-background/70">You choose what it shows before it lands.</span>
+            <span className="text-background/70">{t("You choose what it shows before it lands.")}</span>
           )}
         </span>
       </TooltipContent>
@@ -541,42 +549,46 @@ function GalleryFooter({
   remaining: number;
   onDone: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border/70 bg-muted/40 flex items-center gap-3 border-t px-4 py-2.5">
       <p className="text-2xs text-muted-foreground min-w-0 flex-1">
         {full ? (
           <span className="text-warning-foreground">
-            This home screen is full. Remove a widget to make room for another.
+            {t("This home screen is full. Remove a widget to make room for another.")}
           </span>
         ) : (
           <>
-            Room for {remaining} more.{" "}
+            {t("Room for {0} more.", remaining)}
             <span className="hidden sm:inline">
-              Use <Kbd className="h-4 px-1 text-[10px]">&darr;</Kbd> to reach the cards and{" "}
-              <Kbd className="h-4 px-1 text-[10px]">&crarr;</Kbd> to add one.
+              {t("Use")} <Kbd className="h-4 px-1 text-[10px]">&darr;</Kbd> {t("to reach the cards and")}{" "}
+              <Kbd className="h-4 px-1 text-[10px]">&crarr;</Kbd> {t("to add one.")}
             </span>
           </>
         )}
       </p>
       <Button size="sm" variant="outline" onClick={onDone}>
-        Done
+        {t("Done")}
       </Button>
     </div>
   );
 }
 
 function GalleryEmpty({ search, onClear }: { search: string; onClear: () => void }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
       <SearchIcon className="text-muted-foreground/40 size-5" />
-      <p className="text-sm font-medium">Nothing matches</p>
+      <p className="text-sm font-medium">{t("Nothing matches")}</p>
       <p className="text-muted-foreground max-w-xs text-xs">
         {search.trim() === ""
           ? "No widgets are available to you in this category."
           : `No widget matches “${search.trim()}”.`}
       </p>
       <Button variant="outline" size="sm" className="mt-1" onClick={onClear}>
-        Clear filters
+        {t("Clear filters")}
       </Button>
     </div>
   );

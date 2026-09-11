@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { nextItemId } from "@/components/tile-grid/pack-tiles";
 import { SizeStepper } from "@/components/tile-grid/size-stepper";
 import { SortableTile, TileDragHandle } from "@/components/tile-grid/sortable-tile";
@@ -69,6 +70,8 @@ export function HomeCanvas({
   onChange,
   dock,
 }: HomeCanvasProps) {
+  const t = useT();
+
   const [addOpen, setAddOpen] = useState(false);
   const [configuring, setConfiguring] = useState<ConfigTarget | null>(null);
 
@@ -127,9 +130,9 @@ export function HomeCanvas({
     return (
       <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
         <LayoutGridIcon className="text-muted-foreground/40 size-5" />
-        <p className="text-sm font-medium">Your home screen is empty</p>
+        <p className="text-sm font-medium">{t("Your home screen is empty")}</p>
         <p className="text-muted-foreground max-w-xs text-xs">
-          Choose Customize to add the queues and numbers you want to land on.
+          {t("Choose Customize to add the queues and numbers you want to land on.")}
         </p>
       </div>
     );
@@ -144,9 +147,9 @@ export function HomeCanvas({
           className="border-border hover:border-foreground/25 hover:bg-muted/30 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center transition-colors"
         >
           <PlusIcon className="text-muted-foreground/50 size-5" />
-          <span className="text-sm font-medium">Add your first widget</span>
+          <span className="text-sm font-medium">{t("Add your first widget")}</span>
           <span className="text-muted-foreground max-w-xs text-xs">
-            Pick the queues and numbers this home screen should open on.
+            {t("Pick the queues and numbers this home screen should open on.")}
           </span>
         </button>
       )}
@@ -275,6 +278,8 @@ function WidgetControls({
   onRemove: () => void;
   onResize: (patch: Partial<HomeWidget>) => void;
 }) {
+  const t = useT();
+
   const configurable = option != null && option.configKind !== "none";
 
   return (
@@ -285,7 +290,7 @@ function WidgetControls({
             variant="ghost"
             size="icon"
             className="size-5 shrink-0"
-            aria-label="Widget options"
+            aria-label={t("Widget options")}
           >
             <MoreHorizontalIcon className="size-3" />
           </Button>
@@ -295,7 +300,7 @@ function WidgetControls({
         <div className="flex flex-col gap-2">
           <SizeStepper
             icon={ChevronsLeftRightIcon}
-            label="Width"
+            label={t("Width")}
             value={widget.w}
             min={option?.minW ?? 1}
             max={Math.min(option?.maxW ?? columns, columns)}
@@ -303,7 +308,7 @@ function WidgetControls({
           />
           <SizeStepper
             icon={ChevronsUpDownIcon}
-            label="Height"
+            label={t("Height")}
             value={widget.h}
             min={option?.minH ?? 1}
             max={option?.maxH ?? 12}
@@ -313,7 +318,7 @@ function WidgetControls({
             {configurable && (
               <Button variant="ghost" size="sm" className="h-7 justify-start" onClick={onEdit}>
                 <PencilIcon className="size-3.5" />
-                Configure
+                {t("Configure")}
               </Button>
             )}
             <Button
@@ -323,7 +328,7 @@ function WidgetControls({
               onClick={onRemove}
             >
               <Trash2Icon className="size-3.5" />
-              Remove
+              {t("Remove")}
             </Button>
           </div>
         </div>
