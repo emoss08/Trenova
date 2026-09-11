@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -33,6 +34,8 @@ type TrainingCourseFormProps = {
 };
 
 export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCourseFormProps) {
+  const t = useT();
+
   const { control } = useFormContext<TrainingCourseFormValues>();
   const [isRequired, delivery, passingScore] = useWatch({
     control,
@@ -44,49 +47,49 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="General"
-          hint="Name and code identify the course on worker records and in Dash."
+          title={t("General")}
+          hint={t("Name and code identify the course on worker records and in Dash.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="code"
-              label="Code"
-              placeholder="e.g. DEFENSIVE"
+              label={t("Code")}
+              placeholder={t("e.g. DEFENSIVE")}
               rules={{ required: true }}
-              description="Short unique identifier. Letters, digits, dashes and underscores."
+              description={t("Short unique identifier. Letters, digits, dashes and underscores.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="e.g. Defensive Driving"
+              label={t("Name")}
+              placeholder={t("e.g. Defensive Driving")}
               rules={{ required: true }}
-              description="Shown on the worker's training record and in Dash."
+              description={t("Shown on the worker's training record and in Dash.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="category"
-              label="Category"
+              label={t("Category")}
               options={CATEGORY_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select a category"
-              description="Groups the course on worker records and in the course list."
+              placeholder={t("Select a category")}
+              description={t("Groups the course on worker records and in the course list.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={statusChoices}
               rules={{ required: true }}
-              placeholder="Select a status"
+              placeholder={t("Select a status")}
               description={
                 isEdit && openRecordCount > 0
                   ? `${openRecordCount} worker${openRecordCount === 1 ? " has" : "s have"} this course open; finish or cancel those first to deactivate.`
@@ -98,10 +101,10 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="What the course covers and the regulation behind it, if any"
+              label={t("Description")}
+              placeholder={t("What the course covers and the regulation behind it, if any")}
               maxLength={1000}
-              description="Optional notes on the course content and why it is required."
+              description={t("Optional notes on the course content and why it is required.")}
             />
           </FormControl>
         </FormGroup>
@@ -109,18 +112,18 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
 
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="Delivery"
-          hint="How a worker takes the course and what it takes to pass."
+          title={t("Delivery")}
+          hint={t("How a worker takes the course and what it takes to pass.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="delivery"
-              label="Delivery"
+              label={t("Delivery")}
               options={DELIVERY_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select a delivery method"
+              placeholder={t("Select a delivery method")}
               description={TRAINING_DELIVERY_HINTS[delivery]}
             />
           </FormControl>
@@ -128,18 +131,18 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             <NumberField
               control={control}
               name="durationMinutes"
-              label="Duration"
+              label={t("Duration")}
               sideText="min"
               min={0}
               placeholder="60"
-              description="Shown to the driver so they can plan for it."
+              description={t("Shown to the driver so they can plan for it.")}
             />
           </FormControl>
           <FormControl className="col-span-2">
             <InputField
               control={control}
               name="contentUrl"
-              label="Link"
+              label={t("Link")}
               placeholder="https://"
               rules={{ required: delivery === "Online" }}
               description={
@@ -153,8 +156,8 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             <InputField
               control={control}
               name="passingScore"
-              label="Passing score"
-              placeholder="No score"
+              label={t("Passing score")}
+              placeholder={t("No score")}
               sideText="%"
               description={
                 passingScore
@@ -169,8 +172,8 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             <SwitchField
               control={control}
               name="requiresAcknowledgement"
-              label="Driver acknowledges"
-              description="The driver confirms in Dash that they took the course."
+              label={t("Driver acknowledges")}
+              description={t("The driver confirms in Dash that they took the course.")}
               position="left"
               outlined
             />
@@ -180,16 +183,16 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
 
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="Requirement & validity"
-          hint="Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified."
+          title={t("Requirement & validity")}
+          hint={t("Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.")}
         />
         <FormGroup cols={2}>
           <FormControl className="col-span-2">
             <SwitchField
               control={control}
               name="isRequired"
-              label="Required"
-              description="Assigned automatically on hire, rehire and driver-type change."
+              label={t("Required")}
+              description={t("Assigned automatically on hire, rehire and driver-type change.")}
               position="left"
               outlined
             />
@@ -199,9 +202,9 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               <MultiCheckboxField
                 control={control}
                 name="requiredForDriverTypes"
-                label="Required for driver types"
+                label={t("Required for driver types")}
                 options={driverTypeChoices}
-                description="Leave all unchecked to require it for every worker."
+                description={t("Leave all unchecked to require it for every worker.")}
               />
             </FormControl>
           ) : null}
@@ -209,35 +212,35 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
             <NumberField
               control={control}
               name="dueDaysAfterAssignment"
-              label="Due after"
+              label={t("Due after")}
               sideText="days"
               min={0}
               max={730}
               placeholder="30"
-              description="How long a worker has once the course is assigned. 0 = no due date."
+              description={t("How long a worker has once the course is assigned. 0 = no due date.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="validityMonths"
-              label="Valid for"
+              label={t("Valid for")}
               sideText="months"
               min={1}
               placeholder="12"
-              description="A completion lapses after this and a renewal is assigned. Leave empty for one-time courses."
+              description={t("A completion lapses after this and a renewal is assigned. Leave empty for one-time courses.")}
             />
           </FormControl>
           <FormControl cols="full">
             <NumberField
               control={control}
               name="renewalWindowDays"
-              label="Renewal alert window"
+              label={t("Renewal alert window")}
               sideText="days"
               min={0}
               max={365}
               placeholder="30"
-              description="How far ahead of lapsing the driver and the office are reminded."
+              description={t("How far ahead of lapsing the driver and the office are reminded.")}
             />
           </FormControl>
         </FormGroup>

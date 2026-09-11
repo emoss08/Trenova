@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
@@ -19,6 +20,8 @@ import { getColumns } from "./training-course-columns";
 import { TrainingCoursePanel } from "./training-course-panel";
 
 export default function TrainingCourseTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const { allowed: canArchive } = usePermission(Resource.TrainingCourse, Operation.Archive);
@@ -35,7 +38,7 @@ export default function TrainingCourseTable() {
     async (rows: readonly TrainingCourseRow[]) => {
       const eligible = rows.filter((row) => row.status === "Active" && row.openRecordCount === 0);
       if (eligible.length === 0) {
-        toast.info("Only active courses with no open assignments can be deactivated.");
+        toast.info(t("Only active courses with no open assignments can be deactivated."));
         return;
       }
       const outcome = await settleAll(eligible, (row) =>
@@ -48,14 +51,14 @@ export default function TrainingCourseTable() {
       });
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const restoreRows = useCallback(
     async (rows: readonly TrainingCourseRow[]) => {
       const eligible = rows.filter((row) => row.status === "Inactive");
       if (eligible.length === 0) {
-        toast.info("Only inactive courses can be restored.");
+        toast.info(t("Only inactive courses can be restored."));
         return;
       }
       const outcome = await settleAll(eligible, (row) =>
@@ -68,7 +71,7 @@ export default function TrainingCourseTable() {
       });
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const dockActions = useMemo<DockAction<TrainingCourseRow>[]>(() => {
