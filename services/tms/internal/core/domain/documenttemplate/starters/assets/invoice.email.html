@@ -1,36 +1,36 @@
 <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:600px">
-  <p style="margin:0 0 16px">Hello{{ if .CustomerName }} {{ .CustomerName }}{{ end }},</p>
+  <p style="margin:0 0 16px">{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
 
   <p style="margin:0 0 16px">
-    Invoice <strong>{{ .InvoiceNumber }}</strong> is attached{{ if .PartLabel }} ({{ .PartLabel }}){{ end }}.
+    {{ if .PartLabel }}{{ t "Invoice {0} is attached ({1})." .InvoiceNumber .PartLabel }}{{ else }}{{ t "Invoice {0} is attached." .InvoiceNumber }}{{ end }}
   </p>
 
   <table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">
     <tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">Invoice</td>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Invoice" }}</td>
       <td style="padding:3px 0;font-weight:600">{{ .InvoiceNumber }}</td>
     </tr>
     {{ if .InvoiceDate }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">Issued</td>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Issued" }}</td>
       <td style="padding:3px 0">{{ .InvoiceDate }}</td>
     </tr>{{ end }}
     {{ if .DueDate }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">Due</td>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Due" }}</td>
       <td style="padding:3px 0">{{ .DueDate }}</td>
     </tr>{{ end }}
     {{ if .PaymentTerm }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">Terms</td>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Terms" }}</td>
       <td style="padding:3px 0">{{ .PaymentTerm }}</td>
     </tr>{{ end }}
     {{ if .Total }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">Total</td>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Total" }}</td>
       <td style="padding:3px 0;font-weight:700">{{ .Total }}</td>
     </tr>{{ end }}
   </table>
 
   {{ if .ShipmentProNumber }}
   <p style="margin:0 0 16px;color:#4b5563;font-size:13px">
-    Shipment {{ .ShipmentProNumber }}{{ if .ShipmentBOL }} &middot; BOL {{ .ShipmentBOL }}{{ end }}{{ if and .ShipmentOrigin .ShipmentDestination }}<br>{{ .ShipmentOrigin }} to {{ .ShipmentDestination }}{{ end }}{{ if .ShipmentServiceDate }} &middot; delivered {{ .ShipmentServiceDate }}{{ end }}
+    {{ if .ShipmentBOL }}{{ t "Shipment {0} &middot; BOL {1}" .ShipmentProNumber .ShipmentBOL }}{{ else }}{{ t "Shipment {0}" .ShipmentProNumber }}{{ end }}{{ if and .ShipmentOrigin .ShipmentDestination }}<br>{{ t "{0} to {1}" .ShipmentOrigin .ShipmentDestination }}{{ end }}{{ if .ShipmentServiceDate }} {{ t "&middot; delivered {0}" .ShipmentServiceDate }}{{ end }}
   </p>
   {{ end }}
 
@@ -43,6 +43,6 @@
   {{ end }}
 
   <p style="margin:0;color:#6b7280;font-size:13px">
-    Reply to this message if any detail needs review.<br>{{ .CompanyName }}
+    {{ t "Reply to this message if any detail needs review." }}<br>{{ .CompanyName }}
   </p>
 </div>

@@ -1,13 +1,13 @@
-{{ if eq .Kind "Warning" }}Our driver on shipment {{ .ShipmentProNumber }} is approaching the end of contracted free time at {{ .FacilityName }}.{{ else if eq .Kind "Started" }}Contracted free time on shipment {{ .ShipmentProNumber }} at {{ .FacilityName }} has been exhausted and detention is now accruing.{{ else if eq .Kind "Update" }}Our driver on shipment {{ .ShipmentProNumber }} remains at {{ .FacilityName }} and detention continues to accrue.{{ else if eq .Kind "Final" }}Our driver has departed {{ .FacilityName }} on shipment {{ .ShipmentProNumber }}. Final detention is summarized below.{{ else }}Detention notice for shipment {{ .ShipmentProNumber }} at {{ .FacilityName }}.{{ end }}
+{{ if eq .Kind "Warning" }}{{ t "Our driver on shipment {0} is approaching the end of contracted free time at {1}." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Started" }}{{ t "Contracted free time on shipment {0} at {1} has been exhausted and detention is now accruing." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Update" }}{{ t "Our driver on shipment {0} remains at {1} and detention continues to accrue." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Final" }}{{ t "Our driver has departed {0} on shipment {1}. Final detention is summarized below." .FacilityName .ShipmentProNumber }}{{ else }}{{ t "Detention notice for shipment {0} at {1}." .ShipmentProNumber .FacilityName }}{{ end }}
 
-{{ if .ArrivedAt }}Arrived: {{ .ArrivedAt }}{{ if .ArrivalSource }} ({{ .ArrivalSource }}){{ end }}
-{{ end }}{{ if .FreeTime }}Contracted free time: {{ .FreeTime }}
-{{ end }}{{ if .FreeTimeExpiresAt }}Free time expires: {{ .FreeTimeExpiresAt }}
-{{ end }}{{ if .RateLabel }}Detention rate after free time: {{ .RateLabel }}
-{{ end }}{{ if eq .Kind "Final" }}{{ if .DepartedAt }}Departed: {{ .DepartedAt }}
-{{ end }}Total time on site: {{ .TotalTimeOnSite }}
-{{ end }}{{ if .BillableTime }}Billable detention: {{ .BillableTime }}
-{{ end }}{{ if .BillableAmount }}Detention charge: {{ moneyString .Currency .BillableAmount }}
+{{ if .ArrivedAt }}{{ if .ArrivalSource }}{{ t "Arrived: {0} ({1})" .ArrivedAt .ArrivalSource }}{{ else }}{{ t "Arrived: {0}" .ArrivedAt }}{{ end }}
+{{ end }}{{ if .FreeTime }}{{ t "Contracted free time: {0}" .FreeTime }}
+{{ end }}{{ if .FreeTimeExpiresAt }}{{ t "Free time expires: {0}" .FreeTimeExpiresAt }}
+{{ end }}{{ if .RateLabel }}{{ t "Detention rate after free time: {0}" .RateLabel }}
+{{ end }}{{ if eq .Kind "Final" }}{{ if .DepartedAt }}{{ t "Departed: {0}" .DepartedAt }}
+{{ end }}{{ t "Total time on site: {0}" .TotalTimeOnSite }}
+{{ end }}{{ if .BillableTime }}{{ t "Billable detention: {0}" .BillableTime }}
+{{ end }}{{ if .BillableAmount }}{{ t "Detention charge: {0}" (moneyString .Currency .BillableAmount) }}
 {{ end }}
-{{ if eq .Kind "Final" }}This charge will appear on the invoice for this shipment. Reply to this message if any detail needs review.{{ else }}Please expedite loading or unloading to avoid further charges. Reply to this message if any detail needs review.{{ end }}
+{{ if eq .Kind "Final" }}{{ t "This charge will appear on the invoice for this shipment. Reply to this message if any detail needs review." }}{{ else }}{{ t "Please expedite loading or unloading to avoid further charges. Reply to this message if any detail needs review." }}{{ end }}
 {{ .CompanyName }}

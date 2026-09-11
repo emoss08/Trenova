@@ -1,10 +1,9 @@
-Hi{{ if .FirstName }} {{ .FirstName }}{{ end }},
+{{ if .FirstName }}{{ t "Hi {0}," .FirstName }}{{ else }}{{ t "Hi," }}{{ end }}
 
-{{ .CompanyName }} has set up a Dash account for you. Dash is where you will see your
-assigned loads, submit expenses, and check your pay.
+{{ t "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay." .CompanyName }}
 
-Set up your account:
+{{ t "Set up your account:" }}
 {{ .InviteURL }}
 
-{{ if .ExpiresInDays }}This link expires in {{ .ExpiresInDays }} days{{ if .ExpiresAt }}, on {{ .ExpiresAt }}{{ end }}.
-{{ end }}If you were not expecting this, you can ignore it.
+{{ if .ExpiresInDays }}{{ if .ExpiresAt }}{{ t "This link expires in {0, plural, one {# day} other {# days}}, on {1}." .ExpiresInDays .ExpiresAt }}{{ else }}{{ t "This link expires in {0, plural, one {# day} other {# days}}." .ExpiresInDays }}{{ end }}
+{{ end }}{{ t "If you were not expecting this, you can ignore it." }}

@@ -1,1 +1,1 @@
-You've been assigned{{ if .ShipmentProNumber }} load {{ .ShipmentProNumber }}{{ else }} a load{{ end }}{{ if .StopCount }} with {{ .StopCount }} stops{{ end }}. Open Dash to see the stops and details.
+{{ if .ShipmentProNumber }}{{ t "You have been assigned load {0}." .ShipmentProNumber }}{{ else }}{{ t "You have been assigned a load." }}{{ end }}{{ if .StopCount }} {{ t "It has {0, plural, one {# stop} other {# stops}}." .StopCount }}{{ end }} {{ t "Open Dash to see the stops and details." }}

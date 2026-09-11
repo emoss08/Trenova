@@ -1,9 +1,9 @@
 {{ .Title }}
 {{ if .Description }}{{ .Description }}
 {{ end }}
-{{ .RowCount }} rows{{ if .Format }} / {{ upper .Format }}{{ end }}{{ if .FileSize }} / {{ .FileSize }}{{ end }}{{ if .CompletedAt }} / completed {{ .CompletedAt }}{{ end }}
+{{ t "{0, plural, one {# row} other {# rows}}" .RowCount }}{{ if .Format }} / {{ upper .Format }}{{ end }}{{ if .FileSize }} / {{ .FileSize }}{{ end }}{{ if .CompletedAt }} / {{ t "completed {0}" .CompletedAt }}{{ end }}
 {{ if .Truncated }}
-These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.
+{{ t "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything." }}
 {{ end }}{{ if .Digest.Rows }}
 {{ range .Digest.Headers }}{{ . }}	{{ end }}
 {{ range .Digest.Rows }}{{ range .Cells }}{{ .Text }}	{{ end }}
@@ -12,5 +12,5 @@ These results were cut short at the row limit. Narrow the filters or export a wi
 {{ .AttachedNote }}{{ if and (not .Attached) .DownloadURL }}
 {{ .DownloadURL }}{{ end }}
 {{ if .ExpiresAt }}
-The download expires {{ .ExpiresAt }}.
+{{ t "The download expires {0}." .ExpiresAt }}
 {{ end }}

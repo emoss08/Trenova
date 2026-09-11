@@ -3,12 +3,12 @@
   {{ if .Description }}<p style="margin:0 0 16px;color:#4b5563;font-size:13px">{{ .Description }}</p>{{ end }}
 
   <p style="margin:0 0 16px;color:#4b5563;font-size:13px">
-    {{ .RowCount }} rows{{ if .Format }} &middot; {{ upper .Format }}{{ end }}{{ if .FileSize }} &middot; {{ .FileSize }}{{ end }}{{ if .CompletedAt }} &middot; completed {{ .CompletedAt }}{{ end }}
+    {{ t "{0, plural, one {# row} other {# rows}}" .RowCount }}{{ if .Format }} &middot; {{ upper .Format }}{{ end }}{{ if .FileSize }} &middot; {{ .FileSize }}{{ end }}{{ if .CompletedAt }} &middot; {{ t "completed {0}" .CompletedAt }}{{ end }}
   </p>
 
   {{ if .Truncated }}
   <p style="margin:0 0 16px;padding:10px 12px;background:#fef3c7;border-left:3px solid #b45309;color:#78350f;font-size:13px">
-    These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.
+    {{ t "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything." }}
   </p>
   {{ end }}
 
@@ -29,9 +29,9 @@
 
   <p style="margin:0 0 16px;font-size:13px">
     {{ if .Attached }}{{ .AttachedNote }}
-    {{ else }}{{ .AttachedNote }}{{ if .DownloadURL }} <a href="{{ .DownloadURL }}" style="color:#1d4ed8">Download the report</a>.{{ end }}
+    {{ else }}{{ .AttachedNote }}{{ if .DownloadURL }} <a href="{{ .DownloadURL }}" style="color:#1d4ed8">{{ t "Download the report" }}</a>.{{ end }}
     {{ end }}
   </p>
 
-  {{ if .ExpiresAt }}<p style="margin:0;color:#6b7280;font-size:12px">The download expires {{ .ExpiresAt }}.</p>{{ end }}
+  {{ if .ExpiresAt }}<p style="margin:0;color:#6b7280;font-size:12px">{{ t "The download expires {0}." .ExpiresAt }}</p>{{ end }}
 </div>

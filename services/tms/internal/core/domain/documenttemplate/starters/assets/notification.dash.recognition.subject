@@ -1,1 +1,1 @@
-{{ if .RecognitionTitle }}{{ .RecognitionTitle }}{{ else }}You have been recognised{{ end }}
+{{ if .RecognitionTitle }}{{ .RecognitionTitle }}{{ else }}{{ t "You have been recognised" }}{{ end }}

@@ -1,2 +1,2 @@
-{{ range .Digest }}- {{ .What }}{{ if .Overdue }} — overdue{{ if .DueAt }} since {{ .DueAt }}{{ end }}{{ else if gt .DueInDays 0 }} — due in {{ .DueInDays }} day{{ if ne .DueInDays 1 }}s{{ end }}{{ if .DueAt }}, on {{ .DueAt }}{{ end }}{{ else }} — due today{{ end }}
-{{ end }}Bring what you can to the office, or upload it in Dash.
+{{ range .Digest }}- {{ .What }}{{ if .Overdue }}{{ if .DueAt }} {{ t "— overdue since {0}" .DueAt }}{{ else }} {{ t "— overdue" }}{{ end }}{{ else if gt .DueInDays 0 }}{{ if .DueAt }} {{ t "— due in {0, plural, one {# day} other {# days}}, on {1}" .DueInDays .DueAt }}{{ else }} {{ t "— due in {0, plural, one {# day} other {# days}}" .DueInDays }}{{ end }}{{ else }} {{ t "— due today" }}{{ end }}
+{{ end }}{{ t "Bring what you can to the office, or upload it in Dash." }}

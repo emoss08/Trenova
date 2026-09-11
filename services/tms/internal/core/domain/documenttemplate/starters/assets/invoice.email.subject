@@ -1,1 +1,1 @@
-Invoice {{ .InvoiceNumber }}{{ if .PartLabel }} ({{ .PartLabel }}){{ end }} from {{ .CompanyName }}
+{{ if .PartLabel }}{{ t "Invoice {0} ({1}) from {2}" .InvoiceNumber .PartLabel .CompanyName }}{{ else }}{{ t "Invoice {0} from {1}" .InvoiceNumber .CompanyName }}{{ end }}

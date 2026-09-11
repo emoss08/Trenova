@@ -1,1 +1,1 @@
-Your carrier has published {{ .PolicyTitle }}{{ if .PolicyVersion }} (version {{ .PolicyVersion }}){{ end }} and needs you to read it and sign. Open Dash and go to Policies on your profile.
+{{ if .PolicyVersion }}{{ t "Your carrier has published {0} (version {1}) and needs you to read it and sign." .PolicyTitle .PolicyVersion }}{{ else }}{{ t "Your carrier has published {0} and needs you to read it and sign." .PolicyTitle }}{{ end }} {{ t "Open Dash and go to Policies on your profile." }}

@@ -1,10 +1,10 @@
-Hello{{ if .CustomerName }} {{ .CustomerName }}{{ end }},
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ .AgentBody }}
 {{ if .RequestedDocuments }}
 {{ range .RequestedDocuments }}- {{ . }}
 {{ end }}{{ end }}{{ if .ShipmentProNumber }}
-Shipment {{ .ShipmentProNumber }}
+{{ t "Shipment {0}" .ShipmentProNumber }}
 {{ end }}
-Reply to this message with the documents attached.
+{{ t "Reply to this message with the documents attached." }}
 {{ .CompanyName }}

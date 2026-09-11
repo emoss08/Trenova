@@ -1,1 +1,1 @@
-Profile change {{ if .Approved }}approved{{ else }}not approved{{ end }}
+{{ if .Approved }}{{ t "Profile change approved" }}{{ else }}{{ t "Profile change not approved" }}{{ end }}

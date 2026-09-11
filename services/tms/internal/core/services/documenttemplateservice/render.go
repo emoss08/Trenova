@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +37,7 @@ func (s *Service) RenderDocument(
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		CustomerID: req.CustomerID,
+		Locale:     req.Locale,
 	})
 	if err != nil {
 		return nil, err
@@ -56,7 +58,7 @@ func (s *Service) RenderDocument(
 	// a built-in the tests cover. Re-judging it strictly here would let a rule
 	// added after publication break an invoice mid-billing-run.
 	rendered, diags, err := s.renderDocumentHTML(ctx, def, resolved, data, req.Title,
-		compileOptions{CacheKeyPrefix: s.cacheKeyFor(resolved)})
+		compileOptions{CacheKeyPrefix: s.cacheKeyFor(resolved), Locale: resolved.Locale})
 	if err != nil {
 		return nil, err
 	}
@@ -230,6 +232,7 @@ func (s *Service) RenderMessage(
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		CustomerID: req.CustomerID,
+		Locale:     req.Locale,
 	})
 	if err != nil {
 		return nil, err
@@ -246,7 +249,7 @@ func (s *Service) RenderMessage(
 		return nil, err
 	}
 
-	message, err := s.renderMessageWith(ctx, def, resolved, data)
+	message, err := s.renderMessageWith(ctx, def, resolved, data, resolved.Locale)
 	if err == nil || !req.FallbackToBuiltIn || resolved.FromBuiltIn() {
 		return message, err
 	}
@@ -260,12 +263,12 @@ func (s *Service) RenderMessage(
 		zap.Error(err),
 	)
 
-	fallback, builtInErr := s.builtIn(req.Kind)
+	fallback, builtInErr := s.builtIn(req.Kind, req.Locale)
 	if builtInErr != nil {
 		return nil, err
 	}
 
-	return s.renderMessageWith(ctx, def, fallback, data)
+	return s.renderMessageWith(ctx, def, fallback, data, fallback.Locale)
 }
 
 func (s *Service) renderMessageWith(
@@ -273,9 +276,11 @@ func (s *Service) renderMessageWith(
 	def *documenttemplate.KindDefinition,
 	resolved *services.ResolvedTemplate,
 	data any,
+	locale i18n.Locale,
 ) (*services.RenderedMessage, error) {
 	compiled := s.compile(def, &resolved.Content, compileOptions{
 		CacheKeyPrefix: s.cacheKeyFor(resolved),
+		Locale:         locale,
 	})
 
 	if multiErr := diagnosticsToMultiError(compiled.diags); multiErr != nil {
@@ -512,7 +517,7 @@ func (s *Service) previewSource(
 		)
 	}
 
-	return s.builtIn(req.Kind)
+	return s.builtIn(req.Kind, i18n.Default)
 }
 
 // applyPageDefaults fills the page box a draft has not chosen, so a preview

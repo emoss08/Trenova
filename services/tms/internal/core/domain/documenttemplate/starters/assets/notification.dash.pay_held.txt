@@ -1,1 +1,1 @@
-Pay for one of your loads was placed on hold{{ if .Reason }}: {{ .Reason }}{{ else }}. Talk to dispatch for the details{{ end }}.
+{{ if .Reason }}{{ t "Pay for one of your loads was placed on hold: {0}" .Reason }}{{ else }}{{ t "Pay for one of your loads was placed on hold. Talk to dispatch for the details." }}{{ end }}

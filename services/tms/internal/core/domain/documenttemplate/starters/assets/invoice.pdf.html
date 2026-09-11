@@ -7,12 +7,12 @@
   </div>
 
   <div class="invoice-id">
-    <div class="doc-type">Invoice</div>
+    <div class="doc-type">{{ t "Invoice" }}</div>
     <div class="invoice-number">{{ .InvoiceNumber }}</div>
     <dl class="meta">
-      {{ if .InvoiceDate }}<dt>Issued</dt><dd>{{ .InvoiceDate }}</dd>{{ end }}
-      {{ if .DueDate }}<dt>Due</dt><dd>{{ .DueDate }}</dd>{{ end }}
-      {{ if .PaymentTerm }}<dt>Terms</dt><dd>{{ .PaymentTerm }}</dd>{{ end }}
+      {{ if .InvoiceDate }}<dt>{{ t "Issued" }}</dt><dd>{{ .InvoiceDate }}</dd>{{ end }}
+      {{ if .DueDate }}<dt>{{ t "Due" }}</dt><dd>{{ .DueDate }}</dd>{{ end }}
+      {{ if .PaymentTerm }}<dt>{{ t "Terms" }}</dt><dd>{{ .PaymentTerm }}</dd>{{ end }}
       {{ range .HeaderRows }}<dt>{{ .Label }}</dt><dd>{{ .Value }}</dd>{{ end }}
     </dl>
   </div>
@@ -20,14 +20,14 @@
 
 <section class="parties">
   <div class="party">
-    <h2>Bill To</h2>
+    <h2>{{ t "Bill To" }}</h2>
     <div class="party-name">{{ .BillTo.Name }}</div>
     {{ range .BillTo.Lines }}<div>{{ . }}</div>{{ end }}
     {{ range .BillTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
   </div>
 
   <div class="party">
-    <h2>Remit To</h2>
+    <h2>{{ t "Remit To" }}</h2>
     <div class="party-name">{{ .RemitTo.Name }}</div>
     {{ range .RemitTo.Lines }}<div>{{ . }}</div>{{ end }}
     {{ range .RemitTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
@@ -36,14 +36,14 @@
 
 <section class="parties">
   <div class="party">
-    <h2>Shipper</h2>
+    <h2>{{ t "Shipper" }}</h2>
     <div class="party-name">{{ .Shipper.Name }}</div>
     {{ range .Shipper.Lines }}<div>{{ . }}</div>{{ end }}
     {{ range .Shipper.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
   </div>
 
   <div class="party">
-    <h2>Consignee</h2>
+    <h2>{{ t "Consignee" }}</h2>
     <div class="party-name">{{ .Consignee.Name }}</div>
     {{ range .Consignee.Lines }}<div>{{ . }}</div>{{ end }}
     {{ range .Consignee.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
@@ -52,16 +52,16 @@
 
 {{ if .CommodityRows }}
 <section class="block">
-  <h2>Freight</h2>
+  <h2>{{ t "Freight" }}</h2>
   <table class="grid">
     <thead>
       <tr>
-        <th class="num">Qty</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th class="num">Weight</th>
-        <th class="num">NMFC</th>
-        <th class="num">Class</th>
+        <th class="num">{{ t "Qty" }}</th>
+        <th>{{ t "Type" }}</th>
+        <th>{{ t "Description" }}</th>
+        <th class="num">{{ t "Weight" }}</th>
+        <th class="num">{{ t "NMFC" }}</th>
+        <th class="num">{{ t "Class" }}</th>
       </tr>
     </thead>
     <tbody>
@@ -81,15 +81,15 @@
 {{ end }}
 
 <section class="block">
-  <h2>Charges</h2>
+  <h2>{{ t "Charges" }}</h2>
   <table class="grid">
     <thead>
       <tr>
         <th class="line-col">#</th>
-        <th>Description</th>
-        <th class="num">Quantity</th>
-        <th class="num">Rate</th>
-        <th class="num">Amount</th>
+        <th>{{ t "Description" }}</th>
+        <th class="num">{{ t "Quantity" }}</th>
+        <th class="num">{{ t "Rate" }}</th>
+        <th class="num">{{ t "Amount" }}</th>
       </tr>
     </thead>
     <tbody>
@@ -107,31 +107,31 @@
 
   <div class="totals">
     <dl>
-      <dt>Subtotal</dt><dd>{{ .Subtotal }}</dd>
-      {{ if .Other }}<dt>Other</dt><dd>{{ .Other }}</dd>{{ end }}
-      <dt class="grand">Total</dt><dd class="grand">{{ .Total }}</dd>
-      {{ if .BalanceDue }}<dt class="due">Balance Due</dt><dd class="due">{{ .BalanceDue }}</dd>{{ end }}
+      <dt>{{ t "Subtotal" }}</dt><dd>{{ .Subtotal }}</dd>
+      {{ if .Other }}<dt>{{ t "Other" }}</dt><dd>{{ .Other }}</dd>{{ end }}
+      <dt class="grand">{{ t "Total" }}</dt><dd class="grand">{{ .Total }}</dd>
+      {{ if .BalanceDue }}<dt class="due">{{ t "Balance Due" }}</dt><dd class="due">{{ .BalanceDue }}</dd>{{ end }}
     </dl>
   </div>
 </section>
 
 {{ if .Notes }}
 <section class="block notes">
-  <h2>Notes</h2>
+  <h2>{{ t "Notes" }}</h2>
   {{ range .Notes }}<p>{{ . }}</p>{{ end }}
 </section>
 {{ end }}
 
 {{ if .Attachments }}
 <section class="block">
-  <h2>Enclosed</h2>
+  <h2>{{ t "Enclosed" }}</h2>
   <ul class="enclosed">{{ range .Attachments }}<li>{{ . }}</li>{{ end }}</ul>
 </section>
 {{ end }}
 
 {{ if or .Terms .InvoiceTerms }}
 <section class="block terms">
-  <h2>Terms</h2>
+  <h2>{{ t "Terms" }}</h2>
   {{ range .InvoiceTerms }}<p>{{ . }}</p>{{ end }}
   {{ range .Terms }}<p>{{ . }}</p>{{ end }}
 </section>

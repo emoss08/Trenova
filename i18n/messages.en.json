@@ -44,6 +44,15 @@
       "routes/fuel-management"
     ]
   },
+  "&middot; delivered {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
   "'Individual' creates one invoice per shipment. 'Summary' combines multiple shipments. 'Summary with Detail' includes line-level shipment breakdowns.": {
     "sites": 1,
     "scope": [
@@ -1540,6 +1549,24 @@
       "service/workertrainingservice"
     ]
   },
+  "A credential expires in {0, plural, one {# day} other {# days}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
+  "A credential has expired.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
   "A credential type with this code already exists": {
     "sites": 3,
     "scope": [
@@ -1833,6 +1860,15 @@
     "areas": [
       "domain/tenant",
       "packages/shared/types"
+    ]
+  },
+  "A disciplinary action has been added to your record.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.disciplinary_issued"
     ]
   },
   "A disqualified carrier must record the disqualification reason": {
@@ -2360,6 +2396,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "A load was taken off your schedule.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_unassigned"
     ]
   },
   "A loop cannot be its own parent": {
@@ -3111,6 +3156,15 @@
       "service/driversettlementservice"
     ]
   },
+  "A renewal will be assigned to you — open Training in Dash to take it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
   "A reopen reason of at least 10 characters is required": {
     "sites": 1,
     "scope": [
@@ -3840,6 +3894,42 @@
       "domain/customer"
     ]
   },
+  "A teammate mentioned you": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_mention"
+    ]
+  },
+  "A teammate mentioned you on {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_mention"
+    ]
+  },
+  "A teammate replied to your comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_reply"
+    ]
+  },
+  "A teammate replied to your comment on {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_reply"
+    ]
+  },
   "A template cannot be approved by its submitter": {
     "sites": 1,
     "scope": [
@@ -4238,6 +4328,15 @@
     ],
     "areas": [
       "domain/ratezone"
+    ]
+  },
+  "A {0} has been added to your record.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.disciplinary_issued"
     ]
   },
   "A, B or C": {
@@ -4975,12 +5074,14 @@
     ]
   },
   "Accept load": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/tender.offer.email"
     ]
   },
   "Accept or accept-with-variance carrier invoice matches": {
@@ -4990,6 +5091,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Accept the load:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Accept with Variance (": {
@@ -5008,6 +5118,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Accept:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Acceptance": {
@@ -8298,8 +8417,9 @@
     ]
   },
   "Address": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -8307,7 +8427,8 @@
       "apps/web/components",
       "routes/customer",
       "routes/edi",
-      "routes/shipment"
+      "routes/shipment",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Address & Contact": {
@@ -8967,6 +9088,15 @@
       "routes/shipment"
     ]
   },
+  "After that the load may be offered to another carrier.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
   "After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.": {
     "sites": 1,
     "scope": [
@@ -9084,6 +9214,15 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "Agreed Rate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "Agreed accessorial charges. Empty for an all-in rate.": {
@@ -10420,8 +10559,9 @@
     ]
   },
   "Amount": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -10444,7 +10584,8 @@
       "routes/rate-agreement",
       "routes/recurring-deduction",
       "routes/recurring-earning",
-      "routes/shipment"
+      "routes/shipment",
+      "template/invoice.pdf"
     ]
   },
   "Amount ($)": {
@@ -13512,6 +13653,16 @@
       "service/shipmentmoveservice"
     ]
   },
+  "Arrived": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
   "Arrived late": {
     "sites": 1,
     "scope": [
@@ -13519,6 +13670,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Arrived: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
+  "Arrived: {0} ({1})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Arrives 90m after the window, departs 5h later": {
@@ -14921,6 +15090,24 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/driver-expense"
+    ]
+  },
+  "Attached is the rate confirmation for shipment {0} ({1}).": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "Attached is the rate confirmation for shipment {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "Attached to a settlement as earning lines.": {
@@ -16538,6 +16725,15 @@
       "domain/order"
     ]
   },
+  "BOL {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
+    ]
+  },
   "Back": {
     "sites": 8,
     "scope": [
@@ -16797,6 +16993,15 @@
       "routes/worker"
     ]
   },
+  "Balance Due": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.pdf"
+    ]
+  },
   "Balance Sheet": {
     "sites": 3,
     "scope": [
@@ -16855,12 +17060,15 @@
     ]
   },
   "Band": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
     ]
   },
   "Band maximum miles must exceed minimum miles": {
@@ -17776,13 +17984,15 @@
     ]
   },
   "Bill To": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/carrier-invoice-matching",
-      "routes/rate-agreement"
+      "routes/rate-agreement",
+      "template/invoice.pdf"
     ]
   },
   "Bill To / Shipper": {
@@ -17901,6 +18111,25 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Billable detention": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Billable detention: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Billable minute this rung starts at.": {
@@ -19048,6 +19277,24 @@
     ],
     "areas": [
       "routes/hold-reason"
+    ]
+  },
+  "Bring a current copy to the office or upload it in Dash.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
+  "Bring what you can to the office, or upload it in Dash.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
     ]
   },
   "Broadcast": {
@@ -20992,8 +21239,9 @@
     ]
   },
   "Carrier": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -21010,7 +21258,8 @@
       "routes/rate-agreement",
       "routes/routing-guide",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Carrier Cost Events": {
@@ -21020,6 +21269,15 @@
     ],
     "areas": [
       "routes/carrier-cost-event"
+    ]
+  },
+  "Carrier Equipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "Carrier Fault": {
@@ -21185,6 +21443,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Carrier acceptance — signature and date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "Carrier accepted, but auto-assignment failed": {
@@ -22489,15 +22756,17 @@
     ]
   },
   "Charges": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
       "routes/customer-statement",
       "routes/edi",
-      "routes/invoice"
+      "routes/invoice",
+      "template/invoice.pdf"
     ]
   },
   "Charges above this amount always wait for a human.": {
@@ -22695,6 +22964,33 @@
       "routes/bank-receipt-batch"
     ]
   },
+  "Check Dash for your current loads.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_unassigned"
+    ]
+  },
+  "Check Dash or talk to your manager if you were not expecting this.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_cancelled"
+    ]
+  },
+  "Check Dash or talk to your manager.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_reviewed"
+    ]
+  },
   "Check Digit": {
     "sites": 1,
     "scope": [
@@ -22765,6 +23061,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Check your hours in Dash before your next stop.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.hos_alert"
     ]
   },
   "Check your inbox": {
@@ -23060,12 +23365,14 @@
     ]
   },
   "Choose a new password": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/auth"
+      "routes/auth",
+      "template/account.password_reset.email"
     ]
   },
   "Choose a new password to continue": {
@@ -23075,6 +23382,15 @@
     ],
     "areas": [
       "routes/app-layout.tsx"
+    ]
+  },
+  "Choose a new password:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
     ]
   },
   "Choose a password to finish setting up your account for": {
@@ -23971,13 +24287,15 @@
     ]
   },
   "Class": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/equipment-type",
-      "routes/hazardous-material"
+      "routes/hazardous-material",
+      "template/invoice.pdf"
     ]
   },
   "Class 100": {
@@ -28070,14 +28388,15 @@
     ]
   },
   "Consignee": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other"
+      "go/other",
+      "template/invoice.pdf"
     ]
   },
   "Consignee:": {
@@ -28720,6 +29039,26 @@
       "routes/rate-agreement"
     ]
   },
+  "Contracted free time": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Contracted free time on shipment {0} at {1} has been exhausted and detention is now accruing.": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
   "Contracted free time, such as 2h.": {
     "sites": 1,
     "scope": [
@@ -28727,6 +29066,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Contracted free time: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Contractor": {
@@ -32118,6 +32466,15 @@
       "service/driverportalservice"
     ]
   },
+  "Credential renewal needed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
   "Credential type": {
     "sites": 2,
     "scope": [
@@ -33284,8 +33641,9 @@
     ]
   },
   "Customer": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -33304,7 +33662,8 @@
       "routes/rate-agreement",
       "routes/recurring-shipment",
       "routes/reports",
-      "routes/shipment"
+      "routes/shipment",
+      "template/detention.notice.pdf"
     ]
   },
   "Customer Credit Balance Policy": {
@@ -34057,6 +34416,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "DOT {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "DOT-regulated employment": {
@@ -35558,12 +35926,14 @@
     ]
   },
   "Decline": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "template/tender.offer.email"
     ]
   },
   "Decline Reason": {
@@ -35584,6 +35954,15 @@
       "service/tenderservice"
     ]
   },
+  "Decline the load:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
   "Decline this load?": {
     "sites": 1,
     "scope": [
@@ -35591,6 +35970,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Decline:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Declined": {
@@ -37999,6 +38387,25 @@
       "routes/worker"
     ]
   },
+  "Departed": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Departed: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Department": {
     "sites": 1,
     "scope": [
@@ -38219,7 +38626,7 @@
     ]
   },
   "Description": {
-    "sites": 135,
+    "sites": 137,
     "scope": [
       "go",
       "ts"
@@ -38278,7 +38685,8 @@
       "routes/worker-checklist-template",
       "routes/worker-credential-type",
       "service/edix12inspect",
-      "service/formulatemplateservice"
+      "service/formulatemplateservice",
+      "template/invoice.pdf"
     ]
   },
   "Description (e.g. Detention - Chicago 6/12)": {
@@ -38445,14 +38853,16 @@
     ]
   },
   "Destination": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "packages/shared/types",
       "routes/rate-agreement",
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/tender.offer.email"
     ]
   },
   "Destination City": {
@@ -38564,6 +38974,24 @@
     ],
     "areas": [
       "domain/rateagreement"
+    ]
+  },
+  "Destination: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Destination: {0} ({1})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Detach leg": {
@@ -38747,12 +39175,14 @@
     ]
   },
   "Detention Charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/shipment-control"
+      "routes/shipment-control",
+      "template/detention.notice.pdf"
     ]
   },
   "Detention Desk": {
@@ -38783,6 +39213,15 @@
       "routes/shipment-control"
     ]
   },
+  "Detention Notice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.pdf"
+    ]
+  },
   "Detention Policies": {
     "sites": 2,
     "scope": [
@@ -38800,6 +39239,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Detention Record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.pdf"
     ]
   },
   "Detention Threshold": {
@@ -38865,6 +39313,15 @@
       "service/shipmentmoveservice"
     ]
   },
+  "Detention charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Detention charge is required when track detention time is enabled": {
     "sites": 1,
     "scope": [
@@ -38881,6 +39338,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Detention charge: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention charges are generated automatically and cannot be added manually": {
@@ -38919,6 +39385,15 @@
       "routes/shipment"
     ]
   },
+  "Detention has started — shipment {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Detention lane": {
     "sites": 1,
     "scope": [
@@ -38926,6 +39401,16 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Detention notice for shipment {0} at {1}.": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
     ]
   },
   "Detention notice rendering is not configured on this deployment": {
@@ -38944,6 +39429,15 @@
     ],
     "areas": [
       "service/detentionservice"
+    ]
+  },
+  "Detention notice — shipment {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention occurrence is required": {
@@ -38974,6 +39468,15 @@
       "domain/detention"
     ]
   },
+  "Detention rate after free time: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Detention shorter than this bills nothing — filters out trivially small charges.": {
     "sites": 1,
     "scope": [
@@ -38990,6 +39493,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Detention summary — shipment {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention terms for standard dry van freight, per the 2026 master agreement": {
@@ -39026,6 +39538,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Detention update — shipment {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention waived": {
@@ -39531,6 +40052,15 @@
       "api/graphql"
     ]
   },
+  "Disciplinary action issued": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.disciplinary_issued"
+    ]
+  },
   "Disciplinary action not found": {
     "sites": 1,
     "scope": [
@@ -39769,6 +40299,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Dispatch resolved your dispute in your favor.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispute_resolved"
+    ]
+  },
+  "Dispatch reviewed your dispute and the original settlement stands.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispute_resolved"
     ]
   },
   "Dispatch settings and configuration": {
@@ -41579,6 +42127,15 @@
       "routes/carrier-settlement"
     ]
   },
+  "Download the report": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
   "Download version snapshot": {
     "sites": 1,
     "scope": [
@@ -41909,8 +42466,9 @@
     ]
   },
   "Driver": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -41931,7 +42489,8 @@
       "routes/settlement-batch",
       "routes/settlement-dispute",
       "routes/settlement-workspace",
-      "routes/shipment"
+      "routes/shipment",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Driver Advance Receivable Account": {
@@ -42911,15 +43470,18 @@
     ]
   },
   "Due": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/ar-open-items",
       "routes/customer-payments",
       "routes/worker",
-      "routes/worker-checklist-template"
+      "routes/worker-checklist-template",
+      "template/invoice.email",
+      "template/invoice.pdf"
     ]
   },
   "Due Date": {
@@ -46081,6 +46643,15 @@
       "routes/admin"
     ]
   },
+  "Enclosed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.pdf"
+    ]
+  },
   "Encode a contract's detention terms": {
     "sites": 1,
     "scope": [
@@ -47263,14 +47834,16 @@
     ]
   },
   "Equipment": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/types",
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/tender.offer.email"
     ]
   },
   "Equipment ID is required": {
@@ -47429,6 +48002,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "Equipment: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Equity": {
@@ -49675,6 +50257,15 @@
       "routes/cost-control"
     ]
   },
+  "Expense approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.expense_reviewed"
+    ]
+  },
   "Expense cancelled.": {
     "sites": 1,
     "scope": [
@@ -49701,6 +50292,15 @@
     ],
     "areas": [
       "service/driversettlementservice"
+    ]
+  },
+  "Expense rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.expense_reviewed"
     ]
   },
   "Expense sent — payroll will review it.": {
@@ -51319,13 +51919,15 @@
     ]
   },
   "Facility": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "routes/detention-policy"
+      "routes/detention-policy",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Facility Closure": {
@@ -55582,6 +56184,34 @@
       "routes/detention-policy"
     ]
   },
+  "Free time expires": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Free time expires: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
+  "Free time expiring soon — shipment {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Free time minutes cannot be negative": {
     "sites": 1,
     "scope": [
@@ -55628,14 +56258,16 @@
     ]
   },
   "Freight": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/edi",
       "routes/order",
-      "routes/shipment"
+      "routes/shipment",
+      "template/invoice.pdf"
     ]
   },
   "Freight Charge": {
@@ -56282,7 +56914,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -56290,7 +56922,8 @@
     "areas": [
       "domain/documenttemplate",
       "routes/carrier-invoice-matching",
-      "service/carriersettlementservice"
+      "service/carriersettlementservice",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Fuel surcharge audit detail": {
@@ -57412,6 +58045,15 @@
     ],
     "areas": [
       "domain/rateconfirmation"
+    ]
+  },
+  "Generated {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.pdf"
     ]
   },
   "Generates, approves, posts, and marks the settlement paid in one pass": {
@@ -58945,6 +59587,28 @@
       "routes/settlement-workspace"
     ]
   },
+  "Hello {0},": {
+    "sites": 6,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email",
+      "template/invoice.email",
+      "template/tender.offer.email"
+    ]
+  },
+  "Hello,": {
+    "sites": 6,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email",
+      "template/invoice.email",
+      "template/tender.offer.email"
+    ]
+  },
   "Help text for this field": {
     "sites": 1,
     "scope": [
@@ -58979,6 +59643,26 @@
     ],
     "areas": [
       "routes/home.tsx"
+    ]
+  },
+  "Hi {0},": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email",
+      "template/driverportal.invitation.email"
+    ]
+  },
+  "Hi,": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email",
+      "template/driverportal.invitation.email"
     ]
   },
   "Hidden from default selection while preserving historical audit data.": {
@@ -59712,6 +60396,15 @@
     "areas": [
       "routes/home.tsx",
       "routes/hos.tsx"
+    ]
+  },
+  "Hours of service alert": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.hos_alert"
     ]
   },
   "Hours of service isn't available": {
@@ -61151,6 +61844,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "If this was not you, ignore this email. Your password has not changed and your current one still works.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
+    ]
+  },
+  "If you were not expecting this, you can ignore it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
     ]
   },
   "Ignore": {
@@ -64165,8 +64876,9 @@
     ]
   },
   "Invoice": {
-    "sites": 10,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -64174,7 +64886,9 @@
       "routes/ar-open-items",
       "routes/customer-payments",
       "routes/customer-statement",
-      "routes/invoice-adjustment-batch"
+      "routes/invoice-adjustment-batch",
+      "template/invoice.email",
+      "template/invoice.pdf"
     ]
   },
   "Invoice Adjustment": {
@@ -64856,6 +65570,42 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Invoice {0} ({1}) from {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Invoice {0} from {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Invoice {0} is attached ({1}).": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Invoice {0} is attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
   "Invoiced": {
     "sites": 4,
     "scope": [
@@ -65107,14 +65857,17 @@
     ]
   },
   "Issued": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/pay-advance",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/invoice.email",
+      "template/invoice.pdf"
     ]
   },
   "Issued Date": {
@@ -65296,6 +66049,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "It has {0, plural, one {# stop} other {# stops}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_assigned"
     ]
   },
   "It is a draft again and recomputes with the data on file. The reason is kept with the return.": {
@@ -68924,6 +69686,15 @@
       "routes/shipment"
     ]
   },
+  "Linehaul ({0})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
+    ]
+  },
   "Linehaul + Fuel Surcharge": {
     "sites": 1,
     "scope": [
@@ -68949,6 +69720,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Linehaul amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "Linehaul base": {
@@ -69454,6 +70234,42 @@
       "routes/tender-offer-public"
     ]
   },
+  "Load offer {0} — {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Load offer {0}: {1} to {2} — {3}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Load offer — {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Load offer: {0} to {1} — {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
   "Load plan saved to shipment documents": {
     "sites": 1,
     "scope": [
@@ -69474,6 +70290,15 @@
       "packages/shared/types"
     ]
   },
+  "Load removed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_unassigned"
+    ]
+  },
   "Load tender request is required": {
     "sites": 1,
     "scope": [
@@ -69490,6 +70315,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Load {0} was taken off your schedule.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_unassigned"
     ]
   },
   "Loaded": {
@@ -76172,6 +77006,15 @@
       "domain/worker"
     ]
   },
+  "NMFC": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.pdf"
+    ]
+  },
   "NMFC freight classification code.": {
     "sites": 1,
     "scope": [
@@ -77639,6 +78482,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "New load assigned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_assigned"
     ]
   },
   "New location ID is required": {
@@ -81740,8 +82592,9 @@
     ]
   },
   "Notes": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -81760,7 +82613,8 @@
       "routes/service-failure",
       "routes/settlement-batch",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/invoice.pdf"
     ]
   },
   "Notes a pay change. Pay profiles still drive settlement.": {
@@ -82149,6 +83003,15 @@
       "routes/invoice-approval",
       "routes/invoice-reconciliation",
       "routes/settlement-workspace"
+    ]
+  },
+  "Nothing outstanding": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
     ]
   },
   "Nothing outstanding — all caught up": {
@@ -85742,6 +86605,42 @@
       "apps/web/hooks"
     ]
   },
+  "Open Dash and go to Policies on your profile.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.policy_published"
+    ]
+  },
+  "Open Dash to review it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_posted"
+    ]
+  },
+  "Open Dash to see the stops and details.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_assigned"
+    ]
+  },
+  "Open Dash under Profile and then Safety to read it and acknowledge it; you can add your response there.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.disciplinary_issued"
+    ]
+  },
   "Open Drivers": {
     "sites": 1,
     "scope": [
@@ -85839,6 +86738,15 @@
       "apps/web/components",
       "apps/web/hooks",
       "routes/shipment"
+    ]
+  },
+  "Open Training in Dash to take it and confirm when you are done.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
     ]
   },
   "Open a case": {
@@ -87179,6 +88087,26 @@
       "routes/formula-template"
     ]
   },
+  "Or paste one of these links into your browser:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Or paste this link into your browser:": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email",
+      "template/driverportal.invitation.email",
+      "template/rateconfirmation.email"
+    ]
+  },
   "Order": {
     "sites": 9,
     "scope": [
@@ -87756,14 +88684,16 @@
     ]
   },
   "Origin": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "packages/shared/types",
       "routes/rate-agreement",
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/tender.offer.email"
     ]
   },
   "Origin City": {
@@ -87897,6 +88827,24 @@
       "routes/rate-matrix"
     ]
   },
+  "Origin: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Origin: {0} ({1})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
   "Original": {
     "sites": 3,
     "scope": [
@@ -88005,8 +88953,9 @@
     ]
   },
   "Other": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -88014,7 +88963,8 @@
       "apps/web/lib",
       "routes/carrier-settlement",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/invoice.pdf"
     ]
   },
   "Other Alerts": {
@@ -88106,6 +89056,36 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Our driver has departed {0} on shipment {1}. Final detention is summarized below.": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Our driver on shipment {0} is approaching the end of contracted free time at {1}.": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Our driver on shipment {0} remains at {1} and detention continues to accrue.": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
     ]
   },
   "Our own error caused the delay, so the charge is not defensible.": {
@@ -91018,6 +91998,24 @@
       "routes/settlement-workspace"
     ]
   },
+  "Pay for one of your loads was placed on hold. Talk to dispatch for the details.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pay_held"
+    ]
+  },
+  "Pay for one of your loads was placed on hold: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pay_held"
+    ]
+  },
   "Pay for shipments delivered on or after this date uses this assignment.": {
     "sites": 1,
     "scope": [
@@ -91043,6 +92041,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Pay on hold": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pay_held"
     ]
   },
   "Pay period": {
@@ -91401,13 +92408,25 @@
     ]
   },
   "Payment terms": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/carrier-settlement",
-      "routes/rate-confirmation-public"
+      "routes/rate-confirmation-public",
+      "template/rateconfirmation.email"
+    ]
+  },
+  "Payment terms: {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Payment, billing, and remittance terms": {
@@ -93941,6 +94960,33 @@
       "apps/web/components"
     ]
   },
+  "Please expedite loading or unloading to avoid further charges. Reply to the accompanying message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Please expedite loading or unloading to avoid further charges. Reply to the message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
+  "Please expedite loading or unloading to avoid further charges. Reply to this message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Please read": {
     "sites": 1,
     "scope": [
@@ -93948,6 +94994,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Please read and sign: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.policy_published"
     ]
   },
   "Please select a resource": {
@@ -93966,6 +95021,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Please sign and return the attached confirmation before dispatching, and submit it with your invoice. Reply to this message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "Please sign and return the attached confirmation before dispatching. Submit the confirmation with your invoice. Reply to this message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "Please sign before dispatching and submit the attached confirmation with your invoice. Reply to this message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "Please sign before dispatching and submit the confirmation with your invoice. Reply to this message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "Please try a different search.": {
@@ -96481,6 +97572,24 @@
       "routes/dash-control"
     ]
   },
+  "Profile change approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.profile_change_reviewed"
+    ]
+  },
+  "Profile change not approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.profile_change_reviewed"
+    ]
+  },
   "Profile changes": {
     "sites": 1,
     "scope": [
@@ -97800,6 +98909,15 @@
       "routes/ifta-return"
     ]
   },
+  "Qty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.pdf"
+    ]
+  },
   "Qty × Rate": {
     "sites": 1,
     "scope": [
@@ -97876,14 +98994,16 @@
     ]
   },
   "Quantity": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/fuel-purchase",
-      "routes/invoice"
+      "routes/invoice",
+      "template/invoice.pdf"
     ]
   },
   "Quantity Threshold is required when Reportable Quantity is enabled": {
@@ -98586,7 +99706,7 @@
     ]
   },
   "Rate": {
-    "sites": 12,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -98601,7 +99721,11 @@
       "routes/ifta-tax-rate",
       "routes/rate-agreement",
       "routes/routing-guide",
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/detention.notice.email",
+      "template/detention.notice.pdf",
+      "template/invoice.pdf",
+      "template/tender.offer.email"
     ]
   },
   "Rate ($/mi)": {
@@ -98651,13 +99775,15 @@
     ]
   },
   "Rate Confirmation": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "routes/rate-confirmation-public"
+      "routes/rate-confirmation-public",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Rate Confirmations": {
@@ -98745,6 +99871,15 @@
       "routes/fuel-management"
     ]
   },
+  "Rate Schedule": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.pdf"
+    ]
+  },
   "Rate Source": {
     "sites": 2,
     "scope": [
@@ -98808,6 +99943,16 @@
     "areas": [
       "apps/web/config",
       "routes/rate-zone"
+    ]
+  },
+  "Rate after free time": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
     ]
   },
   "Rate applied": {
@@ -98885,6 +100030,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Rate confirmation — shipment {0} ({1}) — {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "Rate confirmation — shipment {0} — {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "Rate confirmed": {
@@ -99308,6 +100471,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Rate: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "Rate: {0} ({1})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Rated": {
@@ -99945,6 +101126,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Read it in Dash under Profile and then Reviews and sign off when you are done; you can leave a comment for them there.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
     ]
   },
   "Read receipt": {
@@ -100605,6 +101795,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Reason: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.disciplinary_issued"
     ]
   },
   "Reasonable suspicion and post-accident tests must say what prompted them.": {
@@ -103465,6 +104664,15 @@
       "routes/dash-control"
     ]
   },
+  "Remit To": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.pdf"
+    ]
+  },
   "Remit to": {
     "sites": 1,
     "scope": [
@@ -104575,6 +105783,24 @@
       "domain/email"
     ]
   },
+  "Reply to this message if any detail needs review.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Reply to this message with the documents attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email"
+    ]
+  },
   "Reply-To": {
     "sites": 2,
     "scope": [
@@ -104632,6 +105858,15 @@
       "routes/reports"
     ]
   },
+  "Report canceled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_run_canceled"
+    ]
+  },
   "Report created": {
     "sites": 1,
     "scope": [
@@ -104657,6 +105892,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Report failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_run_failed"
     ]
   },
   "Report gallery": {
@@ -104704,6 +105948,15 @@
       "domain/report"
     ]
   },
+  "Report ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_run_completed"
+    ]
+  },
   "Report reset to its canned default": {
     "sites": 1,
     "scope": [
@@ -104729,6 +105982,24 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Report schedule disabled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_schedule_skipped"
+    ]
+  },
+  "Report schedule skipped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_schedule_skipped"
     ]
   },
   "Report views": {
@@ -105181,6 +106452,15 @@
     "areas": [
       "domain/journalreversal",
       "domain/report"
+    ]
+  },
+  "Requested by {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.pdf"
     ]
   },
   "Requested fiscal year. The posting period is resolved from the accounting date.": {
@@ -106188,6 +107468,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Reset your {0} password": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
     ]
   },
   "Resolution": {
@@ -107832,6 +109121,15 @@
       "routes/shipment"
     ]
   },
+  "Review &amp; sign": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
   "Review Status": {
     "sites": 3,
     "scope": [
@@ -107895,6 +109193,15 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "Review and sign the confirmation:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "Review and test it before saving.": {
@@ -109166,12 +110473,14 @@
     ]
   },
   "Routing": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Routing Guide": {
@@ -110024,6 +111333,15 @@
     ],
     "areas": [
       "domain/carrier"
+    ]
+  },
+  "SCAC {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "SCIM Directory": {
@@ -111566,6 +112884,51 @@
       "routes/worker"
     ]
   },
+  "Scheduled report email failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_delivery_email_failed"
+    ]
+  },
+  "Scheduled report ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_run_delivered"
+    ]
+  },
+  "Scheduled report ready: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_run_delivered"
+    ]
+  },
+  "Scheduled report: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
+  "Scheduled report: {0} ({1})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
   "Scheduled runs execute with your permissions. Deliver completed reports by email or straight to teammates in the app.": {
     "sites": 1,
     "scope": [
@@ -112668,6 +114031,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "See the details in Dash.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispute_resolved"
     ]
   },
   "See who is approving in whose place": {
@@ -116678,6 +118050,24 @@
       "routes/shipment"
     ]
   },
+  "Set up your account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
+  "Set up your account:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
   "Set {0} = {1}": {
     "sites": 1,
     "scope": [
@@ -116996,6 +118386,60 @@
     "areas": [
       "domain/carriersettlement",
       "domain/driversettlement"
+    ]
+  },
+  "Settlement {0} for {1} was paid via {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_paid"
+    ]
+  },
+  "Settlement {0} for {1} was paid.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_paid"
+    ]
+  },
+  "Settlement {0} has been issued for {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_posted"
+    ]
+  },
+  "Settlement {0} has been issued.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_posted"
+    ]
+  },
+  "Settlement {0} was paid via {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_paid"
+    ]
+  },
+  "Settlement {0} was paid.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_paid"
     ]
   },
   "Settlement-grade FX data for multi-currency accounting, invoicing, and audit workflows with bid, ask, midpoint, and historical fixing support.": {
@@ -117413,8 +118857,9 @@
     ]
   },
   "Shipment": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -117424,7 +118869,9 @@
       "routes/invoice",
       "routes/reports",
       "routes/service-failure",
-      "routes/shipment"
+      "routes/shipment",
+      "template/detention.notice.pdf",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Shipment Billing Requirement Enforcement": {
@@ -118601,6 +120048,34 @@
       "packages/shared/types"
     ]
   },
+  "Shipment {0}": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email",
+      "template/invoice.email"
+    ]
+  },
+  "Shipment {0} &middot; BOL {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Shipment {0} / BOL {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
   "Shipment {0} attached {1} .": {
     "sites": 1,
     "scope": [
@@ -118725,14 +120200,15 @@
     ]
   },
   "Shipper": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other"
+      "go/other",
+      "template/invoice.pdf"
     ]
   },
   "Shipper:": {
@@ -120011,6 +121487,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Somebody asked to reset the password for your {0} account.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
     ]
   },
   "Somebody has to be named": {
@@ -122289,14 +123774,16 @@
     ]
   },
   "Stop": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/admin",
-      "routes/service-failure"
+      "routes/service-failure",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Stop Field": {
@@ -123223,13 +124710,15 @@
     ]
   },
   "Subtotal": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
-      "routes/invoice"
+      "routes/invoice",
+      "template/invoice.pdf"
     ]
   },
   "Subtract lateness from free time": {
@@ -124262,6 +125751,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Talk to your manager if you think it should be.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.profile_change_reviewed"
     ]
   },
   "Tanker (N)": {
@@ -125854,12 +127352,16 @@
     ]
   },
   "Terms": {
-    "sites": 1,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/detention-policy"
+      "routes/detention-policy",
+      "template/invoice.email",
+      "template/invoice.pdf",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Terms and conditions, one entry per paragraph.": {
@@ -127363,6 +128865,24 @@
       "routes/formula-template"
     ]
   },
+  "The change you asked for on your record has been made. Check your profile in Dash to see it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.profile_change_reviewed"
+    ]
+  },
+  "The change you asked for on your record was not approved.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.profile_change_reviewed"
+    ]
+  },
   "The charge amount.": {
     "sites": 1,
     "scope": [
@@ -128387,6 +129907,15 @@
     ],
     "areas": [
       "routes/document-packet-rule"
+    ]
+  },
+  "The download expires {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
     ]
   },
   "The draft is computed from the miles, fuel and rates on file now. Recompute it whenever late data lands.": {
@@ -129739,6 +131268,15 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "The link stops working at {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -132952,6 +134490,15 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
+  "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
   "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.": {
     "sites": 1,
     "scope": [
@@ -133166,6 +134713,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This charge will appear on the invoice for this shipment. Reply to the accompanying message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.pdf"
+    ]
+  },
+  "This charge will appear on the invoice for this shipment. Reply to the message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
+  "This charge will appear on the invoice for this shipment. Reply to this message if any detail needs review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "This checklist is closed": {
@@ -133853,6 +135427,24 @@
       "routes/escrow-account"
     ]
   },
+  "This link expires in {0, plural, one {# day} other {# days}}, on {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
+  "This link expires in {0, plural, one {# day} other {# days}}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
   "This link is incomplete": {
     "sites": 1,
     "scope": [
@@ -133860,6 +135452,24 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "This link works once and expires in {0, plural, one {# minute} other {# minutes}}, at {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
+    ]
+  },
+  "This link works once and expires in {0, plural, one {# minute} other {# minutes}}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
     ]
   },
   "This link works once. Pick a password you have not used here before.": {
@@ -133969,6 +135579,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This offer expires at {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "This offer expires in {0, plural, one {# hour} other {# hours}}, at {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "This offer expires in {0, plural, one {# hour} other {# hours}}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "This offer is no longer available": {
@@ -134162,6 +135799,15 @@
     "areas": [
       "routes/rate-confirmation-public",
       "service/rateconfirmationservice"
+    ]
+  },
+  "This rate is all-inclusive unless an accessorial is listed above. The carrier must haul the load on the equipment agreed, may not re-broker or co-broker it, and must submit this confirmation number with its invoice. Detention, layover, or additional stops require written approval before they are billable.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
     ]
   },
   "This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}": {
@@ -134962,12 +136608,14 @@
     ]
   },
   "Tier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/detention-policy"
+      "routes/detention-policy",
+      "template/detention.notice.pdf"
     ]
   },
   "Tier accrual must be above zero": {
@@ -135293,6 +136941,33 @@
       "packages/shared/lib",
       "routes/dispatch-console",
       "routes/worker"
+    ]
+  },
+  "Time off approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_reviewed"
+    ]
+  },
+  "Time off cancelled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_cancelled"
+    ]
+  },
+  "Time off denied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_reviewed"
     ]
   },
   "Time off is not tracked against a balance until this worker is enrolled in a policy.": {
@@ -136128,8 +137803,9 @@
     ]
   },
   "Total": {
-    "sites": 20,
+    "sites": 23,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -136146,7 +137822,9 @@
       "routes/order",
       "routes/rate-agreement",
       "routes/rate-confirmation-public",
-      "routes/shipment"
+      "routes/shipment",
+      "template/invoice.email",
+      "template/invoice.pdf"
     ]
   },
   "Total Amount": {
@@ -136352,6 +138030,25 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Total agreed rate": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email",
+      "template/rateconfirmation.pdf"
+    ]
+  },
+  "Total agreed rate: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "Total amount cannot be negative": {
@@ -136589,6 +138286,25 @@
       "packages/shared/types"
     ]
   },
+  "Total time on site": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email",
+      "template/detention.notice.pdf"
+    ]
+  },
+  "Total time on site: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Total tokens cannot be negative": {
     "sites": 1,
     "scope": [
@@ -136765,8 +138481,9 @@
     ]
   },
   "Tractor": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -136778,7 +138495,8 @@
       "routes/ifta-jurisdiction-mileage",
       "routes/reports",
       "routes/shipment",
-      "routes/tractor"
+      "routes/tractor",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Tractor ID is required": {
@@ -136979,8 +138697,9 @@
     ]
   },
   "Trailer": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -136989,7 +138708,8 @@
       "routes/load-detail.tsx",
       "routes/reports",
       "routes/shipment",
-      "routes/trailer"
+      "routes/trailer",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Trailer Continuity": {
@@ -138292,8 +140012,9 @@
     ]
   },
   "Type": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -138317,7 +140038,8 @@
       "routes/reports",
       "routes/service-failure",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/invoice.pdf"
     ]
   },
   "Type a page name in": {
@@ -144346,7 +146068,7 @@
     ]
   },
   "Weight": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -144361,7 +146083,9 @@
       "routes/review-template",
       "routes/shipment",
       "routes/tender-offer-public",
-      "service/edix12inspect"
+      "service/edix12inspect",
+      "template/invoice.pdf",
+      "template/tender.offer.email"
     ]
   },
   "Weight (lbs)": {
@@ -144503,6 +146227,15 @@
     ],
     "areas": [
       "routes/commodity"
+    ]
+  },
+  "Weight: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
     ]
   },
   "Weighted by the template; the score updates as you go.": {
@@ -147190,12 +148923,14 @@
     ]
   },
   "Window": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "routes/shipment",
+      "template/rateconfirmation.pdf"
     ]
   },
   "Window (Days)": {
@@ -148854,6 +150589,42 @@
       "routes/hos.tsx"
     ]
   },
+  "You have been assigned a load.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_assigned"
+    ]
+  },
+  "You have been assigned load {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.load_assigned"
+    ]
+  },
+  "You have been paid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_paid"
+    ]
+  },
+  "You have been recognised": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.recognition"
+    ]
+  },
   "You have exceeded the rate limit. Please try again later.": {
     "sites": 1,
     "scope": [
@@ -148999,6 +150770,24 @@
       "apps/dash/_components"
     ]
   },
+  "Your carrier has published {0} (version {1}) and needs you to read it and sign.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.policy_published"
+    ]
+  },
+  "Your carrier has published {0} and needs you to read it and sign.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.policy_published"
+    ]
+  },
   "Your carrier hasn't connected an ELD provider yet, or your driver profile isn't linked to one.": {
     "sites": 1,
     "scope": [
@@ -149006,6 +150795,24 @@
     ],
     "areas": [
       "routes/hos.tsx"
+    ]
+  },
+  "Your carrier recorded \"{0}\" on your record. Nice work.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.recognition"
+    ]
+  },
+  "Your carrier recorded a recognition on your record. Nice work.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.recognition"
     ]
   },
   "Your carrier said: {0}": {
@@ -149071,6 +150878,42 @@
       "apps/web/hooks"
     ]
   },
+  "Your expense for {0} was approved and will be reimbursed on your next settlement.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.expense_reviewed"
+    ]
+  },
+  "Your expense was approved and will be reimbursed on your next settlement.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.expense_reviewed"
+    ]
+  },
+  "Your expense was rejected. Talk to dispatch for the details.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.expense_reviewed"
+    ]
+  },
+  "Your expense was rejected: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.expense_reviewed"
+    ]
+  },
   "Your fleet manager reviews requests — you'll get a notification either way.": {
     "sites": 1,
     "scope": [
@@ -149123,6 +150966,24 @@
     ],
     "areas": [
       "routes/login.tsx"
+    ]
+  },
+  "Your manager has finished \"{0}\".": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
+    ]
+  },
+  "Your manager has finished your performance review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
     ]
   },
   "Your name (required)": {
@@ -149215,6 +151076,24 @@
       "api/middleware"
     ]
   },
+  "Your pay dispute was denied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispute_resolved"
+    ]
+  },
+  "Your pay dispute was resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.dispute_resolved"
+    ]
+  },
   "Your pay for this load": {
     "sites": 1,
     "scope": [
@@ -149260,6 +151139,15 @@
       "routes/tender-offer-public"
     ]
   },
+  "Your review is ready for your sign-off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
+    ]
+  },
   "Your schedule": {
     "sites": 1,
     "scope": [
@@ -149267,6 +151155,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Your settlement statement is ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.settlement_posted"
     ]
   },
   "Your settlement statements, newest first.": {
@@ -149305,6 +151202,33 @@
       "routes/my-team"
     ]
   },
+  "Your time-off request was approved. Enjoy!": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_reviewed"
+    ]
+  },
+  "Your time-off request was cancelled by the office.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_cancelled"
+    ]
+  },
+  "Your time-off request was not approved.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.pto_reviewed"
+    ]
+  },
   "Your work, your numbers, and where to go next": {
     "sites": 1,
     "scope": [
@@ -149321,6 +151245,78 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Your {0} certification expires in {1, plural, one {# day} other {# days}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "Your {0} certification has expired.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "Your {0} expires in {1, plural, one {# day} other {# days}}, on {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
+  "Your {0} expires in {1, plural, one {# day} other {# days}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
+  "Your {0} has expired.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
+  "Your {0} training is due in {1, plural, one {# day} other {# days}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "Your {0} training is due today.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "Your {0} training is overdue.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
     ]
   },
   "You’re all caught up.": {
@@ -149713,6 +151709,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "completed {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
     ]
   },
   "confirmed by {0}": {
@@ -153333,6 +155338,34 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# row} other {# rows}}": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email",
+      "template/report.pdf"
+    ]
+  },
+  "{0, plural, one {# thing} other {# things}} to sort out": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
+    ]
+  },
+  "{0, plural, one {# thing} other {# things}} to sort out {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
+    ]
+  },
   "{0} ({1} days)": {
     "sites": 1,
     "scope": [
@@ -154100,6 +156133,51 @@
       "routes/worker"
     ]
   },
+  "{0} has a load available for you (ref {1}).": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "{0} has a load available for you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "{0} has finished \"{1}\".": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
+    ]
+  },
+  "{0} has finished your performance review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
+    ]
+  },
+  "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
   "{0} held (": {
     "sites": 1,
     "scope": [
@@ -154146,12 +156224,32 @@
     ]
   },
   "{0} invited you to Dash": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "routes/accept.tsx",
+      "template/driverportal.invitation.email"
+    ]
+  },
+  "{0} is ready for your sign-off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.review_submitted"
+    ]
+  },
+  "{0} issued": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.disciplinary_issued"
     ]
   },
   "{0} lb": {
@@ -154242,6 +156340,24 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "{0} mentioned you": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_mention"
+    ]
+  },
+  "{0} mentioned you on {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_mention"
     ]
   },
   "{0} mi": {
@@ -154735,6 +156851,42 @@
       "routes/reports"
     ]
   },
+  "{0} renewal due": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "{0} renewal needed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.credential_expiring"
+    ]
+  },
+  "{0} replied to your comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_reply"
+    ]
+  },
+  "{0} replied to your comment on {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.shipment_comment_reply"
+    ]
+  },
   "{0} resources": {
     "sites": 1,
     "scope": [
@@ -154973,6 +157125,15 @@
       "routes/scheduling"
     ]
   },
+  "{0} tenders the shipment below to {1} at the agreed rate. This confirmation, together with a clean proof of delivery, is the basis on which the carrier is paid.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.pdf"
+    ]
+  },
   "{0} this resource": {
     "sites": 1,
     "scope": [
@@ -155027,6 +157188,15 @@
       "routes/my-team"
     ]
   },
+  "{0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
   "{0} today · {1} this week": {
     "sites": 1,
     "scope": [
@@ -155053,6 +157223,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} training due in {1, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "{0} training due today": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
+    ]
+  },
+  "{0} training overdue": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.training_due"
     ]
   },
   "{0} unread notification{1}": {
@@ -156040,6 +158237,33 @@
       "apps/web/components"
     ]
   },
+  "— due in {0, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
+    ]
+  },
+  "— due in {0, plural, one {# day} other {# days}}, on {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
+    ]
+  },
+  "— due today": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
+    ]
+  },
   "— expires {0}.": {
     "sites": 1,
     "scope": [
@@ -156065,6 +158289,24 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "— overdue": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
+    ]
+  },
+  "— overdue since {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.obligations_digest"
     ]
   },
   "— this would end employment.": {

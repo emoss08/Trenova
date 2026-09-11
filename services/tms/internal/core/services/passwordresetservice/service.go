@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -372,6 +373,7 @@ func (s *Service) sendResetEmail(
 			ExpiresAt:        timeutils.FormatStampIn(expiresAt, user.Timezone),
 		},
 		ReferenceID:       user.ID,
+		Locale:            i18n.Locale(user.Locale),
 		FallbackToBuiltIn: true,
 	})
 	if renderErr != nil {

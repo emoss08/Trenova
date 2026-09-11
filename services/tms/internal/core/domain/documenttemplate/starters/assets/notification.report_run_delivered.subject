@@ -1,1 +1,1 @@
-Scheduled report ready{{ if .ReportName }}: {{ .ReportName }}{{ end }}
+{{ if .ReportName }}{{ t "Scheduled report ready: {0}" .ReportName }}{{ else }}{{ t "Scheduled report ready" }}{{ end }}

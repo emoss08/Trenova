@@ -17,6 +17,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { runCodemod } from "./codemod.mjs";
+import { extractTemplates } from "./extract-templates.mjs";
 import { extractTypeScript } from "./extract-ts.mjs";
 import { reject } from "./filter.mjs";
 
@@ -79,7 +80,12 @@ async function loadLocales() {
 }
 
 async function report({ showRejected }) {
-  const [go, ts] = await Promise.all([extractGo(), extractTypeScript(repoRoot)]);
+  const [go, ts, templates] = await Promise.all([
+    extractGo(),
+    extractTypeScript(repoRoot),
+    extractTemplates(repoRoot),
+  ]);
+  go.entries.push(...templates.entries);
 
   if (ts.errors.length > 0) {
     console.error(`\nParse failures (${ts.errors.length}):`);
@@ -197,7 +203,12 @@ function localePath(locale) {
 // and scope travel with each entry so translation can be batched by screen and so the emit
 // step can keep backend messages out of the browser bundle.
 async function buildSource() {
-  const [go, ts] = await Promise.all([extractGo(), extractTypeScript(repoRoot)]);
+  const [go, ts, templates] = await Promise.all([
+    extractGo(),
+    extractTypeScript(repoRoot),
+    extractTemplates(repoRoot),
+  ]);
+  go.entries.push(...templates.entries);
   const source = {};
   for (const entry of [...go.entries, ...ts.entries]) {
     let record = source[entry.message];

@@ -1,1 +1,1 @@
-Scheduled report email failed
+{{ t "Scheduled report email failed" }}

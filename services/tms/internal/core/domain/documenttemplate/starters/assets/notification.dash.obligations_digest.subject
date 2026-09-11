@@ -1,1 +1,1 @@
-{{ if .Digest }}{{ len .Digest }} thing{{ if ne (len .Digest) 1 }}s{{ end }} to sort out{{ if .DigestPeriod }} {{ .DigestPeriod }}{{ end }}{{ else }}Nothing outstanding{{ end }}
+{{ if .Digest }}{{ if .DigestPeriod }}{{ t "{0, plural, one {# thing} other {# things}} to sort out {1}" (len .Digest) .DigestPeriod }}{{ else }}{{ t "{0, plural, one {# thing} other {# things}} to sort out" (len .Digest) }}{{ end }}{{ else }}{{ t "Nothing outstanding" }}{{ end }}

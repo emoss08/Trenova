@@ -2,8 +2,8 @@
 {{ if .Description }}<p class="description">{{ .Description }}</p>{{ end }}
 
 <div class="meta">
-  {{ if .GeneratedAt }}<span>Generated {{ .GeneratedAt }}</span>{{ end }}
-  {{ if .RequestedBy }}<span>Requested by {{ .RequestedBy }}</span>{{ end }}
+  {{ if .GeneratedAt }}<span>{{ t "Generated {0}" .GeneratedAt }}</span>{{ end }}
+  {{ if .RequestedBy }}<span>{{ t "Requested by {0}" .RequestedBy }}</span>{{ end }}
   {{ range .Params }}<span>{{ .Label }}: {{ .Value }}</span>{{ end }}
 </div>
 
@@ -20,5 +20,5 @@
   </tfoot>{{ end }}
 </table>
 
-<div class="count">{{ .RowCount }} rows</div>
+<div class="count">{{ t "{0, plural, one {# row} other {# rows}}" .RowCount }}</div>
 {{ if .Truncated }}<div class="notice">{{ .Notice }}</div>{{ end }}

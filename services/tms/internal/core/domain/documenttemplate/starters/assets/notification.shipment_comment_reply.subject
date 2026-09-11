@@ -1,1 +1,1 @@
-{{ if .AuthorName }}{{ .AuthorName }}{{ else }}A teammate{{ end }} replied to your comment{{ if .ShipmentProNumber }} on {{ .ShipmentProNumber }}{{ end }}
+{{ if .AuthorName }}{{ if .ShipmentProNumber }}{{ t "{0} replied to your comment on {1}" .AuthorName .ShipmentProNumber }}{{ else }}{{ t "{0} replied to your comment" .AuthorName }}{{ end }}{{ else }}{{ if .ShipmentProNumber }}{{ t "A teammate replied to your comment on {0}" .ShipmentProNumber }}{{ else }}{{ t "A teammate replied to your comment" }}{{ end }}{{ end }}

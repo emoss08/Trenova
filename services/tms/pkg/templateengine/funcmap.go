@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,9 +28,12 @@ var forbiddenFunctionNames = []string{
 	"js", "jsstr", "env", "exec", "include", "readFile", "template",
 }
 
-// FuncMap returns the functions available to HTML channels.
 func FuncMap() template.FuncMap {
-	return template.FuncMap{
+	return FuncMapFor(i18n.Default)
+}
+
+func FuncMapFor(locale i18n.Locale) template.FuncMap {
+	fm := template.FuncMap{
 		// Money. Currency leads the amount because a bare number on a
 		// customer-facing document invites an argument about which currency.
 		"money":       money.FormatDecimal,
@@ -70,6 +74,12 @@ func FuncMap() template.FuncMap {
 		"seq": seq,
 		"odd": func(i int) bool { return i%2 == 1 },
 	}
+
+	fm["t"] = func(message string, args ...any) string {
+		return i18n.Translate(locale, message, args...)
+	}
+
+	return fm
 }
 
 // TextFuncMap returns the functions available to plain-text channels: subjects,
@@ -79,7 +89,11 @@ func FuncMap() template.FuncMap {
 // function whose name promises HTML would be a trap in a channel that cannot use
 // it.
 func TextFuncMap() template.FuncMap {
-	out := FuncMap()
+	return TextFuncMapFor(i18n.Default)
+}
+
+func TextFuncMapFor(locale i18n.Locale) template.FuncMap {
+	out := FuncMapFor(locale)
 	delete(out, "nl2br")
 	return out
 }

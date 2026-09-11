@@ -1,1 +1,1 @@
-{{ if .DisciplineLevel }}{{ .DisciplineLevel }} issued{{ else }}Disciplinary action issued{{ end }}
+{{ if .DisciplineLevel }}{{ t "{0} issued" .DisciplineLevel }}{{ else }}{{ t "Disciplinary action issued" }}{{ end }}
