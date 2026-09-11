@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
@@ -45,6 +46,8 @@ function mapDotClassToEnum(dotClass: string): HazardousClass | undefined {
 }
 
 function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReference) => void }) {
+  const t = useT();
+
   const { control } = useFormContext<HazardousMaterial>();
   const [focused, setFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,16 +96,16 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
       rules={{ required: true }}
       render={({ field, fieldState }) => (
         <FieldWrapper
-          label="Name"
+          label={t("Name")}
           required
-          description="The name of the hazardous material. Type to search DOT references."
+          description={t("The name of the hazardous material. Type to search DOT references.")}
           error={fieldState.error?.message}
         >
           <div ref={containerRef} className="relative">
             <Input
               {...field}
               value={field.value as string}
-              placeholder="Name"
+              placeholder={t("Name")}
               maxLength={100}
               autoComplete="off"
               aria-invalid={fieldState.invalid}
@@ -134,11 +137,10 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
                       }}
                     >
                       <span>
-                        UN{option.unNumber} &mdash; {option.properShippingName}
+                        {t("UN{0} — {1}", option.unNumber, option.properShippingName)}
                       </span>
                       <span className="text-2xs text-muted-foreground">
-                        Class {option.hazardClass}
-                        {option.packingGroup ? ` | PG ${option.packingGroup}` : ""}
+                        {t("Class {0}{1}", option.hazardClass, option.packingGroup ? ` | PG ${option.packingGroup}` : "")}
                       </span>
                     </button>
                   ))}
@@ -158,6 +160,8 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
 }
 
 export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
+  const t = useT();
+
   const { control, setValue } = useFormContext<HazardousMaterial>();
   const isReportableQuantity = useWatch({
     control,
@@ -211,8 +215,8 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
   return (
     <div className="space-y-6">
       <FormSection
-        title="General Information"
-        description="Basic identification for this hazardous material."
+        title={t("General Information")}
+        description={t("Basic identification for this hazardous material.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -221,9 +225,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
               control={control}
               rules={{ required: true }}
               name="status"
-              label="Status"
-              placeholder="Status"
-              description="The current status of the hazardous material."
+              label={t("Status")}
+              placeholder={t("Status")}
+              description={t("The current status of the hazardous material.")}
               options={statusChoices}
             />
           </FormControl>
@@ -235,9 +239,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
                 control={control}
                 rules={{ required: true }}
                 name="name"
-                label="Name"
-                placeholder="Name"
-                description="The name of the hazardous material."
+                label={t("Name")}
+                placeholder={t("Name")}
+                description={t("The name of the hazardous material.")}
                 maxLength={100}
               />
             )}
@@ -247,9 +251,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
               <InputField
                 control={control}
                 name="code"
-                label="Code"
-                placeholder="Code"
-                description="The system-generated code for the hazardous material."
+                label={t("Code")}
+                placeholder={t("Code")}
+                description={t("The system-generated code for the hazardous material.")}
                 readOnly
               />
             </FormControl>
@@ -259,16 +263,16 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
               control={control}
               rules={{ required: true }}
               name="description"
-              label="Description"
-              placeholder="Description"
-              description="A detailed description of the hazardous material."
+              label={t("Description")}
+              placeholder={t("Description")}
+              description={t("A detailed description of the hazardous material.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="DOT Classification"
-        description="Hazard class, packing group, and regulatory identifiers per 49 CFR 172.101."
+        title={t("DOT Classification")}
+        description={t("Hazard class, packing group, and regulatory identifiers per 49 CFR 172.101.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -277,9 +281,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
               control={control}
               rules={{ required: true }}
               name="class"
-              label="Class"
-              placeholder="Class"
-              description="The hazardous material classification."
+              label={t("Class")}
+              placeholder={t("Class")}
+              description={t("The hazardous material classification.")}
               options={hazardousClassChoices}
             />
           </FormControl>
@@ -287,9 +291,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <InputField
               control={control}
               name="subsidiaryHazardClass"
-              label="Subsidiary Hazard Class"
-              placeholder="e.g. 3, 8"
-              description="Secondary hazard classifications for this material."
+              label={t("Subsidiary Hazard Class")}
+              placeholder={t("e.g. 3, 8")}
+              description={t("Secondary hazard classifications for this material.")}
               maxLength={20}
             />
           </FormControl>
@@ -297,9 +301,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <SelectField
               control={control}
               name="packingGroup"
-              label="Packing Group"
-              placeholder="Packing Group"
-              description="The packing group indicating the degree of danger."
+              label={t("Packing Group")}
+              placeholder={t("Packing Group")}
+              description={t("The packing group indicating the degree of danger.")}
               options={packingGroupChoices}
             />
           </FormControl>
@@ -307,9 +311,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <InputField
               control={control}
               name="unNumber"
-              label="UN Number"
-              placeholder="UN Number"
-              description="The United Nations number identifying the hazardous substance."
+              label={t("UN Number")}
+              placeholder={t("UN Number")}
+              description={t("The United Nations number identifying the hazardous substance.")}
               maxLength={4}
             />
           </FormControl>
@@ -317,9 +321,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <InputField
               control={control}
               name="ergGuideNumber"
-              label="ERG Guide Number"
-              placeholder="e.g. 128"
-              description="Emergency Response Guidebook guide number for first responders."
+              label={t("ERG Guide Number")}
+              placeholder={t("e.g. 128")}
+              description={t("Emergency Response Guidebook guide number for first responders.")}
               maxLength={10}
             />
           </FormControl>
@@ -327,9 +331,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <InputField
               control={control}
               name="labelCodes"
-              label="Label Codes"
-              placeholder="e.g. 3, 8"
-              description="Required label codes for packages containing this material."
+              label={t("Label Codes")}
+              placeholder={t("e.g. 3, 8")}
+              description={t("Required label codes for packages containing this material.")}
               maxLength={50}
             />
           </FormControl>
@@ -337,25 +341,25 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <TextareaField
               control={control}
               name="properShippingName"
-              label="Proper Shipping Name"
-              placeholder="Proper Shipping Name"
-              description="The proper shipping name as designated by transportation regulations."
+              label={t("Proper Shipping Name")}
+              placeholder={t("Proper Shipping Name")}
+              description={t("The proper shipping name as designated by transportation regulations.")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="specialProvisions"
-              label="Special Provisions"
-              placeholder="Special Provisions"
-              description="Any special provisions or exceptions that apply to this material."
+              label={t("Special Provisions")}
+              placeholder={t("Special Provisions")}
+              description={t("Any special provisions or exceptions that apply to this material.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Compliance Flags"
-        description="Regulatory indicators that affect placarding, reporting, and special handling."
+        title={t("Compliance Flags")}
+        description={t("Regulatory indicators that affect placarding, reporting, and special handling.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -363,32 +367,32 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <SwitchField
               control={control}
               name="placardRequired"
-              label="Placard Required"
-              description="Whether a placard is required when transporting this material."
+              label={t("Placard Required")}
+              description={t("Whether a placard is required when transporting this material.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="isReportableQuantity"
-              label="Reportable Quantity"
-              description="Whether this material meets the reportable quantity threshold."
+              label={t("Reportable Quantity")}
+              description={t("Whether this material meets the reportable quantity threshold.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="marinePollutant"
-              label="Marine Pollutant"
-              description="Whether this material is classified as a marine pollutant."
+              label={t("Marine Pollutant")}
+              description={t("Whether this material is classified as a marine pollutant.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="inhalationHazard"
-              label="Inhalation Hazard"
-              description="Whether this material poses a toxic or poison inhalation hazard."
+              label={t("Inhalation Hazard")}
+              description={t("Whether this material poses a toxic or poison inhalation hazard.")}
             />
           </FormControl>
           {isReportableQuantity && (
@@ -397,9 +401,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
                 control={control}
                 rules={{ required: isReportableQuantity }}
                 name="quantityThreshold"
-                label="Reportable Quantity Threshold"
-                placeholder="e.g. 100 lbs"
-                description="The quantity threshold that triggers reporting requirements."
+                label={t("Reportable Quantity Threshold")}
+                placeholder={t("e.g. 100 lbs")}
+                description={t("The quantity threshold that triggers reporting requirements.")}
                 maxLength={20}
               />
             </FormControl>
@@ -407,35 +411,35 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Handling & Emergency"
-        description="Instructions and contact information for safe handling and emergency response."
+        title={t("Handling & Emergency")}
+        description={t("Instructions and contact information for safe handling and emergency response.")}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="handlingInstructions"
-              label="Handling Instructions"
-              placeholder="Handling Instructions"
-              description="Specific instructions for safely handling this material."
+              label={t("Handling Instructions")}
+              placeholder={t("Handling Instructions")}
+              description={t("Specific instructions for safely handling this material.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="emergencyContact"
-              label="Emergency Contact"
-              placeholder="Emergency Contact"
-              description="The name or organization to contact in an emergency."
+              label={t("Emergency Contact")}
+              placeholder={t("Emergency Contact")}
+              description={t("The name or organization to contact in an emergency.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="emergencyContactPhoneNumber"
-              label="Emergency Contact Phone"
-              placeholder="Emergency Contact Phone"
-              description="The phone number for the emergency contact."
+              label={t("Emergency Contact Phone")}
+              placeholder={t("Emergency Contact Phone")}
+              description={t("The phone number for the emergency contact.")}
             />
           </FormControl>
         </FormGroup>
