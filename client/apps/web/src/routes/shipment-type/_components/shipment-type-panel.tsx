@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { ShipmentTypeRow } from "@/lib/graphql/shipment-type-table";
@@ -13,6 +14,8 @@ export function ShipmentTypePanel({
   mode,
   row,
 }: DataTablePanelProps<ShipmentTypeRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(shipmentTypeSchema),
     defaultValues: {
@@ -33,7 +36,7 @@ export function ShipmentTypePanel({
         form={form}
         url="/shipment-types/"
         queryKey="shipment-type-list"
-        title="Shipment Type"
+        title={t("Shipment Type")}
         fieldKey="code"
         formComponent={<ShipmentTypeForm />}
       />
@@ -47,7 +50,7 @@ export function ShipmentTypePanel({
       form={form}
       url="/shipment-types/"
       queryKey="shipment-type-list"
-      title="Shipment Type"
+      title={t("Shipment Type")}
       formComponent={<ShipmentTypeForm />}
     />
   );
