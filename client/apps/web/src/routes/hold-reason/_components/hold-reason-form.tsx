@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -8,6 +9,8 @@ import type { HoldReason } from "@/types/hold-reason";
 import { useFormContext } from "react-hook-form";
 
 export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<HoldReason>();
 
   return (
@@ -17,8 +20,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <SwitchField
             control={control}
             name="active"
-            label="Active"
-            description="Toggles whether this hold reason is available for use in the system."
+            label={t("Active")}
+            description={t("Toggles whether this hold reason is available for use in the system.")}
             outlined
             position="left"
             disabled={disabled}
@@ -28,10 +31,10 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <SelectField
             control={control}
             name="type"
-            label="Hold Type"
-            placeholder="Select Type"
+            label={t("Hold Type")}
+            placeholder={t("Select Type")}
             rules={{ required: true }}
-            description="Choose the hold category to drive default behavior, gating, and reporting."
+            description={t("Choose the hold category to drive default behavior, gating, and reporting.")}
             options={holdTypeChoices}
             isReadOnly={disabled}
           />
@@ -40,11 +43,11 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <InputField
             control={control}
             name="code"
-            label="Reason Code"
+            label={t("Reason Code")}
             placeholder="ELD_OOS"
             rules={{ required: true }}
             maxLength={64}
-            description="Stable identifier used by rules, APIs, and search; prefer UPPER_SNAKE_CASE."
+            description={t("Stable identifier used by rules, APIs, and search; prefer UPPER_SNAKE_CASE.")}
             disabled={disabled}
           />
         </FormControl>
@@ -52,11 +55,11 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <InputField
             control={control}
             name="label"
-            label="Display Name"
-            placeholder="ELD Out of Service"
+            label={t("Display Name")}
+            placeholder={t("ELD Out of Service")}
             rules={{ required: true }}
             maxLength={100}
-            description="Human-friendly name shown in boards, forms, and customer portals."
+            description={t("Human-friendly name shown in boards, forms, and customer portals.")}
             disabled={disabled}
           />
         </FormControl>
@@ -64,9 +67,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <TextareaField
             control={control}
             name="description"
-            label="Details"
-            placeholder="Briefly explain when to use this reason"
-            description="Short context explaining when to apply this reason; use customer-safe wording."
+            label={t("Details")}
+            placeholder={t("Briefly explain when to use this reason")}
+            description={t("Short context explaining when to apply this reason; use customer-safe wording.")}
             disabled={disabled}
           />
         </FormControl>
@@ -74,9 +77,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
           <SelectField
             control={control}
             name="defaultSeverity"
-            label="Default Severity"
-            placeholder="Select Severity"
-            description="Starting impact level applied when users select this reason; adjustable per hold."
+            label={t("Default Severity")}
+            placeholder={t("Select Severity")}
+            description={t("Starting impact level applied when users select this reason; adjustable per hold.")}
             options={holdSeverityChoices}
             rules={{ required: true }}
             isReadOnly={disabled}
@@ -84,16 +87,16 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
         </FormControl>
       </FormGroup>
       <FormSection
-        title="Gating Rules"
-        description="Select which actions this reason blocks by default; multiple can apply and stack."
+        title={t("Gating Rules")}
+        description={t("Select which actions this reason blocks by default; multiple can apply and stack.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <SwitchField
               control={control}
               name="defaultBlocksDispatch"
-              label="Block Dispatch"
-              description="Prevents assigning or dispatching power/trailer until this hold is cleared."
+              label={t("Block Dispatch")}
+              description={t("Prevents assigning or dispatching power/trailer until this hold is cleared.")}
               position="left"
               disabled={disabled}
             />
@@ -102,8 +105,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultBlocksDelivery"
-              label="Block Delivery"
-              description="Prevents marking stops delivered or closing freight until this hold clears."
+              label={t("Block Delivery")}
+              description={t("Prevents marking stops delivered or closing freight until this hold clears.")}
               position="left"
               disabled={disabled}
             />
@@ -112,8 +115,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultBlocksBilling"
-              label="Block Billing"
-              description="Prevents invoicing or moving to billable states while the hold is active."
+              label={t("Block Billing")}
+              description={t("Prevents invoicing or moving to billable states while the hold is active.")}
               position="left"
               disabled={disabled}
             />
@@ -122,8 +125,8 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             <SwitchField
               control={control}
               name="defaultVisibleToCustomer"
-              label="Visible to Customer"
-              description="Makes this reason visible to customers in the portal."
+              label={t("Visible to Customer")}
+              description={t("Makes this reason visible to customers in the portal.")}
               position="left"
               disabled={disabled}
             />
