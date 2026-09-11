@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { PlusIcon } from "lucide-react";
@@ -21,6 +22,8 @@ type PoliciesEmptyProps = {
 };
 
 export function PoliciesEmpty({ title, description, onPublish, className }: PoliciesEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -31,7 +34,7 @@ export function PoliciesEmpty({ title, description, onPublish, className }: Poli
         onPublish ? (
           <Button variant="outline" size="sm" onClick={onPublish}>
             <PlusIcon className="size-3.5" />
-            Publish a policy
+            {t("Publish a policy")}
           </Button>
         ) : null
       }

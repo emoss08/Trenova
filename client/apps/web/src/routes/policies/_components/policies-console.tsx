@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiStat } from "@/components/kpi/kpi-stat";
 import { usePermission } from "@/hooks/use-permission";
@@ -37,6 +38,8 @@ const SCOPE_ITEMS = [
 ] satisfies { value: Scope; label: string }[];
 
 export default function PoliciesConsole() {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.WorkerPolicy, Operation.Read);
   const { allowed: canCreate } = usePermission(Resource.WorkerPolicy, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerPolicy, Operation.Update);
@@ -60,24 +63,24 @@ export default function PoliciesConsole() {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-6 gap-3">
         <KpiStat
-          label="In force"
+          label={t("In force")}
           value={String(active.length)}
           icon={<ScrollTextIcon className="size-[11px]" />}
-          sub="Policies drivers are bound by today"
+          sub={t("Policies drivers are bound by today")}
         />
         <KpiStat
-          label="Need a signature"
+          label={t("Need a signature")}
           value={String(active.filter((row) => row.requiresSignature).length)}
           tone="warning"
           icon={<FileSignatureIcon className="size-[11px]" />}
-          sub="The rest only need reading"
+          sub={t("The rest only need reading")}
         />
         <KpiStat
-          label="Retired"
+          label={t("Retired")}
           value={String(rows.length - active.length)}
           tone="muted"
           icon={<ArchiveIcon className="size-[11px]" />}
-          sub="Kept so old signatures still point at something"
+          sub={t("Kept so old signatures still point at something")}
         />
       </div>
 
@@ -87,18 +90,16 @@ export default function PoliciesConsole() {
             items={SCOPE_ITEMS}
             value={scope}
             onValueChange={setScope}
-            aria-label="Which policies to show"
+            aria-label={t("Which policies to show")}
           />
-          <InfoPopover title="Signatures">
-            A signature is pinned to the version label it was given for. Correcting the text under
-            the same label keeps every signature; publishing a new label asks everybody it applies
-            to to read and sign again from Dash.
+          <InfoPopover title={t("Signatures")}>
+            {t("A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.")}
           </InfoPopover>
         </div>
         {canCreate ? (
           <Button size="sm" onClick={() => setDialog({ policy: null })}>
             <PlusIcon className="size-3.5" />
-            Publish a policy
+            {t("Publish a policy")}
           </Button>
         ) : null}
       </div>
@@ -108,7 +109,7 @@ export default function PoliciesConsole() {
       ) : shown.length === 0 ? (
         <PoliciesEmpty
           title={scope === "active" ? "Nothing in force" : "No policies yet"}
-          description="Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash."
+          description={t("Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash.")}
           onPublish={canCreate ? () => setDialog({ policy: null }) : undefined}
         />
       ) : (
@@ -146,6 +147,8 @@ function PolicyCard({
   onCompliance: () => void;
   onEdit?: () => void;
 }) {
+  const t = useT();
+
   const retired = policy.status !== "Active";
 
   return (
@@ -172,18 +175,18 @@ function PolicyCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="outline">v{policy.versionLabel}</Badge>
+        <Badge variant="outline">{t("v{0}", policy.versionLabel)}</Badge>
         <Badge variant="secondary">{policyAudienceLabel(policy.appliesTo)}</Badge>
         <Badge variant={policy.requiresSignature ? "warning" : "secondary"}>
           {policy.requiresSignature ? "Signature" : "Read only"}
         </Badge>
-        {retired ? <Badge variant="inactive">Retired</Badge> : null}
+        {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
       </div>
 
       <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
         <Button size="xs" variant="outline" onClick={onCompliance}>
           <UsersIcon className="size-3.5" />
-          Who has signed
+          {t("Who has signed")}
         </Button>
         {onEdit ? (
           <Button
@@ -193,7 +196,7 @@ function PolicyCard({
             onClick={onEdit}
             aria-label={`Edit ${policy.title}`}
           >
-            Edit
+            {t("Edit")}
           </Button>
         ) : null}
       </div>

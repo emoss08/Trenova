@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
 import {
   fetchWorkerPolicyCompliance,
@@ -48,6 +49,8 @@ function splitName(name: string): [string, string] {
  * by the next hire.
  */
 export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianceDialogProps) {
+  const t = useT();
+
   const [scope, setScope] = useState<Scope>("outstanding");
   const [search, setSearch] = useState("");
 
@@ -77,8 +80,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
             {policy?.title ?? "Policy"}
           </SheetTitle>
           <SheetDescription>
-            Version {view?.policy.versionLabel ?? policy?.versionLabel}. A signature on an earlier
-            version does not count — those people are outstanding again.
+            {t("Version {0}. A signature on an earlier version does not count — those people are outstanding again.", view?.policy.versionLabel ?? policy?.versionLabel)}
           </SheetDescription>
         </SheetHeader>
 
@@ -95,13 +97,13 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                 size={72}
                 strokeWidth={6}
                 tone={total === 0 ? "muted" : percent === 100 ? "success" : "warning"}
-                aria-label="Share signed"
+                aria-label={t("Share signed")}
               >
                 <span className="font-mono text-sm font-semibold tabular-nums">{percent}%</span>
               </RingGauge>
               <div className="flex-1">
                 <p className="text-lg leading-tight font-semibold tabular-nums">
-                  {view.signed} of {total} signed
+                  {t("{0} of {1} signed", view.signed, total)}
                 </p>
                 <p className="text-muted-foreground text-xs">
                   {total === 0
@@ -118,15 +120,15 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                 items={SCOPE_ITEMS}
                 value={scope}
                 onValueChange={setScope}
-                aria-label="Who to show"
+                aria-label={t("Who to show")}
               />
               <div className="relative">
                 <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Find a name"
-                  aria-label="Find a name"
+                  placeholder={t("Find a name")}
+                  aria-label={t("Find a name")}
                   className="h-7 w-44 pl-7 text-xs"
                 />
               </div>
@@ -175,9 +177,9 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                         </span>
                       </span>
                       {done ? (
-                        <Badge variant="active">Signed</Badge>
+                        <Badge variant="active">{t("Signed")}</Badge>
                       ) : (
-                        <Badge variant="warning">Outstanding</Badge>
+                        <Badge variant="warning">{t("Outstanding")}</Badge>
                       )}
                     </li>
                   );
