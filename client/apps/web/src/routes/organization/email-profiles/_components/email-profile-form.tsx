@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -10,6 +11,8 @@ import {
 } from "./email-profile-constants";
 
 export function EmailProfileForm() {
+  const t = useT();
+
   const { control } = useFormContext<EmailProfileFormValues>();
 
   return (
@@ -19,9 +22,9 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Profile Name"
-          placeholder="Billing sender"
-          description="Internal label used when assigning this sender profile."
+          label={t("Profile Name")}
+          placeholder={t("Billing sender")}
+          description={t("Internal label used when assigning this sender profile.")}
           maxLength={100}
         />
       </FormControl>
@@ -30,9 +33,9 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="status"
-          label="Status"
-          placeholder="Status"
-          description="Inactive profiles cannot be assigned to purposes."
+          label={t("Status")}
+          placeholder={t("Status")}
+          description={t("Inactive profiles cannot be assigned to purposes.")}
           options={emailProfileStatusChoices}
         />
       </FormControl>
@@ -41,9 +44,9 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="provider"
-          label="Provider"
-          placeholder="Provider"
-          description="Email service provider used for this sender identity."
+          label={t("Provider")}
+          placeholder={t("Provider")}
+          description={t("Email service provider used for this sender identity.")}
           options={emailProviderChoices}
         />
       </FormControl>
@@ -52,9 +55,9 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="senderName"
-          label="Sender Name"
-          placeholder="Trenova Billing"
-          description="Display name recipients see in their inbox."
+          label={t("Sender Name")}
+          placeholder={t("Trenova Billing")}
+          description={t("Display name recipients see in their inbox.")}
           maxLength={100}
         />
       </FormControl>
@@ -63,9 +66,9 @@ export function EmailProfileForm() {
           control={control}
           rules={{ required: true }}
           name="senderEmail"
-          label="Sender Email"
-          placeholder="billing@example.com"
-          description="Verified sender email address for this profile."
+          label={t("Sender Email")}
+          placeholder={t("billing@example.com")}
+          description={t("Verified sender email address for this profile.")}
           type="email"
           maxLength={320}
         />
@@ -74,9 +77,9 @@ export function EmailProfileForm() {
         <InputField
           control={control}
           name="replyToEmail"
-          label="Reply-To Email"
-          placeholder="replies@example.com"
-          description="Optional reply destination. Blank uses the sender email."
+          label={t("Reply-To Email")}
+          placeholder={t("replies@example.com")}
+          description={t("Optional reply destination. Blank uses the sender email.")}
           type="email"
           maxLength={320}
         />
@@ -85,9 +88,9 @@ export function EmailProfileForm() {
         <TextareaField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Usage notes for this profile"
-          description="Operational notes for admins choosing sender identities."
+          label={t("Description")}
+          placeholder={t("Usage notes for this profile")}
+          description={t("Operational notes for admins choosing sender identities.")}
         />
       </FormControl>
     </FormGroup>
