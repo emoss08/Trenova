@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import type {
@@ -35,6 +36,8 @@ export function BenefitsOverview({
   planYear,
   now,
 }: BenefitsOverviewProps) {
+  const t = useT();
+
   const totals = useMemo(() => costTotals(costs ?? []), [costs]);
   const yearPlans = useMemo(
     () => (plans ?? []).filter((plan) => planYear === null || plan.planYear === planYear),
@@ -56,9 +59,9 @@ export function BenefitsOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<UsersIcon className="size-[11px]" />}
-          label="People covered"
+          label={t("People covered")}
           info={
-            <InfoPopover title="People covered">
+            <InfoPopover title={t("People covered")}>
               {
                 "Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice."
               }
@@ -66,7 +69,7 @@ export function BenefitsOverview({
           }
         />
         {costs ? (
-          <NumberFlow value={totals.enrolled} className={VALUE_CLASS} aria-label="People covered" />
+          <NumberFlow value={totals.enrolled} className={VALUE_CLASS} aria-label={t("People covered")} />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
@@ -76,9 +79,9 @@ export function BenefitsOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<LayersIcon className="size-[11px]" />}
-          label="Plans on offer"
+          label={t("Plans on offer")}
           info={
-            <InfoPopover title="Plans on offer">
+            <InfoPopover title={t("Plans on offer")}>
               {
                 "Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted."
               }
@@ -86,7 +89,7 @@ export function BenefitsOverview({
           }
         />
         {plans ? (
-          <NumberFlow value={activePlans} className={VALUE_CLASS} aria-label="Plans on offer" />
+          <NumberFlow value={activePlans} className={VALUE_CLASS} aria-label={t("Plans on offer")} />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
@@ -102,9 +105,9 @@ export function BenefitsOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<HeartHandshakeIcon className="size-[11px]" />}
-          label="Employer puts in"
+          label={t("Employer puts in")}
           info={
-            <InfoPopover title="Employer puts in">
+            <InfoPopover title={t("Employer puts in")}>
               {
                 "The employer share across every active enrolment in the year, at each plan's stated rates."
               }
@@ -112,7 +115,7 @@ export function BenefitsOverview({
           }
         />
         {costs ? (
-          <span className={VALUE_CLASS} aria-label="Employer puts in">
+          <span className={VALUE_CLASS} aria-label={t("Employer puts in")}>
             {formatMinor(totals.employerMinor)}
           </span>
         ) : (
@@ -121,7 +124,7 @@ export function BenefitsOverview({
         <CompositionBar
           size="sm"
           className="mt-auto"
-          aria-label="Who pays, per settlement period"
+          aria-label={t("Who pays, per settlement period")}
           formatValue={(value) => formatMinor(value)}
           segments={[
             { key: "employer", label: "Employer", value: totals.employerMinor },
@@ -133,21 +136,21 @@ export function BenefitsOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<BanknoteIcon className="size-[11px]" />}
-          label="Off settlements"
+          label={t("Off settlements")}
           info={
-            <InfoPopover title="Off settlements">
+            <InfoPopover title={t("Off settlements")}>
               {"The employee share across the same enrolments, deducted from driver settlements."}
             </InfoPopover>
           }
         />
         {costs ? (
-          <span className={VALUE_CLASS} aria-label="Off settlements">
+          <span className={VALUE_CLASS} aria-label={t("Off settlements")}>
             {formatMinor(totals.employeeMinor)}
           </span>
         ) : (
           <Skeleton className="h-6.5 w-24" />
         )}
-        <KpiSub>Per settlement period, taken as ordinary deductions</KpiSub>
+        <KpiSub>{t("Per settlement period, taken as ordinary deductions")}</KpiSub>
       </KpiCard>
     </div>
   );

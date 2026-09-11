@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -86,6 +87,8 @@ function defaultsFor(plan: BenefitPlanRow | null): BenefitPlanFormValues {
 }
 
 export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(plan);
   const form = useForm<BenefitPlanFormValues>({
@@ -140,15 +143,13 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit the plan" : "Add a plan"}</DialogTitle>
           <DialogDescription>
-            Each plan year is its own row. The pay code is what a contribution shows up as on a
-            settlement, which is why it is required.
+            {t("Each plan year is its own row. The pay code is what a contribution shows up as on a settlement, which is why it is required.")}
           </DialogDescription>
         </DialogHeader>
         {isEdit ? (
           <Alert variant="warning">
             <AlertDescription>
-              Each enrolment keeps the price it was made at, so changing a cost here only affects
-              people enrolled from now on; existing deductions are not repriced.
+              {t("Each enrolment keeps the price it was made at, so changing a cost here only affects people enrolled from now on; existing deductions are not repriced.")}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -165,121 +166,121 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                 <InputField<BenefitPlanFormValues>
                   control={control}
                   name="code"
-                  label="Code"
-                  placeholder="e.g. MED-PPO"
+                  label={t("Code")}
+                  placeholder={t("e.g. MED-PPO")}
                   rules={{ required: true }}
-                  description="A short tag that identifies the plan on lists and enrolments, up to 20 characters."
+                  description={t("A short tag that identifies the plan on lists and enrolments, up to 20 characters.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<BenefitPlanFormValues>
                   control={control}
                   name="name"
-                  label="Name"
-                  placeholder="e.g. Medical PPO"
+                  label={t("Name")}
+                  placeholder={t("e.g. Medical PPO")}
                   rules={{ required: true }}
-                  description="The plan name workers see when they are enrolled in it or decline it."
+                  description={t("The plan name workers see when they are enrolled in it or decline it.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<BenefitPlanFormValues>
                   control={control}
                   name="planType"
-                  label="Type"
+                  label={t("Type")}
                   options={TYPE_OPTIONS}
-                  placeholder="Pick a type"
+                  placeholder={t("Pick a type")}
                   rules={{ required: true }}
-                  description="The kind of cover this is; plans are grouped by it on the benefits page."
+                  description={t("The kind of cover this is; plans are grouped by it on the benefits page.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField<BenefitPlanFormValues>
                   control={control}
                   name="planYear"
-                  label="Plan year"
-                  placeholder="e.g. 2026"
+                  label={t("Plan year")}
+                  placeholder={t("e.g. 2026")}
                   rules={{ required: true }}
-                  description="The year this pricing applies to; set up next year's plan as a new row instead of editing this one."
+                  description={t("The year this pricing applies to; set up next year's plan as a new row instead of editing this one.")}
                 />
               </FormControl>
               <FormControl>
                 <PayCodeSelectField<BenefitPlanFormValues>
                   control={control}
                   name="payCodeId"
-                  label="Pay code"
+                  label={t("Pay code")}
                   required
-                  description="The line a contribution shows up as on a settlement, so every deduction can be explained."
+                  description={t("The line a contribution shows up as on a settlement, so every deduction can be explained.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<BenefitPlanFormValues>
                   control={control}
                   name="status"
-                  label="Status"
+                  label={t("Status")}
                   options={STATUS_OPTIONS}
-                  placeholder="Pick a status"
-                  description="An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled."
+                  placeholder={t("Pick a status")}
+                  description={t("An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled.")}
                 />
               </FormControl>
               <FormControl>
                 <MoneyField<BenefitPlanFormValues>
                   control={control}
                   name="employeeCostMinor"
-                  label="Employee cost per period"
+                  label={t("Employee cost per period")}
                   placeholder="0.00"
-                  description="What the worker pays each pay period; it is deducted from every settlement while they are enrolled."
+                  description={t("What the worker pays each pay period; it is deducted from every settlement while they are enrolled.")}
                 />
               </FormControl>
               <FormControl>
                 <MoneyField<BenefitPlanFormValues>
                   control={control}
                   name="employerCostMinor"
-                  label="Employer cost per period"
+                  label={t("Employer cost per period")}
                   placeholder="0.00"
-                  description="What the company pays each pay period; never deducted, but carried so a total-compensation statement shows what the job is worth."
+                  description={t("What the company pays each pay period; never deducted, but carried so a total-compensation statement shows what the job is worth.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<BenefitPlanFormValues>
                   control={control}
                   name="carrier"
-                  label="Carrier"
-                  placeholder="e.g. Blue Shield"
-                  description="The insurer or provider that underwrites the plan, shown on the plan card."
+                  label={t("Carrier")}
+                  placeholder={t("e.g. Blue Shield")}
+                  description={t("The insurer or provider that underwrites the plan, shown on the plan card.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<BenefitPlanFormValues>
                   control={control}
                   name="policyNumber"
-                  label="Policy number"
-                  placeholder="e.g. P-100"
-                  description="The carrier's policy or group number, so a query about cover can be matched to the right contract."
+                  label={t("Policy number")}
+                  placeholder={t("e.g. P-100")}
+                  description={t("The carrier's policy or group number, so a query about cover can be matched to the right contract.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <NumberField<BenefitPlanFormValues>
                   control={control}
                   name="waitingPeriodDays"
-                  label="Waiting period (days)"
-                  placeholder="e.g. 30"
-                  description="How long after hire somebody becomes eligible, up to a year; it is shown on the plan card but not checked when enrolling."
+                  label={t("Waiting period (days)")}
+                  placeholder={t("e.g. 30")}
+                  description={t("How long after hire somebody becomes eligible, up to a year; it is shown on the plan card but not checked when enrolling.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<BenefitPlanFormValues>
                   control={control}
                   name="description"
-                  label="Description"
+                  label={t("Description")}
                   maxLength={2000}
-                  placeholder="e.g. PPO with a $500 deductible and a nationwide network"
-                  description="Anything an administrator should know about the plan that the fields above do not say."
+                  placeholder={t("e.g. PPO with a $500 deductible and a nationwide network")}
+                  description={t("Anything an administrator should know about the plan that the fields above do not say.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
                 {isEdit ? "Save" : "Add"}

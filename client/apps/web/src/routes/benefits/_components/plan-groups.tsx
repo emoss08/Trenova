@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { BenefitCostRow, BenefitPlanRow } from "@/lib/graphql/benefits";
 import { groupPlansByType, type PlanTypeGroup } from "@/lib/benefits-console";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -78,18 +79,18 @@ export function PlanGroups({
 }
 
 function GroupHeading({ group }: { group: PlanTypeGroup<BenefitPlanRow, BenefitCostRow> }) {
+  const t = useT();
+
   return (
     <header className="flex flex-wrap items-baseline justify-between gap-2 px-1">
       <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {group.label}
         <span className="ml-1.5 font-normal normal-case tabular-nums">
-          {group.plans.length} plan{group.plans.length === 1 ? "" : "s"}
+          {t("{0} plan{1}", group.plans.length, group.plans.length === 1 ? "" : "s")}
         </span>
       </h4>
       <span className="text-muted-foreground text-xs tabular-nums">
-        {group.enrolled} covered
-        {group.waived > 0 ? ` · ${group.waived} declined` : ""}
-        {group.employerMinor > 0 ? ` · ${formatMinor(group.employerMinor)} employer` : ""}
+        {t("{0} covered {1}{2}", group.enrolled, group.waived > 0 ? ` · ${group.waived} declined` : "", group.employerMinor > 0 ? ` · ${formatMinor(group.employerMinor)} employer` : "")}
       </span>
     </header>
   );
@@ -105,6 +106,8 @@ type PlanRowProps = {
 };
 
 function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }: PlanRowProps) {
+  const t = useT();
+
   const archived = plan.status !== "Active";
   const enrolled = cost?.enrolled ?? 0;
   const waived = cost?.waived ?? 0;
@@ -127,7 +130,7 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
         <span className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="truncate text-sm font-medium">{plan.name}</span>
           <span className="text-muted-foreground text-xs tabular-nums">{plan.code}</span>
-          {archived ? <Badge variant="inactive">Archived</Badge> : null}
+          {archived ? <Badge variant="inactive">{t("Archived")}</Badge> : null}
         </span>
         <span className="text-muted-foreground truncate text-xs">{detail.join(" · ")}</span>
         <div className="flex items-center gap-2">
@@ -143,18 +146,18 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
             />
           </span>
           <span className="text-muted-foreground text-2xs tabular-nums">
-            {enrolled} on it{waived > 0 ? ` · ${waived} declined` : ""}
+            {t("{0} on it{1}", enrolled, waived > 0 ? ` · ${waived} declined` : "")}
           </span>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         <dl className="hidden text-right text-xs tabular-nums sm:grid sm:grid-cols-[auto_auto] sm:gap-x-2 sm:gap-y-0.5">
-          <dt className="text-muted-foreground">Employee</dt>
+          <dt className="text-muted-foreground">{t("Employee")}</dt>
           <dd className="font-mono font-medium">
             {formatMinor(plan.employeeCostMinor, plan.currencyCode)}
           </dd>
-          <dt className="text-muted-foreground">Employer</dt>
+          <dt className="text-muted-foreground">{t("Employer")}</dt>
           <dd className="font-mono font-medium">
             {formatMinor(plan.employerCostMinor, plan.currencyCode)}
           </dd>
@@ -162,7 +165,7 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
         <div className="flex items-center gap-1">
           <Button size="xs" variant="outline" onClick={onOpenRoster}>
             <UsersIcon className="size-3" />
-            Who is on it
+            {t("Who is on it")}
           </Button>
           {canUpdate ? (
             <Button

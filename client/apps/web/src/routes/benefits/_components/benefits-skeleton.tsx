@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -145,8 +146,10 @@ function AsidePanelSkeleton({ label }: { label: string }) {
  * panels' labels only so the two trees can be compared like for like.
  */
 export function BenefitsSkeleton() {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading benefits">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading benefits")}>
       <div className="contents" aria-hidden>
         <OverviewSkeleton />
         <ToolbarSkeleton />

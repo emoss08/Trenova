@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { BenefitEnrollmentListRow, BenefitPlanRow } from "@/lib/graphql/benefits";
 import {
   ENROLLMENT_STANDING_LABELS,
@@ -45,6 +46,8 @@ type PlanEnrollmentsSheetProps = {
  * out: "who declined this" is asked at audit as often as "who is on it".
  */
 export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollmentsSheetProps) {
+  const t = useT();
+
   const [query, setQuery] = useState("");
   const enrollments = useQuery({
     ...planEnrollmentsQuery(plan?.id ?? ""),
@@ -81,14 +84,14 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Find a name or terminal"
-              aria-label="Find on this plan"
+              placeholder={t("Find a name or terminal")}
+              aria-label={t("Find on this plan")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               inputContainerClassName="w-60 max-w-full"
             />
             {enrollments.data ? (
               <span className="text-muted-foreground text-xs tabular-nums">
-                {covered} covered · {rows.length} on record
+                {t("{0} covered · {1} on record", covered, rows.length)}
               </span>
             ) : null}
           </div>
@@ -108,7 +111,7 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
           ) : (
             <ul
               className="bg-card divide-y overflow-hidden rounded-lg border"
-              aria-label="People on the plan"
+              aria-label={t("People on the plan")}
             >
               {rows.map(({ entry, standing }) => {
                 const name = enrollmentWorkerName(entry);
