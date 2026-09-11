@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AgingBadge } from "@/components/accounting/aging-buckets";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
@@ -43,6 +44,8 @@ export function OpenItemsTable({
     updater: RowSelectionState | ((old: RowSelectionState) => RowSelectionState),
   ) => void;
 }) {
+  const t = useT();
+
   const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
 
   const columns = useMemo<ColumnDef<AROpenItem>[]>(
@@ -55,7 +58,7 @@ export function OpenItemsTable({
             checked={table.getIsAllRowsSelected()}
             indeterminate={table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
             onCheckedChange={(checked) => table.toggleAllRowsSelected(checked === true)}
-            aria-label="Select all"
+            aria-label={t("Select all")}
           />
         ),
         cell: ({ row }) => (
@@ -130,9 +133,9 @@ export function OpenItemsTable({
               status={row.original.settlementStatus as SettlementStatus}
             />
             {row.original.disputeStatus === "Disputed" ? (
-              <Badge variant="orange">Disputed</Badge>
+              <Badge variant="orange">{t("Disputed")}</Badge>
             ) : null}
-            {row.original.hasShortPay ? <Badge variant="inactive">Short-paid</Badge> : null}
+            {row.original.hasShortPay ? <Badge variant="inactive">{t("Short-paid")}</Badge> : null}
           </div>
         ),
       },
@@ -167,7 +170,7 @@ export function OpenItemsTable({
         meta: { align: "right" },
       },
     ],
-    [],
+    [t],
   );
 
   const table = useTable({
@@ -263,7 +266,7 @@ export function OpenItemsTable({
           <TableFooter className="bg-muted/40">
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={8} className="py-2 text-right text-xs font-medium">
-                Totals · {items.length} {items.length === 1 ? "invoice" : "invoices"}
+                {t("Totals · {0}{1}", items.length, items.length === 1 ? "invoice" : "invoices")}
               </TableCell>
               <TableCell className="py-2 text-right">
                 <AmountDisplay value={totals.total} className="text-xs font-semibold" />
