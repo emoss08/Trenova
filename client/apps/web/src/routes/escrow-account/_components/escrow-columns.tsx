@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EscrowAccountStatusBadge } from "@trenova/shared/components/status-badge";
 import type { EscrowAccountRow } from "@/lib/graphql/driver-settlement";
@@ -34,7 +35,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "balanceMinor",
-      header: () => <div className="text-right">Balance</div>,
+      header: () => <div className="text-right">{translate("Balance")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay value={row.original.balanceMinor} currency={row.original.currencyCode} />
@@ -45,7 +46,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "targetAmountMinor",
-      header: () => <div className="text-right">Target</div>,
+      header: () => <div className="text-right">{translate("Target")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           {row.original.targetAmountMinor > 0 ? (
@@ -63,7 +64,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       id: "funded",
-      header: () => <div className="text-right">Funded</div>,
+      header: () => <div className="text-right">{translate("Funded")}</div>,
       cell: ({ row }) => {
         const target = row.original.targetAmountMinor;
         if (target <= 0) return <div className="text-muted-foreground text-right text-xs">—</div>;
@@ -81,7 +82,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "annualInterestRate",
-      header: () => <div className="text-right">Interest</div>,
+      header: () => <div className="text-right">{translate("Interest")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">
           {Number(row.original.annualInterestRate) > 0
