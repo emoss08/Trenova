@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RandomDrawListRow } from "@/lib/graphql/worker-drug-alcohol";
 import {
   AlertDialog,
@@ -33,6 +34,8 @@ export function ConfirmRoundDialog({
   onOpenChange,
   onConfirm,
 }: ConfirmRoundDialogProps) {
+  const t = useT();
+
   const finalise = action?.kind === "finalise";
   return (
     <AlertDialog open={action !== null} onOpenChange={onOpenChange}>
@@ -50,7 +53,7 @@ export function ConfirmRoundDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Keep as draft</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{t("Keep as draft")}</AlertDialogCancel>
           <AlertDialogAction
             variant={finalise ? "default" : "destructive"}
             disabled={pending || action === null}

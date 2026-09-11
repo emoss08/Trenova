@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -75,14 +76,16 @@ function PanelHeaderSkeleton({
 }
 
 function PoolsSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="Pools" className="bg-card flex flex-col overflow-hidden rounded-lg border">
+    <section aria-label={t("Pools")} className="bg-card flex flex-col overflow-hidden rounded-lg border">
       <PanelHeaderSkeleton
         titleWidth="w-10"
         hint="w-20"
         action={<Skeleton className="h-6 w-20 rounded-md" />}
       />
-      <ul aria-label="Pools" className="divide-y">
+      <ul aria-label={t("Pools")} className="divide-y">
         {POOLS.map((pool, index) => (
           <li
             key={index}
@@ -115,9 +118,11 @@ function PoolsSkeleton() {
 }
 
 function RoundsSkeleton() {
+  const t = useT();
+
   return (
     <section
-      aria-label="Rounds"
+      aria-label={t("Rounds")}
       className="bg-card flex flex-col overflow-hidden rounded-lg border"
     >
       <PanelHeaderSkeleton
@@ -125,7 +130,7 @@ function RoundsSkeleton() {
         hint="w-16"
         action={<Skeleton className="h-7 w-52 rounded-md" />}
       />
-      <table aria-label="Rounds" className="w-full text-xs">
+      <table aria-label={t("Rounds")} className="w-full text-xs">
         <thead>
           <tr className="bg-sidebar h-8 border-b">
             {ROUND_COLUMN_WIDTHS.map((width, index) => (
@@ -192,8 +197,10 @@ function RoundsSkeleton() {
  * panels' labels only so the two trees can be compared like for like.
  */
 export function RandomTestingSkeleton() {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading random testing">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading random testing")}>
       <div className="contents" aria-hidden>
         <OverviewSkeleton />
         <PoolsSkeleton />

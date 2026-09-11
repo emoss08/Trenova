@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import type { ProgrammeOverview } from "@/lib/random-testing";
@@ -19,6 +20,8 @@ type RandomTestingOverviewProps = {
  * stand against the targets, and how many drivers were in the hat.
  */
 export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) {
+  const t = useT();
+
   const selected = overview.drugSelected + overview.alcoholSelected;
   const target = overview.drugTarget + overview.alcoholTarget;
 
@@ -27,17 +30,17 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
       <KpiCard span={2}>
         <KpiHeader
           icon={<CalendarClockIcon className="size-[11px]" />}
-          label="Owed now"
+          label={t("Owed now")}
           info={
-            <InfoPopover title="Owed now">
+            <InfoPopover title={t("Owed now")}>
               {
                 "Active pools whose current round has not been drawn. Missed means a past round of this year was never drawn, which a DOT audit will find."
               }
             </InfoPopover>
           }
-          right={overview.missed > 0 ? <Badge variant="inactive">Missed</Badge> : null}
+          right={overview.missed > 0 ? <Badge variant="inactive">{t("Missed")}</Badge> : null}
         />
-        <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label="Owed now" />
+        <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label={t("Owed now")} />
         <KpiSub>
           {overview.missed > 0
             ? `${overview.missed} round${overview.missed === 1 ? "" : "s"} missed this year`
@@ -52,9 +55,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
       <KpiCard span={2}>
         <KpiHeader
           icon={<CalendarCheckIcon className="size-[11px]" />}
-          label="Rounds this year"
+          label={t("Rounds this year")}
           info={
-            <InfoPopover title="Rounds this year">
+            <InfoPopover title={t("Rounds this year")}>
               {
                 "Draws made this year that were not voided. A draft round can still change; a final one is the record."
               }
@@ -64,7 +67,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         <NumberFlow
           value={overview.roundsThisYear}
           className={VALUE_CLASS}
-          aria-label="Rounds this year"
+          aria-label={t("Rounds this year")}
         />
         <KpiSub>
           {overview.roundsThisYear === 0
@@ -76,9 +79,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
       <KpiCard span={2}>
         <KpiHeader
           icon={<FlaskConicalIcon className="size-[11px]" />}
-          label="Selected this year"
+          label={t("Selected this year")}
           info={
-            <InfoPopover title="Selected this year">
+            <InfoPopover title={t("Selected this year")}>
               {
                 "Drivers picked across this year's rounds against what those rounds asked for. Short means a pool was smaller than its target."
               }
@@ -86,12 +89,12 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           }
           right={
             target > 0 && selected < target ? (
-              <Badge variant="warning">Short of target</Badge>
+              <Badge variant="warning">{t("Short of target")}</Badge>
             ) : null
           }
         />
         <div className="flex items-baseline gap-1">
-          <NumberFlow value={selected} className={VALUE_CLASS} aria-label="Selected this year" />
+          <NumberFlow value={selected} className={VALUE_CLASS} aria-label={t("Selected this year")} />
           {target > 0 ? (
             <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
               / {target}
@@ -99,9 +102,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           ) : null}
         </div>
         <div className="mt-auto flex flex-col gap-1">
-          <RateLine label="Drug" selected={overview.drugSelected} target={overview.drugTarget} />
+          <RateLine label={t("Drug")} selected={overview.drugSelected} target={overview.drugTarget} />
           <RateLine
-            label="Alcohol"
+            label={t("Alcohol")}
             selected={overview.alcoholSelected}
             target={overview.alcoholTarget}
           />
@@ -111,9 +114,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
       <KpiCard span={2}>
         <KpiHeader
           icon={<UsersIcon className="size-[11px]" />}
-          label="In the hat"
+          label={t("In the hat")}
           info={
-            <InfoPopover title="In the hat">
+            <InfoPopover title={t("In the hat")}>
               {
                 "Drivers eligible at the most recent draw. It changes as people join and leave the pool."
               }
@@ -121,14 +124,14 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           }
         />
         {overview.lastPoolSize === null ? (
-          <span className={cn(VALUE_CLASS, "text-muted-foreground")} aria-label="In the hat">
+          <span className={cn(VALUE_CLASS, "text-muted-foreground")} aria-label={t("In the hat")}>
             —
           </span>
         ) : (
           <NumberFlow
             value={overview.lastPoolSize}
             className={VALUE_CLASS}
-            aria-label="In the hat"
+            aria-label={t("In the hat")}
           />
         )}
         <KpiSub>
@@ -137,8 +140,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
             : "No round has been drawn yet"}
         </KpiSub>
         <KpiSub>
-          {overview.activePools} active pool{overview.activePools === 1 ? "" : "s"}
-          {overview.belowMinimum > 0 ? ` · ${overview.belowMinimum} below the DOT minimum` : ""}
+          {t("{0} active pool{1}{2}", overview.activePools, overview.activePools === 1 ? "" : "s", overview.belowMinimum > 0 ? ` · ${overview.belowMinimum} below the DOT minimum` : "")}
         </KpiSub>
       </KpiCard>
     </div>

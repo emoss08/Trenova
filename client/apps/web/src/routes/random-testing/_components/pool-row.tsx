@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RandomPoolRow } from "@/lib/graphql/worker-drug-alcohol";
 import {
   SLOT_STATE_LABELS,
@@ -54,6 +55,8 @@ export function PoolRow({
   onDraw,
   onEdit,
 }: PoolRowProps) {
+  const t = useT();
+
   const owed = calendar.find((slot) => slot.state === "due");
   const drivers =
     pool.includedDriverTypes.length > 0 ? pool.includedDriverTypes.join(", ") : "every driver";
@@ -70,13 +73,12 @@ export function PoolRow({
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span className="truncate text-sm font-medium">{pool.name}</span>
           <Badge variant="secondary">{pool.code}</Badge>
-          {pool.isDefault ? <Badge variant="outline">Default</Badge> : null}
-          {pool.status !== "Active" ? <Badge variant="inactive">Inactive</Badge> : null}
-          {pool.meetsDotMinimums ? null : <Badge variant="warning">Below the DOT minimum</Badge>}
+          {pool.isDefault ? <Badge variant="outline">{t("Default")}</Badge> : null}
+          {pool.status !== "Active" ? <Badge variant="inactive">{t("Inactive")}</Badge> : null}
+          {pool.meetsDotMinimums ? null : <Badge variant="warning">{t("Below the DOT minimum")}</Badge>}
         </div>
         <p className="text-muted-foreground truncate text-xs">
-          {randomPeriodLabel(pool.period)} · {pool.drugRatePercent}% drug ·{" "}
-          {pool.alcoholRatePercent}% alcohol · {drivers}
+          {t("{0} · {1}% drug · {2}% alcohol · {3}", randomPeriodLabel(pool.period), pool.drugRatePercent, pool.alcoholRatePercent, drivers)}
         </p>
         {pool.description ? (
           <p className="text-muted-foreground truncate text-xs">{pool.description}</p>
@@ -118,9 +120,7 @@ export function PoolRow({
           "Nothing drawn this year"
         ) : (
           <>
-            Drug {progress.drugSelected} of {progress.drugTarget} · Alcohol{" "}
-            {progress.alcoholSelected} of {progress.alcoholTarget}
-            {progress.onPace ? "" : " · a round fell short"}
+            {t("Drug {0} of {1} · Alcohol {2} of {3}{4}", progress.drugSelected, progress.drugTarget, progress.alcoholSelected, progress.alcoholTarget, progress.onPace ? "" : " · a round fell short")}
           </>
         )}
       </p>
@@ -134,7 +134,7 @@ export function PoolRow({
           onClick={() => onSelect(selected ? null : pool.id)}
         >
           <ListFilterIcon className="size-3" />
-          Rounds
+          {t("Rounds")}
         </Button>
         {canEdit ? (
           <Button
@@ -144,7 +144,7 @@ export function PoolRow({
             onClick={() => onEdit(pool)}
           >
             <PencilIcon className="size-3" />
-            Edit
+            {t("Edit")}
           </Button>
         ) : null}
         {canDraw && pool.status === "Active" ? (

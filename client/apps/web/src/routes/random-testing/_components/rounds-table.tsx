@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RandomDrawListRow } from "@/lib/graphql/worker-drug-alcohol";
 import { drawShortOfTarget, roundStatusLabel, roundStatusTone } from "@/lib/random-testing";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -39,6 +40,8 @@ export function RoundsTable({
   onFinalise,
   onVoid,
 }: RoundsTableProps) {
+  const t = useT();
+
   const reduceMotion = useReducedMotion();
   const [settled, setSettled] = useState(false);
 
@@ -48,18 +51,18 @@ export function RoundsTable({
   }, []);
 
   return (
-    <Table aria-label="Rounds" className="text-xs">
+    <Table aria-label={t("Rounds")} className="text-xs">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="h-8 px-3">Round</TableHead>
-          <TableHead className="h-8">Pool</TableHead>
-          <TableHead className="h-8">Status</TableHead>
-          <TableHead className="h-8">Drug</TableHead>
-          <TableHead className="h-8">Alcohol</TableHead>
-          <TableHead className="h-8 text-right">In the hat</TableHead>
-          <TableHead className="h-8">Drawn</TableHead>
+          <TableHead className="h-8 px-3">{t("Round")}</TableHead>
+          <TableHead className="h-8">{t("Pool")}</TableHead>
+          <TableHead className="h-8">{t("Status")}</TableHead>
+          <TableHead className="h-8">{t("Drug")}</TableHead>
+          <TableHead className="h-8">{t("Alcohol")}</TableHead>
+          <TableHead className="h-8 text-right">{t("In the hat")}</TableHead>
+          <TableHead className="h-8">{t("Drawn")}</TableHead>
           <TableHead className="h-8 px-3 text-right">
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">{t("Actions")}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -102,12 +105,12 @@ export function RoundsTable({
                   <Badge variant={roundStatusTone(draw.status)}>
                     {roundStatusLabel(draw.status)}
                   </Badge>
-                  {short ? <Badge variant="warning">Short</Badge> : null}
+                  {short ? <Badge variant="warning">{t("Short")}</Badge> : null}
                 </span>
               </TableCell>
               <TableCell className="py-2">
                 <Fill
-                  label="Drug"
+                  label={t("Drug")}
                   selected={draw.drugSelected}
                   target={draw.drugTarget}
                   muted={draw.status === "Cancelled"}
@@ -115,7 +118,7 @@ export function RoundsTable({
               </TableCell>
               <TableCell className="py-2">
                 <Fill
-                  label="Alcohol"
+                  label={t("Alcohol")}
                   selected={draw.alcoholSelected}
                   target={draw.alcoholTarget}
                   muted={draw.status === "Cancelled"}
@@ -133,7 +136,7 @@ export function RoundsTable({
                     aria-label={`Open ${draw.periodKey}`}
                     onClick={() => onOpen(draw.id)}
                   >
-                    Open
+                    {t("Open")}
                   </Button>
                   {canDraw && draw.status === "Draft" ? (
                     <>
@@ -144,7 +147,7 @@ export function RoundsTable({
                         aria-label={`Finalise ${draw.periodKey}`}
                         onClick={() => onFinalise(draw)}
                       >
-                        Finalise
+                        {t("Finalise")}
                       </Button>
                       <Button
                         size="xs"
@@ -153,7 +156,7 @@ export function RoundsTable({
                         aria-label={`Void ${draw.periodKey}`}
                         onClick={() => onVoid(draw)}
                       >
-                        Void
+                        {t("Void")}
                       </Button>
                     </>
                   ) : null}

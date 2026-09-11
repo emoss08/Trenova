@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -42,6 +43,8 @@ const STATUS_ITEMS = [
 ] satisfies { value: RoundStatusFilter; label: string }[];
 
 export default function RandomTestingConsole() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canEdit } = usePermission(Resource.DOTRandomPool, Operation.Update);
   const { allowed: canCreate } = usePermission(Resource.DOTRandomPool, Operation.Create);
@@ -82,31 +85,31 @@ export default function RandomTestingConsole() {
       setOpenDrawId(draw.id);
     },
     onError: (error: Error) =>
-      toast.error("Could not run the draw", { description: error.message }),
+      toast.error(t("Could not run the draw"), { description: error.message }),
   });
 
   const finaliseMutation = useMutation({
     mutationFn: (id: string) => finalizeDotRandomDraw(id),
     onSuccess: () => {
-      toast.success("Round finalised", {
-        description: "The names are now the record. Correcting one means voiding the round.",
+      toast.success(t("Round finalised"), {
+        description: t("The names are now the record. Correcting one means voiding the round."),
       });
       setRoundAction(null);
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not finalise the round", { description: error.message }),
+      toast.error(t("Could not finalise the round"), { description: error.message }),
   });
 
   const voidMutation = useMutation({
     mutationFn: (id: string) => cancelDotRandomDraw(id, "Voided from the random testing console"),
     onSuccess: () => {
-      toast.success("Round voided", { description: "The period can be drawn again." });
+      toast.success(t("Round voided"), { description: t("The period can be drawn again.") });
       setRoundAction(null);
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not void the round", { description: error.message }),
+      toast.error(t("Could not void the round"), { description: error.message }),
   });
 
   const pools = poolsQuery.data;
@@ -145,7 +148,7 @@ export default function RandomTestingConsole() {
   if (failure || !pools || !draws || !overview) {
     return (
       <div className="text-destructive rounded-lg border border-dashed p-4 text-sm">
-        The programme could not be read. {failure?.message}
+        {t("The programme could not be read. {0}", failure?.message)}
       </div>
     );
   }
@@ -155,8 +158,8 @@ export default function RandomTestingConsole() {
       <div className="flex flex-col gap-4">
         <RandomTestingOverview overview={overview} />
         <RandomTestingEmpty
-          title="No pool is configured"
-          description="A pool names the drivers in the hat and the annual rates the draws must meet. Draws cannot run until one exists."
+          title={t("No pool is configured")}
+          description={t("A pool names the drivers in the hat and the annual rates the draws must meet. Draws cannot run until one exists.")}
           onNewPool={canCreate ? () => setPoolDialog({ pool: null }) : undefined}
         />
         <RandomPoolDialog
@@ -178,30 +181,27 @@ export default function RandomTestingConsole() {
       {overview.missed > 0 ? (
         <Alert variant="warning">
           <AlertDescription>
-            {overview.missed === 1 ? "A round" : `${overview.missed} rounds`} this year{" "}
-            {overview.missed === 1 ? "was" : "were"} never drawn. A missed period cannot be drawn
-            after it has ended; record why in the pool&apos;s description so the gap is explained
-            when the programme is audited.
+            {t("{0} this year {1} never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.", overview.missed === 1 ? "A round" : `${overview.missed} rounds`, overview.missed === 1 ? "was" : "were")}
           </AlertDescription>
         </Alert>
       ) : null}
 
       <SectionPanel
-        title="Pools"
+        title={t("Pools")}
         icon={<LayersIcon />}
-        help="Each pool names the drivers in the hat and the annual rates its draws must meet. The strip is this year's rounds: filled is final, dashed is drawn but not final, red was never drawn."
+        help={t("Each pool names the drivers in the hat and the annual rates its draws must meet. The strip is this year's rounds: filled is final, dashed is drawn but not final, red was never drawn.")}
         count={pools.length}
         hint={`Rounds in ${year}`}
         action={
           canCreate ? (
             <Button size="xs" variant="outline" onClick={() => setPoolDialog({ pool: null })}>
               <PlusIcon className="size-3" />
-              New pool
+              {t("New pool")}
             </Button>
           ) : null
         }
       >
-        <ul aria-label="Pools" className="divide-y">
+        <ul aria-label={t("Pools")} className="divide-y">
           {rows.map(({ pool, calendar, progress }) => (
             <PoolRow
               key={pool.id}
@@ -222,9 +222,9 @@ export default function RandomTestingConsole() {
       </SectionPanel>
 
       <SectionPanel
-        title="Rounds"
+        title={t("Rounds")}
         icon={<ListChecksIcon />}
-        help="Every draw, newest first. A draft can still be finalised or voided; a final round is the record and only opens."
+        help={t("Every draw, newest first. A draft can still be finalised or voided; a final round is the record and only opens.")}
         hint={
           rounds.length === draws.length
             ? `${draws.length} round${draws.length === 1 ? "" : "s"}`
@@ -247,7 +247,7 @@ export default function RandomTestingConsole() {
               items={STATUS_ITEMS}
               value={status}
               onValueChange={(value) => setStatus(isRoundStatusFilter(value) ? value : "all")}
-              aria-label="Round status"
+              aria-label={t("Round status")}
             />
           </>
         }
