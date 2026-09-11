@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -14,6 +15,8 @@ import { LazyLoadComponent } from "react-lazy-load-image-component";
 import FiscalPeriodTable from "./fiscal-periods-table";
 
 export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
+  const t = useT();
+
   const { control, setValue } = useFormContext<FiscalYear>();
   const { fields: periods } = useFieldArray({
     control,
@@ -54,9 +57,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             rules={{ required: true }}
             name="status"
             isReadOnly={!isEdit}
-            label="Status"
-            placeholder="Select status"
-            description="Current workflow status"
+            label={t("Status")}
+            placeholder={t("Select status")}
+            description={t("Current workflow status")}
             options={fiscalYearStatusChoices}
           />
         </FormControl>
@@ -66,9 +69,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             control={control}
             rules={{ required: true }}
             name="year"
-            label="Year"
+            label={t("Year")}
             placeholder="2025"
-            description="Fiscal year identifier"
+            description={t("Fiscal year identifier")}
             min={new Date().getFullYear() - 1}
             max={new Date().getFullYear() + 5}
           />
@@ -79,9 +82,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             control={control}
             rules={{ required: true }}
             name="name"
-            label="Name"
-            placeholder="FY 2025"
-            description="Display name for reports and references"
+            label={t("Name")}
+            placeholder={t("FY 2025")}
+            description={t("Display name for reports and references")}
             maxLength={100}
             readOnly={isEdit && (isClosed || isPermanentlyClosed)}
           />
@@ -91,15 +94,15 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
           <TextareaField
             control={control}
             name="description"
-            label="Description"
-            placeholder="Optional notes about this fiscal year..."
-            description="Additional context or special notes"
+            label={t("Description")}
+            placeholder={t("Optional notes about this fiscal year...")}
+            description={t("Additional context or special notes")}
           />
         </FormControl>
       </FormGroup>
       <FormSection
-        title="Date Configuration"
-        description="Define the fiscal period and calendar year settings"
+        title={t("Date Configuration")}
+        description={t("Define the fiscal period and calendar year settings")}
         className="border-b py-2"
       >
         <FormGroup cols={1}>
@@ -107,8 +110,8 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             <SwitchField
               control={control}
               name="isCalendarYear"
-              label="Calendar Year"
-              description="Standard Jan 1 - Dec 31 period (automatically sets dates)"
+              label={t("Calendar Year")}
+              description={t("Standard Jan 1 - Dec 31 period (automatically sets dates)")}
               position="left"
               disabled={isEdit && !isDraft}
               outlined
@@ -122,9 +125,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               rules={{ required: true }}
               control={control}
               name="startDate"
-              label="Start Date"
-              placeholder="Select start date"
-              description="First day of fiscal period"
+              label={t("Start Date")}
+              placeholder={t("Select start date")}
+              description={t("First day of fiscal period")}
               readOnly={isEdit && !isDraft}
             />
           </FormControl>
@@ -134,17 +137,17 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               rules={{ required: true }}
               control={control}
               name="endDate"
-              label="End Date"
-              placeholder="Select end date"
-              description="Last day of fiscal period"
+              label={t("End Date")}
+              placeholder={t("Select end date")}
+              description={t("Last day of fiscal period")}
               readOnly={isEdit && !isDraft}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Financial Planning"
-        description="Budget and tax reporting configuration"
+        title={t("Financial Planning")}
+        description={t("Budget and tax reporting configuration")}
         className="border-b py-2"
       >
         <FormGroup cols={2}>
@@ -152,9 +155,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             <NumberField
               control={control}
               name="budgetAmount"
-              label="Budget Amount"
+              label={t("Budget Amount")}
               placeholder="0"
-              description="Annual budget in dollars (optional)"
+              description={t("Annual budget in dollars (optional)")}
               min={0}
               readOnly={isEdit && (isClosed || isPermanentlyClosed)}
             />
@@ -164,17 +167,17 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             <NumberField
               control={control}
               name="taxYear"
-              label="Tax Year"
+              label={t("Tax Year")}
               placeholder="2025"
-              description="IRS tax reporting year (auto-synced)"
+              description={t("IRS tax reporting year (auto-synced)")}
               readOnly={!isEdit}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Year-End Settings"
-        description="Post-close adjustment configuration"
+        title={t("Year-End Settings")}
+        description={t("Post-close adjustment configuration")}
         className={isEdit ? "border-b py-2" : "py-2"}
       >
         <FormGroup cols={2}>
@@ -182,8 +185,8 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             <SwitchField
               control={control}
               name="allowAdjustingEntries"
-              label="Allow Adjusting Entries"
-              description="Permit accounting adjustments after year-end close"
+              label={t("Allow Adjusting Entries")}
+              description={t("Permit accounting adjustments after year-end close")}
               position="left"
               outlined
               readOnly={isEdit && isPermanentlyClosed}
@@ -195,9 +198,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               <AutoCompleteDateField
                 control={control}
                 name="adjustmentDeadline"
-                label="Adjustment Deadline"
-                placeholder="Select deadline"
-                description="Final date for post-close adjusting entries"
+                label={t("Adjustment Deadline")}
+                placeholder={t("Select deadline")}
+                description={t("Final date for post-close adjusting entries")}
                 readOnly={isPermanentlyClosed}
               />
             </FormControl>
@@ -206,8 +209,8 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       </FormSection>
       {isEdit && (
         <FormSection
-          title="System Settings"
-          description="Active fiscal year designation"
+          title={t("System Settings")}
+          description={t("Active fiscal year designation")}
           className="border-b py-2"
         >
           <FormGroup cols={1}>
@@ -215,8 +218,8 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               <SwitchField
                 control={control}
                 name="isCurrent"
-                label="Current Fiscal Year"
-                description="Active year for transaction posting (only one allowed per organization)"
+                label={t("Current Fiscal Year")}
+                description={t("Active year for transaction posting (only one allowed per organization)")}
                 position="left"
                 outlined
                 disabled
@@ -227,7 +230,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       )}
 
       {isEdit && (
-        <FormSection title="Fiscal Periods" description="Manage fiscal periods" className="py-2">
+        <FormSection title={t("Fiscal Periods")} description={t("Manage fiscal periods")} className="py-2">
           <LazyLoadComponent>
             <FiscalPeriodTable periods={periods} />
           </LazyLoadComponent>
