@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { CarrierRow } from "@/lib/graphql/carrier-table";
@@ -46,6 +47,8 @@ const DEFAULT_VALUES: Carrier = {
 };
 
 export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<CarrierRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(carrierSchema),
     defaultValues: DEFAULT_VALUES,
@@ -61,7 +64,7 @@ export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         form={form}
         url="/carriers/"
         queryKey="carrier-list"
-        title="Carrier"
+        title={t("Carrier")}
         fieldKey="name"
         size="lg"
         formComponent={<CarrierTabbedForm />}
@@ -76,7 +79,7 @@ export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       form={form}
       url="/carriers/"
       queryKey="carrier-list"
-      title="Carrier"
+      title={t("Carrier")}
       size="lg"
       formComponent={<CarrierTabbedForm />}
     />
