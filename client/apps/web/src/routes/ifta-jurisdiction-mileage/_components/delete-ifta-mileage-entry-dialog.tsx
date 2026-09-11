@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import {
   deleteIftaMileageEntry,
@@ -36,14 +37,16 @@ export function DeleteIftaMileageEntryDialog({
   entry,
   onDeleted,
 }: DeleteIftaMileageEntryDialogProps) {
+  const t = useT();
+
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       if (!entry) throw new Error("No mileage entry selected");
       return deleteIftaMileageEntry(entry.id, entry.version);
     },
     onSuccess: async () => {
-      toast.success("Entry deleted", {
-        description: "Recompute the quarter's return to take these miles out of the figures.",
+      toast.success(t("Entry deleted"), {
+        description: t("Recompute the quarter's return to take these miles out of the figures."),
       });
       await onDeleted();
       onOpenChange(false);
@@ -60,31 +63,25 @@ export function DeleteIftaMileageEntryDialog({
           <AlertDialogMedia className="bg-destructive/10 text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Delete this entry?")}</AlertDialogTitle>
           <AlertDialogDescription>
             {entry ? (
               <span className="block">
-                {formatDecimalString(entry.miles, IFTA_MILES_SCALE)} miles in{" "}
-                {entry.jurisdiction.code} on {formatUnixDate(entry.traveledAt)}
-                {entry.tractor?.code ? ` for tractor ${entry.tractor.code}` : ""} will be removed
-                outright.
+                {t("{0} miles in {1} on {2}{3} will be removed outright.", formatDecimalString(entry.miles, IFTA_MILES_SCALE), entry.jurisdiction.code, formatUnixDate(entry.traveledAt), entry.tractor?.code ? ` for tractor ${entry.tractor.code}` : "")}
               </span>
             ) : null}
             <span className="mt-2 block">
-              The quarter&apos;s return drops these miles on its next recompute. A return already
-              generated for {period ?? "the quarter"} keeps its figures until it is recomputed, so
-              recompute it after deleting while the quarter is still open.
+              {t("The quarter's return drops these miles on its next recompute. A return already generated for {0} keeps its figures until it is recomputed, so recompute it after deleting while the quarter is still open.", period ?? "the quarter")}
             </span>
             {entry && entry.source !== "Manual" ? (
               <span className="mt-2 block">
-                These miles were written by {IFTA_MILEAGE_SOURCE_LABELS[entry.source].toLowerCase()}
-                , not keyed by hand, so deleting removes the system&apos;s own record of the travel.
+                {t("These miles were written by {0} , not keyed by hand, so deleting removes the system's own record of the travel.", IFTA_MILEAGE_SOURCE_LABELS[entry.source].toLowerCase())}
               </span>
             ) : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Keep entry</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("Keep entry")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() => mutate()}
