@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
@@ -76,6 +77,8 @@ export function AuthForm({
   tenantQuery?: UseQueryResult<TenantLoginMetadata>;
   organizationSlug?: string;
 }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const fetchManifest = usePermissionStore((state) => state.fetchManifest);
   const clearPermissions = usePermissionStore((state) => state.clearPermissions);
@@ -214,24 +217,24 @@ export function AuthForm({
 
   return (
     <>
-      <Metadata title="Sign In" description="Sign in to your Trenova account" />
+      <Metadata title={t("Sign In")} description={t("Sign in to your Trenova account")} />
       <AuthShell step={step} receipt={receipt}>
         <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
           <img src={logoRainbow} alt="" className="size-6 object-contain" />
-          <span className="text-[14px] font-semibold tracking-[-0.02em]">Trenova</span>
+          <span className="text-[14px] font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
         </div>
 
         <AuthCard stepKey={step}>
           {tenantQuery?.isLoading ? (
             <AuthCardBody>
               <p className="text-muted-foreground m-0 text-[12.5px]">
-                Loading organization sign-in…
+                {t("Loading organization sign-in…")}
               </p>
             </AuthCardBody>
           ) : tenantQuery?.isError ? (
             <AuthCardBody>
               <p className="text-auth-danger m-0 text-[12.5px]">
-                We couldn&apos;t load this tenant login page.
+                {t("We couldn't load this tenant login page.")}
               </p>
             </AuthCardBody>
           ) : step === "forgot" ? (
@@ -270,14 +273,14 @@ export function AuthForm({
         </AuthCard>
 
         <p className="text-subtle-foreground m-0 text-center text-[11.5px] text-balance">
-          By continuing you agree to our{" "}
+          {t("By continuing you agree to our")}{" "}
           <a
             href={TERMS_URL}
             target="_blank"
             rel="noreferrer"
             className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
           >
-            Terms of Service
+            {t("Terms of Service")}
           </a>{" "}
           and{" "}
           <a
@@ -286,7 +289,7 @@ export function AuthForm({
             rel="noreferrer"
             className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
           >
-            Privacy Policy
+            {t("Privacy Policy")}
           </a>
           .
         </p>

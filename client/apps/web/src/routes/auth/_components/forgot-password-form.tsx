@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { authService } from "@trenova/shared/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +29,8 @@ export function ForgotPasswordForm({
   defaultEmail?: string;
   onBack: () => void;
 }) {
+  const t = useT();
+
   const form = useForm<ForgotPasswordRequest>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { emailAddress: defaultEmail ?? "" },
@@ -48,8 +51,8 @@ export function ForgotPasswordForm({
   return (
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Secure sign-in" />
-      <StepHeading title="Reset your password">
-        Enter the address you sign in with and we&apos;ll send you a link to choose a new password.
+      <StepHeading title={t("Reset your password")}>
+        {t("Enter the address you sign in with and we'll send you a link to choose a new password.")}
       </StepHeading>
 
       <form
@@ -60,7 +63,7 @@ export function ForgotPasswordForm({
         <AuthTextField
           name="emailAddress"
           control={control}
-          label="Email address"
+          label={t("Email address")}
           type="email"
           required
           placeholder="name@work-email.com"
@@ -68,32 +71,32 @@ export function ForgotPasswordForm({
           disabled={isPending}
         />
         {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText="Sending link">
-          Send reset link
+        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Sending link")}>
+          {t("Send reset link")}
         </AuthSubmit>
       </form>
 
-      <AuthTray onBack={onBack} hints={<span>Remembered it? Go back.</span>} />
+      <AuthTray onBack={onBack} hints={<span>{t("Remembered it? Go back.")}</span>} />
     </AuthCardBody>
   );
 }
 
 function ForgotPasswordSent({ onBack }: { onBack: () => void }) {
+  const t = useT();
+
   return (
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Link sent" />
-      <StepHeading title="Check your inbox">
-        If that address has an account, a reset link is on its way. The link works once and expires
-        shortly, so use it soon.
+      <StepHeading title={t("Check your inbox")}>
+        {t("If that address has an account, a reset link is on its way. The link works once and expires shortly, so use it soon.")}
       </StepHeading>
 
       <p className="text-subtle-foreground mt-4 mb-0 text-[11.5px]">
-        Nothing arrived? Check spam, then try again — and confirm you used the address your
-        administrator set the account up with.
+        {t("Nothing arrived? Check spam, then try again — and confirm you used the address your administrator set the account up with.")}
       </p>
 
       <div className="mt-4">
-        <AuthSubmit onClick={onBack}>Back to sign in</AuthSubmit>
+        <AuthSubmit onClick={onBack}>{t("Back to sign in")}</AuthSubmit>
       </div>
     </AuthCardBody>
   );

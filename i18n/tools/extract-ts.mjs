@@ -7,6 +7,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { parse } from "@babel/parser";
+import { foldableRuns } from "./fold.mjs";
 import { reject, TEXT_PROPS } from "./filter.mjs";
 
 const SOURCE_ROOTS = [
@@ -36,61 +37,6 @@ async function* walkFiles(dir) {
       yield full;
     }
   }
-}
-
-// foldElementText turns an element whose children mix text and expressions into ONE message
-// carrying numbered placeholders:
-//
-//   <p>Delete "{name}"? This cannot be undone.</p>
-//     -> 'Delete "{0}"? This cannot be undone.'
-//
-// Recording the text nodes separately instead would put the fragments `Delete "` and
-// `"? This cannot be undone.` in the catalog. Those cannot be translated correctly: Spanish
-// and Chinese put the object in a different place in the sentence, and a translator handed
-// half a clause has no way to produce the other half. Folding keeps the sentence whole and
-// lets the runtime substitute the value wherever the target language needs it.
-//
-// Elements with nested markup children are left alone — splicing tags into a message needs
-// a richer representation, and those are handled per text node as before.
-function foldElementText(node, consumed, record) {
-  const children = node.children.filter(
-    (child) => !(child.type === "JSXText" && child.value.trim() === ""),
-  );
-  if (children.length < 2) return;
-
-  const hasText = children.some((c) => c.type === "JSXText" && c.value.trim() !== "");
-  if (!hasText) return;
-
-  const foldable = children.every(
-    (c) => c.type === "JSXText" || c.type === "JSXExpressionContainer",
-  );
-  if (!foldable) return;
-
-  // A container holding only a string literal or whitespace is not a real interpolation.
-  let placeholderIndex = 0;
-  let message = "";
-  for (const child of children) {
-    if (child.type === "JSXText") {
-      message += child.value;
-      continue;
-    }
-    const expr = child.expression;
-    if (expr.type === "StringLiteral") {
-      message += expr.value;
-      continue;
-    }
-    if (expr.type === "JSXEmptyExpression") continue;
-    message += `{${placeholderIndex}}`;
-    placeholderIndex += 1;
-  }
-
-  if (message.trim() === "") return;
-  if (placeholderIndex === 0) return;
-
-  for (const child of children) {
-    if (child.type === "JSXText") consumed.add(child);
-  }
-  record(message, node, "jsx-block");
 }
 
 // visit walks every AST node, handing each one its parent so a JSXText knows which element
@@ -187,7 +133,12 @@ export async function extractTypeScript(repoRoot) {
         switch (node.type) {
           case "JSXElement":
           case "JSXFragment": {
-            foldElementText(node, consumed, record);
+            for (const run of foldableRuns(node.children)) {
+              for (const child of run.nodes) {
+                if (child.type === "JSXText") consumed.add(child);
+              }
+              record(run.message, run.nodes[0], "jsx-block");
+            }
             return;
           }
 
@@ -206,6 +157,20 @@ export async function extractTypeScript(repoRoot) {
             const literal = literalFromAttributeValue(node.value);
             if (literal === null) return;
             record(literal.value, literal, "jsx-prop", name);
+            return;
+          }
+
+          case "ObjectProperty": {
+            // Label maps — navigation entries, select options, status badges — are plain
+            // object literals, usually at module scope. They are some of the most visible
+            // text in the product, so they belong in the catalog; but they are deliberately
+            // NOT wrapped by the codemod. A module-level const evaluates once at import, so
+            // a translate() call there would freeze whatever language loaded first. The
+            // English text stays in the data as the key, and the component that renders it
+            // translates at render.
+            if (node.key.type !== "Identifier" || node.value.type !== "StringLiteral") return;
+            if (!TEXT_PROPS.has(node.key.name) && node.key.name !== "header") return;
+            record(node.value.value, node.value, "object-label", node.key.name);
             return;
           }
 

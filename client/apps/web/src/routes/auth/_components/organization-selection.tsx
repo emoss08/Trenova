@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
@@ -28,6 +29,8 @@ export function OrganizationSelection({
   onBack: () => void;
   onSelected: (organization: UserOrganization) => Promise<void> | void;
 }) {
+  const t = useT();
+
   const setUser = useAuthStore((state) => state.setUser);
   const clearPermissions = usePermissionStore((state) => state.clearPermissions);
   const listRef = useRef<HTMLDivElement>(null);
@@ -82,12 +85,12 @@ export function OrganizationSelection({
   return (
     <AuthCardBody>
       <StepCrumbs left={stepLabel} right={`${organizations.length} available`} />
-      <StepHeading title="Select organization">Choose the workspace for this session.</StepHeading>
+      <StepHeading title={t("Select organization")}>{t("Choose the workspace for this session.")}</StepHeading>
 
       <div
         ref={listRef}
         role="radiogroup"
-        aria-label="Organizations"
+        aria-label={t("Organizations")}
         className="mt-4 mb-3.5 flex flex-col gap-2"
       >
         {organizations.map((organization, index) => (
@@ -109,10 +112,10 @@ export function OrganizationSelection({
       <AuthSubmit
         disabled={!selectedOrganization}
         isLoading={isContinuing}
-        loadingText="Opening workspace"
+        loadingText={t("Opening workspace")}
         onClick={() => void continueWithOrganization()}
       >
-        Continue
+        {t("Continue")}
       </AuthSubmit>
 
       <AuthTray

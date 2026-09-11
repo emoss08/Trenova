@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import logoRainbow from "@/assets/logo.webp";
 import { updateService } from "@/services/update";
 import type { NetworkPulse, NetworkPulseLane } from "@/types/update";
@@ -27,6 +28,8 @@ export type CredentialReceipt = {
  * Hidden below 900px, where the card takes the whole viewport.
  */
 export function AuthPanel({ receipt }: { receipt: CredentialReceipt }) {
+  const t = useT();
+
   const prefersReducedMotion = useReducedMotion();
   // One fetch feeds both the metrics and the lane band. The endpoint is opt-in
   // (system.networkPulse.enabled) and 404s when it is off, so a failure means "render
@@ -48,9 +51,9 @@ export function AuthPanel({ receipt }: { receipt: CredentialReceipt }) {
 
       <div className="relative flex items-center gap-2.5">
         <img src={logoRainbow} alt="" className="size-6 object-contain" />
-        <span className="text-[14px] font-semibold tracking-[-0.02em]">Trenova</span>
+        <span className="text-[14px] font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
         <span className="border-border text-subtle-foreground font-table ml-0.5 border-l pl-2.5 text-[10.5px]">
-          Enterprise
+          {t("Enterprise")}
         </span>
       </div>
 
@@ -76,6 +79,8 @@ const PULSE_REFETCH_MS = 60_000;
  * percentage over an empty sample is not 0%, it is nothing.
  */
 function NetworkPulseMetrics({ pulse }: { pulse?: NetworkPulse }) {
+  const t = useT();
+
   if (!pulse) {
     return null;
   }
@@ -85,7 +90,7 @@ function NetworkPulseMetrics({ pulse }: { pulse?: NetworkPulse }) {
 
   return (
     <div className="relative hidden gap-10 whitespace-nowrap [@media(min-height:620px)]:flex">
-      <Metric label="loads in motion">
+      <Metric label={t("loads in motion")}>
         <Tally value={pulse.loadsInMotion} />
       </Metric>
       {hasOnTime && (
@@ -166,11 +171,13 @@ function LaneTrack({
 }
 
 function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
+  const t = useT();
+
   return (
     <div className="auth-receipt border-border-2 relative w-full max-w-[392px] rounded-xl border">
       <div className="border-border-2 flex items-center justify-between border-b border-dashed px-3.5 py-[11px]">
         <span className="text-subtle-foreground font-table text-[10.5px] whitespace-nowrap">
-          Credential
+          {t("Credential")}
         </span>
         <span className="text-subtle-foreground font-table text-[10.5px] whitespace-nowrap">
           {receipt.issued ? "Issued" : "Assembling"}
@@ -201,7 +208,7 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
       ))}
       {receipt.issued && (
         <span className="auth-stamp border-foreground font-table absolute right-3.5 bottom-3 rounded border px-[7px] py-[3px] text-[10.5px] tracking-[0.04em] uppercase">
-          Authorized
+          {t("Authorized")}
         </span>
       )}
     </div>
@@ -209,6 +216,8 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
 }
 
 function PanelFooter() {
+  const t = useT();
+
   // Public endpoint — it is the same call the update banner uses, and its success is
   // also the honest answer to whether the API is reachable from this browser.
   const versionQuery = useQuery({
@@ -235,7 +244,7 @@ function PanelFooter() {
             : "Network unreachable"}
       </span>
       {versionQuery.data?.environment && <span>{versionQuery.data.environment}</span>}
-      {versionQuery.data?.version && <span>v{versionQuery.data.version}</span>}
+      {versionQuery.data?.version && <span>{t("v{0}", versionQuery.data.version)}</span>}
     </div>
   );
 }

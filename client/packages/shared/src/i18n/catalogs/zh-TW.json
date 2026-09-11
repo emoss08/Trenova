@@ -1,9 +1,12 @@
 {
   "Cancel": "取消",
+  "Code is required": "代碼為必填",
   "Currency": "幣別",
   "Date": "日期",
   "Description": "說明",
   "Name": "名稱",
+  "Name is required": "名稱為必填",
   "Save": "儲存",
-  "Status": "狀態"
+  "Status": "狀態",
+  "Worker is required": "駕駛員為必填"
 }

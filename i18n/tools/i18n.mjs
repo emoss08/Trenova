@@ -7,6 +7,7 @@
 //   merge <locale> <file>  merge a batch of translations into that locale's catalog
 //   emit                   write the per-scope runtime catalogs the apps load
 //   check                  CI gate: fail on missing or orphaned entries
+//   codemod <dir> [--write]  wrap user-facing literals in t() under <dir>
 //
 // Both extractors feed one merged catalog keyed by the English source string, so a message
 // written once in Go and again in React is translated once.
@@ -15,6 +16,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { runCodemod } from "./codemod.mjs";
 import { extractTypeScript } from "./extract-ts.mjs";
 import { reject } from "./filter.mjs";
 
@@ -436,6 +438,29 @@ switch (command) {
   case "emit":
     await emit();
     break;
+  case "codemod": {
+    const target = process.argv[3];
+    if (!target) {
+      console.error("i18n: codemod needs a directory, e.g. client/apps/web/src/routes/auth");
+      process.exit(1);
+    }
+    const write = process.argv.includes("--write");
+    const result = await runCodemod(repoRoot, target, { dryRun: !write });
+    console.log(
+      `i18n: ${write ? "rewrote" : "would rewrite"} ${result.changedFiles}/${result.files} files, ` +
+        `${result.replacements} literals wrapped`,
+    );
+    if (result.skipped.length > 0) {
+      console.log(`\n  ${result.skipped.length} sites skipped:`);
+      const byReason = new Map();
+      for (const s of result.skipped) byReason.set(s.reason, (byReason.get(s.reason) ?? 0) + 1);
+      for (const [reason, n] of byReason) console.log(`    ${String(n).padStart(5)}  ${reason}`);
+      for (const s of result.skipped.slice(0, 5)) {
+        console.log(`      ${s.file}: ${s.detail ?? ""}`.slice(0, 140));
+      }
+    }
+    break;
+  }
   case "check":
     await check();
     break;

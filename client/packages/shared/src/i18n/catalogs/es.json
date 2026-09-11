@@ -1,9 +1,12 @@
 {
   "Cancel": "Cancelar",
+  "Code is required": "El código es obligatorio",
   "Currency": "Moneda",
   "Date": "Fecha",
   "Description": "Descripción",
   "Name": "Nombre",
+  "Name is required": "El nombre es obligatorio",
   "Save": "Guardar",
-  "Status": "Estado"
+  "Status": "Estado",
+  "Worker is required": "El trabajador es obligatorio"
 }

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
 import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
@@ -14,6 +15,8 @@ import { ResetPasswordDone, ResetPasswordForm } from "./_components/reset-passwo
  * the user would be readable by whoever holds the link.
  */
 export function ResetPasswordPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -35,11 +38,11 @@ export function ResetPasswordPage() {
 
   return (
     <>
-      <Metadata title="Reset password" description="Choose a new Trenova password" />
+      <Metadata title={t("Reset password")} description={t("Choose a new Trenova password")} />
       <AuthShell step={isDone ? "done" : "login"} receipt={receipt}>
         <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
           <img src={logoRainbow} alt="" className="size-6 object-contain" />
-          <span className="text-[14px] font-semibold tracking-[-0.02em]">Trenova</span>
+          <span className="text-[14px] font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
         </div>
 
         <AuthCard stepKey={isDone ? "done" : "reset"}>
@@ -55,14 +58,14 @@ export function ResetPasswordPage() {
         </AuthCard>
 
         <p className="text-subtle-foreground m-0 text-center text-[11.5px] text-balance">
-          By continuing you agree to our{" "}
+          {t("By continuing you agree to our")}{" "}
           <a
             href={TERMS_URL}
             target="_blank"
             rel="noreferrer"
             className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
           >
-            Terms of Service
+            {t("Terms of Service")}
           </a>{" "}
           and{" "}
           <a
@@ -71,7 +74,7 @@ export function ResetPasswordPage() {
             rel="noreferrer"
             className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
           >
-            Privacy Policy
+            {t("Privacy Policy")}
           </a>
           .
         </p>

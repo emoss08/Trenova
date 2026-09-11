@@ -1,9 +1,12 @@
 {
   "Cancel": "取消",
+  "Code is required": "编码为必填项",
   "Currency": "币种",
   "Date": "日期",
   "Description": "说明",
   "Name": "名称",
+  "Name is required": "名称为必填项",
   "Save": "保存",
-  "Status": "状态"
+  "Status": "状态",
+  "Worker is required": "司机为必填项"
 }

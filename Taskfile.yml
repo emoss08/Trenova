@@ -48,6 +48,18 @@ tasks:
     cmds:
       - node i18n/tools/i18n.mjs report {{.CLI_ARGS}}
 
+  i18n-codemod:
+    desc: 'Wrap user-facing literals in t() under a directory: task i18n-codemod -- <dir> --write'
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - node i18n/tools/i18n.mjs codemod {{.CLI_ARGS}}
+
+  i18n-test:
+    desc: Run the extraction and codemod tool tests
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - node --test i18n/tools/
+
   i18n-check:
     desc: Verify every locale catalog is complete and up to date
     dir: '{{.ROOT_DIR}}'

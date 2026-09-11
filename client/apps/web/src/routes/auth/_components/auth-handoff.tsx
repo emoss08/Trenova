@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useReducedMotion } from "motion/react";
 import { useEffect } from "react";
 
@@ -21,6 +22,8 @@ export function AuthHandoff({
   permissionCount?: number;
   onComplete: () => void;
 }) {
+  const t = useT();
+
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -50,10 +53,9 @@ export function AuthHandoff({
           {organizationName ? `Entering ${organizationName}` : "Entering Trenova"}
         </div>
         <div className="text-subtle-foreground font-table mt-1.5 text-[11.5px]">
-          {roleCount} role{roleCount === 1 ? "" : "s"}
-          {permissionCount === undefined
+          {t("{0} role{1}{2}", roleCount, roleCount === 1 ? "" : "s", permissionCount === undefined
             ? null
-            : ` · ${permissionCount.toLocaleString()} permission${permissionCount === 1 ? "" : "s"}`}
+            : ` · ${permissionCount.toLocaleString()} permission${permissionCount === 1 ? "" : "s"}`)}
         </div>
       </div>
       <div className="bg-border-2 h-0.5 w-full overflow-hidden rounded-sm">

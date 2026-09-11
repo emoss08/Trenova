@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { authService } from "@trenova/shared/services/auth";
@@ -47,6 +48,8 @@ export function RoleSelection({
   onBack?: () => void;
   onActivated?: (activated: RoleSummary[]) => Promise<void> | void;
 }) {
+  const t = useT();
+
   const fetchManifest = usePermissionStore((state) => state.fetchManifest);
   const listRef = useRef<HTMLDivElement>(null);
   // A single authorized role is not a choice; preselect it so the step is one keystroke.
@@ -112,12 +115,12 @@ export function RoleSelection({
             `${selectedCount} of ${roles.length} selected`
           ) : (
             <>
-              <Tally value={permissionTotal} /> permission{permissionTotal === 1 ? "" : "s"}
+              <Tally value={permissionTotal} /> {t("permission{0}", permissionTotal === 1 ? "" : "s")}
             </>
           )
         }
       />
-      <StepHeading title="Select active roles">
+      <StepHeading title={t("Select active roles")}>
         {organizationName
           ? `Scope this session at ${organizationName}. You can switch later without signing out.`
           : "Scope this session. You can switch later without signing out."}
@@ -126,7 +129,7 @@ export function RoleSelection({
       <div
         ref={listRef}
         role="group"
-        aria-label="Authorized roles"
+        aria-label={t("Authorized roles")}
         className="mt-4 mb-3.5 flex flex-col gap-2"
       >
         {roles.map((role, index) => (
@@ -148,7 +151,7 @@ export function RoleSelection({
       <AuthSubmit
         disabled={selectedCount === 0}
         isLoading={isActivating}
-        loadingText="Issuing credential"
+        loadingText={t("Issuing credential")}
         onClick={() => void activateRoles()}
       >
         {selectedCount === 0
