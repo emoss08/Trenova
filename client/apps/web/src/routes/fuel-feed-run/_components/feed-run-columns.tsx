@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fuelCardProviderChoices } from "@/lib/choices";
 import type { FuelPurchaseImportBatch } from "@/lib/graphql/fuel-purchase-import";
@@ -78,7 +79,7 @@ export function getColumns(): ColumnDef<FuelPurchaseImportBatch>[] {
           return <span className="text-muted-foreground font-table tabular-nums">0</span>;
         }
 
-        return <Badge variant="inactive">{held} waiting</Badge>;
+        return <Badge variant="inactive">{translate("{0} waiting", held)}</Badge>;
       },
       size: 120,
       meta: { apiField: "errorCount", sortable: true },

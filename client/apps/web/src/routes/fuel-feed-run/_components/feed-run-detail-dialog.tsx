@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   FUEL_FEED_RUN_LIST_KEY,
@@ -40,6 +41,8 @@ export function FeedRunDetailDialog({
   onOpenChange: (open: boolean) => void;
   batch: FuelPurchaseImportBatch | null;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   // A run is opened to deal with what it could not place, so the held rows are
   // what it opens on. Everything else is still one click away.
@@ -93,10 +96,9 @@ export function FeedRunDetailDialog({
             </span>
           </DialogTitle>
           <DialogDescription>
-            {batch?.feedReference
+            {t("{0} {1} posted, {2} waiting.", batch?.feedReference
               ? `Read ${batch.feedReference}.`
-              : "Read from the provider's API."}{" "}
-            {batch?.committedCount ?? 0} posted, {held} waiting.
+              : "Read from the provider's API.", batch?.committedCount ?? 0, held)}
           </DialogDescription>
         </DialogHeader>
 
@@ -106,18 +108,18 @@ export function FeedRunDetailDialog({
 
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t("Close")}
           </Button>
           <Button
             type="button"
             onClick={() => mutateAsync()}
             isLoading={isPending}
-            loadingText="Working them out..."
+            loadingText={t("Working them out...")}
             disabled={held === 0}
             title={held === 0 ? "This run has nothing waiting" : undefined}
           >
             <RefreshCwIcon className="size-4" />
-            Work rows out again
+            {t("Work rows out again")}
           </Button>
         </DialogFooter>
       </DialogContent>
