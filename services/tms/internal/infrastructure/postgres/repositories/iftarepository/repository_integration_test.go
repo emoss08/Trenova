@@ -81,9 +81,13 @@ func setup(t *testing.T) *fixture {
 	tenantB := pagination.TenantInfo{OrgID: other.Organization.ID, BuID: other.BusinessUnit.ID}
 
 	f := &fixture{
-		ctx:     ctx,
-		db:      db,
-		repo:    iftarepository.New(iftarepository.Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
+		ctx: ctx,
+		db:  db,
+		repo: iftarepository.New(iftarepository.Params{
+			DB:                postgres.NewTestConnection(db),
+			Logger:            zap.NewNop(),
+			JurisdictionCache: &FakeJurisdictionCache{},
+		}),
 		tenantA: tenantA,
 		tenantB: tenantB,
 		period:  ifta.NewPeriod(2020, 1),

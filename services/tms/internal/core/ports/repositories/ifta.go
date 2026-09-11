@@ -148,6 +148,12 @@ type MileAccumulation struct {
 	Mismatches   []MoveMismatch `json:"mismatches"`
 }
 
+type IFTAJurisdictionCacheRepository interface {
+	GetAll(ctx context.Context) ([]*ifta.Jurisdiction, error)
+	Set(ctx context.Context, jurisdictions []*ifta.Jurisdiction) error
+	Invalidate(ctx context.Context) error
+}
+
 type IFTARepository interface {
 	ListJurisdictions(
 		ctx context.Context,
