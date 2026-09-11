@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -88,6 +89,8 @@ function CredentialTypeCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<CredentialTypeFormValues>({
     resolver: zodResolver(credentialTypeFormSchema) as Resolver<CredentialTypeFormValues>,
     defaultValues: buildCredentialTypeDefaults(null),
@@ -97,8 +100,8 @@ function CredentialTypeCreatePanel({
     <FormCreatePanel<CredentialTypeFormValues, WorkerCredentialTypeRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Credential Type"
-      description="Add a licence, endorsement or certificate workers can hold, and decide whether it is required."
+      title={t("Credential Type")}
+      description={t("Add a licence, endorsement or certificate workers can hold, and decide whether it is required.")}
       queryKey={WORKER_CREDENTIAL_TYPE_LIST_KEY}
       form={form}
       size="lg"
@@ -120,6 +123,8 @@ function CredentialTypeEditPanel({
   onOpenChange: (open: boolean) => void;
   row: WorkerCredentialTypeRow;
 }) {
+  const t = useT();
+
   const formRow = {
     ...row,
     ...buildCredentialTypeDefaults(row),
@@ -134,7 +139,7 @@ function CredentialTypeEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Credential Type"
+      title={t("Credential Type")}
       fieldKey="code"
       queryKey={WORKER_CREDENTIAL_TYPE_LIST_KEY}
       form={form}

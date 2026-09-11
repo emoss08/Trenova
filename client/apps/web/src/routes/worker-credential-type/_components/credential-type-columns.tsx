@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
 import type { WorkerCredentialTypeRow } from "@/lib/graphql/worker-credential";
@@ -122,12 +123,12 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
         <span className="flex gap-1">
           {row.original.requiresNumber ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              Number
+              {translate("Number")}
             </Badge>
           ) : null}
           {row.original.requiresDocument ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              Document
+              {translate("Document")}
             </Badge>
           ) : null}
         </span>
