@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { GeocodedBadge } from "@/components/geocode-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -90,6 +91,8 @@ type CreateDialogProps = {
 };
 
 function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
+  const t = useT();
+
   const form = useForm<LocationFormInput, unknown, Location>({
     resolver: zodResolver(locationSchema),
     defaultValues: CREATE_DEFAULT_VALUES,
@@ -119,7 +122,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
   >({
     mutationFn: async ({ values }) => api.post<Location>(URL, values),
     onSuccess: (_data, variables) => {
-      toast.success("Changes have been saved.", {
+      toast.success(t("Changes have been saved."), {
         description: `${TITLE} created successfully`,
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -169,10 +172,10 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
         if (next) reset();
         onOpenChange(next);
       }}
-      titleNode={<DialogTitle>Create new location</DialogTitle>}
+      titleNode={<DialogTitle>{t("Create new location")}</DialogTitle>}
       descriptionNode={
         <DialogDescription className="text-muted-foreground text-xs">
-          Fill out the form below to create a new Location.
+          {t("Fill out the form below to create a new Location.")}
         </DialogDescription>
       }
       footer={
@@ -185,14 +188,14 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
               reset();
             }}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <SplitButton
             options={CREATE_SAVE_OPTIONS}
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
             isLoading={isSubmitting}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             formId={FORM_ID}
           />
         </>
@@ -210,6 +213,8 @@ type EditDialogProps = {
 };
 
 function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
+  const t = useT();
+
   const form = useForm<LocationFormInput, unknown, Location>({
     resolver: zodResolver(locationSchema),
     defaultValues: CREATE_DEFAULT_VALUES,
@@ -247,7 +252,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success("Changes have been saved", {
+      toast.success(t("Changes have been saved"), {
         description: `${TITLE} updated successfully`,
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -332,14 +337,14 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
               reset();
             }}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <SplitButton
             options={EDIT_SAVE_OPTIONS}
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
             isLoading={isSubmitting}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             formId={FORM_ID}
           />
         </>
