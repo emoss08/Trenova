@@ -1,0 +1,10 @@
+{
+  "name": "@trenova/i18n-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Repo-level i18n extraction, catalog generation and codemod. Self-contained so CI can run it without installing the client workspace.",
+  "dependencies": {
+    "@babel/parser": "^7.28.4"
+  }
+}
