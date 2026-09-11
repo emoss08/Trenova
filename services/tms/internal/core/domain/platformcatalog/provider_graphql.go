@@ -150,6 +150,8 @@ var graphQLRootFieldOwners = map[FeatureKey][]GraphQLRootField{
 		{Operation: GraphQLOperationQuery, Field: "myProfileChangeRequests"},
 		{Operation: GraphQLOperationMutation, Field: "inviteWorkerToPortal"},
 		{Operation: GraphQLOperationMutation, Field: "revokeWorkerPortalAccess"},
+		{Operation: GraphQLOperationQuery, Field: "myCredentials"},
+		{Operation: GraphQLOperationQuery, Field: "myComplianceProfile"},
 		{Operation: GraphQLOperationMutation, Field: "acknowledgeMyPolicy"},
 		{Operation: GraphQLOperationMutation, Field: "withdrawMyProfileChange"},
 		{Operation: GraphQLOperationMutation, Field: "updateMyContactInfo"},
@@ -168,10 +170,6 @@ var graphQLRootFieldOwners = map[FeatureKey][]GraphQLRootField{
 		{Operation: GraphQLOperationMutation, Field: "setMyAvailability"},
 		{Operation: GraphQLOperationMutation, Field: "proposeMyShiftSwap"},
 		{Operation: GraphQLOperationMutation, Field: "respondToMyShiftSwap"},
-	},
-	FeatureWorkforceCompliance: {
-		{Operation: GraphQLOperationQuery, Field: "myCredentials"},
-		{Operation: GraphQLOperationQuery, Field: "myComplianceProfile"},
 	},
 }
 

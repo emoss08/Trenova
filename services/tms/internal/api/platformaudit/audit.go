@@ -17,11 +17,23 @@ type PackReach struct {
 type Findings struct {
 	UnsellableFeatures   []platformcatalog.FeatureKey
 	UnreachableRoutes    map[platformcatalog.FeatureKey][]string
-	UnreachableGraphQL   map[platformcatalog.FeatureKey][]platformcatalog.GraphQLSource
+	UnreachableGraphQL   map[platformcatalog.FeatureKey][]string
 	LegacyOnlyFeatures   []platformcatalog.FeatureKey
 	MigrationLostRoutes  map[platformcatalog.FeatureKey][]string
-	MigrationLostGraphQL map[platformcatalog.FeatureKey][]platformcatalog.GraphQLSource
+	MigrationLostGraphQL map[platformcatalog.FeatureKey][]string
 	PackReach            []PackReach
+}
+
+func graphQLSurface(feature platformcatalog.Feature) []string {
+	surface := make([]string, 0, len(feature.GraphQLSources)+len(feature.GraphQLRootFields))
+	for _, source := range feature.GraphQLSources {
+		surface = append(surface, string(source))
+	}
+	for _, field := range feature.GraphQLRootFields {
+		surface = append(surface, field.Key())
+	}
+
+	return surface
 }
 
 type Input struct {
@@ -36,23 +48,25 @@ func Audit(in Input) Findings {
 
 	findings := Findings{
 		UnreachableRoutes:    map[platformcatalog.FeatureKey][]string{},
-		UnreachableGraphQL:   map[platformcatalog.FeatureKey][]platformcatalog.GraphQLSource{},
+		UnreachableGraphQL:   map[platformcatalog.FeatureKey][]string{},
 		MigrationLostRoutes:  map[platformcatalog.FeatureKey][]string{},
-		MigrationLostGraphQL: map[platformcatalog.FeatureKey][]platformcatalog.GraphQLSource{},
+		MigrationLostGraphQL: map[platformcatalog.FeatureKey][]string{},
 	}
 
 	for _, feature := range in.Registry.ListFeatures() {
+		surface := graphQLSurface(feature)
+
 		if _, ok := sellable[feature.Key]; !ok {
 			findings.UnsellableFeatures = append(findings.UnsellableFeatures, feature.Key)
-			if len(feature.GraphQLSources) > 0 {
-				findings.UnreachableGraphQL[feature.Key] = feature.GraphQLSources
+			if len(surface) > 0 {
+				findings.UnreachableGraphQL[feature.Key] = surface
 			}
 		}
 		if len(feature.LegacyGrantingFeatures) > 0 {
 			findings.LegacyOnlyFeatures = append(findings.LegacyOnlyFeatures, feature.Key)
 		}
-		if !grantedBy(in.Registry, feature.Key, legacy) && len(feature.GraphQLSources) > 0 {
-			findings.MigrationLostGraphQL[feature.Key] = feature.GraphQLSources
+		if !grantedBy(in.Registry, feature.Key, legacy) && len(surface) > 0 {
+			findings.MigrationLostGraphQL[feature.Key] = surface
 		}
 	}
 
@@ -129,7 +143,7 @@ func packReach(
 			if !ok {
 				continue
 			}
-			entry.GraphQLSources += len(feature.GraphQLSources)
+			entry.GraphQLSources += len(graphQLSurface(feature))
 		}
 		reach = append(reach, entry)
 	}

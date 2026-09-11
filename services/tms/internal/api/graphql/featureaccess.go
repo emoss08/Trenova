@@ -293,12 +293,12 @@ func (e *FeatureAccessExtension) authorizeFeature(
 
 	checkedAt := e.now().Unix()
 	reason := ""
-	checkFailed := false
+	primaryCheckFailed := false
 	authorizing := e.registry.AuthorizingFeatures(
 		entry.policy.FeatureKey,
 		e.cfg.Platform.ControlPlane.HonorLegacyGrants(),
 	)
-	for _, featureKey := range authorizing {
+	for index, featureKey := range authorizing {
 		result, err := e.authorizer.AuthorizeAccess(ctx, &services.AccessAuthorizeRequest{
 			OrganizationID: authCtx.OrganizationID,
 			BusinessUnitID: authCtx.BusinessUnitID,
@@ -313,7 +313,9 @@ func (e *FeatureAccessExtension) authorizeFeature(
 			CheckedAt:      checkedAt,
 		})
 		if err != nil {
-			checkFailed = true
+			if index == 0 {
+				primaryCheckFailed = true
+			}
 			e.l.Error(
 				"GraphQL feature access check failed",
 				zap.String("featureKey", string(featureKey)),
@@ -325,7 +327,7 @@ func (e *FeatureAccessExtension) authorizeFeature(
 		if result.Allowed {
 			return nil
 		}
-		if reason == "" {
+		if index == 0 {
 			reason = result.Reason
 		}
 	}
@@ -340,7 +342,7 @@ func (e *FeatureAccessExtension) authorizeFeature(
 		zap.String("request_id", gqlctx.RequestID(ctx)),
 	)
 	if reason == "" {
-		if checkFailed {
+		if primaryCheckFailed {
 			return e.refuse(ctx, entry.field, "feature entitlement could not be verified")
 		}
 		reason = deniedFeatureReason

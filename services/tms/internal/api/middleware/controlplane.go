@@ -176,10 +176,10 @@ func (m *ControlPlaneAccessMiddleware) authorizeProductAccess(
 	checkedAt int64,
 ) (*services.AccessAuthorizeResult, bool) {
 	var (
-		denied  *services.AccessAuthorizeResult
-		lastErr error
+		primaryDenied *services.AccessAuthorizeResult
+		primaryErr    error
 	)
-	for _, candidate := range m.registry.AuthorizingFeatures(
+	for index, candidate := range m.registry.AuthorizingFeatures(
 		featureKey,
 		m.cfg.Platform.ControlPlane.HonorLegacyGrants(),
 	) {
@@ -200,25 +200,27 @@ func (m *ControlPlaneAccessMiddleware) authorizeProductAccess(
 			},
 		)
 		if err != nil {
-			lastErr = err
+			if index == 0 {
+				primaryErr = err
+			}
 			continue
 		}
 		if result.Allowed {
 			return result, true
 		}
-		if denied == nil {
-			denied = result
+		if index == 0 {
+			primaryDenied = result
 		}
 	}
 
-	if denied != nil {
-		m.logDeniedAccess(c, routePattern, denied.FeatureKey, denied.Reason)
-		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(denied.Reason))
+	if primaryDenied != nil {
+		m.logDeniedAccess(c, routePattern, primaryDenied.FeatureKey, primaryDenied.Reason)
+		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(primaryDenied.Reason))
 		return nil, false
 	}
 
-	if lastErr != nil {
-		m.errorHandler.HandleError(c, lastErr)
+	if primaryErr != nil {
+		m.errorHandler.HandleError(c, primaryErr)
 		return nil, false
 	}
 
