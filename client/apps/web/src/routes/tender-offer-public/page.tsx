@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { publicLinkErrorKind, type PublicLinkErrorKind } from "@/components/public-page/error-kind";
 import { PublicPageShell } from "@/components/public-page/public-page-shell";
@@ -34,31 +35,33 @@ function OfferSummary({
   onAccept: () => void;
   onDecline: (reason: string) => void;
 }) {
+  const t = useT();
+
   const [declineOpen, setDeclineOpen] = useState(intent === "decline");
   const [reason, setReason] = useState("");
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="text-base">Load offer for {offer.carrierName}</CardTitle>
+        <CardTitle className="text-base">{t("Load offer for {0}", offer.carrierName)}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          PRO {offer.shipmentProNumber} · respond before the offer expires
+          {t("PRO {0} · respond before the offer expires", offer.shipmentProNumber)}
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-col">
-          <SummaryRow label="Origin" value={offer.originSummary} />
-          <SummaryRow label="Destination" value={offer.destinationSummary} />
-          <SummaryRow label="Pickup" value={offer.pickupWindow} />
-          <SummaryRow label="Delivery" value={offer.deliveryWindow} />
-          <SummaryRow label="Equipment" value={offer.equipmentSummary} />
-          <SummaryRow label="Weight" value={offer.weightSummary} />
+          <SummaryRow label={t("Origin")} value={offer.originSummary} />
+          <SummaryRow label={t("Destination")} value={offer.destinationSummary} />
+          <SummaryRow label={t("Pickup")} value={offer.pickupWindow} />
+          <SummaryRow label={t("Delivery")} value={offer.deliveryWindow} />
+          <SummaryRow label={t("Equipment")} value={offer.equipmentSummary} />
+          <SummaryRow label={t("Weight")} value={offer.weightSummary} />
         </div>
 
         <Separator />
 
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-xs">Rate</span>
+          <span className="text-muted-foreground text-xs">{t("Rate")}</span>
           <span className="text-sm font-semibold tabular-nums">
             {offer.rateAmount}
             <span className="text-muted-foreground ml-1 text-xs font-normal">
@@ -71,7 +74,7 @@ function OfferSummary({
           <div className="bg-muted/40 flex items-center gap-1.5 rounded-md border px-2 py-1.5">
             <ClockIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
             <span className="text-muted-foreground text-xs">
-              Offer expires {formatUnixDateTime(offer.expiresAt)}
+              {t("Offer expires {0}", formatUnixDateTime(offer.expiresAt))}
             </span>
           </div>
         )}
@@ -82,11 +85,11 @@ function OfferSummary({
               type="button"
               className={cn("flex-1", intent === "accept" && "ring-ring ring-2 ring-offset-2")}
               isLoading={isSubmitting && !declineOpen}
-              loadingText="Accepting..."
+              loadingText={t("Accepting...")}
               disabled={isSubmitting}
               onClick={onAccept}
             >
-              Accept load
+              {t("Accept load")}
             </Button>
             <Button
               type="button"
@@ -97,7 +100,7 @@ function OfferSummary({
               )}
               disabled={isSubmitting}
               isLoading={isSubmitting && declineOpen}
-              loadingText="Declining..."
+              loadingText={t("Declining...")}
               onClick={() => {
                 if (!declineOpen) {
                   setDeclineOpen(true);
@@ -113,13 +116,13 @@ function OfferSummary({
           {declineOpen && (
             <div className="flex flex-col gap-1">
               <label htmlFor="decline-reason" className="text-muted-foreground text-xs">
-                Reason (optional)
+                {t("Reason (optional)")}
               </label>
               <Textarea
                 id="decline-reason"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                placeholder="e.g., No truck available in the area"
+                placeholder={t("e.g., No truck available in the area")}
                 rows={3}
                 maxLength={500}
               />
@@ -138,6 +141,8 @@ function OfferSummary({
  * unusable.
  */
 export function TenderOfferPublicPage() {
+  const t = useT();
+
   const { token = "" } = useParams();
   const { pathname } = useLocation();
 
@@ -175,24 +180,24 @@ export function TenderOfferPublicPage() {
     content = (
       <StatusCard
         icon={<CheckCircle2Icon className="size-8 text-green-600" aria-hidden />}
-        title="Response recorded"
-        body="Thank you — the dispatcher has been notified of your response."
+        title={t("Response recorded")}
+        body={t("Thank you — the dispatcher has been notified of your response.")}
       />
     );
   } else if (submitError === "throttled") {
     content = (
       <StatusCard
         icon={<ClockIcon className="text-muted-foreground size-8" aria-hidden />}
-        title="Too many attempts"
-        body="Please wait a minute and try the link from your email again."
+        title={t("Too many attempts")}
+        body={t("Please wait a minute and try the link from your email again.")}
       />
     );
   } else if (submitError === "unavailable") {
     content = (
       <StatusCard
         icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
-        title="Temporarily unavailable"
-        body="Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment."
+        title={t("Temporarily unavailable")}
+        body={t("Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.")}
         action={
           <Button
             type="button"
@@ -207,7 +212,7 @@ export function TenderOfferPublicPage() {
               }
             }}
           >
-            Try again
+            {t("Try again")}
           </Button>
         }
       />
@@ -216,8 +221,8 @@ export function TenderOfferPublicPage() {
     content = (
       <StatusCard
         icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
-        title="This offer link is no longer valid"
-        body="The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error."
+        title={t("This offer link is no longer valid")}
+        body={t("The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.")}
       />
     );
   } else if (previewQuery.isLoading) {
@@ -236,14 +241,14 @@ export function TenderOfferPublicPage() {
       kind === "throttled" ? (
         <StatusCard
           icon={<ClockIcon className="text-muted-foreground size-8" aria-hidden />}
-          title="Too many attempts"
-          body="Please wait a minute and try the link from your email again."
+          title={t("Too many attempts")}
+          body={t("Please wait a minute and try the link from your email again.")}
         />
       ) : kind === "unavailable" ? (
         <StatusCard
           icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
-          title="Temporarily unavailable"
-          body="The offer could not be loaded because of a temporary problem. Please try again in a moment."
+          title={t("Temporarily unavailable")}
+          body={t("The offer could not be loaded because of a temporary problem. Please try again in a moment.")}
           action={
             <Button
               type="button"
@@ -251,26 +256,26 @@ export function TenderOfferPublicPage() {
               size="sm"
               className="mt-2"
               isLoading={previewQuery.isRefetching}
-              loadingText="Retrying..."
+              loadingText={t("Retrying...")}
               onClick={() => void previewQuery.refetch()}
             >
-              Try again
+              {t("Try again")}
             </Button>
           }
         />
       ) : (
         <StatusCard
           icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
-          title="This offer link is no longer valid"
-          body="The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error."
+          title={t("This offer link is no longer valid")}
+          body={t("The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.")}
         />
       );
   } else if (previewQuery.data?.responded) {
     content = (
       <StatusCard
         icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
-        title="Already answered"
-        body="A response has already been recorded for this offer. Contact the broker if anything changed."
+        title={t("Already answered")}
+        body={t("A response has already been recorded for this offer. Contact the broker if anything changed.")}
       />
     );
   } else if (previewQuery.data) {
@@ -287,16 +292,16 @@ export function TenderOfferPublicPage() {
     content = (
       <StatusCard
         icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
-        title="This offer link is no longer valid"
-        body="The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error."
+        title={t("This offer link is no longer valid")}
+        body={t("The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.")}
       />
     );
   }
 
   return (
     <>
-      <Metadata title="Load Offer" description="Review and respond to a load offer" />
-      <PublicPageShell footer="Powered by Trenova. Questions about this load? Reply to the offer email.">
+      <Metadata title={t("Load Offer")} description={t("Review and respond to a load offer")} />
+      <PublicPageShell footer={t("Powered by Trenova. Questions about this load? Reply to the offer email.")}>
         {content}
       </PublicPageShell>
     </>
