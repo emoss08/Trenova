@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
@@ -35,6 +36,8 @@ const METHOD_OPTIONS = leaveMeasurementMethodSchema.options.map((value) => ({
 }));
 
 export default function LeaveControlForm() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: [LEAVE_CONTROL_KEY],
@@ -67,9 +70,9 @@ export default function LeaveControlForm() {
         certificationDueDays: values.certificationDueDays,
       }),
     onSuccess: (_, values) => {
-      toast.success("Leave settings updated", {
+      toast.success(t("Leave settings updated"), {
         description:
-          "Every balance is derived on read, so the change applies to existing cases as well as new ones.",
+          t("Every balance is derived on read, so the change applies to existing cases as well as new ones."),
       });
       reset(values);
       void queryClient.invalidateQueries({ queryKey: [LEAVE_CONTROL_KEY] });
@@ -91,7 +94,7 @@ export default function LeaveControlForm() {
           <MeasurementCard />
           <EntitlementCard />
           <EligibilityCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -99,17 +102,16 @@ export default function LeaveControlForm() {
 }
 
 function MeasurementCard() {
+  const t = useT();
+
   const { control } = useFormContext<LeaveControlFormValues>();
   const method = useWatch({ control, name: "measurementMethod" });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>The twelve-month period</CardTitle>
+        <CardTitle>{t("The twelve-month period")}</CardTitle>
         <CardDescription>
-          An employer picks one of the four methods in 29 CFR 825.200(b) and must apply it to every
-          employee alike. Changing it is a change of policy, not a correction — employees are
-          entitled to sixty days&apos; notice, and until then whichever method gives the greater
-          benefit applies.
+          {t("An employer picks one of the four methods in 29 CFR 825.200(b) and must apply it to every employee alike. Changing it is a change of policy, not a correction — employees are entitled to sixty days' notice, and until then whichever method gives the greater benefit applies.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -118,10 +120,10 @@ function MeasurementCard() {
             <SelectField<LeaveControlFormValues>
               control={control}
               name="measurementMethod"
-              label="How the year is measured"
+              label={t("How the year is measured")}
               options={METHOD_OPTIONS}
-              placeholder="Choose a method"
-              description="The twelve-month period every employee's entitlement is counted against."
+              placeholder={t("Choose a method")}
+              description={t("The twelve-month period every employee's entitlement is counted against.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -137,15 +139,15 @@ function MeasurementCard() {
 }
 
 function EntitlementCard() {
+  const t = useT();
+
   const { control } = useFormContext<LeaveControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>What the entitlement is worth</CardTitle>
+        <CardTitle>{t("What the entitlement is worth")}</CardTitle>
         <CardDescription>
-          Leave is granted in weeks and taken in hours, so a week needs a length. Intermittent leave
-          draws on the same entitlement in whatever increment the organisation uses for any other
-          absence (29 CFR 825.205).
+          {t("Leave is granted in weeks and taken in hours, so a week needs a length. Intermittent leave draws on the same entitlement in whatever increment the organisation uses for any other absence (29 CFR 825.205).")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -154,9 +156,9 @@ function EntitlementCard() {
             <NumberField<LeaveControlFormValues>
               control={control}
               name="entitlementWeeks"
-              label="Weeks of leave"
+              label={t("Weeks of leave")}
               placeholder="12"
-              description="Weeks of leave each eligible employee gets per period; the statute is a floor of twelve and a more generous figure is allowed."
+              description={t("Weeks of leave each eligible employee gets per period; the statute is a floor of twelve and a more generous figure is allowed.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -164,9 +166,9 @@ function EntitlementCard() {
             <NumberField<LeaveControlFormValues>
               control={control}
               name="militaryCaregiverWeeks"
-              label="Military caregiver weeks"
+              label={t("Military caregiver weeks")}
               placeholder="26"
-              description="Weeks allowed for military caregiver leave; twenty-six in a single twelve-month period under 29 CFR 825.127."
+              description={t("Weeks allowed for military caregiver leave; twenty-six in a single twelve-month period under 29 CFR 825.127.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -174,9 +176,9 @@ function EntitlementCard() {
             <NumberField<LeaveControlFormValues>
               control={control}
               name="workweekHours"
-              label="Hours in a workweek"
+              label={t("Hours in a workweek")}
               placeholder="40"
-              description="What one week of the entitlement converts to when leave is taken in hours."
+              description={t("What one week of the entitlement converts to when leave is taken in hours.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -187,14 +189,15 @@ function EntitlementCard() {
 }
 
 function EligibilityCard() {
+  const t = useT();
+
   const { control } = useFormContext<LeaveControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Eligibility and certification</CardTitle>
+        <CardTitle>{t("Eligibility and certification")}</CardTitle>
         <CardDescription>
-          The tenure half of the eligibility test is answered from the hire date. The hours-worked
-          half cannot be — there is no timeclock here — so it is recorded on each case by hand.
+          {t("The tenure half of the eligibility test is answered from the hire date. The hours-worked half cannot be — there is no timeclock here — so it is recorded on each case by hand.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -203,9 +206,9 @@ function EligibilityCard() {
             <NumberField<LeaveControlFormValues>
               control={control}
               name="eligibilityMonths"
-              label="Months of service"
+              label={t("Months of service")}
               placeholder="12"
-              description="Months since hire an employee needs before they qualify; twelve under 29 CFR 825.110(a), and they need not be consecutive."
+              description={t("Months since hire an employee needs before they qualify; twelve under 29 CFR 825.110(a), and they need not be consecutive.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -213,9 +216,9 @@ function EligibilityCard() {
             <NumberField<LeaveControlFormValues>
               control={control}
               name="eligibilityHours"
-              label="Hours worked in the prior year"
+              label={t("Hours worked in the prior year")}
               placeholder="1250"
-              description="Hours an employee must have worked in the prior twelve months; 1,250 under the statute, shown beside each case for the office to check."
+              description={t("Hours an employee must have worked in the prior twelve months; 1,250 under the statute, shown beside each case for the office to check.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -223,9 +226,9 @@ function EligibilityCard() {
             <NumberField<LeaveControlFormValues>
               control={control}
               name="certificationDueDays"
-              label="Days to return a certification"
+              label={t("Days to return a certification")}
               placeholder="15"
-              description="Calendar days an employee has to return a medical certification once it is requested; at least fifteen under 29 CFR 825.305(b)."
+              description={t("Calendar days an employee has to return a medical certification once it is requested; at least fifteen under 29 CFR 825.305(b).")}
               rules={{ required: true }}
             />
           </FormControl>
