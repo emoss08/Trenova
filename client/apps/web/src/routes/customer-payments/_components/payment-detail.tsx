@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   formatAccountingDate,
@@ -49,11 +50,13 @@ import { toast } from "sonner";
 import { ApplyUnappliedForm } from "./apply-unapplied-form";
 
 export function PaymentDetail({ paymentId, onClose }: { paymentId: string; onClose: () => void }) {
+  const t = useT();
+
   const [view, setView] = useState<"detail" | "apply">("detail");
   const { data: payment, isLoading } = useQuery(queries.customerPayment.detail(paymentId));
 
   if (isLoading || !payment) {
-    return <ComponentLoader message="Loading payment..." />;
+    return <ComponentLoader message={t("Loading payment...")} />;
   }
 
   if (view === "apply") {
@@ -72,6 +75,8 @@ function PaymentDetailView({
   payment: CustomerPaymentDetail;
   onApplyUnapplied: () => void;
 }) {
+  const t = useT();
+
   const { allowed: canManage } = usePermission(Resource.CustomerPayment, Operation.Update);
   const isPosted = payment.status === "Posted";
   const isReversed = payment.status === "Reversed";
@@ -105,7 +110,7 @@ function PaymentDetailView({
           {canManage && isPosted && payment.unappliedAmountMinor > 0 ? (
             <Button size="sm" variant="outline" onClick={onApplyUnapplied}>
               <HandCoinsIcon className="size-4" />
-              Apply Unapplied
+              {t("Apply Unapplied")}
             </Button>
           ) : null}
           {canManage && isPosted ? <ReversePaymentButton payment={payment} /> : null}
@@ -115,8 +120,7 @@ function PaymentDetailView({
       {isReversed ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900 dark:bg-red-950">
           <p className="text-xs font-medium text-red-700 dark:text-red-300">
-            Reversed {formatAccountingDate(payment.reversedAt)} — cash was backed out and the
-            applied invoices were reopened.
+            {t("Reversed {0} — cash was backed out and the applied invoices were reopened.", formatAccountingDate(payment.reversedAt))}
           </p>
           {payment.reversalReason ? (
             <p className="mt-0.5 text-xs text-red-600/90 dark:text-red-400/90">
@@ -134,15 +138,15 @@ function PaymentDetailView({
       />
 
       <div className="bg-muted/30 grid grid-cols-2 gap-x-6 gap-y-2.5 rounded-md border p-3 text-xs md:grid-cols-3">
-        <DetailItem label="Payment date" value={formatAccountingDate(payment.paymentDate)} />
-        <DetailItem label="Accounting date" value={formatAccountingDate(payment.accountingDate)} />
-        <DetailItem label="Method" value={payment.paymentMethod} />
-        <DetailItem label="Reference" value={payment.referenceNumber || "—"} />
-        <DetailItem label="Currency" value={payment.currencyCode} />
-        <DetailItem label="Recorded" value={formatAccountingDate(payment.createdAt)} />
+        <DetailItem label={t("Payment date")} value={formatAccountingDate(payment.paymentDate)} />
+        <DetailItem label={t("Accounting date")} value={formatAccountingDate(payment.accountingDate)} />
+        <DetailItem label={t("Method")} value={payment.paymentMethod} />
+        <DetailItem label={t("Reference")} value={payment.referenceNumber || "—"} />
+        <DetailItem label={t("Currency")} value={payment.currencyCode} />
+        <DetailItem label={t("Recorded")} value={formatAccountingDate(payment.createdAt)} />
         {payment.memo ? (
           <div className="col-span-2 md:col-span-3">
-            <DetailItem label="Memo" value={payment.memo} />
+            <DetailItem label={t("Memo")} value={payment.memo} />
           </div>
         ) : null}
       </div>
@@ -165,6 +169,8 @@ function CashAllocationBar({
   unappliedMinor: number;
   shortPayMinor: number;
 }) {
+  const t = useT();
+
   if (amountMinor <= 0) return null;
   const appliedShare = (appliedMinor / amountMinor) * 100;
   const unappliedShare = (unappliedMinor / amountMinor) * 100;
@@ -192,16 +198,16 @@ function CashAllocationBar({
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
           <span className="size-2 rounded-full bg-emerald-500" />
-          Applied · {formatCurrency(appliedMinor / 100)}
+          {t("Applied · {0}", formatCurrency(appliedMinor / 100))}
         </span>
         <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
           <span className="size-2 rounded-full bg-sky-500" />
-          Unapplied · {formatCurrency(unappliedMinor / 100)}
+          {t("Unapplied · {0}", formatCurrency(unappliedMinor / 100))}
         </span>
         {shortPayMinor > 0 ? (
           <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
             <span className="size-2 rounded-full bg-amber-500" />
-            Short-pay written off · {formatCurrency(shortPayMinor / 100)}
+            {t("Short-pay written off · {0}", formatCurrency(shortPayMinor / 100))}
           </span>
         ) : null}
       </div>
@@ -216,31 +222,33 @@ function ApplicationsSection({
   payment: CustomerPaymentDetail;
   shortPayMinor: number;
 }) {
+  const t = useT();
+
   const applications = payment.applications ?? [];
 
   return (
     <div>
       <p className="mb-2 text-sm font-medium">
-        Applications
+        {t("Applications")}
         <span className="text-muted-foreground ml-1.5 text-xs font-normal">
           {applications.length} {applications.length === 1 ? "invoice" : "invoices"}
         </span>
       </p>
       {applications.length === 0 ? (
         <div className="text-muted-foreground flex h-24 items-center justify-center rounded-md border border-dashed text-sm">
-          Nothing applied — the full amount is unapplied cash
+          {t("Nothing applied — the full amount is unapplied cash")}
         </div>
       ) : (
         <div className="overflow-hidden rounded-md border">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="h-8 text-xs">Invoice</TableHead>
-                <TableHead className="h-8 text-xs">Due</TableHead>
-                <TableHead className="h-8 text-right text-xs">Invoice Total</TableHead>
-                <TableHead className="h-8 text-right text-xs">Applied</TableHead>
-                <TableHead className="h-8 text-right text-xs">Short-pay</TableHead>
-                <TableHead className="h-8 text-xs">Settlement</TableHead>
+                <TableHead className="h-8 text-xs">{t("Invoice")}</TableHead>
+                <TableHead className="h-8 text-xs">{t("Due")}</TableHead>
+                <TableHead className="h-8 text-right text-xs">{t("Invoice Total")}</TableHead>
+                <TableHead className="h-8 text-right text-xs">{t("Applied")}</TableHead>
+                <TableHead className="h-8 text-right text-xs">{t("Short-pay")}</TableHead>
+                <TableHead className="h-8 text-xs">{t("Settlement")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -308,7 +316,7 @@ function ApplicationsSection({
               ))}
               <TableRow className="bg-muted/30 hover:bg-muted/30 border-t font-medium">
                 <TableCell colSpan={3} className="py-2 text-right text-xs">
-                  Totals
+                  {t("Totals")}
                 </TableCell>
                 <TableCell className="py-2 text-right">
                   <AmountDisplay
@@ -337,6 +345,8 @@ function ApplicationsSection({
 }
 
 function GLActivitySection({ paymentId }: { paymentId: string }) {
+  const t = useT();
+
   const { data: entries, isLoading } = useQuery(
     queries.journalEntry.bySource("CustomerPayment", paymentId),
   );
@@ -346,7 +356,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
     <div>
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-medium">
-          GL Postings
+          {t("GL Postings")}
           {postings.length > 0 ? (
             <span className="text-muted-foreground ml-1.5 text-xs font-normal">
               {postings.length} {postings.length === 1 ? "entry" : "entries"}
@@ -357,7 +367,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
           to={`/accounting/journal-entries/source/CustomerPayment/${paymentId}`}
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs hover:underline"
         >
-          Open full view
+          {t("Open full view")}
           <ExternalLinkIcon className="size-3" />
         </Link>
       </div>
@@ -365,7 +375,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
         <Skeleton className="h-24 w-full rounded-md" />
       ) : postings.length === 0 ? (
         <div className="text-muted-foreground flex h-20 items-center justify-center rounded-md border border-dashed text-sm">
-          Nothing has been posted to the ledger yet
+          {t("Nothing has been posted to the ledger yet")}
         </div>
       ) : (
         <div className="space-y-2">
@@ -383,13 +393,15 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
 }
 
 function CopyIdButton({ id }: { id: string }) {
+  const t = useT();
+
   const [copied, setCopied] = useState(false);
 
   return (
     <Button
       size="icon-sm"
       variant="ghost"
-      title="Copy payment ID"
+      title={t("Copy payment ID")}
       onClick={() => {
         void navigator.clipboard.writeText(id);
         setCopied(true);
@@ -420,6 +432,8 @@ type ReversePaymentFormValues = {
 };
 
 function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -436,8 +450,8 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
         reason: values.reason || undefined,
       }),
     onSuccess: () => {
-      toast.success("Payment reversed", {
-        description: "The cash receipt and invoice applications were backed out.",
+      toast.success(t("Payment reversed"), {
+        description: t("The cash receipt and invoice applications were backed out."),
       });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({
@@ -460,7 +474,7 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
     <>
       <Button size="sm" variant="destructive" onClick={() => setOpen(true)}>
         <Undo2Icon className="size-4" />
-        Reverse
+        {t("Reverse")}
       </Button>
       <Dialog
         open={open}
@@ -471,37 +485,36 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reverse payment</DialogTitle>
+            <DialogTitle>{t("Reverse payment")}</DialogTitle>
             <DialogDescription>
-              This backs out {formatCurrency(payment.amountMinor / 100)} of cash, reopens the
-              applied invoices, and posts a reversing GL entry. This cannot be undone.
+              {t("This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.", formatCurrency(payment.amountMinor / 100))}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <AutoCompleteDateField
               control={control}
               name="accountingDate"
-              label="Accounting Date"
+              label={t("Accounting Date")}
               rules={{ required: true }}
             />
             <TextareaField
               control={control}
               name="reason"
-              label="Reason"
-              placeholder="NSF check, posted to wrong customer, ..."
+              label={t("Reason")}
+              placeholder={t("NSF check, posted to wrong customer, ...")}
               rows={3}
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => void handleSubmit(onSubmit)()}
               isLoading={isPending}
             >
-              Reverse Payment
+              {t("Reverse Payment")}
             </Button>
           </DialogFooter>
         </DialogContent>

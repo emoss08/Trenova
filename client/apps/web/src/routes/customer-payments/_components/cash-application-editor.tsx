@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AgingBadge } from "@/components/accounting/aging-buckets";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { NumberField } from "@/components/fields/number-field";
@@ -40,6 +41,8 @@ export function CashApplicationEditor({
   isLoadingItems: boolean;
   emptyMessage: string;
 }) {
+  const t = useT();
+
   const { control, setValue } = useFormContext<CashApplicationFormShape>();
   const watchedRows = useWatch({ control, name: "applications" });
   const rows = useMemo(() => watchedRows ?? [], [watchedRows]);
@@ -49,7 +52,7 @@ export function CashApplicationEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">Apply to open invoices</p>
+        <p className="text-sm font-medium">{t("Apply to open invoices")}</p>
         <Button
           type="button"
           variant="outline"
@@ -59,13 +62,13 @@ export function CashApplicationEditor({
           className="h-7 text-xs"
         >
           <WandSparklesIcon className="size-3.5" />
-          Auto-apply oldest first
+          {t("Auto-apply oldest first")}
         </Button>
       </div>
 
       {isLoadingItems ? (
         <div className="text-muted-foreground flex h-32 items-center justify-center rounded-md border text-sm">
-          Loading open invoices…
+          {t("Loading open invoices…")}
         </div>
       ) : rows.length === 0 ? (
         <div className="text-muted-foreground flex h-32 items-center justify-center rounded-md border border-dashed text-sm">
@@ -77,11 +80,11 @@ export function CashApplicationEditor({
             <TableHeader className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="h-8 w-8" />
-                <TableHead className="h-8 text-xs">Invoice</TableHead>
-                <TableHead className="h-8 text-xs">Due</TableHead>
-                <TableHead className="h-8 text-right text-xs">Open</TableHead>
-                <TableHead className="h-8 w-32 text-right text-xs">Applied</TableHead>
-                <TableHead className="h-8 w-32 text-right text-xs">Short-pay</TableHead>
+                <TableHead className="h-8 text-xs">{t("Invoice")}</TableHead>
+                <TableHead className="h-8 text-xs">{t("Due")}</TableHead>
+                <TableHead className="h-8 text-right text-xs">{t("Open")}</TableHead>
+                <TableHead className="h-8 w-32 text-right text-xs">{t("Applied")}</TableHead>
+                <TableHead className="h-8 w-32 text-right text-xs">{t("Short-pay")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -129,7 +132,7 @@ export function CashApplicationEditor({
                       <AmountDisplay value={row.openAmountMinor} className="text-xs" />
                       {isOverApplied ? (
                         <p className="text-[10px] text-red-600 dark:text-red-400">
-                          exceeds open amount
+                          {t("exceeds open amount")}
                         </p>
                       ) : null}
                     </TableCell>
@@ -171,18 +174,17 @@ export function CashApplicationEditor({
       >
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
           <SummaryStat label={budgetLabel} value={budgetMinor} />
-          <SummaryStat label="Applied" value={totals.appliedMinor} />
-          <SummaryStat label="Short-pay" value={totals.shortPayMinor} />
+          <SummaryStat label={t("Applied")} value={totals.appliedMinor} />
+          <SummaryStat label={t("Short-pay")} value={totals.shortPayMinor} />
           <SummaryStat
-            label="Unapplied"
+            label={t("Unapplied")}
             value={totals.unappliedMinor}
             className={totals.unappliedMinor > 0 ? "text-amber-600 dark:text-amber-400" : undefined}
           />
         </div>
         {totals.isOverBudget ? (
           <p className="text-xs font-medium text-red-600 dark:text-red-400">
-            Applied exceeds {budgetLabel.toLowerCase()} by{" "}
-            {formatCurrency((totals.appliedMinor - budgetMinor) / 100)}
+            {t("Applied exceeds {0} by {1}", budgetLabel.toLowerCase(), formatCurrency((totals.appliedMinor - budgetMinor) / 100))}
           </p>
         ) : null}
       </div>

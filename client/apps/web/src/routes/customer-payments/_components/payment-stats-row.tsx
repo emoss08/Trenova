@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
@@ -6,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 
 export function PaymentStatsRow() {
+  const t = useT();
+
   const { data: stats, isLoading } = useQuery(queries.ar.paymentStats());
 
   if (isLoading || !stats) {
@@ -22,7 +25,7 @@ export function PaymentStatsRow() {
     <div className="grid grid-cols-3 gap-2.5">
       <StatTile
         index={0}
-        label="Posted Today"
+        label={t("Posted Today")}
         value={formatCurrency(stats.postedTodayMinor / 100)}
         detail={`${stats.postedTodayCount} ${
           stats.postedTodayCount === 1 ? "payment" : "payments"
@@ -30,7 +33,7 @@ export function PaymentStatsRow() {
       />
       <StatTile
         index={1}
-        label="Unapplied Cash"
+        label={t("Unapplied Cash")}
         value={formatCurrency(stats.unappliedCashMinor / 100)}
         detail={`${stats.unappliedPaymentCount} ${
           stats.unappliedPaymentCount === 1 ? "payment" : "payments"
@@ -41,7 +44,7 @@ export function PaymentStatsRow() {
       />
       <StatTile
         index={2}
-        label="Reversed — 30 days"
+        label={t("Reversed — 30 days")}
         value={formatCurrency(stats.reversedLast30Minor / 100)}
         detail={`${stats.reversedLast30Count} ${
           stats.reversedLast30Count === 1 ? "reversal" : "reversals"

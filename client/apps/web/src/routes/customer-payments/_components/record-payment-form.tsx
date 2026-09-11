@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -15,6 +16,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { CashApplicationEditor } from "./cash-application-editor";
 
 export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds: string[] }) {
+  const t = useT();
+
   const { control, setValue, getValues } = useFormContext<RecordPaymentFormValues>();
   const customerId = useWatch({ control, name: "customerId" });
   const amount = useWatch({ control, name: "amount" });
@@ -57,8 +60,8 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <CustomerAutocompleteField
             control={control}
             name="customerId"
-            label="Customer"
-            placeholder="Select customer"
+            label={t("Customer")}
+            placeholder={t("Select customer")}
             rules={{ required: true }}
           />
         </FormControl>
@@ -66,19 +69,19 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <NumberField
             control={control}
             name="amount"
-            label="Payment Amount"
+            label={t("Payment Amount")}
             placeholder="0.00"
             rules={{ required: true }}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
+            sideText={t("USD")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name="paymentMethod"
-            label="Payment Method"
+            label={t("Payment Method")}
             rules={{ required: true }}
             options={paymentMethodChoices}
           />
@@ -87,33 +90,33 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           <AutoCompleteDateField
             control={control}
             name="paymentDate"
-            label="Payment Date"
+            label={t("Payment Date")}
             rules={{ required: "Payment date is required" }}
-            placeholder="Select date"
-            description="The date the funds were received."
+            placeholder={t("Select date")}
+            description={t("The date the funds were received.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="accountingDate"
-            label="Accounting Date"
+            label={t("Accounting Date")}
             rules={{ required: "Accounting date is required" }}
-            placeholder="Select date"
-            description="The GL date. It must fall within an open fiscal period."
+            placeholder={t("Select date")}
+            description={t("The GL date. It must fall within an open fiscal period.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="referenceNumber"
-            label="Reference Number"
-            placeholder="Check # / ACH trace"
+            label={t("Reference Number")}
+            placeholder={t("Check # / ACH trace")}
             maxLength={100}
           />
         </FormControl>
         <FormControl>
-          <TextareaField control={control} name="memo" label="Memo" placeholder="Optional note" />
+          <TextareaField control={control} name="memo" label={t("Memo")} placeholder={t("Optional note")} />
         </FormControl>
       </FormGroup>
 
@@ -123,11 +126,11 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           budgetLabel="Payment"
           onAutoApply={handleAutoApply}
           isLoadingItems={itemsLoading}
-          emptyMessage="This customer has no open invoices — the full amount will post as unapplied cash."
+          emptyMessage={t("This customer has no open invoices — the full amount will post as unapplied cash.")}
         />
       ) : (
         <div className="text-muted-foreground flex h-24 items-center justify-center rounded-md border border-dashed text-sm">
-          Select a customer to see their open invoices
+          {t("Select a customer to see their open invoices")}
         </div>
       )}
     </div>

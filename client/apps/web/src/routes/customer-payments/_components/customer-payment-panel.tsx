@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -69,6 +70,8 @@ function RecordPaymentPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [prefill, setPrefill] = useQueryStates(prefillParamsParser);
   const prefilledInvoiceIds = useMemo(
@@ -122,7 +125,7 @@ function RecordPaymentPanel({
       });
     },
     onSuccess: (created) => {
-      toast.success("Payment posted", {
+      toast.success(t("Payment posted"), {
         description: `${formatCurrency(created.amountMinor / 100)} received — ${formatCurrency(
           created.appliedAmountMinor / 100,
         )} applied, ${formatCurrency(created.unappliedAmountMinor / 100)} unapplied.`,
@@ -140,14 +143,14 @@ function RecordPaymentPanel({
   const onSubmit = async (values: RecordPaymentFormValues) => {
     const totals = computeApplicationTotals(values.applications, toMinor(values.amount));
     if (totals.isOverBudget) {
-      toast.error("Over-applied", {
-        description: "The applied total exceeds the payment amount.",
+      toast.error(t("Over-applied"), {
+        description: t("The applied total exceeds the payment amount."),
       });
       return;
     }
     if (totals.overAppliedRows.length > 0) {
-      toast.error("Invalid application", {
-        description: "One or more invoices would be over-applied.",
+      toast.error(t("Invalid application"), {
+        description: t("One or more invoices would be over-applied."),
       });
       return;
     }
@@ -169,16 +172,16 @@ function RecordPaymentPanel({
         }
         onOpenChange(next);
       }}
-      title="Record Payment"
-      description="Post a customer payment and apply it across open invoices in one step."
+      title={t("Record Payment")}
+      description={t("Post a customer payment and apply it across open invoices in one step.")}
       size="xl"
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="record-payment-form" isLoading={isSubmitting}>
-            Post Payment
+            {t("Post Payment")}
           </Button>
         </>
       }
