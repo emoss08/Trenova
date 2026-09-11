@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
@@ -9,11 +10,13 @@ const InvoiceAdjustmentControlForm = lazy(
 );
 
 export function InvoiceAdjustmentControlPage() {
+  const t = useT();
+
   return (
     <AdminPageLayout>
       <PageHeader
-        title="Invoice Adjustment Controls"
-        description="Configure organization policy for credits, rebills, write-offs, and invoice adjustment review."
+        title={t("Invoice Adjustment Controls")}
+        description={t("Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.")}
       />
       <div className="p-4">
         <QueryLazyComponent queryKey={queries.invoiceAdjustmentControl.get._def}>
