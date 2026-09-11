@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { CarrierSettlementStatusBadge } from "@trenova/shared/components/status-badge";
@@ -71,6 +72,8 @@ export function SettlementQueue({
   onCheckedChange: (ids: ReadonlySet<string>) => void;
   onActionComplete: () => void;
 }) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const hasActiveFilters = filter !== "all" || search.trim() !== "";
   const clearFilters = () => {
@@ -135,10 +138,10 @@ export function SettlementQueue({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search carrier or number"
+            placeholder={t("Search carrier or number")}
             leftElement={<Search className="text-muted-foreground size-3.5" />}
             className="h-8 pl-7 text-xs"
-            aria-label="Search settlements by carrier name or settlement number"
+            aria-label={t("Search settlements by carrier name or settlement number")}
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -166,7 +169,7 @@ export function SettlementQueue({
         <Checkbox
           checked={allVisibleChecked}
           onCheckedChange={toggleAllVisible}
-          aria-label="Select all visible settlements"
+          aria-label={t("Select all visible settlements")}
         />
         <span className="text-muted-foreground text-[11px]">
           {checkedIds.size > 0
@@ -266,6 +269,8 @@ function BulkActionBar({
   onClear: () => void;
   onComplete: () => void;
 }) {
+  const t = useT();
+
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   const eligibleRows = (action: CarrierSettlementLifecycleAction) =>
@@ -340,7 +345,7 @@ function BulkActionBar({
         className="text-muted-foreground ml-auto h-7 text-xs"
         onClick={onClear}
       >
-        Clear
+        {t("Clear")}
       </Button>
       <BulkMarkPaidDialog
         open={payDialogOpen}

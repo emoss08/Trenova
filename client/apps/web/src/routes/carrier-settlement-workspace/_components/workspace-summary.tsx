@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { StatTile } from "@/components/stat-tile";
 import type { CarrierSettlementWorkspaceSummary } from "@/lib/graphql/carrier-settlement";
@@ -15,6 +16,8 @@ export function WorkspaceSummaryStrip({
   summary: CarrierSettlementWorkspaceSummary;
   actions: ReactNode;
 }) {
+  const t = useT();
+
   const pipelineTotal =
     summary.draftCount +
     summary.pendingApprovalCount +
@@ -26,39 +29,38 @@ export function WorkspaceSummaryStrip({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-muted-foreground text-xs">
-          Pay period{" "}
+          {t("Pay period")}{" "}
           <span className="text-foreground font-medium">
             {formatDate(summary.periodStart)} – {formatDate(summary.periodEnd - 86400)}
           </span>{" "}
-          · pays <span className="text-foreground font-medium">{formatDate(summary.payDate)}</span>
+          {t("· pays")} <span className="text-foreground font-medium">{formatDate(summary.payDate)}</span>
         </p>
         {actions}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         <StatTile
-          label="In Pipeline"
-          hint="Carrier settlements created for this period, across every status except voided."
+          label={t("In Pipeline")}
+          hint={t("Carrier settlements created for this period, across every status except voided.")}
           value={<span className="tabular-nums">{pipelineTotal}</span>}
           sub={
             <span>
-              {summary.draftCount} draft · {summary.pendingApprovalCount} pending ·{" "}
-              {summary.approvedCount} approved
+              {t("{0} draft · {1} pending · {2} approved", summary.draftCount, summary.pendingApprovalCount, summary.approvedCount)}
             </span>
           }
         />
         <StatTile
-          label="Posted / Paid"
-          hint="Settlements posted to the GL and settlements already remitted."
+          label={t("Posted / Paid")}
+          hint={t("Settlements posted to the GL and settlements already remitted.")}
           value={
             <span className="tabular-nums">
               {summary.postedCount} · {summary.paidCount}
             </span>
           }
-          sub={<span>posted · paid</span>}
+          sub={<span>{t("posted · paid")}</span>}
         />
         <StatTile
-          label="Period Net Payable"
-          hint="Total net payable across every non-voided settlement in this period."
+          label={t("Period Net Payable")}
+          hint={t("Total net payable across every non-voided settlement in this period.")}
           value={<AmountDisplay value={summary.totalNetMinor} currency="USD" />}
           sub={
             <span>
@@ -67,19 +69,19 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label="Unsettled Cost"
+          label={t("Unsettled Cost")}
           tone={summary.pendingEventCount > 0 ? "info" : undefined}
-          hint="Accrued purchased-transportation cost not yet on a settlement."
+          hint={t("Accrued purchased-transportation cost not yet on a settlement.")}
           value={<AmountDisplay value={summary.pendingAmountMinor} currency="USD" />}
           sub={
             <span>
-              {summary.pendingEventCount} events · {summary.pendingCarrierCount} carriers
+              {t("{0} events · {1} carriers", summary.pendingEventCount, summary.pendingCarrierCount)}
             </span>
           }
         />
         <StatTile
-          label="Open Batch"
-          hint="Whether an AP run for this period is already open."
+          label={t("Open Batch")}
+          hint={t("Whether an AP run for this period is already open.")}
           value={<span>{summary.openBatchId ? "Open" : "None"}</span>}
           sub={<span>{summary.openBatchId ? "generation tops it up" : "generate to start"}</span>}
         />
