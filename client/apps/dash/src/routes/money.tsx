@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,6 +20,8 @@ import { DisputeStatusBadge, disputeCategoryLabels } from "../_components/portal
 import { canWithdrawDispute, escrowProgressPercent } from "../lib/settlement";
 
 export function DashMoneyPage() {
+  const t = useT();
+
   const features = useDashFeatures();
   const escrow = useQuery({
     queryKey: ["dash-escrow"],
@@ -36,16 +39,16 @@ export function DashMoneyPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Money</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{t("Money")}</h1>
         <p className="text-sm text-muted-foreground">
-          Expenses, escrow, advances, and open questions.
+          {t("Expenses, escrow, advances, and open questions.")}
         </p>
       </div>
 
       {features.allowExpenseSubmission ? <ExpensesSection /> : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Escrow</h2>
+        <h2 className="text-sm font-semibold">{t("Escrow")}</h2>
         {escrow.isPending ? (
           <Skeleton className="h-32 w-full rounded-2xl" />
         ) : escrow.data?.account ? (
@@ -100,13 +103,13 @@ export function DashMoneyPage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            You don&apos;t have an escrow account.
+            {t("You don't have an escrow account.")}
           </div>
         )}
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Advances</h2>
+        <h2 className="text-sm font-semibold">{t("Advances")}</h2>
         {advances.isPending ? (
           <Skeleton className="h-20 w-full rounded-2xl" />
         ) : advances.data && advances.data.length > 0 ? (
@@ -126,7 +129,7 @@ export function DashMoneyPage() {
                   </Badge>
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Issued {formatRange(advance.issuedDate, advance.issuedDate)} ·{" "}
+                  {t("Issued {0} ·", formatRange(advance.issuedDate, advance.issuedDate))}
                   <AmountDisplay value={advance.recoveredMinor} currency={advance.currencyCode} />{" "}
                   of <AmountDisplay value={advance.amountMinor} currency={advance.currencyCode} />{" "}
                   repaid
@@ -136,13 +139,13 @@ export function DashMoneyPage() {
           </ul>
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            No outstanding advances. 🎉
+            {t("No outstanding advances. 🎉")}
           </div>
         )}
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">Pay disputes</h2>
+        <h2 className="text-sm font-semibold">{t("Pay disputes")}</h2>
         {disputes.isPending ? (
           <Skeleton className="h-20 w-full rounded-2xl" />
         ) : disputes.data && disputes.data.length > 0 ? (
@@ -153,8 +156,7 @@ export function DashMoneyPage() {
           </ul>
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            If something on a settlement looks wrong, flag it from the statement and it will show up
-            here.
+            {t("If something on a settlement looks wrong, flag it from the statement and it will show up here.")}
           </div>
         )}
       </section>
@@ -167,6 +169,8 @@ type DisputeItemProps = {
 };
 
 function DisputeItem({ dispute }: DisputeItemProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
   const canWithdraw = canWithdrawDispute(dispute.status);
@@ -175,7 +179,7 @@ function DisputeItem({ dispute }: DisputeItemProps) {
     setPending(true);
     try {
       await withdrawSettlementDispute(dispute.id);
-      toast.success("Dispute withdrawn.");
+      toast.success(t("Dispute withdrawn."));
       await queryClient.invalidateQueries({ queryKey: ["dash-disputes"] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We couldn't withdraw the dispute.");
@@ -201,7 +205,7 @@ function DisputeItem({ dispute }: DisputeItemProps) {
       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{dispute.description}</p>
       {dispute.resolutionNote ? (
         <p className="mt-2 rounded-md border-l-0 border-border text-xs text-foreground">
-          <span className="text-muted-foreground">Carrier response:</span> {dispute.resolutionNote}
+          <span className="text-muted-foreground">{t("Carrier response:")}</span> {dispute.resolutionNote}
         </p>
       ) : null}
       {canWithdraw ? (

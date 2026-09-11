@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TrainingHealthBadge } from "@trenova/shared/components/training-health-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -31,6 +32,8 @@ function isOpen(item: PortalTraining): boolean {
 }
 
 export function TrainingCard() {
+  const t = useT();
+
   const training = useQuery({
     queryKey: [DASH_TRAINING_KEY],
     queryFn: ({ signal }) => fetchMyTraining({ signal }),
@@ -51,19 +54,19 @@ export function TrainingCard() {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <GraduationCapIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Training</h2>
+          <h2 className="text-sm font-semibold">{t("Training")}</h2>
         </div>
         {attention > 0 ? (
           <Badge variant="warning">
-            {attention} need{attention === 1 ? "s" : ""} attention
+            {t("{0} need{1} attention", attention, attention === 1 ? "s" : "")}
           </Badge>
         ) : (
-          <Badge variant="active">All current</Badge>
+          <Badge variant="active">{t("All current")}</Badge>
         )}
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">Nothing has been assigned to you yet.</p>
+        <p className="mt-3 text-xs text-muted-foreground">{t("Nothing has been assigned to you yet.")}</p>
       ) : (
         <ul className="mt-3 divide-y divide-border border-t border-border">
           {items.map((item) => (
@@ -72,14 +75,15 @@ export function TrainingCard() {
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        Open a course, take it, then confirm here. Scored courses are closed by your carrier once
-        they enter your result.
+        {t("Open a course, take it, then confirm here. Scored courses are closed by your carrier once they enter your result.")}
       </p>
     </div>
   );
 }
 
 function TrainingRow({ item }: { item: PortalTraining }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const meta = trainingHealthMeta(item.health);
   const open = isOpen(item);
@@ -121,7 +125,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
             {item.name}
             {item.required ? (
               <span className="ml-1 text-[10px] font-normal uppercase text-muted-foreground">
-                Required
+                {t("Required")}
               </span>
             ) : null}
           </p>
@@ -132,12 +136,11 @@ function TrainingRow({ item }: { item: PortalTraining }) {
               daysUntilExpiry: item.daysUntilExpiry,
             })}
             {open && item.dueAt ? (
-              <span className="text-muted-foreground"> · by {formatUnixDate(item.dueAt)}</span>
+              <span className="text-muted-foreground"> {t("· by {0}", formatUnixDate(item.dueAt))}</span>
             ) : null}
             {!open && item.expiresAt ? (
               <span className="text-muted-foreground">
-                {" "}
-                · until {formatUnixDate(item.expiresAt)}
+                {t("· until {0}", formatUnixDate(item.expiresAt))}
               </span>
             ) : null}
           </p>
@@ -153,14 +156,14 @@ function TrainingRow({ item }: { item: PortalTraining }) {
           {item.durationMinutes > 0 ? (
             <span className="flex items-center gap-1">
               <ClockIcon className="size-3" />
-              {item.durationMinutes} min
+              {t("{0} min", item.durationMinutes)}
             </span>
           ) : null}
           {awaitingResult ? (
-            <span className="text-amber-600 dark:text-amber-400">Waiting for your result</span>
+            <span className="text-amber-600 dark:text-amber-400">{t("Waiting for your result")}</span>
           ) : null}
           {item.score ? (
-            <span className="tabular-nums">Score {Number(item.score).toFixed(0)}%</span>
+            <span className="tabular-nums">{t("Score {0}%", Number(item.score).toFixed(0))}</span>
           ) : null}
         </div>
         {open || item.health === "ExpiringSoon" ? (
@@ -177,7 +180,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
                 }}
               >
                 <ExternalLinkIcon className="size-3.5" />
-                Open course
+                {t("Open course")}
               </a>
             ) : null}
             {canAcknowledge ? (

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -11,6 +12,8 @@ import { Link } from "react-router";
 import { YtdCard } from "../_components/ytd-card";
 
 export function DashPayPage() {
+  const t = useT();
+
   const settlements = useQuery({
     queryKey: ["dash-settlements"],
     queryFn: ({ signal }) => fetchMySettlements(50, 0, { signal }),
@@ -19,8 +22,8 @@ export function DashPayPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Pay</h1>
-        <p className="text-sm text-muted-foreground">Your settlement statements, newest first.</p>
+        <h1 className="text-xl font-semibold tracking-tight">{t("Pay")}</h1>
+        <p className="text-sm text-muted-foreground">{t("Your settlement statements, newest first.")}</p>
       </div>
 
       <YtdCard />
@@ -59,8 +62,7 @@ export function DashPayPage() {
                       />
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatRange(settlement.periodStart, settlement.periodEnd)} · Pay date{" "}
-                      {formatRange(settlement.payDate, settlement.payDate)}
+                      {t("{0} · Pay date {1}", formatRange(settlement.periodStart, settlement.periodEnd), formatRange(settlement.payDate, settlement.payDate))}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -81,7 +83,7 @@ export function DashPayPage() {
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-10 text-center">
           <ReceiptTextIcon className="size-6 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            Once your carrier issues a settlement, your statement will show up here.
+            {t("Once your carrier issues a settlement, your statement will show up here.")}
           </p>
         </div>
       )}

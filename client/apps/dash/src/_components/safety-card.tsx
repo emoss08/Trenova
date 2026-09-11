@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -28,6 +29,8 @@ export const DASH_RECOGNITIONS_KEY = "dash-recognitions";
 export const DASH_DISCIPLINE_KEY = "dash-discipline";
 
 export function SafetyCard() {
+  const t = useT();
+
   const scorecard = useQuery({
     queryKey: [DASH_SAFETY_KEY],
     queryFn: ({ signal }) => fetchMySafetyScorecard({ signal }),
@@ -57,7 +60,7 @@ export function SafetyCard() {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ShieldCheckIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Safety</h2>
+          <h2 className="text-sm font-semibold">{t("Safety")}</h2>
         </div>
         <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
       </div>
@@ -81,15 +84,15 @@ export function SafetyCard() {
             />
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {card.activePoints} point{card.activePoints === 1 ? "" : "s"} on your record
+            {t("{0} point{1} on your record", card.activePoints, card.activePoints === 1 ? "" : "s")}
           </p>
         </div>
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <Fact label="Inspections" value={summariseInspections(card)} />
+        <Fact label={t("Inspections")} value={summariseInspections(card)} />
         <Fact
-          label="Last event"
+          label={t("Last event")}
           value={
             card.daysSinceLastEvent == null
               ? "Nothing on record"
@@ -140,6 +143,8 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const level = DISCIPLINARY_LEVEL_LABELS[action.level as DisciplinaryLevel] ?? action.level;
@@ -148,7 +153,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
   const acknowledge = useMutation({
     mutationFn: () => acknowledgeMyDisciplinaryAction(action.id, comment || undefined),
     onSuccess: async () => {
-      toast.success("Thanks — your carrier can see that you have read it.");
+      toast.success(t("Thanks — your carrier can see that you have read it."));
       await queryClient.invalidateQueries({ queryKey: [DASH_DISCIPLINE_KEY] });
     },
     onError: (error: Error) => {
@@ -170,7 +175,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
         </div>
         {acknowledged ? (
           <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
-            Read
+            {t("Read")}
           </Badge>
         ) : null}
       </div>
@@ -182,12 +187,12 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
       ) : (
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] text-muted-foreground" htmlFor={`reply-${action.id}`}>
-            Your response
+            {t("Your response")}
           </label>
           <textarea
             id={`reply-${action.id}`}
             className="min-h-16 rounded-md border border-border bg-background p-2 text-xs"
-            placeholder="Optional — anything you want on the record"
+            placeholder={t("Optional — anything you want on the record")}
             value={comment}
             onChange={(event) => setComment(event.target.value)}
           />

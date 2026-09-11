@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -23,6 +24,8 @@ import { toast } from "sonner";
 export const DASH_REVIEWS_KEY = "dash-reviews";
 
 export function ReviewsCard() {
+  const t = useT();
+
   const reviews = useQuery({
     queryKey: [DASH_REVIEWS_KEY],
     queryFn: ({ signal }) => fetchMyReviews({ signal }),
@@ -42,14 +45,14 @@ export function ReviewsCard() {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ClipboardCheckIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Reviews</h2>
+          <h2 className="text-sm font-semibold">{t("Reviews")}</h2>
         </div>
-        {waiting > 0 ? <Badge variant="warning">{waiting} waiting for you</Badge> : null}
+        {waiting > 0 ? <Badge variant="warning">{t("{0} waiting for you", waiting)}</Badge> : null}
       </div>
 
       {reviews.data.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          No reviews yet. Your manager will share one here when it is ready.
+          {t("No reviews yet. Your manager will share one here when it is ready.")}
         </p>
       ) : (
         <ul className="mt-3 flex flex-col gap-3">
@@ -63,6 +66,8 @@ export function ReviewsCard() {
 }
 
 function ReviewRow({ review }: { review: PortalReview }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const status = review.status as PerformanceReviewStatus;
@@ -71,7 +76,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
   const acknowledge = useMutation({
     mutationFn: () => acknowledgeMyReview(review.id, comment || undefined),
     onSuccess: async () => {
-      toast.success("Signed — thanks. Your manager can see your comment.");
+      toast.success(t("Signed — thanks. Your manager can see your comment."));
       await queryClient.invalidateQueries({ queryKey: [DASH_REVIEWS_KEY] });
     },
     onError: (error: Error) => {
@@ -146,12 +151,12 @@ function ReviewRow({ review }: { review: PortalReview }) {
       {needsSignOff ? (
         <div className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3">
           <label className="text-[11px] text-muted-foreground" htmlFor={`comment-${review.id}`}>
-            Your comment
+            {t("Your comment")}
           </label>
           <textarea
             id={`comment-${review.id}`}
             className="min-h-16 rounded-md border border-border bg-background p-2 text-xs"
-            placeholder="Optional — anything you want your manager to see"
+            placeholder={t("Optional — anything you want your manager to see")}
             value={comment}
             onChange={(event) => setComment(event.target.value)}
           />

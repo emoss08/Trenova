@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { fetchMyPortalProfile } from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
@@ -56,6 +57,8 @@ function NotificationBell() {
 }
 
 export function DashLayout() {
+  const t = useT();
+
   const location = useLocation();
   const { data: profile } = useDashProfile();
   useDashRealtime();
@@ -70,7 +73,7 @@ export function DashLayout() {
         <div className="mx-auto flex h-14 w-full max-w-lg items-center justify-between px-4">
           <div className="flex items-baseline gap-2">
             <Link to="/dash" className="text-lg font-semibold tracking-tight">
-              Dash
+              {t("Dash")}
             </Link>
             {profile?.organizationName ? (
               <span className="max-w-40 truncate text-xs text-muted-foreground">
@@ -82,7 +85,7 @@ export function DashLayout() {
             <NotificationBell />
             <NavLink
               to="/dash/profile"
-              aria-label="Profile"
+              aria-label={t("Profile")}
               className={({ isActive }) =>
                 cn(
                   "flex size-8 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-muted-foreground",
@@ -108,7 +111,7 @@ export function DashLayout() {
       </main>
 
       <nav
-        aria-label="Primary"
+        aria-label={t("Primary")}
         className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
       >
         <div className="mx-auto grid w-full max-w-lg grid-cols-5">

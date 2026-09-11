@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
@@ -36,6 +37,8 @@ import { useDashFeatures } from "./use-dash-features";
 const ptoTypes = Object.keys(ptoTypeLabels) as PortalPtoType[];
 
 export function PtoSection() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [requestOpen, setRequestOpen] = useState(false);
   const pto = useQuery({ queryKey: ["dash-pto"], queryFn: ({ signal }) => fetchMyPto({ signal }) });
@@ -45,7 +48,7 @@ export function PtoSection() {
   const cancel = useMutation({
     mutationFn: (id: string) => cancelMyPto(id),
     onSuccess: async () => {
-      toast.success("Request cancelled.");
+      toast.success(t("Request cancelled."));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dash-pto"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),
@@ -59,11 +62,11 @@ export function PtoSection() {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CalendarDaysIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Time off</h2>
+          <h2 className="text-sm font-semibold">{t("Time off")}</h2>
         </div>
         <Button variant="outline" size="sm" className="h-8" onClick={() => setRequestOpen(true)}>
           <PlusIcon className="size-3.5" />
-          Request
+          {t("Request")}
         </Button>
       </div>
 
@@ -100,7 +103,7 @@ export function PtoSection() {
                   disabled={cancel.isPending}
                   onClick={() => cancel.mutate(request.id)}
                 >
-                  Cancel request
+                  {t("Cancel request")}
                 </Button>
               ) : null}
             </li>
@@ -108,7 +111,7 @@ export function PtoSection() {
         </ul>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Need days off? Send a request and your fleet manager will review it.
+          {t("Need days off? Send a request and your fleet manager will review it.")}
         </p>
       )}
 
@@ -124,6 +127,8 @@ type PtoRequestDrawerProps = {
 };
 
 function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [type, setType] = useState<PortalPtoType>("Personal");
   const [startDate, setStartDate] = useState("");
@@ -155,7 +160,7 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
       });
     },
     onSuccess: async () => {
-      toast.success("Request sent — you'll get a notification when it's reviewed.");
+      toast.success(t("Request sent — you'll get a notification when it's reviewed."));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dash-pto"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),
@@ -189,9 +194,9 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
     >
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Request time off</DrawerTitle>
+          <DrawerTitle>{t("Request time off")}</DrawerTitle>
           <DrawerDescription>
-            Your fleet manager reviews requests — you&apos;ll get a notification either way.
+            {t("Your fleet manager reviews requests — you'll get a notification either way.")}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -213,7 +218,7 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">First day</Label>
+              <Label className="text-xs text-muted-foreground">{t("First day")}</Label>
               <Input
                 type="date"
                 value={startDate}
@@ -221,7 +226,7 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Last day</Label>
+              <Label className="text-xs text-muted-foreground">{t("Last day")}</Label>
               <Input
                 type="date"
                 value={endDate}
@@ -235,19 +240,17 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
               className={cn("text-xs text-muted-foreground", overdrawn && "text-destructive")}
               data-testid="pto-request-days"
             >
-              {requestedDays} day{requestedDays === 1 ? "" : "s"}
-              {available !== null
+              {t("{0} day{1}{2}{3}", requestedDays, requestedDays === 1 ? "" : "s", available !== null
                 ? ` · ${available.toFixed(available % 1 === 0 ? 0 : 2)} available`
-                : ""}
-              {overdrawn
+                : "", overdrawn
                 ? " — more than you have banked; your manager may still approve it if days accrue by then."
-                : ""}
+                : "")}
             </p>
           ) : null}
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="What's it for? A quick note helps your manager plan coverage."
+            placeholder={t("What's it for? A quick note helps your manager plan coverage.")}
             rows={3}
             maxLength={1000}
           />

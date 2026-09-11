@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CredentialHealthBadge } from "@trenova/shared/components/credential-health-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -32,6 +33,8 @@ function canUploadRenewal(item: PortalCredential): boolean {
 }
 
 export function CredentialsCard() {
+  const t = useT();
+
   const features = useDashFeatures();
   const credentials = useQuery({
     queryKey: [DASH_CREDENTIALS_KEY],
@@ -53,20 +56,20 @@ export function CredentialsCard() {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <IdCardIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Credentials</h2>
+          <h2 className="text-sm font-semibold">{t("Credentials")}</h2>
         </div>
         {attention > 0 ? (
           <Badge variant="warning">
-            {attention} need{attention === 1 ? "s" : ""} attention
+            {t("{0} need{1} attention", attention, attention === 1 ? "s" : "")}
           </Badge>
         ) : (
-          <Badge variant="active">All current</Badge>
+          <Badge variant="active">{t("All current")}</Badge>
         )}
       </div>
 
       {items.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          Your carrier has not listed any credentials for you yet.
+          {t("Your carrier has not listed any credentials for you yet.")}
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-border border-t border-border">
@@ -80,13 +83,15 @@ export function CredentialsCard() {
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        Renewed a card? Upload a photo and your carrier will update the record after checking it.
+        {t("Renewed a card? Upload a photo and your carrier will update the record after checking it.")}
       </p>
     </div>
   );
 }
 
 function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload: boolean }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -98,7 +103,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
       return uploadMyCredentialDocument(item.id, file);
     },
     onSuccess: async () => {
-      toast.success("Uploaded — your carrier will review it and update the record.");
+      toast.success(t("Uploaded — your carrier will review it and update the record."));
       setFileName(null);
       await queryClient.invalidateQueries({ queryKey: [DASH_CREDENTIALS_KEY] });
     },
@@ -119,7 +124,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
             {item.name}
             {item.required ? (
               <span className="ml-1 text-[10px] font-normal uppercase text-muted-foreground">
-                Required
+                {t("Required")}
               </span>
             ) : null}
           </p>
@@ -127,7 +132,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
             {item.health === "Missing" || item.expiresAt ? (
               <span>{describeDaysUntilOrMissing(item)}</span>
             ) : (
-              <span>No expiry</span>
+              <span>{t("No expiry")}</span>
             )}
             {item.expiresAt && item.health !== "Missing" ? (
               <span className="text-muted-foreground"> · {formatUnixDate(item.expiresAt)}</span>
@@ -143,7 +148,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
           {item.verified ? (
             <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
               <ShieldCheckIcon className="size-3.5" />
-              Verified
+              {t("Verified")}
             </span>
           ) : null}
         </div>

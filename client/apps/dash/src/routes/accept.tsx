@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -73,14 +74,15 @@ function isRejectedInvitation(error: unknown): boolean {
 }
 
 function UnreachableInvitation({ onRetry, retrying }: { onRetry: () => void; retrying: boolean }) {
+  const t = useT();
+
   return (
     <div className="text-center">
       <h1 className="text-2xl font-semibold tracking-tight">
-        We couldn&apos;t load your invitation
+        {t("We couldn't load your invitation")}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Your invitation link looks fine, but we couldn&apos;t reach Dash just now. Check your
-        connection and try again.
+        {t("Your invitation link looks fine, but we couldn't reach Dash just now. Check your connection and try again.")}
       </p>
       <Button className="mt-6 h-11 w-full" onClick={onRetry} disabled={retrying}>
         {retrying ? "Retrying..." : "Try again"}
@@ -90,18 +92,21 @@ function UnreachableInvitation({ onRetry, retrying }: { onRetry: () => void; ret
 }
 
 function InvalidInvitation() {
+  const t = useT();
+
   return (
     <div className="text-center">
-      <h1 className="text-2xl font-semibold tracking-tight">This invitation isn&apos;t valid</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t("This invitation isn't valid")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        The link may have expired or been revoked. Ask your carrier to send a new invitation to get
-        set up on Dash.
+        {t("The link may have expired or been revoked. Ask your carrier to send a new invitation to get set up on Dash.")}
       </p>
     </div>
   );
 }
 
 function AcceptForm({ token, preview }: { token: string; preview: InvitationPreview }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
   const [password, setPassword] = useState("");
@@ -144,36 +149,36 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
     <div>
       <div className="mb-8">
         <p className="text-sm text-muted-foreground">
-          Welcome{preview.workerFirstName ? `, ${preview.workerFirstName}` : ""} 👋
+          {t("Welcome{0} 👋", preview.workerFirstName ? `, ${preview.workerFirstName}` : "")}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {preview.organizationName || "Your carrier"} invited you to Dash
+          {t("{0} invited you to Dash", preview.organizationName || "Your carrier")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Choose a password to finish setting up your account for{" "}
+          {t("Choose a password to finish setting up your account for")}{" "}
           <span className="font-medium text-foreground">{preview.email}</span>.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="dash-new-password">Password</Label>
+          <Label htmlFor="dash-new-password">{t("Password")}</Label>
           <Input
             id="dash-new-password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            placeholder={t("At least 8 characters")}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="dash-confirm-password">Confirm password</Label>
+          <Label htmlFor="dash-confirm-password">{t("Confirm password")}</Label>
           <Input
             id="dash-confirm-password"
             type="password"
             autoComplete="new-password"
-            placeholder="Repeat your password"
+            placeholder={t("Repeat your password")}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
           />

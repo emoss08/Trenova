@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -29,6 +30,8 @@ const priorityDot: Record<string, string> = {
 };
 
 export function DashNotificationsPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const feed = useNotificationFeed({ state: "inbox", unreadOnly: false }, true, "mine");
   const markRead = useNotificationAction("read", "mine");
@@ -47,7 +50,7 @@ export function DashNotificationsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Notifications</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{t("Notifications")}</h1>
         {hasUnread ? (
           <Button
             variant="ghost"
@@ -57,7 +60,7 @@ export function DashNotificationsPage() {
             onClick={() => markAllRead.mutate()}
           >
             <CheckCheckIcon className="size-3.5" />
-            Mark all read
+            {t("Mark all read")}
           </Button>
         ) : null}
       </div>
@@ -138,7 +141,7 @@ export function DashNotificationsPage() {
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-10 text-center">
           <BellIcon className="size-6 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            You&apos;re all caught up. Load assignments, settlements, and pay updates land here.
+            {t("You're all caught up. Load assignments, settlements, and pay updates land here.")}
           </p>
         </div>
       )}

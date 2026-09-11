@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -25,6 +26,8 @@ import {
 } from "../lib/settlement";
 
 export function DashSettlementPage() {
+  const t = useT();
+
   const { settlementId = "" } = useParams();
   const features = useDashFeatures();
   const [disputeOpen, setDisputeOpen] = useState(false);
@@ -70,10 +73,10 @@ export function DashSettlementPage() {
     return (
       <div className="flex flex-col items-start gap-4">
         <Link to="/dash/pay" className="flex items-center gap-1 text-sm text-muted-foreground">
-          <ArrowLeftIcon className="size-4" /> Back to pay
+          <ArrowLeftIcon className="size-4" /> {t("Back to pay")}
         </Link>
         <div className="w-full rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          We couldn&apos;t find that settlement.
+          {t("We couldn't find that settlement.")}
         </div>
       </div>
     );
@@ -82,7 +85,7 @@ export function DashSettlementPage() {
   return (
     <div className="flex flex-col gap-4">
       <Link to="/dash/pay" className="flex items-center gap-1 text-sm text-muted-foreground">
-        <ArrowLeftIcon className="size-4" /> Back to pay
+        <ArrowLeftIcon className="size-4" /> {t("Back to pay")}
       </Link>
 
       <div className="rounded-2xl border border-border bg-card p-4">
@@ -94,7 +97,7 @@ export function DashSettlementPage() {
           <AmountDisplay value={data.netPayMinor} currency={data.currencyCode} />
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Net pay for {formatRange(data.periodStart, data.periodEnd)}
+          {t("Net pay for {0}", formatRange(data.periodStart, data.periodEnd))}
         </p>
         <p className="text-sm text-muted-foreground">
           {data.paidAt
@@ -104,30 +107,30 @@ export function DashSettlementPage() {
 
         <dl className="mt-4 flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
           <SummaryRow
-            label="Gross earnings"
+            label={t("Gross earnings")}
             valueMinor={data.grossEarningsMinor}
             currency={data.currencyCode}
           />
           <SummaryRow
-            label="Reimbursements"
+            label={t("Reimbursements")}
             valueMinor={data.reimbursementsMinor}
             currency={data.currencyCode}
           />
           <SummaryRow
-            label="Deductions"
+            label={t("Deductions")}
             valueMinor={-data.deductionsMinor}
             currency={data.currencyCode}
           />
           {data.carryForwardInMinor !== 0 ? (
             <SummaryRow
-              label="Carried in"
+              label={t("Carried in")}
               valueMinor={data.carryForwardInMinor}
               currency={data.currencyCode}
             />
           ) : null}
           {data.carryForwardOutMinor !== 0 ? (
             <SummaryRow
-              label="Carried to next period"
+              label={t("Carried to next period")}
               valueMinor={-data.carryForwardOutMinor}
               currency={data.currencyCode}
             />
@@ -137,7 +140,7 @@ export function DashSettlementPage() {
 
       {settlementDisputes.length > 0 ? (
         <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-sm font-semibold">Your disputes on this statement</p>
+          <p className="text-sm font-semibold">{t("Your disputes on this statement")}</p>
           <ul className="mt-2 flex flex-col gap-2">
             {settlementDisputes.map((dispute) => (
               <li key={dispute.id} className="flex items-center justify-between gap-2 text-sm">
@@ -189,7 +192,7 @@ export function DashSettlementPage() {
       {features.allowSettlementDisputes ? (
         <Button variant="outline" className="h-11" onClick={() => openDispute(null)}>
           <FlagIcon className="size-4" />
-          Something looks wrong
+          {t("Something looks wrong")}
         </Button>
       ) : null}
 

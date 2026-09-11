@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -35,6 +36,8 @@ const themeOptions = [
 ] as const;
 
 export function DashProfilePage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
   const { theme, setTheme } = useTheme();
@@ -48,7 +51,7 @@ export function DashProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold tracking-tight">Profile</h1>
+      <h1 className="text-xl font-semibold tracking-tight">{t("Profile")}</h1>
 
       {profile.isPending ? (
         <Skeleton className="h-40 w-full rounded-2xl" />
@@ -59,16 +62,16 @@ export function DashProfilePage() {
           </p>
           <p className="text-sm text-muted-foreground">{profile.data.organizationName}</p>
           <dl className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
-            <ProfileRow label="Email" value={profile.data.email} />
-            <ProfileRow label="Phone" value={profile.data.phoneNumber} />
-            <ProfileRow label="Driver type" value={profile.data.driverType} />
-            <ProfileRow label="Classification" value={profile.data.workerType} />
-            <ProfileRow label="Fleet" value={profile.data.fleetCodeName} />
+            <ProfileRow label={t("Email")} value={profile.data.email} />
+            <ProfileRow label={t("Phone")} value={profile.data.phoneNumber} />
+            <ProfileRow label={t("Driver type")} value={profile.data.driverType} />
+            <ProfileRow label={t("Classification")} value={profile.data.workerType} />
+            <ProfileRow label={t("Fleet")} value={profile.data.fleetCodeName} />
           </dl>
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          We couldn&apos;t load your profile.
+          {t("We couldn't load your profile.")}
         </div>
       )}
 
@@ -98,7 +101,7 @@ export function DashProfilePage() {
       <PushNotificationsCard />
 
       <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="text-sm font-semibold">Appearance</p>
+        <p className="text-sm font-semibold">{t("Appearance")}</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {themeOptions.map((option) => (
             <button
@@ -119,11 +122,11 @@ export function DashProfilePage() {
 
       <Button variant="outline" className="h-11" onClick={handleLogout}>
         <LogOutIcon className="size-4" />
-        Sign out
+        {t("Sign out")}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        Questions about your pay? Flag it on the statement or call your fleet manager.
+        {t("Questions about your pay? Flag it on the statement or call your fleet manager.")}
       </p>
     </div>
   );
@@ -142,6 +145,8 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
 }
 
 function PushNotificationsCard() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const supported = pushSupported();
 
@@ -181,7 +186,7 @@ function PushNotificationsCard() {
         <div className="flex min-w-0 items-center gap-2">
           <BellRingIcon className="size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Push notifications</p>
+            <p className="text-sm font-semibold">{t("Push notifications")}</p>
             <p className="text-xs text-muted-foreground">
               {supported
                 ? "Load assignments, settlements, and pay updates — even when Dash is closed."

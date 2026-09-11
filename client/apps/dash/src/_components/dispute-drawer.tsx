@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
@@ -26,6 +27,8 @@ type DisputeDrawerProps = {
 };
 
 export function DisputeDrawer({ settlementId, line, open, onOpenChange }: DisputeDrawerProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<SettlementDisputeCategory | null>(null);
   const [description, setDescription] = useState("");
@@ -38,11 +41,11 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
 
   const handleSubmit = async () => {
     if (!category) {
-      toast.info("Pick what kind of issue this is.");
+      toast.info(t("Pick what kind of issue this is."));
       return;
     }
     if (description.trim().length === 0) {
-      toast.info("Tell us what looks wrong so your carrier can fix it.");
+      toast.info(t("Tell us what looks wrong so your carrier can fix it."));
       return;
     }
     setPending(true);
@@ -53,7 +56,7 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
         category,
         description: description.trim(),
       });
-      toast.success("Sent to your carrier. You'll see updates under Money → Disputes.");
+      toast.success(t("Sent to your carrier. You'll see updates under Money → Disputes."));
       await queryClient.invalidateQueries({ queryKey: ["dash-disputes"] });
       reset();
       onOpenChange(false);
@@ -74,7 +77,7 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
     >
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Question about your pay?</DrawerTitle>
+          <DrawerTitle>{t("Question about your pay?")}</DrawerTitle>
           <DrawerDescription>
             {line
               ? `About "${line.description}" — your carrier will review it and follow up.`
@@ -101,7 +104,7 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
           <Textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="Describe what looks wrong — loads, dates, amounts, anything that helps."
+            placeholder={t("Describe what looks wrong — loads, dates, amounts, anything that helps.")}
             rows={4}
             maxLength={4000}
           />

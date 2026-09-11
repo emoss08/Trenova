@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -26,6 +27,8 @@ import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
 
 export function ComplianceCard() {
+  const t = useT();
+
   const features = useDashFeatures();
   const [editOpen, setEditOpen] = useState(false);
   const profile = useQuery({
@@ -50,7 +53,7 @@ export function ComplianceCard() {
           ) : (
             <ShieldAlertIcon className="size-4 text-red-600 dark:text-red-400" />
           )}
-          <h2 className="text-sm font-semibold">Qualification file</h2>
+          <h2 className="text-sm font-semibold">{t("Qualification file")}</h2>
         </div>
         <Badge variant={data.isQualified ? "active" : "inactive"}>
           {data.isQualified ? "Qualified" : "Action needed"}
@@ -59,7 +62,7 @@ export function ComplianceCard() {
 
       <dl className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">CDL</dt>
+          <dt className="text-muted-foreground">{t("CDL")}</dt>
           <dd className="font-medium">
             {data.licenseNumber}
             {data.licenseState ? ` · ${data.licenseState}` : ""}
@@ -68,30 +71,30 @@ export function ComplianceCard() {
         </div>
         {data.endorsement ? (
           <div className="flex items-center justify-between gap-4">
-            <dt className="text-muted-foreground">Endorsements</dt>
+            <dt className="text-muted-foreground">{t("Endorsements")}</dt>
             <dd className="font-medium">{data.endorsement}</dd>
           </div>
         ) : null}
       </dl>
 
       <p className="mt-2 text-xs text-muted-foreground">
-        Expiry dates for every card and endorsement are tracked under Credentials below.
+        {t("Expiry dates for every card and endorsement are tracked under Credentials below.")}
       </p>
 
       <div className="mt-3 border-t border-border pt-3">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">Contact details</h3>
+          <h3 className="text-sm font-semibold">{t("Contact details")}</h3>
           {features.allowContactInfoEdit ? (
             <Button variant="outline" size="sm" className="h-8" onClick={() => setEditOpen(true)}>
               <PencilIcon className="size-3.5" />
-              Edit
+              {t("Edit")}
             </Button>
           ) : null}
         </div>
         <dl className="mt-2 flex flex-col gap-1.5 text-sm">
-          <ContactRow label="Phone" value={data.phoneNumber} />
+          <ContactRow label={t("Phone")} value={data.phoneNumber} />
           <ContactRow
-            label="Address"
+            label={t("Address")}
             value={[
               data.addressLine1,
               data.addressLine2,
@@ -103,7 +106,7 @@ export function ComplianceCard() {
               .join(", ")}
           />
           <ContactRow
-            label="Emergency"
+            label={t("Emergency")}
             value={[data.emergencyContactName, data.emergencyContactPhone]
               .filter(Boolean)
               .join(" · ")}
@@ -124,6 +127,8 @@ export function ComplianceCard() {
  * the request are never read apart from each other.
  */
 function PendingChangeNotice() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const requests = useQuery({
     queryKey: ["dash-profile-change-requests"],
@@ -134,7 +139,7 @@ function PendingChangeNotice() {
   const withdraw = useMutation({
     mutationFn: (id: string) => withdrawMyProfileChange(id),
     onSuccess: async () => {
-      toast.success("Request withdrawn.");
+      toast.success(t("Request withdrawn."));
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });
     },
     onError: (error: Error) => toast.error(error.message || "Could not withdraw it."),
@@ -158,7 +163,7 @@ function PendingChangeNotice() {
             disabled={withdraw.isPending}
             onClick={() => withdraw.mutate(latest.id)}
           >
-            Withdraw
+            {t("Withdraw")}
           </Button>
         ) : null}
       </div>
@@ -168,7 +173,7 @@ function PendingChangeNotice() {
         ))}
       </ul>
       {latest.decisionNote ? (
-        <p className="text-muted-foreground mt-1">Your carrier said: {latest.decisionNote}</p>
+        <p className="text-muted-foreground mt-1">{t("Your carrier said: {0}", latest.decisionNote)}</p>
       ) : null}
     </div>
   );
@@ -191,6 +196,8 @@ type ContactEditDrawerProps = {
 };
 
 function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const requiresApproval = useDashFeatures().requireContactChangeApproval;
   const [form, setForm] = useState(() => ({
@@ -241,7 +248,7 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Update contact details</DrawerTitle>
+          <DrawerTitle>{t("Update contact details")}</DrawerTitle>
           <DrawerDescription>
             {requiresApproval
               ? "Your carrier checks contact changes before they land on your record. Only the fields you change are sent."
@@ -250,7 +257,7 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
         </DrawerHeader>
 
         <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto px-4">
-          <Field label="Phone">
+          <Field label={t("Phone")}>
             <Input
               type="tel"
               inputMode="tel"
@@ -258,17 +265,17 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
               onChange={setField("phoneNumber")}
             />
           </Field>
-          <Field label="Address line 1">
+          <Field label={t("Address line 1")}>
             <Input value={form.addressLine1} onChange={setField("addressLine1")} />
           </Field>
-          <Field label="Address line 2">
+          <Field label={t("Address line 2")}>
             <Input value={form.addressLine2} onChange={setField("addressLine2")} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="City">
+            <Field label={t("City")}>
               <Input value={form.city} onChange={setField("city")} />
             </Field>
-            <Field label="ZIP code">
+            <Field label={t("ZIP code")}>
               <Input
                 inputMode="numeric"
                 value={form.postalCode}
@@ -276,10 +283,10 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
               />
             </Field>
           </div>
-          <Field label="Emergency contact name">
+          <Field label={t("Emergency contact name")}>
             <Input value={form.emergencyContactName} onChange={setField("emergencyContactName")} />
           </Field>
-          <Field label="Emergency contact phone">
+          <Field label={t("Emergency contact phone")}>
             <Input
               type="tel"
               inputMode="tel"

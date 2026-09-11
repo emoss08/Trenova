@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -46,6 +47,8 @@ const SECONDS_IN_DAY = 86400;
  * by a promise the app never made.
  */
 export function ScheduleCard() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<MyScheduleDay | null>(null);
 
@@ -77,7 +80,7 @@ export function ScheduleCard() {
   const { mutate: answerSwap, isPending: answeringSwap } = useMutation({
     mutationFn: respondToMyShiftSwap,
     onSuccess: () => {
-      toast.success("Sent to your carrier");
+      toast.success(t("Sent to your carrier"));
       void queryClient.invalidateQueries({ queryKey: ["dash-shift-swaps"] });
       void queryClient.invalidateQueries({ queryKey: ["dash-schedule"] });
     },
@@ -107,7 +110,7 @@ export function ScheduleCard() {
         <div className="flex items-start gap-2">
           <CalendarClockIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold">Your schedule</h2>
+            <h2 className="text-sm font-semibold">{t("Your schedule")}</h2>
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
               {week.shiftColor ? (
                 <span
@@ -117,7 +120,7 @@ export function ScheduleCard() {
                 />
               ) : null}
               {week.shiftName ?? "No shift"} · {week.scheduledDays} day
-              {week.scheduledDays === 1 ? "" : "s"} over two weeks
+              {week.scheduledDays === 1 ? "" : "s"} {t("over two weeks")}
             </p>
           </div>
         </div>
@@ -184,10 +187,9 @@ export function ScheduleCard() {
       ) : null}
 
       <div className="border-border mt-4 border-t pt-3">
-        <p className="text-sm font-semibold">What you would rather work</p>
+        <p className="text-sm font-semibold">{t("What you would rather work")}</p>
         <p className="text-muted-foreground text-xs">
-          Your carrier sees this when they build the rota. It is not a promise — dispatch can still
-          put you on a day you marked, and they will see that they did.
+          {t("Your carrier sees this when they build the rota. It is not a promise — dispatch can still put you on a day you marked, and they will see that they did.")}
         </p>
         <ul className="mt-2 flex flex-col gap-1.5">
           {DAY_LABELS_LONG.map((label, dayOfWeek) => {
@@ -218,7 +220,7 @@ export function ScheduleCard() {
         <div className="border-border mt-4 border-t pt-3">
           <div className="flex items-center gap-2">
             <RepeatIcon className="text-muted-foreground size-4" />
-            <p className="text-sm font-semibold">Swaps</p>
+            <p className="text-sm font-semibold">{t("Swaps")}</p>
           </div>
           <ul className="mt-2 flex flex-col gap-2">
             {openSwaps.map((swap) => {
@@ -252,7 +254,7 @@ export function ScheduleCard() {
                           disabled={answeringSwap}
                           onClick={() => answerSwap({ id: swap.id, response: "Accepted" })}
                         >
-                          Take it
+                          {t("Take it")}
                         </Button>
                       ) : null}
                       {actions.includes("decline") ? (
@@ -263,7 +265,7 @@ export function ScheduleCard() {
                           disabled={answeringSwap}
                           onClick={() => answerSwap({ id: swap.id, response: "Declined" })}
                         >
-                          Decline
+                          {t("Decline")}
                         </Button>
                       ) : null}
                       {actions.includes("withdraw") ? (
@@ -274,7 +276,7 @@ export function ScheduleCard() {
                           disabled={answeringSwap}
                           onClick={() => answerSwap({ id: swap.id, response: "Withdrawn" })}
                         >
-                          Withdraw
+                          {t("Withdraw")}
                         </Button>
                       ) : null}
                     </div>

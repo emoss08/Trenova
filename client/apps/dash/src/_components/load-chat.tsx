@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -87,6 +88,8 @@ function ChatMessage({ comment }: { comment: PortalLoadComment }) {
 }
 
 export function LoadChat({ shipmentId }: { shipmentId: string }) {
+  const t = useT();
+
   const features = useDashFeatures();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
@@ -123,10 +126,10 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <MessageSquareTextIcon className="size-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold">Dispatch chat</h2>
+        <h2 className="text-sm font-semibold">{t("Dispatch chat")}</h2>
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="size-1.5 rounded-full bg-green-500" />
-          Live
+          {t("Live")}
         </span>
       </div>
 
@@ -136,7 +139,7 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
             <MessageScrollerContent className="gap-4">
               {thread.length === 0 ? (
                 <p className="py-10 text-center text-xs text-muted-foreground">
-                  No messages yet. Say something and dispatch sees it on the shipment right away.
+                  {t("No messages yet. Say something and dispatch sees it on the shipment right away.")}
                 </p>
               ) : (
                 thread.map((comment) => (
@@ -166,14 +169,14 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
                 handleSend();
               }
             }}
-            placeholder="Message dispatch..."
+            placeholder={t("Message dispatch...")}
             rows={1}
             maxLength={5000}
             className="max-h-24 min-h-9 flex-1 resize-none"
           />
           <Button
             size="icon"
-            aria-label="Send message"
+            aria-label={t("Send message")}
             disabled={draft.trim().length === 0 || send.isPending}
             onClick={handleSend}
           >

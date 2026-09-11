@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -7,6 +8,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 export function DashLoginPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
   const [emailAddress, setEmailAddress] = useState("");
@@ -41,27 +44,27 @@ export function DashLoginPage() {
         className="mx-auto w-full max-w-sm"
       >
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight">Dash</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("Dash")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your loads, settlements, and pay — in one place.
+            {t("Your loads, settlements, and pay — in one place.")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="dash-email">Email</Label>
+            <Label htmlFor="dash-email">{t("Email")}</Label>
             <Input
               id="dash-email"
               type="email"
               autoComplete="email"
               inputMode="email"
-              placeholder="you@example.com"
+              placeholder={t("you@example.com")}
               value={emailAddress}
               onChange={(event) => setEmailAddress(event.target.value)}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="dash-password">Password</Label>
+            <Label htmlFor="dash-password">{t("Password")}</Label>
             <Input
               id="dash-password"
               type="password"
@@ -80,12 +83,12 @@ export function DashLoginPage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          No account yet? Ask your carrier to send you a Dash invitation.
+          {t("No account yet? Ask your carrier to send you a Dash invitation.")}
         </p>
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Office or dispatch?{" "}
+          {t("Office or dispatch?")}{" "}
           <a href="/login" className="text-foreground underline underline-offset-4">
-            Sign in to Trenova
+            {t("Sign in to Trenova")}
           </a>
         </p>
       </m.div>

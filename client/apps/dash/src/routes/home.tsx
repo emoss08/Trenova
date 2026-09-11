@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -60,6 +61,8 @@ function Section({
 }
 
 export function DashHomePage() {
+  const t = useT();
+
   const { data: profile } = useDashProfile();
   const period = useQuery({
     queryKey: ["dash-period-summary"],
@@ -89,7 +92,7 @@ export function DashHomePage() {
           {greeting()}
           {profile ? `, ${profile.firstName}` : ""}
         </h1>
-        <p className="text-sm text-muted-foreground">Here&apos;s where you stand.</p>
+        <p className="text-sm text-muted-foreground">{t("Here's where you stand.")}</p>
       </m.div>
 
       <m.section
@@ -107,7 +110,7 @@ export function DashHomePage() {
           className="pointer-events-none absolute -bottom-28 -left-10 size-56 rounded-full bg-indigo-500/15 blur-3xl"
         />
         <p className="text-2xs font-medium tracking-wide text-zinc-400 uppercase">
-          Earned this period
+          {t("Earned this period")}
         </p>
         {period.isPending ? (
           <Skeleton className="mt-2 h-10 w-40 bg-zinc-800" />
@@ -118,7 +121,7 @@ export function DashHomePage() {
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
-                {period.data.eventCount} load{period.data.eventCount === 1 ? "" : "s"}
+                {t("{0} load{1}", period.data.eventCount, period.data.eventCount === 1 ? "" : "s")}
               </span>
               <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
                 {formatRange(period.data.periodStart, period.data.periodEnd)}
@@ -132,20 +135,20 @@ export function DashHomePage() {
           </>
         ) : (
           <p className="mt-2 text-sm text-zinc-400">
-            We couldn&apos;t load your pay period right now.
+            {t("We couldn't load your pay period right now.")}
           </p>
         )}
       </m.section>
 
       {hos.data ? (
-        <Section title="Hours of service" to="/dash/hos" toLabel="Open" delay={0.06}>
+        <Section title={t("Hours of service")} to="/dash/hos" toLabel="Open" delay={0.06}>
           <Link
             to="/dash/hos"
             className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
           >
             <div>
               <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
-                Drive left
+                {t("Drive left")}
               </p>
               <p className="mt-0.5 text-lg font-semibold tabular-nums">
                 {formatClockDurationMs(hos.data.driveRemainingMs)}
@@ -153,7 +156,7 @@ export function DashHomePage() {
             </div>
             <div>
               <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
-                Shift left
+                {t("Shift left")}
               </p>
               <p className="mt-0.5 text-lg font-semibold tabular-nums">
                 {formatClockDurationMs(hos.data.shiftRemainingMs)}
@@ -163,19 +166,19 @@ export function DashHomePage() {
         </Section>
       ) : null}
 
-      <Section title="Current load" to="/dash/loads" toLabel="All loads" delay={0.08}>
+      <Section title={t("Current load")} to="/dash/loads" toLabel="All loads" delay={0.08}>
         {loads.isPending ? (
           <Skeleton className="h-36 w-full rounded-2xl" />
         ) : currentLoad ? (
           <LoadCard load={currentLoad} />
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            No active loads right now.
+            {t("No active loads right now.")}
           </div>
         )}
       </Section>
 
-      <Section title="Recent pay activity" to="/dash/pay" toLabel="Settlements" delay={0.12}>
+      <Section title={t("Recent pay activity")} to="/dash/pay" toLabel="Settlements" delay={0.12}>
         {events.isPending ? (
           <Skeleton className="h-28 w-full rounded-2xl" />
         ) : events.data && events.data.length > 0 ? (
@@ -192,7 +195,7 @@ export function DashHomePage() {
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {event.onHold ? <Badge variant="warning">Held</Badge> : null}
+                  {event.onHold ? <Badge variant="warning">{t("Held")}</Badge> : null}
                   <span className="text-sm font-semibold tabular-nums">
                     <AmountDisplay value={event.grossAmountMinor} currency={event.currencyCode} />
                   </span>
@@ -204,7 +207,7 @@ export function DashHomePage() {
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-8 text-center">
             <ReceiptTextIcon className="size-6 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Pay from your loads will show up here as you run them.
+              {t("Pay from your loads will show up here as you run them.")}
             </p>
           </div>
         )}

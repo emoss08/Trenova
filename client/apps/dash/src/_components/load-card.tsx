@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatRange, formatUnixTime } from "@trenova/shared/lib/date";
@@ -62,6 +63,8 @@ export function LoadPayChip({ load }: { load: PortalLoad }) {
 }
 
 export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number }) {
+  const t = useT();
+
   const origin = originStop(load);
   const destination = destinationStop(load);
   const meta = [
@@ -104,7 +107,7 @@ export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number
               <ArrowRightIcon className="size-4 text-muted-foreground" />
               {load.stops.length > 2 ? (
                 <span className="text-2xs text-muted-foreground">
-                  +{load.stops.length - 2} stop{load.stops.length - 2 === 1 ? "" : "s"}
+                  {t("+{0} stop{1}", load.stops.length - 2, load.stops.length - 2 === 1 ? "" : "s")}
                 </span>
               ) : null}
             </div>
@@ -138,6 +141,8 @@ export function StopTimeline({
   showDirections?: boolean;
   moveId?: string;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const checkIn = useMutation({
     mutationFn: ({ stopId, action }: { stopId: string; action: PortalStopAction }) =>
@@ -219,7 +224,7 @@ export function StopTimeline({
                   onClick={(event) => event.stopPropagation()}
                   className="mt-1 shrink-0 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
                 >
-                  Directions
+                  {t("Directions")}
                 </a>
               ) : null}
             </div>
