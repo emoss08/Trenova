@@ -142,38 +142,16 @@ func (r *testRepository) GetRolesWithInheritance(
 		return []*permission.Role{}, nil
 	}
 
-	allRoleIDs := make(map[pulid.ID]bool)
-	for _, id := range roleIDs {
-		allRoleIDs[id] = true
-	}
-
-	roles := make([]*permission.Role, 0)
+	roles := make([]*permission.Role, 0, len(roleIDs))
 	err := r.db.
 		NewSelect().
 		Model(&roles).
 		Relation("Permissions").
-		Where("r.id IN (?)", bun.List(roleIDs)).
+		WithRecursive("role_closure", r.db.NewRaw(roleClosureQuery, bun.List(roleIDs))).
+		Where("r.id IN (SELECT c.id FROM role_closure c)").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	var parentIDs []pulid.ID
-	for _, role := range roles {
-		for _, parentID := range role.ParentRoleIDs {
-			if !allRoleIDs[parentID] {
-				parentIDs = append(parentIDs, parentID)
-				allRoleIDs[parentID] = true
-			}
-		}
-	}
-
-	if len(parentIDs) > 0 {
-		parentRoles, err := r.GetRolesWithInheritance(ctx, parentIDs)
-		if err != nil {
-			return nil, err
-		}
-		roles = append(roles, parentRoles...)
 	}
 
 	return roles, nil
@@ -669,6 +647,145 @@ func TestRoleRepository_GetRolesWithInheritance_Integration(t *testing.T) {
 	}
 	assert.True(t, roleNames["Parent Role"])
 	assert.True(t, roleNames["Child Role"])
+}
+
+func roleNameSet(roles []*permission.Role) map[string]bool {
+	names := make(map[string]bool, len(roles))
+	for _, role := range roles {
+		names[role.Name] = true
+	}
+	return names
+}
+
+func newInheritanceTestRole(
+	orgID pulid.ID,
+	name string,
+	parents []pulid.ID,
+	resource string,
+) *permission.Role {
+	now := timeutils.NowUnix()
+	return &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		OrganizationID: orgID,
+		Name:           name,
+		ParentRoleIDs:  parents,
+		MaxSensitivity: permission.SensitivityInternal,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+		Permissions: []*permission.ResourcePermission{
+			{
+				ID:         pulid.MustNew("rp_"),
+				Resource:   resource,
+				Operations: []permission.Operation{permission.OpRead},
+				DataScope:  permission.DataScopeOrganization,
+				CreatedAt:  now,
+				UpdatedAt:  now,
+			},
+		},
+	}
+}
+
+func TestRoleRepository_GetRolesWithInheritance_Depth_Integration(t *testing.T) {
+	testutil.RequireIntegration(t)
+
+	tc, db := testutil.SetupTestDB(t)
+	createTestSchema(t, db, *tc)
+	orgID := createTestOrg(t, db, *tc)
+
+	repo := setupTestRepository(t, db)
+
+	grandparent := newInheritanceTestRole(orgID, "Grandparent", nil, "shipment")
+	require.NoError(t, repo.Create(tc.Ctx, grandparent))
+
+	parent := newInheritanceTestRole(
+		orgID, "Parent", []pulid.ID{grandparent.ID}, "driver",
+	)
+	require.NoError(t, repo.Create(tc.Ctx, parent))
+
+	child := newInheritanceTestRole(orgID, "Child", []pulid.ID{parent.ID}, "customer")
+	require.NoError(t, repo.Create(tc.Ctx, child))
+
+	unrelated := newInheritanceTestRole(orgID, "Unrelated", nil, "invoice")
+	require.NoError(t, repo.Create(tc.Ctx, unrelated))
+
+	t.Run("three deep chain resolves in full", func(t *testing.T) {
+		roles, err := repo.GetRolesWithInheritance(tc.Ctx, []pulid.ID{child.ID})
+		require.NoError(t, err)
+
+		names := roleNameSet(roles)
+		assert.Len(t, roles, 3)
+		assert.True(t, names["Child"])
+		assert.True(t, names["Parent"])
+		assert.True(t, names["Grandparent"])
+		assert.False(t, names["Unrelated"])
+	})
+
+	t.Run("permissions are loaded for inherited roles", func(t *testing.T) {
+		roles, err := repo.GetRolesWithInheritance(tc.Ctx, []pulid.ID{child.ID})
+		require.NoError(t, err)
+
+		resources := make(map[string]bool, len(roles))
+		for _, role := range roles {
+			require.Len(t, role.Permissions, 1, "role %s lost its permissions", role.Name)
+			resources[role.Permissions[0].Resource] = true
+		}
+		assert.True(t, resources["shipment"])
+		assert.True(t, resources["driver"])
+		assert.True(t, resources["customer"])
+	})
+
+	t.Run("a role reached by two paths is returned once", func(t *testing.T) {
+		diamond := newInheritanceTestRole(
+			orgID, "Diamond", []pulid.ID{parent.ID, grandparent.ID}, "worker",
+		)
+		require.NoError(t, repo.Create(tc.Ctx, diamond))
+
+		roles, err := repo.GetRolesWithInheritance(tc.Ctx, []pulid.ID{diamond.ID})
+		require.NoError(t, err)
+		assert.Len(t, roles, 3)
+	})
+
+	t.Run("multiple roots share one query", func(t *testing.T) {
+		roles, err := repo.GetRolesWithInheritance(
+			tc.Ctx, []pulid.ID{child.ID, unrelated.ID},
+		)
+		require.NoError(t, err)
+
+		names := roleNameSet(roles)
+		assert.True(t, names["Child"])
+		assert.True(t, names["Grandparent"])
+		assert.True(t, names["Unrelated"])
+	})
+}
+
+func TestRoleRepository_GetRolesWithInheritance_Cycle_Integration(t *testing.T) {
+	testutil.RequireIntegration(t)
+
+	tc, db := testutil.SetupTestDB(t)
+	createTestSchema(t, db, *tc)
+	orgID := createTestOrg(t, db, *tc)
+
+	repo := setupTestRepository(t, db)
+
+	first := newInheritanceTestRole(orgID, "Cycle First", nil, "shipment")
+	require.NoError(t, repo.Create(tc.Ctx, first))
+
+	second := newInheritanceTestRole(orgID, "Cycle Second", []pulid.ID{first.ID}, "driver")
+	require.NoError(t, repo.Create(tc.Ctx, second))
+
+	_, err := db.ExecContext(tc.Ctx,
+		`UPDATE roles SET parent_role_ids = ARRAY[?]::text[] WHERE id = ?`,
+		second.ID.String(), first.ID.String(),
+	)
+	require.NoError(t, err)
+
+	roles, err := repo.GetRolesWithInheritance(tc.Ctx, []pulid.ID{second.ID})
+	require.NoError(t, err)
+
+	names := roleNameSet(roles)
+	assert.Len(t, roles, 2)
+	assert.True(t, names["Cycle First"])
+	assert.True(t, names["Cycle Second"])
 }
 
 func TestRoleRepository_ResourcePermissions_Integration(t *testing.T) {
