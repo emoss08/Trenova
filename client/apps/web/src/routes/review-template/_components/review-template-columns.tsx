@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import type { ReviewTemplateRow } from "@/lib/graphql/performance-review";
@@ -29,7 +30,7 @@ export function getColumns(): ColumnDef<ReviewTemplateRow>[] {
           {row.original.code}
           {row.original.isDefault ? (
             <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
-              Default
+              {translate("Default")}
             </Badge>
           ) : null}
         </span>
@@ -87,7 +88,7 @@ export function getColumns(): ColumnDef<ReviewTemplateRow>[] {
         row.original.cadenceMonths ? (
           `Every ${row.original.cadenceMonths} mo`
         ) : (
-          <span className="text-muted-foreground">One-off</span>
+          <span className="text-muted-foreground">{translate("One-off")}</span>
         ),
       size: 110,
       meta: { apiField: "cadenceMonths", sortable: true },
