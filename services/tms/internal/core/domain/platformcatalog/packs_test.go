@@ -25,7 +25,9 @@ func TestRegistry_PacksCoverPricedCatalog(t *testing.T) {
 	wantPacks := []PackKey{
 		PackCompliance,
 		PackDispatchIntel,
+		PackDocumentAI,
 		PackDriverDash,
+		PackIntegrations,
 		PackProfessional,
 		PackSettlement,
 		PackVisibility,
@@ -142,7 +144,84 @@ func TestRegistry_StandalonePackMustIncludeRequiredFeatures(t *testing.T) {
 	}
 
 	err := registry.validatePacks()
-	require.ErrorContains(t, err, "requires missing feature")
+	require.ErrorContains(t, err, "which requires feature")
+}
+
+func TestRegistry_AddOnPackMaySatisfyRequirementsThroughRequiredPack(t *testing.T) {
+	t.Parallel()
+
+	registry := &Registry{
+		features: map[FeatureKey]Feature{
+			"a.core":  {Key: "a.core"},
+			"a.addon": {Key: "a.addon", RequiresFeatures: []FeatureKey{"a.core"}},
+		},
+		packs: map[PackKey]Pack{
+			"base": {Key: "base", Features: []FeatureKey{"a.core"}},
+			"addon": {
+				Key:           "addon",
+				RequiresPacks: []PackKey{"base"},
+				Features:      []FeatureKey{"a.addon"},
+			},
+		},
+	}
+
+	require.NoError(t, registry.validatePacks())
+}
+
+func TestRegistry_PackValidationRejectsMissingRequiredPack(t *testing.T) {
+	t.Parallel()
+
+	registry := &Registry{
+		features: map[FeatureKey]Feature{"a.core": {Key: "a.core"}},
+		packs: map[PackKey]Pack{
+			"addon": {
+				Key:           "addon",
+				RequiresPacks: []PackKey{"nope"},
+				Features:      []FeatureKey{"a.core"},
+			},
+		},
+	}
+
+	err := registry.validatePacks()
+	require.ErrorContains(t, err, "requires missing pack")
+}
+
+func TestRegistry_PackValidationRejectsSelfRequiringPack(t *testing.T) {
+	t.Parallel()
+
+	registry := &Registry{
+		features: map[FeatureKey]Feature{"a.core": {Key: "a.core"}},
+		packs: map[PackKey]Pack{
+			"loop": {
+				Key:           "loop",
+				RequiresPacks: []PackKey{"loop"},
+				Features:      []FeatureKey{"a.core"},
+			},
+		},
+	}
+
+	err := registry.validatePacks()
+	require.ErrorContains(t, err, "cannot require itself")
+}
+
+func TestRegistry_StandalonePackCannotRequireOtherPacks(t *testing.T) {
+	t.Parallel()
+
+	registry := &Registry{
+		features: map[FeatureKey]Feature{"a.core": {Key: "a.core"}},
+		packs: map[PackKey]Pack{
+			"base": {Key: "base", Features: []FeatureKey{"a.core"}},
+			"solo": {
+				Key:           "solo",
+				Standalone:    true,
+				RequiresPacks: []PackKey{"base"},
+				Features:      []FeatureKey{"a.core"},
+			},
+		},
+	}
+
+	err := registry.validatePacks()
+	require.ErrorContains(t, err, "cannot require other packs")
 }
 
 func TestRegistry_AuthorizingFeaturesIncludesLegacyGrant(t *testing.T) {
@@ -153,17 +232,111 @@ func TestRegistry_AuthorizingFeaturesIncludesLegacyGrant(t *testing.T) {
 	require.Equal(
 		t,
 		[]FeatureKey{FeatureWorkforceCore, FeatureFleetMaintenance},
-		registry.AuthorizingFeatures(FeatureWorkforceCore),
+		registry.AuthorizingFeatures(FeatureWorkforceCore, true),
 	)
 	require.Equal(
 		t,
 		[]FeatureKey{FeatureDispatch},
-		registry.AuthorizingFeatures(FeatureDispatch),
+		registry.AuthorizingFeatures(FeatureDispatch, true),
 	)
 	require.Equal(
 		t,
 		[]FeatureKey{FeatureKey("not.a.feature")},
-		registry.AuthorizingFeatures(FeatureKey("not.a.feature")),
+		registry.AuthorizingFeatures(FeatureKey("not.a.feature"), true),
+	)
+}
+
+func TestRegistry_PackValidationReportsIndirectCycles(t *testing.T) {
+	t.Parallel()
+
+	registry := &Registry{
+		features: map[FeatureKey]Feature{"a.core": {Key: "a.core"}},
+		packs: map[PackKey]Pack{
+			"alpha": {
+				Key:           "alpha",
+				RequiresPacks: []PackKey{"beta"},
+				Features:      []FeatureKey{"a.core"},
+			},
+			"beta": {
+				Key:           "beta",
+				RequiresPacks: []PackKey{"alpha"},
+				Features:      []FeatureKey{"a.core"},
+			},
+		},
+	}
+
+	err := registry.validatePacks()
+	require.ErrorContains(t, err, "pack requirement cycle")
+	require.NotContains(t, err.Error(), "cannot require itself")
+}
+
+func TestRegistry_PackGrantedFeaturesAreDeclaredNotInferred(t *testing.T) {
+	t.Parallel()
+
+	registry := &Registry{
+		features: map[FeatureKey]Feature{
+			"a.core":  {Key: "a.core"},
+			"a.addon": {Key: "a.addon", RequiresFeatures: []FeatureKey{"a.core"}},
+		},
+		packs: map[PackKey]Pack{
+			"solo": {Key: "solo", Features: []FeatureKey{"a.addon"}},
+		},
+	}
+
+	granted, ok := registry.PackGrantedFeatures("solo")
+	require.True(t, ok)
+	require.Equal(
+		t,
+		[]FeatureKey{"a.addon"},
+		granted,
+		"a pack grants what it declares; a feature dependency is not an implicit grant",
+	)
+
+	closure, ok := registry.PackFeatureClosure("solo")
+	require.True(t, ok)
+	require.Equal(
+		t,
+		[]FeatureKey{"a.addon", "a.core"},
+		closure,
+		"the dependency closure still records what the pack needs in order to work",
+	)
+}
+
+func TestRegistry_PackGrantedFeaturesFollowRequiredPacks(t *testing.T) {
+	t.Parallel()
+
+	registry := newTestRegistry(t)
+
+	granted, ok := registry.PackGrantedFeatures(PackSettlement)
+	require.True(t, ok)
+	require.Contains(t, granted, FeatureSettlement)
+	require.Contains(
+		t,
+		granted,
+		FeatureCoreTMS,
+		"Settlement requires the Professional pack, so its buyer holds Core TMS through it",
+	)
+
+	standalone, ok := registry.PackGrantedFeatures(PackWorkforce)
+	require.True(t, ok)
+	require.NotContains(t, standalone, FeatureCoreTMS)
+	require.NotContains(t, standalone, FeatureDispatch)
+}
+
+func TestRegistry_AuthorizingFeaturesCanIgnoreLegacyGrants(t *testing.T) {
+	t.Parallel()
+
+	registry := newTestRegistry(t)
+
+	require.Equal(
+		t,
+		[]FeatureKey{FeatureWorkforceCore},
+		registry.AuthorizingFeatures(FeatureWorkforceCore, false),
+	)
+	require.Equal(
+		t,
+		[]FeatureKey{FeatureSettlement},
+		registry.AuthorizingFeatures(FeatureSettlement, false),
 	)
 }
 

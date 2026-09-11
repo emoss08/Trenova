@@ -294,7 +294,11 @@ func (e *FeatureAccessExtension) authorizeFeature(
 	checkedAt := e.now().Unix()
 	reason := ""
 	checkFailed := false
-	for _, featureKey := range e.registry.AuthorizingFeatures(entry.policy.FeatureKey) {
+	authorizing := e.registry.AuthorizingFeatures(
+		entry.policy.FeatureKey,
+		e.cfg.Platform.ControlPlane.HonorLegacyGrants(),
+	)
+	for _, featureKey := range authorizing {
 		result, err := e.authorizer.AuthorizeAccess(ctx, &services.AccessAuthorizeRequest{
 			OrganizationID: authCtx.OrganizationID,
 			BusinessUnitID: authCtx.BusinessUnitID,

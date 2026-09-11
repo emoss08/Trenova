@@ -179,7 +179,10 @@ func (m *ControlPlaneAccessMiddleware) authorizeProductAccess(
 		denied  *services.AccessAuthorizeResult
 		lastErr error
 	)
-	for _, candidate := range m.registry.AuthorizingFeatures(featureKey) {
+	for _, candidate := range m.registry.AuthorizingFeatures(
+		featureKey,
+		m.cfg.Platform.ControlPlane.HonorLegacyGrants(),
+	) {
 		result, err := m.authorizer.AuthorizeAccess(
 			c.Request.Context(),
 			&services.AccessAuthorizeRequest{

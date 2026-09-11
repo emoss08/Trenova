@@ -171,15 +171,55 @@ func (r *Registry) PackFeatureClosure(key PackKey) ([]FeatureKey, bool) {
 		r.collectRequiredFeatures(featureKey, resolved)
 	}
 
-	closure := make([]FeatureKey, 0, len(resolved))
-	for featureKey := range resolved {
-		closure = append(closure, featureKey)
+	return sortedFeatureKeys(resolved), true
+}
+
+func (r *Registry) PackGrantedFeatures(key PackKey) ([]FeatureKey, bool) {
+	pack, ok := r.packs[key]
+	if !ok {
+		return nil, false
 	}
-	slices.SortFunc(closure, func(a, b FeatureKey) int {
+
+	granted := make(map[FeatureKey]struct{}, len(pack.Features))
+	visited := make(map[PackKey]struct{})
+	r.collectPackFeatures(key, pack, granted, visited)
+
+	return sortedFeatureKeys(granted), true
+}
+
+func (r *Registry) collectPackFeatures(
+	key PackKey,
+	pack Pack,
+	granted map[FeatureKey]struct{},
+	visited map[PackKey]struct{},
+) {
+	if _, seen := visited[key]; seen {
+		return
+	}
+	visited[key] = struct{}{}
+
+	for _, featureKey := range pack.Features {
+		granted[featureKey] = struct{}{}
+	}
+	for _, requiredKey := range pack.RequiresPacks {
+		requiredPack, ok := r.packs[requiredKey]
+		if !ok {
+			continue
+		}
+		r.collectPackFeatures(requiredKey, requiredPack, granted, visited)
+	}
+}
+
+func sortedFeatureKeys(keys map[FeatureKey]struct{}) []FeatureKey {
+	sorted := make([]FeatureKey, 0, len(keys))
+	for featureKey := range keys {
+		sorted = append(sorted, featureKey)
+	}
+	slices.SortFunc(sorted, func(a, b FeatureKey) int {
 		return strings.Compare(string(a), string(b))
 	})
 
-	return closure, true
+	return sorted
 }
 
 func (r *Registry) collectRequiredFeatures(
@@ -200,9 +240,9 @@ func (r *Registry) collectRequiredFeatures(
 	}
 }
 
-func (r *Registry) AuthorizingFeatures(key FeatureKey) []FeatureKey {
+func (r *Registry) AuthorizingFeatures(key FeatureKey, includeLegacy bool) []FeatureKey {
 	feature, ok := r.features[key]
-	if !ok {
+	if !ok || !includeLegacy {
 		return []FeatureKey{key}
 	}
 
@@ -338,8 +378,16 @@ func (r *Registry) validatePackClosure(
 	pack Pack,
 	included map[FeatureKey]struct{},
 ) error {
-	if !pack.Standalone {
-		return nil
+	if pack.Standalone && len(pack.RequiresPacks) > 0 {
+		return fmt.Errorf(
+			"platform catalog standalone pack %q cannot require other packs",
+			key,
+		)
+	}
+
+	available, err := r.packProvidedFeatures(key, pack, included)
+	if err != nil {
+		return err
 	}
 
 	for _, featureKey := range pack.Features {
@@ -347,9 +395,10 @@ func (r *Registry) validatePackClosure(
 		r.collectRequiredFeatures(featureKey, closure)
 
 		for required := range closure {
-			if _, ok := included[required]; !ok {
+			if _, ok := available[required]; !ok {
 				return fmt.Errorf(
-					"platform catalog standalone pack %q includes feature %q which requires missing feature %q",
+					"platform catalog pack %q includes feature %q which requires feature %q; "+
+						"add it to the pack or declare a pack that provides it in requiresPacks",
 					key,
 					featureKey,
 					required,
@@ -359,6 +408,56 @@ func (r *Registry) validatePackClosure(
 	}
 
 	return nil
+}
+
+func (r *Registry) packProvidedFeatures(
+	key PackKey,
+	pack Pack,
+	included map[FeatureKey]struct{},
+) (map[FeatureKey]struct{}, error) {
+	available := make(map[FeatureKey]struct{}, len(included))
+	for featureKey := range included {
+		available[featureKey] = struct{}{}
+	}
+
+	for _, requiredKey := range pack.RequiresPacks {
+		if requiredKey == key {
+			return nil, fmt.Errorf("platform catalog pack %q cannot require itself", key)
+		}
+	}
+
+	visited := map[PackKey]struct{}{key: {}}
+	queue := append([]PackKey(nil), pack.RequiresPacks...)
+	for len(queue) > 0 {
+		requiredKey := queue[0]
+		queue = queue[1:]
+
+		if requiredKey == key {
+			return nil, fmt.Errorf(
+				"platform catalog pack %q takes part in a pack requirement cycle",
+				key,
+			)
+		}
+		if _, seen := visited[requiredKey]; seen {
+			continue
+		}
+		visited[requiredKey] = struct{}{}
+
+		requiredPack, ok := r.packs[requiredKey]
+		if !ok {
+			return nil, fmt.Errorf(
+				"platform catalog pack %q requires missing pack %q",
+				key,
+				requiredKey,
+			)
+		}
+		for _, featureKey := range requiredPack.Features {
+			available[featureKey] = struct{}{}
+		}
+		queue = append(queue, requiredPack.RequiresPacks...)
+	}
+
+	return available, nil
 }
 
 func (r *Registry) registerProvider(provider CatalogProvider) error {
