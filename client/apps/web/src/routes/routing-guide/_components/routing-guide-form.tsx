@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -38,6 +39,8 @@ const LANE_MODE_ITEMS: { value: LaneMatchMode; label: string; caption: string }[
  * ends of the lane must be described at the same tier.
  */
 export function RoutingGuideForm() {
+  const t = useT();
+
   const { control, setValue, clearErrors } = useFormContext<RoutingGuidePayloadInput>();
 
   const originLocationId = useWatch({ control, name: "originLocationId" });
@@ -100,45 +103,45 @@ export function RoutingGuideForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <FormSection title="Identity" description="How this guide is referenced across dispatch">
+      <FormSection title={t("Identity")} description={t("How this guide is referenced across dispatch")}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="Dallas → Atlanta Dry Van"
+              label={t("Name")}
+              placeholder={t("Dallas → Atlanta Dry Van")}
               rules={{ required: true }}
               maxLength={255}
-              description="Shown wherever a tender references this guide."
+              description={t("Shown wherever a tender references this guide.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="status"
-              label="Status"
-              placeholder="Select status"
+              label={t("Status")}
+              placeholder={t("Select status")}
               rules={{ required: true }}
               options={statusChoices}
-              description="Only Active guides are matched when a move is tendered."
+              description={t("Only Active guides are matched when a move is tendered.")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Primary waterfall for the Dallas–Atlanta contract freight"
-              description="Context for the next person who has to understand this ladder."
+              label={t("Description")}
+              placeholder={t("Primary waterfall for the Dallas–Atlanta contract freight")}
+              description={t("Context for the next person who has to understand this ladder.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Lane"
-        description="Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only."
+        title={t("Lane")}
+        description={t("Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.")}
       >
         <div className="flex flex-col gap-3">
           <SegmentedControl<LaneMatchMode>
@@ -146,7 +149,7 @@ export function RoutingGuideForm() {
             value={laneMode}
             onValueChange={switchLaneMode}
             fullWidth
-            aria-label="Lane match level"
+            aria-label={t("Lane match level")}
           />
 
           <FormGroup cols={2}>
@@ -156,8 +159,8 @@ export function RoutingGuideForm() {
                   <LocationAutocompleteField
                     control={control}
                     name="originLocationId"
-                    label="Origin Location"
-                    placeholder="Select origin facility"
+                    label={t("Origin Location")}
+                    placeholder={t("Select origin facility")}
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -165,8 +168,8 @@ export function RoutingGuideForm() {
                   <LocationAutocompleteField
                     control={control}
                     name="destinationLocationId"
-                    label="Destination Location"
-                    placeholder="Select destination facility"
+                    label={t("Destination Location")}
+                    placeholder={t("Select destination facility")}
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -179,8 +182,8 @@ export function RoutingGuideForm() {
                   <InputField
                     control={control}
                     name="originCity"
-                    label="Origin City"
-                    placeholder="Dallas"
+                    label={t("Origin City")}
+                    placeholder={t("Dallas")}
                     rules={{ required: true }}
                     maxLength={100}
                   />
@@ -189,8 +192,8 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="originState"
-                    label="Origin State"
-                    placeholder="Select state"
+                    label={t("Origin State")}
+                    placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
                   />
@@ -199,8 +202,8 @@ export function RoutingGuideForm() {
                   <InputField
                     control={control}
                     name="destinationCity"
-                    label="Destination City"
-                    placeholder="Atlanta"
+                    label={t("Destination City")}
+                    placeholder={t("Atlanta")}
                     rules={{ required: true }}
                     maxLength={100}
                   />
@@ -209,8 +212,8 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="destinationState"
-                    label="Destination State"
-                    placeholder="Select state"
+                    label={t("Destination State")}
+                    placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
                   />
@@ -224,8 +227,8 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="originState"
-                    label="Origin State"
-                    placeholder="Select state"
+                    label={t("Origin State")}
+                    placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
                   />
@@ -234,8 +237,8 @@ export function RoutingGuideForm() {
                   <SelectField
                     control={control}
                     name="destinationState"
-                    label="Destination State"
-                    placeholder="Select state"
+                    label={t("Destination State")}
+                    placeholder={t("Select state")}
                     rules={{ required: true }}
                     options={usStateAbbreviationChoices}
                   />
@@ -247,8 +250,8 @@ export function RoutingGuideForm() {
       </FormSection>
 
       <FormSection
-        title="Carrier Waterfall"
-        description="Ranked carriers with the rate, offer expiry, and channel each is tendered on"
+        title={t("Carrier Waterfall")}
+        description={t("Ranked carriers with the rate, offer expiry, and channel each is tendered on")}
       >
         <RoutingGuideEntryEditor />
       </FormSection>

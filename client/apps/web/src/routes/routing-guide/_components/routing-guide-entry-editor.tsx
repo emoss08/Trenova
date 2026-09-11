@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -28,6 +29,8 @@ function ttlOptionsFor(valueSeconds: number | undefined) {
  * to the next rank.
  */
 export function RoutingGuideEntryEditor() {
+  const t = useT();
+
   const { control } = useFormContext<RoutingGuidePayloadInput>();
   const { fields, append, remove } = useFieldArray({ control, name: "entries" });
   const entries = useWatch({ control, name: "entries" }) ?? [];
@@ -45,8 +48,7 @@ export function RoutingGuideEntryEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No carriers yet. Add carriers in the order they should be offered the freight — rank 1
-          goes first.
+          {t("No carriers yet. Add carriers in the order they should be offered the freight — rank 1 goes first.")}
         </p>
       )}
 
@@ -54,10 +56,10 @@ export function RoutingGuideEntryEditor() {
         <div key={field.id} className="rounded-md border p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-medium">
-              Rank {entries[index]?.rank ?? index + 1}
+              {t("Rank")} {entries[index]?.rank ?? index + 1}
               {entries[index]?.channel === "EDI" && (
                 <span className="text-muted-foreground ml-2 font-normal">
-                  Requires a default EDI channel on the carrier
+                  {t("Requires a default EDI channel on the carrier")}
                 </span>
               )}
             </p>
@@ -68,7 +70,7 @@ export function RoutingGuideEntryEditor() {
               className="h-6 text-xs"
               onClick={() => remove(index)}
             >
-              Remove
+              {t("Remove")}
             </Button>
           </div>
 
@@ -77,8 +79,8 @@ export function RoutingGuideEntryEditor() {
               <CarrierAutocompleteField
                 control={control}
                 name={`entries.${index}.carrierId`}
-                label="Carrier"
-                placeholder="Select carrier"
+                label={t("Carrier")}
+                placeholder={t("Select carrier")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -86,10 +88,10 @@ export function RoutingGuideEntryEditor() {
               <NumberField
                 control={control}
                 name={`entries.${index}.rank`}
-                label="Rank"
+                label={t("Rank")}
                 placeholder="1"
                 rules={{ required: true }}
-                description="Offer order — rank 1 is tendered first."
+                description={t("Offer order — rank 1 is tendered first.")}
               />
             </FormControl>
           </div>
@@ -99,8 +101,8 @@ export function RoutingGuideEntryEditor() {
               <SelectField
                 control={control}
                 name={`entries.${index}.rateMethod`}
-                label="Rate Method"
-                placeholder="Select method"
+                label={t("Rate Method")}
+                placeholder={t("Select method")}
                 rules={{ required: true }}
                 options={carrierRateMethodChoices}
               />
@@ -109,47 +111,47 @@ export function RoutingGuideEntryEditor() {
               <NumberField
                 control={control}
                 name={`entries.${index}.rate`}
-                label="Rate"
+                label={t("Rate")}
                 placeholder="1500.00"
                 sideText="$"
                 decimalScale={2}
                 rules={{ required: true }}
-                description="Flat total or per-mile rate offered."
+                description={t("Flat total or per-mile rate offered.")}
               />
             </FormControl>
             <FormControl>
               <SelectField
                 control={control}
                 name={`entries.${index}.offerTtlSeconds`}
-                label="Offer Expiry"
-                placeholder="Select expiry"
+                label={t("Offer Expiry")}
+                placeholder={t("Select expiry")}
                 rules={{ required: true }}
                 options={ttlOptionsFor(
                   typeof entries[index]?.offerTtlSeconds === "number"
                     ? entries[index]?.offerTtlSeconds
                     : undefined,
                 )}
-                description="How long this carrier holds the offer."
+                description={t("How long this carrier holds the offer.")}
               />
             </FormControl>
             <FormControl>
               <SelectField
                 control={control}
                 name={`entries.${index}.channel`}
-                label="Channel"
-                placeholder="Select channel"
+                label={t("Channel")}
+                placeholder={t("Select channel")}
                 rules={{ required: true }}
                 options={tenderChannelChoices}
-                description="How the offer reaches the carrier."
+                description={t("How the offer reaches the carrier.")}
               />
             </FormControl>
             <FormControl>
               <SwitchField
                 control={control}
                 name={`entries.${index}.useContractRate`}
-                label="Price from the contract"
+                label={t("Price from the contract")}
                 outlined
-                description="Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers."
+                description={t("Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.")}
               />
             </FormControl>
           </div>
@@ -158,7 +160,7 @@ export function RoutingGuideEntryEditor() {
 
       <div>
         <Button type="button" size="sm" variant="outline" onClick={appendEntry}>
-          Add carrier
+          {t("Add carrier")}
         </Button>
       </div>
     </div>

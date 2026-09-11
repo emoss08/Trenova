@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { handleMutationError } from "@/hooks/use-api-mutation";
@@ -33,12 +34,14 @@ import { RoutingGuideForm } from "./routing-guide-form";
 const QUERY_KEY = "routing-guide-list";
 
 function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
     mutationFn: (guideId: string) => apiService.routingGuideService.delete(guideId),
     onSuccess: () => {
-      toast.success("Routing guide deleted");
+      toast.success(t("Routing guide deleted"));
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       onDeleted();
     },
@@ -54,7 +57,7 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
             variant="ghost"
             size="icon-sm"
             className="text-muted-foreground hover:text-destructive"
-            aria-label="Delete routing guide"
+            aria-label={t("Delete routing guide")}
             disabled={deleteMutation.isPending}
           >
             <Trash2Icon className="size-4" />
@@ -63,20 +66,20 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
       />
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete this routing guide?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Delete this routing guide?")}</AlertDialogTitle>
           <AlertDialogDescription>
             {`"${row.name}" will no longer match this lane. Tenders already running against it are
             unaffected, but new waterfalls cannot use it.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep guide</AlertDialogCancel>
+          <AlertDialogCancel>{t("Keep guide")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               if (row.id) deleteMutation.mutate(row.id);
             }}
           >
-            Delete guide
+            {t("Delete guide")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -90,6 +93,8 @@ export function RoutingGuidePanel({
   mode,
   row,
 }: DataTablePanelProps<RoutingGuideRow>) {
+  const t = useT();
+
   const form = useForm<RoutingGuidePayloadInput, unknown, RoutingGuidePayload>({
     resolver: zodResolver(routingGuidePayloadSchema),
     defaultValues: { ...emptyRoutingGuidePayload },
@@ -104,7 +109,7 @@ export function RoutingGuidePanel({
         row={row}
         form={form}
         queryKey={QUERY_KEY}
-        title="Routing Guide"
+        title={t("Routing Guide")}
         fieldKey="name"
         size="lg"
         formComponent={<RoutingGuideForm />}
@@ -127,9 +132,9 @@ export function RoutingGuidePanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={QUERY_KEY}
-      title="Routing Guide"
+      title={t("Routing Guide")}
       size="lg"
-      description="Rank the carriers a lane should waterfall through, with the rate and offer window for each."
+      description={t("Rank the carriers a lane should waterfall through, with the rate and offer window for each.")}
       formComponent={<RoutingGuideForm />}
       mutationFn={(values) => apiService.routingGuideService.create(values)}
     />
