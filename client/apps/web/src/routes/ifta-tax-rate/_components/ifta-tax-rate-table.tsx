@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   jurisdictionFilterOptions,
@@ -40,6 +41,8 @@ function IftaTaxRatesEmpty({
   canImport,
   onImport,
 }: DataTableEmptyStateRenderProps & { canImport: boolean; onImport: () => void }) {
+  const t = useT();
+
   return (
     <EmptyTable
       className="py-10"
@@ -55,7 +58,7 @@ function IftaTaxRatesEmpty({
         canImport ? (
           <Button variant="outline" size="sm" onClick={onImport}>
             <FileSpreadsheetIcon className="size-3.5" />
-            Import rates
+            {t("Import rates")}
           </Button>
         ) : null
       }

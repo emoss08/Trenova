@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -86,6 +87,8 @@ function IftaTaxRateCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<IftaTaxRateFormValues>({
     resolver: zodResolver(iftaTaxRateFormSchema) as Resolver<IftaTaxRateFormValues>,
     defaultValues: buildIftaTaxRateDefaults(null, mostRecentCompletedQuarter()),
@@ -95,8 +98,8 @@ function IftaTaxRateCreatePanel({
     <FormCreatePanel<IftaTaxRateFormValues, IftaTaxRateRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="IFTA Tax Rate"
-      description="Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe."
+      title={t("IFTA Tax Rate")}
+      description={t("Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.")}
       queryKey={IFTA_TAX_RATE_LIST_KEY}
       form={form}
       size="md"
@@ -118,6 +121,8 @@ function IftaTaxRateEditPanel({
   onOpenChange: (open: boolean) => void;
   row: IftaTaxRateRow;
 }) {
+  const t = useT();
+
   const period = { year: row.year, quarter: row.quarter };
   const formRow = {
     ...row,
@@ -133,10 +138,10 @@ function IftaTaxRateEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="IFTA Tax Rate"
+      title={t("IFTA Tax Rate")}
       titleComponent={(record) => (
         <span>
-          {record.jurisdiction.code} · {record.fuelType} · Q{record.quarter} {record.year}
+          {t("{0} · {1} · Q{2}{3}", record.jurisdiction.code, record.fuelType, record.quarter, record.year)}
         </span>
       )}
       queryKey={IFTA_TAX_RATE_LIST_KEY}

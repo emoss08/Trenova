@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
 import { iftaFuelTypeChoices, iftaQuarterChoices } from "@/lib/choices";
@@ -37,7 +38,7 @@ export function getColumns(
     {
       accessorKey: "quarter",
       header: "Quarter",
-      cell: ({ row }) => <span className="font-table tabular-nums">Q{row.original.quarter}</span>,
+      cell: ({ row }) => <span className="font-table tabular-nums">{translate("Q{0}", row.original.quarter)}</span>,
       size: 100,
       meta: {
         apiField: "quarter",
@@ -57,12 +58,12 @@ export function getColumns(
           {jurisdictionLabel(row.original.jurisdiction)}
           {row.original.jurisdiction.hasSurcharge ? (
             <Badge variant="orange" className="px-1.5 py-0 text-[10px]">
-              Surcharge
+              {translate("Surcharge")}
             </Badge>
           ) : null}
           {row.original.jurisdiction.isIftaMember ? null : (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              Non-member
+              {translate("Non-member")}
             </Badge>
           )}
         </span>
