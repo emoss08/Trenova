@@ -82,12 +82,22 @@ func (s *Service) GetIncomeStatement(
 	}, nil
 }
 
+// GetBalanceSheet reports the position as at the end of a period, not the
+// movement within it: a balance sheet is cumulative by definition. Every period
+// of the fiscal year up to and including the requested one is summed, and the
+// year's opening entry in period 1 is what carries the prior year in.
 func (s *Service) GetBalanceSheet(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	fiscalPeriodID pulid.ID,
 ) (*serviceports.GLBalanceSheet, error) {
-	balances, err := s.ListTrialBalanceByPeriod(ctx, tenantInfo, fiscalPeriodID)
+	balances, err := s.repo.ListCumulativeBalancesThroughPeriod(
+		ctx,
+		repositoryports.ListCumulativeBalancesThroughPeriodRequest{
+			TenantInfo:     tenantInfo,
+			FiscalPeriodID: fiscalPeriodID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +105,7 @@ func (s *Service) GetBalanceSheet(
 	assets := newSection("assets", "Assets")
 	liabilities := newSection("liabilities", "Liabilities")
 	equity := newSection("equity", "Equity")
-	var currentPeriodNetIncome int64
+	var currentYearEarnings int64
 
 	for _, balance := range balances {
 		line := toStatementLine(balance, statementAmount(balance))
@@ -110,21 +120,21 @@ func (s *Service) GetBalanceSheet(
 			equity.Lines = append(equity.Lines, line)
 			equity.TotalMinor += line.AmountMinor
 		case accounttype.CategoryRevenue:
-			currentPeriodNetIncome += line.AmountMinor
+			currentYearEarnings += line.AmountMinor
 		case accounttype.CategoryCostOfRevenue, accounttype.CategoryExpense:
-			currentPeriodNetIncome -= line.AmountMinor
+			currentYearEarnings -= line.AmountMinor
 		}
 	}
 
 	return &serviceports.GLBalanceSheet{
-		FiscalPeriodID:              fiscalPeriodID,
-		Assets:                      assets,
-		Liabilities:                 liabilities,
-		Equity:                      equity,
-		CurrentPeriodNetIncomeMinor: currentPeriodNetIncome,
-		TotalAssetsMinor:            assets.TotalMinor,
-		TotalLiabilitiesMinor:       liabilities.TotalMinor,
-		TotalEquityMinor:            equity.TotalMinor + currentPeriodNetIncome,
+		FiscalPeriodID:           fiscalPeriodID,
+		Assets:                   assets,
+		Liabilities:              liabilities,
+		Equity:                   equity,
+		CurrentYearEarningsMinor: currentYearEarnings,
+		TotalAssetsMinor:         assets.TotalMinor,
+		TotalLiabilitiesMinor:    liabilities.TotalMinor,
+		TotalEquityMinor:         equity.TotalMinor + currentYearEarnings,
 	}, nil
 }
 

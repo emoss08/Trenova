@@ -438,6 +438,103 @@ func (r *repository) Close(
 	return entity, nil
 }
 
+func (r *repository) Reopen(
+	ctx context.Context,
+	req repositories.ReopenFiscalYearRequest,
+) (*fiscalyear.FiscalYear, error) {
+	log := r.l.With(
+		zap.String("operation", "Reopen"),
+		zap.String("id", req.ID.String()),
+	)
+
+	entity := new(fiscalyear.FiscalYear)
+	result, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		Set("status = ?", fiscalyear.StatusOpen).
+		Set("closed_at = NULL").
+		Set("closed_by_id = NULL").
+		Set("reopened_at = ?", req.ReopenedAt).
+		Set("reopened_by_id = ?", req.ReopenedByID).
+		Set("reopen_reason = ?", req.ReopenReason).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.Where("fy.id = ?", req.ID).
+				Where("fy.organization_id = ?", req.TenantInfo.OrgID).
+				Where("fy.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("fy.status = ?", fiscalyear.StatusClosed)
+		}).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to reopen fiscal year", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(result, "FiscalYear", req.ID.String()); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *repository) GetNextFiscalYear(
+	ctx context.Context,
+	req repositories.GetNextFiscalYearRequest,
+) (*fiscalyear.FiscalYear, error) {
+	log := r.l.With(
+		zap.String("operation", "GetNextFiscalYear"),
+		zap.Int64("afterDate", req.AfterDate),
+	)
+
+	entity := new(fiscalyear.FiscalYear)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("fy.organization_id = ?", req.TenantInfo.OrgID).
+				Where("fy.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("fy.start_date > ?", req.AfterDate)
+		}).
+		Order("fy.start_date ASC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to get next fiscal year", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "FiscalYear")
+	}
+
+	return entity, nil
+}
+
+func (r *repository) GetExpiredOpenFiscalYears(
+	ctx context.Context,
+	req repositories.GetExpiredOpenFiscalYearsRequest,
+) ([]*fiscalyear.FiscalYear, error) {
+	log := r.l.With(
+		zap.String("operation", "GetExpiredOpenFiscalYears"),
+		zap.Int64("beforeDate", req.BeforeDate),
+	)
+
+	entities := make([]*fiscalyear.FiscalYear, 0)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("fy.organization_id = ?", req.OrgID).
+				Where("fy.business_unit_id = ?", req.BuID).
+				Where("fy.status = ?", fiscalyear.StatusOpen).
+				Where("fy.end_date < ?", req.BeforeDate)
+		}).
+		Order("fy.end_date ASC").
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to list expired open fiscal years", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) Activate(
 	ctx context.Context,
 	req repositories.ActivateFiscalYearRequest,

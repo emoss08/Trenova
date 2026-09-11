@@ -2,6 +2,7 @@ package fiscalperiod
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -152,7 +153,8 @@ func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&fp.PeriodNumber,
 			validation.Required.Error("Period number is required"),
 			validation.Min(1).Error("Period number must be at least 1"),
-			validation.Max(12).Error("Period number must be at most 12"),
+			validation.Max(fp.maxPeriodNumber()).
+				Error(fmt.Sprintf("Period number must be at most %d", fp.maxPeriodNumber())),
 		),
 		validation.Field(&fp.Name,
 			validation.Required.Error("Name is required"),
@@ -184,6 +186,18 @@ func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("End date is required"),
 		),
 	))
+}
+
+// maxPeriodNumber caps the ordinal a period may take. Operating periods stop at
+// 12; adjusting periods sit above them (Period 13/14) and share the final
+// operating period's date range, which is why they are excluded from the
+// fiscal_periods no-overlap constraint.
+func (fp *FiscalPeriod) maxPeriodNumber() int {
+	if fp.IsAdjusting || fp.PeriodType == PeriodTypeAdjusting {
+		return MaxAdjustingPeriodNumber
+	}
+
+	return MaxOperatingPeriodNumber
 }
 
 func (fp *FiscalPeriod) GetID() pulid.ID {

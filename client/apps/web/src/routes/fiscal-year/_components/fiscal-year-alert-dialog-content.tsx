@@ -6,28 +6,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
+import type {
+  FiscalYearClosePlan,
+  FiscalYearClosePlanEntry,
+  FiscalYearSubledgerCheck,
+} from "@/types/fiscal-year";
 import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangleIcon } from "lucide-react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-export type FiscalYearAction = "activate" | "close";
+export type FiscalYearAction = "activate" | "close" | "reopen";
 
-export function FiscalYearActivateAlertDialogContent({ record }: { record: FiscalYearRow }) {
+type DialogProps = {
+  record: FiscalYearRow;
+  onClose: () => void;
+};
+
+function useFiscalYearInvalidation() {
   const queryClient = useQueryClient();
 
-  const { mutateAsync } = useApiMutation({
+  return useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["fiscal-year-list"] });
+    void queryClient.invalidateQueries({ queryKey: ["fiscal-year-close-preview"] });
+  }, [queryClient]);
+}
+
+export function FiscalYearActivateAlertDialogContent({ record, onClose }: DialogProps) {
+  const invalidate = useFiscalYearInvalidation();
+
+  const { mutateAsync, isPending } = useApiMutation({
     mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.activate(id),
     onSuccess: () => {
       toast.success("Activated successfully", {
         description: `Successfully set ${record?.year} as current`,
       });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-year-list"],
-      });
+      invalidate();
+      onClose();
     },
   });
 
@@ -46,25 +69,37 @@ export function FiscalYearActivateAlertDialogContent({ record }: { record: Fisca
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleFiscalYearActivate}>Set as Current</AlertDialogAction>
+        <AlertDialogAction disabled={isPending} onClick={handleFiscalYearActivate}>
+          Set as Current
+        </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   );
 }
 
-export function FiscalYearCloseAlertDialogContent({ record }: { record: FiscalYearRow }) {
-  const queryClient = useQueryClient();
+export function FiscalYearCloseAlertDialogContent({ record, onClose }: DialogProps) {
+  const invalidate = useFiscalYearInvalidation();
   const today = getTodayDate();
 
-  const { mutateAsync } = useApiMutation({
+  const {
+    data: plan,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["fiscal-year-close-preview", record?.id],
+    queryFn: () => apiService.fiscalYearService.closePreview(record.id),
+    enabled: !!record?.id,
+    staleTime: 0,
+  });
+
+  const { mutateAsync, isPending } = useApiMutation({
     mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.close(id),
     onSuccess: () => {
       toast.success("Closed successfully", {
         description: `Successfully closed ${record?.year}`,
       });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-year-list"],
-      });
+      invalidate();
+      onClose();
     },
   });
 
@@ -72,46 +107,242 @@ export function FiscalYearCloseAlertDialogContent({ record }: { record: FiscalYe
     void mutateAsync(record?.id);
   }, [mutateAsync, record?.id]);
 
+  const blocked = !plan?.canClose;
+
   return (
     <AlertDialogContent className="min-w-lg">
       <AlertDialogHeader>
         <AlertDialogTitle>Close Fiscal Year {record?.year}?</AlertDialogTitle>
         {record?.endDate && record.endDate > today && (
-          <div className="mb-2 flex w-full items-center justify-between rounded-md border border-yellow-600/50 bg-yellow-500/10 p-4">
-            <div className="flex w-full items-center gap-3 text-yellow-600">
-              <div className="flex flex-col">
-                <p className="text-sm font-medium">Early Close Warning</p>
-                <div className="flex flex-col gap-1 text-xs dark:text-yellow-100">
-                  <div className="flex flex-row gap-0.5">
-                    <p>This fiscal year does not end until {formatUnixDate(record.endDate)}</p>
-                    <p className="font-semibold">
-                      ({Math.ceil((record.endDate - today) / 86400)} days remaining).
-                    </p>
-                  </div>
-                  <p>
-                    Closing early will prevent posting transactions for the remainder of the period.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Alert variant="warning">
+            <AlertTriangleIcon />
+            <AlertTitle>Early close</AlertTitle>
+            <AlertDescription>
+              <p>
+                This fiscal year does not end until {formatUnixDate(record.endDate)} (
+                {Math.ceil((record.endDate - today) / 86400)} days remaining). Closing early
+                prevents posting transactions for the remainder of the year.
+              </p>
+            </AlertDescription>
+          </Alert>
         )}
-        <div className="text-muted-foreground flex flex-col text-sm">
-          <p>This prevent new transactions. Only adjusting entries will be allowed.</p>
-          <ul className="list-inside list-disc">
-            <li>All shipments are billed</li>
-            <li>Depreciation is posted</li>
-            <li>Bank reconciliation complete</li>
-            <li>Trial balance verified</li>
-          </ul>
+        {isLoading && <ClosePreviewSkeleton />}
+        {isError && (
+          <Alert variant="destructive">
+            <AlertTriangleIcon />
+            <AlertTitle>Close preview unavailable</AlertTitle>
+            <AlertDescription>
+              <p>The year-end entries could not be calculated. Try again before closing.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        {plan && <ClosePreview plan={plan} />}
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction
+          variant="destructive"
+          disabled={isLoading || isPending || blocked}
+          onClick={handleFiscalYearClose}
+        >
+          Post and Close Year
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  );
+}
+
+export function FiscalYearReopenAlertDialogContent({ record, onClose }: DialogProps) {
+  const invalidate = useFiscalYearInvalidation();
+  const [reason, setReason] = useState("");
+
+  const { mutateAsync, isPending } = useApiMutation({
+    mutationFn: async (reopenReason: string) =>
+      apiService.fiscalYearService.reopen(record.id, reopenReason),
+    onSuccess: () => {
+      toast.success("Reopened successfully", {
+        description: `${record?.year} is open again and its closing entries were reversed`,
+      });
+      invalidate();
+      onClose();
+    },
+  });
+
+  const handleFiscalYearReopen = useCallback(() => {
+    void mutateAsync(reason.trim());
+  }, [mutateAsync, reason]);
+
+  return (
+    <AlertDialogContent className="min-w-lg">
+      <AlertDialogHeader>
+        <AlertDialogTitle>Reopen Fiscal Year {record?.year}?</AlertDialogTitle>
+        <Alert variant="warning">
+          <AlertTriangleIcon />
+          <AlertTitle>The close will be reversed</AlertTitle>
+          <AlertDescription>
+            <p>
+              Reversing entries are posted against the closing and opening entries this year
+              produced. The originals stay on the ledger, so the audit trail shows both the close
+              and its undo. The year has to be closed again afterwards.
+            </p>
+          </AlertDescription>
+        </Alert>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium" htmlFor="fiscal-year-reopen-reason">
+            Reason
+          </label>
+          <Textarea
+            id="fiscal-year-reopen-reason"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            placeholder="Why is this year being reopened?"
+            rows={3}
+          />
+          <p className="text-muted-foreground text-xs">
+            Recorded on the fiscal year and on every reversing entry.
+          </p>
         </div>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction variant="destructive" onClick={handleFiscalYearClose}>
-          Close Fiscal Year
+        <AlertDialogAction
+          variant="destructive"
+          disabled={isPending || reason.trim().length === 0}
+          onClick={handleFiscalYearReopen}
+        >
+          Reverse and Reopen
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
+  );
+}
+
+function ClosePreviewSkeleton() {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-16 w-full" />
+      <Skeleton className="h-24 w-full" />
+    </div>
+  );
+}
+
+function ClosePreview({ plan }: { plan: FiscalYearClosePlan }) {
+  if (plan.blockers.length > 0) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangleIcon />
+        <AlertTitle>
+          {plan.blockers.length === 1
+            ? "1 issue blocks this close"
+            : `${plan.blockers.length} issues block this close`}
+        </AlertTitle>
+        <AlertDescription>
+          <ul className="list-inside list-disc">
+            {plan.blockers.map((blocker) => (
+              <li key={`${blocker.field}-${blocker.message}`}>{blocker.message}</li>
+            ))}
+          </ul>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 text-left">
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <Figure label="Revenue" value={formatMinor(plan.revenueMinor)} />
+        <Figure label="Cost of revenue" value={formatMinor(plan.costOfRevenueMinor)} />
+        <Figure label="Operating expense" value={formatMinor(plan.operatingExpenseMinor)} />
+        <Figure
+          label={plan.netIncomeMinor < 0 ? "Net loss" : "Net income"}
+          value={formatMinor(Math.abs(plan.netIncomeMinor))}
+          emphasis
+        />
+      </div>
+      <p className="text-muted-foreground text-sm">
+        {plan.netIncomeMinor < 0 ? "Debited to " : "Credited to "}
+        <span className="font-medium">
+          {plan.retainedEarningsAccountCode} {plan.retainedEarningsAccountName}
+        </span>
+        {plan.nextFiscalYearName
+          ? `, with closing balances carried forward into ${plan.nextFiscalYearName}.`
+          : "."}
+      </p>
+      <div className="flex flex-col gap-2">
+        <EntrySummary entry={plan.closingEntry} fallback="No income-statement activity to close." />
+        <EntrySummary entry={plan.openingEntry} fallback="No balances to carry forward." />
+      </div>
+      <SubledgerChecks checks={plan.subledgerChecks} />
+    </div>
+  );
+}
+
+/**
+ * The general ledger carries one total per control account; the detail behind it
+ * lives in the subledger. This is the close proving the two still agree.
+ */
+function SubledgerChecks({ checks }: { checks: FiscalYearSubledgerCheck[] }) {
+  if (checks.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {checks.map((check) => (
+        <div
+          key={check.key}
+          className="flex items-baseline justify-between gap-2 text-xs"
+          data-slot="subledger-check"
+        >
+          <span className="text-muted-foreground">
+            {check.label} ({check.accountCode})
+          </span>
+          {check.reconciled ? (
+            <span className="font-mono">reconciled · {formatMinor(check.glBalanceMinor)}</span>
+          ) : (
+            <span className="text-destructive font-mono">
+              off by {formatMinor(check.differenceMinor)}
+              {check.enforced ? "" : " (not enforced)"}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Figure({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-muted-foreground text-xs">{label}</span>
+      <span className={emphasis ? "font-mono font-semibold" : "font-mono"}>{value}</span>
+    </div>
+  );
+}
+
+function EntrySummary({
+  entry,
+  fallback,
+}: {
+  entry?: FiscalYearClosePlanEntry | null;
+  fallback: string;
+}) {
+  if (!entry) {
+    return <p className="text-muted-foreground text-xs">{fallback}</p>;
+  }
+
+  return (
+    <div className="border-border rounded-md border p-3 text-sm">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-medium">
+          {entry.kind === "Closing" ? "Closing entry" : "Opening entry"}
+        </span>
+        <span className="font-mono text-xs">{formatMinor(entry.totalDebitMinor)}</span>
+      </div>
+      <p className="text-muted-foreground text-xs">
+        {entry.lines.length} {entry.lines.length === 1 ? "line" : "lines"} into{" "}
+        {entry.fiscalPeriodName}
+        {entry.createsPeriod ? " (created by this close)" : ""} dated{" "}
+        {formatUnixDate(entry.accountingDate)}
+      </p>
+    </div>
   );
 }

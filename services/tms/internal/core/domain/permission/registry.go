@@ -2827,6 +2827,11 @@ func (r *Registry) registerAccountingResources() {
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify fiscal years"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete fiscal years"},
 			{Operation: OpClose, DisplayName: "Close", Description: "Close fiscal years"},
+			{
+				Operation:   OpReopen,
+				DisplayName: "Reopen",
+				Description: "Reopen closed fiscal years and reverse their closing entries",
+			},
 			{Operation: OpLock, DisplayName: "Lock", Description: "Lock fiscal years"},
 			{Operation: OpUnlock, DisplayName: "Unlock", Description: "Unlock fiscal years"},
 			{Operation: OpActivate, DisplayName: "Activate", Description: "Activate fiscal years"},

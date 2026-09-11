@@ -27,7 +27,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
 
   const isDraft = status === "Draft";
   const isClosed = status === "Closed";
-  const isLocked = status === "Locked";
+  const isPermanentlyClosed = status === "PermanentlyClosed";
 
   useEffect(() => {
     if (!isEdit && year) {
@@ -83,7 +83,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             placeholder="FY 2025"
             description="Display name for reports and references"
             maxLength={100}
-            readOnly={isEdit && (isClosed || isLocked)}
+            readOnly={isEdit && (isClosed || isPermanentlyClosed)}
           />
         </FormControl>
 
@@ -156,7 +156,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               placeholder="0"
               description="Annual budget in dollars (optional)"
               min={0}
-              readOnly={isEdit && (isClosed || isLocked)}
+              readOnly={isEdit && (isClosed || isPermanentlyClosed)}
             />
           </FormControl>
 
@@ -186,7 +186,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               description="Permit accounting adjustments after year-end close"
               position="left"
               outlined
-              readOnly={isEdit && isLocked}
+              readOnly={isEdit && isPermanentlyClosed}
             />
           </FormControl>
 
@@ -198,7 +198,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
                 label="Adjustment Deadline"
                 placeholder="Select deadline"
                 description="Final date for post-close adjusting entries"
-                readOnly={isLocked}
+                readOnly={isPermanentlyClosed}
               />
             </FormControl>
           )}

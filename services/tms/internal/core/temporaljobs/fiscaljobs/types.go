@@ -31,6 +31,17 @@ type AutoCreateFiscalYearResult struct {
 	Errors     []string `json:"errors,omitempty"`
 }
 
+type CloseReadinessPayload struct {
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+}
+
+type CloseReadinessResult struct {
+	YearsReviewed int      `json:"yearsReviewed"`
+	Notified      int      `json:"notified"`
+	Errors        []string `json:"errors,omitempty"`
+}
+
 type OrgTenant struct {
 	OrganizationID pulid.ID `json:"organizationId"`
 	BusinessUnitID pulid.ID `json:"businessUnitId"`
@@ -42,6 +53,7 @@ type GetAutoCloseTenantsResult struct {
 
 type FiscalTenantRunResult struct {
 	temporaljobs.TenantRunResult
-	Closed  int `json:"closed,omitempty"`
-	Created int `json:"created,omitempty"`
+	Closed   int `json:"closed,omitempty"`
+	Created  int `json:"created,omitempty"`
+	Notified int `json:"notified,omitempty"`
 }

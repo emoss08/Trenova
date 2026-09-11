@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -79,6 +80,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:fiscalYearID/close-blockers/",
 		h.pm.RequirePermission(permission.ResourceFiscalYear.String(), permission.OpRead),
 		h.closeBlockers,
+	)
+	api.GET(
+		"/:fiscalYearID/close-preview/",
+		h.pm.RequirePermission(permission.ResourceFiscalYear.String(), permission.OpRead),
+		h.closePreview,
+	)
+	api.PUT(
+		"/:fiscalYearID/reopen/",
+		h.pm.RequirePermission(permission.ResourceFiscalYear.String(), permission.OpReopen),
+		h.reopen,
 	)
 	api.PUT(
 		"/:fiscalYearID/activate/",
@@ -185,6 +196,95 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+// @Summary Preview the accounting a fiscal year close would post
+// @ID previewFiscalYearClose
+// @Tags Fiscal Years
+// @Produce json
+// @Param fiscalYearID path string true "Fiscal year ID"
+// @Success 200 {object} fiscalclose.Plan
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /fiscal-years/{fiscalYearID}/close-preview/ [get]
+func (h *Handler) closePreview(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	fiscalYearID, err := pulid.MustParse(c.Param("fiscalYearID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var plan *fiscalclose.Plan
+	plan, err = h.service.GetClosePreview(
+		c.Request.Context(),
+		repositories.GetFiscalYearByIDRequest{
+			ID: fiscalYearID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, plan)
+}
+
+type reopenFiscalYearPayload struct {
+	ReopenReason string `json:"reopenReason"`
+}
+
+// @Summary Reopen a closed fiscal year
+// @ID reopenFiscalYear
+// @Tags Fiscal Years
+// @Accept json
+// @Produce json
+// @Param fiscalYearID path string true "Fiscal year ID"
+// @Param request body reopenFiscalYearPayload true "Reopen payload"
+// @Success 200 {object} fiscalyear.FiscalYear
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /fiscal-years/{fiscalYearID}/reopen/ [put]
+func (h *Handler) reopen(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	fiscalYearID, err := pulid.MustParse(c.Param("fiscalYearID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	payload := new(reopenFiscalYearPayload)
+	if err = c.ShouldBindJSON(payload); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.Reopen(c.Request.Context(), repositories.ReopenFiscalYearRequest{
+		ID: fiscalYearID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		ReopenReason: payload.ReopenReason,
+	}, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
 }
 
 // @Summary Create a fiscal year
