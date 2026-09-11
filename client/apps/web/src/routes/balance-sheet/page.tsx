@@ -63,11 +63,11 @@ export function BalanceSheetPage() {
 
             <FinancialReportSection section={data.equity} />
 
-            {data.currentPeriodNetIncomeMinor !== 0 ? (
+            {data.currentYearEarningsMinor !== 0 ? (
               <div className="flex items-center justify-between rounded-md border px-4 py-2 text-sm">
-                <span className="text-muted-foreground">Current Period Net Income</span>
+                <span className="text-muted-foreground">Current Year Earnings</span>
                 <AmountDisplay
-                  value={data.currentPeriodNetIncomeMinor}
+                  value={data.currentYearEarningsMinor}
                   variant="auto"
                   className="font-medium"
                 />

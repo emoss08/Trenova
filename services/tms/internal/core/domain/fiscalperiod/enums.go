@@ -1,5 +1,17 @@
 package fiscalperiod
 
+const (
+	// MaxOperatingPeriodNumber is the highest ordinal an operating period may
+	// take. Monthly calendars use 1–12 and 4-4-5 calendars fold their thirteenth
+	// week-period into the twelfth ordinal.
+	MaxOperatingPeriodNumber = 12
+
+	// MaxAdjustingPeriodNumber is the highest ordinal an adjusting period may
+	// take. Period 13 covers the year-end close; Period 14 is reserved for
+	// post-audit entries.
+	MaxAdjustingPeriodNumber = 14
+)
+
 type PeriodType string
 
 const (

@@ -18,11 +18,7 @@ func TestGenerateMonthlyPeriods_CalendarYear(t *testing.T) {
 		EndDate:        time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := fy.GenerateMonthlyPeriods()
-
-	if len(periods) != 12 {
-		t.Fatalf("expected 12 periods, got %d", len(periods))
-	}
+	periods := operatingPeriods(t, fy.GenerateMonthlyPeriods())
 
 	expectedMonths := []struct {
 		startMonth time.Month
@@ -86,11 +82,7 @@ func TestGenerateMonthlyPeriods_LeapYear(t *testing.T) {
 		EndDate:        time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := fy.GenerateMonthlyPeriods()
-
-	if len(periods) != 12 {
-		t.Fatalf("expected 12 periods, got %d", len(periods))
-	}
+	periods := operatingPeriods(t, fy.GenerateMonthlyPeriods())
 
 	febEnd := time.Unix(periods[1].EndDate, 0).UTC()
 	if febEnd.Day() != 29 {
@@ -107,11 +99,7 @@ func TestGenerateMonthlyPeriods_NonCalendarFiscalYear(t *testing.T) {
 		EndDate:        time.Date(2026, 3, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := fy.GenerateMonthlyPeriods()
-
-	if len(periods) != 12 {
-		t.Fatalf("expected 12 periods, got %d", len(periods))
-	}
+	periods := operatingPeriods(t, fy.GenerateMonthlyPeriods())
 
 	firstStart := time.Unix(periods[0].StartDate, 0).UTC()
 	if firstStart.Month() != time.April || firstStart.Day() != 1 {
@@ -143,7 +131,7 @@ func TestGenerateMonthlyPeriods_Contiguous(t *testing.T) {
 		EndDate:        time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := fy.GenerateMonthlyPeriods()
+	periods := operatingPeriods(t, fy.GenerateMonthlyPeriods())
 
 	firstStart := time.Unix(periods[0].StartDate, 0).UTC()
 	if firstStart.Unix() != fy.StartDate {
@@ -162,5 +150,67 @@ func TestGenerateMonthlyPeriods_Contiguous(t *testing.T) {
 			t.Errorf("gap between period %d and %d: expected 1 second, got %d seconds",
 				i, i+1, currStart-prevEnd)
 		}
+	}
+}
+
+// operatingPeriods strips the year-end adjusting period so the month-by-month
+// assertions below read only the twelve periods that carry operations.
+func operatingPeriods(
+	t *testing.T,
+	periods []*fiscalperiod.FiscalPeriod,
+) []*fiscalperiod.FiscalPeriod {
+	t.Helper()
+
+	if len(periods) != 13 {
+		t.Fatalf("expected 12 operating periods plus one adjusting period, got %d", len(periods))
+	}
+
+	return periods[:12]
+}
+
+func TestGenerateMonthlyPeriods_AppendsAdjustingPeriod(t *testing.T) {
+	fy := &fiscalyear.FiscalYear{
+		ID:             pulid.MustNew("fy_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Name:           "FY 2025",
+		StartDate:      time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		EndDate:        time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
+	}
+
+	periods := fy.GenerateMonthlyPeriods()
+	if len(periods) != 13 {
+		t.Fatalf("expected 13 periods, got %d", len(periods))
+	}
+
+	december := periods[11]
+	adjusting := periods[12]
+
+	if !adjusting.IsAdjusting {
+		t.Error("expected the trailing period to be flagged as adjusting")
+	}
+	if adjusting.PeriodType != fiscalperiod.PeriodTypeAdjusting {
+		t.Errorf("expected type Adjusting, got %s", adjusting.PeriodType)
+	}
+	if adjusting.PeriodNumber != 13 {
+		t.Errorf("expected period number 13, got %d", adjusting.PeriodNumber)
+	}
+
+	// Inactive, so nothing lands in it until a controller opens it for auditor
+	// adjustments or the year-end close seals it.
+	if adjusting.Status != fiscalperiod.StatusInactive {
+		t.Errorf("expected status Inactive, got %s", adjusting.Status)
+	}
+	if !adjusting.AllowAdjustingEntries {
+		t.Error("expected the adjusting period to accept adjusting entries")
+	}
+
+	// It deliberately shares December's range: that overlap is what keeps the
+	// December income statement free of closing entries.
+	if adjusting.StartDate != december.StartDate || adjusting.EndDate != december.EndDate {
+		t.Error("expected the adjusting period to share the final operating period range")
+	}
+	if adjusting.Name != "Adjusting Period - FY 2025" {
+		t.Errorf("unexpected adjusting period name %q", adjusting.Name)
 	}
 }

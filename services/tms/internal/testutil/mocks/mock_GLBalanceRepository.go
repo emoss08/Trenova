@@ -105,3 +105,139 @@ func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) RunAndReturn(ru
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListYearToDateBalances provides a mock function for the type MockGLBalanceRepository
+func (_mock *MockGLBalanceRepository) ListYearToDateBalances(ctx context.Context, req repositories.ListYearToDateBalancesRequest) ([]*repositories.GLPeriodAccountBalance, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListYearToDateBalances")
+	}
+
+	var r0 []*repositories.GLPeriodAccountBalance
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListYearToDateBalancesRequest) ([]*repositories.GLPeriodAccountBalance, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListYearToDateBalancesRequest) []*repositories.GLPeriodAccountBalance); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.GLPeriodAccountBalance)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListYearToDateBalancesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockGLBalanceRepository_ListYearToDateBalances_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListYearToDateBalances'
+type MockGLBalanceRepository_ListYearToDateBalances_Call struct {
+	*mock.Call
+}
+
+// ListYearToDateBalances is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListYearToDateBalancesRequest
+func (_e *MockGLBalanceRepository_Expecter) ListYearToDateBalances(ctx any, req any) *MockGLBalanceRepository_ListYearToDateBalances_Call {
+	return &MockGLBalanceRepository_ListYearToDateBalances_Call{Call: _e.mock.On("ListYearToDateBalances", ctx, req)}
+}
+
+func (_c *MockGLBalanceRepository_ListYearToDateBalances_Call) Run(run func(ctx context.Context, req repositories.ListYearToDateBalancesRequest)) *MockGLBalanceRepository_ListYearToDateBalances_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListYearToDateBalancesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListYearToDateBalancesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockGLBalanceRepository_ListYearToDateBalances_Call) Return(gLPeriodAccountBalances []*repositories.GLPeriodAccountBalance, err error) *MockGLBalanceRepository_ListYearToDateBalances_Call {
+	_c.Call.Return(gLPeriodAccountBalances, err)
+	return _c
+}
+
+func (_c *MockGLBalanceRepository_ListYearToDateBalances_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListYearToDateBalancesRequest) ([]*repositories.GLPeriodAccountBalance, error)) *MockGLBalanceRepository_ListYearToDateBalances_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListCumulativeBalancesThroughPeriod provides a mock function for the type MockGLBalanceRepository
+func (_mock *MockGLBalanceRepository) ListCumulativeBalancesThroughPeriod(ctx context.Context, req repositories.ListCumulativeBalancesThroughPeriodRequest) ([]*repositories.GLPeriodAccountBalance, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListCumulativeBalancesThroughPeriod")
+	}
+
+	var r0 []*repositories.GLPeriodAccountBalance
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListCumulativeBalancesThroughPeriodRequest) ([]*repositories.GLPeriodAccountBalance, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListCumulativeBalancesThroughPeriodRequest) []*repositories.GLPeriodAccountBalance); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.GLPeriodAccountBalance)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListCumulativeBalancesThroughPeriodRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCumulativeBalancesThroughPeriod'
+type MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call struct {
+	*mock.Call
+}
+
+// ListCumulativeBalancesThroughPeriod is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListCumulativeBalancesThroughPeriodRequest
+func (_e *MockGLBalanceRepository_Expecter) ListCumulativeBalancesThroughPeriod(ctx any, req any) *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call {
+	return &MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call{Call: _e.mock.On("ListCumulativeBalancesThroughPeriod", ctx, req)}
+}
+
+func (_c *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call) Run(run func(ctx context.Context, req repositories.ListCumulativeBalancesThroughPeriodRequest)) *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListCumulativeBalancesThroughPeriodRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListCumulativeBalancesThroughPeriodRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call) Return(gLPeriodAccountBalances []*repositories.GLPeriodAccountBalance, err error) *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call {
+	_c.Call.Return(gLPeriodAccountBalances, err)
+	return _c
+}
+
+func (_c *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListCumulativeBalancesThroughPeriodRequest) ([]*repositories.GLPeriodAccountBalance, error)) *MockGLBalanceRepository_ListCumulativeBalancesThroughPeriod_Call {
+	_c.Call.Return(run)
+	return _c
+}

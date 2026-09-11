@@ -30,12 +30,16 @@ type GLIncomeStatement struct {
 }
 
 type GLBalanceSheet struct {
-	FiscalPeriodID              pulid.ID            `json:"fiscalPeriodId"`
-	Assets                      *GLStatementSection `json:"assets"`
-	Liabilities                 *GLStatementSection `json:"liabilities"`
-	Equity                      *GLStatementSection `json:"equity"`
-	CurrentPeriodNetIncomeMinor int64               `json:"currentPeriodNetIncomeMinor"`
-	TotalAssetsMinor            int64               `json:"totalAssetsMinor"`
-	TotalLiabilitiesMinor       int64               `json:"totalLiabilitiesMinor"`
-	TotalEquityMinor            int64               `json:"totalEquityMinor"`
+	FiscalPeriodID pulid.ID            `json:"fiscalPeriodId"`
+	Assets         *GLStatementSection `json:"assets"`
+	Liabilities    *GLStatementSection `json:"liabilities"`
+	Equity         *GLStatementSection `json:"equity"`
+	// CurrentYearEarningsMinor is the year's result to date, derived from the
+	// income-statement accounts rather than posted. It appears on the balance
+	// sheet as Current Year Earnings until the year-end close moves it into
+	// retained earnings.
+	CurrentYearEarningsMinor int64 `json:"currentYearEarningsMinor"`
+	TotalAssetsMinor         int64 `json:"totalAssetsMinor"`
+	TotalLiabilitiesMinor    int64 `json:"totalLiabilitiesMinor"`
+	TotalEquityMinor         int64 `json:"totalEquityMinor"`
 }

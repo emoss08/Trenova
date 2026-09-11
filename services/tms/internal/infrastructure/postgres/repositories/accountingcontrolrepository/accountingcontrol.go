@@ -57,6 +57,23 @@ func (r *repository) GetByOrgID(
 	return entity, nil
 }
 
+func (r *repository) ListAll(
+	ctx context.Context,
+) ([]*accountingcontrol.AccountingControl, error) {
+	log := r.l.With(zap.String("operation", "ListAll"))
+
+	entities := make([]*accountingcontrol.AccountingControl, 0)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Scan(ctx); err != nil {
+		log.Error("failed to list accounting controls", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) ListWithScheduledPeriodClose(
 	ctx context.Context,
 ) ([]*accountingcontrol.AccountingControl, error) {

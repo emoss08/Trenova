@@ -4314,6 +4314,199 @@
                 },
                 "type": "object"
             },
+            "github_com_emoss08_trenova_internal_core_domain_fiscalclose.Blocker": {
+                "properties": {
+                    "category": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_pkg_errortypes.ErrorCode"
+                    },
+                    "field": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_domain_fiscalclose.EntryKind": {
+                "enum": [
+                    "Closing",
+                    "Opening"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "EntryKindClosing",
+                    "EntryKindOpening"
+                ]
+            },
+            "github_com_emoss08_trenova_internal_core_domain_fiscalclose.Plan": {
+                "properties": {
+                    "blockers": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.Blocker"
+                        },
+                        "type": "array"
+                    },
+                    "canClose": {
+                        "type": "boolean"
+                    },
+                    "closingEntry": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.PlanEntry"
+                    },
+                    "costOfRevenueMinor": {
+                        "type": "integer"
+                    },
+                    "fiscalYearId": {
+                        "type": "string"
+                    },
+                    "fiscalYearName": {
+                        "type": "string"
+                    },
+                    "netIncomeMinor": {
+                        "type": "integer"
+                    },
+                    "nextFiscalYearId": {
+                        "type": "string"
+                    },
+                    "nextFiscalYearName": {
+                        "type": "string"
+                    },
+                    "openingEntry": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.PlanEntry"
+                    },
+                    "operatingExpenseMinor": {
+                        "type": "integer"
+                    },
+                    "retainedEarningsAccountCode": {
+                        "type": "string"
+                    },
+                    "retainedEarningsAccountId": {
+                        "type": "string"
+                    },
+                    "retainedEarningsAccountName": {
+                        "type": "string"
+                    },
+                    "revenueMinor": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "subledgerChecks": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.SubledgerCheck"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_domain_fiscalclose.PlanEntry": {
+                "properties": {
+                    "accountingDate": {
+                        "type": "integer"
+                    },
+                    "createsPeriod": {
+                        "type": "boolean"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "fiscalPeriodId": {
+                        "type": "string"
+                    },
+                    "fiscalPeriodName": {
+                        "type": "string"
+                    },
+                    "fiscalYearId": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.EntryKind"
+                    },
+                    "lines": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.PlanLine"
+                        },
+                        "type": "array"
+                    },
+                    "totalCreditMinor": {
+                        "type": "integer"
+                    },
+                    "totalDebitMinor": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_domain_fiscalclose.PlanLine": {
+                "properties": {
+                    "accountCategory": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accounttype.Category"
+                    },
+                    "accountCode": {
+                        "type": "string"
+                    },
+                    "accountName": {
+                        "type": "string"
+                    },
+                    "creditMinor": {
+                        "type": "integer"
+                    },
+                    "debitMinor": {
+                        "type": "integer"
+                    },
+                    "glAccountId": {
+                        "type": "string"
+                    },
+                    "isRetainedEarnings": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_domain_fiscalclose.SubledgerCheck": {
+                "properties": {
+                    "accountCode": {
+                        "type": "string"
+                    },
+                    "accountName": {
+                        "type": "string"
+                    },
+                    "differenceMinor": {
+                        "type": "integer"
+                    },
+                    "enforced": {
+                        "description": "Enforced reports whether a mismatch blocks the close. The check is always\ncomputed and always shown; whether it stops the close is the carrier's\ncall, through RequireReconciliationToClose and ReconciliationMode.",
+                        "type": "boolean"
+                    },
+                    "glAccountId": {
+                        "type": "string"
+                    },
+                    "glBalanceMinor": {
+                        "type": "integer"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "reconciled": {
+                        "type": "boolean"
+                    },
+                    "subledgerBalanceMinor": {
+                        "type": "integer"
+                    },
+                    "toleranceMinor": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "github_com_emoss08_trenova_internal_core_domain_fiscalperiod.FiscalPeriod": {
                 "properties": {
                     "adjustmentDeadline": {
@@ -17228,6 +17421,53 @@
                     "TimeFormat24Hour"
                 ]
             },
+            "github_com_emoss08_trenova_pkg_errortypes.ErrorCode": {
+                "enum": [
+                    "REQUIRED",
+                    "INVALID",
+                    "DUPLICATE",
+                    "NOT_FOUND",
+                    "BUSINESS_LOGIC",
+                    "UNAUTHORIZED",
+                    "FORBIDDEN",
+                    "INVALID_FORMAT",
+                    "INVALID_LENGTH",
+                    "INVALID_REFERENCE",
+                    "INVALID_OPERATION",
+                    "SYSTEM_ERROR",
+                    "ALREADY_EXISTS",
+                    "ALREADY_CLEARED",
+                    "VERSION_MISMATCH",
+                    "TOO_MANY_REQUESTS",
+                    "COMPLIANCE_VIOLATION",
+                    "RESOURCE_IN_USE",
+                    "BREAKING_CHANGE",
+                    "NOT_IMPLEMENTED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ErrRequired",
+                    "ErrInvalid",
+                    "ErrDuplicate",
+                    "ErrNotFound",
+                    "ErrBusinessLogic",
+                    "ErrUnauthorized",
+                    "ErrForbidden",
+                    "ErrInvalidFormat",
+                    "ErrInvalidLength",
+                    "ErrInvalidReference",
+                    "ErrInvalidOperation",
+                    "ErrSystemError",
+                    "ErrAlreadyExists",
+                    "ErrAlreadyCleared",
+                    "ErrVersionMismatch",
+                    "ErrTooManyRequests",
+                    "ErrComplianceViolation",
+                    "ErrResourceInUse",
+                    "ErrBreakingChange",
+                    "ErrNotImplemented"
+                ]
+            },
             "github_com_emoss08_trenova_pkg_formulatemplatetypes.BreakdownAmount": {
                 "properties": {
                     "amount": {
@@ -19569,6 +19809,14 @@
                     "password",
                     "token"
                 ],
+                "type": "object"
+            },
+            "internal_api_handlers_fiscalyearhandler.reopenFiscalYearPayload": {
+                "properties": {
+                    "reopenReason": {
+                        "type": "string"
+                    }
+                },
                 "type": "object"
             },
             "internal_api_handlers_formulatemplatehandler.approvalActionRequest": {
@@ -33879,6 +34127,83 @@
                 ]
             }
         },
+        "/fiscal-years/{fiscalYearID}/close-preview/": {
+            "get": {
+                "operationId": "previewFiscalYearClose",
+                "parameters": [
+                    {
+                        "description": "Fiscal year ID",
+                        "in": "path",
+                        "name": "fiscalYearID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalclose.Plan"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Preview the accounting a fiscal year close would post",
+                "tags": [
+                    "Fiscal Years"
+                ]
+            }
+        },
         "/fiscal-years/{fiscalYearID}/close/": {
             "put": {
                 "operationId": "closeFiscalYear",
@@ -33951,6 +34276,95 @@
                     }
                 ],
                 "summary": "Close a fiscal year",
+                "tags": [
+                    "Fiscal Years"
+                ]
+            }
+        },
+        "/fiscal-years/{fiscalYearID}/reopen/": {
+            "put": {
+                "operationId": "reopenFiscalYear",
+                "parameters": [
+                    {
+                        "description": "Fiscal year ID",
+                        "in": "path",
+                        "name": "fiscalYearID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/internal_api_handlers_fiscalyearhandler.reopenFiscalYearPayload"
+                            }
+                        }
+                    },
+                    "description": "Reopen payload",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fiscalyear.FiscalYear"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Reopen a closed fiscal year",
                 "tags": [
                     "Fiscal Years"
                 ]

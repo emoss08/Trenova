@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -23,24 +25,30 @@ type ActivitiesParams struct {
 	FiscalYearRepo        repositories.FiscalYearRepository
 	FiscalPeriodRepo      repositories.FiscalPeriodRepository
 	FiscalPeriodService   *fiscalperiodservice.Service
+	FiscalYearService     *fiscalyearservice.Service
+	NotificationService   *notificationservice.Service
 	UserRepo              repositories.UserRepository
 }
 
 type Activities struct {
-	acRepo   repositories.AccountingControlRepository
-	fyRepo   repositories.FiscalYearRepository
-	fpRepo   repositories.FiscalPeriodRepository
-	fpSvc    *fiscalperiodservice.Service
-	userRepo repositories.UserRepository
+	acRepo       repositories.AccountingControlRepository
+	fyRepo       repositories.FiscalYearRepository
+	fpRepo       repositories.FiscalPeriodRepository
+	fpSvc        *fiscalperiodservice.Service
+	fySvc        *fiscalyearservice.Service
+	notification *notificationservice.Service
+	userRepo     repositories.UserRepository
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		acRepo:   p.AccountingControlRepo,
-		fyRepo:   p.FiscalYearRepo,
-		fpRepo:   p.FiscalPeriodRepo,
-		fpSvc:    p.FiscalPeriodService,
-		userRepo: p.UserRepo,
+		acRepo:       p.AccountingControlRepo,
+		fyRepo:       p.FiscalYearRepo,
+		fpRepo:       p.FiscalPeriodRepo,
+		fpSvc:        p.FiscalPeriodService,
+		fySvc:        p.FiscalYearService,
+		notification: p.NotificationService,
+		userRepo:     p.UserRepo,
 	}
 }
 
@@ -68,6 +76,38 @@ func (a *Activities) GetAutoCloseTenantsActivity(
 	}
 
 	logger.Info("Found tenants with scheduled period close enabled", "count", len(tenants))
+
+	return &GetAutoCloseTenantsResult{Tenants: tenants}, nil
+}
+
+// GetFiscalCalendarTenantsActivity returns every tenant that keeps books, not
+// only those that opted into scheduled period close. Keeping the fiscal calendar
+// a year ahead is not an automation preference: a year-end close cannot carry
+// balances forward into a year that does not exist yet.
+func (a *Activities) GetFiscalCalendarTenantsActivity(
+	ctx context.Context,
+) (*GetAutoCloseTenantsResult, error) {
+	logger := activity.GetLogger(ctx)
+	logger.Info("Fetching tenants that keep a fiscal calendar")
+
+	controls, err := a.acRepo.ListAll(ctx)
+	if err != nil {
+		logger.Error("Failed to list accounting controls", "error", err)
+		return nil, temporaltype.NewRetryableError("Failed to list accounting controls", err).
+			ToTemporalError()
+	}
+
+	limit := min(len(controls), temporaljobs.DefaultTenantScanLimit)
+
+	tenants := make([]OrgTenant, 0, limit)
+	for _, ac := range controls[:limit] {
+		tenants = append(tenants, OrgTenant{
+			OrganizationID: ac.OrganizationID,
+			BusinessUnitID: ac.BusinessUnitID,
+		})
+	}
+
+	logger.Info("Found tenants that keep a fiscal calendar", "count", len(tenants))
 
 	return &GetAutoCloseTenantsResult{Tenants: tenants}, nil
 }
