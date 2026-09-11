@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import {
   PRESET_SCORING_WEIGHTS,
@@ -15,6 +16,8 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export function ScoringWeightForm() {
+  const t = useT();
+
   const { control } = useFormContext<DispatchControl>();
 
   const strategy = useWatch({
@@ -27,11 +30,9 @@ export function ScoringWeightForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Candidate Scoring Weights</CardTitle>
+        <CardTitle>{t("Candidate Scoring Weights")}</CardTitle>
         <CardDescription>
-          Fine-tune how heavily each factor counts when ranking drivers for a shipment. Weights run
-          from 0 to 10 and are relative to each other; a factor set to 0 is ignored entirely. Leave
-          a field empty to inherit the {strategy} strategy&apos;s preset, shown as the placeholder.
+          {t("Fine-tune how heavily each factor counts when ranking drivers for a shipment. Weights run from 0 to 10 and are relative to each other; a factor set to 0 is ignored entirely. Leave a field empty to inherit the {0} strategy's preset, shown as the placeholder.", strategy)}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
