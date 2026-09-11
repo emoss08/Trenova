@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -59,6 +60,8 @@ export function ServiceFailureReasonCodePanel({
   mode,
   row,
 }: DataTablePanelProps<ServiceFailureReasonCodeRow>) {
+  const t = useT();
+
   const form = useForm<ServiceFailureReasonCode>({
     resolver: zodResolver(serviceFailureReasonCodeSchema) as Resolver<ServiceFailureReasonCode>,
     defaultValues,
@@ -82,7 +85,7 @@ export function ServiceFailureReasonCodePanel({
       form={form}
       url="/service-failure-reason-codes/"
       queryKey="service-failure-reason-code-list"
-      title="Service Failure Reason Code"
+      title={t("Service Failure Reason Code")}
       formComponent={<ServiceFailureReasonCodeForm />}
     />
   );
@@ -101,6 +104,8 @@ function ServiceFailureReasonCodeEditPanel({
   row,
   form,
 }: ServiceFailureReasonCodeEditPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
 
@@ -130,8 +135,8 @@ function ServiceFailureReasonCodeEditPanel({
     mutationFn: async ({ values }) =>
       api.put<ServiceFailureReasonCode>(`/service-failure-reason-codes/${row?.id}/`, values),
     onSuccess: (_data, variables) => {
-      toast.success("Changes have been saved", {
-        description: "Service failure reason code updated successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Service failure reason code updated successfully"),
       });
       void queryClient.invalidateQueries({
         queryKey: ["service-failure-reason-code-list"],
@@ -170,21 +175,21 @@ function ServiceFailureReasonCodeEditPanel({
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <SplitButton
             options={SAVE_OPTIONS}
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
             isLoading={isSubmitting}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             formId="panel-edit-form"
           />
         </>
       }
     >
       {!row ? (
-        <ComponentLoader message="Loading reason code..." />
+        <ComponentLoader message={t("Loading reason code...")} />
       ) : (
         <FormProvider {...form}>
           <Form
