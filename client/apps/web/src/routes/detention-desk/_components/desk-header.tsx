@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +62,8 @@ export function DeskLivePulse({ desk }: { desk: DetentionDeskState }) {
  * the notice queue before the deadlines run out, and pull fresh numbers.
  */
 export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
+  const t = useT();
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const sendNotices = useSendDetentionNotices();
   const { noticeQueue, isFetching, refetch } = desk;
@@ -79,15 +82,15 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
           disabled={sendNotices.isPending}
         >
           <MailIcon className="size-3.5" />
-          Send {noticeQueue.length} {pluralize("notice", noticeQueue.length)}
+          {t("Send {0}{1}", noticeQueue.length, pluralize("notice", noticeQueue.length))}
         </Button>
       )}
 
       <Button
         variant="outline"
         size="icon-sm"
-        aria-label="Refresh the detention desk"
-        title="Refresh the detention desk"
+        aria-label={t("Refresh the detention desk")}
+        title={t("Refresh the detention desk")}
         onClick={() => void refetch()}
         disabled={isFetching}
       >
@@ -100,13 +103,10 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              Send {noticeQueue.length} detention {pluralize("notice", noticeQueue.length)}?
+              {t("Send {0} detention {1}?", noticeQueue.length, pluralize("notice", noticeQueue.length))}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Each customer is notified that detention has started and the notice is recorded as
-              evidence, which is what keeps{" "}
-              {formatCurrency(queueTotal, noticeQueue[0]?.occurrence.currency)} defensible in a
-              dispute.
+              {t("Each customer is notified that detention has started and the notice is recorded as evidence, which is what keeps {0} defensible in a dispute.", formatCurrency(queueTotal, noticeQueue[0]?.occurrence.currency))}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -125,12 +125,12 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
                 </span>
               </li>
             ))}
-            {overflow > 0 && <li className="text-muted-foreground">and {overflow} more</li>}
+            {overflow > 0 && <li className="text-muted-foreground">{t("and {0} more", overflow)}</li>}
           </ul>
 
           <AlertDialogFooter>
             <AlertDialogCancel variant="outline" size="default">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               size="default"
@@ -143,7 +143,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
                 )
               }
             >
-              Send {pluralize("notice", noticeQueue.length)}
+              {t("Send {0}", pluralize("notice", noticeQueue.length))}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

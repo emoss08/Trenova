@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -54,14 +55,16 @@ export function DeskSkeleton() {
 }
 
 export function DeskError({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
   return (
     <DeskNotice
       icon={TriangleAlertIcon}
-      title="The detention desk could not be loaded"
-      body="The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now."
+      title={t("The detention desk could not be loaded")}
+      body={t("The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.")}
       action={
         <Button variant="outline" size="sm" onClick={onRetry}>
-          Try again
+          {t("Try again")}
         </Button>
       }
     />
@@ -124,12 +127,14 @@ function DeskRowsSketch() {
 }
 
 export function DeskEmpty() {
+  const t = useT();
+
   return (
     <EmptySheet
       className="py-10"
       sketchClassName="max-w-2xl"
-      title="No drivers are sitting on a dock"
-      description="Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running."
+      title={t("No drivers are sitting on a dock")}
+      description={t("Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.")}
       sketch={
         <div className="border-border/70 bg-card flex flex-col gap-2 rounded-lg border pt-4 text-left">
           <DeskRailSketch />
@@ -145,16 +150,18 @@ export function DeskEmpty() {
  * the rows that the lane and search have hidden.
  */
 export function DeskNoMatches({ onReset, className }: { onReset: () => void; className?: string }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={cn("py-8", className)}
       sketchClassName="max-w-2xl"
-      title="No stops match this view"
-      description="Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back."
+      title={t("No stops match this view")}
+      description={t("Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back.")}
       action={
         <Button variant="outline" size="sm" onClick={onReset}>
           <XIcon className="size-3.5" />
-          Clear filters
+          {t("Clear filters")}
         </Button>
       }
       sketch={
