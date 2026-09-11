@@ -1,6 +1,10 @@
 package helpers
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/emoss08/trenova/shared/i18n"
+)
 
 const ProblemJSONContentType = "application/problem+json"
 
@@ -33,6 +37,7 @@ type ProblemBuilder struct {
 	errors      []ValidationError
 	usageStats  any
 	params      map[string]string
+	locale      i18n.Locale
 }
 
 func NewProblemBuilder(baseURI string) *ProblemBuilder {
@@ -81,6 +86,25 @@ func (b *ProblemBuilder) WithParams(params map[string]string) *ProblemBuilder {
 	return b
 }
 
+func (b *ProblemBuilder) WithLocale(locale i18n.Locale) *ProblemBuilder {
+	b.locale = locale
+	return b
+}
+
+func (b *ProblemBuilder) translatedErrors() []ValidationError {
+	if len(b.errors) == 0 {
+		return b.errors
+	}
+
+	translated := make([]ValidationError, len(b.errors))
+	for i, e := range b.errors {
+		translated[i] = e
+		translated[i].Message = i18n.Translate(b.locale, e.Message)
+	}
+
+	return translated
+}
+
 func (b *ProblemBuilder) Build() *ProblemDetail {
 	info := b.problemType.Info()
 
@@ -91,12 +115,12 @@ func (b *ProblemBuilder) Build() *ProblemDetail {
 
 	return &ProblemDetail{
 		Type:       typeURI,
-		Title:      info.Title,
+		Title:      i18n.Translate(b.locale, info.Title),
 		Status:     info.StatusCode,
-		Detail:     b.detail,
+		Detail:     i18n.Translate(b.locale, b.detail),
 		Instance:   b.instance,
 		TraceID:    b.traceID,
-		Errors:     b.errors,
+		Errors:     b.translatedErrors(),
 		UsageStats: b.usageStats,
 		Params:     b.params,
 	}

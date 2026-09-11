@@ -1,15 +1,3 @@
-// Command i18n-extract walks the Go services and reports every user-facing message
-// literal it finds, so the translation catalogs are derived from the source rather than
-// maintained by hand.
-//
-// Messages are recognised by call site, not by heuristics on the string itself: a literal
-// in the message position of a known constructor is user-facing by construction, and a
-// literal anywhere else is not. That keeps SQL fragments, log lines, and struct tags out
-// of the catalog without needing a denylist on this side.
-//
-// The recognised shapes are declared in messageArgs. An errortypes constructor that is not
-// listed there is reported as an error rather than skipped, because a silently ignored
-// constructor means a whole class of messages never reaches a translator and nothing fails.
 package main
 
 import (
@@ -27,10 +15,6 @@ import (
 	"github.com/bytedance/sonic"
 )
 
-// messageArgs maps a callee name to the argument index holding its user-facing message.
-// Index is zero-based and counts only the call's own arguments. Indices are taken from the
-// real signatures in pkg/errortypes/errors.go — note NewRateLimitError puts the message
-// second, behind a field name.
 var messageArgs = map[string]int{
 	"Add":                            2,
 	"AddWithPriority":                2,
@@ -46,26 +30,19 @@ var messageArgs = map[string]int{
 	"NewNotImplementedError":         0,
 	"NewConflictError":               0,
 	"NewRateLimitError":              1,
-	// ozzo-validation attaches a custom message to any rule via .Error(msg). The same
-	// selector is how zap logs (logger.Error("failed to ...")), so this entry alone would
-	// pull several thousand internal log lines into the catalog. discardedCalls below
-	// separates them: a log call throws its value away, an ozzo rule is built to be passed
-	// into validation.Field.
-	"Error": 0,
+	"Error":                          0,
 }
 
-// noMessage lists New*Error constructors that carry nothing to translate, so that the
-// unrecognised-constructor gate below stays meaningful. Three reasons appear here:
-//
-//   - containers and non-errors that only match the New*Error name shape
-//     (NewMultiError, the Prometheus metrics NewError);
-//   - constructors that take structured identifiers and compose their own text
-//     (the formula and seeder errors, NewRequestTooLargeError) — the composed text is
-//     reported separately as a dynamic message rather than captured here;
-//   - Temporal control-plane errors, which drive workflow retry decisions and reach
-//     operators through job history and logs, never a translated end-user surface.
-//
-// Moving one of these into messageArgs is the single edit needed if that judgement changes.
+var messageFields = map[string]struct{}{
+	"Title":       {},
+	"Message":     {},
+	"Detail":      {},
+	"Description": {},
+	"Label":       {},
+	"Summary":     {},
+	"Subject":     {},
+}
+
 var noMessage = map[string]struct{}{
 	"NewMultiError":                   {},
 	"NewMultiErrorWithLimit":          {},
@@ -95,8 +72,6 @@ var noMessage = map[string]struct{}{
 	"NewConcurrentAccessError":        {},
 }
 
-// isErrortypesConstructor matches the constructor naming convention so an unlisted one can
-// be reported instead of quietly dropped.
 func isErrortypesConstructor(name string) bool {
 	return strings.HasPrefix(name, "New") && strings.HasSuffix(name, "Error")
 }
@@ -122,7 +97,7 @@ func (e *extractor) walkDir(root string) error {
 		}
 		if d.IsDir() {
 			switch d.Name() {
-			case "node_modules", "testdata", ".git", "vendor", "mocks":
+			case "node_modules", "testdata", ".git", "vendor", "mocks", "seeds":
 				return filepath.SkipDir
 			}
 			return nil
@@ -151,6 +126,11 @@ func (e *extractor) parseFile(path string) error {
 	}
 
 	ast.Inspect(file, func(n ast.Node) bool {
+		if kv, isKV := n.(*ast.KeyValueExpr); isKV {
+			e.recordStructField(kv, rel)
+			return true
+		}
+
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
 			return true
@@ -176,7 +156,6 @@ func (e *extractor) parseFile(path string) error {
 			return true
 		}
 
-		// A .Error(msg) whose result is dropped is a log statement, not a validation rule.
 		if name == "Error" && discarded[call] {
 			return true
 		}
@@ -201,9 +180,6 @@ func (e *extractor) parseFile(path string) error {
 	return nil
 }
 
-// discardedCalls collects calls whose return value is thrown away — the bare
-// `logger.Error("...")` statement shape. Every ozzo rule, by contrast, is constructed to be
-// handed to validation.Field, so it always appears in a value position.
 func discardedCalls(file *ast.File) map[*ast.CallExpr]bool {
 	discarded := map[*ast.CallExpr]bool{}
 	ast.Inspect(file, func(n ast.Node) bool {
@@ -219,9 +195,28 @@ func discardedCalls(file *ast.File) map[*ast.CallExpr]bool {
 	return discarded
 }
 
-// calleeName returns the final identifier of a call target: both `NewBusinessError(...)`
-// and `errortypes.NewBusinessError(...)` and `multiErr.Add(...)` reduce to one name, which
-// is all messageArgs needs to key on.
+func (e *extractor) recordStructField(kv *ast.KeyValueExpr, rel string) {
+	key, ok := kv.Key.(*ast.Ident)
+	if !ok {
+		return
+	}
+	if _, wanted := messageFields[key.Name]; !wanted {
+		return
+	}
+
+	msg, ok := stringLiteral(kv.Value)
+	if !ok || strings.TrimSpace(msg) == "" {
+		return
+	}
+
+	e.entries = append(e.entries, entry{
+		Message: msg,
+		File:    filepath.ToSlash(rel),
+		Line:    e.fset.Position(kv.Pos()).Line,
+		Callee:  "field:" + key.Name,
+	})
+}
+
 func calleeName(fun ast.Expr) string {
 	switch f := fun.(type) {
 	case *ast.Ident:
@@ -233,10 +228,6 @@ func calleeName(fun ast.Expr) string {
 	}
 }
 
-// stringLiteral unquotes a plain string literal, and concatenations of them, so a message
-// split across source lines for width is still captured whole. Anything involving a
-// variable or a call yields false: those are dynamic and need an explicit parameterised
-// message instead.
 func stringLiteral(expr ast.Expr) (string, bool) {
 	switch v := expr.(type) {
 	case *ast.BasicLit:

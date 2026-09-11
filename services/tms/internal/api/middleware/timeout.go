@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 func NewRequestTimeoutHandler(
@@ -97,6 +98,7 @@ func timeoutResponseContext(r *http.Request) helpers.TimeoutResponseContext {
 		Method:    r.Method,
 		Path:      r.URL.Path,
 		IP:        clientIP(r),
+		Locale:    i18n.FromRequest(r),
 	}
 }
 

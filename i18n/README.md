@@ -80,3 +80,35 @@ A sentence split by an interpolation is captured whole, with placeholders:
 
 Recording the two halves separately would be untranslatable — Spanish and Chinese order
 that sentence differently, and half a clause gives a translator nothing to work with.
+
+## Maintaining the Go extractor
+
+Go source in this repo carries no comments by convention, so the reasoning behind
+`shared/cmd/i18n-extract` lives here.
+
+**`messageArgs` — which argument holds the message.** Keyed by the final identifier of the
+call, so `NewBusinessError(...)` and `errortypes.NewBusinessError(...)` both match. Indices
+come from the real signatures in `pkg/errortypes/errors.go`; note `NewRateLimitError` puts
+its message *second*, behind a field name.
+
+**`noMessage` — recognised, but nothing to translate.** Three kinds live here: containers
+that only match the `New*Error` name shape (`NewMultiError`, the Prometheus `NewError`);
+constructors taking structured identifiers that compose their own text (the formula and
+seeder errors, `NewRequestTooLargeError`); and Temporal control-plane errors, which drive
+workflow retry decisions and reach operators through job history, never a translated
+end-user surface. Moving one into `messageArgs` is the only edit needed if that judgement
+changes.
+
+**Why an unlisted constructor fails the run.** Skipping it would drop a whole class of
+messages from the catalog with nothing anywhere failing. The gate is what turned up 25
+constructors on the first run.
+
+**The `.Error(...)` collision.** ozzo-validation attaches a message to a rule with
+`.Error(msg)` — and zap logs with `logger.Error(msg)`. That one entry was pulling 2,187
+internal log lines into the catalog. They are told apart structurally: a log call discards
+its value (it is an `ExprStmt`), while an ozzo rule is always built to be passed into
+`validation.Field`. See `discardedCalls`.
+
+**`stringLiteral` follows concatenation** so a message split across lines for width is
+captured whole, and refuses anything involving a variable or call — those are dynamic and
+need an explicit parameterised message instead.

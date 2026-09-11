@@ -33,12 +33,31 @@ const (
 	RiskDecisionIDKey         = Key("riskDecisionId")
 	IsPortalUserKey           = Key("isPortalUser")
 	MustChangePasswordKey     = Key("mustChangePassword")
+	LocaleKey                 = Key("locale")
 )
 
 const (
 	PrincipalTypeUser   = "session_user"
 	PrincipalTypeAPIKey = "api_key"
 )
+
+func SetLocale(c *gin.Context, locale string) {
+	c.Set(string(LocaleKey), locale)
+}
+
+func GetLocale(c *gin.Context) (string, bool) {
+	value, exists := c.Get(string(LocaleKey))
+	if !exists {
+		return "", false
+	}
+
+	locale, ok := value.(string)
+	if !ok || locale == "" {
+		return "", false
+	}
+
+	return locale, true
+}
 
 func SetUserID(c *gin.Context, userID pulid.ID) {
 	c.Set(string(UserIDKey), userID)
