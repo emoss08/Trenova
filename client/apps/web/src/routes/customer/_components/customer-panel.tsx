@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { GeocodedBadge } from "@/components/geocode-badge";
@@ -85,6 +86,8 @@ const DEFAULT_VALUES: Customer = {
 };
 
 export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<CustomerRow>) {
+  const t = useT();
+
   const user = useAuthStore((s) => s.user);
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(
@@ -111,7 +114,7 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         form={form}
         url="/customers/"
         queryKey="customer-list"
-        title="Customer"
+        title={t("Customer")}
         fieldKey="name"
         size="lg"
         formComponent={<CustomerTabbedForm />}
@@ -143,7 +146,7 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       form={form}
       url="/customers/"
       queryKey="customer-list"
-      title="Customer"
+      title={t("Customer")}
       size="lg"
       formComponent={<CustomerTabbedForm />}
     />

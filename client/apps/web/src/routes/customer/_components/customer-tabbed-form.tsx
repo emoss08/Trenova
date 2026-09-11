@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { CreditCardIcon, MailIcon, UserIcon } from "lucide-react";
@@ -7,6 +8,8 @@ import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerForm } from "./customer-form";
 
 export function CustomerTabbedForm() {
+  const t = useT();
+
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
 
   return (
@@ -19,15 +22,15 @@ export function CustomerTabbedForm() {
         <TabsList variant="underline">
           <TabsTab value="general">
             <UserIcon className="size-4" />
-            General
+            {t("General")}
           </TabsTab>
           <TabsTab value="billing">
             <CreditCardIcon className="size-4" />
-            Billing Profile
+            {t("Billing Profile")}
           </TabsTab>
           <TabsTab value="email">
             <MailIcon className="size-4" />
-            Email Profile
+            {t("Email Profile")}
           </TabsTab>
         </TabsList>
       </div>
