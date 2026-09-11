@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { TCASubscriptionRow } from "@/lib/graphql/table-change-alert-table";
@@ -32,6 +33,8 @@ export function SubscriptionPanel({
   mode,
   row,
 }: DataTablePanelProps<TCASubscriptionRow>) {
+  const t = useT();
+
   const form = useForm<TCASubscriptionFormValues>({
     resolver: zodResolver(tcaSubscriptionFormSchema),
     defaultValues: DEFAULT_VALUES,
@@ -46,7 +49,7 @@ export function SubscriptionPanel({
         form={form}
         url="/tca/subscriptions/"
         queryKey="tca-subscription-list"
-        title="Subscription"
+        title={t("Subscription")}
         fieldKey="name"
         size="lg"
         formComponent={<SubscriptionForm />}
@@ -61,7 +64,7 @@ export function SubscriptionPanel({
       form={form}
       url="/tca/subscriptions/"
       queryKey="tca-subscription-list"
-      title="Subscription"
+      title={t("Subscription")}
       size="lg"
       formComponent={<SubscriptionForm />}
     />

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { TCASubscriptionRow } from "@/lib/graphql/table-change-alert-table";
 import type { NotificationPriority } from "@/types/table-change-alert";
@@ -56,10 +57,10 @@ export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
       header: "Conditions",
       cell: ({ row }) => {
         const count = row.original.conditions?.length ?? 0;
-        if (count === 0) return <span className="text-muted-foreground">None</span>;
+        if (count === 0) return <span className="text-muted-foreground">{translate("None")}</span>;
         return (
           <Badge variant="info">
-            {count} condition{count !== 1 ? "s" : ""}
+            {translate("{0} condition{1}", count, count !== 1 ? "s" : "")}
           </Badge>
         );
       },

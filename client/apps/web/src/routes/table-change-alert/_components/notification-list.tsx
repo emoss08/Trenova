@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -18,6 +19,8 @@ function NotificationRow({
   notification: Notification;
   onMarkRead: (id: string) => void;
 }) {
+  const t = useT();
+
   const isUnread = !notification.readAt;
   const config = getPriorityConfig(notification.priority);
   const sourceLabel = SOURCE_LABELS[notification.source] ?? notification.source;
@@ -74,7 +77,7 @@ function NotificationRow({
           size="icon-xs"
           className="mt-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
           onClick={() => onMarkRead(notification.id)}
-          aria-label="Mark as read"
+          aria-label={t("Mark as read")}
         >
           <CheckIcon className="size-3.5" />
         </Button>
@@ -84,6 +87,8 @@ function NotificationRow({
 }
 
 export default function NotificationList() {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery(queries.notification.feed({ first: 50 }));
@@ -101,27 +106,27 @@ export default function NotificationList() {
         await apiService.notificationService.markRead([id]);
         invalidate();
       } catch {
-        toast.error("Failed to mark notification as read");
+        toast.error(t("Failed to mark notification as read"));
       }
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const handleMarkAllRead = useCallback(async () => {
     try {
       await apiService.notificationService.markAllRead();
       invalidate();
-      toast.success("All notifications marked as read");
+      toast.success(t("All notifications marked as read"));
     } catch {
-      toast.error("Failed to mark all as read");
+      toast.error(t("Failed to mark all as read"));
     }
-  }, [invalidate]);
+  }, [invalidate, t]);
 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-16">
         <InboxIcon className="text-muted-foreground/40 size-6 animate-pulse" />
-        <p className="text-muted-foreground text-sm">Loading notifications...</p>
+        <p className="text-muted-foreground text-sm">{t("Loading notifications...")}</p>
       </div>
     );
   }
@@ -133,9 +138,9 @@ export default function NotificationList() {
           <InboxIcon className="text-muted-foreground/60 size-7" />
         </div>
         <div className="text-center">
-          <p className="text-foreground text-sm font-medium">No notifications yet</p>
+          <p className="text-foreground text-sm font-medium">{t("No notifications yet")}</p>
           <p className="text-2xs text-muted-foreground mt-1 max-w-sm">
-            When your subscriptions match database changes, notifications will appear here.
+            {t("When your subscriptions match database changes, notifications will appear here.")}
           </p>
         </div>
       </div>
@@ -148,7 +153,7 @@ export default function NotificationList() {
         <>
           <div className="flex items-center justify-between py-2">
             <p className="text-2xs text-muted-foreground font-medium">
-              {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
+              {t("{0} unread notification{1}", unreadCount, unreadCount !== 1 ? "s" : "")}
             </p>
             <Button
               variant="ghost"
@@ -157,7 +162,7 @@ export default function NotificationList() {
               onClick={handleMarkAllRead}
             >
               <CheckCheckIcon className="size-3" />
-              Mark all read
+              {t("Mark all read")}
             </Button>
           </div>
           <Separator className="mb-3" />

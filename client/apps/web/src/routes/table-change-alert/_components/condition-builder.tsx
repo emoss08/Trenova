@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -38,6 +39,8 @@ function ConditionRow({
   index: number;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const operator = useWatch({
     control,
     name: `conditions.${index}.operator`,
@@ -52,7 +55,7 @@ function ConditionRow({
           <InputField<TCASubscriptionFormValues>
             control={control}
             name={`conditions.${index}.field`}
-            placeholder="e.g., status"
+            placeholder={t("e.g., status")}
           />
         </FormControl>
         <FormControl>
@@ -60,7 +63,7 @@ function ConditionRow({
             control={control}
             name={`conditions.${index}.operator`}
             options={OPERATOR_OPTIONS}
-            placeholder="Operator"
+            placeholder={t("Operator")}
           />
         </FormControl>
         {!isUnary && (
@@ -68,7 +71,7 @@ function ConditionRow({
             <InputField<TCASubscriptionFormValues>
               control={control}
               name={`conditions.${index}.value`}
-              placeholder="Value"
+              placeholder={t("Value")}
             />
           </FormControl>
         )}
@@ -78,7 +81,7 @@ function ConditionRow({
         variant="ghost"
         size="icon-xs"
         onClick={onRemove}
-        aria-label="Remove condition"
+        aria-label={t("Remove condition")}
       >
         <TrashIcon className="size-3.5" />
       </Button>
@@ -87,6 +90,8 @@ function ConditionRow({
 }
 
 export function ConditionBuilder({ control }: { control: Control<TCASubscriptionFormValues> }) {
+  const t = useT();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "conditions",
@@ -99,9 +104,9 @@ export function ConditionBuilder({ control }: { control: Control<TCASubscription
           <SelectField<TCASubscriptionFormValues>
             control={control}
             name="conditionMatch"
-            label="Condition Matching"
+            label={t("Condition Matching")}
             options={MATCH_OPTIONS}
-            description="How multiple conditions are evaluated together."
+            description={t("How multiple conditions are evaluated together.")}
           />
         </FormControl>
       </FormGroup>
@@ -126,7 +131,7 @@ export function ConditionBuilder({ control }: { control: Control<TCASubscription
         onClick={() => append({ field: "", operator: "eq", value: "" })}
       >
         <PlusIcon className="mr-1 size-3.5" />
-        Add condition
+        {t("Add condition")}
       </Button>
     </div>
   );
