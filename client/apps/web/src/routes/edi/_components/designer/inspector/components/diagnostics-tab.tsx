@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@trenova/shared/types/edi";
 import { diagnosticKey } from "../../utils/edi-designer-utils";
@@ -12,6 +13,8 @@ export default function DiagnosticsTab({
   inspection: EDIX12Inspection;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
+  const t = useT();
+
   const groups = groupDiagnostics(diagnostics);
   const summary = {
     errors: diagnostics.filter((diagnostic) => diagnostic.severity === "Error").length,
@@ -20,15 +23,15 @@ export default function DiagnosticsTab({
   };
 
   if (diagnostics.length === 0) {
-    return <div className="text-muted-foreground text-sm">No diagnostics.</div>;
+    return <div className="text-muted-foreground text-sm">{t("No diagnostics.")}</div>;
   }
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        <SummaryCard label="Errors" value={summary.errors} variant="inactive" />
-        <SummaryCard label="Warnings" value={summary.warnings} variant="warning" />
-        <SummaryCard label="Info" value={summary.info} variant="outline" />
+        <SummaryCard label={t("Errors")} value={summary.errors} variant="inactive" />
+        <SummaryCard label={t("Warnings")} value={summary.warnings} variant="warning" />
+        <SummaryCard label={t("Info")} value={summary.info} variant="outline" />
       </div>
       <div className="space-y-2">
         {groups.map((group) => {

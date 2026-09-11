@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
@@ -38,6 +39,8 @@ export function EDITransferReviewPanel({
 }: DataTablePanelProps<EDITransferRow> & {
   direction: "inbound" | "outbound";
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [inlineMappings, setInlineMappings] = useState<Record<string, EDIMappingProfileItem>>({});
@@ -56,32 +59,32 @@ export function EDITransferReviewPanel({
         mappings: Object.values(inlineMappings),
       }),
     onSuccess: async () => {
-      toast.success("EDI transfer approval started.");
+      toast.success(t("EDI transfer approval started."));
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);
     },
-    onError: () => toast.error("Failed to approve transfer"),
+    onError: () => toast.error(t("Failed to approve transfer")),
   });
 
   const rejectMutation = useApiMutation({
     mutationFn: (reason: string) => apiService.ediService.rejectTransfer(transfer!.id, { reason }),
     onSuccess: async () => {
-      toast.success("EDI transfer rejected");
+      toast.success(t("EDI transfer rejected"));
       setRejectDialogOpen(false);
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);
     },
-    onError: () => toast.error("Failed to reject transfer"),
+    onError: () => toast.error(t("Failed to reject transfer")),
   });
 
   const cancelMutation = useApiMutation({
     mutationFn: () => apiService.ediService.cancelTransfer(transfer!.id),
     onSuccess: async () => {
-      toast.success("EDI transfer canceled");
+      toast.success(t("EDI transfer canceled"));
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);
     },
-    onError: () => toast.error("Failed to cancel transfer"),
+    onError: () => toast.error(t("Failed to cancel transfer")),
   });
 
   const unresolved = preview?.unresolved ?? [];
@@ -105,7 +108,7 @@ export function EDITransferReviewPanel({
             <div className="ml-auto flex gap-2">
               <Button variant="outline" onClick={() => setRejectDialogOpen(true)}>
                 <XIcon data-icon="inline-start" />
-                Reject
+                {t("Reject")}
               </Button>
               <Button
                 disabled={!approvalReady}
@@ -113,7 +116,7 @@ export function EDITransferReviewPanel({
                 onClick={() => approveMutation.mutate(undefined)}
               >
                 <CheckIcon data-icon="inline-start" />
-                Approve
+                {t("Approve")}
               </Button>
             </div>
           )}
@@ -124,7 +127,7 @@ export function EDITransferReviewPanel({
               isLoading={cancelMutation.isPending}
               onClick={() => cancelMutation.mutate(undefined)}
             >
-              Cancel Transfer
+              {t("Cancel Transfer")}
             </Button>
           )}
         </>
@@ -137,15 +140,15 @@ export function EDITransferReviewPanel({
             <TabsList variant="underline" className="border-border w-full border-b">
               <TabsTrigger value="tender">
                 <RouteIcon data-icon="inline-start" />
-                Tender
+                {t("Tender")}
               </TabsTrigger>
               <TabsTrigger value="freight">
                 <PackageIcon data-icon="inline-start" />
-                Freight
+                {t("Freight")}
               </TabsTrigger>
               <TabsTrigger value="mappings">
                 <ArrowRightIcon data-icon="inline-start" />
-                Mappings
+                {t("Mappings")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="tender" className="mt-0 space-y-3">
@@ -169,14 +172,14 @@ export function EDITransferReviewPanel({
       <EDIReasonDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        title="Reject Load Tender"
+        title={t("Reject Load Tender")}
         description={
           transfer?.tenderPayload.bol
             ? `Reject the load tender for BOL ${transfer.tenderPayload.bol}.`
             : "Reject this load tender."
         }
-        placeholder="Reason shared with the submitting partner"
-        confirmLabel="Reject Transfer"
+        placeholder={t("Reason shared with the submitting partner")}
+        confirmLabel={t("Reject Transfer")}
         isPending={rejectMutation.isPending}
         onConfirm={(reason) => rejectMutation.mutate(reason)}
       />

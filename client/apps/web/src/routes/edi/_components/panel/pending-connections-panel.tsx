@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -24,6 +25,8 @@ import { invalidateEDIConnections } from "./edi-panel-invalidation";
 import { EDIReasonDialog } from "./edi-reason-dialog";
 
 export function PendingConnectionsPanel() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const currentOrganizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
   const canUpdate = usePermissionStore((state) =>
@@ -39,20 +42,20 @@ export function PendingConnectionsPanel() {
   const acceptMutation = useApiMutation({
     mutationFn: (connectionId: string) => apiService.ediService.acceptConnection(connectionId),
     onSuccess: async () => {
-      toast.success("EDI connection accepted");
+      toast.success(t("EDI connection accepted"));
       await invalidateEDIConnections(queryClient);
     },
-    onError: () => toast.error("Failed to accept EDI connection"),
+    onError: () => toast.error(t("Failed to accept EDI connection")),
   });
   const rejectMutation = useApiMutation({
     mutationFn: ({ connection, reason }: { connection: EDIConnection; reason: string }) =>
       apiService.ediService.rejectConnection(connection.id, { reason }),
     onSuccess: async () => {
-      toast.success("EDI connection rejected");
+      toast.success(t("EDI connection rejected"));
       setRejecting(null);
       await invalidateEDIConnections(queryClient);
     },
-    onError: () => toast.error("Failed to reject EDI connection"),
+    onError: () => toast.error(t("Failed to reject EDI connection")),
   });
 
   if (!isLoading && pending.length === 0) {
@@ -63,9 +66,9 @@ export function PendingConnectionsPanel() {
     <div className="bg-background rounded-md border">
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div>
-          <div className="text-sm font-medium">Pending EDI connection requests</div>
+          <div className="text-sm font-medium">{t("Pending EDI connection requests")}</div>
           <div className="text-muted-foreground text-xs">
-            Accepting creates reciprocal internal partners and communication profiles.
+            {t("Accepting creates reciprocal internal partners and communication profiles.")}
           </div>
         </div>
         <Badge variant="outline">{pending.length}</Badge>
@@ -73,10 +76,10 @@ export function PendingConnectionsPanel() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Requester</TableHead>
-            <TableHead>Target</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead>Requested</TableHead>
+            <TableHead>{t("Requester")}</TableHead>
+            <TableHead>{t("Target")}</TableHead>
+            <TableHead>{t("Method")}</TableHead>
+            <TableHead>{t("Requested")}</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
@@ -96,7 +99,7 @@ export function PendingConnectionsPanel() {
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" size="sm" onClick={() => setRejecting(connection)}>
                       <XIcon data-icon="inline-start" />
-                      Reject
+                      {t("Reject")}
                     </Button>
                     <Button
                       size="sm"
@@ -104,7 +107,7 @@ export function PendingConnectionsPanel() {
                       onClick={() => acceptMutation.mutate(connection.id)}
                     >
                       <CheckIcon data-icon="inline-start" />
-                      Accept
+                      {t("Accept")}
                     </Button>
                   </div>
                 )}
@@ -114,7 +117,7 @@ export function PendingConnectionsPanel() {
           {isLoading && (
             <TableRow>
               <TableCell colSpan={5} className="text-muted-foreground h-16 text-center">
-                Loading connection requests.
+                {t("Loading connection requests.")}
               </TableCell>
             </TableRow>
           )}
@@ -123,14 +126,14 @@ export function PendingConnectionsPanel() {
       <EDIReasonDialog
         open={!!rejecting}
         onOpenChange={(open) => !open && setRejecting(null)}
-        title="Reject EDI Connection"
+        title={t("Reject EDI Connection")}
         description={
           rejecting
             ? `Reject the connection request from ${rejecting.sourceOrganization?.name ?? rejecting.sourceOrganizationId}.`
             : undefined
         }
-        placeholder="Reason shared with the requesting organization"
-        confirmLabel="Reject Connection"
+        placeholder={t("Reason shared with the requesting organization")}
+        confirmLabel={t("Reject Connection")}
         isPending={rejectMutation.isPending}
         onConfirm={(reason) =>
           rejecting && rejectMutation.mutate({ connection: rejecting, reason })

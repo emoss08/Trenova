@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Table,
   TableBody,
@@ -31,10 +32,12 @@ function attentionCellClass(count: number) {
 }
 
 export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerScorecard[] }) {
+  const t = useT();
+
   if (scorecards.length === 0) {
     return (
       <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-        No partner activity in the selected time range.
+        {t("No partner activity in the selected time range.")}
       </div>
     );
   }
@@ -44,18 +47,18 @@ export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerSco
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Partner</TableHead>
-            <TableHead className="text-right">Sent</TableHead>
-            <TableHead className="text-right">Failed</TableHead>
-            <TableHead className="text-right">Dead-lettered</TableHead>
-            <TableHead className="text-right">Received</TableHead>
-            <TableHead className="text-right">Success rate</TableHead>
-            <TableHead className="text-right">Ack avg</TableHead>
-            <TableHead className="text-right">Ack p95</TableHead>
-            <TableHead className="text-right">Overdue acks</TableHead>
-            <TableHead className="text-right">&gt;4h</TableHead>
-            <TableHead className="text-right">&gt;24h</TableHead>
-            <TableHead className="text-right">Oldest pending</TableHead>
+            <TableHead>{t("Partner")}</TableHead>
+            <TableHead className="text-right">{t("Sent")}</TableHead>
+            <TableHead className="text-right">{t("Failed")}</TableHead>
+            <TableHead className="text-right">{t("Dead-lettered")}</TableHead>
+            <TableHead className="text-right">{t("Received")}</TableHead>
+            <TableHead className="text-right">{t("Success rate")}</TableHead>
+            <TableHead className="text-right">{t("Ack avg")}</TableHead>
+            <TableHead className="text-right">{t("Ack p95")}</TableHead>
+            <TableHead className="text-right">{t("Overdue acks")}</TableHead>
+            <TableHead className="text-right">{t(">4h")}</TableHead>
+            <TableHead className="text-right">{t(">24h")}</TableHead>
+            <TableHead className="text-right">{t("Oldest pending")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

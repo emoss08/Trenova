@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
@@ -51,6 +52,8 @@ function CreatePartnerPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const currentOrganizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
   const [activeTab, setActiveTab] = useState("external");
@@ -77,7 +80,7 @@ function CreatePartnerPanel({
     form: externalForm,
     resourceName: "EDI Partner",
     onSuccess: async () => {
-      toast.success("External EDI partner created");
+      toast.success(t("External EDI partner created"));
       externalForm.reset(getPartnerFormDefaults());
       onOpenChange(false);
       await invalidateEDIPartners(queryClient);
@@ -89,7 +92,7 @@ function CreatePartnerPanel({
     form: pairForm,
     resourceName: "EDI Connection",
     onSuccess: async () => {
-      toast.success("EDI connection requested");
+      toast.success(t("EDI connection requested"));
       reset(getCreatePairDefaults());
       onOpenChange(false);
       await invalidateEDIPartners(queryClient);
@@ -141,13 +144,13 @@ function CreatePartnerPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title="New EDI Partner"
-      description="Create an external trading partner or request an internal organization connection."
+      title={t("New EDI Partner")}
+      description={t("Create an external trading partner or request an internal organization connection.")}
       size="xl"
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           {activeTab === "external" ? (
             <Button
@@ -155,7 +158,7 @@ function CreatePartnerPanel({
               form="edi-create-external-partner-form"
               isLoading={createExternalMutation.isPending}
             >
-              Create Partner
+              {t("Create Partner")}
             </Button>
           ) : (
             <Button
@@ -163,7 +166,7 @@ function CreatePartnerPanel({
               form="edi-create-pair-form"
               isLoading={createConnectionMutation.isPending}
             >
-              Request Connection
+              {t("Request Connection")}
             </Button>
           )}
         </>
@@ -173,11 +176,11 @@ function CreatePartnerPanel({
         <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="external">
             <Building2Icon className="size-4" />
-            External Partner
+            {t("External Partner")}
           </TabsTrigger>
           <TabsTrigger value="internal">
             <HandshakeIcon className="size-4" />
-            Internal Connection
+            {t("Internal Connection")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="external" className="pt-4">
@@ -272,6 +275,8 @@ function PartnerEditPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -298,7 +303,7 @@ function PartnerEditPanel({
     form,
     resourceName: "EDI Partner",
     onSuccess: async () => {
-      toast.success("EDI partner updated");
+      toast.success(t("EDI partner updated"));
       await invalidateEDIPartners(queryClient);
     },
   });
@@ -312,16 +317,16 @@ function PartnerEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={partner?.name ?? "EDI Partner"}
-      description="Partner settings and saved mapping profile."
+      description={t("Partner settings and saved mapping profile.")}
       size="xl"
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           {partner && canUpdate && (
             <Button type="submit" form="edi-edit-partner-form" isLoading={mutation.isPending}>
-              Save Partner
+              {t("Save Partner")}
             </Button>
           )}
         </>
@@ -332,15 +337,15 @@ function PartnerEditPanel({
           <TabsList variant="underline" className="border-border w-full border-b">
             <TabsTrigger value="details">
               <ListChecksIcon className="size-4" />
-              Details
+              {t("Details")}
             </TabsTrigger>
             <TabsTrigger value="mappings">
               <GitBranchIcon className="size-4" />
-              Mappings
+              {t("Mappings")}
             </TabsTrigger>
             <TabsTrigger value="readiness">
               <CircleCheckBigIcon className="size-4" />
-              Readiness
+              {t("Readiness")}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="pt-4">

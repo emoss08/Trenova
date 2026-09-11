@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import {
   EDIMessageAckStatusBadge,
@@ -26,6 +27,8 @@ export const RETRYABLE_DELIVERY_STATUSES = new Set<EDIMessageDeliveryStatus>([
 ]);
 
 export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<EDIMessageRow>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -39,19 +42,19 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
   const retryMutation = useApiMutation({
     mutationFn: (messageId: string) => apiService.ediService.retryMessageDelivery(messageId),
     onSuccess: async () => {
-      toast.success("Delivery retry queued");
+      toast.success(t("Delivery retry queued"));
       await invalidateEDIMessages(queryClient, row?.id);
     },
-    onError: () => toast.error("Failed to queue delivery retry"),
+    onError: () => toast.error(t("Failed to queue delivery retry")),
   });
 
   const replayMutation = useApiMutation({
     mutationFn: (messageId: string) => apiService.ediService.replayMessageDelivery(messageId),
     onSuccess: async () => {
-      toast.success("Replay queued — the document will be re-delivered to the partner");
+      toast.success(t("Replay queued — the document will be re-delivered to the partner"));
       await invalidateEDIMessages(queryClient, row?.id);
     },
-    onError: () => toast.error("Failed to queue the replay"),
+    onError: () => toast.error(t("Failed to queue the replay")),
   });
 
   if (!detail) return null;
@@ -77,7 +80,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
       footer={
         <div className="flex w-full items-center justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t("Close")}
           </Button>
           {canReplay && (
             <Button
@@ -85,9 +88,9 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               variant="outline"
               isLoading={replayMutation.isPending}
               onClick={() => replayMutation.mutate(detail.id)}
-              title="Queue this already-delivered document for another delivery to the partner"
+              title={t("Queue this already-delivered document for another delivery to the partner")}
             >
-              Replay Delivery
+              {t("Replay Delivery")}
             </Button>
           )}
           {canRetry && (
@@ -96,75 +99,75 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               isLoading={retryMutation.isPending}
               onClick={() => retryMutation.mutate(detail.id)}
             >
-              Retry Delivery
+              {t("Retry Delivery")}
             </Button>
           )}
         </div>
       }
     >
       <div className="flex min-h-0 flex-col gap-3">
-        <DetailSection title="Overview">
-          <DetailField label="Transaction Set">
+        <DetailSection title={t("Overview")}>
+          <DetailField label={t("Transaction Set")}>
             <Badge variant="secondary">{detail.transactionSet}</Badge>
           </DetailField>
-          <DetailField label="Direction">{detail.direction}</DetailField>
-          <DetailField label="Partner">
+          <DetailField label={t("Direction")}>{detail.direction}</DetailField>
+          <DetailField label={t("Partner")}>
             <EDIPartnerRef partner={detail.partner} />
           </DetailField>
-          <DetailField label="X12 Version">{detail.x12Version}</DetailField>
-          <DetailField label="ISA Control Number">
+          <DetailField label={t("X12 Version")}>{detail.x12Version}</DetailField>
+          <DetailField label={t("ISA Control Number")}>
             <span className="font-mono text-xs">{detail.interchangeControlNumber || "—"}</span>
           </DetailField>
-          <DetailField label="GS / ST Control Numbers">
+          <DetailField label={t("GS / ST Control Numbers")}>
             <span className="font-mono text-xs">
               {detail.groupControlNumber || "—"} / {detail.transactionControlNumber || "—"}
             </span>
           </DetailField>
-          <DetailField label="Segments">{detail.segmentCount}</DetailField>
-          <DetailField label="Generated">{formatToUserTimezone(detail.generatedAt)}</DetailField>
+          <DetailField label={t("Segments")}>{detail.segmentCount}</DetailField>
+          <DetailField label={t("Generated")}>{formatToUserTimezone(detail.generatedAt)}</DetailField>
         </DetailSection>
         {detail.direction === "Outbound" && (
-          <DetailSection title="Delivery">
-            <DetailField label="Status">
+          <DetailSection title={t("Delivery")}>
+            <DetailField label={t("Status")}>
               {detail.deliveryStatus ? (
                 <EDIMessageDeliveryStatusBadge status={detail.deliveryStatus} />
               ) : (
                 "Not queued"
               )}
             </DetailField>
-            <DetailField label="Attempts">{detail.deliveryAttempts}</DetailField>
-            <DetailField label="Remote Path">
+            <DetailField label={t("Attempts")}>{detail.deliveryAttempts}</DetailField>
+            <DetailField label={t("Remote Path")}>
               {detail.deliveryRemotePath ? (
                 <span className="font-mono text-xs">{detail.deliveryRemotePath}</span>
               ) : (
                 "—"
               )}
             </DetailField>
-            <DetailField label="Sent At">
+            <DetailField label={t("Sent At")}>
               {detail.deliverySentAt ? formatToUserTimezone(detail.deliverySentAt) : "—"}
             </DetailField>
             {detail.deliveryLastError && (
-              <DetailField label="Last Error" fullWidth>
+              <DetailField label={t("Last Error")} fullWidth>
                 <span className="text-destructive text-xs">{detail.deliveryLastError}</span>
               </DetailField>
             )}
           </DetailSection>
         )}
-        <DetailSection title="Acknowledgment">
-          <DetailField label="Status">
+        <DetailSection title={t("Acknowledgment")}>
+          <DetailField label={t("Status")}>
             <EDIMessageAckStatusBadge status={detail.ackStatus ?? "NotExpected"} />
           </DetailField>
-          <DetailField label="Received At">
+          <DetailField label={t("Received At")}>
             {detail.ackReceivedAt ? formatToUserTimezone(detail.ackReceivedAt) : "—"}
           </DetailField>
           {detail.ackLastError && (
-            <DetailField label="Details" fullWidth>
+            <DetailField label={t("Details")} fullWidth>
               <span className="text-destructive text-xs">{detail.ackLastError}</span>
             </DetailField>
           )}
         </DetailSection>
         {message?.rawX12 && (
-          <DetailSection title="Raw X12" fullWidth>
+          <DetailSection title={t("Raw X12")} fullWidth>
             <EDIRawContent content={message.rawX12} />
           </DetailSection>
         )}

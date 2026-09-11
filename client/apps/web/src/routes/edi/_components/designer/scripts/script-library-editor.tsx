@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -26,6 +27,8 @@ import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import { isTemplateVersionEditable } from "../utils/edi-designer-utils";
 
 export function ScriptLibraryEditor() {
+  const t = useT();
+
   const { theme } = useTheme();
   const editorTheme = theme === "dark" ? darkTheme : lightTheme;
   const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
@@ -40,11 +43,11 @@ export function ScriptLibraryEditor() {
 
   const saveScriptsMutation = useSaveEDITemplateScriptsMutation({
     onSuccess: async () => {
-      toast.success("Script libraries saved");
+      toast.success(t("Script libraries saved"));
       clearScriptsDirty();
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Failed to save script libraries"),
+    onError: () => toast.error(t("Failed to save script libraries")),
   });
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export function ScriptLibraryEditor() {
     <div className="grid h-full min-h-0 grid-cols-[260px_minmax(0,1fr)] overflow-hidden">
       <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden border-r">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-xs font-semibold">Libraries</span>
+          <span className="text-xs font-semibold">{t("Libraries")}</span>
           <Button
             type="button"
             variant="outline"
@@ -119,13 +122,13 @@ export function ScriptLibraryEditor() {
         <div className="flex items-end justify-between gap-3 border-b p-3">
           <div className="grid flex-1 grid-cols-2 gap-2">
             <InputBlock
-              label="Name"
+              label={t("Name")}
               value={selected?.name ?? ""}
               disabled={!isEditable || !selected}
               onChange={(name) => updateSelected({ name })}
             />
             <InputBlock
-              label="Description"
+              label={t("Description")}
               value={selected?.description ?? ""}
               disabled={!isEditable || !selected}
               onChange={(description) => updateSelected({ description })}
@@ -142,7 +145,7 @@ export function ScriptLibraryEditor() {
               }
             >
               <Trash2Icon className="size-4" />
-              Remove
+              {t("Remove")}
             </Button>
             <Button
               type="button"
@@ -160,13 +163,13 @@ export function ScriptLibraryEditor() {
               }
             >
               <SaveIcon className="size-4" />
-              Save Scripts
+              {t("Save Scripts")}
             </Button>
           </div>
         </div>
         <div className="border-b p-3">
           <ScriptPresetPicker
-            title="Script Presets"
+            title={t("Script Presets")}
             presets={getEDIScriptPresetsByCategory("scriptLibrary")}
             disabled={!isEditable || !selected}
             onApply={applyPreset}
@@ -185,7 +188,7 @@ export function ScriptLibraryEditor() {
             />
           </div>
         ) : (
-          <div className="text-muted-foreground p-4 text-sm">No script libraries.</div>
+          <div className="text-muted-foreground p-4 text-sm">{t("No script libraries.")}</div>
         )}
       </div>
     </div>

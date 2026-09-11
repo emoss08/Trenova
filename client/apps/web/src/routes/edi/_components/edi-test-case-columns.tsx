@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -92,18 +93,18 @@ export function getTestCaseColumns(): ColumnDef<EDITestCaseTableRow>[] {
       cell: ({ row }) => {
         const { expectedWarnings, expectedErrors } = row.original;
         if (expectedWarnings === 0 && expectedErrors === 0) {
-          return <Badge variant="outline">Clean</Badge>;
+          return <Badge variant="outline">{translate("Clean")}</Badge>;
         }
         return (
           <div className="flex items-center gap-1.5">
             {expectedWarnings > 0 && (
               <Badge variant="secondary">
-                {expectedWarnings} warning{expectedWarnings === 1 ? "" : "s"}
+                {translate("{0} warning{1}", expectedWarnings, expectedWarnings === 1 ? "" : "s")}
               </Badge>
             )}
             {expectedErrors > 0 && (
               <Badge variant="warning">
-                {expectedErrors} error{expectedErrors === 1 ? "" : "s"}
+                {translate("{0} error{1}", expectedErrors, expectedErrors === 1 ? "" : "s")}
               </Badge>
             )}
           </div>

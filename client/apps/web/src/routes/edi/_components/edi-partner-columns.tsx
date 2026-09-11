@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDIPartnerReadinessBadge, StatusBadge } from "@trenova/shared/components/status-badge";
@@ -57,9 +58,9 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
       header: "Direction",
       cell: ({ row }) => (
         <div className="flex gap-1">
-          <Badge variant={row.original.enabledForInbound ? "secondary" : "outline"}>Inbound</Badge>
+          <Badge variant={row.original.enabledForInbound ? "secondary" : "outline"}>{translate("Inbound")}</Badge>
           <Badge variant={row.original.enabledForOutbound ? "secondary" : "outline"}>
-            Outbound
+            {translate("Outbound")}
           </Badge>
         </div>
       ),

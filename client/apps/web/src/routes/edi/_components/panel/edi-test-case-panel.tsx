@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EDIDocumentProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { EDITestCaseVerdictBadge } from "@trenova/shared/components/status-badge";
@@ -52,6 +53,8 @@ function CreateTestCasePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<EDITestCaseFormValues>({
     resolver: zodResolver(ediTestCaseFormSchema),
@@ -65,7 +68,7 @@ function CreateTestCasePanel({
     form,
     resourceName: "EDI Test Case",
     onSuccess: async () => {
-      toast.success("EDI test case created");
+      toast.success(t("EDI test case created"));
       form.reset(getTestCaseFormDefaults());
       onOpenChange(false);
       await invalidateEDITestCases(queryClient);
@@ -83,16 +86,16 @@ function CreateTestCasePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title="New EDI Test Case"
-      description="Bind a document profile to a payload and expected validation outcome for partner certification."
+      title={t("New EDI Test Case")}
+      description={t("Bind a document profile to a payload and expected validation outcome for partner certification.")}
       size="xl"
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="edi-create-test-case-form" isLoading={mutation.isPending}>
-            Create Test Case
+            {t("Create Test Case")}
           </Button>
         </>
       }
@@ -116,6 +119,8 @@ function TestCaseEditPanel({
   onOpenChange: (open: boolean) => void;
   testCaseId: string | null;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -160,7 +165,7 @@ function TestCaseEditPanel({
     form,
     resourceName: "EDI Test Case",
     onSuccess: async () => {
-      toast.success("EDI test case updated");
+      toast.success(t("EDI test case updated"));
       await invalidateEDITestCases(queryClient, testCaseId ?? undefined);
     },
   });
@@ -178,7 +183,7 @@ function TestCaseEditPanel({
       setInspectorOpen(true);
     },
     onError: () => {
-      toast.error("Failed to run the test case preview");
+      toast.error(t("Failed to run the test case preview"));
     },
   });
 
@@ -190,12 +195,12 @@ function TestCaseEditPanel({
       return apiService.ediService.deleteTestCase(testCaseId);
     },
     onSuccess: async () => {
-      toast.success("EDI test case deleted");
+      toast.success(t("EDI test case deleted"));
       onOpenChange(false);
       await invalidateEDITestCases(queryClient, testCaseId ?? undefined);
     },
     onError: () => {
-      toast.error("Failed to delete the test case");
+      toast.error(t("Failed to delete the test case"));
     },
   });
 
@@ -210,7 +215,7 @@ function TestCaseEditPanel({
         open={open}
         onOpenChange={onOpenChange}
         title={testCase?.name ?? "EDI Test Case"}
-        description="Run the stored payload through the partner's template and inspect the rendered X12."
+        description={t("Run the stored payload through the partner's template and inspect the rendered X12.")}
         size="xl"
         footer={
           <>
@@ -221,11 +226,11 @@ function TestCaseEditPanel({
                 onClick={() => deleteMutation.mutate()}
                 isLoading={deleteMutation.isPending}
               >
-                Delete
+                {t("Delete")}
               </Button>
             )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             {testCase && (
               <Button
@@ -237,12 +242,12 @@ function TestCaseEditPanel({
                 title={isDirty ? "Save your changes before running the preview" : undefined}
               >
                 <PlayIcon className="size-4" />
-                Run Preview
+                {t("Run Preview")}
               </Button>
             )}
             {testCase && canUpdate && (
               <Button type="submit" form="edi-edit-test-case-form" isLoading={mutation.isPending}>
-                Save Test Case
+                {t("Save Test Case")}
               </Button>
             )}
           </>
@@ -317,6 +322,8 @@ function TestCaseVerdict({
   testCase: EDITestCaseRow;
   onOpenInspector: () => void;
 }) {
+  const t = useT();
+
   const { expectedWarnings, expectedErrors } = testCase;
   const warningDiagnostics = preview.diagnostics.filter(
     (diagnostic) => diagnostic.severity === "Warning",
@@ -353,18 +360,17 @@ function TestCaseVerdict({
           </p>
           {!passed && (
             <p className="text-muted-foreground text-xs">
-              Review the inspector diagnostics, then either fix the payload/template or update the
-              expected counts and codes.
+              {t("Review the inspector diagnostics, then either fix the payload/template or update the expected counts and codes.")}
             </p>
           )}
-          <CodeDiffLine label="Missing warning codes" codes={warningDiff.missing} />
-          <CodeDiffLine label="Unexpected warning codes" codes={warningDiff.unexpected} />
-          <CodeDiffLine label="Missing error codes" codes={errorDiff.missing} />
-          <CodeDiffLine label="Unexpected error codes" codes={errorDiff.unexpected} />
+          <CodeDiffLine label={t("Missing warning codes")} codes={warningDiff.missing} />
+          <CodeDiffLine label={t("Unexpected warning codes")} codes={warningDiff.unexpected} />
+          <CodeDiffLine label={t("Missing error codes")} codes={errorDiff.missing} />
+          <CodeDiffLine label={t("Unexpected error codes")} codes={errorDiff.unexpected} />
         </div>
       </div>
       <Button type="button" variant="ghost" size="sm" onClick={onOpenInspector}>
-        Open Inspector
+        {t("Open Inspector")}
       </Button>
     </div>
   );
@@ -381,6 +387,8 @@ function TestCaseForm({
   disabled: boolean;
   onSubmit: (values: EDITestCaseFormValues) => void;
 }) {
+  const t = useT();
+
   const { control, handleSubmit } = form;
 
   return (
@@ -393,16 +401,16 @@ function TestCaseForm({
       }}
     >
       <FormSection
-        title="Test Case"
-        description="Name the scenario and pick the partner document profile it certifies."
+        title={t("Test Case")}
+        description={t("Name the scenario and pick the partner document profile it certifies.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="Partner 204 happy path"
+              label={t("Name")}
+              placeholder={t("Partner 204 happy path")}
               rules={{ required: true }}
               disabled={disabled}
             />
@@ -411,8 +419,8 @@ function TestCaseForm({
             <EDIDocumentProfileAutocompleteField
               control={control}
               name="partnerDocumentProfileId"
-              label="Document Profile"
-              placeholder="Select a document profile"
+              label={t("Document Profile")}
+              placeholder={t("Select a document profile")}
               rules={{ required: true }}
               disabled={disabled}
             />
@@ -421,23 +429,23 @@ function TestCaseForm({
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="What this scenario certifies"
+              label={t("Description")}
+              placeholder={t("What this scenario certifies")}
               disabled={disabled}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Expected Outcome"
-        description="Diagnostics the rendered document is expected to produce."
+        title={t("Expected Outcome")}
+        description={t("Diagnostics the rendered document is expected to produce.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="expectedWarnings"
-              label="Expected Warnings"
+              label={t("Expected Warnings")}
               disabled={disabled}
             />
           </FormControl>
@@ -445,7 +453,7 @@ function TestCaseForm({
             <NumberField
               control={control}
               name="expectedErrors"
-              label="Expected Errors"
+              label={t("Expected Errors")}
               disabled={disabled}
             />
           </FormControl>
@@ -453,35 +461,35 @@ function TestCaseForm({
             <InputField
               control={control}
               name="expectedWarningCodes"
-              label="Expected Warning Codes"
+              label={t("Expected Warning Codes")}
               disabled={disabled}
-              placeholder="missing_optional_element, value_truncated"
-              description="Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's warning codes to match exactly."
+              placeholder={t("missing_optional_element, value_truncated")}
+              description={t("Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's warning codes to match exactly.")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               control={control}
               name="expectedErrorCodes"
-              label="Expected Error Codes"
+              label={t("Expected Error Codes")}
               disabled={disabled}
               placeholder="missing_required_element"
-              description="Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's error codes to match exactly."
+              description={t("Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's error codes to match exactly.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Document Payload"
-        description="Structured payload rendered through the profile's template when the preview runs."
+        title={t("Document Payload")}
+        description={t("Structured payload rendered through the profile's template when the preview runs.")}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
             <JsonEditorField
               control={control}
               name="payloadJson"
-              label="Payload"
-              description='JSON document payload, e.g. {"transactionSet":"204","loadTender":{...}}'
+              label={t("Payload")}
+              description={t("JSON document payload, e.g. {\"transactionSet\":\"204\",\"loadTender\":{...}}")}
               disabled={disabled}
               height="320px"
             />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -46,6 +47,8 @@ import {
 import { isTemplateVersionEditable } from "../utils/edi-designer-utils";
 
 export function ElementDesigner() {
+  const t = useT();
+
   const { selectedVersion } = useSelectedTemplateDesignerData();
   const { selectedSegment: segment, selectedElement: element } =
     useSelectedTemplateDesignerSegmentElement();
@@ -60,7 +63,7 @@ export function ElementDesigner() {
   if (!selectedVersion || !segment) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center p-4 text-sm">
-        Select a template version and segment to edit.
+        {t("Select a template version and segment to edit.")}
       </div>
     );
   }
@@ -69,7 +72,7 @@ export function ElementDesigner() {
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
       <div className="bg-background sticky top-0 z-10 grid grid-cols-4 gap-2 border-b p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
         <InputBlock
-          label="X12 Version"
+          label={t("X12 Version")}
           value={metadataDraft.x12Version}
           onChange={(value) => {
             if (!isEditable) return;
@@ -78,7 +81,7 @@ export function ElementDesigner() {
           disabled={!isEditable}
         />
         <InputBlock
-          label="Functional Group"
+          label={t("Functional Group")}
           value={metadataDraft.functionalGroupId}
           onChange={(value) => {
             if (!isEditable) return;
@@ -87,7 +90,7 @@ export function ElementDesigner() {
           disabled={!isEditable}
         />
         <InputBlock
-          label="Notes"
+          label={t("Notes")}
           value={metadataDraft.versionNotes}
           onChange={(value) => {
             if (!isEditable) return;
@@ -96,7 +99,7 @@ export function ElementDesigner() {
           disabled={!isEditable}
         />
         <InputBlock
-          label="Segment Condition"
+          label={t("Segment Condition")}
           value={segment.condition ?? ""}
           onChange={(condition) => {
             if (!isEditable) return;
@@ -114,19 +117,18 @@ export function ElementDesigner() {
               <div>
                 <div className="text-sm font-semibold">{segment.name}</div>
                 <div className="text-muted-foreground text-xs">
-                  Sequence {segment.sequence}
-                  {segment.repeatPath ? ` / repeats ${segment.repeatPath}` : ""}
+                  {t("Sequence {0}{1}", segment.sequence, segment.repeatPath ? ` / repeats ${segment.repeatPath}` : "")}
                 </div>
               </div>
             </div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-14">Pos</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Path / Value</TableHead>
-                  <TableHead className="w-20">Issues</TableHead>
+                  <TableHead className="w-14">{t("Pos")}</TableHead>
+                  <TableHead>{t("Name")}</TableHead>
+                  <TableHead>{t("Source")}</TableHead>
+                  <TableHead>{t("Path / Value")}</TableHead>
+                  <TableHead className="w-20">{t("Issues")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,10 +198,12 @@ function ElementInspector({
     updater: (element: EDITemplateElement) => EDITemplateElement,
   ) => void;
 }) {
+  const t = useT();
+
   if (!element) {
     return (
       <div className="text-muted-foreground flex items-center justify-center border-l p-4 text-sm">
-        Select an element.
+        {t("Select an element.")}
       </div>
     );
   }
@@ -217,10 +221,10 @@ function ElementInspector({
             {segment.segmentId}
             {element.position.toString().padStart(2, "0")} {element.name}
           </div>
-          <div className="text-muted-foreground text-xs">Element source and validation rules</div>
+          <div className="text-muted-foreground text-xs">{t("Element source and validation rules")}</div>
         </div>
         <ControlledSelectField
-          label="Source"
+          label={t("Source")}
           value={element.source}
           onValueChange={(source) => update({ source: source as EDITemplateElement["source"] })}
           disabled={!isEditable}
@@ -235,13 +239,13 @@ function ElementInspector({
         />
         <div className="grid grid-cols-2 gap-2">
           <InputBlock
-            label="Default"
+            label={t("Default")}
             value={element.default ?? ""}
             onChange={(value) => update({ default: value })}
             disabled={!isEditable}
           />
           <InputBlock
-            label="Max Length"
+            label={t("Max Length")}
             value={String(element.validation.maxLength || "")}
             onChange={(value) =>
               update({
@@ -253,8 +257,8 @@ function ElementInspector({
         </div>
         <div className="flex items-center justify-between rounded-md border p-2">
           <div>
-            <div className="text-xs font-medium">Required</div>
-            <div className="text-muted-foreground text-xs">Backend validation rule</div>
+            <div className="text-xs font-medium">{t("Required")}</div>
+            <div className="text-muted-foreground text-xs">{t("Backend validation rule")}</div>
           </div>
           <Switch
             checked={element.validation.required}
@@ -265,7 +269,7 @@ function ElementInspector({
           />
         </div>
         <TextareaBlock
-          label="Implementation Guide Note"
+          label={t("Implementation Guide Note")}
           value={element.implementationGuideNote ?? ""}
           onChange={(value) => update({ implementationGuideNote: value })}
           disabled={!isEditable}
@@ -284,10 +288,12 @@ function SourceEditor({
   isEditable: boolean;
   onChange: (patch: Partial<EDITemplateElement>) => void;
 }) {
+  const t = useT();
+
   if (element.source === "constant") {
     return (
       <InputBlock
-        label="Value"
+        label={t("Value")}
         value={element.value ?? ""}
         onChange={(value) => onChange({ value })}
         disabled={!isEditable}
@@ -297,7 +303,7 @@ function SourceEditor({
   if (element.source === "fieldPath") {
     return (
       <PathReferenceField
-        label="Field Path"
+        label={t("Field Path")}
         value={element.fieldPath ?? ""}
         onChange={(fieldPath) => onChange({ fieldPath })}
         disabled={!isEditable}
@@ -307,7 +313,7 @@ function SourceEditor({
   if (element.source === "partnerSetting") {
     return (
       <PathReferenceField
-        label="Partner Setting"
+        label={t("Partner Setting")}
         value={element.partnerSettingPath ?? ""}
         onChange={(partnerSettingPath) => onChange({ partnerSettingPath })}
         disabled={!isEditable}
@@ -318,7 +324,7 @@ function SourceEditor({
   if (element.source === "runtime") {
     return (
       <InputBlock
-        label="Runtime Key"
+        label={t("Runtime Key")}
         value={element.runtimeKey ?? ""}
         onChange={(runtimeKey) => onChange({ runtimeKey })}
         disabled={!isEditable}
@@ -328,7 +334,7 @@ function SourceEditor({
   if (element.source === "repeat") {
     return (
       <PathReferenceField
-        label="Repeat Path"
+        label={t("Repeat Path")}
         value={element.repeatPath ?? ""}
         onChange={(repeatPath) => onChange({ repeatPath })}
         disabled={!isEditable}
@@ -340,7 +346,7 @@ function SourceEditor({
     return (
       <div className="space-y-2">
         <ControlledSelectField
-          label="Mapping Entity"
+          label={t("Mapping Entity")}
           value={element.mappingEntityType ?? ""}
           onValueChange={(mappingEntityType) =>
             onChange({
@@ -351,7 +357,7 @@ function SourceEditor({
           options={mappingEntityTypeOptions}
         />
         <PathReferenceField
-          label="Mapping Source Path"
+          label={t("Mapping Source Path")}
           value={element.mappingSourcePath ?? ""}
           onChange={(mappingSourcePath) => onChange({ mappingSourcePath })}
           disabled={!isEditable}
@@ -379,19 +385,19 @@ function SourceEditor({
   return (
     <div className="space-y-2">
       <InputBlock
-        label="Function Name"
+        label={t("Function Name")}
         value={element.starlarkFunction ?? ""}
         onChange={(starlarkFunction) => onChange({ starlarkFunction })}
         disabled={!isEditable}
       />
       <TextareaBlock
-        label="Inline Script"
+        label={t("Inline Script")}
         value={element.starlarkScript ?? ""}
         onChange={(starlarkScript) => onChange({ starlarkScript })}
         disabled={!isEditable}
       />
       <ScriptPresetPicker
-        title="Presets"
+        title={t("Presets")}
         presets={starlarkPresets}
         disabled={!isEditable}
         onApply={applyStarlarkPreset}
@@ -408,6 +414,8 @@ function ConditionEditor({
   disabled: boolean;
   onChange: (condition: string) => void;
 }) {
+  const t = useT();
+
   const [draft, setDraft] = useState<ConditionDraft>(() => parseConditionString(condition));
 
   const apply = (next: ConditionDraft) => {
@@ -428,15 +436,15 @@ function ConditionEditor({
 
   return (
     <div className="space-y-2 rounded-md border p-2">
-      <div className="text-xs font-semibold">Condition</div>
+      <div className="text-xs font-semibold">{t("Condition")}</div>
       <ScriptPresetPicker
-        title="Presets"
+        title={t("Presets")}
         presets={getEDIScriptPresetsByCategory("condition")}
         disabled={disabled}
         onApply={applyPreset}
       />
       <ControlledSelectField
-        label="Mode"
+        label={t("Mode")}
         value={draft.mode}
         disabled={disabled}
         onValueChange={(mode) => {
@@ -452,7 +460,7 @@ function ConditionEditor({
       />
       {draft.mode === "truthy" || draft.mode === "falsey" ? (
         <InputBlock
-          label="Path"
+          label={t("Path")}
           value={draft.path}
           disabled={disabled}
           onChange={(path) => apply({ ...draft, path })}
@@ -461,20 +469,20 @@ function ConditionEditor({
       {draft.mode === "comparison" ? (
         <div className="grid grid-cols-[1fr_76px_1fr] gap-2">
           <InputBlock
-            label="Path"
+            label={t("Path")}
             value={draft.path}
             disabled={disabled}
             onChange={(path) => apply({ ...draft, path })}
           />
           <ControlledSelectField
-            label="Op"
+            label={t("Op")}
             value={draft.operator}
             disabled={disabled}
             onValueChange={(operator) => apply({ ...draft, operator: operator as "==" | "!=" })}
             options={conditionOperatorOptions}
           />
           <InputBlock
-            label="Value"
+            label={t("Value")}
             value={draft.value}
             disabled={disabled}
             onChange={(value) => apply({ ...draft, value })}
@@ -483,7 +491,7 @@ function ConditionEditor({
       ) : null}
       {draft.mode === "starlarkFunction" ? (
         <InputBlock
-          label="Function"
+          label={t("Function")}
           value={draft.functionName}
           disabled={disabled}
           onChange={(functionName) => apply({ ...draft, functionName })}
@@ -491,7 +499,7 @@ function ConditionEditor({
       ) : null}
       {draft.mode === "inlineStarlark" ? (
         <TextareaBlock
-          label="Script"
+          label={t("Script")}
           value={draft.script}
           disabled={disabled}
           onChange={(script) => apply({ ...draft, script })}

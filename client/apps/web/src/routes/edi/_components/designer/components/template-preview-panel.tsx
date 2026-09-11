@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -17,11 +18,13 @@ import { PreviewPane, parsePayload } from "./designer-shared";
 import type { SelectOption } from "@/lib/graphql/select-options";
 
 export default function TemplatePreviewPanel() {
+  const t = useT();
+
   const [profileId, setProfileId] = useState("");
   const [selectedProfile, setSelectedProfile] = useState<SelectOption | null>(null);
   const [sourceValues, setSourceValues] = useState<EDIDocumentSourceValues>({});
   const previewMutation = usePreviewEDIDocumentMutation({
-    onError: () => toast.error("Failed to preview EDI document"),
+    onError: () => toast.error(t("Failed to preview EDI document")),
   });
   const transactionSet = (selectedProfile?.meta?.transactionSet as string) || undefined;
   const direction = (selectedProfile?.meta?.direction as string) || undefined;
@@ -71,7 +74,7 @@ export default function TemplatePreviewPanel() {
             disabled={!canPreview}
           >
             <RefreshCwIcon className="size-4" />
-            Preview
+            {t("Preview")}
           </Button>
         </div>
       </ScrollArea>

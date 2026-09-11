@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutocompleteCommandContent } from "@/components/fields/autocomplete/autocomplete-content";
 import { AutocompleteTrigger } from "@/components/fields/autocomplete/autocomplete-input";
 import { FieldWrapper } from "@/components/fields/field-components";
@@ -166,6 +167,8 @@ export function PathInsertField({
   documentTypeId?: string;
   x12Version?: string;
 }) {
+  const t = useT();
+
   return (
     <div className="space-y-1">
       <PathInput
@@ -178,7 +181,7 @@ export function PathInsertField({
       <div className="grid grid-cols-2 gap-1">
         <SourceContextPicker
           disabled={disabled}
-          placeholder="Source"
+          placeholder={t("Source")}
           extraSearchParams={{
             ...(transactionSet ? { transactionSet } : {}),
             ...(direction ? { direction } : {}),
@@ -188,7 +191,7 @@ export function PathInsertField({
         />
         <PartnerSettingPicker
           disabled={disabled}
-          placeholder="Partner"
+          placeholder={t("Partner")}
           transactionSet={transactionSet}
           direction={direction}
           documentTypeId={documentTypeId}
@@ -212,10 +215,12 @@ function SourceContextPicker({
   placeholder?: string;
   extraSearchParams?: Record<string, string>;
 }) {
+  const t = useT();
+
   return (
     <PathPicker<EDISourceContextField>
       link="/edi/catalog/source-context/fields/select-options/"
-      label="Source Fields"
+      label={t("Source Fields")}
       disabled={disabled}
       placeholder={placeholder}
       getOptionValue={(field) => field.path}
@@ -252,10 +257,12 @@ function PartnerSettingPicker({
   x12Version?: string;
   getPickValue?: (field: EDIPartnerSettingField) => string;
 }) {
+  const t = useT();
+
   return (
     <PathPicker<EDIPartnerSettingField>
       link="/edi/catalog/partner-settings/fields/select-options/"
-      label="Partner Settings"
+      label={t("Partner Settings")}
       disabled={disabled}
       placeholder={placeholder}
       getOptionValue={(field) => field.path}

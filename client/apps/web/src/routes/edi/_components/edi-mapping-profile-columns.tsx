@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -60,7 +61,7 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
         return count > 0 ? (
           <Badge variant="secondary">{count.toLocaleString()}</Badge>
         ) : (
-          <DataTablePlaceholder text="None" />
+          <DataTablePlaceholder text={translate("None")} />
         );
       },
       size: 120,

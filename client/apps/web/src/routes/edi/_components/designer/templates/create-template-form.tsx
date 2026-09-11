@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EDIDocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -15,6 +16,8 @@ export function CreateTemplateForm({
   disabled?: boolean;
   mode?: "create" | "edit";
 }) {
+  const t = useT();
+
   const { control, getValues, setValue } = useFormContext<TemplateFormValues>();
 
   const handleDocumentTypeChange = (option: SelectOption | null) => {
@@ -54,12 +57,12 @@ export function CreateTemplateForm({
           <EDIDocumentTypeAutocompleteField<TemplateFormValues>
             control={control}
             name="documentTypeId"
-            label="Document Type"
+            label={t("Document Type")}
             rules={{ required: true }}
             clearable
             disabled={disabled}
-            description="The EDI document type that seeds the template direction and transaction set."
-            placeholder="Document Type"
+            description={t("The EDI document type that seeds the template direction and transaction set.")}
+            placeholder={t("Document Type")}
             onOptionChange={handleDocumentTypeChange}
           />
         </FormControl>
@@ -69,9 +72,9 @@ export function CreateTemplateForm({
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Name"
-          placeholder="Template name"
-          description="A clear internal name for this EDI template."
+          label={t("Name")}
+          placeholder={t("Template name")}
+          description={t("A clear internal name for this EDI template.")}
           disabled={disabled}
         />
       </FormControl>
@@ -79,9 +82,9 @@ export function CreateTemplateForm({
         <InputField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Description"
-          description="Optional context for where this template should be used."
+          label={t("Description")}
+          placeholder={t("Description")}
+          description={t("Optional context for where this template should be used.")}
           disabled={disabled}
         />
       </FormControl>
@@ -92,9 +95,9 @@ export function CreateTemplateForm({
               control={control}
               rules={{ required: true }}
               name="x12Version"
-              label="X12 Version"
+              label={t("X12 Version")}
               placeholder="004010"
-              description="The X12 version for the first draft."
+              description={t("The X12 version for the first draft.")}
               disabled={disabled}
             />
           </FormControl>
@@ -103,9 +106,9 @@ export function CreateTemplateForm({
               control={control}
               rules={{ required: true }}
               name="functionalGroupId"
-              label="Group"
-              placeholder="SM"
-              description="The functional group identifier."
+              label={t("Group")}
+              placeholder={t("SM")}
+              description={t("The functional group identifier.")}
               disabled={disabled}
             />
           </FormControl>
@@ -116,9 +119,9 @@ export function CreateTemplateForm({
             control={control}
             rules={{ required: true }}
             name="status"
-            label="Status"
-            placeholder="Status"
-            description="The template status."
+            label={t("Status")}
+            placeholder={t("Status")}
+            description={t("The template status.")}
             options={templateStatusOptions}
             isReadOnly={disabled}
           />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   ediTableGraphQLConfigs,
@@ -118,6 +119,8 @@ function CommunicationProfilesWorkspace() {
 }
 
 function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }) {
+  const t = useT();
+
   const columns = useMemo(() => getTransferColumns(direction), [direction]);
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
@@ -137,7 +140,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     async (rows: EDITransferRow[]) => {
       const eligible = rows.filter((row) => ACTIONABLE_TRANSFER_STATUSES.has(row.status));
       if (eligible.length === 0) {
-        toast.info("None of the selected transfers are awaiting review");
+        toast.info(t("None of the selected transfers are awaiting review"));
         return;
       }
       const result = await apiService.ediService.bulkApproveTransfers(
@@ -150,18 +153,18 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         skipped: rows.length - eligible.length,
       });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const handleBulkRejectRequest = useCallback((rows: EDITransferRow[]) => {
     const eligible = rows.filter((row) => ACTIONABLE_TRANSFER_STATUSES.has(row.status));
     if (eligible.length === 0) {
-      toast.info("None of the selected transfers are awaiting review");
+      toast.info(t("None of the selected transfers are awaiting review"));
       return;
     }
     setRejectRows(eligible);
     setRejectOpen(true);
-  }, []);
+  }, [t]);
 
   const handleBulkRejectConfirm = useCallback(
     async (reason: string) => {
@@ -232,9 +235,9 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         open={rejectOpen}
         onOpenChange={setRejectOpen}
         title={`Reject ${rejectRows.length} Load Tender(s)`}
-        description="The rejection reason is sent back to the trading partner on the outbound 990 response."
-        placeholder="Explain why these tenders are being rejected"
-        confirmLabel="Reject Tenders"
+        description={t("The rejection reason is sent back to the trading partner on the outbound 990 response.")}
+        placeholder={t("Explain why these tenders are being rejected")}
+        confirmLabel={t("Reject Tenders")}
         isPending={rejectPending}
         onConfirm={handleBulkRejectConfirm}
       />
@@ -243,6 +246,8 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
 }
 
 function MessagesWorkspace() {
+  const t = useT();
+
   const columns = useMemo(() => getMessageColumns(), []);
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
@@ -258,7 +263,7 @@ function MessagesWorkspace() {
           RETRYABLE_DELIVERY_STATUSES.has(row.deliveryStatus),
       );
       if (eligible.length === 0) {
-        toast.info("None of the selected messages are retryable");
+        toast.info(t("None of the selected messages are retryable"));
         return;
       }
       const result = await apiService.ediService.bulkRetryMessageDelivery(
@@ -271,7 +276,7 @@ function MessagesWorkspace() {
         skipped: rows.length - eligible.length,
       });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<EDIMessageRow>[]>(() => {
@@ -308,6 +313,8 @@ function MessagesWorkspace() {
 }
 
 function InboundFilesWorkspace() {
+  const t = useT();
+
   const columns = useMemo(() => getInboundFileColumns(), []);
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
@@ -318,7 +325,7 @@ function InboundFilesWorkspace() {
     async (rows: EDIInboundFileRow[]) => {
       const eligible = rows.filter((row) => REPROCESSABLE_STATUSES.has(row.status));
       if (eligible.length === 0) {
-        toast.info("None of the selected files can be reprocessed");
+        toast.info(t("None of the selected files can be reprocessed"));
         return;
       }
       const result = await apiService.ediService.bulkReprocessInboundFiles(
@@ -331,7 +338,7 @@ function InboundFilesWorkspace() {
         skipped: rows.length - eligible.length,
       });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<EDIInboundFileRow>[]>(() => {

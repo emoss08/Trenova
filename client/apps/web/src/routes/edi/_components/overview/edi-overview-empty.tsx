@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -38,6 +39,8 @@ export function EDIOverviewEmpty({
   widenLabel = "Look at everything",
   className,
 }: EDIOverviewEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -51,7 +54,7 @@ export function EDIOverviewEmpty({
           </Button>
         ) : (
           <Button variant="outline" size="sm" render={<Link to="/edi/partners" />}>
-            Set up a trading partner
+            {t("Set up a trading partner")}
           </Button>
         )
       }

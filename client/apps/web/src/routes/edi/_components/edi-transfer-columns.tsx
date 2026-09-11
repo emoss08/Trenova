@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
@@ -92,10 +93,10 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
             to={`/shipment-management/shipments?item=${row.original.targetShipmentId}`}
           >
             <LinkIcon className="size-3.5" />
-            Open shipment
+            {translate("Open shipment")}
           </Link>
         ) : (
-          <DataTablePlaceholder text="Pending" />
+          <DataTablePlaceholder text={translate("Pending")} />
         ),
       size: 180,
       meta: {
@@ -115,7 +116,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         const totalCount = row.original.mappingSnapshot.length;
 
         if (totalCount === 0) {
-          return <DataTablePlaceholder text="No requirements" />;
+          return <DataTablePlaceholder text={translate("No requirements")} />;
         }
 
         return (
@@ -123,7 +124,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
               {unresolvedCount > 0 ? `${unresolvedCount} unresolved` : "Resolved"}
             </Badge>
-            <Badge variant="secondary">{totalCount} total</Badge>
+            <Badge variant="secondary">{translate("{0} total", totalCount)}</Badge>
           </div>
         );
       },

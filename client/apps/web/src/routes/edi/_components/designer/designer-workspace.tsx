@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { ArchiveIcon, Layers3Icon } from "lucide-react";
 import { lazy, Suspense } from "react";
@@ -12,6 +13,8 @@ function DesignerLoadingBlock() {
 }
 
 export function DesignerWorkspace() {
+  const t = useT();
+
   const [{ designerTab }, setDesignerUrlState] = useEDIDesignerUrlState();
 
   return (
@@ -23,11 +26,11 @@ export function DesignerWorkspace() {
       <TabsList variant="underline" className="border-border w-full justify-start border-b px-1">
         <TabsTrigger value="templates" className="max-w-34">
           <Layers3Icon data-icon="inline-start" />
-          Templates
+          {t("Templates")}
         </TabsTrigger>
         <TabsTrigger value="documents" className="max-w-52">
           <ArchiveIcon data-icon="inline-start" />
-          Document Preview & Archive
+          {t("Document Preview & Archive")}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="templates" className="m-0 min-h-0 overflow-hidden px-3 pt-3">

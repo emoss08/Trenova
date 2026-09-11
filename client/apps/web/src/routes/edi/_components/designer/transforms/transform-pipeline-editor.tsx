@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import type {
   EDITemplateElement,
@@ -32,6 +33,8 @@ export function TransformPipelineEditor({
   disabled: boolean;
   onChange: (patch: Partial<EDITemplateElement>) => void;
 }) {
+  const t = useT();
+
   const baseSource = element.baseSource ?? { source: "fieldPath" as const, fieldPath: "" };
   const updateBase = (patch: Partial<EDITemplateElementBaseSource>) =>
     onChange({ baseSource: { ...baseSource, ...patch } });
@@ -41,10 +44,10 @@ export function TransformPipelineEditor({
     <div className="space-y-3 rounded-md border p-2">
       <div className="flex items-center gap-2 text-xs font-semibold">
         <ShuffleIcon className="size-4" />
-        Transform Pipeline
+        {t("Transform Pipeline")}
       </div>
       <ControlledSelectField
-        label="Base Source"
+        label={t("Base Source")}
         value={baseSource.source}
         onValueChange={(source) =>
           updateBase({ source: source as EDITemplateElementBaseSource["source"] })
@@ -83,14 +86,14 @@ export function TransformPipelineEditor({
         ))}
       </div>
       <ControlledSelectField
-        label="Add Operation"
+        label={t("Add Operation")}
         value=""
         onValueChange={(operation) => {
           if (!operation) return;
           updatePipeline([...element.transformPipeline, createTransformStep(operation)]);
         }}
         disabled={disabled}
-        placeholder="Select operation"
+        placeholder={t("Select operation")}
         options={transformOperationOptions}
       />
     </div>
@@ -106,10 +109,12 @@ function BaseSourceValueEditor({
   disabled: boolean;
   onChange: (patch: Partial<EDITemplateElementBaseSource>) => void;
 }) {
+  const t = useT();
+
   if (source.source === "partnerSetting") {
     return (
       <PathReferenceField
-        label="Base Partner Setting"
+        label={t("Base Partner Setting")}
         value={source.partnerSettingPath ?? ""}
         onChange={(partnerSettingPath) => onChange({ partnerSettingPath })}
         disabled={disabled}
@@ -120,7 +125,7 @@ function BaseSourceValueEditor({
   if (source.source === "fieldPath" || source.source === "repeat" || source.source === "mapping") {
     return (
       <PathReferenceField
-        label="Base Path"
+        label={t("Base Path")}
         value={source.fieldPath ?? source.repeatPath ?? source.mappingSourcePath ?? ""}
         onChange={(value) => {
           if (source.source === "repeat") onChange({ repeatPath: value });
@@ -135,7 +140,7 @@ function BaseSourceValueEditor({
   if (source.source === "runtime") {
     return (
       <InputBlock
-        label="Base Runtime Key"
+        label={t("Base Runtime Key")}
         value={source.runtimeKey ?? ""}
         onChange={(runtimeKey) => onChange({ runtimeKey })}
         disabled={disabled}
@@ -144,7 +149,7 @@ function BaseSourceValueEditor({
   }
   return (
     <InputBlock
-      label="Base Value"
+      label={t("Base Value")}
       value={source.value ?? ""}
       onChange={(value) => onChange({ value })}
       disabled={disabled}
@@ -167,6 +172,8 @@ function TransformStepEditor({
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const definition = getTransformOperationDefinition(step.operation);
   const setArg = (key: string, value: unknown) =>
     onChange({ ...step, arguments: { ...step.arguments, [key]: value } });
@@ -187,7 +194,7 @@ function TransformStepEditor({
             disabled={disabled}
             onClick={() => onMove(-1)}
           >
-            Up
+            {t("Up")}
           </Button>
           <Button
             type="button"
@@ -196,7 +203,7 @@ function TransformStepEditor({
             disabled={disabled}
             onClick={() => onMove(1)}
           >
-            Down
+            {t("Down")}
           </Button>
           <Button type="button" variant="ghost" size="icon" disabled={disabled} onClick={onRemove}>
             <Trash2Icon className="size-4" />

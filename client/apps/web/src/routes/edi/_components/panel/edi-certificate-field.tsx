@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -31,6 +32,8 @@ export function EDICertificateField({
   label,
   description,
 }: EDICertificateFieldProps) {
+  const t = useT();
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { field } = useController({ control, name });
   const rawValue = useWatch({ control, name });
@@ -52,7 +55,7 @@ export function EDICertificateField({
       const contents = await file.text();
       field.onChange(contents.trim());
     } catch {
-      toast.error("The selected certificate file could not be read");
+      toast.error(t("The selected certificate file could not be read"));
     }
   };
 
@@ -63,7 +66,7 @@ export function EDICertificateField({
         name={name}
         label={label}
         description={description}
-        placeholder="-----BEGIN CERTIFICATE-----"
+        placeholder={t("-----BEGIN CERTIFICATE-----")}
       />
       <div className="flex items-start justify-between gap-2">
         <CertificateSummaryLine hasValue={debouncedValue.length > 0} inspection={inspection} />
@@ -75,7 +78,7 @@ export function EDICertificateField({
           onClick={() => fileInputRef.current?.click()}
         >
           <UploadIcon className="size-3.5" />
-          Upload
+          {t("Upload")}
         </Button>
         <input
           ref={fileInputRef}
@@ -99,20 +102,22 @@ function CertificateSummaryLine({
   hasValue: boolean;
   inspection: UseQueryResult<EDICertificateSummary, Error>;
 }) {
+  const t = useT();
+
   if (!hasValue) {
     return (
       <p className="text-muted-foreground text-xs">
-        Paste a PEM certificate or upload a .pem/.crt file.
+        {t("Paste a PEM certificate or upload a .pem/.crt file.")}
       </p>
     );
   }
   if (inspection.isPending) {
-    return <p className="text-muted-foreground text-xs">Inspecting certificate…</p>;
+    return <p className="text-muted-foreground text-xs">{t("Inspecting certificate…")}</p>;
   }
   if (inspection.isError || !inspection.data) {
     return (
       <p className="text-xs text-red-600 dark:text-red-400">
-        The value is not a valid PEM certificate.
+        {t("The value is not a valid PEM certificate.")}
       </p>
     );
   }
@@ -138,7 +143,7 @@ function CertificateSummaryLine({
         className="text-2xs text-muted-foreground truncate font-mono"
         title={`SHA-256 ${summary.sha256Fingerprint}`}
       >
-        SHA-256 {summary.sha256Fingerprint}
+        {t("SHA-256 {0}", summary.sha256Fingerprint)}
       </p>
     </div>
   );

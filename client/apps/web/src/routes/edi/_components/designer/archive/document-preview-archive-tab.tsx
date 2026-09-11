@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ControlledEDIDocumentProfileAutocompleteField,
   ControlledEDIPartnerAutocompleteField,
@@ -117,6 +118,8 @@ const defaultProfileDraft: UpsertEDIPartnerDocumentProfileRequest = {
 };
 
 export function DocumentPreviewArchiveTab() {
+  const t = useT();
+
   const [
     [
       {
@@ -236,25 +239,25 @@ export function DocumentPreviewArchiveTab() {
 
   const saveProfileMutation = useSaveEDIDocumentProfileMutation({
     onSuccess: async (profile) => {
-      toast.success("Document profile saved");
+      toast.success(t("Document profile saved"));
       setProfileId(profile.id);
       setSelectedProfile(profile);
       await invalidateDocumentProfiles(profile);
     },
-    onError: () => toast.error("Failed to save document profile"),
+    onError: () => toast.error(t("Failed to save document profile")),
   });
 
   const previewMutation = usePreviewEDIDocumentMutation({
-    onError: () => toast.error("Failed to preview EDI document"),
+    onError: () => toast.error(t("Failed to preview EDI document")),
   });
 
   const generateMutation = useGenerateEDIDocumentMutation({
     onSuccess: async (message) => {
-      toast.success("EDI message generated and archived");
+      toast.success(t("EDI message generated and archived"));
       void setInspectorMessageId(message.id);
       await invalidateMessageArchive();
     },
-    onError: () => toast.error("Failed to generate EDI message"),
+    onError: () => toast.error(t("Failed to generate EDI message")),
   });
 
   const setSourceValue = (field: EDIDocumentSourceField, value: string) => {
@@ -264,12 +267,12 @@ export function DocumentPreviewArchiveTab() {
   return (
     <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] gap-3 overflow-hidden">
       <aside className="bg-background flex min-h-0 flex-col overflow-hidden rounded-md border">
-        <PanelHeader icon={<ShieldCheckIcon />} title="Document Profile" />
+        <PanelHeader icon={<ShieldCheckIcon />} title={t("Document Profile")} />
         <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
           <div className="flex flex-col gap-3 p-3">
             <ControlledEDIPartnerAutocompleteField
               value={partnerId}
-              placeholder="Select a partner..."
+              placeholder={t("Select a partner...")}
               onValueChange={(nextPartnerId) => {
                 setPartnerId(nextPartnerId);
                 setProfileId("");
@@ -305,10 +308,10 @@ export function DocumentPreviewArchiveTab() {
               direction={archiveDirection}
               disabled={!partnerId}
               placeholder={partnerId ? "Select document profile" : "Select a partner first."}
-              noResultsMessage="No document profiles match this partner and document context."
+              noResultsMessage={t("No document profiles match this partner and document context.")}
             />
             <InputBlock
-              label="Profile Name"
+              label={t("Profile Name")}
               value={profileDraft.name}
               onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
             />
@@ -333,14 +336,14 @@ export function DocumentPreviewArchiveTab() {
             />
             <div className="grid grid-cols-2 gap-2">
               <InputBlock
-                label="Version Override"
+                label={t("Version Override")}
                 value={profileDraft.x12VersionOverride ?? ""}
                 onChange={(x12VersionOverride) =>
                   setProfileDraft((current) => ({ ...current, x12VersionOverride }))
                 }
               />
               <InputBlock
-                label="Group"
+                label={t("Group")}
                 value={profileDraft.functionalGroupId}
                 onChange={(functionalGroupId) =>
                   setProfileDraft((current) => ({ ...current, functionalGroupId }))
@@ -348,7 +351,7 @@ export function DocumentPreviewArchiveTab() {
               />
             </div>
             <ControlledSelectField
-              label="Status"
+              label={t("Status")}
               value={profileDraft.status}
               onValueChange={(status) =>
                 setProfileDraft((current) => ({
@@ -360,7 +363,7 @@ export function DocumentPreviewArchiveTab() {
               clearable={false}
             />
             <ControlledSelectField
-              label="Validation"
+              label={t("Validation")}
               value={profileDraft.validationMode}
               onValueChange={(validationMode) =>
                 setProfileDraft((current) => ({
@@ -383,8 +386,8 @@ export function DocumentPreviewArchiveTab() {
               />
             )}
             <TextareaBlock
-              label="Partner Settings"
-              description="Raw partner settings for advanced profile configuration."
+              label={t("Partner Settings")}
+              description={t("Raw partner settings for advanced profile configuration.")}
               value={rawPartnerSettings}
               onChange={setRawPartnerSettings}
             />
@@ -405,7 +408,7 @@ export function DocumentPreviewArchiveTab() {
               disabled={!partnerId}
             >
               <ShieldCheckIcon className="size-4" />
-              Save Profile
+              {t("Save Profile")}
             </Button>
           </div>
         </ScrollArea>
@@ -423,11 +426,11 @@ export function DocumentPreviewArchiveTab() {
               >
                 <TabsTrigger value="preview">
                   <FileCode2Icon data-icon="inline-start" />
-                  Preview
+                  {t("Preview")}
                 </TabsTrigger>
                 <TabsTrigger value="archive">
                   <DatabaseIcon data-icon="inline-start" />
-                  Archive
+                  {t("Archive")}
                 </TabsTrigger>
               </TabsList>
               <div className="text-muted-foreground min-w-0 truncate text-xs">
@@ -464,7 +467,7 @@ export function DocumentPreviewArchiveTab() {
                   disabled={(!profileId && !partnerId) || !hasSourceValue}
                 >
                   <RefreshCwIcon className="size-4" />
-                  Preview provisional controls
+                  {t("Preview provisional controls")}
                 </Button>
                 <Button
                   type="button"
@@ -487,7 +490,7 @@ export function DocumentPreviewArchiveTab() {
                   disabled={!profileId || !hasSourceValue}
                 >
                   <PlayIcon className="size-4" />
-                  Generate archive message
+                  {t("Generate archive message")}
                 </Button>
               </div>
             </div>
@@ -564,6 +567,8 @@ function ServiceFailure214SettingsEditor({
   rawSettings: string;
   onChange: (value: string) => void;
 }) {
+  const t = useT();
+
   const root = parseRawSettings(rawSettings);
   const settings = serviceFailure214Settings(root);
   const updateSettings = (patch: Record<string, unknown>) => {
@@ -584,7 +589,7 @@ function ServiceFailure214SettingsEditor({
 
   return (
     <div className="space-y-3 rounded-md border p-3">
-      <div className="text-muted-foreground text-xs font-medium">Service Failure 214</div>
+      <div className="text-muted-foreground text-xs font-medium">{t("Service Failure 214")}</div>
       <div className="grid grid-cols-2 gap-2">
         {serviceFailure214BooleanFields.map((field) => (
           <label
@@ -601,18 +606,18 @@ function ServiceFailure214SettingsEditor({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <InputBlock
-          label="Status Code"
+          label={t("Status Code")}
           value={settingString(settings.statusCode)}
           onChange={(statusCode) => updateSettings({ statusCode: statusCode.trim().toUpperCase() })}
         />
         <InputBlock
-          label="Time Code"
+          label={t("Time Code")}
           value={settingString(settings.timeCode)}
           onChange={(timeCode) => updateSettings({ timeCode: timeCode.trim().toUpperCase() })}
         />
       </div>
       <InputBlock
-        label="Accepted Reason Codes"
+        label={t("Accepted Reason Codes")}
         value={settingStringArray(settings.acceptedReasonCodes).join(", ")}
         onChange={(value) =>
           updateSettings({
@@ -697,6 +702,8 @@ function MessageArchive({
   onFiltersChange: (patch: Partial<MessageArchiveFilters>) => void;
   onOpenMessage: (messageId: string) => void;
 }) {
+  const t = useT();
+
   const { copy } = useCopyToClipboard();
   const transactionSetFilterOptions = useEDITransactionSetOptions(transactionSetOptions);
   const copyControlNumbers = (message: EDIMessage) => {
@@ -709,76 +716,76 @@ function MessageArchive({
         <ControlledEDIPartnerAutocompleteField
           value={filters.partnerId}
           onValueChange={(partnerId) => onFiltersChange({ partnerId })}
-          placeholder="All partners"
+          placeholder={t("All partners")}
         />
         <ControlledSelectField
-          label="Transaction"
+          label={t("Transaction")}
           value={filters.transactionSet}
           onValueChange={(transactionSet) => onFiltersChange({ transactionSet })}
           options={transactionSetFilterOptions}
-          placeholder="All sets"
+          placeholder={t("All sets")}
         />
         <ControlledSelectField
-          label="Direction"
+          label={t("Direction")}
           value={filters.direction}
           onValueChange={(direction) => onFiltersChange({ direction })}
           options={documentDirectionOptions}
-          placeholder="All directions"
+          placeholder={t("All directions")}
         />
         <ControlledSelectField
-          label="Status"
+          label={t("Status")}
           value={filters.status}
           onValueChange={(status) => onFiltersChange({ status })}
           options={messageStatusOptions}
-          placeholder="All statuses"
+          placeholder={t("All statuses")}
         />
         <InputBlock
-          label="Search"
+          label={t("Search")}
           value={filters.query}
           onChange={(query) => onFiltersChange({ query })}
-          placeholder="Message, shipment, transfer, ISA, GS, ST"
+          placeholder={t("Message, shipment, transfer, ISA, GS, ST")}
         />
         <InputBlock
-          label="Generated From"
+          label={t("Generated From")}
           value={filters.generatedFrom}
           onChange={(generatedFrom) => onFiltersChange({ generatedFrom })}
-          placeholder="YYYY-MM-DD"
+          placeholder={t("YYYY-MM-DD")}
         />
         <InputBlock
-          label="Generated To"
+          label={t("Generated To")}
           value={filters.generatedTo}
           onChange={(generatedTo) => onFiltersChange({ generatedTo })}
-          placeholder="YYYY-MM-DD"
+          placeholder={t("YYYY-MM-DD")}
         />
       </div>
       <ScrollArea className="min-h-0" viewportClassName="min-h-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-36">Archived At</TableHead>
-              <TableHead className="min-w-48">Partner</TableHead>
-              <TableHead>Set</TableHead>
-              <TableHead>Direction</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Version</TableHead>
-              <TableHead>Control Numbers</TableHead>
-              <TableHead>Shipment</TableHead>
-              <TableHead>Transfer</TableHead>
-              <TableHead>Diagnostics</TableHead>
-              <TableHead className="w-36">Actions</TableHead>
+              <TableHead className="min-w-36">{t("Archived At")}</TableHead>
+              <TableHead className="min-w-48">{t("Partner")}</TableHead>
+              <TableHead>{t("Set")}</TableHead>
+              <TableHead>{t("Direction")}</TableHead>
+              <TableHead>{t("Status")}</TableHead>
+              <TableHead>{t("Version")}</TableHead>
+              <TableHead>{t("Control Numbers")}</TableHead>
+              <TableHead>{t("Shipment")}</TableHead>
+              <TableHead>{t("Transfer")}</TableHead>
+              <TableHead>{t("Diagnostics")}</TableHead>
+              <TableHead className="w-36">{t("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={11} className="text-muted-foreground h-24 text-center">
-                  Loading archive messages.
+                  {t("Loading archive messages.")}
                 </TableCell>
               </TableRow>
             ) : messages.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} className="text-muted-foreground h-24 text-center">
-                  No archived generated messages match the current filters.
+                  {t("No archived generated messages match the current filters.")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -805,18 +812,18 @@ function MessageArchive({
                     </Badge>
                     {message.deliveryStatus && (
                       <div className="text-2xs text-muted-foreground mt-1">
-                        Delivery {message.deliveryStatus}
+                        {t("Delivery {0}", message.deliveryStatus)}
                       </div>
                     )}
                     {message.ackStatus && (
-                      <div className="text-2xs text-muted-foreground">ACK {message.ackStatus}</div>
+                      <div className="text-2xs text-muted-foreground">{t("ACK {0}", message.ackStatus)}</div>
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-xs">{message.x12Version}</TableCell>
                   <TableCell className="font-mono text-xs">
-                    <div>ISA {message.interchangeControlNumber}</div>
-                    <div>GS {message.groupControlNumber}</div>
-                    <div>ST {message.transactionControlNumber}</div>
+                    <div>{t("ISA {0}", message.interchangeControlNumber)}</div>
+                    <div>{t("GS {0}", message.groupControlNumber)}</div>
+                    <div>{t("ST {0}", message.transactionControlNumber)}</div>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{message.shipmentId ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs">{message.transferId ?? "-"}</TableCell>
@@ -831,7 +838,7 @@ function MessageArchive({
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        title="Open detail"
+                        title={t("Open detail")}
                         onClick={() => onOpenMessage(message.id)}
                       >
                         <EyeIcon className="size-4" />
@@ -840,7 +847,7 @@ function MessageArchive({
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        title="Copy control numbers"
+                        title={t("Copy control numbers")}
                         onClick={() => copyControlNumbers(message)}
                       >
                         <CopyIcon className="size-4" />
@@ -849,7 +856,7 @@ function MessageArchive({
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        title="Copy raw X12"
+                        title={t("Copy raw X12")}
                         disabled={!message.rawX12}
                         onClick={() => void copy(message.rawX12, { withToast: true })}
                       >
@@ -859,7 +866,7 @@ function MessageArchive({
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        title="Download raw X12"
+                        title={t("Download raw X12")}
                         disabled={!message.rawX12}
                         onClick={() =>
                           downloadTextFile(buildX12Filename(message), message.rawX12, "text/plain")

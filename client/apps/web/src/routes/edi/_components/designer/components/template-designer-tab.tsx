@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -92,6 +93,8 @@ function TemplateDesignerSelectionSync() {
 }
 
 function TemplateDesignerHeader() {
+  const t = useT();
+
   const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
   const { selectedTemplate, selectedVersion } = useSelectedTemplateDesignerData();
   const metadataDraft = useTemplateDesignerStore((state) => state.metadataDraft);
@@ -107,31 +110,31 @@ function TemplateDesignerHeader() {
 
   const createDraftMutation = useCreateEDITemplateDraftMutation({
     onSuccess: async (version) => {
-      toast.success("Draft version created");
+      toast.success(t("Draft version created"));
       resetDraftState();
       patchTemplateUrlState({ versionId: version.id });
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Failed to create draft version"),
+    onError: () => toast.error(t("Failed to create draft version")),
   });
 
   const certifyMutation = useValidateAndCertifyEDITemplateMutation({
     onSuccess: async ({ validation }) => {
       setDiagnostics(validation.diagnostics);
-      toast.success("Template version certified");
+      toast.success(t("Template version certified"));
       clearDirtyState();
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Certification requires zero validation errors"),
+    onError: () => toast.error(t("Certification requires zero validation errors")),
   });
 
   const activateMutation = useActivateEDITemplateMutation({
     onSuccess: async () => {
-      toast.success("Template version activated");
+      toast.success(t("Template version activated"));
       clearDirtyState();
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Only certified versions can be activated"),
+    onError: () => toast.error(t("Only certified versions can be activated")),
   });
 
   return (
@@ -142,8 +145,8 @@ function TemplateDesignerHeader() {
             {selectedTemplate?.name ?? "No template selected"}
           </span>
           {selectedVersion ? <VersionStatusBadge version={selectedVersion} /> : null}
-          {hasUnsavedChanges && <Badge variant="warning">Unsaved</Badge>}
-          {!isEditable && selectedVersion ? <Badge variant="outline">Read-only</Badge> : null}
+          {hasUnsavedChanges && <Badge variant="warning">{t("Unsaved")}</Badge>}
+          {!isEditable && selectedVersion ? <Badge variant="outline">{t("Read-only")}</Badge> : null}
         </div>
         <div className="text-muted-foreground text-xs">
           {selectedVersion
@@ -168,7 +171,7 @@ function TemplateDesignerHeader() {
           disabled={!selectedTemplateId || !selectedVersion || selectedVersion.status === "Draft"}
         >
           <CopyPlusIcon className="size-4" />
-          New Draft
+          {t("New Draft")}
         </Button>
         <Button
           type="button"
@@ -178,7 +181,7 @@ function TemplateDesignerHeader() {
           disabled={!canValidate}
         >
           <ListChecksIcon className="size-4" />
-          Validate
+          {t("Validate")}
         </Button>
         <Button
           type="button"
@@ -194,7 +197,7 @@ function TemplateDesignerHeader() {
           disabled={!isEditable || hasUnsavedChanges}
         >
           <ClipboardCheckIcon className="size-4" />
-          Certify
+          {t("Certify")}
         </Button>
         <Button
           type="button"
@@ -209,7 +212,7 @@ function TemplateDesignerHeader() {
           disabled={selectedVersion?.status !== "Certified"}
         >
           <CheckCircle2Icon className="size-4" />
-          Activate
+          {t("Activate")}
         </Button>
       </div>
     </div>
@@ -255,6 +258,8 @@ function TemplateDesignerEditor() {
 }
 
 function TemplateDesignerTabBar() {
+  const t = useT();
+
   const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
   const { selectedVersion } = useSelectedTemplateDesignerData();
   const metadataDraft = useTemplateDesignerStore((state) => state.metadataDraft);
@@ -268,29 +273,29 @@ function TemplateDesignerTabBar() {
 
   const saveMetadataMutation = useSaveEDITemplateMetadataMutation({
     onSuccess: async () => {
-      toast.success("Version metadata saved");
+      toast.success(t("Version metadata saved"));
       clearMetadataDirty();
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Failed to save version metadata"),
+    onError: () => toast.error(t("Failed to save version metadata")),
   });
 
   const saveSegmentsMutation = useSaveEDITemplateSegmentsMutation({
     onSuccess: async () => {
-      toast.success("Draft segments saved");
+      toast.success(t("Draft segments saved"));
       clearSegmentsDirty();
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Failed to save draft segments"),
+    onError: () => toast.error(t("Failed to save draft segments")),
   });
 
   return (
     <div className="bg-sidebar flex flex-wrap items-center justify-between gap-2 border-b px-1">
       <TabsList variant="underline">
-        <TabsTrigger value="elements">Elements</TabsTrigger>
-        <TabsTrigger value="scripts">Scripts</TabsTrigger>
-        <TabsTrigger value="validation">Validation</TabsTrigger>
-        <TabsTrigger value="preview">Preview</TabsTrigger>
+        <TabsTrigger value="elements">{t("Elements")}</TabsTrigger>
+        <TabsTrigger value="scripts">{t("Scripts")}</TabsTrigger>
+        <TabsTrigger value="validation">{t("Validation")}</TabsTrigger>
+        <TabsTrigger value="preview">{t("Preview")}</TabsTrigger>
       </TabsList>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -313,7 +318,7 @@ function TemplateDesignerTabBar() {
           disabled={!isEditable || !metadataDirty}
         >
           <SaveIcon className="size-4" />
-          Save Metadata
+          {t("Save Metadata")}
         </Button>
         <Button
           type="button"
@@ -332,7 +337,7 @@ function TemplateDesignerTabBar() {
           disabled={!isEditable || !segmentsDirty}
         >
           <SaveIcon className="size-4" />
-          Save Draft
+          {t("Save Draft")}
         </Button>
       </div>
     </div>
@@ -340,6 +345,8 @@ function TemplateDesignerTabBar() {
 }
 
 function TemplateDesignerFooter() {
+  const t = useT();
+
   const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
   const { selectedVersion } = useSelectedTemplateDesignerData();
   const clearDirtyState = useTemplateDesignerStore((state) => state.clearDirtyState);
@@ -347,18 +354,17 @@ function TemplateDesignerFooter() {
 
   const archiveMutation = useArchiveEDITemplateMutation({
     onSuccess: async () => {
-      toast.success("Template version archived");
+      toast.success(t("Template version archived"));
       clearDirtyState();
       await invalidateTemplateQueries();
     },
-    onError: () => toast.error("Failed to archive template version"),
+    onError: () => toast.error(t("Failed to archive template version")),
   });
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2">
       <div className="text-muted-foreground text-xs">
-        Draft changes are explicit. Segment, element, and script edits are not sent until Save Draft
-        is clicked.
+        {t("Draft changes are explicit. Segment, element, and script edits are not sent until Save Draft is clicked.")}
       </div>
       <Button
         type="button"
@@ -377,19 +383,21 @@ function TemplateDesignerFooter() {
         }
       >
         <ArchiveIcon className="size-4" />
-        Archive Version
+        {t("Archive Version")}
       </Button>
     </div>
   );
 }
 
 function TemplateDesignerDiagnosticsAside() {
+  const t = useT();
+
   const diagnostics = useTemplateDesignerStore((state) => state.diagnostics);
   const selectDiagnostic = useSelectDiagnostic();
 
   return (
     <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border max-xl:hidden">
-      <PanelHeader icon={<AlertTriangleIcon />} title="Diagnostics" />
+      <PanelHeader icon={<AlertTriangleIcon />} title={t("Diagnostics")} />
       <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
         <DiagnosticsList diagnostics={diagnostics} onSelect={selectDiagnostic} />
       </ScrollArea>

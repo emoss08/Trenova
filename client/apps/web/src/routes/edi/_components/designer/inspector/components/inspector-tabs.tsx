@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import type { EDIX12Inspection } from "@trenova/shared/types/edi";
@@ -42,6 +43,8 @@ export default function InspectorTabs({
   onTabChange: (tab: InspectorTab) => void;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
+  const t = useT();
+
   const countComparison = inspection.transactions.find(
     (transaction) =>
       transaction.expectedSegments > 0 &&
@@ -67,22 +70,21 @@ export default function InspectorTabs({
           variant="underline"
           className={`grid w-max ${tabGridClass} border-border border-b`}
         >
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="controls">Controls</TabsTrigger>
-          <TabsTrigger value="raw">Raw</TabsTrigger>
-          <TabsTrigger value="formatted">Formatted</TabsTrigger>
-          <TabsTrigger value="segments">Segments</TabsTrigger>
-          <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
-          {context.payload ? <TabsTrigger value="payload">Payload</TabsTrigger> : null}
-          {context.provenanceRows ? <TabsTrigger value="provenance">Provenance</TabsTrigger> : null}
+          <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
+          <TabsTrigger value="controls">{t("Controls")}</TabsTrigger>
+          <TabsTrigger value="raw">{t("Raw")}</TabsTrigger>
+          <TabsTrigger value="formatted">{t("Formatted")}</TabsTrigger>
+          <TabsTrigger value="segments">{t("Segments")}</TabsTrigger>
+          <TabsTrigger value="diagnostics">{t("Diagnostics")}</TabsTrigger>
+          {context.payload ? <TabsTrigger value="payload">{t("Payload")}</TabsTrigger> : null}
+          {context.provenanceRows ? <TabsTrigger value="provenance">{t("Provenance")}</TabsTrigger> : null}
         </TabsList>
       </div>
       <div className="min-h-0 overflow-auto p-3">
         {countComparison ? (
           <Alert variant="warning" className="mb-3">
             <AlertDescription>
-              SE01 reports {countComparison.expectedSegments} segments, but the transaction contains{" "}
-              {countComparison.actualSegments}.
+              {t("SE01 reports {0} segments, but the transaction contains {1}.", countComparison.expectedSegments, countComparison.actualSegments)}
             </AlertDescription>
           </Alert>
         ) : null}

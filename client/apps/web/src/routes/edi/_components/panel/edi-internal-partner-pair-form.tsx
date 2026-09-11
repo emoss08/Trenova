@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { OrganizationAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -19,6 +20,8 @@ export function InternalPartnerPairForm({
   onSubmit,
   onTargetOrganizationChange,
 }: InternalPartnerPairFormProps) {
+  const t = useT();
+
   const { control, handleSubmit } = form;
 
   return (
@@ -31,17 +34,17 @@ export function InternalPartnerPairForm({
       }}
     >
       <FormSection
-        title="Organization Pairing"
-        description="Choose the organization to connect with and confirm the reciprocal partner records that will be created."
+        title={t("Organization Pairing")}
+        description={t("Choose the organization to connect with and confirm the reciprocal partner records that will be created.")}
       >
         <FormGroup cols={2} className="gap-x-5 gap-y-3">
           <FormControl cols="full">
             <OrganizationAutocompleteField
               control={control}
               name="targetOrganizationId"
-              label="Target Organization"
-              placeholder="Select organization"
-              description="Organization that will receive the connection request. The current organization is excluded from this list."
+              label={t("Target Organization")}
+              placeholder={t("Select organization")}
+              description={t("Organization that will receive the connection request. The current organization is excluded from this list.")}
               rules={{ required: true }}
               extraSearchParams={{
                 scope: "business-unit",
@@ -51,14 +54,14 @@ export function InternalPartnerPairForm({
             />
           </FormControl>
           <PartnerSideFields
-            title="Current Organization View"
-            description="Partner record created in your current organization to represent the selected organization."
+            title={t("Current Organization View")}
+            description={t("Partner record created in your current organization to represent the selected organization.")}
             prefix="source"
             control={control}
           />
           <PartnerSideFields
-            title="Target Organization View"
-            description="Partner record created in the selected organization to represent your current organization."
+            title={t("Target Organization View")}
+            description={t("Partner record created in the selected organization to represent your current organization.")}
             prefix="target"
             control={control}
           />
@@ -79,6 +82,8 @@ function PartnerSideFields({
   prefix: "source" | "target";
   control: Control<CreateInternalPartnerPairFormValues>;
 }) {
+  const t = useT();
+
   const codeName = `${prefix}Code` as const;
   const partnerName = `${prefix}Name` as const;
   const contactName = `${prefix}ContactName` as const;
@@ -98,9 +103,9 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={codeName}
-            label="Partner Code"
-            placeholder="Partner code"
-            description="Stable code used to identify this organization in internal EDI routing and connection records."
+            label={t("Partner Code")}
+            placeholder={t("Partner code")}
+            description={t("Stable code used to identify this organization in internal EDI routing and connection records.")}
             rules={{ required: true }}
           />
         </FormControl>
@@ -108,9 +113,9 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={partnerName}
-            label="Partner Name"
-            placeholder="Partner name"
-            description="Display name shown on the reciprocal partner record after the connection is accepted."
+            label={t("Partner Name")}
+            placeholder={t("Partner name")}
+            description={t("Display name shown on the reciprocal partner record after the connection is accepted.")}
             rules={{ required: true }}
           />
         </FormControl>
@@ -118,35 +123,35 @@ function PartnerSideFields({
           <InputField
             control={control}
             name={contactName}
-            label="Contact Name"
-            placeholder="Contact name"
-            description="Operational owner for questions about this side of the internal connection."
+            label={t("Contact Name")}
+            placeholder={t("Contact name")}
+            description={t("Operational owner for questions about this side of the internal connection.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name={contactEmail}
-            label="Contact Email"
-            placeholder="ops@example.com"
-            description="Email address used for coordination if the internal connection needs attention."
+            label={t("Contact Email")}
+            placeholder={t("ops@example.com")}
+            description={t("Email address used for coordination if the internal connection needs attention.")}
           />
         </FormControl>
         <FormControl cols="full">
           <InputField
             control={control}
             name={contactPhone}
-            label="Contact Phone"
-            placeholder="Contact phone"
-            description="Phone number for urgent operational follow-up about this connection."
+            label={t("Contact Phone")}
+            placeholder={t("Contact phone")}
+            description={t("Phone number for urgent operational follow-up about this connection.")}
           />
         </FormControl>
         <FormControl>
           <SwitchField
             control={control}
             name={inboundName}
-            label="Inbound Enabled"
-            description="Allow this partner record to receive load tenders from the connected organization."
+            label={t("Inbound Enabled")}
+            description={t("Allow this partner record to receive load tenders from the connected organization.")}
             outlined
           />
         </FormControl>
@@ -154,8 +159,8 @@ function PartnerSideFields({
           <SwitchField
             control={control}
             name={outboundName}
-            label="Outbound Enabled"
-            description="Allow this partner record to send load tenders to the connected organization."
+            label={t("Outbound Enabled")}
+            description={t("Allow this partner record to send load tenders to the connected organization.")}
             outlined
           />
         </FormControl>

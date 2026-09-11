@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -22,6 +23,8 @@ export default function RawViewTab({
   selectedSegmentIndex: number;
   editorTheme: ReturnType<typeof useEditorTheme>;
 }) {
+  const t = useT();
+
   const { copy } = useCopyToClipboard();
   const [wrap, setWrap] = useState(true);
   const extensions = useMemo(
@@ -48,7 +51,7 @@ export default function RawViewTab({
             onClick={() => void copy(context.rawX12, { withToast: true })}
           >
             <CopyIcon className="size-4" />
-            Copy raw
+            {t("Copy raw")}
           </Button>
           <Button
             type="button"
@@ -56,11 +59,11 @@ export default function RawViewTab({
             onClick={() => downloadTextFile(context.rawFilename, context.rawX12, "text/plain")}
           >
             <DownloadIcon className="size-4" />
-            Download
+            {t("Download")}
           </Button>
         </div>
         <label className="text-muted-foreground flex items-center gap-2 text-xs">
-          Wrap
+          {t("Wrap")}
           <Switch checked={wrap} onCheckedChange={setWrap} />
         </label>
       </div>

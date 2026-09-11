@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 
@@ -75,10 +76,12 @@ export function DesignerAsideSkeleton() {
 }
 
 export function DesignerWorkspaceSkeleton() {
+  const t = useT();
+
   return (
     <div
       className="grid h-[calc(100vh-11rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden"
-      aria-label="Loading EDI designer workspace"
+      aria-label={t("Loading EDI designer workspace")}
     >
       <div className="bg-muted flex w-fit gap-1 rounded-md p-1">
         <Skeleton className="h-8 w-28 rounded-sm" />

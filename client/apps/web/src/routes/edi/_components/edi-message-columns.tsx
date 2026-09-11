@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import {
@@ -78,10 +79,10 @@ export function getMessageColumns(): ColumnDef<EDIMessageRow>[] {
       header: "Delivery",
       cell: ({ row }) => {
         if (row.original.direction === "Inbound") {
-          return <Badge variant="outline">Received</Badge>;
+          return <Badge variant="outline">{translate("Received")}</Badge>;
         }
         if (!row.original.deliveryStatus) {
-          return <DataTablePlaceholder text="Not queued" />;
+          return <DataTablePlaceholder text={translate("Not queued")} />;
         }
         return (
           <div className="flex items-center gap-1.5">
