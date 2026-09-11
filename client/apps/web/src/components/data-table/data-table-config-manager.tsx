@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
@@ -36,6 +37,8 @@ export default function DataTableConfigManager({
   onViewPersisted,
   onViewDeleted,
 }: DataTableConfigManagerProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const { allowed: canManageOrgDefaults } = usePermission(Resource.Organization, Operation.Update);
@@ -94,7 +97,7 @@ export default function DataTableConfigManager({
             {activeViewName && isViewDirty && (
               <span
                 className="size-1.5 shrink-0 rounded-full bg-amber-500"
-                title="This view has unsaved changes"
+                title={t("This view has unsaved changes")}
               />
             )}
           </Button>
@@ -107,7 +110,7 @@ export default function DataTableConfigManager({
               <div className="flex flex-col px-1 pb-1">
                 <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium uppercase">
                   <BookmarkIcon className="size-3" />
-                  My Views
+                  {t("My Views")}
                 </h3>
                 {myViews.map((config) => renderItem(config, true))}
               </div>
@@ -121,7 +124,7 @@ export default function DataTableConfigManager({
               >
                 <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium uppercase">
                   <UsersIcon className="size-3" />
-                  Team Views
+                  {t("Team Views")}
                 </h3>
                 {teamViews.map((config) => renderItem(config, false))}
               </div>
@@ -130,9 +133,9 @@ export default function DataTableConfigManager({
         ) : (
           <div className="flex flex-col items-center gap-1 px-2 py-6 text-center">
             <BookmarkIcon className="text-muted-foreground size-4" />
-            <p className="text-sm font-medium">No saved views</p>
+            <p className="text-sm font-medium">{t("No saved views")}</p>
             <p className="text-muted-foreground text-xs">
-              Configure filters, sorting, and columns, then save them as a reusable view.
+              {t("Configure filters, sorting, and columns, then save them as a reusable view.")}
             </p>
           </div>
         )}
@@ -146,7 +149,7 @@ export default function DataTableConfigManager({
           }}
         >
           <PlusIcon className="size-4" />
-          Save Current View
+          {t("Save Current View")}
         </Button>
       </PopoverContent>
     </Popover>

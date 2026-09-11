@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SheetTitle } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 
@@ -28,10 +29,12 @@ export function NotificationFeedSkeleton() {
  * real SheetTitle so the dialog stays labelled while the chunk loads.
  */
 export function NotificationPanelSkeleton() {
+  const t = useT();
+
   return (
     <>
       <div className="flex items-center justify-between gap-2 py-3 pr-11 pl-4">
-        <SheetTitle className="text-sm font-semibold">Notifications</SheetTitle>
+        <SheetTitle className="text-sm font-semibold">{t("Notifications")}</SheetTitle>
       </div>
       <div className="border-border flex items-center gap-3 border-b pr-3 pl-4">
         <Skeleton className="my-2 h-4 w-12 rounded" />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon, XIcon } from "lucide-react";
@@ -92,6 +93,8 @@ export function AutocompleteInputInner<TOption>({
   placeholder: string;
   isInvalid?: boolean;
 }) {
+  const t = useT();
+
   if (selectedOption) {
     return <div className="truncate">{getDisplayValue(selectedOption)}</div>;
   }
@@ -99,7 +102,7 @@ export function AutocompleteInputInner<TOption>({
   if (currentValue && isLoadingSelected) {
     return (
       <div className="truncate">
-        <span className="text-muted-foreground animate-pulse">Loading...</span>
+        <span className="text-muted-foreground animate-pulse">{t("Loading...")}</span>
       </div>
     );
   }
@@ -132,6 +135,8 @@ export function AutocompleteInputActions({
   disabled?: boolean;
   open: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="ml-auto flex items-center gap-1">
       {clearable && currentValue && !disabled && (
@@ -143,7 +148,7 @@ export function AutocompleteInputActions({
           }}
           className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
         >
-          <span className="sr-only">Clear</span>
+          <span className="sr-only">{t("Clear")}</span>
           <XIcon className="size-4" />
         </span>
       )}

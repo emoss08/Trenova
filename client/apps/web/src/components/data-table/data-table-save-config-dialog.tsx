@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -60,6 +61,8 @@ export function DataTableSaveConfigDialog({
   currentConfig,
   onSaved,
 }: DataTableSaveConfigDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const visibilityOptions = useVisibilityOptions();
 
@@ -114,7 +117,7 @@ export function DataTableSaveConfigDialog({
 
       onSaved?.(created);
 
-      toast.success("View saved", {
+      toast.success(t("View saved"), {
         description: `"${created.name}" has been saved.`,
       });
     },
@@ -137,9 +140,9 @@ export function DataTableSaveConfigDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Save View</DialogTitle>
+          <DialogTitle>{t("Save View")}</DialogTitle>
           <DialogDescription>
-            Save the current table configuration for quick access later.
+            {t("Save the current table configuration for quick access later.")}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(onSubmit)}>
@@ -148,9 +151,9 @@ export function DataTableSaveConfigDialog({
               <InputField
                 name="name"
                 control={control}
-                label="Name"
-                placeholder="e.g., Active shipments this week"
-                description="A descriptive name for this table configuration"
+                label={t("Name")}
+                placeholder={t("e.g., Active shipments this week")}
+                description={t("A descriptive name for this table configuration")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -158,9 +161,9 @@ export function DataTableSaveConfigDialog({
               <TextareaField
                 name="description"
                 control={control}
-                label="Description"
-                placeholder="The description of the table configuration."
-                description="The description of the table configuration."
+                label={t("Description")}
+                placeholder={t("The description of the table configuration.")}
+                description={t("The description of the table configuration.")}
                 rules={{ required: false }}
               />
             </FormControl>
@@ -168,9 +171,9 @@ export function DataTableSaveConfigDialog({
               <SelectField
                 name="visibility"
                 control={control}
-                label="Visibility"
-                placeholder="Select visibility"
-                description="The visibility of the table configuration."
+                label={t("Visibility")}
+                placeholder={t("Select visibility")}
+                description={t("The visibility of the table configuration.")}
                 options={visibilityOptions}
                 rules={{ required: true }}
               />
@@ -181,18 +184,18 @@ export function DataTableSaveConfigDialog({
                 position="left"
                 name="isDefault"
                 control={control}
-                label="Set as default"
-                description="When enabled, the system will automatically apply this table configuration to the table"
+                label={t("Set as default")}
+                description={t("When enabled, the system will automatically apply this table configuration to the table")}
                 rules={{ required: false }}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
-              Save View
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Saving...")}>
+              {t("Save View")}
             </Button>
           </DialogFooter>
         </Form>

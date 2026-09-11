@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -86,6 +87,8 @@ export default function NotificationPanel({
   unreadCount: number;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const [tab, setTab] = useState<NotificationState>("inbox");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -153,10 +156,10 @@ export default function NotificationPanel({
     <>
       <div className="flex items-center justify-between gap-2 py-3 pr-11 pl-4">
         <div className="flex items-center gap-2">
-          <SheetTitle className="text-sm font-semibold">Notifications</SheetTitle>
+          <SheetTitle className="text-sm font-semibold">{t("Notifications")}</SheetTitle>
           {unreadCount > 0 && (
             <Badge variant="info" className="text-2xs h-4.5 tabular-nums">
-              {unreadCount} new
+              {t("{0} new", unreadCount)}
             </Badge>
           )}
         </div>
@@ -169,7 +172,7 @@ export default function NotificationPanel({
             onClick={() => markAllRead.mutate()}
           >
             <CheckCheckIcon className="size-3" />
-            Mark all read
+            {t("Mark all read")}
           </Button>
         )}
       </div>
@@ -182,10 +185,10 @@ export default function NotificationPanel({
         >
           <TabsList variant="underline" className="py-0">
             <TabsTab value="inbox" className="h-8 px-2.5 text-xs sm:h-8 sm:text-xs">
-              Inbox
+              {t("Inbox")}
             </TabsTab>
             <TabsTab value="archived" className="h-8 px-2.5 text-xs sm:h-8 sm:text-xs">
-              Archive
+              {t("Archive")}
             </TabsTab>
           </TabsList>
         </Tabs>
@@ -206,7 +209,7 @@ export default function NotificationPanel({
                 />
               }
             >
-              Unread
+              {t("Unread")}
             </TooltipTrigger>
             <TooltipContent side="bottom">
               {unreadOnly ? "Show all notifications" : "Show unread only"}
@@ -221,9 +224,9 @@ export default function NotificationPanel({
         {isError && !isLoading && (
           <div className="flex flex-col items-center justify-center gap-3 py-16">
             <CircleAlertIcon className="text-destructive/60 size-5" />
-            <p className="text-2xs text-muted-foreground">Notifications couldn&apos;t be loaded.</p>
+            <p className="text-2xs text-muted-foreground">{t("Notifications couldn't be loaded.")}</p>
             <Button type="button" variant="outline" size="xs" onClick={() => void refetch()}>
-              Try again
+              {t("Try again")}
             </Button>
           </div>
         )}

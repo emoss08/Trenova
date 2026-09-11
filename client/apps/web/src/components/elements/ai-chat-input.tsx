@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { Loader2, Paperclip } from "lucide-react";
@@ -25,6 +26,8 @@ export function AiChatInput({
   maxRows = 6,
   className,
 }: AiChatInputProps) {
+  const t = useT();
+
   const [value, setValue] = React.useState("");
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -126,7 +129,7 @@ export function AiChatInput({
               disabled={isDisabled}
             >
               <Paperclip className="size-4" />
-              <span className="sr-only">Attach files</span>
+              <span className="sr-only">{t("Attach files")}</span>
             </button>
           </>
         )}
@@ -139,7 +142,7 @@ export function AiChatInput({
           placeholder={placeholder}
           disabled={isDisabled}
           rows={3}
-          aria-label="Chat message input"
+          aria-label={t("Chat message input")}
           className={cn(
             "placeholder:text-muted-foreground/50 flex-1 resize-none bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
             "min-h-[72px] px-3 py-2.5",
@@ -153,7 +156,7 @@ export function AiChatInput({
           disabled={!canSubmit}
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : "SEND"}
-          <span className="sr-only">Send message</span>
+          <span className="sr-only">{t("Send message")}</span>
         </button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
@@ -128,6 +129,8 @@ export function AutocompleteCommandContent<TOption>({
   listboxId: string;
   filterOption?: (option: TOption) => boolean;
 }) {
+  const t = useT();
+
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
 
@@ -264,9 +267,9 @@ export function AutocompleteCommandContent<TOption>({
       >
         {isError && (
           <div className="flex flex-col items-center gap-2 p-4">
-            <p className="text-destructive text-center text-xs">Failed to load options.</p>
+            <p className="text-destructive text-center text-xs">{t("Failed to load options.")}</p>
             <Button size="sm" variant="outline" onClick={() => refetch()}>
-              Retry
+              {t("Retry")}
             </Button>
           </div>
         )}
@@ -277,11 +280,11 @@ export function AutocompleteCommandContent<TOption>({
                 `No ${pluralize(toTitleCase(label ?? ""), options.length)} found.`}
             </CommandEmpty>
             <span className="text-2xs text-muted-foreground text-center">
-              We can&apos;t find any {label ? label.toLowerCase() : "results"} in your organization.
+              {t("We can't find any {0} in your organization.", label ? label.toLowerCase() : "results")}
             </span>
             {popoutLink && (
               <Button size="sm" onClick={(event) => openPopoutWindow(popoutLink, event)}>
-                Add New
+                {t("Add New")}
               </Button>
             )}
           </div>
@@ -308,7 +311,7 @@ export function AutocompleteCommandContent<TOption>({
             </div>
           )}
           {hasNextPage && !isFetchingNextPage && (
-            <div className="text-muted-foreground p-2 text-center text-xs">Scroll for more</div>
+            <div className="text-muted-foreground p-2 text-center text-xs">{t("Scroll for more")}</div>
           )}
         </CommandGroup>
       </CommandList>

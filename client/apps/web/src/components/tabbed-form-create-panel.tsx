@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -72,6 +73,8 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
   useDock = false,
   mutationFn,
 }: TabbedFormCreatePanelProps<T, TData>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useCreatePanelActionPreference();
   const pendingActionRef = useRef<CreatePanelSaveAction>(defaultAction);
@@ -110,7 +113,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
       return api.post<T>(url, values);
     },
     onSuccess: () => {
-      toast.success("Changes have been saved", {
+      toast.success(t("Changes have been saved"), {
         description: `${title} created successfully`,
       });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
@@ -196,7 +199,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
                   }
                 >
                   <XIcon className="size-4" />
-                  <span className="sr-only">Close panel</span>
+                  <span className="sr-only">{t("Close panel")}</span>
                 </Dialog.Close>
               </div>
             </div>
@@ -272,14 +275,14 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
             )}
           >
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <SplitButton
               options={SAVE_OPTIONS}
               selectedOption={defaultAction}
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               formId="panel-create-form"
             />
           </div>

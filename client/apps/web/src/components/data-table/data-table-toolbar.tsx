@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import {
   DropdownMenu,
@@ -115,6 +116,8 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   onDensityChange,
   exportContext,
 }: DataTableToolbarProps<TData>) {
+  const t = useT();
+
   const { canExport } = useDataTable<TData, unknown>();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -163,14 +166,14 @@ export function DataTableToolbar<TData extends Record<string, any>>({
                   <Button
                     variant="outline"
                     size="sm"
-                    aria-label="Export to CSV"
+                    aria-label={t("Export to CSV")}
                     onClick={() => setExportDialogOpen(true)}
                   >
                     <DownloadIcon className="size-4" />
                   </Button>
                 }
               />
-              <TooltipContent>Export to CSV</TooltipContent>
+              <TooltipContent>{t("Export to CSV")}</TooltipContent>
             </Tooltip>
           )}
           <Suspense fallback={<ToolbarButtonSkeleton />}>
@@ -191,14 +194,14 @@ export function DataTableToolbar<TData extends Record<string, any>>({
           {hasSingleAddRecordAction ? (
             <Button variant="default" size="sm" onClick={addRecordActions[0]?.onClick}>
               <PlusIcon className="size-3.5" />
-              Add Record
+              {t("Add Record")}
             </Button>
           ) : null}
           {hasAddRecordActions && !hasSingleAddRecordAction ? (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="default" size="sm" />}>
                 <PlusIcon className="size-3.5" />
-                Add Record
+                {t("Add Record")}
                 <ChevronDownIcon className="size-3.5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-72">

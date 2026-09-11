@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
@@ -100,6 +101,8 @@ export type ExceptionsListProps = {
  * own view, not a change to the shipment.
  */
 export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: ExceptionsListProps) {
+  const t = useT();
+
   const { data, isLoading } = useExceptionShipments("all", undefined, enabled);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -128,11 +131,11 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
     <>
       {isLoading && (
         <div className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-[10.5px]">
-          <Spinner className="size-3" /> Loading…
+          <Spinner className="size-3" /> {t("Loading…")}
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">All clear ✓</p>
+        <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">{t("All clear ✓")}</p>
       )}
       {visible.map((it, i) => {
         const Icon = KIND_ICON[it.kind];
@@ -178,7 +181,7 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
                   className="text-muted-foreground"
                   onClick={() => dismiss(it.id)}
                 >
-                  Dismiss
+                  {t("Dismiss")}
                 </Button>
               </div>
             </div>

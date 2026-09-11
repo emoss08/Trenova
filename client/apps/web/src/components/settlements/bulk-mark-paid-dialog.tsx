@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -45,6 +46,8 @@ export function BulkMarkPaidDialog({
   onOpenChange: (open: boolean) => void;
   onConfirm: (paymentMethod: string, paymentReference: string) => void;
 }) {
+  const t = useT();
+
   const [paymentMethod, setPaymentMethod] = useState(methods[0]?.value ?? "");
   const [paymentReference, setPaymentReference] = useState("");
 
@@ -61,16 +64,15 @@ export function BulkMarkPaidDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            Mark {count} settlement{count === 1 ? "" : "s"} paid
+            {t("Mark {0} settlement{1} paid", count, count === 1 ? "" : "s")}
           </DialogTitle>
           <DialogDescription>
-            Records the disbursement on every selected posted settlement. Use a batch reference
-            (e.g. the ACH file ID) so the whole run reconciles against one bank entry.
+            {t("Records the disbursement on every selected posted settlement. Use a batch reference (e.g. the ACH file ID) so the whole run reconciles against one bank entry.")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div>
-            <p className="mb-1 text-xs font-medium">Payment method</p>
+            <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
             <div className="flex gap-2">
               {methods.map((method) => (
                 <Button
@@ -85,20 +87,20 @@ export function BulkMarkPaidDialog({
             </div>
           </div>
           <div>
-            <p className="mb-1 text-xs font-medium">Batch reference</p>
+            <p className="mb-1 text-xs font-medium">{t("Batch reference")}</p>
             <Input
               value={paymentReference}
               onChange={(event) => setPaymentReference(event.target.value)}
-              placeholder="ACH file / batch ID (optional)"
+              placeholder={t("ACH file / batch ID (optional)")}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={pending} onClick={() => onConfirm(paymentMethod, paymentReference)}>
-            Mark Paid
+            {t("Mark Paid")}
           </Button>
         </DialogFooter>
       </DialogContent>

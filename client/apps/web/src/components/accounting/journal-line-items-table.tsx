@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import type { JournalEntryLine } from "@/types/journal-entry";
 
@@ -12,16 +13,18 @@ export function JournalLineItemsTable({
   totalDebit,
   totalCredit,
 }: JournalLineItemsTableProps) {
+  const t = useT();
+
   return (
     <div className="overflow-hidden rounded-md border">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-muted-foreground text-left">
           <tr>
-            <th className="px-3 py-2 text-xs font-medium">Line</th>
-            <th className="px-3 py-2 text-xs font-medium">Account</th>
-            <th className="px-3 py-2 text-xs font-medium">Description</th>
-            <th className="px-3 py-2 text-right text-xs font-medium">Debit</th>
-            <th className="px-3 py-2 text-right text-xs font-medium">Credit</th>
+            <th className="px-3 py-2 text-xs font-medium">{t("Line")}</th>
+            <th className="px-3 py-2 text-xs font-medium">{t("Account")}</th>
+            <th className="px-3 py-2 text-xs font-medium">{t("Description")}</th>
+            <th className="px-3 py-2 text-right text-xs font-medium">{t("Debit")}</th>
+            <th className="px-3 py-2 text-right text-xs font-medium">{t("Credit")}</th>
           </tr>
         </thead>
         <tbody>
@@ -55,7 +58,7 @@ export function JournalLineItemsTable({
         <tfoot className="bg-muted/30 border-t font-medium">
           <tr>
             <td colSpan={3} className="px-3 py-2 text-right text-xs">
-              Totals
+              {t("Totals")}
             </td>
             <td className="px-3 py-2 text-right">
               <AmountDisplay value={totalDebit} className="text-xs font-semibold" />

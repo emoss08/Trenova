@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BetaTag } from "@/components/beta-tag";
 import { NavItemBadge } from "@/components/navigation/nav-item-badge";
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
@@ -162,6 +163,8 @@ function ModuleSection({
 }
 
 export function BrowseSection() {
+  const t = useT();
+
   const { pathname } = useLocation();
   const modules = useFilteredNavigation();
   const adminLinks = useAccessibleAdminLinks();
@@ -202,7 +205,7 @@ export function BrowseSection() {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <SidebarSectionLabel>Browse</SidebarSectionLabel>
+      <SidebarSectionLabel>{t("Browse")}</SidebarSectionLabel>
       {modules.map((module) => {
         if (module.id === "home") {
           const Icon = module.icon;

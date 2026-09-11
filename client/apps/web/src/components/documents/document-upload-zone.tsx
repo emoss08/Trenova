@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -44,6 +45,8 @@ export const DocumentUploadZone = forwardRef<DocumentUploadZoneHandle, DocumentU
     },
     ref,
   ) {
+  const t = useT();
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -130,15 +133,15 @@ export const DocumentUploadZone = forwardRef<DocumentUploadZoneHandle, DocumentU
       >
         <div className="flex flex-col items-center gap-2">
           <Button type="button" variant="secondary" onClick={handleClick} disabled={disabled}>
-            Select files
+            {t("Select files")}
           </Button>
-          <p className="text-muted-foreground text-sm">or drag and drop them here</p>
+          <p className="text-muted-foreground text-sm">{t("or drag and drop them here")}</p>
         </div>
 
         <ul className="text-muted-foreground mt-4 space-y-1 text-xs">
-          <li>• Supported formats: PDF, images, Word, Excel, and text files</li>
-          <li>• Maximum file size: 50 MB per file</li>
-          <li>• You can upload multiple files at once</li>
+          <li>{t("• Supported formats: PDF, images, Word, Excel, and text files")}</li>
+          <li>{t("• Maximum file size: 50 MB per file")}</li>
+          <li>{t("• You can upload multiple files at once")}</li>
         </ul>
 
         <input

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,8 @@ export function CustomizeSidebarDialog({
   ghost?: boolean;
   trigger?: ReactElement;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const { data: preferences, isPlaceholderData } = useSidebarPreferences();
   const { data: options } = useSidebarCustomizationOptions(open);
@@ -54,8 +57,8 @@ export function CustomizeSidebarDialog({
           trigger ?? (
             <button
               type="button"
-              aria-label="Customize sidebar"
-              title="Customize sidebar"
+              aria-label={t("Customize sidebar")}
+              title={t("Customize sidebar")}
               className={cn(
                 "text-muted-foreground hover:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
                 ghost
@@ -70,10 +73,9 @@ export function CustomizeSidebarDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Customize sidebar</DialogTitle>
+          <DialogTitle>{t("Customize sidebar")}</DialogTitle>
           <DialogDescription>
-            Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how
-            much activity you see. Your choices follow you across devices.
+            {t("Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how much activity you see. Your choices follow you across devices.")}
           </DialogDescription>
         </DialogHeader>
         {isReady ? (

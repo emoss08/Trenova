@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   addDecimalStrings,
@@ -107,6 +108,8 @@ function NumberFieldImpl<T extends FieldValues>({
   valueType,
   ...props
 }: NumberFieldImplProps<T>) {
+  const t = useT();
+
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -198,7 +201,7 @@ function NumberFieldImpl<T extends FieldValues>({
                 <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
                   <button
                     type="button"
-                    aria-label="Increment"
+                    aria-label={t("Increment")}
                     className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => stepBy(step, max, "max")}
@@ -207,7 +210,7 @@ function NumberFieldImpl<T extends FieldValues>({
                   </button>
                   <button
                     type="button"
-                    aria-label="Decrement"
+                    aria-label={t("Decrement")}
                     className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => stepBy(-step, min, "min")}

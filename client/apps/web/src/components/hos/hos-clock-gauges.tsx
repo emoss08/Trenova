@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatClockDurationMs } from "@trenova/shared/lib/date";
@@ -56,6 +57,8 @@ export function HosClockGauge({
   strokeWidth?: number;
   className?: string;
 }) {
+  const t = useT();
+
   const clamped = Math.max(0, remainingMs);
   const tone = severity ?? hosClockSeverity(clamped);
   const limitHours = Math.round(limitMs / HOUR_MS);
@@ -87,7 +90,7 @@ export function HosClockGauge({
         </div>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        {label}: {formatClockDurationMs(clamped)} of {limitHours}h remaining
+        {t("{0}: {1} of {2}h remaining", label, formatClockDurationMs(clamped), limitHours)}
       </TooltipContent>
     </Tooltip>
   );
@@ -125,22 +128,24 @@ export function HosClockGauges({
   strokeWidth?: number;
   className?: string;
 }) {
+  const t = useT();
+
   if (!hasFeed) {
     return (
-      <p className={cn("text-muted-foreground text-[10px]", className)}>No hours-of-service feed</p>
+      <p className={cn("text-muted-foreground text-[10px]", className)}>{t("No hours-of-service feed")}</p>
     );
   }
 
   if (isStale) {
     return (
-      <p className={cn("text-warning text-[10px]", className)}>Hours-of-service data is stale</p>
+      <p className={cn("text-warning text-[10px]", className)}>{t("Hours-of-service data is stale")}</p>
     );
   }
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <HosClockGauge
-        label="Drive"
+        label={t("Drive")}
         remainingMs={driveRemainingMs}
         limitMs={driveLimitMs}
         severity={hasViolation ? "critical" : undefined}
@@ -149,7 +154,7 @@ export function HosClockGauges({
         className="flex-1"
       />
       <HosClockGauge
-        label="Shift"
+        label={t("Shift")}
         remainingMs={shiftRemainingMs}
         limitMs={shiftLimitMs}
         severity={hasViolation ? "critical" : undefined}
@@ -158,7 +163,7 @@ export function HosClockGauges({
         className="flex-1"
       />
       <HosClockGauge
-        label="Cycle"
+        label={t("Cycle")}
         remainingMs={cycleRemainingMs}
         limitMs={cycleLimitMs}
         size={size}

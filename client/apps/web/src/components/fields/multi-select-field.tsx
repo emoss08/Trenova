@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -221,6 +222,8 @@ export function MultiSelectAutocomplete<T>({
   extraSearchParams,
   nestedValues = false,
 }: BaseMultiSelectAutocompleteFieldProps<T>) {
+  const t = useT();
+
   type AsyncState = {
     options: T[];
     loading: boolean;
@@ -615,7 +618,7 @@ export function MultiSelectAutocomplete<T>({
                     {selectedOptions.length > 0 && !loading && !isLocked && (
                       <div className="flex-rowitems-center flex justify-center gap-0.5">
                         <span
-                          title="Clear all"
+                          title={t("Clear all")}
                           className="text-muted-foreground hover:bg-muted-foreground/20 hover:text-foreground mr-1 size-4 cursor-pointer items-center justify-center transition-all duration-200 ease-in-out"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -629,7 +632,7 @@ export function MultiSelectAutocomplete<T>({
                           className="bg-foreground/10 h-full min-h-4"
                         />
                         <span
-                          title="Toggle dropdown"
+                          title={t("Toggle dropdown")}
                           className="text-muted-foreground mr-0.5 size-3 cursor-pointer items-center justify-center transition-all duration-200 ease-in-out"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -717,7 +720,7 @@ export function MultiSelectAutocomplete<T>({
                     >
                       <CheckIcon className="size-4" />
                     </div>
-                    <span>(Select All)</span>
+                    <span>{t("(Select All)")}</span>
                   </CommandItem>
                 )}
                 {options.map((option) => {
@@ -747,7 +750,7 @@ export function MultiSelectAutocomplete<T>({
                 )}
                 {hasMore && !loading && (
                   <div className="text-muted-foreground p-2 text-center text-xs">
-                    Scroll for more
+                    {t("Scroll for more")}
                   </div>
                 )}
               </CommandGroup>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -36,6 +37,8 @@ export function SettlementPeriodEmpty({
   generating = false,
   className,
 }: SettlementPeriodEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={cn("flex-1 justify-center", className)}
@@ -46,7 +49,7 @@ export function SettlementPeriodEmpty({
         onGenerate ? (
           <Button variant="outline" size="sm" disabled={generating} onClick={onGenerate}>
             <Sparkles className="size-3.5" />
-            Generate settlements
+            {t("Generate settlements")}
           </Button>
         ) : null
       }

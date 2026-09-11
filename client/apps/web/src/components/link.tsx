@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,8 @@ function ExternalLinkDialog({
   onClose: () => void;
   link: string;
 }) {
+  const t = useT();
+
   const onClick = (link: string) => {
     // Navigate the user to the external link
     window.open(link, "_blank", "noopener,noreferrer");
@@ -38,15 +41,14 @@ function ExternalLinkDialog({
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
-        <AlertDialogTitle>External Link</AlertDialogTitle>
+        <AlertDialogTitle>{t("External Link")}</AlertDialogTitle>
         <AlertDialogDescription>
-          You are about to leave Trenova and visit an external website. Are you sure you want to
-          continue?
+          {t("You are about to leave Trenova and visit an external website. Are you sure you want to continue?")}
         </AlertDialogDescription>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={() => onClick(link)}>
-            Continue
+            {t("Continue")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

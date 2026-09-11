@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -202,6 +203,8 @@ export function DocumentShipmentDraftReviewDialog({
   embedded = false,
   onShipmentCreated,
 }: DocumentShipmentDraftReviewDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(shipmentCreateSchema),
@@ -252,11 +255,11 @@ export function DocumentShipmentDraftReviewDialog({
       });
 
       if (attachError) {
-        toast.warning("Shipment created, but the source document could not be attached", {
+        toast.warning(t("Shipment created, but the source document could not be attached"), {
           description: attachError.message,
         });
       } else {
-        toast.success("Shipment created from document draft");
+        toast.success(t("Shipment created from document draft"));
       }
 
       onShipmentCreated?.({
@@ -284,7 +287,7 @@ export function DocumentShipmentDraftReviewDialog({
           <div className="grid gap-4 p-4">
             <div className="rounded-lg border p-3">
               <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                Source Document
+                {t("Source Document")}
               </div>
               <div className="mt-1 text-sm font-medium">{document?.originalName ?? "Document"}</div>
               {document?.detectedKind ? (
@@ -295,35 +298,34 @@ export function DocumentShipmentDraftReviewDialog({
             </div>
             <div className="rounded-lg border p-3">
               <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                Draft Summary
+                {t("Draft Summary")}
               </div>
               <div className="mt-3 grid gap-2 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Shipper:</span>{" "}
+                  <span className="text-muted-foreground">{t("Shipper:")}</span>{" "}
                   {renderField(draft?.draftData?.fields?.shipper)}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Consignee:</span>{" "}
+                  <span className="text-muted-foreground">{t("Consignee:")}</span>{" "}
                   {renderField(draft?.draftData?.fields?.consignee)}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Reference:</span>{" "}
+                  <span className="text-muted-foreground">{t("Reference:")}</span>{" "}
                   {renderField(
                     draft?.draftData?.fields?.reference ?? draft?.draftData?.fields?.loadNumber,
                   )}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Rate:</span>{" "}
+                  <span className="text-muted-foreground">{t("Rate:")}</span>{" "}
                   {renderField(draft?.draftData?.fields?.rate)}
                 </div>
               </div>
             </div>
             {isAttached ? (
               <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
-                <div className="font-medium">This source document is already attached.</div>
+                <div className="font-medium">{t("This source document is already attached.")}</div>
                 <div className="mt-1 text-emerald-900/80">
-                  Shipment {draft?.attachedShipmentId} attached{" "}
-                  {formatUnixTimestamp(draft?.attachedAt)}.
+                  {t("Shipment {0} attached {1}.", draft?.attachedShipmentId, formatUnixTimestamp(draft?.attachedAt))}
                 </div>
                 <div className="mt-3">
                   <Button
@@ -331,7 +333,7 @@ export function DocumentShipmentDraftReviewDialog({
                     size="sm"
                     render={<Link to="/shipment-management/shipments" />}
                   >
-                    Open Shipments
+                    {t("Open Shipments")}
                   </Button>
                 </div>
               </div>
@@ -340,7 +342,7 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="rounded-lg border p-3">
                 <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <SparklesIcon className="size-3.5" />
-                  Draft Signals
+                  {t("Draft Signals")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {signals.map((signal) => (
@@ -355,7 +357,7 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="rounded-lg border border-dashed p-3">
                 <div className="text-foreground mb-2 flex items-center gap-2 text-sm font-medium">
                   <AlertCircleIcon className="size-4" />
-                  Review needed
+                  {t("Review needed")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field) => (
@@ -368,11 +370,11 @@ export function DocumentShipmentDraftReviewDialog({
             ) : null}
             <div className="rounded-lg border p-3">
               <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                Extracted Stops
+                {t("Extracted Stops")}
               </div>
               {stops.length === 0 ? (
                 <div className="text-muted-foreground mt-2 text-sm">
-                  No stops were extracted. You can still create the shipment manually.
+                  {t("No stops were extracted. You can still create the shipment manually.")}
                 </div>
               ) : (
                 <div className="mt-3 grid gap-3">
@@ -386,7 +388,7 @@ export function DocumentShipmentDraftReviewDialog({
                           {stop.role === "delivery" ? "Delivery" : "Pickup"} #{stop.sequence}
                         </div>
                         {stop.pageNumber ? (
-                          <Badge variant="outline">Page {stop.pageNumber}</Badge>
+                          <Badge variant="outline">{t("Page {0}", stop.pageNumber)}</Badge>
                         ) : null}
                       </div>
                       <div className="text-muted-foreground mt-1 text-xs">
@@ -403,8 +405,7 @@ export function DocumentShipmentDraftReviewDialog({
               )}
             </div>
             <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-              Location, customer, service type, shipment type, and formula template still need to be
-              confirmed before the shipment can be created.
+              {t("Location, customer, service type, shipment type, and formula template still need to be confirmed before the shipment can be created.")}
             </div>
           </div>
         </ScrollArea>
@@ -421,8 +422,7 @@ export function DocumentShipmentDraftReviewDialog({
                 <div className="p-6">
                   {isAttached ? (
                     <div className="text-muted-foreground mb-4 rounded-lg border border-dashed p-3 text-sm">
-                      Shipment creation from this draft is disabled because the source document has
-                      already been linked to shipment {draft?.attachedShipmentId}.
+                      {t("Shipment creation from this draft is disabled because the source document has already been linked to shipment {0}.", draft?.attachedShipmentId)}
                     </div>
                   ) : null}
                   <ShipmentForm />
@@ -454,12 +454,11 @@ export function DocumentShipmentDraftReviewDialog({
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-6xl" showCloseButton>
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <DialogTitle>Create Shipment from Document</DialogTitle>
+            <DialogTitle>{t("Create Shipment from Document")}</DialogTitle>
             {draft?.status ? <Badge variant="secondary">{draft.status}</Badge> : null}
           </div>
           <DialogDescription>
-            Review the extracted shipment draft, fill in the required shipment details, then create
-            a shipment and attach this document lineage to it.
+            {t("Review the extracted shipment draft, fill in the required shipment details, then create a shipment and attach this document lineage to it.")}
           </DialogDescription>
         </DialogHeader>
         {content}

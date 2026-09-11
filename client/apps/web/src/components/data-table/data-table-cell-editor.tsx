@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
@@ -77,6 +78,8 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
   cell,
 }: DataTableCellEditorProps<TData>) {
   "use no memo";
+  const t = useT();
+
   const variant = (cell.column.columnDef.meta?.filterType ?? "text") as FilterVariant;
   const filterOptions = cell.column.columnDef.meta?.filterOptions as SelectOption[] | undefined;
   const initialValue = cell.getValue();
@@ -94,13 +97,13 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
       try {
         await cell.commitEdit(value);
       } catch (error) {
-        toast.error("Update failed", {
+        toast.error(t("Update failed"), {
           description: error instanceof Error ? error.message : "The change could not be saved.",
         });
         setIsPending(false);
       }
     },
-    [cell, initialValue],
+    [cell, initialValue, t],
   );
 
   const handleInputKeyDown = useCallback(
@@ -171,7 +174,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
             className="h-7 w-full min-w-0 text-xs"
             aria-label={`Edit ${cell.column.id}`}
           >
-            <SelectValue placeholder="Select a value" />
+            <SelectValue placeholder={t("Select a value")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -124,6 +125,8 @@ export function TestDataEditor({
   customVariables = [],
   className,
 }: TestDataEditorProps) {
+  const t = useT();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const known = useKnownIdentifiers(schemaId, customVariables);
   const groups = useMemo(() => groupByCategory(known.variables), [known.variables]);
@@ -159,9 +162,9 @@ export function TestDataEditor({
       >
         <div className="flex items-center gap-2">
           <Database className="text-muted-foreground size-3.5" />
-          <span className="text-xs font-medium">Sample Data</span>
+          <span className="text-xs font-medium">{t("Sample Data")}</span>
           <span className="text-muted-foreground text-xs">
-            ({Object.keys(values).length} values)
+            {t("({0} values)", Object.keys(values).length)}
           </span>
         </div>
         {isExpanded ? (
@@ -175,7 +178,7 @@ export function TestDataEditor({
         <div className="border-t px-3 py-3">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-muted-foreground text-xs">
-              Edit values below to test your expression with different inputs
+              {t("Edit values below to test your expression with different inputs")}
             </p>
             <Button
               type="button"
@@ -185,7 +188,7 @@ export function TestDataEditor({
               className="text-muted-foreground h-6 gap-1 px-2 text-xs"
             >
               <RotateCcw className="size-3" />
-              Reset
+              {t("Reset")}
             </Button>
           </div>
 
@@ -216,7 +219,7 @@ export function TestDataEditor({
                             onValueChange={(value) => handleValueChange(variable.name, value ?? "")}
                           >
                             <SelectTrigger id={inputId} className="w-full">
-                              <SelectValue placeholder="Select a value" />
+                              <SelectValue placeholder={t("Select a value")} />
                             </SelectTrigger>
                             <SelectContent>
                               {selectItemsFor(variable, kind).map((item) => (

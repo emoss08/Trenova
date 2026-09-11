@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,8 @@ import { useHotkey } from "@tanstack/react-hotkeys";
 import { useState } from "react";
 
 export function KeyboardShortcutsDialog() {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   useHotkey(
@@ -28,9 +31,9 @@ export function KeyboardShortcutsDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+          <DialogTitle>{t("Keyboard Shortcuts")}</DialogTitle>
           <DialogDescription>
-            Available keyboard shortcuts throughout the application.
+            {t("Available keyboard shortcuts throughout the application.")}
           </DialogDescription>
         </DialogHeader>
         <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">

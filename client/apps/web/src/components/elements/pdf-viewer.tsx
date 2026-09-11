@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { cn } from "@trenova/shared/lib/utils";
@@ -22,6 +23,8 @@ interface PdfViewerProps {
 }
 
 export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className }: PdfViewerProps) {
+  const t = useT();
+
   const [numPages, setNumPages] = React.useState<number>(0);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [viewMode, setViewMode] = React.useState<ViewMode>(mode);
@@ -98,7 +101,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            Single
+            {t("Single")}
           </button>
           <button
             type="button"
@@ -110,7 +113,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            Scroll
+            {t("Scroll")}
           </button>
           <button
             type="button"
@@ -122,7 +125,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            Book
+            {t("Book")}
           </button>
         </div>
 
@@ -185,7 +188,7 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
             onClick={handleFitWidth}
             className="border-border bg-background hover:bg-muted rounded border px-2 py-1 text-xs"
           >
-            Fit
+            {t("Fit")}
           </button>
         </div>
       </div>
@@ -204,13 +207,13 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
           onLoadSuccess={onDocumentLoadSuccess}
           loading={
             <div className="flex items-center justify-center p-8">
-              <div className="text-muted-foreground text-sm">Loading PDF...</div>
+              <div className="text-muted-foreground text-sm">{t("Loading PDF...")}</div>
             </div>
           }
           error={
             <div className="flex items-center justify-center p-8">
               <div className="text-destructive text-sm">
-                Failed to load PDF. Please check the file or URL.
+                {t("Failed to load PDF. Please check the file or URL.")}
               </div>
             </div>
           }

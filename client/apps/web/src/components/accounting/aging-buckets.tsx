@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ChartConfig } from "@trenova/shared/components/ui/chart";
 import { cn } from "@trenova/shared/lib/utils";
@@ -123,11 +124,13 @@ export function AgingDistributionBar({
 }
 
 export function AgingBadge({ daysPastDue }: { daysPastDue: number }) {
+  const t = useT();
+
   if (daysPastDue <= 0) {
-    return <Badge variant="active">Current</Badge>;
+    return <Badge variant="active">{t("Current")}</Badge>;
   }
   if (daysPastDue <= 30) {
-    return <Badge variant="orange">{daysPastDue}d overdue</Badge>;
+    return <Badge variant="orange">{t("{0}d overdue", daysPastDue)}</Badge>;
   }
-  return <Badge variant="inactive">{daysPastDue}d overdue</Badge>;
+  return <Badge variant="inactive">{t("{0}d overdue", daysPastDue)}</Badge>;
 }

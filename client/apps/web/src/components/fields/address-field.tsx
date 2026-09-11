@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import type { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
@@ -67,6 +68,8 @@ export function AddressField<TForm extends FieldValues>({
   readOnly = false,
   rules,
 }: AddressFieldProps<TForm>) {
+  const t = useT();
+
   const { setValue } = useFormContext<TForm>();
   const isLocked = disabled || readOnly;
   const [open, setOpen] = useState(false);
@@ -239,7 +242,7 @@ export function AddressField<TForm extends FieldValues>({
                     className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground flex cursor-pointer items-center gap-1 rounded-md p-1"
                   >
                     <SearchIcon className="text-muted-foreground size-3" />
-                    <span className="sr-only">Search addresses</span>
+                    <span className="sr-only">{t("Search addresses")}</span>
                   </span>
                 </Button>
               }
@@ -247,7 +250,7 @@ export function AddressField<TForm extends FieldValues>({
             <PopoverContent className="w-96 p-0">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Search for an address..."
+                  placeholder={t("Search for an address...")}
                   value={searchValue}
                   onValueChange={setSearchValue}
                   className="h-9"
@@ -263,8 +266,8 @@ export function AddressField<TForm extends FieldValues>({
                         <LocationSearchError error={apiKeyError} />
                       ) : (
                         <div className="text-muted-foreground flex min-h-[100px] flex-col justify-center gap-1 text-center text-sm">
-                          <span>No locations found.</span>
-                          <span>Please try a different search.</span>
+                          <span>{t("No locations found.")}</span>
+                          <span>{t("Please try a different search.")}</span>
                         </div>
                       )}
                     </CommandEmpty>
@@ -300,8 +303,8 @@ export function AddressField<TForm extends FieldValues>({
                   )}
                 </CommandList>
                 <div className="bg-muted text-2xs text-muted-foreground flex items-center justify-between gap-0.5 border-t px-2 py-0.5">
-                  <div className="flex items-center gap-0.5">Powered by Google Maps</div>
-                  <div>Found {locations.length} locations</div>
+                  <div className="flex items-center gap-0.5">{t("Powered by Google Maps")}</div>
+                  <div>{t("Found {0} locations", locations.length)}</div>
                 </div>
               </Command>
             </PopoverContent>
@@ -320,7 +323,7 @@ export function AddressField<TForm extends FieldValues>({
               }
             />
             <TooltipContent>
-              Address lookup requires the Google Maps integration to be configured.
+              {t("Address lookup requires the Google Maps integration to be configured.")}
             </TooltipContent>
           </Tooltip>
         )}
@@ -330,17 +333,19 @@ export function AddressField<TForm extends FieldValues>({
 }
 
 function LocationSearchError({ error }: { error: string }) {
+  const t = useT();
+
   return (
     <div className="animate-in fade-in flex flex-col items-center gap-2.5 px-4 py-3 duration-300">
       <div className="border-destructive/30 bg-destructive/5 text-destructive flex w-full max-w-md items-center gap-2 rounded-lg border p-3 shadow-sm">
         <div className="flex flex-col space-y-0.5">
-          <span className="text-sm font-medium">API Key Error</span>
+          <span className="text-sm font-medium">{t("API Key Error")}</span>
           <span className="text-destructive/80 text-xs">{error}</span>
         </div>
       </div>
       <div className="text-muted-foreground flex flex-col gap-1 text-center text-sm">
-        <span>This feature requires a valid Google Maps API key.</span>
-        <span>Please contact your IT administrator for assistance.</span>
+        <span>{t("This feature requires a valid Google Maps API key.")}</span>
+        <span>{t("Please contact your IT administrator for assistance.")}</span>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   HoverCard,
   HoverCardContent,
@@ -34,6 +35,8 @@ export function HoverCardTimestamp({
   className,
   showTime = true,
 }: HoverCardTimestampProps) {
+  const t = useT();
+
   const { timezone } = useUserDatePreferences();
 
   const date = toDate(timestamp);
@@ -65,8 +68,8 @@ export function HoverCardTimestamp({
       <HoverCardPortal>
         <HoverCardContent className="w-auto p-2" {...{ side, align, alignOffset, sideOffset }}>
           <dl className="flex flex-col gap-1">
-            <Row value={String(date.getTime())} label="Timestamp" />
-            <Row value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")} label="UTC" />
+            <Row value={String(date.getTime())} label={t("Timestamp")} />
+            <Row value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")} label={t("UTC")} />
             <Row
               value={formatToUserTimezone(timestamp, {
                 showSeconds: showTime,
@@ -79,7 +82,7 @@ export function HoverCardTimestamp({
               value={formatDistanceToNowStrict(date, {
                 addSuffix: true,
               })}
-              label="Relative"
+              label={t("Relative")}
             />
           </dl>
         </HoverCardContent>

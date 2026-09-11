@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BetaTag } from "@/components/beta-tag";
 import { preloadCommandPalette } from "@/components/command-palette/command-palette-mount";
 import type {
@@ -68,6 +69,8 @@ export function SearchTrigger({
   className?: string;
   tooltipSide?: "right" | "bottom";
 }) {
+  const t = useT();
+
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
   const preload = () => void preloadCommandPalette();
   const shortcut = formatShortcut("K");
@@ -81,7 +84,7 @@ export function SearchTrigger({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Search"
+              aria-label={t("Search")}
               onClick={() => setOpen(true)}
               onPointerEnter={preload}
               onFocus={preload}
@@ -93,7 +96,7 @@ export function SearchTrigger({
         </TooltipTrigger>
         <TooltipContent side={tooltipSide} sideOffset={10}>
           <span className="flex items-center gap-2">
-            Search
+            {t("Search")}
             <Kbd>{shortcut}</Kbd>
           </span>
         </TooltipContent>
@@ -113,7 +116,7 @@ export function SearchTrigger({
       )}
     >
       <SearchIcon className="size-3.5 shrink-0" strokeWidth={1.75} />
-      <span className="flex-1 truncate text-left">Search or jump to…</span>
+      <span className="flex-1 truncate text-left">{t("Search or jump to…")}</span>
       <Kbd>{shortcut}</Kbd>
     </button>
   );
@@ -165,11 +168,13 @@ export function ModulePageList({
   onNavigate?: () => void;
   className?: string;
 }) {
+  const t = useT();
+
   const hasPages = view.sections.some((section) => section.items.length > 0);
   const hasConfiguration = view.configuration.length > 0;
 
   if (!hasPages && !hasConfiguration) {
-    return <p className="text-muted-foreground px-2.5 py-4 text-xs">This area has no pages yet.</p>;
+    return <p className="text-muted-foreground px-2.5 py-4 text-xs">{t("This area has no pages yet.")}</p>;
   }
 
   return (
@@ -192,7 +197,7 @@ export function ModulePageList({
       ))}
       {hasConfiguration && (
         <div className={cn("flex flex-col gap-0.5", hasPages && "border-border mt-2.5 border-t")}>
-          <WorkspaceGroupLabel>Configuration</WorkspaceGroupLabel>
+          <WorkspaceGroupLabel>{t("Configuration")}</WorkspaceGroupLabel>
           {view.configuration.map((item) => (
             <PageLink
               key={item.id}

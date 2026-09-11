@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { pluralize } from "@trenova/shared/lib/utils";
 import {
   AlertDialog,
@@ -23,21 +24,22 @@ export function DuplicateAlertDialog({
   onConfirm: () => void;
   isLoading: boolean;
 }) {
+  const t = useT();
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg font-semibold">
-            Duplicate {rowCount} {pluralize("row", rowCount)}?
+            {t("Duplicate {0}{1}?", rowCount, pluralize("row", rowCount))}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to duplicate {rowCount} {pluralize("row", rowCount)}? This action
-            cannot be undone.
+            {t("Are you sure you want to duplicate {0}{1}? This action cannot be undone.", rowCount, pluralize("row", rowCount))}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="outline" size="default">
-            Cancel
+            {t("Cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
@@ -46,7 +48,7 @@ export function DuplicateAlertDialog({
             disabled={isLoading}
             isLoading={isLoading}
           >
-            Duplicate
+            {t("Duplicate")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

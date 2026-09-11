@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -34,6 +35,8 @@ export default function DataTableDisplayMenu({
   formatRuleCount = 0,
   onEditFormatRules,
 }: DataTableDisplayMenuProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const columns = table
@@ -51,7 +54,7 @@ export default function DataTableDisplayMenu({
         render={
           <Button variant="outline" size="sm">
             <SlidersHorizontalIcon className="size-3.5" />
-            <span className="hidden lg:inline">Display</span>
+            <span className="hidden lg:inline">{t("Display")}</span>
           </Button>
         }
       />
@@ -59,11 +62,11 @@ export default function DataTableDisplayMenu({
         <div className="flex flex-col gap-3 p-3">
           {onDensityChange && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-muted-foreground text-xs font-medium">Density</span>
+              <span className="text-muted-foreground text-xs font-medium">{t("Density")}</span>
               <div
                 className="bg-muted grid grid-cols-2 gap-1 rounded-lg p-1"
                 role="radiogroup"
-                aria-label="Row density"
+                aria-label={t("Row density")}
               >
                 {DENSITY_OPTIONS.map((option) => {
                   const selected = density === option.value;
@@ -92,14 +95,14 @@ export default function DataTableDisplayMenu({
           {columns.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-xs font-medium">Columns</span>
+                <span className="text-muted-foreground text-xs font-medium">{t("Columns")}</span>
                 {hiddenCount > 0 && (
                   <button
                     type="button"
                     className="text-muted-foreground hover:text-foreground cursor-pointer text-xs transition-colors"
                     onClick={() => table.toggleAllColumnsVisible(true)}
                   >
-                    Show all
+                    {t("Show all")}
                   </button>
                 )}
               </div>
@@ -139,7 +142,7 @@ export default function DataTableDisplayMenu({
             }}
           >
             <PaintbrushIcon className="text-muted-foreground size-3.5" />
-            Conditional formatting
+            {t("Conditional formatting")}
             <span className="text-muted-foreground ml-auto flex items-center gap-1">
               {formatRuleCount > 0 && (
                 <span className="bg-muted flex size-5 items-center justify-center rounded-md font-mono text-xs">

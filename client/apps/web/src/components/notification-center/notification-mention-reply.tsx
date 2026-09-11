@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useNotificationAction, useReplyToMention } from "@trenova/shared/hooks/use-notifications";
@@ -21,6 +22,8 @@ export function MentionReply({
   notification: Notification;
   onNavigate?: (link: string) => void;
 }) {
+  const t = useT();
+
   const shipmentId = notificationRelatedId(notification, "shipmentId");
   const authorId = notificationDataString(notification, "authorId");
   const authorName = notificationDataString(notification, "authorName");
@@ -94,7 +97,7 @@ export function MentionReply({
       {sent ? (
         <div className="text-2xs text-muted-foreground flex items-center gap-1.5">
           <CheckIcon className="text-success size-3" />
-          <span>Reply sent</span>
+          <span>{t("Reply sent")}</span>
           {link && (
             <>
               <span aria-hidden>·</span>
@@ -103,7 +106,7 @@ export function MentionReply({
                 className="text-brand font-medium hover:underline"
                 onClick={openThread}
               >
-                View conversation
+                {t("View conversation")}
               </button>
             </>
           )}
@@ -127,7 +130,7 @@ export function MentionReply({
             </span>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="xs" className="text-2xs" onClick={closeComposer}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 size="xs"
@@ -139,7 +142,7 @@ export function MentionReply({
                   submit();
                 }}
               >
-                Send
+                {t("Send")}
               </Button>
             </div>
           </div>
@@ -149,7 +152,7 @@ export function MentionReply({
           {shipmentId && (
             <Button variant="outline" size="xs" className="text-2xs" onClick={openComposer}>
               <CornerUpLeftIcon className="size-3" />
-              Reply
+              {t("Reply")}
             </Button>
           )}
           {link && (
@@ -159,7 +162,7 @@ export function MentionReply({
               className="text-2xs text-muted-foreground"
               onClick={openThread}
             >
-              View conversation
+              {t("View conversation")}
             </Button>
           )}
         </div>

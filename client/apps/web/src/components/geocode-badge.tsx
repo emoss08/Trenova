@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   HoverCard,
   HoverCardContent,
@@ -24,6 +25,8 @@ export const GeocodeBadgeSchema = z.object({
 export type GeocodeBadgeSchema = z.infer<typeof GeocodeBadgeSchema>;
 
 export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSchema) {
+  const t = useT();
+
   const position = {
     lat: latitude ?? 0,
     lng: longitude ?? 0,
@@ -48,16 +51,16 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
       />
       <HoverCardContent className="flex w-auto flex-col gap-2 p-2">
         <div className="flex flex-col gap-0.5">
-          <Row label="Longitude" value={longitude} />
-          <Row label="Latitude" value={latitude} />
-          <Row label="Place ID" value={placeId} />
+          <Row label={t("Longitude")} value={longitude} />
+          <Row label={t("Latitude")} value={latitude} />
+          <Row label={t("Place ID")} value={placeId} />
         </div>
         {placeId && (
           <div className="border-border h-32 w-full overflow-hidden rounded-md border">
             <Suspense
               fallback={
                 <div className="bg-muted text-muted-foreground flex h-full w-full animate-pulse items-center justify-center text-xs">
-                  Loading map...
+                  {t("Loading map...")}
                 </div>
               }
             >

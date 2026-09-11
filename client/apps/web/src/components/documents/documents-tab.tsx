@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { ColorOptionValue } from "@/components/fields/select-components";
@@ -86,6 +87,8 @@ function sortDocuments(docs: Document[], field: SortField, direction: SortDirect
 }
 
 export function DocumentsTab({ resourceId, resourceType, disabled = false }: DocumentsTabProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -245,7 +248,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         void queryClient.invalidateQueries({
           queryKey: shipmentDetailsQuery.queryKey,
         });
-        toast.success("Document uploaded successfully");
+        toast.success(t("Document uploaded successfully"));
       },
       onError: (error) => {
         toast.error(`Upload failed: ${error.message}`);
@@ -266,7 +269,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           queryKey: shipmentDetailsQuery.queryKey,
         });
       }
-      toast.success("Document deleted");
+      toast.success(t("Document deleted"));
       setDeletingId(null);
     },
     onError: (error) => {
@@ -317,7 +320,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           queryKey: shipmentDetailsQuery.queryKey,
         });
       }
-      toast.success("Document version restored");
+      toast.success(t("Document version restored"));
     },
     onError: (error) => {
       toast.error(`Restore failed: ${error.message}`);
@@ -376,18 +379,18 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
       const url = await apiService.documentService.getViewUrl(document.id);
       window.open(url, "_blank");
     } catch {
-      toast.error("Failed to open document");
+      toast.error(t("Failed to open document"));
     }
-  }, []);
+  }, [t]);
 
   const handleDownload = useCallback(async (document: Document) => {
     try {
       const url = await apiService.documentService.getDownloadUrl(document.id);
       window.open(url, "_blank");
     } catch {
-      toast.error("Failed to get download URL");
+      toast.error(t("Failed to get download URL"));
     }
-  }, []);
+  }, [t]);
 
   const { mutate: deleteDocument } = deleteMutation;
 
@@ -459,7 +462,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         }),
         queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
       ]);
-      toast.success("Shipment marked ready to invoice");
+      toast.success(t("Shipment marked ready to invoice"));
     },
     resourceName: "Shipment",
   });
@@ -476,7 +479,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   if (!resourceId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-muted-foreground text-sm">Save the record first to manage documents.</p>
+        <p className="text-muted-foreground text-sm">{t("Save the record first to manage documents.")}</p>
       </div>
     );
   }
@@ -538,7 +541,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
               )}
             </div>
           )}
-          placeholder="Document type (optional)"
+          placeholder={t("Document type (optional)")}
           clearable
           triggerClassName="w-[220px]"
           disabled={!!requiredUploadTypeId}

@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { DriverType } from "@trenova/shared/types/worker";
@@ -53,6 +54,8 @@ export function EditableDriverTypeBadge({
   disabled = false,
   className,
 }: EditableDriverTypeBadgeProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,13 +71,13 @@ export function EditableDriverTypeBadge({
 
       await onDriverTypeChange(newType)
         .catch(() => {
-          toast.error("Failed to update driver type");
+          toast.error(t("Failed to update driver type"));
         })
         .finally(() => {
           setIsLoading(false);
         });
     },
-    [driverType, onDriverTypeChange],
+    [driverType, onDriverTypeChange, t],
   );
 
   const variant = DRIVER_TYPE_VARIANTS[driverType] || "outline";

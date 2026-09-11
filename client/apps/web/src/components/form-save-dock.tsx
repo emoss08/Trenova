@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ACTION_DOCK_SECONDARY_BUTTON,
   ActionDock,
@@ -52,6 +53,8 @@ function SaveDockContent<T extends string = string>({
   isDirty: boolean;
   onReset: () => void;
 }) {
+  const t = useT();
+
   const showUnsavedIndicator = isDirty || !alwaysVisible;
 
   return (
@@ -63,7 +66,7 @@ function SaveDockContent<T extends string = string>({
         showUnsavedIndicator ? (
           <ActionDockIndicator
             title={unsavedText ?? "Unsaved changes"}
-            description="You have unsaved changes."
+            description={t("You have unsaved changes.")}
           />
         ) : undefined
       }
@@ -76,7 +79,7 @@ function SaveDockContent<T extends string = string>({
           disabled={isSubmitting}
           className={ACTION_DOCK_SECONDARY_BUTTON}
         >
-          Reset
+          {t("Reset")}
         </Button>
       )}
       {splitButton ? (

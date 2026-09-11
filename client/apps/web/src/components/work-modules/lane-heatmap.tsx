@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
@@ -11,18 +12,20 @@ type LaneHeatmapProps = {
 };
 
 export function LaneHeatmap({ data }: LaneHeatmapProps) {
+  const t = useT();
+
   const { grid, total, max, top } = useMemo(() => buildGrid(data), [data]);
 
   return (
     <section className="cc-module-card flex min-h-65 flex-col">
       <header className="border-border flex items-center justify-between border-b px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <h3 className="cc-label text-foreground">Lane heatmap</h3>
+          <h3 className="cc-label text-foreground">{t("Lane heatmap")}</h3>
           <span className="text-muted-foreground font-mono text-[10px]">
-            origin → destination · {total} loads
+            {t("origin → destination · {0} loads", total)}
           </span>
         </div>
-        <span className="text-muted-foreground font-mono text-[10px]">{data.windowDays}d</span>
+        <span className="text-muted-foreground font-mono text-[10px]">{t("{0}d", data.windowDays)}</span>
       </header>
 
       <div className="flex flex-1 flex-col gap-1 px-3 py-3">

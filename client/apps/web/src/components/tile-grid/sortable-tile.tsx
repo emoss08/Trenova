@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@trenova/shared/lib/utils";
@@ -54,11 +55,13 @@ export function SortableTile({ id, w, h, editing, className, children }: Sortabl
 
 /** The grab affordance, so every canvas presents the same target. */
 export function TileDragHandle({ attributes, listeners }: TileDragHandleProps) {
+  const t = useT();
+
   return (
     <button
       type="button"
       className="text-muted-foreground hover:text-foreground shrink-0 cursor-grab"
-      aria-label="Move tile"
+      aria-label={t("Move tile")}
       {...attributes}
       {...listeners}
     >

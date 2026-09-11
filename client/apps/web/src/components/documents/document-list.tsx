@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Document } from "@trenova/shared/types/document";
 import { FileIcon } from "lucide-react";
@@ -22,14 +23,16 @@ interface DocumentListProps {
 }
 
 function EmptyState() {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="bg-muted mb-4 rounded-full p-4">
         <FileIcon className="text-muted-foreground size-8" />
       </div>
-      <h3 className="text-sm font-medium">No documents</h3>
+      <h3 className="text-sm font-medium">{t("No documents")}</h3>
       <p className="text-muted-foreground mt-1 text-sm">
-        Upload documents using the drop zone above.
+        {t("Upload documents using the drop zone above.")}
       </p>
     </div>
   );

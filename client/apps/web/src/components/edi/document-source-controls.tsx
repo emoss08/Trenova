@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ControlledEDITransferAutocompleteField,
   ControlledShipmentAutocompleteField,
@@ -26,6 +27,8 @@ export function DocumentSourceControls({
   onChange,
   layout = "stack",
 }: DocumentSourceControlsProps) {
+  const t = useT();
+
   const sourceInputs = getEDIDocumentSourceInputs(transactionSet);
 
   return (
@@ -38,7 +41,7 @@ export function DocumentSourceControls({
               key={input.field}
               label={input.label}
               value={value}
-              placeholder='{"transactionSet":"204"}'
+              placeholder={t("{\"transactionSet\":\"204\"}")}
               onChange={(nextValue) => onChange(input.field, nextValue)}
               className="w-64"
             />

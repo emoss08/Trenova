@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -66,6 +67,8 @@ type ReceiptViewProps = {
  * before guardrails and rounding touched it.
  */
 export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProps) {
+  const t = useT();
+
   const [showVariables, setShowVariables] = useState(false);
   const scalarValues = useMemo(
     () =>
@@ -82,11 +85,11 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
   return (
     <div className={cn("space-y-3", className)}>
       <div className="text-muted-foreground text-2xs flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span>Raw {formatCurrency(receipt.rawAmount)} before guardrails and rounding</span>
-        {receipt.versionNumber ? <span className="font-mono">v{receipt.versionNumber}</span> : null}
-        {receipt.effectiveFrom ? <span>scheduled version</span> : null}
+        <span>{t("Raw {0} before guardrails and rounding", formatCurrency(receipt.rawAmount))}</span>
+        {receipt.versionNumber ? <span className="font-mono">{t("v{0}", receipt.versionNumber)}</span> : null}
+        {receipt.effectiveFrom ? <span>{t("scheduled version")}</span> : null}
         {receipt.durationMicros ? (
-          <span className="tabular-nums">{(receipt.durationMicros / 1000).toFixed(1)} ms</span>
+          <span className="tabular-nums">{t("{0} ms", (receipt.durationMicros / 1000).toFixed(1))}</span>
         ) : null}
       </div>
 
@@ -94,7 +97,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
         <div className="space-y-1">
           <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
             <TableIcon className="size-3" />
-            Rate tables consulted
+            {t("Rate tables consulted")}
           </div>
           <ul className="bg-background/50 divide-y rounded-md border text-xs">
             {lookups.map((lookup, index) => (
@@ -110,7 +113,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
                     {describeLookupMatch(lookup.match)}
                   </span>
                   {lookup.scope !== "expression" && (
-                    <span className="text-muted-foreground"> · in {lookup.scope}</span>
+                    <span className="text-muted-foreground"> {t("· in {0}", lookup.scope)}</span>
                   )}
                 </div>
                 {lookup.error ? (
@@ -135,7 +138,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
             className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase"
           >
             <Braces className="size-3" />
-            Variables ({receipt.variables.length})
+            {t("Variables ({0})", receipt.variables.length)}
           </button>
           {onUseValues && (
             <Button
@@ -144,7 +147,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
               size="xs"
               onClick={() => onUseValues(scalarValues)}
             >
-              Use these values
+              {t("Use these values")}
             </Button>
           )}
         </div>

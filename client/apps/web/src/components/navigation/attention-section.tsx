@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import {
   ATTENTION_TONE_DOT_CLASSES,
@@ -49,6 +50,8 @@ function AttentionRow({
 }
 
 export function AttentionSection() {
+  const t = useT();
+
   const { pathname } = useLocation();
   const { rows, isLoading } = useAttentionRows();
 
@@ -58,7 +61,7 @@ export function AttentionSection() {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <SidebarSectionLabel>Needs Attention</SidebarSectionLabel>
+      <SidebarSectionLabel>{t("Needs Attention")}</SidebarSectionLabel>
       {isLoading
         ? Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-7 w-full rounded-md" />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,8 @@ function DocumentRow({
   onDelete: (doc: Document) => void;
   isDeleting: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="flex items-center justify-between rounded-md border p-3">
       <div className="flex items-center gap-3">
@@ -49,7 +52,7 @@ function DocumentRow({
           variant="ghost"
           size="sm"
           onClick={() => onDownload(document)}
-          aria-label="Download document"
+          aria-label={t("Download document")}
         >
           <DownloadIcon className="size-4" />
         </Button>
@@ -58,7 +61,7 @@ function DocumentRow({
           size="sm"
           onClick={() => onDelete(document)}
           disabled={isDeleting}
-          aria-label="Delete document"
+          aria-label={t("Delete document")}
         >
           <Trash2Icon className="text-destructive size-4" />
         </Button>
@@ -72,6 +75,8 @@ export function DocumentUploadSection({
   resourceType,
   disabled = false,
 }: DocumentUploadSectionProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -97,7 +102,7 @@ export function DocumentUploadSection({
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
-      toast.success("Document uploaded successfully");
+      toast.success(t("Document uploaded successfully"));
     },
     onError: (error) => {
       toast.error(`Upload failed: ${error.message}`);
@@ -108,7 +113,7 @@ export function DocumentUploadSection({
     mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
-      toast.success("Document deleted successfully");
+      toast.success(t("Document deleted successfully"));
       setDeletingId(null);
     },
     onError: (error) => {
@@ -160,9 +165,9 @@ export function DocumentUploadSection({
       const url = await apiService.documentService.getDownloadUrl(doc.id);
       window.open(url, "_blank");
     } catch {
-      toast.error("Failed to get download URL");
+      toast.error(t("Failed to get download URL"));
     }
-  }, []);
+  }, [t]);
 
   const handleDelete = useCallback(
     (doc: Document) => {
@@ -180,14 +185,14 @@ export function DocumentUploadSection({
 
   if (!resourceId) {
     return (
-      <FormSection title="Documents" className="border-t pt-2">
-        <p className="text-muted-foreground text-sm">Save the record to upload documents.</p>
+      <FormSection title={t("Documents")} className="border-t pt-2">
+        <p className="text-muted-foreground text-sm">{t("Save the record to upload documents.")}</p>
       </FormSection>
     );
   }
 
   return (
-    <FormSection title="Documents" className="border-t pt-2">
+    <FormSection title={t("Documents")} className="border-t pt-2">
       <div className="space-y-4">
         <div
           onClick={handleClick}
@@ -201,7 +206,7 @@ export function DocumentUploadSection({
           }}
           role="button"
           tabIndex={disabled ? -1 : 0}
-          aria-label="Upload documents"
+          aria-label={t("Upload documents")}
           aria-disabled={disabled}
           className={`border-muted-foreground/25 hover:border-muted-foreground/50 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
             isDragging ? "border-primary bg-primary/5" : ""
@@ -211,7 +216,7 @@ export function DocumentUploadSection({
           <p className="text-muted-foreground text-sm">
             {uploadMutation.isPending ? "Uploading..." : "Drop files here or click to upload"}
           </p>
-          <p className="text-muted-foreground/70 text-xs">PDF, Images, Documents up to 50MB</p>
+          <p className="text-muted-foreground/70 text-xs">{t("PDF, Images, Documents up to 50MB")}</p>
           <input
             ref={fileInputRef}
             type="file"
@@ -224,7 +229,7 @@ export function DocumentUploadSection({
         </div>
 
         {isLoading ? (
-          <p className="text-muted-foreground text-sm">Loading documents...</p>
+          <p className="text-muted-foreground text-sm">{t("Loading documents...")}</p>
         ) : documents.length > 0 ? (
           <div className="space-y-2">
             {documents.map((doc) => (

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable, type EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
 import { pluralize } from "@trenova/shared/lib/utils";
@@ -26,6 +27,8 @@ export function DataTableEmptyState({
   onClearFilters,
   onAddRecord,
 }: DataTableEmptyStateProps) {
+  const t = useT();
+
   const records = pluralize(name.toLowerCase(), 2);
   return (
     <EmptyTable
@@ -44,7 +47,7 @@ export function DataTableEmptyState({
         onAddRecord ? (
           <Button variant="outline" size="sm" onClick={onAddRecord}>
             <PlusIcon className="size-3.5" />
-            Add {name}
+            {t("Add {0}", name)}
           </Button>
         ) : null
       }

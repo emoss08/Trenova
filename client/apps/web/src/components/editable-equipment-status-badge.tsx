@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { EquipmentStatus } from "@trenova/shared/types/helpers";
@@ -53,6 +54,8 @@ export function EditableEquipmentStatusBadge({
   disabled = false,
   className,
 }: EditableEquipmentStatusBadgeProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,13 +71,13 @@ export function EditableEquipmentStatusBadge({
 
       await onStatusChange(newStatus)
         .catch(() => {
-          toast.error("Failed to update status");
+          toast.error(t("Failed to update status"));
         })
         .finally(() => {
           setIsLoading(false);
         });
     },
-    [status, onStatusChange],
+    [status, onStatusChange, t],
   );
 
   const variant = EQUIPMENT_STATUS_VARIANTS[status] || "outline";

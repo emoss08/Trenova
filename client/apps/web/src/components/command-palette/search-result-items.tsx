@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import Highlight from "@trenova/shared/components/highlight";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { CommandItem } from "@trenova/shared/components/ui/command";
@@ -42,6 +43,8 @@ export function ShipmentResultItem({
   onSelect: () => void;
   onPreview?: (id: string) => void;
 }) {
+  const t = useT();
+
   const meta = hit.metadata;
   return (
     <ResultItemContainer
@@ -75,7 +78,7 @@ export function ShipmentResultItem({
           )}
           {meta?.bol && (
             <p className="max-w-[140px] truncate">
-              <span className="opacity-70">BOL</span>
+              <span className="opacity-70">{t("BOL")}</span>
               <span className="ml-1">
                 <Highlight highlight={searchValue} text={meta.bol} />
               </span>

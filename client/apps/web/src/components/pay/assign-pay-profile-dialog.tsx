@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -44,6 +45,8 @@ export function AssignPayProfileDialog({
   payProfileId?: string;
   onAssigned?: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [overrides, setOverrides] = useState<Record<string, string>>({});
 
@@ -108,7 +111,7 @@ export function AssignPayProfileDialog({
         notes: values.notes || undefined,
       }),
     onSuccess: () => {
-      toast.success("Pay profile assigned");
+      toast.success(t("Pay profile assigned"));
       void queryClient.invalidateQueries({ queryKey: ["worker-pay"] });
       void queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
       void queryClient.invalidateQueries({ queryKey: ["pay-profile-assignments"] });
@@ -129,11 +132,9 @@ export function AssignPayProfileDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Assign Pay Profile</DialogTitle>
+          <DialogTitle>{t("Assign Pay Profile")}</DialogTitle>
           <DialogDescription>
-            The driver&apos;s pay is computed from this profile for every shipment delivered on or
-            after the effective date. Any currently-open assignment ends automatically — no cleanup
-            needed.
+            {t("The driver's pay is computed from this profile for every shipment delivered on or after the effective date. Any currently-open assignment ends automatically — no cleanup needed.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -144,10 +145,10 @@ export function AssignPayProfileDialog({
                   <WorkerAutocompleteField
                     control={control}
                     name="workerId"
-                    label="Driver"
-                    placeholder="Select driver"
+                    label={t("Driver")}
+                    placeholder={t("Select driver")}
                     rules={{ required: true }}
-                    description="The driver who will be paid under this profile from the effective date forward."
+                    description={t("The driver who will be paid under this profile from the effective date forward.")}
                   />
                 </FormControl>
               )}
@@ -156,8 +157,8 @@ export function AssignPayProfileDialog({
                   <SelectField
                     control={control}
                     name="payProfileId"
-                    label="Pay Profile"
-                    placeholder="Select pay profile"
+                    label={t("Pay Profile")}
+                    placeholder={t("Select pay profile")}
                     options={(profileOptions ?? []).map((option) => ({
                       label: `${option.name}${
                         option.classification === "OwnerOperator" ? " (O-O)" : ""
@@ -165,7 +166,7 @@ export function AssignPayProfileDialog({
                       value: option.id,
                     }))}
                     rules={{ required: true }}
-                    description="Profiles are shared templates — set driver-specific rates below instead of cloning profiles."
+                    description={t("Profiles are shared templates — set driver-specific rates below instead of cloning profiles.")}
                   />
                 </FormControl>
               )}
@@ -173,18 +174,18 @@ export function AssignPayProfileDialog({
                 <AutoCompleteDateField
                   control={control}
                   name="effectiveFrom"
-                  label="Effective From"
+                  label={t("Effective From")}
                   rules={{ required: true }}
-                  description="Pay for shipments delivered on or after this date uses this assignment."
+                  description={t("Pay for shipments delivered on or after this date uses this assignment.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField
                   control={control}
                   name="splitPercent"
-                  label="Split Percent"
+                  label={t("Split Percent")}
                   sideText="%"
-                  description="100 for solo drivers; 50 each for an even team split."
+                  description={t("100 for solo drivers; 50 each for an even team split.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -192,9 +193,9 @@ export function AssignPayProfileDialog({
                 <TextareaField
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Negotiated rate bump at 1-year anniversary"
-                  description="Why this assignment or rate was set — kept in the assignment history for audits."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Negotiated rate bump at 1-year anniversary")}
+                  description={t("Why this assignment or rate was set — kept in the assignment history for audits.")}
                 />
               </FormControl>
             </FormGroup>
@@ -203,10 +204,9 @@ export function AssignPayProfileDialog({
 
         {activeComponents.length > 0 && (
           <div className="rounded-lg border p-3">
-            <p className="text-xs font-medium">Driver-Specific Rate Overrides</p>
+            <p className="text-xs font-medium">{t("Driver-Specific Rate Overrides")}</p>
             <p className="text-muted-foreground mb-2 text-[11px]">
-              Leave blank to use the profile rate. An override replaces the component&apos;s base
-              rate and any mileage bands for this driver only.
+              {t("Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.")}
             </p>
             <div className="flex flex-col gap-2">
               {activeComponents.map((component) => (
@@ -218,15 +218,14 @@ export function AssignPayProfileDialog({
                     {component.description || `${component.kind} (${component.method})`}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
-                    profile: {Number(component.rate)}
-                    {component.method === "PercentOfRevenue" ? "%" : ""}
+                    {t("profile: {0}{1}", Number(component.rate), component.method === "PercentOfRevenue" ? "%" : "")}
                   </span>
                   <Input
                     value={overrides[component.id] ?? ""}
                     onChange={(e) =>
                       setOverrides((prev) => ({ ...prev, [component.id]: e.target.value }))
                     }
-                    placeholder="Override"
+                    placeholder={t("Override")}
                     inputMode="decimal"
                     className="h-7 text-xs"
                   />
@@ -238,10 +237,10 @@ export function AssignPayProfileDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button form="assign-pay-profile-form" type="submit" disabled={isSubmitting}>
-            Assign Profile
+            {t("Assign Profile")}
           </Button>
         </DialogFooter>
       </DialogContent>

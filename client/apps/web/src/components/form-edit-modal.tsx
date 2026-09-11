@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -60,6 +61,8 @@ export function FormEditModal<T extends FieldValues>({
   onSuccess,
   isLoading: isLoadingRecordProp,
 }: FormEditModalProps<T>) {
+  const t = useT();
+
   const dataTable = useOptionalDataTable<T, unknown>();
   const [isPending, startTransition] = useTransition();
   const [searchParams, setSearchParams] = useQueryStates(entitySearchParamsParser, {
@@ -268,7 +271,7 @@ export function FormEditModal<T extends FieldValues>({
       return { previousRecord, newValues };
     },
     onSuccess: async (newValues, values) => {
-      toast.success("Changes have been saved", {
+      toast.success(t("Changes have been saved"), {
         description: `${title} updated successfully`,
       });
 
@@ -344,10 +347,9 @@ export function FormEditModal<T extends FieldValues>({
               </DialogTitle>
               {!isLoadingRecord && effectiveRecord && (
                 <DialogDescription>
-                  Last updated on{" "}
-                  {formatToUserTimezone(effectiveRecord.updatedAt, {
+                  {t("Last updated on {0}", formatToUserTimezone(effectiveRecord.updatedAt, {
                     timeFormat: TimeFormat.enum["24-hour"],
-                  })}
+                  }))}
                 </DialogDescription>
               )}
             </div>
@@ -367,16 +369,16 @@ export function FormEditModal<T extends FieldValues>({
                           <ChevronUpIcon
                             className={cn((isPending || isFetchedRecord) && "opacity-50")}
                           />
-                          <span className="sr-only">Previous</span>
+                          <span className="sr-only">{t("Previous")}</span>
                         </Button>
                       }
                     />
                     <TooltipContent>
                       {isFetchedRecord ? (
-                        <p>Navigation unavailable when viewing record directly</p>
+                        <p>{t("Navigation unavailable when viewing record directly")}</p>
                       ) : (
                         <p>
-                          Navigate <Kbd>↑</Kbd>
+                          {t("Navigate")} <Kbd>↑</Kbd>
                         </p>
                       )}
                     </TooltipContent>
@@ -394,16 +396,16 @@ export function FormEditModal<T extends FieldValues>({
                           <ChevronDownIcon
                             className={cn((isPending || isFetchedRecord) && "opacity-50")}
                           />
-                          <span className="sr-only">Next</span>
+                          <span className="sr-only">{t("Next")}</span>
                         </Button>
                       }
                     ></TooltipTrigger>
                     <TooltipContent>
                       {isFetchedRecord ? (
-                        <p>Navigation unavailable when viewing record directly</p>
+                        <p>{t("Navigation unavailable when viewing record directly")}</p>
                       ) : (
                         <p>
-                          Navigate <Kbd>↓</Kbd>
+                          {t("Navigate")} <Kbd>↓</Kbd>
                         </p>
                       )}
                     </TooltipContent>
@@ -415,7 +417,7 @@ export function FormEditModal<T extends FieldValues>({
                 render={
                   <Button size="icon" variant="ghost" className="size-7 [&_svg]:size-4">
                     <XIcon />
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{t("Close")}</span>
                   </Button>
                 }
               ></DialogClose>
@@ -445,7 +447,7 @@ export function FormEditModal<T extends FieldValues>({
                       });
                     }}
                   >
-                    Close
+                    {t("Close")}
                   </Button>
                 </div>
               ) : (
@@ -454,11 +456,11 @@ export function FormEditModal<T extends FieldValues>({
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>
-                Cancel
+                {t("Cancel")}
               </Button>
               {!fetchError && (
-                <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
-                  Save and Close
+                <Button type="submit" isLoading={isSubmitting} loadingText={t("Saving...")}>
+                  {t("Save and Close")}
                 </Button>
               )}
             </DialogFooter>

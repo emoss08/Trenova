@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   useCannedReports,
   useReportDefinition,
@@ -60,6 +61,8 @@ export function ReportSourcePicker({
   labelledBy,
   className,
 }: ReportSourcePickerProps) {
+  const t = useT();
+
   const [tab, setTab] = useState<Tab>(() => initialTab(value));
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
@@ -154,7 +157,7 @@ export function ReportSourcePicker({
     >
       <div className="border-border/70 flex flex-col gap-2 border-b p-2">
         <SegmentedControl
-          aria-label="Where the report comes from"
+          aria-label={t("Where the report comes from")}
           fullWidth
           value={tab}
           onValueChange={setTab}
@@ -174,7 +177,7 @@ export function ReportSourcePicker({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Clear search"
+                aria-label={t("Clear search")}
                 className="size-6"
                 onClick={() => setSearch("")}
               >
@@ -194,13 +197,13 @@ export function ReportSourcePicker({
       >
         {error ? (
           <PickerMessage>
-            <p className="text-destructive text-xs">Could not load reports.</p>
+            <p className="text-destructive text-xs">{t("Could not load reports.")}</p>
             <Button
               size="sm"
               variant="outline"
               onClick={() => void (savedTab ? definitions.refetch() : canned.refetch())}
             >
-              Retry
+              {t("Retry")}
             </Button>
           </PickerMessage>
         ) : loading ? (
@@ -223,7 +226,7 @@ export function ReportSourcePicker({
             </p>
             {search.trim() !== "" && (
               <Button size="sm" variant="outline" onClick={() => setSearch("")}>
-                Clear search
+                {t("Clear search")}
               </Button>
             )}
           </PickerMessage>
@@ -244,7 +247,7 @@ export function ReportSourcePicker({
                 {isFetchingNextPage ? (
                   <>
                     <Spinner className="size-3" />
-                    Loading more
+                    {t("Loading more")}
                   </>
                 ) : (
                   "Load more"

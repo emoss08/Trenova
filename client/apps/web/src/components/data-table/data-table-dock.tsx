@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
@@ -26,6 +27,8 @@ export function DataTableDock<TData extends RowData>({
   table,
   actions,
 }: DataTableDockProps<TData>) {
+  const t = useT();
+
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const [openSelectId, setOpenSelectId] = useState<string | null>(null);
   const { selectedCount, getSelectedRows } = useDataTable<TData, unknown>();
@@ -121,13 +124,13 @@ export function DataTableDock<TData extends RowData>({
                     onClick={handleClearSelection}
                   >
                     <span className="text-background text-sm font-medium tabular-nums">
-                      {selectedCount} selected
+                      {t("{0} selected", selectedCount)}
                     </span>{" "}
                     <XIcon className="text-background size-3" />
                   </Button>
                 }
               />
-              <TooltipContent sideOffset={10}>Clear selection</TooltipContent>
+              <TooltipContent sideOffset={10}>{t("Clear selection")}</TooltipContent>
             </Tooltip>
             <div className="flex items-center gap-1 pl-1">
               {actions.map((action) => {

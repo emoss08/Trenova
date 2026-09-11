@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -75,6 +76,8 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
   currentPageRows,
   totalCount,
 }: DataTableExportDialogProps<TData>) {
+  const t = useT();
+
   const [scope, setScope] = useState<ExportScope>("all");
   const [columnsMode, setColumnsMode] = useState<"visible" | "all">("visible");
   const [isExporting, setIsExporting] = useState(false);
@@ -91,8 +94,8 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
   const handleExport = async () => {
     const exportColumns = buildExportColumns(table.getAllLeafColumns(), columnsMode === "visible");
     if (exportColumns.length === 0) {
-      toast.error("Nothing to export", {
-        description: "No exportable columns are available.",
+      toast.error(t("Nothing to export"), {
+        description: t("No exportable columns are available."),
       });
       return;
     }
@@ -116,12 +119,12 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
       if (cancelledRef.current) return;
 
       downloadCsv(buildCsv(rows, exportColumns), exportFilename(resource));
-      toast.success("Export complete", {
+      toast.success(t("Export complete"), {
         description: `Exported ${rows.length} ${rows.length === 1 ? "row" : "rows"} to CSV.`,
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error("Export failed", {
+      toast.error(t("Export failed"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred.",
       });
     } finally {
@@ -134,55 +137,54 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>Export to CSV</DialogTitle>
+          <DialogTitle>{t("Export to CSV")}</DialogTitle>
           <DialogDescription>
-            Exports respect the current filters, sorting, and column layout.
+            {t("Exports respect the current filters, sorting, and column layout.")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 pb-2">
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground text-xs font-medium uppercase">Rows</Label>
-            <div className="flex gap-2" role="radiogroup" aria-label="Export scope">
+            <Label className="text-muted-foreground text-xs font-medium uppercase">{t("Rows")}</Label>
+            <div className="flex gap-2" role="radiogroup" aria-label={t("Export scope")}>
               <ChoiceButton selected={scope === "all"} onClick={() => setScope("all")}>
-                <span className="font-medium">All matching</span>
+                <span className="font-medium">{t("All matching")}</span>
                 {cappedTotal != null && (
                   <span className="text-muted-foreground text-xs">
-                    {cappedTotal.toLocaleString()} rows
+                    {t("{0} rows", cappedTotal.toLocaleString())}
                   </span>
                 )}
               </ChoiceButton>
               <ChoiceButton selected={scope === "page"} onClick={() => setScope("page")}>
-                <span className="font-medium">Current page</span>
-                <span className="text-muted-foreground text-xs">{currentPageRows.length} rows</span>
+                <span className="font-medium">{t("Current page")}</span>
+                <span className="text-muted-foreground text-xs">{t("{0} rows", currentPageRows.length)}</span>
               </ChoiceButton>
             </div>
             {totalCount != null && totalCount > EXPORT_MAX_ROWS && (
               <p className="text-muted-foreground text-xs">
-                Exports are capped at {EXPORT_MAX_ROWS.toLocaleString()} rows. Narrow your filters
-                to export a specific slice.
+                {t("Exports are capped at {0} rows. Narrow your filters to export a specific slice.", EXPORT_MAX_ROWS.toLocaleString())}
               </p>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground text-xs font-medium uppercase">Columns</Label>
-            <div className="flex gap-2" role="radiogroup" aria-label="Export columns">
+            <Label className="text-muted-foreground text-xs font-medium uppercase">{t("Columns")}</Label>
+            <div className="flex gap-2" role="radiogroup" aria-label={t("Export columns")}>
               <ChoiceButton
                 selected={columnsMode === "visible"}
                 onClick={() => setColumnsMode("visible")}
               >
-                <span className="font-medium">Visible columns</span>
-                <span className="text-muted-foreground text-xs">Matches the table layout</span>
+                <span className="font-medium">{t("Visible columns")}</span>
+                <span className="text-muted-foreground text-xs">{t("Matches the table layout")}</span>
               </ChoiceButton>
               <ChoiceButton selected={columnsMode === "all"} onClick={() => setColumnsMode("all")}>
-                <span className="font-medium">All columns</span>
-                <span className="text-muted-foreground text-xs">Every exportable field</span>
+                <span className="font-medium">{t("All columns")}</span>
+                <span className="text-muted-foreground text-xs">{t("Every exportable field")}</span>
               </ChoiceButton>
             </div>
           </div>
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
@@ -190,7 +192,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
             isLoading={isExporting}
             loadingText={progress ?? "Exporting..."}
           >
-            Export
+            {t("Export")}
           </Button>
         </DialogFooter>
       </DialogContent>

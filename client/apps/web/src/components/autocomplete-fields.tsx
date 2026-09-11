@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
 import type {
   SelectOption as GraphQLSelectOption,
@@ -692,6 +693,8 @@ export function WorkerAutocompleteField<T extends FieldValues>({
    */
   ownerOperatorsOnly?: boolean;
 }) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/workers/select-options/"
@@ -708,7 +711,7 @@ export function WorkerAutocompleteField<T extends FieldValues>({
           <span>{option.label}</span>
           {selectOptionMetaString(option, "fleetCode") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              Fleet: {selectOptionMetaString(option, "fleetCode")}
+              {t("Fleet: {0}", selectOptionMetaString(option, "fleetCode"))}
             </span>
           )}
         </div>
@@ -1307,13 +1310,15 @@ export function ControlledEDITemplateAutocompleteField({
   direction?: string;
   extraSearchParams?: Record<string, string | string[]>;
 }) {
+  const t = useT();
+
   const graphqlFilters: Record<string, unknown> = {
     ...(transactionSet ? { transactionSet } : {}),
     ...(direction ? { direction } : {}),
   };
   return (
     <ControlledAutocompleteField<GraphQLSelectOption>
-      label="Template"
+      label={t("Template")}
       link="/edi/templates/select-options/"
       graphql={
         Object.keys(graphqlFilters).length > 0
@@ -1361,6 +1366,8 @@ export function ControlledEDIDocumentProfileAutocompleteField({
   direction?: string;
   extraSearchParams?: Record<string, string | string[]>;
 }) {
+  const t = useT();
+
   const graphqlFilters: Record<string, unknown> = {
     ...(partnerId ? { partnerId } : {}),
     ...(transactionSet ? { transactionSet } : {}),
@@ -1368,7 +1375,7 @@ export function ControlledEDIDocumentProfileAutocompleteField({
   };
   return (
     <ControlledAutocompleteField<GraphQLSelectOption>
-      label="Document Profile"
+      label={t("Document Profile")}
       link="/edi/document-profiles/select-options/"
       graphql={
         Object.keys(graphqlFilters).length > 0
@@ -1597,6 +1604,8 @@ export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>
 export function HazardousMaterialAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/hazardous-materials/select-options/"
@@ -1609,7 +1618,7 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
           <span>{option.label}</span>
           {selectOptionMetaString(option, "class") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              Class {selectOptionMetaString(option, "class")}
+              {t("Class {0}", selectOptionMetaString(option, "class"))}
             </span>
           )}
         </div>
@@ -1647,6 +1656,8 @@ export function CommodityAutocompleteField<T extends FieldValues>({
 export function FiscalYearAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/fiscal-years/"
@@ -1662,7 +1673,7 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
               {option.label}
               {selectOptionMetaBoolean(option, "isCurrent") && (
                 <span className="inline-flex items-center rounded border border-green-600/30 bg-green-600/20 px-1 py-px text-[10px] font-medium text-green-700 dark:text-green-400">
-                  Current
+                  {t("Current")}
                 </span>
               )}
               {status && status !== "Open" && (
@@ -2067,6 +2078,8 @@ export function ShiftTemplateAutocompleteField<T extends FieldValues>({
 export function WorkerPolicyAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/worker-policies/select-options/"
@@ -2078,8 +2091,7 @@ export function WorkerPolicyAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.label}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
-            {selectOptionMetaString(option, "code")} · v
-            {selectOptionMetaString(option, "versionLabel")}
+            {t("{0} · v {1}", selectOptionMetaString(option, "code"), selectOptionMetaString(option, "versionLabel"))}
           </span>
         </div>
       )}

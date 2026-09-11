@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   HoverCard,
   HoverCardContent,
@@ -9,6 +10,8 @@ import { useState } from "react";
 import { LazyImage } from "./image";
 
 export function UserHoverCard({ userId, username }: { userId?: string; username: string }) {
+  const t = useT();
+
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
 
   const { data: hoveredUserData } = useQuery({
@@ -54,7 +57,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
             )}
           </div>
         ) : (
-          <div className="text-muted-foreground text-sm">User not found</div>
+          <div className="text-muted-foreground text-sm">{t("User not found")}</div>
         )}
       </HoverCardContent>
     </HoverCard>

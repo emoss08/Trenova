@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { useUpdateStore } from "@/stores/update-store";
@@ -6,6 +7,8 @@ import { ExternalLinkIcon, XIcon } from "lucide-react";
 import { Button } from "@trenova/shared/components/ui/button";
 
 export function LatestChange() {
+  const t = useT();
+
   const manifest = usePermissionStore((state) => state.manifest);
   const status = useUpdateStore((state) => state.status);
   const dismissedVersion = useUpdateStore((state) => state.dismissedVersion);
@@ -39,13 +42,13 @@ export function LatestChange() {
       )}
     >
       <span className="text-muted-foreground font-mono text-[10px] font-light">UPDATE</span>
-      <p className="text-xs font-medium">v{status.latestVersion} available</p>
-      <span className="text-muted-foreground text-[10px]">Running v{status.currentVersion}</span>
+      <p className="text-xs font-medium">{t("v{0} available", status.latestVersion)}</p>
+      <span className="text-muted-foreground text-[10px]">{t("Running v{0}", status.currentVersion)}</span>
       {status.latestRelease.htmlUrl && (
         <Button
           render={
             <a href={status.latestRelease.htmlUrl} target="_blank" rel="noopener noreferrer">
-              View Release
+              {t("View Release")}
             </a>
           }
           className="w-max px-0 text-xs font-light"

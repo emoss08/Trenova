@@ -1,4 +1,5 @@
 "use no memo";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Checkbox } from "../animate-ui/components/base/checkbox";
 
@@ -10,7 +11,7 @@ export function createSelectionColumn<TData extends Record<string, unknown>>(): 
         checked={table.getIsAllPageRowsSelected()}
         indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
+        aria-label={translate("Select all")}
         nativeButton
         className="translate-y-[2px]"
       />
@@ -19,7 +20,7 @@ export function createSelectionColumn<TData extends Record<string, unknown>>(): 
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
+        aria-label={translate("Select row")}
         nativeButton
         className="translate-y-[2px]"
       />

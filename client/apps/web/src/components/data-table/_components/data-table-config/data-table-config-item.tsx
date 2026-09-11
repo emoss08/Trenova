@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -51,6 +52,8 @@ export function DataTableConfigItem({
   onViewDeleted?: (id: string) => void;
   setOpen: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -65,7 +68,7 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: () => {
       onViewDeleted?.(config.id);
-      toast.success("View deleted", {
+      toast.success(t("View deleted"), {
         description: `"${config.name}" has been deleted.`,
       });
     },
@@ -77,7 +80,7 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
       onApplyConfig(updated.tableConfig, { id: updated.id, name: updated.name });
-      toast.success("Default view updated", {
+      toast.success(t("Default view updated"), {
         description: `"${updated.name}" is now your default view and has been applied.`,
       });
     },
@@ -114,7 +117,7 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
       onViewPersisted?.(updated);
-      toast.success("View updated", {
+      toast.success(t("View updated"), {
         description: `"${updated.name}" now matches the current table state.`,
       });
     },
@@ -125,7 +128,7 @@ export function DataTableConfigItem({
     mutationFn: () => apiService.tableConfigurationService.duplicate(config),
     resourceName: "Table Configuration",
     onSuccess: (created: TableConfiguration) => {
-      toast.success("View duplicated", {
+      toast.success(t("View duplicated"), {
         description: `"${created.name}" has been added to your views.`,
       });
     },
@@ -165,20 +168,20 @@ export function DataTableConfigItem({
           <span className="truncate">{config.name}</span>
           {!isOwn && config.user?.name && (
             <span className="text-muted-foreground truncate text-[10px]">
-              by {config.user.name}
+              {t("by {0}", config.user.name)}
             </span>
           )}
         </span>
         {config.isDefault && isOwn && (
           <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[10px] font-medium">
             <StarIcon className="size-2.5" />
-            Default
+            {t("Default")}
           </span>
         )}
         {config.isOrgDefault && (
           <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[10px] font-medium">
             <Building2Icon className="size-2.5" />
-            Org default
+            {t("Org default")}
           </span>
         )}
       </button>
@@ -211,45 +214,45 @@ export function DataTableConfigItem({
                 aria-expanded={dropdownOpen}
               >
                 <MoreHorizontalIcon className="text-muted-foreground size-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{t("Open menu")}</span>
               </Button>
             }
           />
           <DropdownMenuContent align="end" side="inline-start" className="min-w-62">
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                title="Apply"
+                title={t("Apply")}
                 onClick={handleApply}
-                description="Apply this view to the table"
+                description={t("Apply this view to the table")}
                 startContent={<CheckIcon className="size-4" />}
               />
               {isOwn && currentConfig && (
                 <DropdownMenuItem
-                  title="Save current state to view"
+                  title={t("Save current state to view")}
                   disabled={isUpdatingConfig}
                   onClick={withStopPropagation(() => updateConfig(currentConfig))}
-                  description="Overwrite this view with the current filters, sorting, and columns"
+                  description={t("Overwrite this view with the current filters, sorting, and columns")}
                   startContent={<SaveIcon className="size-4" />}
                 />
               )}
               <DropdownMenuItem
-                title="Duplicate"
+                title={t("Duplicate")}
                 disabled={isDuplicating}
                 onClick={withStopPropagation(() => duplicateConfig(undefined))}
-                description="Create your own private copy of this view"
+                description={t("Create your own private copy of this view")}
                 startContent={<CopyIcon className="size-4" />}
               />
               {isOwn && (
                 <DropdownMenuItem
-                  title="Set as default"
+                  title={t("Set as default")}
                   disabled={isSettingDefaultConfig || config.isDefault}
                   onClick={withStopPropagation(async () => {
                     await setDefaultConfig(config.id);
                     setOpen(false);
                   })}
-                  description="Apply this view automatically when the table loads"
+                  description={t("Apply this view automatically when the table loads")}
                   startContent={<StarIcon className="size-4" />}
                 />
               )}
@@ -258,17 +261,17 @@ export function DataTableConfigItem({
                   title={config.isOrgDefault ? "Remove org default" : "Set as org default"}
                   disabled={isSettingOrgDefault}
                   onClick={withStopPropagation(() => setOrgDefaultConfig(!config.isOrgDefault))}
-                  description="The org default applies for everyone without a personal default"
+                  description={t("The org default applies for everyone without a personal default")}
                   startContent={<Building2Icon className="size-4" />}
                 />
               )}
               {isOwn && (
                 <DropdownMenuItem
-                  title="Delete"
+                  title={t("Delete")}
                   color="danger"
                   disabled={isDeletingConfig}
                   onClick={withStopPropagation(() => deleteConfig(config.id))}
-                  description="Delete this view"
+                  description={t("Delete this view")}
                   startContent={<TrashIcon className="size-4" />}
                 />
               )}

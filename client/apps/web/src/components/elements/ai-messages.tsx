@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { ArrowDown } from "lucide-react";
@@ -13,6 +14,8 @@ interface AiMessagesProps {
 }
 
 function AiMessages({ children, className, autoScroll = true }: AiMessagesProps) {
+  const t = useT();
+
   const containerRef = React.useRef<HTMLDivElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
@@ -53,7 +56,7 @@ function AiMessages({ children, className, autoScroll = true }: AiMessagesProps)
       <button
         type="button"
         onClick={() => scrollToBottom("smooth")}
-        aria-label="Scroll to bottom"
+        aria-label={t("Scroll to bottom")}
         className={cn(
           "bg-background hover:bg-muted absolute bottom-4 left-1/2 z-10 flex size-8 -translate-x-1/2 items-center justify-center border transition-all",
           isAtBottom

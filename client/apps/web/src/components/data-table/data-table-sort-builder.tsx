@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -56,6 +57,8 @@ export default function DataTableSortBuilder<TData extends RowData>({
   sort,
   onSortChange,
 }: DataTableSortBuilderProps<TData>) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -156,7 +159,7 @@ export default function DataTableSortBuilder<TData extends RowData>({
         render={
           <Button variant="outline" size="sm">
             <ArrowUpDownIcon className="size-3.5" />
-            Sort
+            {t("Sort")}
             {sortCount > 0 && (
               <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {sortCount}
@@ -172,14 +175,14 @@ export default function DataTableSortBuilder<TData extends RowData>({
         {sort.length == 0 ? (
           <div className="flex flex-col items-start gap-3 p-3">
             <div className="flex flex-col items-start">
-              <h3 className="text-xl font-semibold">No sorts applied</h3>
+              <h3 className="text-xl font-semibold">{t("No sorts applied")}</h3>
               <p className="text-muted-foreground text-sm">
-                Add sorts to narrow down your results.
+                {t("Add sorts to narrow down your results.")}
               </p>
             </div>
             <Button onClick={handleAddSort} disabled={availableColumns.length === 0}>
               <PlusIcon className="size-3.5" />
-              Add Sort
+              {t("Add Sort")}
             </Button>
           </div>
         ) : (
@@ -226,11 +229,11 @@ export default function DataTableSortBuilder<TData extends RowData>({
                 disabled={availableColumns.length === 0}
               >
                 <PlusIcon className="size-3.5" />
-                Add Sort
+                {t("Add Sort")}
               </Button>
               {sort.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={handleResetSort}>
-                  Reset Sort
+                  {t("Reset Sort")}
                 </Button>
               )}
             </div>
@@ -261,6 +264,8 @@ function SortableSortRow({
   onDirectionChange,
   onRemove,
 }: SortableSortRowProps) {
+  const t = useT();
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sortField.field,
   });
@@ -318,12 +323,12 @@ function SortableSortRow({
               {sortField.direction === "asc" ? (
                 <>
                   <ArrowUpIcon className="size-3.5" />
-                  Ascending
+                  {t("Ascending")}
                 </>
               ) : (
                 <>
                   <ArrowDownIcon className="size-3.5" />
-                  Descending
+                  {t("Descending")}
                 </>
               )}
             </span>
@@ -333,13 +338,13 @@ function SortableSortRow({
           <SelectItem value="asc">
             <span className="flex items-center gap-2">
               <ArrowUpIcon className="size-3.5" />
-              Ascending
+              {t("Ascending")}
             </span>
           </SelectItem>
           <SelectItem value="desc">
             <span className="flex items-center gap-2">
               <ArrowDownIcon className="size-3.5" />
-              Descending
+              {t("Descending")}
             </span>
           </SelectItem>
         </SelectContent>
@@ -374,6 +379,8 @@ type SortRowOverlayProps = {
 };
 
 function SortRowOverlay({ sortField, index, getColumnLabel }: SortRowOverlayProps) {
+  const t = useT();
+
   return (
     <div className="bg-popover flex items-center gap-2 rounded-md border px-2 py-1 shadow-lg">
       <span className="text-muted-foreground w-10 shrink-0 text-sm">
@@ -388,12 +395,12 @@ function SortRowOverlay({ sortField, index, getColumnLabel }: SortRowOverlayProp
         {sortField.direction === "asc" ? (
           <>
             <ArrowUpIcon className="size-3.5" />
-            Ascending
+            {t("Ascending")}
           </>
         ) : (
           <>
             <ArrowDownIcon className="size-3.5" />
-            Descending
+            {t("Descending")}
           </>
         )}
       </div>

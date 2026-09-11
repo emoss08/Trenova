@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
   FormControlProps,
@@ -56,6 +57,8 @@ export function SelectField<T extends FieldValues>({
   renderOption,
   onValueChange,
 }: SelectFieldProps<T>) {
+  const t = useT();
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState("");
 
@@ -192,7 +195,7 @@ export function SelectField<T extends FieldValues>({
                     onValueChange={(value) => setSearchValue(value)}
                   />
                   <CommandList>
-                    <CommandEmpty>No options found.</CommandEmpty>
+                    <CommandEmpty>{t("No options found.")}</CommandEmpty>
                     {groups ? (
                       groups.map((group, idx) => (
                         <React.Fragment key={group.label}>
@@ -227,6 +230,8 @@ function SelectInputActions({
   handleClear: () => void;
   open: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="ml-auto flex items-center gap-1">
       {clearable && currentValue && (
@@ -238,7 +243,7 @@ function SelectInputActions({
           }}
           className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
         >
-          <span className="sr-only">Clear</span>
+          <span className="sr-only">{t("Clear")}</span>
           <XIcon className="size-4" />
         </span>
       )}

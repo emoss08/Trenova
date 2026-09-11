@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { DialogClose, DialogFooter } from "@trenova/shared/components/ui/dialog";
@@ -90,6 +91,8 @@ function SortableRow({
   disabled?: boolean;
   children: React.ReactNode;
 }) {
+  const t = useT();
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled,
@@ -107,7 +110,7 @@ function SortableRow({
       {children}
       <button
         type="button"
-        aria-label="Reorder"
+        aria-label={t("Reorder")}
         className={cn(
           "text-muted-foreground/60 hover:text-foreground ml-auto flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors",
           disabled && "invisible",
@@ -130,6 +133,8 @@ function SectionsEditor({
   sections: SectionDraft[];
   onChange: (sections: SectionDraft[]) => void;
 }) {
+  const t = useT();
+
   const sensors = useVerticalDndSensors();
   const sectionsByKey = useMemo(
     () => new Map(options.sections.map((section) => [section.key, section])),
@@ -149,7 +154,7 @@ function SectionsEditor({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <GroupLabel>Sections</GroupLabel>
+      <GroupLabel>{t("Sections")}</GroupLabel>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -180,7 +185,7 @@ function SectionsEditor({
                   />
                   <span className="truncate text-xs font-medium">{definition.label}</span>
                   {!definition.hideable && (
-                    <span className="text-2xs text-muted-foreground/70">Always visible</span>
+                    <span className="text-2xs text-muted-foreground/70">{t("Always visible")}</span>
                   )}
                 </SortableRow>
               );
@@ -302,11 +307,13 @@ function ActivityEditor({
   activity: PreferencesDraft["activity"];
   onChange: (activity: PreferencesDraft["activity"]) => void;
 }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-1.5">
-      <GroupLabel>Recent Activity</GroupLabel>
+      <GroupLabel>{t("Recent Activity")}</GroupLabel>
       <div className="border-border bg-background flex h-8 items-center justify-between rounded-md border px-2">
-        <span className="text-xs font-medium">Entries per page</span>
+        <span className="text-xs font-medium">{t("Entries per page")}</span>
         <Select
           value={String(activity.pageSize)}
           onValueChange={(value) => {
@@ -331,7 +338,7 @@ function ActivityEditor({
         </Select>
       </div>
       <div className="border-border bg-background flex h-8 items-center justify-between rounded-md border px-2">
-        <span className="text-xs font-medium">Expanded by default</span>
+        <span className="text-xs font-medium">{t("Expanded by default")}</span>
         <Switch
           size="sm"
           checked={activity.defaultOpen}
@@ -351,6 +358,8 @@ export default function CustomizeSidebarForm({
   options: SidebarCustomizationOptions;
   onSaved: () => void;
 }) {
+  const t = useT();
+
   const [draft, setDraft] = useState<PreferencesDraft>(() => draftFromPreferences(preferences));
   const updateMutation = useUpdateSidebarPreferences();
 
@@ -383,11 +392,11 @@ export default function CustomizeSidebarForm({
       },
       {
         onSuccess: () => {
-          toast.success("Sidebar preferences saved");
+          toast.success(t("Sidebar preferences saved"));
           onSaved();
         },
         onError: (error) => {
-          toast.error("Failed to save sidebar preferences", {
+          toast.error(t("Failed to save sidebar preferences"), {
             description: graphQLErrorMessage(error, "Your changes could not be saved."),
           });
         },
@@ -404,7 +413,7 @@ export default function CustomizeSidebarForm({
           onChange={(sections) => setDraft((previous) => ({ ...previous, sections }))}
         />
         <ChecklistEditor
-          label="Needs Attention"
+          label={t("Needs Attention")}
           items={options.attentionMetrics.map((metric) => ({
             id: metric.key,
             label: metric.label,
@@ -415,7 +424,7 @@ export default function CustomizeSidebarForm({
           }
         />
         <ChecklistEditor
-          label="Quick Actions"
+          label={t("Quick Actions")}
           hint={`${draft.quickActionIds.length}/${options.maxQuickActions}`}
           items={options.quickActions.map((action) => ({ id: action.id, label: action.label }))}
           selected={draft.quickActionIds}
@@ -441,9 +450,9 @@ export default function CustomizeSidebarForm({
           onClick={handleReset}
           disabled={updateMutation.isPending}
         >
-          Reset to defaults
+          {t("Reset to defaults")}
         </Button>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
+        <DialogClose render={<Button variant="outline">{t("Cancel")}</Button>} />
         <Button onClick={handleSave} disabled={updateMutation.isPending}>
           {updateMutation.isPending ? "Saving…" : "Save changes"}
         </Button>

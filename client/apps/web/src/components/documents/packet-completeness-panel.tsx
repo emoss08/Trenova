@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DocumentPacketItem, DocumentPacketSummary } from "@trenova/shared/types/document";
 import {
   AlertTriangleIcon,
@@ -87,6 +88,8 @@ function groupByStatus(items: DocumentPacketItem[]) {
 }
 
 function PacketItem({ item }: { item: DocumentPacketItem }) {
+  const t = useT();
+
   return (
     <div className="bg-background flex items-center justify-between gap-3 rounded-md border px-3 py-2">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -101,26 +104,26 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
       <div className="flex shrink-0 items-center gap-2">
         {item.required && (
           <Badge variant="outline" className="text-2xs">
-            Required
+            {t("Required")}
           </Badge>
         )}
         {item.allowMultiple && (
           <Badge variant="outline" className="text-2xs">
-            Multiple
+            {t("Multiple")}
           </Badge>
         )}
         {item.documentCount > 0 ? (
           <Badge variant="secondary" className="text-2xs">
-            {item.documentCount} doc{item.documentCount !== 1 ? "s" : ""}
+            {t("{0} doc{1}", item.documentCount, item.documentCount !== 1 ? "s" : "")}
           </Badge>
         ) : (
           <Badge variant="outline" className="text-2xs text-muted-foreground">
-            No docs
+            {t("No docs")}
           </Badge>
         )}
         {item.expirationRequired && item.status === "ExpiringSoon" && (
           <Badge variant="warning" className="text-2xs">
-            {item.expirationWarningDays}d warning
+            {t("{0}d warning", item.expirationWarningDays)}
           </Badge>
         )}
       </div>
@@ -129,6 +132,8 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
 }
 
 export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProps) {
+  const t = useT();
+
   const [isOpen, setIsOpen] = useState(false);
   const grouped = groupByStatus(summary.items);
 
@@ -137,7 +142,7 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
       <div className="bg-card rounded-lg border">
         <CollapsibleTrigger className="hover:bg-accent/50 flex w-full cursor-pointer items-center justify-between px-4 py-3 transition-colors">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">Packet Status</span>
+            <span className="text-sm font-medium">{t("Packet Status")}</span>
             <Badge variant={getStatusBadgeVariant(summary.status)}>
               {summary.status === "ExpiringSoon"
                 ? "Expiring Soon"
@@ -146,26 +151,26 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
                   : summary.status}
             </Badge>
             <span className="text-muted-foreground text-sm">
-              {summary.satisfiedRules}/{summary.totalRules} rules satisfied
+              {t("{0}/{1} rules satisfied", summary.satisfiedRules, summary.totalRules)}
             </span>
             {summary.missingRequired > 0 && (
               <Badge variant="inactive" className="text-2xs">
-                {summary.missingRequired} missing
+                {t("{0} missing", summary.missingRequired)}
               </Badge>
             )}
             {summary.expired > 0 && (
               <Badge variant="pink" className="text-2xs">
-                {summary.expired} expired
+                {t("{0} expired", summary.expired)}
               </Badge>
             )}
             {summary.expiringSoon > 0 && (
               <Badge variant="warning" className="text-2xs">
-                {summary.expiringSoon} expiring
+                {t("{0} expiring", summary.expiringSoon)}
               </Badge>
             )}
             {summary.needsReview > 0 && (
               <Badge variant="purple" className="text-2xs">
-                {summary.needsReview} review
+                {t("{0} review", summary.needsReview)}
               </Badge>
             )}
           </div>

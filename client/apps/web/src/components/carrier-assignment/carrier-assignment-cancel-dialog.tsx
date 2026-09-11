@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -37,6 +38,8 @@ export function CarrierAssignmentCancelDialog({
   isSubmitting: boolean;
   onConfirm: (reason: string) => void;
 }) {
+  const t = useT();
+
   const form = useForm<CancelReasonValues>({
     resolver: zodResolver(cancelReasonSchema),
     defaultValues: { reason: "" },
@@ -56,7 +59,7 @@ export function CarrierAssignmentCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Cancel Carrier Assignment</DialogTitle>
+          <DialogTitle>{t("Cancel Carrier Assignment")}</DialogTitle>
           <DialogDescription>
             {carrierName
               ? `Pull this move back from ${carrierName}. The move returns to uncovered and the cancellation reason is recorded.`
@@ -73,22 +76,22 @@ export function CarrierAssignmentCancelDialog({
             <TextareaField
               control={control}
               name="reason"
-              label="Reason"
+              label={t("Reason")}
               rules={{ required: true }}
-              placeholder="e.g., Carrier failed to dispatch a truck"
+              placeholder={t("e.g., Carrier failed to dispatch a truck")}
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Keep assignment
+              {t("Keep assignment")}
             </Button>
             <Button
               type="submit"
               variant="destructive"
               isLoading={isSubmitting}
-              loadingText="Canceling..."
+              loadingText={t("Canceling...")}
             >
-              Cancel assignment
+              {t("Cancel assignment")}
             </Button>
           </DialogFooter>
         </Form>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
@@ -72,6 +73,8 @@ export function UnassignedQueueList({
   onSelect,
   onSummary,
 }: UnassignedQueueListProps) {
+  const t = useT();
+
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useUnassignedShipments(undefined, enabled);
 
@@ -129,12 +132,12 @@ export function UnassignedQueueList({
     <div className="flex flex-col gap-1.5">
       {isLoading && (
         <div className="text-muted-foreground flex items-center gap-2 text-[10.5px]">
-          <Spinner className="size-3" /> Loading…
+          <Spinner className="size-3" /> {t("Loading…")}
         </div>
       )}
       {!isLoading && visible.length === 0 && (
         <p className="text-muted-foreground py-3 text-center text-[10.5px]">
-          All loads are assigned ✓
+          {t("All loads are assigned ✓")}
         </p>
       )}
       {visible.map((s) => {
@@ -172,11 +175,11 @@ export function UnassignedQueueList({
             </div>
             <div className="font-table flex items-baseline justify-between gap-2 tabular-nums">
               <span className="text-muted-foreground truncate text-[9.5px]">
-                pickup {pickupDisplay(s)}
+                {t("pickup {0}", pickupDisplay(s))}
               </span>
               <span className="text-[10.5px] font-semibold">
                 {formatCurrency(revenue)}{" "}
-                <span className="text-muted-foreground text-[9.5px] font-normal">· {miles}mi</span>
+                <span className="text-muted-foreground text-[9.5px] font-normal">{t("· {0}mi", miles)}</span>
               </span>
             </div>
           </button>
@@ -185,7 +188,7 @@ export function UnassignedQueueList({
       {paging && isFetchingNextPage && (
         <div className="flex items-center justify-center py-2">
           <TextShimmer className="font-mono text-[10px]" duration={1}>
-            Loading more…
+            {t("Loading more…")}
           </TextShimmer>
         </div>
       )}

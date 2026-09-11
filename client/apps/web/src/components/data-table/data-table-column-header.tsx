@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -34,6 +35,8 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
   onSort,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
+  const t = useT();
+
   const meta = column.columnDef.meta;
   const apiField = meta?.apiField || column.id;
   const isSortable = meta?.sortable !== false;
@@ -78,14 +81,14 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
           <DropdownMenuGroup>
             <DropdownMenuItem
               startContent={<ArrowUpIcon className="text-muted-foreground/70 size-3.5" />}
-              title="Asc"
-              label="Asc"
+              title={t("Asc")}
+              label={t("Asc")}
               onClick={() => handleSort("asc")}
             />
             <DropdownMenuItem
               startContent={<ArrowDownIcon className="text-muted-foreground/70 size-3.5" />}
-              title="Desc"
-              label="Desc"
+              title={t("Desc")}
+              label={t("Desc")}
               onClick={() => handleSort("desc")}
             />
             {sortDirection && (
@@ -93,8 +96,8 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   startContent={<ArrowUpDownIcon className="text-muted-foreground/70 size-3.5" />}
-                  title="Clear sort"
-                  label="Clear sort"
+                  title={t("Clear sort")}
+                  label={t("Clear sort")}
                   onClick={() => handleSort(null)}
                 />
               </>
@@ -108,8 +111,8 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                     startContent={
                       <PinIcon className="text-muted-foreground/70 size-3.5 -rotate-45" />
                     }
-                    title="Pin left"
-                    label="Pin left"
+                    title={t("Pin left")}
+                    label={t("Pin left")}
                   />
                 )}
                 {column.getIsPinned() !== "end" && (
@@ -118,16 +121,16 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                     startContent={
                       <PinIcon className="text-muted-foreground/70 size-3.5 rotate-45" />
                     }
-                    title="Pin right"
-                    label="Pin right"
+                    title={t("Pin right")}
+                    label={t("Pin right")}
                   />
                 )}
                 {column.getIsPinned() && (
                   <DropdownMenuItem
                     onClick={() => column.pin(false)}
                     startContent={<PinOffIcon className="text-muted-foreground/70 size-3.5" />}
-                    title="Unpin"
-                    label="Unpin"
+                    title={t("Unpin")}
+                    label={t("Unpin")}
                   />
                 )}
               </>
@@ -138,8 +141,8 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                 <DropdownMenuItem
                   onClick={() => column.toggleVisibility(false)}
                   startContent={<EyeOffIcon className="text-muted-foreground/70 size-3.5" />}
-                  title="Hide"
-                  label="Hide"
+                  title={t("Hide")}
+                  label={t("Hide")}
                 />
               </>
             )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { cn } from "@trenova/shared/lib/utils";
@@ -23,6 +24,8 @@ export function AiStreamingText({
   onComplete,
   className,
 }: AiStreamingTextProps) {
+  const t = useT();
+
   const [displayedText, setDisplayedText] = React.useState("");
   const [isComplete, setIsComplete] = React.useState(false);
 
@@ -71,7 +74,7 @@ export function AiStreamingText({
       data-slot="ai-streaming-text"
       role="status"
       aria-live="polite"
-      aria-label="AI response"
+      aria-label={t("AI response")}
       className={cn("relative", className)}
     >
       <span className="whitespace-pre-wrap">{displayedText}</span>

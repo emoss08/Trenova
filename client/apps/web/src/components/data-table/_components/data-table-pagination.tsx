@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -35,6 +36,8 @@ export function DataTablePagination<TData extends RowData>({
   onPageChange,
   onPageSizeChange,
 }: DataTablePaginationProps<TData>) {
+  const t = useT();
+
   const { pageIndex, pageSize } = table.state.pagination;
   const pageCount = table.getPageCount();
   const rowCount = table.getRowCount();
@@ -65,10 +68,10 @@ export function DataTablePagination<TData extends RowData>({
     <div className="flex items-center justify-between gap-4 px-2">
       <div className="text-muted-foreground text-sm">
         {visibleRowCount < 1 ? (
-          <>No results on this page</>
+          <>{t("No results on this page")}</>
         ) : (
           <>
-            Showing <span className="text-foreground font-medium">{startRow}</span> to{" "}
+            {t("Showing")} <span className="text-foreground font-medium">{startRow}</span> to{" "}
             <span className="text-foreground font-medium">{endRow}</span>
             {cursorMode ? (
               totalCount != null ? (
@@ -95,7 +98,7 @@ export function DataTablePagination<TData extends RowData>({
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-sm">Rows per page</span>
+          <span className="text-muted-foreground text-sm">{t("Rows per page")}</span>
           <Select
             value={String(pageSize)}
             onValueChange={(value) => handlePageSizeChange(Number(value))}
@@ -122,7 +125,7 @@ export function DataTablePagination<TData extends RowData>({
               size="icon-sm"
               onClick={() => handlePageChange(0)}
               disabled={!canPreviousPage}
-              aria-label="Go to first page"
+              aria-label={t("Go to first page")}
             >
               <ChevronFirstIcon className="size-4" />
             </Button>
@@ -132,12 +135,12 @@ export function DataTablePagination<TData extends RowData>({
             size="icon-sm"
             onClick={() => handlePageChange(pageIndex - 1)}
             disabled={!canPreviousPage}
-            aria-label="Go to previous page"
+            aria-label={t("Go to previous page")}
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
           <div className="flex items-center gap-1 px-2 text-sm">
-            <span className="text-muted-foreground">Page</span>
+            <span className="text-muted-foreground">{t("Page")}</span>
             <span className="font-medium">{pageIndex + 1}</span>
             {(!cursorMode || totalCount != null) && (
               <>
@@ -151,7 +154,7 @@ export function DataTablePagination<TData extends RowData>({
             size="icon-sm"
             onClick={() => handlePageChange(pageIndex + 1)}
             disabled={!canNextPage}
-            aria-label="Go to next page"
+            aria-label={t("Go to next page")}
           >
             <ChevronRightIcon className="size-4" />
           </Button>
@@ -161,7 +164,7 @@ export function DataTablePagination<TData extends RowData>({
               size="icon-sm"
               onClick={() => handlePageChange(pageCount - 1)}
               disabled={!canNextPage}
-              aria-label="Go to last page"
+              aria-label={t("Go to last page")}
             >
               <ChevronLastIcon className="size-4" />
             </Button>

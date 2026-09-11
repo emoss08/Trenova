@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateOnly, generateDateOnlyString } from "@trenova/shared/lib/date";
 import { CalendarIcon } from "lucide-react";
@@ -18,6 +19,8 @@ export function AutoCompleteDatePicker({
   readOnly,
   ...props
 }: DatePickerProps) {
+  const t = useT();
+
   return (
     <DateSuggestionInput
       {...props}
@@ -39,7 +42,7 @@ export function AutoCompleteDatePicker({
             disabled={disabled || readOnly}
             className="text-muted-foreground absolute top-1/2 right-2 size-5 -translate-y-1/2 [&>svg]:size-3"
           >
-            <span className="sr-only">Open date picker</span>
+            <span className="sr-only">{t("Open date picker")}</span>
             <CalendarIcon className="size-4" />
           </Button>
         </DatePickerPopover>

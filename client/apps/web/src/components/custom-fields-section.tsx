@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import type { CustomFieldDefinition, SelectOption } from "@/types/custom-field";
 import { useQuery } from "@tanstack/react-query";
@@ -124,6 +125,8 @@ export function CustomFieldsSection<T extends FieldValues>({
   control,
   fieldPrefix = "customFields",
 }: CustomFieldsSectionProps<T>) {
+  const t = useT();
+
   const { data: customFields, isLoading } = useQuery({
     queryKey: ["custom-fields", resourceType],
     queryFn: () => apiService.customFieldService.getByResourceType(resourceType),
@@ -146,7 +149,7 @@ export function CustomFieldsSection<T extends FieldValues>({
   }
 
   return (
-    <FormSection title="Custom Fields" className="border-t pt-2">
+    <FormSection title={t("Custom Fields")} className="border-t pt-2">
       <FormGroup cols={2}>
         {sortedFields.map((definition) => (
           <FormControl key={definition.id} cols={definition.fieldType === "boolean" ? "full" : 1}>

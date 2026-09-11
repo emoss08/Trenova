@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Progress } from "@trenova/shared/components/ui/progress";
@@ -106,6 +107,8 @@ export function ShipmentBillingReadinessPanel({
   isMarkingReady,
   disabled,
 }: ShipmentBillingReadinessPanelProps) {
+  const t = useT();
+
   const nextMissing = readiness.missingRequirements[0];
   const totalRequirements = readiness.requirements.length;
   const completedRequirements = totalRequirements - readiness.missingRequirements.length;
@@ -128,7 +131,7 @@ export function ShipmentBillingReadinessPanel({
       {/* Header */}
       <div className="border-b px-4 py-3">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-sm font-semibold">Billing Readiness</span>
+          <span className="text-sm font-semibold">{t("Billing Readiness")}</span>
           <span className="text-2xs text-muted-foreground">{statusHint}</span>
         </div>
 
@@ -147,7 +150,7 @@ export function ShipmentBillingReadinessPanel({
         {readiness.validationFailures.length > 0 && (
           <Alert variant="destructive" className="mb-3">
             <AlertCircleIcon className="size-4" />
-            <AlertTitle>Validation issues</AlertTitle>
+            <AlertTitle>{t("Validation issues")}</AlertTitle>
             <AlertDescription>
               <ul className="list-inside list-disc space-y-0.5">
                 {readiness.validationFailures.map((failure) => (
@@ -163,7 +166,7 @@ export function ShipmentBillingReadinessPanel({
         {readiness.warnings.length > 0 && (
           <Alert className="mb-3 border-amber-500/40 bg-amber-500/10">
             <AlertCircleIcon className="size-4 text-amber-600" />
-            <AlertTitle>Billing warnings</AlertTitle>
+            <AlertTitle>{t("Billing warnings")}</AlertTitle>
             <AlertDescription>
               <ul className="list-inside list-disc space-y-0.5">
                 {readiness.warnings.map((warning) => (
@@ -177,8 +180,7 @@ export function ShipmentBillingReadinessPanel({
                   href={`/shipment-management/service-failures?shipmentId=${shipment?.id ?? ""}`}
                   className="text-primary mt-2 inline-flex items-center gap-1 text-xs font-medium underline-offset-4 hover:underline"
                 >
-                  View {readiness.serviceFailureContext.unresolvedCount} service failure
-                  {readiness.serviceFailureContext.unresolvedCount === 1 ? "" : "s"}
+                  {t("View {0} service failure {1}", readiness.serviceFailureContext.unresolvedCount, readiness.serviceFailureContext.unresolvedCount === 1 ? "" : "s")}
                   <ExternalLinkIcon className="size-3" />
                 </a>
               )}
@@ -201,7 +203,7 @@ export function ShipmentBillingReadinessPanel({
         ) : (
           <div className="text-muted-foreground flex items-center justify-center gap-2 py-6">
             <Clock3Icon className="size-4" />
-            <p className="text-sm">No billing documents required.</p>
+            <p className="text-sm">{t("No billing documents required.")}</p>
           </div>
         )}
 
@@ -213,10 +215,10 @@ export function ShipmentBillingReadinessPanel({
               onClick={onMarkReadyToInvoice}
               disabled={disabled}
               isLoading={isMarkingReady}
-              loadingText="Marking..."
+              loadingText={t("Marking...")}
             >
               <CheckCircle2Icon className="size-4" />
-              Mark Ready To Invoice
+              {t("Mark Ready To Invoice")}
             </Button>
           </div>
         )}

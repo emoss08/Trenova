@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
@@ -227,6 +228,8 @@ interface AiTaskListProgressProps {
 }
 
 function AiTaskListProgress({ className }: AiTaskListProgressProps) {
+  const t = useT();
+
   const { completedCount, totalCount } = useTaskListContext();
 
   const percentage = React.useMemo(() => {
@@ -237,9 +240,9 @@ function AiTaskListProgress({ className }: AiTaskListProgressProps) {
   return (
     <div data-slot="ai-task-list-progress" className={cn("space-y-1", className)}>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Progress</span>
+        <span className="text-muted-foreground">{t("Progress")}</span>
         <span className="font-medium">
-          {completedCount} of {totalCount} ({percentage}%)
+          {t("{0} of {1} ({2}%)", completedCount, totalCount, percentage)}
         </span>
       </div>
       <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
