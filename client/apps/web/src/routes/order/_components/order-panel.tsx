@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -16,6 +17,8 @@ import { OrderForm } from "./order-form";
 const AuditTab = lazy(() => import("@/components/audit-tab"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
+  const t = useT();
+
   const { data: owner, isLoading } = useQuery({
     queryKey: ["user", ownerId],
     queryFn: () => apiService.userService.get(ownerId!),
@@ -28,16 +31,18 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   if (ownerId) {
     return (
       <div className="flex items-center gap-1">
-        <span className="text-2xs text-muted-foreground">Owner:</span>
+        <span className="text-2xs text-muted-foreground">{t("Owner:")}</span>
         <span className="text-2xs text-blue-500">{owner?.name}</span>
       </div>
     );
   }
 
-  return <span className="text-2xs text-foreground">No owner assigned</span>;
+  return <span className="text-2xs text-foreground">{t("No owner assigned")}</span>;
 }
 
 export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<OrderRow>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(orderSchema),
@@ -63,7 +68,7 @@ export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         row={row}
         form={form}
         queryKey="order-list"
-        title="Order"
+        title={t("Order")}
         fieldKey="orderNumber"
         formComponent={<OrderForm mode="edit" />}
         mutationFn={async (values, currentRow) => {
@@ -93,7 +98,7 @@ export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
       onOpenChange={onOpenChange}
       form={form}
       queryKey="order-list"
-      title="Order"
+      title={t("Order")}
       formComponent={<OrderForm mode="create" />}
       mutationFn={(values) => createOrder(values)}
     />

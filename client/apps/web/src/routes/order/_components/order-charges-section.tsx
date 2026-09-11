@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
 import {
   AlertDialog,
@@ -27,6 +28,8 @@ import { useOrderInvalidation } from "./use-order-invalidation";
 const ORDER_STATUSES_LOCKED_FOR_CHARGES = new Set(["Billed", "Closed", "Canceled"]);
 
 export function OrderChargesSection() {
+  const t = useT();
+
   const { control } = useFormContext<Order>();
   const orderId = useWatch({ control, name: "id" });
   const invalidateOrders = useOrderInvalidation();
@@ -44,10 +47,10 @@ export function OrderChargesSection() {
     mutationFn: (chargeId: string) => removeOrderCharge(orderId!, chargeId),
     onSuccess: () => {
       invalidateOrders();
-      toast.success("Charge removed");
+      toast.success(t("Charge removed"));
     },
     onError: (error) =>
-      toast.error("Failed to remove charge", {
+      toast.error(t("Failed to remove charge"), {
         description: graphQLErrorMessage(error, "The charge could not be removed."),
       }),
     onSettled: () => setChargePendingRemoval(null),
@@ -74,16 +77,16 @@ export function OrderChargesSection() {
 
   return (
     <FormSection
-      title="Order Charges"
+      title={t("Order Charges")}
       titleCount={charges.length}
-      description="Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice."
+      description={t("Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice.")}
       className="border-border border-t pt-4"
       action={
         charges.length > 0 &&
         !chargesLocked && (
           <Button type="button" variant="outline" size="xxs" onClick={openAddCharge}>
             <PlusIcon className="size-3" />
-            Add Charge
+            {t("Add Charge")}
           </Button>
         )
       }
@@ -91,8 +94,8 @@ export function OrderChargesSection() {
       {charges.length > 0 ? (
         <div className="rounded-lg border">
           <div className="border-border text-2xs text-muted-foreground grid grid-cols-12 gap-2 border-b px-4 py-2 uppercase">
-            <span className="col-span-7">Description</span>
-            <span className="col-span-3 text-right">Amount</span>
+            <span className="col-span-7">{t("Description")}</span>
+            <span className="col-span-3 text-right">{t("Amount")}</span>
             <span className="col-span-2" />
           </div>
           <div className="divide-y">
@@ -109,7 +112,7 @@ export function OrderChargesSection() {
                     <span className="truncate">{charge.description}</span>
                     {invoiced && (
                       <Badge variant="outline" className="shrink-0">
-                        Invoiced
+                        {t("Invoiced")}
                       </Badge>
                     )}
                   </span>
@@ -124,7 +127,7 @@ export function OrderChargesSection() {
                           variant="ghost"
                           size="icon"
                           onClick={() => openEditCharge(charge)}
-                          aria-label="Edit charge"
+                          aria-label={t("Edit charge")}
                         >
                           <PencilIcon className="size-3.5" />
                         </Button>
@@ -134,7 +137,7 @@ export function OrderChargesSection() {
                           size="icon"
                           disabled={isRemoving}
                           onClick={() => setChargePendingRemoval(charge)}
-                          aria-label="Remove charge"
+                          aria-label={t("Remove charge")}
                         >
                           <Trash2Icon className="text-destructive size-3.5" />
                         </Button>
@@ -146,7 +149,7 @@ export function OrderChargesSection() {
             })}
           </div>
           <div className="border-border grid grid-cols-12 gap-2 border-t px-4 py-2 text-sm font-medium">
-            <span className="col-span-7">Charges subtotal</span>
+            <span className="col-span-7">{t("Charges subtotal")}</span>
             <span className="col-span-3 text-right tabular-nums">
               {formatCurrency(chargesSubtotal, currency)}
             </span>
@@ -156,8 +159,8 @@ export function OrderChargesSection() {
       ) : (
         <EmptyState
           className="border-bg-sidebar-border max-h-[160px] rounded-lg border p-4"
-          title="No Order Charges"
-          description="Add customs brokerage, order-wide fuel, or other order-level fees"
+          title={t("No Order Charges")}
+          description={t("Add customs brokerage, order-wide fuel, or other order-level fees")}
           icons={[ReceiptTextIcon]}
           action={
             chargesLocked
@@ -185,7 +188,7 @@ export function OrderChargesSection() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove this charge?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Remove this charge?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {chargePendingRemoval
                 ? `"${chargePendingRemoval.description}" (${formatCurrency(
@@ -196,11 +199,11 @@ export function OrderChargesSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep charge</AlertDialogCancel>
+            <AlertDialogCancel>{t("Keep charge")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => chargePendingRemoval && removeCharge(chargePendingRemoval.id)}
             >
-              Remove charge
+              {t("Remove charge")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

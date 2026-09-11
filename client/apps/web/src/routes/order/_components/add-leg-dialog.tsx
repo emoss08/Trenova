@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -31,6 +32,8 @@ type SelectedLeg = {
 };
 
 export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLegDialogProps) {
+  const t = useT();
+
   const invalidateOrders = useOrderInvalidation();
   const [pickerValue, setPickerValue] = useState("");
   const [selected, setSelected] = useState<SelectedLeg[]>([]);
@@ -61,12 +64,12 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
     onSuccess: () => {
       invalidateOrders();
       toast.success(selected.length === 1 ? "Leg added" : `${selected.length} legs added`, {
-        description: "The shipments have been attached to this order.",
+        description: t("The shipments have been attached to this order."),
       });
       handleClose();
     },
     onError: (error) => {
-      toast.error("Failed to add legs", {
+      toast.error(t("Failed to add legs"), {
         description: graphQLErrorMessage(error, "The shipments could not be attached."),
       });
     },
@@ -76,9 +79,9 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Add Legs</DialogTitle>
+          <DialogTitle>{t("Add Legs")}</DialogTitle>
           <DialogDescription>
-            Attach one or more shipments to this order as additional legs.
+            {t("Attach one or more shipments to this order as additional legs.")}
           </DialogDescription>
         </DialogHeader>
         <FormGroup cols={1} className="pb-4">
@@ -126,13 +129,13 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
         </FormGroup>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
             disabled={selected.length === 0}
             isLoading={isPending}
-            loadingText="Adding..."
+            loadingText={t("Adding...")}
             onClick={() => mutate()}
           >
             {selected.length > 1 ? `Add ${selected.length} Legs` : "Add Leg"}
