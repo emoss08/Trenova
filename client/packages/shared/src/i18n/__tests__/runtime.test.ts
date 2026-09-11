@@ -68,3 +68,33 @@ describe("translate", () => {
     expect(document.documentElement.lang).toBe("zh-TW");
   });
 });
+
+describe("real catalog entries", () => {
+  it("renders navigation in Spanish", async () => {
+    await setLocale("es");
+    expect(translate("Shipments")).toBe("Envíos");
+    expect(translate("Create Shipment")).toBe("Crear envío");
+    expect(translate("Save Changes")).toBe("Guardar cambios");
+  });
+
+  it("renders navigation in Traditional Chinese with Taiwan vocabulary", async () => {
+    await setLocale("zh-TW");
+    expect(translate("Shipments")).toBe("運單");
+    expect(translate("User Settings")).toBe("使用者設定");
+    expect(translate("Trailers")).toBe("拖車");
+  });
+
+  it("renders navigation in Simplified Chinese with mainland vocabulary", async () => {
+    await setLocale("zh-CN");
+    expect(translate("Shipments")).toBe("运单");
+    expect(translate("User Settings")).toBe("用户设置");
+    expect(translate("Trailers")).toBe("挂车");
+  });
+
+  it("keeps the two Chinese variants distinct", async () => {
+    await setLocale("zh-TW");
+    const traditional = translate("Audit Entries");
+    await setLocale("zh-CN");
+    expect(translate("Audit Entries")).not.toBe(traditional);
+  });
+});
