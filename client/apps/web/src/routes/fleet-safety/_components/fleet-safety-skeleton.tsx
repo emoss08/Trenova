@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { CSA_BASIC_ORDER, SAFETY_EVENT_KIND_LABELS } from "@trenova/shared/lib/csa";
@@ -92,8 +93,10 @@ function ToolbarSkeleton() {
 }
 
 function BasicsSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="CSA BASICs" className="bg-card overflow-hidden rounded-lg border">
+    <section aria-label={t("CSA BASICs")} className="bg-card overflow-hidden rounded-lg border">
       <CardHeaderSkeleton titleWidth="w-20" right="w-32" />
       <ul className="divide-y">
         {CSA_BASIC_ORDER.map((basic, index) => (
@@ -119,8 +122,10 @@ function BasicsSkeleton() {
 }
 
 function TrendSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="Events by month" className="bg-card overflow-hidden rounded-lg border">
+    <section aria-label={t("Events by month")} className="bg-card overflow-hidden rounded-lg border">
       <CardHeaderSkeleton titleWidth="w-28" right="w-36" />
       <div className="p-3">
         <div className="flex h-44 w-full gap-2 pl-7">
@@ -131,7 +136,7 @@ function TrendSkeleton() {
           </div>
         </div>
       </div>
-      <ul className="divide-y border-t" aria-label="Events by kind">
+      <ul className="divide-y border-t" aria-label={t("Events by kind")}>
         {TREND_KINDS.map((kind) => (
           <li key={kind} className="flex h-7 items-center justify-between gap-2 px-3">
             <Skeleton className="h-3 w-20" />
@@ -148,9 +153,11 @@ function TrendSkeleton() {
 }
 
 function TerminalsSkeleton() {
+  const t = useT();
+
   return (
     <section
-      aria-label="By terminal"
+      aria-label={t("By terminal")}
       className="bg-card flex flex-col overflow-hidden rounded-lg border"
     >
       <CardHeaderSkeleton titleWidth="w-20" right="w-16" />
@@ -208,8 +215,10 @@ function RankListSkeleton({ label }: { label: string }) {
  * cards' labels only so the two trees can be compared like for like.
  */
 export function FleetSafetySkeleton() {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading fleet safety">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading fleet safety")}>
       <div className="contents" aria-hidden>
         <OverviewSkeleton />
         <ToolbarSkeleton />
@@ -219,8 +228,8 @@ export function FleetSafetySkeleton() {
         </div>
         <div className="grid gap-4 lg:grid-cols-3">
           <TerminalsSkeleton />
-          <RankListSkeleton label="Needs attention" />
-          <RankListSkeleton label="Best records" />
+          <RankListSkeleton label={t("Needs attention")} />
+          <RankListSkeleton label={t("Best records")} />
         </div>
       </div>
     </div>

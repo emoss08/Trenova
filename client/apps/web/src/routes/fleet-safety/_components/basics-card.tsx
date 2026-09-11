@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { basicStandings } from "@/lib/fleet-safety-console";
 import type { FleetSafetyBasicRow } from "@/lib/graphql/fleet-safety";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -21,6 +22,8 @@ type BasicsCardProps = {
  * relative bar a percentile would be a lie a safety director would catch.
  */
 export function BasicsCard({ basics, inferred }: BasicsCardProps) {
+  const t = useT();
+
   const standings = useMemo(() => basicStandings(basics), [basics]);
   const reduceMotion = useReducedMotion();
 
@@ -30,7 +33,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
         <div className="flex items-center gap-2">
           <ShieldAlertIcon className="text-muted-foreground size-3.5" aria-hidden />
           <h3 id="basics-heading" className="text-sm font-medium">
-            CSA BASICs
+            {t("CSA BASICs")}
           </h3>
         </div>
         <Tooltip>
@@ -38,14 +41,12 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
             render={
               <span className="text-muted-foreground flex items-center gap-1 text-xs">
                 <InfoIcon className="size-3" aria-hidden />
-                How the score is made
+                {t("How the score is made")}
               </span>
             }
           />
           <TooltipContent className="max-w-72">
-            Severity, plus two for an out-of-service order, weighted three times inside six months
-            and twice inside a year. Bars are relative to this fleet&apos;s own worst category, not
-            to a national percentile.
+            {t("Severity, plus two for an out-of-service order, weighted three times inside six months and twice inside a year. Bars are relative to this fleet's own worst category, not to a national percentile.")}
           </TooltipContent>
         </Tooltip>
       </header>
@@ -53,9 +54,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
       {inferred ? (
         <Alert variant="warning" className="rounded-none border-x-0 border-t-0">
           <AlertDescription>
-            Some categories were reached from the kind of event rather than from violations somebody
-            keyed in. Record the violation codes off an inspection report and these become the real
-            thing.
+            {t("Some categories were reached from the kind of event rather than from violations somebody keyed in. Record the violation codes off an inspection report and these become the real thing.")}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -83,12 +82,12 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
                   </TooltipTrigger>
                   <TooltipContent className="max-w-64">{csaBasicHint(basic.basic)}</TooltipContent>
                 </Tooltip>
-                {tone === "critical" ? <Badge variant="inactive">Highest</Badge> : null}
-                {tone === "warning" ? <Badge variant="warning">Elevated</Badge> : null}
-                {basic.inferred ? <Badge variant="secondary">Inferred</Badge> : null}
+                {tone === "critical" ? <Badge variant="inactive">{t("Highest")}</Badge> : null}
+                {tone === "warning" ? <Badge variant="warning">{t("Elevated")}</Badge> : null}
+                {basic.inferred ? <Badge variant="secondary">{t("Inferred")}</Badge> : null}
                 {basic.outOfService > 0 ? (
                   <Badge variant="outline" className="tabular-nums">
-                    {basic.outOfService} OOS
+                    {t("{0} OOS", basic.outOfService)}
                   </Badge>
                 ) : null}
               </span>

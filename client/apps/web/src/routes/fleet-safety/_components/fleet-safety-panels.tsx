@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { terminalStandings } from "@/lib/fleet-safety-console";
 import type { FleetSafetyRankRow, FleetSafetyTerminalRow } from "@/lib/graphql/fleet-safety";
@@ -31,6 +32,8 @@ export function TerminalsPanel({
   selected,
   onSelect,
 }: TerminalsPanelProps) {
+  const t = useT();
+
   const standings = useMemo(
     () => terminalStandings(terminals, totalWorkers),
     [terminals, totalWorkers],
@@ -38,13 +41,13 @@ export function TerminalsPanel({
 
   return (
     <SectionPanel
-      title="By terminal"
+      title={t("By terminal")}
       icon={<Building2Icon />}
       hint={`${totalWorkers} drivers`}
-      help="Drivers by terminal, the yard with the most at-risk drivers first. Choose one to narrow every section on the page to it."
+      help={t("Drivers by terminal, the yard with the most at-risk drivers first. Choose one to narrow every section on the page to it.")}
     >
       {standings.length === 0 ? (
-        <SectionPanelQuiet>No active drivers.</SectionPanelQuiet>
+        <SectionPanelQuiet>{t("No active drivers.")}</SectionPanelQuiet>
       ) : (
         <ul className="divide-y">
           {standings.map(({ terminal, flagged, share }) => {
@@ -82,13 +85,13 @@ export function TerminalsPanel({
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
                       {terminal.atRisk > 0 ? (
-                        <Badge variant="inactive">{terminal.atRisk} at risk</Badge>
+                        <Badge variant="inactive">{t("{0} at risk", terminal.atRisk)}</Badge>
                       ) : null}
                       {terminal.watch > 0 ? (
-                        <Badge variant="warning">{terminal.watch} watch</Badge>
+                        <Badge variant="warning">{t("{0} watch", terminal.watch)}</Badge>
                       ) : null}
                       <span className="text-muted-foreground tabular-nums">
-                        {terminal.workers} · avg {terminal.averageScore}
+                        {t("{0} · avg {1}", terminal.workers, terminal.averageScore)}
                       </span>
                     </span>
                   </span>
@@ -125,6 +128,8 @@ type RankListProps = {
  * opposite ends, so a driver never appears on both.
  */
 export function RankList({ title, kind, empty, rows }: RankListProps) {
+  const t = useT();
+
   const reduceMotion = useReducedMotion();
   const [settled, setSettled] = useState(false);
 
@@ -176,8 +181,7 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                       ) : null}
                     </span>
                     <span className="text-muted-foreground text-xs tabular-nums">
-                      {row.events} event{row.events === 1 ? "" : "s"}
-                      {row.lastEventAt ? ` · last ${formatUnixDate(row.lastEventAt)}` : ""}
+                      {t("{0} event{1}{2}", row.events, row.events === 1 ? "" : "s", row.lastEventAt ? ` · last ${formatUnixDate(row.lastEventAt)}` : "")}
                     </span>
                   </span>
                 </span>
@@ -185,7 +189,7 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                   <span className="text-right text-xs tabular-nums">
                     <span className="font-mono font-medium">{row.score}</span>
                     {row.activePoints > 0 ? (
-                      <span className="text-muted-foreground"> · {row.activePoints} pts</span>
+                      <span className="text-muted-foreground"> {t("· {0} pts", row.activePoints)}</span>
                     ) : null}
                   </span>
                   <Badge variant={safetyRatingTone(row.rating)}>
