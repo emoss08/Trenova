@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -33,6 +34,8 @@ export function LinkCarrierDialog({
   onOpenChange: (open: boolean) => void;
   onLinked: () => void;
 }) {
+  const t = useT();
+
   const form = useForm<LinkCarrierFormValues>({
     defaultValues: { carrierId: suggestedCarrierId ?? "" },
   });
@@ -51,7 +54,7 @@ export function LinkCarrierDialog({
     mutationFn: (values: LinkCarrierFormValues) =>
       linkEdiCarrierInvoiceToCarrier(invoiceId, values.carrierId),
     onSuccess: () => {
-      toast.success("Invoice linked to carrier");
+      toast.success(t("Invoice linked to carrier"));
       onOpenChange(false);
       onLinked();
     },
@@ -62,28 +65,27 @@ export function LinkCarrierDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Link invoice to carrier</DialogTitle>
+          <DialogTitle>{t("Link invoice to carrier")}</DialogTitle>
           <DialogDescription>
-            Ties invoice {invoiceNumber || invoiceId} to a carrier in the master so it can be
-            matched against that carrier&apos;s assignments.
+            {t("Ties invoice {0} to a carrier in the master so it can be matched against that carrier's assignments.", invoiceNumber || invoiceId)}
           </DialogDescription>
         </DialogHeader>
         <CarrierAutocompleteField<LinkCarrierFormValues>
           control={control}
           name="carrierId"
-          label="Carrier"
-          placeholder="Search by code or name"
+          label={t("Carrier")}
+          placeholder={t("Search by code or name")}
           rules={{ required: true }}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={!carrierId || mutation.isPending}
             onClick={handleSubmit((values) => mutation.mutate(values))}
           >
-            Link Carrier
+            {t("Link Carrier")}
           </Button>
         </DialogFooter>
       </DialogContent>

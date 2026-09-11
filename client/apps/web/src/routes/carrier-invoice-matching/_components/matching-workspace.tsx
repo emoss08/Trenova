@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { CarrierInvoiceMatchStatusBadge } from "@trenova/shared/components/status-badge";
@@ -101,6 +102,8 @@ function invalidateMatchingQueries(queryClient: ReturnType<typeof useQueryClient
 }
 
 export default function MatchingWorkspace() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<QueueTab>("invoices");
   const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>("attention");
@@ -219,25 +222,24 @@ export default function MatchingWorkspace() {
           data-testid="carrier-match-automation-status"
           className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-[11px]"
         >
-          <span>Auto-match: {settlementControl.autoMatchInboundInvoices ? "On" : "Off"}</span>
+          <span>{t("Auto-match: {0}", settlementControl.autoMatchInboundInvoices ? "On" : "Off")}</span>
           <span aria-hidden>·</span>
           <span>
-            Auto-accept within tolerance:{" "}
-            {settlementControl.autoAcceptWithinTolerance ? "On" : "Off"}
+            {t("Auto-accept within tolerance: {0}", settlementControl.autoAcceptWithinTolerance ? "On" : "Off")}
           </span>
           <Link
             to="/admin/carrier-settlement-control"
             className="text-foreground font-medium underline underline-offset-2"
           >
-            Automation settings
+            {t("Automation settings")}
           </Link>
         </p>
       )}
       <div className="grid gap-3 md:grid-cols-4">
-        <SummaryCard label="Invoices Needing Attention" value={String(attentionInvoiceCount)} />
-        <SummaryCard label="Variance Matches" value={String(varianceCount)} />
-        <SummaryCard label="Suggested Matches" value={String(suggestedCount)} />
-        <SummaryCard label="Resolved" value={String(resolvedCount)} />
+        <SummaryCard label={t("Invoices Needing Attention")} value={String(attentionInvoiceCount)} />
+        <SummaryCard label={t("Variance Matches")} value={String(varianceCount)} />
+        <SummaryCard label={t("Suggested Matches")} value={String(suggestedCount)} />
+        <SummaryCard label={t("Resolved")} value={String(resolvedCount)} />
       </div>
       <div className="grid h-[calc(100vh-260px)] min-h-120 gap-0 overflow-hidden rounded-lg border md:grid-cols-[340px_1fr]">
         <div className="flex h-full min-h-0 flex-col overflow-hidden border-r">
@@ -257,7 +259,7 @@ export default function MatchingWorkspace() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search invoice, pro number, carrier..."
+              placeholder={t("Search invoice, pro number, carrier...")}
               className="h-8 text-xs"
             />
             {tab === "invoices" ? (
@@ -290,7 +292,7 @@ export default function MatchingWorkspace() {
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-                    Created
+                    {t("Created")}
                   </span>
                   {matchViaFilterChips.map((chip) => (
                     <FilterChip
@@ -337,8 +339,8 @@ export default function MatchingWorkspace() {
             ) : (
               <BillingDetailUnselected
                 layout="cards"
-                title="Nothing open"
-                description="Pick a carrier invoice from the list to link it to a carrier and create a match."
+                title={t("Nothing open")}
+                description={t("Pick a carrier invoice from the list to link it to a carrier and create a match.")}
               />
             )
           ) : selectedMatch ? (
@@ -350,8 +352,8 @@ export default function MatchingWorkspace() {
           ) : (
             <BillingDetailUnselected
               layout="cards"
-              title="Nothing open"
-              description="Pick a match from the list to compare the invoice against the negotiated buy rate."
+              title={t("Nothing open")}
+              description={t("Pick a match from the list to compare the invoice against the negotiated buy rate.")}
             />
           )}
         </ScrollArea>
@@ -517,6 +519,8 @@ function MatchList({
   empty: ListEmpty;
   onClearFilters: () => void;
 }) {
+  const t = useT();
+
   if (loading) {
     return (
       <div className="flex flex-col gap-1.5 p-2">
@@ -558,18 +562,18 @@ function MatchList({
                 <Badge
                   variant="info"
                   className="h-4 px-1 text-[9px]"
-                  title="Created by the inbound EDI 210 auto-match sweep"
+                  title={t("Created by the inbound EDI 210 auto-match sweep")}
                 >
-                  Auto-matched
+                  {t("Auto-matched")}
                 </Badge>
               )}
               {wasAutoAccepted(match) && (
                 <Badge
                   variant="active"
                   className="h-4 px-1 text-[9px]"
-                  title="Resolved automatically because the variance was within tolerance"
+                  title={t("Resolved automatically because the variance was within tolerance")}
                 >
-                  Auto-accepted
+                  {t("Auto-accepted")}
                 </Badge>
               )}
               <CarrierInvoiceMatchStatusBadge status={match.status} />
@@ -604,6 +608,8 @@ function InvoiceDetail({
   invoice: EdiCarrierInvoiceRow;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [linkOpen, setLinkOpen] = useState(false);
   const [suggestedCarrierId, setSuggestedCarrierId] = useState<string | null>(null);
 
@@ -611,7 +617,7 @@ function InvoiceDetail({
     mutationFn: () => suggestCarrierForEdiInvoice(invoice.id),
     onSuccess: (carrier) => {
       if (!carrier) {
-        toast.info("No carrier in the master matches this invoice's SCAC or DOT number.");
+        toast.info(t("No carrier in the master matches this invoice's SCAC or DOT number."));
         return;
       }
       setSuggestedCarrierId(carrier.id);
@@ -640,36 +646,36 @@ function InvoiceDetail({
     <div className="flex flex-col gap-4 p-4">
       <div className="rounded-lg border">
         <div className="border-b px-4 py-3">
-          <h3 className="text-sm font-semibold">Invoice {invoice.invoiceNumber || invoice.id}</h3>
+          <h3 className="text-sm font-semibold">{t("Invoice {0}", invoice.invoiceNumber || invoice.id)}</h3>
           <p className="text-muted-foreground text-xs">
-            EDI 210 carrier freight invoice · received {formatSettlementDate(invoice.createdAt)}
+            {t("EDI 210 carrier freight invoice · received {0}", formatSettlementDate(invoice.createdAt))}
           </p>
         </div>
         <div className="grid gap-3 p-4 md:grid-cols-2">
-          <Metric label="Reconciliation Status" value={invoice.reconciliationStatus} />
+          <Metric label={t("Reconciliation Status")} value={invoice.reconciliationStatus} />
           <Metric
-            label="Invoice Total"
+            label={t("Invoice Total")}
             value={
               invoice.totalAmount != null
                 ? formatCurrency(Number(invoice.totalAmount), invoice.currencyCode || "USD")
                 : "—"
             }
           />
-          <Metric label="Invoice Date" value={formatSettlementDate(invoice.invoiceDate)} />
-          <Metric label="Delivery Date" value={formatSettlementDate(invoice.deliveryDate)} />
-          <Metric label="Pro Number" value={invoice.proNumber || "—"} />
-          <Metric label="BOL" value={invoice.bol || "—"} />
-          <Metric label="Shipment Reference" value={invoice.shipmentReference || "—"} />
-          <Metric label="Bill To" value={invoice.billToName || "—"} />
+          <Metric label={t("Invoice Date")} value={formatSettlementDate(invoice.invoiceDate)} />
+          <Metric label={t("Delivery Date")} value={formatSettlementDate(invoice.deliveryDate)} />
+          <Metric label={t("Pro Number")} value={invoice.proNumber || "—"} />
+          <Metric label={t("BOL")} value={invoice.bol || "—"} />
+          <Metric label={t("Shipment Reference")} value={invoice.shipmentReference || "—"} />
+          <Metric label={t("Bill To")} value={invoice.billToName || "—"} />
           {invoice.expectedAmount != null && (
             <Metric
-              label="Expected Amount"
+              label={t("Expected Amount")}
               value={formatCurrency(Number(invoice.expectedAmount), invoice.currencyCode || "USD")}
             />
           )}
           {invoice.varianceAmount != null && (
             <Metric
-              label="Variance"
+              label={t("Variance")}
               value={formatCurrency(Number(invoice.varianceAmount), invoice.currencyCode || "USD")}
             />
           )}
@@ -678,7 +684,7 @@ function InvoiceDetail({
 
       <div className="rounded-lg border p-4">
         <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
-          Carrier Link
+          {t("Carrier Link")}
         </h4>
         <p className="text-muted-foreground mb-2 text-[11px]">
           {invoice.carrierId
@@ -695,11 +701,11 @@ function InvoiceDetail({
                 onClick={() => suggestMutation.mutate()}
               >
                 <SparklesIcon className="size-3.5" />
-                Suggest Carrier
+                {t("Suggest Carrier")}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
                 <LinkIcon className="size-3.5" />
-                Link Carrier
+                {t("Link Carrier")}
               </Button>
             </>
           )}
@@ -714,7 +720,7 @@ function InvoiceDetail({
             onClick={() => createMatchMutation.mutate()}
           >
             <FileTextIcon className="size-3.5" />
-            Create Match
+            {t("Create Match")}
           </Button>
         </div>
       </div>
@@ -753,6 +759,8 @@ function MatchDetail({
   varianceToleranceMinor: number | null;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [rejectOpen, setRejectOpen] = useState(false);
   const assignment = match.carrierAssignment;
   const currency = match.currencyCode || "USD";
@@ -763,7 +771,7 @@ function MatchDetail({
   const acceptMutation = useMutation({
     mutationFn: () => acceptCarrierInvoiceMatch({ matchId: match.id }),
     onSuccess: () => {
-      toast.success("Match accepted — the invoice is reconciled");
+      toast.success(t("Match accepted — the invoice is reconciled"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to accept match"),
@@ -773,7 +781,7 @@ function MatchDetail({
     mutationFn: () => acceptCarrierInvoiceMatchWithVariance({ matchId: match.id }),
     onSuccess: () => {
       toast.success(
-        "Match accepted with variance — an adjustment cost event was accrued for the difference",
+        t("Match accepted with variance — an adjustment cost event was accrued for the difference"),
       );
       onChanged();
     },
@@ -789,7 +797,7 @@ function MatchDetail({
           {match.carrier?.scac ? ` (${match.carrier.scac})` : ""}
         </span>
         <span className="text-muted-foreground ml-auto text-xs">
-          created {formatSettlementDate(match.createdAt)}
+          {t("created {0}", formatSettlementDate(match.createdAt))}
         </span>
       </div>
 
@@ -797,22 +805,22 @@ function MatchDetail({
         <div className="rounded-lg border">
           <div className="bg-muted/30 border-b px-4 py-2">
             <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Carrier Invoice
+              {t("Carrier Invoice")}
             </h4>
           </div>
           <div className="flex flex-col gap-2 p-4 text-xs">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Invoice number</span>
+              <span className="text-muted-foreground">{t("Invoice number")}</span>
               <span className="font-mono font-medium">{match.invoiceNumber || "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Source</span>
+              <span className="text-muted-foreground">{t("Source")}</span>
               <span className="font-medium">
                 {match.ediCarrierInvoiceId ? "EDI 210" : "Document AI"}
               </span>
             </div>
             <div className="mt-2 flex justify-between border-t pt-2 text-sm">
-              <span className="font-semibold">Invoice total</span>
+              <span className="font-semibold">{t("Invoice total")}</span>
               <span className="font-semibold">
                 <AmountDisplay value={match.invoiceTotalMinor} currency={currency} />
               </span>
@@ -823,7 +831,7 @@ function MatchDetail({
         <div className="rounded-lg border">
           <div className="bg-muted/30 border-b px-4 py-2">
             <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Negotiated Buy Rate
+              {t("Negotiated Buy Rate")}
             </h4>
           </div>
           <div className="flex flex-col gap-2 p-4 text-xs">
@@ -831,20 +839,20 @@ function MatchDetail({
               <>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    Base ({assignment.rateMethod === "PerMile" ? "per mile" : "flat"})
+                    {t("Base ({0})", assignment.rateMethod === "PerMile" ? "per mile" : "flat")}
                   </span>
                   <span className="font-medium tabular-nums">
                     {formatCurrency(Number(assignment.baseAmount ?? 0), currency)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Fuel surcharge</span>
+                  <span className="text-muted-foreground">{t("Fuel surcharge")}</span>
                   <span className="font-medium tabular-nums">
                     {formatCurrency(Number(assignment.fuelSurcharge ?? 0), currency)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Accessorials</span>
+                  <span className="text-muted-foreground">{t("Accessorials")}</span>
                   <span className="font-medium tabular-nums">
                     {formatCurrency(Number(assignment.accessorialTotal ?? 0), currency)}
                   </span>
@@ -860,7 +868,7 @@ function MatchDetail({
                   </div>
                 ))}
                 <div className="mt-2 flex justify-between border-t pt-2 text-sm">
-                  <span className="font-semibold">Expected total</span>
+                  <span className="font-semibold">{t("Expected total")}</span>
                   <span className="font-semibold">
                     <AmountDisplay value={match.expectedTotalMinor} currency={currency} />
                   </span>
@@ -868,7 +876,7 @@ function MatchDetail({
               </>
             ) : (
               <p className="text-muted-foreground">
-                The linked assignment is unavailable. Expected total:{" "}
+                {t("The linked assignment is unavailable. Expected total:")}{" "}
                 <AmountDisplay value={match.expectedTotalMinor} currency={currency} />
               </p>
             )}
@@ -887,13 +895,13 @@ function MatchDetail({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-xs font-semibold">
-              Variance:{" "}
+              {t("Variance:")}{" "}
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />
             </p>
             <p className="text-muted-foreground text-[11px]">
               {varianceToleranceMinor != null ? (
                 <>
-                  Invoice minus expected · tolerance{" "}
+                  {t("Invoice minus expected · tolerance")}{" "}
                   <AmountDisplay value={varianceToleranceMinor} currency={currency} /> —{" "}
                   {withinTolerance
                     ? "within tolerance"
@@ -914,10 +922,10 @@ function MatchDetail({
               size="sm"
               disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
               onClick={() => acceptMutation.mutate()}
-              title="Reconciles the invoice against the buy rate without changing the accrued cost"
+              title={t("Reconciles the invoice against the buy rate without changing the accrued cost")}
             >
               <CheckCheckIcon className="size-3.5" />
-              Accept
+              {t("Accept")}
             </Button>
           )}
           {match.status === "Variance" && (
@@ -925,10 +933,10 @@ function MatchDetail({
               size="sm"
               disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
               onClick={() => acceptWithVarianceMutation.mutate()}
-              title="Accrues an adjustment cost event for the variance so the carrier is paid the billed amount"
+              title={t("Accrues an adjustment cost event for the variance so the carrier is paid the billed amount")}
             >
               <ScaleIcon className="size-3.5" />
-              Accept with Variance (
+              {t("Accept with Variance (")}
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />)
             </Button>
           )}
@@ -940,7 +948,7 @@ function MatchDetail({
             onClick={() => setRejectOpen(true)}
           >
             <XIcon className="size-3.5" />
-            Reject
+            {t("Reject")}
           </Button>
         </div>
       ) : (
@@ -972,12 +980,14 @@ function RejectMatchDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [note, setNote] = useState("");
 
   const mutation = useMutation({
     mutationFn: () => rejectCarrierInvoiceMatch({ matchId, note: note.trim() }),
     onSuccess: () => {
-      toast.success("Match rejected");
+      toast.success(t("Match rejected"));
       setNote("");
       onOpenChange(false);
       onChanged();
@@ -989,28 +999,27 @@ function RejectMatchDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reject match</DialogTitle>
+          <DialogTitle>{t("Reject match")}</DialogTitle>
           <DialogDescription>
-            Dismisses the pairing — the invoice stays open for a different assignment or a dispute
-            with the carrier.
+            {t("Dismisses the pairing — the invoice stays open for a different assignment or a dispute with the carrier.")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          placeholder="Reason (required) — e.g. Invoice bills a different load"
+          placeholder={t("Reason (required) — e.g. Invoice bills a different load")}
           rows={3}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant="destructive"
             disabled={!note.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            Reject
+            {t("Reject")}
           </Button>
         </DialogFooter>
       </DialogContent>
