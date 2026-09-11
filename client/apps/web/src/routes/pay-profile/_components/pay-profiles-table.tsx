@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { runBulkAction } from "@/lib/bulk-run";
 import {
@@ -15,6 +16,8 @@ import { getColumns, payProfileStatusInput } from "./pay-profile-columns";
 import { PayProfilePanel } from "./pay-profile-panel";
 
 export default function PayProfilesTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
@@ -22,7 +25,7 @@ export default function PayProfilesTable() {
     async (rows: PayProfileRow[], status: string) => {
       const eligible = rows.filter((row) => row.status !== status);
       if (eligible.length === 0) {
-        toast.info("Every selected pay profile already has that status.");
+        toast.info(t("Every selected pay profile already has that status."));
         return;
       }
       await runBulkAction(
@@ -32,7 +35,7 @@ export default function PayProfilesTable() {
       );
       await queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<PayProfileRow>[]>(

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -17,6 +18,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 export function PayProfileForm() {
+  const t = useT();
+
   const { control } = useFormContext<PayProfileFormValues>();
   const componentsArray = useFieldArray({ control, name: "components" });
 
@@ -27,70 +30,70 @@ export function PayProfileForm() {
           <SelectField
             control={control}
             name="status"
-            label="Status"
+            label={t("Status")}
             options={statusChoices}
             rules={{ required: true }}
-            description="Inactive profiles keep their history but cannot be assigned to new drivers."
+            description={t("Inactive profiles keep their history but cannot be assigned to new drivers.")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name="classification"
-            label="Classification"
+            label={t("Classification")}
             options={payeeClassificationChoices}
             rules={{ required: true }}
-            description="Determines W-2 vs 1099 treatment and GL expense account."
+            description={t("Determines W-2 vs 1099 treatment and GL expense account.")}
           />
         </FormControl>
         <FormControl className="col-span-2">
           <InputField
             control={control}
             name="name"
-            label="Name"
-            placeholder="e.g. OTR Company Driver - Standard"
+            label={t("Name")}
+            placeholder={t("e.g. OTR Company Driver - Standard")}
             rules={{ required: true }}
-            description="A short, unique name dispatchers and payroll staff will recognize when assigning drivers."
+            description={t("A short, unique name dispatchers and payroll staff will recognize when assigning drivers.")}
           />
         </FormControl>
         <FormControl className="col-span-2">
           <TextareaField
             control={control}
             name="description"
-            label="Description"
-            placeholder="When to use this pay package"
-            description="Explain who this package is for and any negotiated terms so future admins know when to apply it."
+            label={t("Description")}
+            placeholder={t("When to use this pay package")}
+            description={t("Explain who this package is for and any negotiated terms so future admins know when to apply it.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="guaranteedPeriodMinimum"
-            label="Guaranteed Minimum / Period"
+            label={t("Guaranteed Minimum / Period")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
-            description="Top-up applied when period gross falls below this floor."
+            sideText={t("USD")}
+            description={t("Top-up applied when period gross falls below this floor.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="perDiemDailyCap"
-            label="Per Diem Daily Cap"
+            label={t("Per Diem Daily Cap")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
-            description="Maximum non-taxable per diem per day when splitting pay for tax purposes (IRS cap applies)."
+            sideText={t("USD")}
+            description={t("Maximum non-taxable per diem per day when splitting pay for tax purposes (IRS cap applies).")}
           />
         </FormControl>
       </FormGroup>
 
       <div className="flex items-center justify-between border-t pt-4">
         <div>
-          <h3 className="text-sm font-semibold">Pay Components</h3>
+          <h3 className="text-sm font-semibold">{t("Pay Components")}</h3>
           <p className="text-muted-foreground text-xs">
-            Each component computes pay per completed move; team splits apply on top.
+            {t("Each component computes pay per completed move; team splits apply on top.")}
           </p>
         </div>
         <Button
@@ -113,7 +116,7 @@ export function PayProfileForm() {
           }
         >
           <Plus className="size-3.5" />
-          Add Component
+          {t("Add Component")}
         </Button>
       </div>
 
@@ -131,6 +134,8 @@ export function PayProfileForm() {
 }
 
 function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => void }) {
+  const t = useT();
+
   const { control } = useFormContext<PayProfileFormValues>();
   const method = useWatch({ control, name: `components.${index}.method` });
   const kind = useWatch({ control, name: `components.${index}.kind` });
@@ -148,20 +153,20 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             <SelectField
               control={control}
               name={`components.${index}.kind`}
-              label="Component"
+              label={t("Component")}
               options={payComponentKindChoices}
               rules={{ required: true }}
-              description="What is being paid — linehaul, stop pay, detention, hazmat premium, and so on."
+              description={t("What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name={`components.${index}.method`}
-              label="Method"
+              label={t("Method")}
               options={payCalcMethodChoices}
               rules={{ required: true }}
-              description="How the amount is calculated: per mile, percent of revenue, flat, per stop, or per hour."
+              description={t("How the amount is calculated: per mile, percent of revenue, flat, per stop, or per hour.")}
             />
           </FormControl>
           <FormControl>
@@ -185,10 +190,10 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               <SelectField
                 control={control}
                 name={`components.${index}.revenueBasis`}
-                label="Revenue Basis"
+                label={t("Revenue Basis")}
                 options={payRevenueBasisChoices}
                 rules={{ required: true }}
-                description="Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total."
+                description={t("Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.")}
               />
             </FormControl>
           )}
@@ -197,8 +202,8 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               <NumberField
                 control={control}
                 name={`components.${index}.freeTimeMinutes`}
-                label="Free Time (minutes)"
-                description="Detention pays only for dwell beyond this threshold."
+                label={t("Free Time (minutes)")}
+                description={t("Detention pays only for dwell beyond this threshold.")}
               />
             </FormControl>
           )}
@@ -207,9 +212,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               <InputField
                 control={control}
                 name={`components.${index}.description`}
-                label="Label"
-                placeholder="Shown on the settlement statement"
-                description="The exact wording drivers see for this line on their settlement statement."
+                label={t("Label")}
+                placeholder={t("Shown on the settlement statement")}
+                description={t("The exact wording drivers see for this line on their settlement statement.")}
               />
             </FormControl>
           )}
@@ -217,31 +222,31 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             <NumberField
               control={control}
               name={`components.${index}.minAmount`}
-              label="Minimum per Move"
+              label={t("Minimum per Move")}
               decimalScale={2}
               fixedDecimalScale
-              sideText="USD"
-              description="Floor for this component on any single move; short runs are topped up to this amount."
+              sideText={t("USD")}
+              description={t("Floor for this component on any single move; short runs are topped up to this amount.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name={`components.${index}.maxAmount`}
-              label="Maximum per Move"
+              label={t("Maximum per Move")}
               decimalScale={2}
               fixedDecimalScale
-              sideText="USD"
-              description="Cap for this component on any single move; anything above is not paid."
+              sideText={t("USD")}
+              description={t("Cap for this component on any single move; anything above is not paid.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name={`components.${index}.isActive`}
-              label="Active"
+              label={t("Active")}
               outlined
-              description="Inactive components are kept for history but skipped when computing pay."
+              description={t("Inactive components are kept for history but skipped when computing pay.")}
             />
           </FormControl>
         </FormGroup>
@@ -252,7 +257,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             variant="ghost"
             className="text-muted-foreground shrink-0"
             onClick={onRemove}
-            aria-label="Remove component"
+            aria-label={t("Remove component")}
           >
             <Trash2 className="size-4" />
           </Button>
@@ -263,9 +268,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
         <div className="mt-3 border-t pt-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-medium">
-              Mileage Bands
+              {t("Mileage Bands")}
               <span className="text-muted-foreground ml-1 font-normal">
-                (optional; sliding scale by length of haul)
+                {t("(optional; sliding scale by length of haul)")}
               </span>
             </p>
             <Button
@@ -281,7 +286,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               }
             >
               <Plus className="size-3" />
-              Add Band
+              {t("Add Band")}
             </Button>
           </div>
           {bandsArray.fields.length > 0 && (
@@ -325,7 +330,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
                     variant="ghost"
                     className="text-muted-foreground"
                     onClick={() => bandsArray.remove(bandIndex)}
-                    aria-label="Remove band"
+                    aria-label={t("Remove band")}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
