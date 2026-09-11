@@ -1466,6 +1466,7 @@
   "Template version is required": "範本版本為必填",
   "Templates for customer documents, emails, and notifications": "客戶文件、電子郵件與通知的範本",
   "Tenant-managed parsing rules, versions, fixtures, and simulations": "由租戶管理的剖析規則、版本、測試樣本與模擬",
+  "Tender accepted": "已接受派車要約",
   "Tender offer has no EDI partner": "此派車要約沒有 EDI 合作夥伴",
   "Tender offer is missing its tender": "此派車要約缺少其要約內容",
   "Tender offer is not an EDI offer": "此派車要約並非 EDI 要約",
