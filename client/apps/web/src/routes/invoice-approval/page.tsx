@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -50,6 +51,8 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 export function InvoiceApprovalPage() {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(invoiceApprovalSearchParamsParser);
   const { item: selectedAdjustmentId, query, kind } = searchParams;
   const deferredQuery = useDeferredValue(query);
@@ -146,10 +149,10 @@ export function InvoiceApprovalPage() {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      toast.success("Adjustment approved");
+      toast.success(t("Adjustment approved"));
       setShowRejectForm(false);
     },
-    onError: () => toast.error("Failed to approve invoice adjustment"),
+    onError: () => toast.error(t("Failed to approve invoice adjustment")),
   });
 
   const rejectMutation = useApiMutation({
@@ -166,7 +169,7 @@ export function InvoiceApprovalPage() {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
       rejectForm.reset();
       setShowRejectForm(false);
-      toast.success("Adjustment rejected");
+      toast.success(t("Adjustment rejected"));
     },
   });
 
@@ -187,16 +190,16 @@ export function InvoiceApprovalPage() {
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
           <SummaryCard
-            label="Pending Approvals"
+            label={t("Pending Approvals")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
           <SummaryCard
-            label="Reconciliation"
+            label={t("Reconciliation")}
             value={String(summaryQuery.data?.reconciliationPending ?? 0)}
           />
-          <SummaryCard label="Write-Offs" value={String(summaryQuery.data?.writeOffPending ?? 0)} />
+          <SummaryCard label={t("Write-Offs")} value={String(summaryQuery.data?.writeOffPending ?? 0)} />
           <SummaryCard
-            label="Batch Failures"
+            label={t("Batch Failures")}
             value={String(summaryQuery.data?.failedBatchItems ?? 0)}
           />
         </div>
@@ -207,7 +210,7 @@ export function InvoiceApprovalPage() {
             <Input
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
-              placeholder="Search invoice, customer, reason..."
+              placeholder={t("Search invoice, customer, reason...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
@@ -219,10 +222,10 @@ export function InvoiceApprovalPage() {
               }
             >
               <SelectTrigger className="h-7 text-xs">
-                <SelectValue placeholder="All adjustment types" />
+                <SelectValue placeholder={t("All adjustment types")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All adjustment types</SelectItem>
+                <SelectItem value="all">{t("All adjustment types")}</SelectItem>
                 {adjustmentKindChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
                     {choice.label}
@@ -299,7 +302,7 @@ export function InvoiceApprovalPage() {
               {isFetchingNextPage ? (
                 <div className="flex items-center justify-center py-4">
                   <TextShimmer className="font-mono text-sm" duration={1}>
-                    Loading more...
+                    {t("Loading more...")}
                   </TextShimmer>
                 </div>
               ) : null}
@@ -313,8 +316,8 @@ export function InvoiceApprovalPage() {
           {!selectedRow ? (
             <BillingDetailUnselected
               layout="cards"
-              title="Nothing open"
-              description="Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it."
+              title={t("Nothing open")}
+              description={t("Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.")}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -358,6 +361,8 @@ function ApprovalDetail({
   rejectMutation: { isPending: boolean };
   handleReject: (values: { rejectReason: string }) => void;
 }) {
+  const t = useT();
+
   const netDelta = Number(selectedRow.netDeltaAmount);
 
   return (
@@ -371,31 +376,31 @@ function ApprovalDetail({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="warning">Pending Approval</Badge>
+        <Badge variant="warning">{t("Pending Approval")}</Badge>
         <Badge variant="secondary">{KIND_LABELS[selectedRow.kind] ?? selectedRow.kind}</Badge>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>Financial Impact</SectionLabel>
+            <SectionLabel>{t("Financial Impact")}</SectionLabel>
             <div className="mt-2 space-y-2">
               <ChargeSummaryRow
-                label="Credit"
+                label={t("Credit")}
                 value={formatCurrency(Number(selectedRow.creditTotalAmount))}
               />
               <ChargeSummaryRow
-                label="Rebill"
+                label={t("Rebill")}
                 value={formatCurrency(Number(selectedRow.rebillTotalAmount))}
               />
               <Separator />
-              <ChargeSummaryRow label="Net Delta" value={formatCurrency(netDelta)} bold />
+              <ChargeSummaryRow label={t("Net Delta")} value={formatCurrency(netDelta)} bold />
             </div>
           </div>
 
           {selectedRow.reason || selectedRow.policyReason ? (
             <div className="bg-card rounded-lg border p-3">
-              <SectionLabel>Reason</SectionLabel>
+              <SectionLabel>{t("Reason")}</SectionLabel>
               {selectedRow.reason ? (
                 <p className="border-muted-foreground/20 text-muted-foreground mt-1.5 border-l-2 pl-2.5 text-xs italic">
                   {selectedRow.reason}
@@ -403,31 +408,31 @@ function ApprovalDetail({
               ) : null}
               {selectedRow.policyReason ? (
                 <p className="text-2xs text-muted-foreground mt-1.5">
-                  Policy: {selectedRow.policyReason}
+                  {t("Policy: {0}", selectedRow.policyReason)}
                 </p>
               ) : null}
             </div>
           ) : null}
 
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>Context</SectionLabel>
+            <SectionLabel>{t("Context")}</SectionLabel>
             <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-              <PropertyCell label="Requested By">
+              <PropertyCell label={t("Requested By")}>
                 <span className="text-xs font-medium">
                   {selectedRow.submittedByName || "Unknown"}
                 </span>
               </PropertyCell>
-              <PropertyCell label="Submitted">
+              <PropertyCell label={t("Submitted")}>
                 <span className="text-xs font-medium">
                   {formatTimestamp(selectedRow.submittedAt)}
                 </span>
               </PropertyCell>
-              <PropertyCell label="Policy Source">
+              <PropertyCell label={t("Policy Source")}>
                 <span className="text-xs font-medium">
                   {selectedRow.policySource || "Policy-controlled"}
                 </span>
               </PropertyCell>
-              <PropertyCell label="Invoice Status">
+              <PropertyCell label={t("Invoice Status")}>
                 <span className="text-xs font-medium">{selectedRow.originalInvoiceStatus}</span>
               </PropertyCell>
             </div>
@@ -436,47 +441,47 @@ function ApprovalDetail({
             selectedRow.wouldCreateUnappliedCredit ? (
               <div className="mt-2.5 flex flex-wrap gap-1">
                 {selectedRow.requiresReconciliationException ? (
-                  <Badge variant="warning">Reconciliation Exception</Badge>
+                  <Badge variant="warning">{t("Reconciliation Exception")}</Badge>
                 ) : null}
                 {selectedRow.requiresReplacementInvoiceReview ? (
-                  <Badge variant="info">Replacement Review</Badge>
+                  <Badge variant="info">{t("Replacement Review")}</Badge>
                 ) : null}
                 {selectedRow.wouldCreateUnappliedCredit ? (
-                  <Badge variant="orange">Unapplied Credit</Badge>
+                  <Badge variant="orange">{t("Unapplied Credit")}</Badge>
                 ) : null}
               </div>
             ) : null}
           </div>
 
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>Linked Artifacts</SectionLabel>
+            <SectionLabel>{t("Linked Artifacts")}</SectionLabel>
             <div className="text-2xs mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
               <ArtifactLink
                 to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}
-                label="Original Invoice"
+                label={t("Original Invoice")}
               />
               {selectedRow.creditMemoInvoiceId ? (
                 <ArtifactLink
                   to={`/billing/invoices?item=${selectedRow.creditMemoInvoiceId}`}
-                  label="Credit Memo"
+                  label={t("Credit Memo")}
                 />
               ) : null}
               {selectedRow.replacementInvoiceId ? (
                 <ArtifactLink
                   to={`/billing/invoices?item=${selectedRow.replacementInvoiceId}`}
-                  label="Replacement"
+                  label={t("Replacement")}
                 />
               ) : null}
               {selectedRow.rebillQueueItemId ? (
                 <ArtifactLink
                   to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
-                  label="Rebill Queue"
+                  label={t("Rebill Queue")}
                 />
               ) : null}
               {selectedRow.batchId ? (
                 <ArtifactLink
                   to={`/billing/adjustment-batches?item=${selectedRow.batchId}`}
-                  label="Batch"
+                  label={t("Batch")}
                 />
               ) : null}
             </div>
@@ -485,15 +490,15 @@ function ApprovalDetail({
 
         <div className="flex flex-col gap-5">
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>Charge Detail</SectionLabel>
+            <SectionLabel>{t("Charge Detail")}</SectionLabel>
             <div className="mt-2 overflow-hidden rounded-md border">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
-                    <th className="px-3 py-2 text-xs font-medium">Line</th>
-                    <th className="px-3 py-2 text-xs font-medium">Description</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium">Credit</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium">Rebill</th>
+                    <th className="px-3 py-2 text-xs font-medium">{t("Line")}</th>
+                    <th className="px-3 py-2 text-xs font-medium">{t("Description")}</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium">{t("Credit")}</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium">{t("Rebill")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -515,7 +520,7 @@ function ApprovalDetail({
           </div>
 
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>Decision</SectionLabel>
+            <SectionLabel>{t("Decision")}</SectionLabel>
             <div className="mt-2">
               {!showRejectForm ? (
                 <div className="flex items-center gap-2">
@@ -527,7 +532,7 @@ function ApprovalDetail({
                     disabled={approveMutation.isPending}
                   >
                     <CheckIcon className="size-3.5" />
-                    Approve
+                    {t("Approve")}
                   </Button>
                   <Button
                     size="sm"
@@ -536,7 +541,7 @@ function ApprovalDetail({
                     onClick={() => setShowRejectForm(true)}
                   >
                     <XIcon className="size-3.5" />
-                    Reject
+                    {t("Reject")}
                   </Button>
                 </div>
               ) : (
@@ -545,8 +550,8 @@ function ApprovalDetail({
                     <TextareaField
                       control={rejectForm.control}
                       name="rejectReason"
-                      label="Rejection Reason"
-                      placeholder="Why is this adjustment being rejected?"
+                      label={t("Rejection Reason")}
+                      placeholder={t("Why is this adjustment being rejected?")}
                       minRows={3}
                     />
                     <div className="flex items-center gap-2">
@@ -556,7 +561,7 @@ function ApprovalDetail({
                         type="submit"
                         disabled={rejectMutation.isPending}
                       >
-                        Confirm Rejection
+                        {t("Confirm Rejection")}
                       </Button>
                       <Button
                         size="sm"
@@ -567,7 +572,7 @@ function ApprovalDetail({
                           rejectForm.reset();
                         }}
                       >
-                        Cancel
+                        {t("Cancel")}
                       </Button>
                     </div>
                   </div>
