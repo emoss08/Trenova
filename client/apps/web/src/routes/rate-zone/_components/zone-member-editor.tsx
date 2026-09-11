@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   LocationAutocompleteField,
   UsStateAutocompleteField,
@@ -32,6 +33,8 @@ const NEW_MEMBER = {
 } as unknown as RateZoneMember;
 
 export function ZoneMemberEditor() {
+  const t = useT();
+
   const { control } = useFormContext<RateZone>();
   const { fields, append, remove } = useFieldArray({ control, name: "members" });
   const members = (useWatch({ control, name: "members" }) ?? []) as RateZoneMember[];
@@ -40,8 +43,7 @@ export function ZoneMemberEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No places yet. A zone with no members matches nothing, so every lane written against it
-          would quietly never apply.
+          {t("No places yet. A zone with no members matches nothing, so every lane written against it would quietly never apply.")}
         </p>
       )}
 
@@ -51,7 +53,7 @@ export function ZoneMemberEditor() {
         return (
           <div key={field.id} className="bg-card rounded-md border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium">Place {index + 1}</p>
+              <p className="text-sm font-medium">{t("Place {0}", index + 1)}</p>
               <Button
                 type="button"
                 variant="ghost"
@@ -59,7 +61,7 @@ export function ZoneMemberEditor() {
                 className="h-6 text-xs"
                 onClick={() => remove(index)}
               >
-                Remove
+                {t("Remove")}
               </Button>
             </div>
 
@@ -69,9 +71,9 @@ export function ZoneMemberEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`members.${index}.scopeType` as never}
-                  label="Place Type"
-                  placeholder="Select type"
-                  description="How this place is named"
+                  label={t("Place Type")}
+                  placeholder={t("Select type")}
+                  description={t("How this place is named")}
                   options={MEMBER_SCOPE_CHOICES}
                 />
               </FormControl>
@@ -82,9 +84,9 @@ export function ZoneMemberEditor() {
                     control={control}
                     rules={{ required: true }}
                     name={`members.${index}.scopeValue` as never}
-                    label="State"
-                    placeholder="State"
-                    description="The state this place sits in"
+                    label={t("State")}
+                    placeholder={t("State")}
+                    description={t("The state this place sits in")}
                   />
                 </FormControl>
               ) : scopeType === "Location" ? (
@@ -93,9 +95,9 @@ export function ZoneMemberEditor() {
                     control={control}
                     rules={{ required: true }}
                     name={`members.${index}.scopeValue` as never}
-                    label="Location"
-                    placeholder="Location"
-                    description="A single facility"
+                    label={t("Location")}
+                    placeholder={t("Location")}
+                    description={t("A single facility")}
                   />
                 </FormControl>
               ) : (
@@ -121,9 +123,9 @@ export function ZoneMemberEditor() {
                     control={control}
                     rules={{ required: true }}
                     name={`members.${index}.city` as never}
-                    label="City"
-                    placeholder="Chicago"
-                    description="Spelling and case do not matter — the city is folded before it is matched"
+                    label={t("City")}
+                    placeholder={t("Chicago")}
+                    description={t("Spelling and case do not matter — the city is folded before it is matched")}
                   />
                 </FormControl>
               )}
@@ -134,7 +136,7 @@ export function ZoneMemberEditor() {
 
       <Button type="button" variant="outline" size="sm" onClick={() => append(NEW_MEMBER)}>
         <PlusIcon className="mr-1 size-3.5" />
-        Add place
+        {t("Add place")}
       </Button>
     </div>
   );

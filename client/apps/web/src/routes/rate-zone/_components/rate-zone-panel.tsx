@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { RateZoneRow } from "@/lib/graphql/rate-tables";
@@ -8,6 +9,8 @@ import { useForm, type Resolver } from "react-hook-form";
 import { RateZoneForm } from "./rate-zone-form";
 
 export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelProps<RateZoneRow>) {
+  const t = useT();
+
   const form = useForm<RateZone>({
     resolver: zodResolver(rateZoneSchema) as Resolver<RateZone>,
     defaultValues: {
@@ -31,7 +34,7 @@ export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelP
         size="lg"
         url="/rate-zones/"
         queryKey="rate-zone-list"
-        title="Rate Zone"
+        title={t("Rate Zone")}
         fieldKey="name"
         formComponent={<RateZoneForm />}
       />
@@ -46,7 +49,7 @@ export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelP
       size="lg"
       url="/rate-zones/"
       queryKey="rate-zone-list"
-      title="Rate Zone"
+      title={t("Rate Zone")}
       formComponent={<RateZoneForm />}
     />
   );
