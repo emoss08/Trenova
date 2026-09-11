@@ -568,6 +568,8 @@ export function OrderStatusBadge({
 }
 
 export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus | string }) {
+  const t = useT();
+
   if (!status) return null;
 
   const attrs: Record<EDITransferStatus, BadgeAttrProps> = {
@@ -622,7 +624,7 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
     return <Badge variant="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -682,6 +684,8 @@ export function EDIMessageDeliveryStatusBadge({
 }: {
   status?: EDIMessageDeliveryStatus | string | null;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const attrs: Record<EDIMessageDeliveryStatus, BadgeAttrProps> = {
@@ -716,7 +720,7 @@ export function EDIMessageDeliveryStatusBadge({
     return <Badge variant="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -727,6 +731,8 @@ export function EDIMessageAckStatusBadge({
 }: {
   status?: EDIMessageAcknowledgmentStatus | string | null;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const attrs: Record<EDIMessageAcknowledgmentStatus, BadgeAttrProps> = {
@@ -761,13 +767,15 @@ export function EDIMessageAckStatusBadge({
     return <Badge variant="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
 }
 
 export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileStatus | string }) {
+  const t = useT();
+
   if (!status) return null;
 
   const attrs: Record<EDIInboundFileStatus, BadgeAttrProps> = {
@@ -807,7 +815,7 @@ export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileS
     return <Badge variant="outline">{status}</Badge>;
   }
   return (
-    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+    <Badge variant={attr.variant} className="max-h-5" title={t(attr.description)}>
       {attr.text}
     </Badge>
   );
@@ -820,6 +828,8 @@ export function DriverSettlementStatusBadge({
   status: DriverSettlementStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<DriverSettlementStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
@@ -858,7 +868,7 @@ export function DriverSettlementStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -866,6 +876,8 @@ export function DriverSettlementStatusBadge({
 }
 
 export function SettlementBatchStatusBadge({ status }: { status: SettlementBatchStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<SettlementBatchStatus, BadgeAttrProps> = {
     Open: {
       variant: "info",
@@ -888,7 +900,7 @@ export function SettlementBatchStatusBadge({ status }: { status: SettlementBatch
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -896,6 +908,8 @@ export function SettlementBatchStatusBadge({ status }: { status: SettlementBatch
 }
 
 export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<PayAdvanceStatus, BadgeAttrProps> = {
     Outstanding: {
       variant: "warning",
@@ -924,7 +938,7 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -932,6 +946,8 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
 }
 
 export function RecurringEarningStatusBadge({ status }: { status: RecurringEarningStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<RecurringEarningStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
@@ -954,7 +970,7 @@ export function RecurringEarningStatusBadge({ status }: { status: RecurringEarni
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -962,6 +978,8 @@ export function RecurringEarningStatusBadge({ status }: { status: RecurringEarni
 }
 
 export function RecurringDeductionStatusBadge({ status }: { status: RecurringDeductionStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<RecurringDeductionStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
@@ -984,7 +1002,7 @@ export function RecurringDeductionStatusBadge({ status }: { status: RecurringDed
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -992,6 +1010,8 @@ export function RecurringDeductionStatusBadge({ status }: { status: RecurringDed
 }
 
 export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<EscrowAccountStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
@@ -1009,7 +1029,7 @@ export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStat
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1017,6 +1037,8 @@ export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStat
 }
 
 export function DriverPayEventStatusBadge({ status }: { status: DriverPayEventStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<DriverPayEventStatus, BadgeAttrProps> = {
     Accrued: {
       variant: "info",
@@ -1039,7 +1061,7 @@ export function DriverPayEventStatusBadge({ status }: { status: DriverPayEventSt
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1051,6 +1073,8 @@ export function PayeeClassificationBadge({
 }: {
   classification: PayeeClassification;
 }) {
+  const t = useT();
+
   const attributes: Record<PayeeClassification, BadgeAttrProps> = {
     CompanyDriver: {
       variant: "info",
@@ -1068,7 +1092,7 @@ export function PayeeClassificationBadge({
     <Badge
       variant={attributes[classification].variant}
       className="max-h-5"
-      title={attributes[classification].description}
+      title={t(attributes[classification].description)}
     >
       {attributes[classification].text}
     </Badge>
@@ -1082,6 +1106,8 @@ export function CarrierSettlementStatusBadge({
   status: CarrierSettlementStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierSettlementStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
@@ -1120,7 +1146,7 @@ export function CarrierSettlementStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1132,6 +1158,8 @@ export function CarrierSettlementBatchStatusBadge({
 }: {
   status: CarrierSettlementBatchStatus;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierSettlementBatchStatus, BadgeAttrProps> = {
     Open: {
       variant: "info",
@@ -1154,7 +1182,7 @@ export function CarrierSettlementBatchStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1162,6 +1190,8 @@ export function CarrierSettlementBatchStatusBadge({
 }
 
 export function CarrierCostEventStatusBadge({ status }: { status: CarrierCostEventStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierCostEventStatus, BadgeAttrProps> = {
     Pending: {
       variant: "info",
@@ -1189,7 +1219,7 @@ export function CarrierCostEventStatusBadge({ status }: { status: CarrierCostEve
     <Badge
       variant={statusAttributes[status].variant}
       className="max-h-5"
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1203,6 +1233,8 @@ export function CarrierInvoiceMatchStatusBadge({
   status: CarrierInvoiceMatchStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierInvoiceMatchStatus, BadgeAttrProps> = {
     Suggested: {
       variant: "secondary",
@@ -1235,7 +1267,7 @@ export function CarrierInvoiceMatchStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1249,6 +1281,8 @@ export function CarrierComplianceStatusBadge({
   status: CarrierComplianceStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierComplianceStatus, BadgeAttrProps> = {
     Pending: {
       variant: "warning",
@@ -1276,7 +1310,7 @@ export function CarrierComplianceStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1290,6 +1324,8 @@ export function CarrierSafetyRatingBadge({
   status: CarrierSafetyRating;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierSafetyRating, BadgeAttrProps> = {
     Satisfactory: {
       variant: "active",
@@ -1317,7 +1353,7 @@ export function CarrierSafetyRatingBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1331,6 +1367,8 @@ export function CarrierAssignmentStatusBadge({
   status: CarrierAssignmentStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<CarrierAssignmentStatus, BadgeAttrProps> = {
     Pending: {
       variant: "warning",
@@ -1353,7 +1391,7 @@ export function CarrierAssignmentStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1367,6 +1405,8 @@ export function TenderStatusBadge({
   status?: TenderStatus | null;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<TenderStatus, BadgeAttrProps> = {
@@ -1402,7 +1442,7 @@ export function TenderStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1416,6 +1456,8 @@ export function TenderOfferStatusBadge({
   status?: TenderOfferStatus | null;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<TenderOfferStatus, BadgeAttrProps> = {
@@ -1470,7 +1512,7 @@ export function TenderOfferStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1484,6 +1526,8 @@ export function RateConfirmationStatusBadge({
   status: RateConfirmationStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<RateConfirmationStatus, BadgeAttrProps> = {
     Generated: {
       variant: "secondary",
@@ -1511,7 +1555,7 @@ export function RateConfirmationStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1525,6 +1569,8 @@ export function IftaReturnStatusBadge({
   status: IftaReturnStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<IftaReturnStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
@@ -1550,7 +1596,7 @@ export function IftaReturnStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].icon}
       {statusAttributes[status].text}
@@ -1565,6 +1611,8 @@ export function FuelPurchaseImportStatusBadge({
   status: FuelPurchaseImportStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<FuelPurchaseImportStatus, BadgeAttrProps> = {
     Pending: {
       variant: "warning",
@@ -1597,7 +1645,7 @@ export function FuelPurchaseImportStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>
@@ -1611,6 +1659,8 @@ export function FuelCardStatusBadge({
   status: FuelCardStatus;
   className?: string;
 }) {
+  const t = useT();
+
   const statusAttributes: Record<FuelCardStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
@@ -1633,7 +1683,7 @@ export function FuelCardStatusBadge({
     <Badge
       variant={statusAttributes[status].variant}
       className={cn("max-h-5", className)}
-      title={statusAttributes[status].description}
+      title={t(statusAttributes[status].description)}
     >
       {statusAttributes[status].text}
     </Badge>

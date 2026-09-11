@@ -207,3 +207,24 @@ test("adds a binding to a second component in an already-migrated file", () => {
   assert.equal(out.match(/const t = useT\(\);/g).length, 2);
   assert.equal(out.match(/i18n\/use-t/g).length, 1, "the import is per file");
 });
+
+test("labels mode translates a caption passed as a prop, but never a key", () => {
+  const out = transformSource(
+    `export function F({ option, group }: any) {\n  return <Cmd key={group.label} heading={group.label}><Item label={option.label} value={option.id} /></Cmd>;\n}\n`,
+    "s.tsx",
+    { labels: true },
+  ).output;
+  assert.match(out, /heading=\{t\(group\.label\)\}/);
+  assert.match(out, /label=\{t\(option\.label\)\}/);
+  assert.match(out, /key=\{group\.label\}/);
+  assert.match(out, /value=\{option\.id\}/);
+});
+
+test("labels mode does not wrap an already-wrapped caption", () => {
+  const out = transformSource(
+    `export function F({ option }: any) {\n  const t = useT();\n  return <Item label={t(option.label)} />;\n}\n`,
+    "s.tsx",
+    { labels: true },
+  );
+  assert.equal(out.changed, false);
+});

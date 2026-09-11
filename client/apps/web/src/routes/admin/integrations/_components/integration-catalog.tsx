@@ -183,7 +183,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
               )}
             </div>
           </div>
-          <CatalogItemDescription description={item.description} />
+          <CatalogItemDescription description={t(item.description)} />
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <div className="border-border/80 flex items-center justify-between gap-2 border-t pt-3">

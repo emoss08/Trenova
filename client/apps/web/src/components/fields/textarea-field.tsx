@@ -105,8 +105,8 @@ export function TextareaField<T extends FieldValues>({
                           key={preset.id}
                           onClick={() => field.onChange(preset.description)}
                           className="flex flex-col items-start gap-1 py-2"
-                          title={preset.label}
-                          description={preset.description}
+                          title={t(preset.label)}
+                          description={t(preset.description)}
                         />
                       ))}
                     </DropdownMenuContent>

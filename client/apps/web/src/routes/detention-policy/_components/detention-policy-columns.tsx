@@ -137,7 +137,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} truncateLength={80} />
+        <DataTableDescription description={translate(row.original.description)} truncateLength={80} />
       ),
       size: 280,
       minSize: 200,

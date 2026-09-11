@@ -232,7 +232,7 @@ function PermissionRow({
               <label
                 key={opDef.operation}
                 className="text-muted-foreground flex items-center gap-1.5 text-xs"
-                title={opDef.description}
+                title={t(opDef.description)}
               >
                 <Checkbox
                   checked={permission.operations.includes(opDef.operation as Operation)}
@@ -435,7 +435,7 @@ function AddPermissionDialog({
                   <label
                     key={opDef.operation}
                     className="flex items-center gap-1.5 text-sm"
-                    title={opDef.description}
+                    title={t(opDef.description)}
                   >
                     <Checkbox
                       checked={selectedOperations.includes(opDef.operation as Operation)}
@@ -629,7 +629,7 @@ function CreatePermissionRow({
               <label
                 key={opDef.operation}
                 className="text-muted-foreground flex items-center gap-1.5 text-xs"
-                title={opDef.description}
+                title={t(opDef.description)}
               >
                 <Checkbox
                   checked={permission.operations.includes(opDef.operation as Operation)}
@@ -811,7 +811,7 @@ function CreateAddPermissionDialog({
                   <label
                     key={opDef.operation}
                     className="flex items-center gap-1.5 text-sm"
-                    title={opDef.description}
+                    title={t(opDef.description)}
                   >
                     <Checkbox
                       checked={selectedOperations.includes(opDef.operation as Operation)}

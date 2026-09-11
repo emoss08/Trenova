@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -41,7 +42,7 @@ export function getColumns(): ColumnDef<RoleRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} truncateLength={60} />
+        <DataTableDescription description={translate(row.original.description)} truncateLength={60} />
       ),
       meta: {
         label: "Description",

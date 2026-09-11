@@ -196,7 +196,7 @@ export function CommentsToolbar({
             {commentPriorityChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}
-                label={choice.label}
+                label={t(choice.label)}
                 checked={filters.priorities.includes(choice.value)}
                 onToggle={() =>
                   onFiltersChange({
@@ -212,7 +212,7 @@ export function CommentsToolbar({
             {commentTypeChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}
-                label={choice.label}
+                label={t(choice.label)}
                 checked={filters.types.includes(choice.value)}
                 onToggle={() =>
                   onFiltersChange({

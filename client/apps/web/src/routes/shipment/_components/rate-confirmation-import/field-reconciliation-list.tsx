@@ -134,7 +134,7 @@ export function FieldReconciliationList({
         return (
           <div key={section.label} className="mb-1">
             <SectionHeader
-              label={section.label}
+              label={t(section.label)}
               issueCount={section.issueCount}
               collapsed={collapsed}
               onToggle={() => toggleSection(section.label)}

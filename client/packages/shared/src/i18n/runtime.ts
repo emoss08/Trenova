@@ -72,7 +72,7 @@ export async function setLocale(locale: Locale): Promise<void> {
  * that source rather than rendering a key, so an untranslated string is merely English —
  * never `shipment.header.title` in front of a customer.
  */
-export function translate(message: string, ...args: unknown[]): string {
+export function translate(message: string | null | undefined, ...args: unknown[]): string {
   return translateIn(activeLocale, message, ...args);
 }
 
@@ -81,8 +81,15 @@ export function translate(message: string, ...args: unknown[]): string {
  * has rendered with, so a language switch mid-render cannot produce a component whose text
  * is half one language and half the other.
  */
-export function translateIn(locale: Locale, message: string, ...args: unknown[]): string {
-  if (message === "") return "";
+export function translateIn(
+  locale: Locale,
+  message: string | null | undefined,
+  ...args: unknown[]
+): string {
+  // An optional caption is ordinary — `label?: string` on a menu entry, a description a
+  // row may not have. Rendering nothing matches what the bare value did before it was
+  // wrapped, and is far better than making every call site guard.
+  if (message === null || message === undefined || message === "") return "";
 
   const messages = locale === activeLocale ? activeMessages : (loaded.get(locale) ?? {});
   const translated = messages[message] ?? message;

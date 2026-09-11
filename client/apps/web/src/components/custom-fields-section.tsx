@@ -34,6 +34,8 @@ function CustomFieldRenderer<T extends FieldValues>({
   control: Control<T>;
   fieldPrefix: string;
 }) {
+  const t = useT();
+
   const fieldName = `${fieldPrefix}.${definition.id}` as Path<T>;
   const rules = {
     required: definition.isRequired ? `${definition.label} is required` : false,
@@ -45,8 +47,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <InputField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
           maxLength={definition.validationRules?.maxLength ?? undefined}
@@ -60,8 +62,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <NumberField<FieldValues>
           control={control as Control<FieldValues>}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
         />
@@ -72,8 +74,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <AutoCompleteDateField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
         />
@@ -84,8 +86,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <SwitchField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
         />
       );
 
@@ -94,8 +96,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <SelectField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
           options={mapSelectOptions(definition.options)}
@@ -107,8 +109,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <SelectField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
           options={mapSelectOptions(definition.options)}

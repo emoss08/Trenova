@@ -320,7 +320,7 @@ function TreeRow({
       ref={setDropRef}
       data-depth={node.depth}
       data-open={hasChildren ? open : undefined}
-      aria-label={position.title}
+      aria-label={t(position.title)}
       className={cn(
         "group/row relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b py-1.5 pr-2 transition-colors last:border-b-0",
         isDragging && "opacity-40",
@@ -461,7 +461,7 @@ function TreeRow({
                 {moveTargets.map((target) => (
                   <DropdownMenuItem
                     key={target.position.id}
-                    title={target.position.title}
+                    title={t(target.position.title)}
                     titleClassProps="truncate"
                     onClick={() => onMove(target.position.id)}
                     style={{ paddingLeft: `${0.5 + target.depth * 0.75}rem` }}

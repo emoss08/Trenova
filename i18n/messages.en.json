@@ -4348,6 +4348,15 @@
       "routes/worker"
     ]
   },
+  "A-55": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A3": {
     "sites": 2,
     "scope": [
@@ -5139,12 +5148,14 @@
     ]
   },
   "Accepted": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/components",
       "routes/dispatch-console"
     ]
@@ -6308,12 +6319,15 @@
     ]
   },
   "Active": {
-    "sites": 36,
+    "sites": 38,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/fuelpurchase",
+      "domain/ifta",
       "packages/shared/components",
       "routes/admin",
       "routes/benefits",
@@ -6580,6 +6594,15 @@
       "routes/admin"
     ]
   },
+  "Activity in a non-member jurisdiction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
+    ]
+  },
   "Activity is required": {
     "sites": 1,
     "scope": [
@@ -6587,6 +6610,15 @@
     ],
     "areas": [
       "domain/documentaiextraction"
+    ]
+  },
+  "Activity on non-qualified tractors": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
     ]
   },
   "Activity stream": {
@@ -6733,6 +6765,15 @@
     ],
     "areas": [
       "domain/shipmentstate"
+    ]
+  },
+  "Actual knowledge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Add": {
@@ -8513,12 +8554,14 @@
     ]
   },
   "Address line 1": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "domain/worker"
     ]
   },
   "Address line 1 is required": {
@@ -8552,12 +8595,14 @@
     ]
   },
   "Address line 2": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "domain/worker"
     ]
   },
   "Address line cannot be longer than 200 characters": {
@@ -9397,6 +9442,15 @@
     ]
   },
   "Alcohol rate cannot exceed 100%": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "Alcohol use": {
     "sites": 1,
     "scope": [
       "go"
@@ -10374,6 +10428,15 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "Already imported": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "Already on file": {
@@ -11764,6 +11827,15 @@
       "domain/driverpay"
     ]
   },
+  "Annual limited query": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Another carrier accepted first; this offer no longer stands.": {
     "sites": 1,
     "scope": [
@@ -13085,13 +13157,15 @@
     ]
   },
   "Approved": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/components",
       "packages/shared/lib",
       "routes/carrier-settlement",
@@ -16541,6 +16615,24 @@
       "apps/web/components"
     ]
   },
+  "Awaiting SAP referral": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "Awaiting a decision": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Awaiting approval": {
     "sites": 5,
     "scope": [
@@ -16560,13 +16652,33 @@
       "packages/shared/lib"
     ]
   },
-  "Awaiting result": {
-    "sites": 2,
+  "Awaiting file": {
+    "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
+  "Awaiting response": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "Awaiting result": {
+    "sites": 3,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/lib"
     ]
   },
@@ -18697,6 +18809,15 @@
       "routes/edi"
     ]
   },
+  "Biodiesel": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Biweekly": {
     "sites": 1,
     "scope": [
@@ -19895,12 +20016,14 @@
     ]
   },
   "CSV": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "domain/fuelpurchase",
       "routes/time-attendance"
     ]
   },
@@ -20074,6 +20197,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Calendar year": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Calendar year must end on December 31st": {
@@ -20690,13 +20822,15 @@
     ]
   },
   "Cancelled": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "domain/fuelpurchase",
       "packages/shared/components",
       "routes/driver-expense",
       "routes/worker"
@@ -21085,12 +21219,14 @@
     ]
   },
   "Card": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "routes/fuel-card"
     ]
   },
@@ -21140,6 +21276,15 @@
     ]
   },
   "Card last four must be exactly four digits": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
+  "Cards": {
     "sites": 1,
     "scope": [
       "go"
@@ -24012,13 +24157,16 @@
     ]
   },
   "City": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "domain/worker",
+      "go/other",
       "routes/admin",
       "routes/carrier",
       "routes/customer",
@@ -24720,13 +24868,15 @@
     ]
   },
   "Clear": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/lib",
       "routes/admin",
       "routes/ar-open-items",
@@ -25429,12 +25579,14 @@
     ]
   },
   "Closed": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/components",
       "routes/osha"
     ]
@@ -26284,6 +26436,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Comdata": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "Comdata Code": {
@@ -27294,6 +27455,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Compressed natural gas": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Compresses outbound payloads before encryption to reduce transfer size.": {
@@ -28959,12 +29129,14 @@
     ]
   },
   "Continuous": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/worker"
     ]
   },
   "Continuous is one block of time; intermittent and reduced schedule are recorded day by day.": {
@@ -32911,7 +33083,7 @@
     ]
   },
   "Currency": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -32919,6 +33091,7 @@
     "areas": [
       "apps/web/types",
       "domain/integration",
+      "go/other",
       "routes/customer",
       "routes/customer-payments",
       "routes/fuel-management",
@@ -35355,6 +35528,15 @@
       "routes/jurisdiction-rule-override"
     ]
   },
+  "Daylight movement only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
+    ]
+  },
   "Days": {
     "sites": 6,
     "scope": [
@@ -35407,12 +35589,14 @@
     ]
   },
   "Days away from work": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "routes/osha",
       "routes/worker"
     ]
@@ -35696,12 +35880,14 @@
     ]
   },
   "Death": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/worker"
     ]
   },
   "Debit": {
@@ -38338,14 +38524,16 @@
     ]
   },
   "Denied": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/lib",
+      "domain/worker",
       "routes/settlement-dispute"
     ]
   },
@@ -39667,12 +39855,14 @@
     ]
   },
   "Diesel": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Diesel $/gal": {
@@ -39682,6 +39872,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Diesel exhaust fluid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Diesel price index used to resolve the live fuel cost per mile.": {
@@ -40035,11 +40234,13 @@
     ]
   },
   "Discarded": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/fuelpurchase",
       "packages/shared/components"
     ]
   },
@@ -42146,12 +42347,14 @@
     ]
   },
   "Draft": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/ifta",
       "packages/shared/components",
       "packages/shared/types",
       "routes/admin",
@@ -42466,7 +42669,7 @@
     ]
   },
   "Driver": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -42474,6 +42677,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "go/other",
       "packages/shared/lib",
       "routes/auth",
       "routes/driver-expense",
@@ -43460,6 +43664,15 @@
       "routes/worker"
     ]
   },
+  "Drug use": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Drug {0} of {1} · Alcohol {2} of {3} {4}": {
     "sites": 1,
     "scope": [
@@ -43703,6 +43916,15 @@
       "domain/permission"
     ]
   },
+  "Duplicate in file": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
   "Duplicate journal source event": {
     "sites": 1,
     "scope": [
@@ -43895,6 +44117,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "E-85": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "EDI": {
@@ -44512,6 +44743,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "EFS": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "EFS Money Code": {
@@ -45446,6 +45686,15 @@
       "service/formulatemplateservice"
     ]
   },
+  "Electricity": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Electronically submitted": {
     "sites": 1,
     "scope": [
@@ -46043,6 +46292,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Emergency contact": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Emergency contact name": {
     "sites": 1,
     "scope": [
@@ -46053,12 +46311,14 @@
     ]
   },
   "Emergency contact phone": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "domain/worker"
     ]
   },
   "Emphasis": {
@@ -48023,14 +48283,16 @@
     ]
   },
   "Error": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/fuelpurchase"
     ]
   },
   "Error Details": {
@@ -48387,6 +48649,15 @@
     ],
     "areas": [
       "domain/invoice"
+    ]
+  },
+  "Ethanol": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Europe": {
@@ -49593,6 +49864,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Excel workbook": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "Excellent": {
@@ -51967,13 +52247,15 @@
     ]
   },
   "Failed": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "domain/fuelpurchase",
       "packages/shared/components",
       "packages/shared/lib",
       "routes/edi",
@@ -54162,11 +54444,14 @@
     ]
   },
   "Filed": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/ifta",
+      "domain/worker",
       "packages/shared/components",
       "routes/osha"
     ]
@@ -54446,11 +54731,13 @@
     ]
   },
   "Finalized": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/ifta",
       "packages/shared/components"
     ]
   },
@@ -54753,6 +55040,15 @@
     ]
   },
   "First Name must be between 1 and 100 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "First aid only": {
     "sites": 1,
     "scope": [
       "go"
@@ -55064,6 +55360,15 @@
       "domain/integration"
     ]
   },
+  "Fixed-width file": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
   "Fixes the quarter the miles belong to. Cannot be in the future.": {
     "sites": 1,
     "scope": [
@@ -55155,12 +55460,14 @@
     ]
   },
   "Flat": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/shipment",
       "routes/accessorial-charge",
       "routes/detention-policy"
     ]
@@ -55434,6 +55741,15 @@
       "apps/web/hooks"
     ]
   },
+  "Follow-up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Follow-up count cannot be negative": {
     "sites": 1,
     "scope": [
@@ -55462,6 +55778,15 @@
     ]
   },
   "Follow-up test count cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "Follow-up testing": {
     "sites": 1,
     "scope": [
       "go"
@@ -56589,6 +56914,15 @@
       "domain/rateagreement"
     ]
   },
+  "Front escort": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
+    ]
+  },
   "Fuel": {
     "sites": 11,
     "scope": [
@@ -56801,6 +57135,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "Fuel card import": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
   "Fuel card statements can be imported as CSV or XLSX": {
     "sites": 1,
     "scope": [
@@ -56902,6 +57245,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Fuel product": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Fuel spend, surcharge pricing, and IFTA": {
@@ -57157,6 +57509,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Full query": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Fully recovered from the driver's settlements.": {
@@ -57612,13 +57973,24 @@
       "domain/fuelpurchase"
     ]
   },
-  "Gasoline": {
+  "Gasohol": {
     "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Gasoline": {
+    "sites": 2,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Gasoline & Diesel Fuel Update": {
@@ -59485,12 +59857,14 @@
     ]
   },
   "Hearing loss": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/worker"
     ]
   },
   "Heat": {
@@ -60129,6 +60503,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Holiday restriction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
     ]
   },
   "Holidays": {
@@ -61341,6 +61724,15 @@
       "routes/shipment"
     ]
   },
+  "Hydrogen": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Hyphen (-)": {
     "sites": 1,
     "scope": [
@@ -62221,12 +62613,14 @@
     ]
   },
   "Imported": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/fuelpurchase",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/reconciliation-summary"
@@ -62474,12 +62868,14 @@
     ]
   },
   "Inactive": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/ifta",
       "routes/edi",
       "routes/fuel-management",
       "routes/jurisdiction-rule",
@@ -62904,6 +63300,15 @@
       "routes/income-statement"
     ]
   },
+  "Incomplete or insufficient": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Incorrect Deduction": {
     "sites": 1,
     "scope": [
@@ -63213,6 +63618,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Injury": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Injury and illness cases, the OSHA 300 log and the 300A annual summary": {
@@ -63860,6 +64274,15 @@
     ],
     "areas": [
       "service/distanceoverrideservice"
+    ]
+  },
+  "Intermittent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Intermittent leave is recorded day by day in hours, in the smallest increment the organisation uses for any other absence (29 CFR 825.205).": {
@@ -66290,12 +66713,14 @@
     ]
   },
   "Job transfer or restriction": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/worker"
     ]
   },
   "Journal Details": {
@@ -66654,6 +67079,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Jurisdiction miles do not match move distance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
     ]
   },
   "Jurisdiction miles need a move with at least two located stops": {
@@ -69250,6 +69684,15 @@
       "domain/worker"
     ]
   },
+  "License plate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Lifecycle": {
     "sites": 1,
     "scope": [
@@ -69466,6 +69909,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Limited query": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Limits on what this carrier may be paid relative to what the load sells for.": {
@@ -69914,6 +70366,15 @@
       "routes/tractor"
     ]
   },
+  "Liquefied natural gas": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "List content must be list items": {
     "sites": 1,
     "scope": [
@@ -69966,6 +70427,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Litres": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "Litres are converted to US gallons for the return.": {
@@ -71831,6 +72301,15 @@
       "domain/documenttemplate"
     ]
   },
+  "M-85": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "MC": {
     "sites": 1,
     "scope": [
@@ -72575,6 +73054,16 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Manual entry": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase",
+      "domain/ifta"
     ]
   },
   "Manual journal actions require an authenticated user": {
@@ -74782,6 +75271,15 @@
       "apps/web/lib"
     ]
   },
+  "Methanol": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Method": {
     "sites": 21,
     "scope": [
@@ -75090,6 +75588,15 @@
       "domain/ifta"
     ]
   },
+  "Miles not attributed to a jurisdiction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
+    ]
+  },
   "Miles per Gallon": {
     "sites": 1,
     "scope": [
@@ -75124,6 +75631,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Miles without a tractor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
     ]
   },
   "Miles ÷ gallons, per fuel type": {
@@ -75669,6 +76185,15 @@
     ],
     "areas": [
       "domain/fuelsurcharge"
+    ]
+  },
+  "Missing tax rate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
     ]
   },
   "Missing warning codes": {
@@ -78206,14 +78731,16 @@
     ]
   },
   "New": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/lib",
+      "domain/fuelpurchase",
       "packages/shared/components",
       "routes/admin",
       "routes/edi",
@@ -78863,6 +79390,15 @@
     ],
     "areas": [
       "routes/holiday"
+    ]
+  },
+  "Night movement only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
     ]
   },
   "Nightly PTO accrual, carryover cap, and expiry posting": {
@@ -80085,6 +80621,15 @@
       "routes/fuel-management"
     ]
   },
+  "No fuel purchased for fuel type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
+    ]
+  },
   "No fuel surcharge": {
     "sites": 1,
     "scope": [
@@ -81187,6 +81732,15 @@
       "routes/admin"
     ]
   },
+  "No response after follow-up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "No results for \"{0}\"": {
     "sites": 1,
     "scope": [
@@ -82253,6 +82807,15 @@
       "routes/admin"
     ]
   },
+  "Not applicable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Not applied": {
     "sites": 1,
     "scope": [
@@ -82363,6 +82926,15 @@
       "routes/shipment"
     ]
   },
+  "Not filed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Not found": {
     "sites": 1,
     "scope": [
@@ -82409,12 +82981,14 @@
     ]
   },
   "Not on file": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/lib"
     ]
   },
@@ -82445,6 +83019,15 @@
       "routes/edi"
     ]
   },
+  "Not recordable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Not recorded": {
     "sites": 1,
     "scope": [
@@ -82455,11 +83038,13 @@
     ]
   },
   "Not required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/worker",
       "routes/edi"
     ]
   },
@@ -82534,6 +83119,15 @@
     ],
     "areas": [
       "routes/hos.tsx"
+    ]
+  },
+  "Not yet requested": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Note": {
@@ -84060,11 +84654,13 @@
     ]
   },
   "Odometer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/fuel-purchase"
     ]
   },
@@ -88953,7 +89549,7 @@
     ]
   },
   "Other": {
-    "sites": 16,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -88961,6 +89557,9 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "domain/fuelpurchase",
+      "domain/worker",
+      "go/other",
       "routes/carrier-settlement",
       "routes/shipment",
       "routes/worker",
@@ -89013,6 +89612,15 @@
       "routes/worker"
     ]
   },
+  "Other illness": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Other reason": {
     "sites": 1,
     "scope": [
@@ -89020,6 +89628,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Other recordable case": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Other recordable cases": {
@@ -89378,12 +89995,14 @@
     ]
   },
   "Overdue": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/lib",
       "routes/accounting-dashboard",
       "routes/ar-aging",
@@ -92802,12 +93421,14 @@
     ]
   },
   "Per Mile": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "domain/shipment"
     ]
   },
   "Per Mile (MPG Formula)": {
@@ -93755,7 +94376,7 @@
     ]
   },
   "Phone": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -93763,6 +94384,7 @@
     "areas": [
       "apps/dash/_components",
       "domain/documenttemplate",
+      "domain/worker",
       "routes/carrier",
       "routes/osha",
       "routes/profile.tsx"
@@ -95172,6 +95794,15 @@
       "routes/worker"
     ]
   },
+  "Poisoning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Poisonings": {
     "sites": 1,
     "scope": [
@@ -95179,6 +95810,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Police escort": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
     ]
   },
   "Policies": {
@@ -95676,6 +96316,15 @@
       "routes/escrow-account"
     ]
   },
+  "Positive test": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Post Adjustment": {
     "sites": 1,
     "scope": [
@@ -95823,6 +96472,15 @@
       "routes/manual-journal"
     ]
   },
+  "Post-accident": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Post-close adjustment configuration": {
     "sites": 1,
     "scope": [
@@ -95877,12 +96535,14 @@
     ]
   },
   "Postal code": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "routes/rate-zone"
     ]
   },
@@ -96151,6 +96811,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Pre-employment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "Pre-employment full query": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Pre-employment query": {
@@ -97807,12 +98485,14 @@
     ]
   },
   "Prohibited": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/lib"
     ]
   },
@@ -97886,6 +98566,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Propane (LPG)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Proper Shipping Name": {
@@ -98082,6 +98771,15 @@
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
       "routes/organization"
+    ]
+  },
+  "Provider API": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "Provider Fingerprint": {
@@ -98994,13 +99692,14 @@
     ]
   },
   "Quantity": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "routes/fuel-purchase",
       "routes/invoice",
       "template/invoice.pdf"
@@ -99040,6 +99739,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Quantity unit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Quantity unit is required": {
@@ -99466,6 +100174,15 @@
       "routes/worker"
     ]
   },
+  "Ramp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
   "Ran": {
     "sites": 2,
     "scope": [
@@ -99485,11 +100202,13 @@
     ]
   },
   "Random": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/worker",
       "routes/admin"
     ]
   },
@@ -101374,6 +102093,15 @@
       "routes/shipment"
     ]
   },
+  "Ready to review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
   "Ready to run": {
     "sites": 1,
     "scope": [
@@ -101462,6 +102190,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "Rear escort": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
     ]
   },
   "Reason": {
@@ -101806,6 +102543,15 @@
       "template/notification.dash.disciplinary_issued"
     ]
   },
+  "Reasonable suspicion": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Reasonable suspicion and post-accident tests must say what prompted them.": {
     "sites": 1,
     "scope": [
@@ -102075,12 +102821,14 @@
     ]
   },
   "Received": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/components",
       "routes/edi"
     ]
@@ -103710,6 +104458,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Reduced schedule": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Reefer": {
     "sites": 2,
     "scope": [
@@ -103726,6 +104483,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Reefer fuel": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reefer temperature capture": {
@@ -104037,6 +104803,15 @@
     "areas": [
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Refusal to test": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Refusing to terminate the current database session.": {
@@ -106350,13 +107125,15 @@
     ]
   },
   "Requested": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/components",
       "routes/edi"
     ]
@@ -107637,13 +108414,15 @@
     ]
   },
   "Resolved": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "domain/worker",
       "packages/shared/components",
       "routes/carrier-invoice-matching",
       "routes/invoice-reconciliation",
@@ -107872,6 +108651,15 @@
       "domain/documentpacketrule"
     ]
   },
+  "Respiratory condition": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Respiratory conditions": {
     "sites": 1,
     "scope": [
@@ -107918,11 +108706,13 @@
     ]
   },
   "Response received": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/worker",
       "routes/worker"
     ]
   },
@@ -108488,6 +109278,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Return to duty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Return true when text contains a substring.": {
     "sites": 1,
     "scope": [
@@ -108531,6 +109330,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Return-to-duty test required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "Returned to duty": {
@@ -109903,6 +110711,15 @@
       "routes/cost-control"
     ]
   },
+  "Rolling twelve months looking back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Rolls off": {
     "sites": 1,
     "scope": [
@@ -110391,6 +111208,15 @@
       "apps/web/lib"
     ]
   },
+  "Route calculation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ifta"
+    ]
+  },
   "Route hash is required": {
     "sites": 1,
     "scope": [
@@ -110434,6 +111260,15 @@
     ],
     "areas": [
       "domain/storedmileage"
+    ]
+  },
+  "Route survey": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
     ]
   },
   "Route timeline": {
@@ -111235,6 +112070,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Rush hour restriction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
+    ]
+  },
   "SAML providers cannot be managed until SAML sign-in is available": {
     "sites": 1,
     "scope": [
@@ -111242,6 +112086,15 @@
     ],
     "areas": [
       "service/iamservice"
+    ]
+  },
+  "SAP evaluation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "SAP name cannot exceed 100 characters": {
@@ -111260,6 +112113,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "SCAC": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "SCAC Code": {
@@ -121179,6 +122041,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Skin disorder": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Skin disorders": {
     "sites": 1,
     "scope": [
@@ -121234,11 +122105,13 @@
     ]
   },
   "Skipped": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/fuelpurchase",
       "packages/shared/components",
       "routes/shipment"
     ]
@@ -123199,6 +124072,15 @@
     "areas": [
       "routes/edi",
       "service/edix12inspect"
+    ]
+  },
+  "State or province": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "State that issued the license.": {
@@ -125188,12 +126070,14 @@
     ]
   },
   "Suspended": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/fuelpurchase",
       "packages/shared/components"
     ]
   },
@@ -125359,6 +126243,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Synced": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "Synced Active": {
@@ -126320,11 +127213,13 @@
     ]
   },
   "Telematics": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/ifta",
       "routes/tractor"
     ]
   },
@@ -138051,6 +138946,15 @@
       "template/rateconfirmation.email"
     ]
   },
+  "Total amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Total amount cannot be negative": {
     "sites": 1,
     "scope": [
@@ -139153,6 +140057,15 @@
       "domain/edi"
     ]
   },
+  "Transaction date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Transaction date is required": {
     "sites": 1,
     "scope": [
@@ -139163,11 +140076,13 @@
     ]
   },
   "Transaction reference": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/fuel-purchase"
     ]
   },
@@ -139271,11 +140186,13 @@
     ]
   },
   "Transactions": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/fuelpurchase",
       "routes/edi"
     ]
   },
@@ -139993,6 +140910,24 @@
       "service/reporting"
     ]
   },
+  "Twelve months forward from first use": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
+  "Twelve months from the hire anniversary": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "Two dimensions cannot share a position": {
     "sites": 1,
     "scope": [
@@ -140195,6 +141130,15 @@
     ],
     "areas": [
       "routes/hazardous-material"
+    ]
+  },
+  "US gallons": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
     ]
   },
   "USA": {
@@ -140882,6 +141826,15 @@
       "domain/shipment"
     ]
   },
+  "Unit number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Unit number of the carrier's tractor on this move.": {
     "sites": 1,
     "scope": [
@@ -140916,6 +141869,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Unit price": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Unit price cannot be negative": {
@@ -141927,12 +142889,14 @@
     ]
   },
   "Uploaded": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "domain/fuelpurchase"
     ]
   },
   "Uploaded File": {
@@ -143466,11 +144430,13 @@
     ]
   },
   "Vendor": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/fuel-purchase"
     ]
   },
@@ -145219,6 +146185,15 @@
       "routes/carrier"
     ]
   },
+  "WEX": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/fuelpurchase"
+    ]
+  },
   "Wait before the first retry; doubles each attempt. Defaults to 30 seconds.": {
     "sites": 1,
     "scope": [
@@ -145421,11 +146396,13 @@
     ]
   },
   "Waived": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/worker",
       "routes/rate-agreement"
     ]
   },
@@ -145983,6 +146960,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Weekend restriction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/jurisdictionrule"
     ]
   },
   "Weekly": {
@@ -151702,6 +152688,15 @@
       "service/roleservice"
     ]
   },
+  "coaching conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "company.com, contractor.com": {
     "sites": 2,
     "scope": [
@@ -151808,6 +152803,15 @@
     ],
     "areas": [
       "routes/worker-checklist-template"
+    ]
+  },
+  "disciplinary action": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "dispatch@carrier.com": {
@@ -153879,6 +154883,15 @@
       "service/workerptoservice"
     ]
   },
+  "final warning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "first 100 shown": {
     "sites": 1,
     "scope": [
@@ -154884,6 +155897,15 @@
       "routes/fuel-management"
     ]
   },
+  "suspension": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "synced {0}": {
     "sites": 1,
     "scope": [
@@ -154900,6 +155922,24 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulatemplateservice"
+    ]
+  },
+  "termination": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "this document exceeded its total image size budget; the rest were dropped": {
@@ -155091,6 +156131,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "verbal warning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "via {0}": {
@@ -155300,6 +156349,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "written warning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
     ]
   },
   "you@example.com": {

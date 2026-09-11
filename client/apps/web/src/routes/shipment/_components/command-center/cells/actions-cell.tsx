@@ -39,7 +39,7 @@ export function ActionsCell({
             return (
               <DropdownMenuItem
                 key={action.id}
-                title={action.label}
+                title={t(action.label)}
                 color={action.variant === "destructive" ? "danger" : undefined}
                 disabled={disabled}
                 startContent={Icon ? <Icon className="size-3.5" /> : undefined}

@@ -135,7 +135,7 @@ function RosterSkeleton() {
         </div>
       </div>
       {ROSTER_GROUPS.map((group) => (
-        <section key={group.label} aria-label={group.label} className="flex flex-col gap-1.5">
+        <section key={group.label} aria-label={t(group.label)} className="flex flex-col gap-1.5">
           <header className="flex items-baseline justify-between gap-2 px-1">
             <span className="flex items-center gap-1.5">
               <Skeleton className="h-3 w-24" />

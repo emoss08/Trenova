@@ -171,7 +171,7 @@ export function InvoiceAdjustmentTypeSelector({
                 <button
                   key={strategy.value}
                   type="button"
-                  title={strategy.description}
+                  title={t(strategy.description)}
                   className={cn(
                     "flex-1 rounded-md border border-transparent px-2.5 py-1.5 text-xs font-medium transition-all duration-150",
                     isSelected

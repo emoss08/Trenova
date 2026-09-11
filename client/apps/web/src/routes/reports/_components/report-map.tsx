@@ -119,7 +119,7 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
               <AdvancedMarker
                 key={point.key}
                 position={{ lat: point.lat, lng: point.lng }}
-                title={point.label}
+                title={t(point.label)}
               />
             ))}
           </Map>

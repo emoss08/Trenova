@@ -42,8 +42,8 @@ export function ScoringWeightForm() {
               <NumberField
                 control={control}
                 name={`scoringWeights.${factor.key}`}
-                label={factor.label}
-                description={factor.description}
+                label={t(factor.label)}
+                description={t(factor.description)}
                 placeholder={presets[factor.key].toFixed(1)}
                 decimalScale={1}
               />

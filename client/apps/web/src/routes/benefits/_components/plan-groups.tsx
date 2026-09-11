@@ -35,6 +35,8 @@ export function PlanGroups({
   onEdit,
   onOpenRoster,
 }: PlanGroupsProps) {
+  const t = useT();
+
   const groups = useMemo(() => groupPlansByType(plans, costs), [plans, costs]);
   const reduceMotion = useReducedMotion();
   const [settled, setSettled] = useState(false);
@@ -48,7 +50,7 @@ export function PlanGroups({
   return (
     <div className="flex flex-col gap-4">
       {groups.map((group) => (
-        <section key={group.type} aria-label={group.label} className="flex flex-col gap-1.5">
+        <section key={group.type} aria-label={t(group.label)} className="flex flex-col gap-1.5">
           <GroupHeading group={group} />
           <ul className="bg-card divide-y overflow-hidden rounded-lg border">
             {group.plans.map(({ plan, cost }) => {

@@ -22,6 +22,14 @@ const PARSER_PLUGINS = ["typescript", "jsx", "decorators-legacy", "explicitResou
 const SKIP_DIR = new Set(["node_modules", "generated", "__tests__", "__snapshots__", "dist", "i18n"]);
 const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
 
+// Files whose caption props are typed ReactNode rather than string. The caller passes
+// markup it has already translated, so wrapping here is wrong — and the codemod cannot
+// tell from syntax alone, which is why the list is explicit instead of inferred.
+const REACTNODE_CAPTIONS = new Set([
+  "client/packages/shared/src/components/ui/segmented-control.tsx",
+  "client/packages/shared/src/components/ui/stepper.tsx",
+]);
+
 const HOOK_IMPORT = 'import { useT } from "@trenova/shared/i18n/use-t";';
 const TRANSLATE_IMPORT = 'import { translate } from "@trenova/shared/i18n/runtime";';
 
@@ -140,6 +148,10 @@ function literalFromAttributeValue(value) {
 const LABEL_PROPS = new Set(["label", "description", "title", "header"]);
 
 export function transformSource(source, filePath, { labels = false } = {}) {
+  if (labels && REACTNODE_CAPTIONS.has(filePath?.split("\\").join("/"))) {
+    labels = false;
+  }
+
   let ast;
   try {
     ast = parse(source, { sourceType: "module", plugins: PARSER_PLUGINS });
@@ -239,6 +251,28 @@ export function transformSource(source, filePath, { labels = false } = {}) {
       case "JSXAttribute": {
         const name = attributeName(node);
         if (name === null || !TEXT_PROPS.has(name)) return;
+
+        // label={option.label} — a caption passed down as data, typically from a label
+        // map or a GraphQL select option. Only prose-bearing props reach here, so a
+        // key or an id is never rewritten.
+        if (labels && node.value !== null && node.value.type === "JSXExpressionContainer") {
+          const expr = node.value.expression;
+          if (
+            expr.type === "MemberExpression" &&
+            !expr.computed &&
+            expr.property.type === "Identifier" &&
+            LABEL_PROPS.has(expr.property.name)
+          ) {
+            const call = callFor(stack, deps);
+            edits.push({
+              start: expr.start,
+              end: expr.end,
+              text: `${call}(${source.slice(expr.start, expr.end)})`,
+            });
+            return;
+          }
+        }
+
         const literal = literalFromAttributeValue(node.value);
         if (literal === null) return;
         if (reject(literal.value, { prop: name }) !== null) return;

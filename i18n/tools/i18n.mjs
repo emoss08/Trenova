@@ -36,7 +36,8 @@ async function extractGo() {
   const entries = [];
   const rejected = [];
   for (const item of raw) {
-    const reason = reject(item.message, {});
+    // Every Go entry comes from a position the extractor knows is user-facing.
+    const reason = reject(item.message, { positional: true });
     if (reason !== null) {
       rejected.push({ ...item, reason });
       continue;

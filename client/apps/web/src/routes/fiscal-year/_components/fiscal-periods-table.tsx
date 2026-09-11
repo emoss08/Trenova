@@ -84,7 +84,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
               <TableRow key={period.id}>
                 <TableCell>
                   {statusChoice ? (
-                    <DataTableColorColumn text={statusChoice.label} color={statusChoice.color} />
+                    <DataTableColorColumn text={t(statusChoice.label)} color={statusChoice.color} />
                   ) : (
                     period.status
                   )}
@@ -92,7 +92,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
                 <TableCell className="text-sm font-medium">{period.name}</TableCell>
                 <TableCell>
                   {typeChoice ? (
-                    <DataTableColorColumn text={typeChoice.label} color={typeChoice.color} />
+                    <DataTableColorColumn text={t(typeChoice.label)} color={typeChoice.color} />
                   ) : (
                     period.periodType
                   )}
@@ -125,7 +125,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
                           <DropdownMenuItem
                             key={action.id}
                             startContent={<action.icon className="size-4" />}
-                            title={action.label}
+                            title={t(action.label)}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAction(period, action.id);

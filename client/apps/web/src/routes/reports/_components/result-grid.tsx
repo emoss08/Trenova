@@ -166,7 +166,7 @@ export function ResultGrid({
                     onSortChange && "hover:text-foreground transition-colors",
                     active && "text-foreground",
                   )}
-                  title={column.label}
+                  title={t(column.label)}
                 >
                   <span className="truncate">{t(column.label)}</span>
                   {active &&

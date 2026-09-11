@@ -100,7 +100,7 @@ export function OshaSummaryCard({
               <FormFigure
                 key={column.column}
                 mark={column.column}
-                label={column.label}
+                label={t(column.label)}
                 value={totals[column.key]}
                 alarm={column.key === "deaths" && totals.deaths > 0}
                 muted
@@ -132,7 +132,7 @@ export function OshaSummaryCard({
               <FormFigure
                 key={type.number}
                 mark={`(${type.number})`}
-                label={type.label}
+                label={t(type.label)}
                 value={totals[type.key]}
                 muted
               />

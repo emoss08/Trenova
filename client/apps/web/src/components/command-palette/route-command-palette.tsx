@@ -181,7 +181,7 @@ export function RouteCommandPalette() {
   const remoteResultGroups =
     remoteQueryReady && !remoteSearchQuery.isFetching && !remoteSearchQuery.isError
       ? remoteGroups.map((group) => (
-          <CommandGroup key={group.entityType} heading={group.label}>
+          <CommandGroup key={group.entityType} heading={t(group.label)}>
             {group.hits.map((hit) => (
               <SearchResultItem
                 key={`${group.entityType}:${hit.id}`}
@@ -345,7 +345,7 @@ export function RouteCommandPalette() {
               {!recordEntityFilter && (
                 <>
                   {routeGroups.map((group) => (
-                    <CommandGroup key={group.id} heading={group.label}>
+                    <CommandGroup key={group.id} heading={t(group.label)}>
                       {group.items.map((item) => (
                         <CommandItem
                           key={item.id}
@@ -355,7 +355,7 @@ export function RouteCommandPalette() {
                         >
                           <item.icon className="size-4" />
                           <div className="flex flex-1 flex-col">
-                            <Highlight text={item.title} highlight={searchValue} />
+                            <Highlight text={t(item.title)} highlight={searchValue} />
                             <Highlight
                               text={item.subtitle}
                               highlight={searchValue}
@@ -378,9 +378,9 @@ export function RouteCommandPalette() {
                         >
                           <Plus className="size-4" />
                           <div className="flex flex-1 flex-col">
-                            <Highlight text={item.label} highlight={searchValue} />
+                            <Highlight text={t(item.label)} highlight={searchValue} />
                             <Highlight
-                              text={item.description}
+                              text={t(item.description)}
                               highlight={searchValue}
                               className="text-2xs text-muted-foreground"
                             />

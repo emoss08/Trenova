@@ -125,7 +125,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             <Separator />
             <div className="space-y-1.5">
               {derivation.map((row) => (
-                <DetailRow key={row.label} label={row.label} value={row.value} />
+                <DetailRow key={row.label} label={t(row.label)} value={row.value} />
               ))}
             </div>
           </>

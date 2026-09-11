@@ -453,7 +453,7 @@ function LegendChip({
     <button
       type="button"
       aria-pressed={!hidden}
-      aria-label={entry.label}
+      aria-label={t(entry.label)}
       title={hidden ? `Show ${entry.label}` : `Hide ${entry.label}`}
       onClick={onToggle}
       className={cn(

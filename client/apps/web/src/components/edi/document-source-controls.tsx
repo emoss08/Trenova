@@ -39,7 +39,7 @@ export function DocumentSourceControls({
           return layout === "toolbar" ? (
             <DocumentSourceField
               key={input.field}
-              label={input.label}
+              label={t(input.label)}
               value={value}
               placeholder={t("{\"transactionSet\":\"204\"}")}
               onChange={(nextValue) => onChange(input.field, nextValue)}
@@ -48,7 +48,7 @@ export function DocumentSourceControls({
           ) : (
             <DocumentSourceTextarea
               key={input.field}
-              label={input.label}
+              label={t(input.label)}
               value={value}
               onChange={(nextValue) => onChange(input.field, nextValue)}
             />
@@ -61,7 +61,7 @@ export function DocumentSourceControls({
           return (
             <div key={input.field} className={fieldClassName}>
               <ControlledShipmentAutocompleteField
-                label={input.label}
+                label={t(input.label)}
                 value={value}
                 onValueChange={(nextValue) => onChange(input.field, nextValue)}
               />
@@ -73,7 +73,7 @@ export function DocumentSourceControls({
           return (
             <div key={input.field} className={fieldClassName}>
               <ControlledEDITransferAutocompleteField
-                label={input.label}
+                label={t(input.label)}
                 value={value}
                 onValueChange={(nextValue) => onChange(input.field, nextValue)}
               />
@@ -84,7 +84,7 @@ export function DocumentSourceControls({
         return (
           <DocumentSourceField
             key={input.field}
-            label={input.label}
+            label={t(input.label)}
             placeholder={input.placeholder}
             value={value}
             onChange={(nextValue) => onChange(input.field, nextValue)}

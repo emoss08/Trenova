@@ -125,7 +125,7 @@ export function OverflowTabsList({
               {overflowItems.map((tab) => (
                 <DropdownMenuItem
                   key={tab.value}
-                  title={tab.label}
+                  title={t(tab.label)}
                   onClick={() => onSelect(tab.value)}
                   className={tab.className}
                   startContent={tab.icon ? <tab.icon className="size-4" /> : undefined}

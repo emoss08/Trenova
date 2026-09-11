@@ -113,9 +113,9 @@ export function EditableDriverTypeBadge({
                   value={option.value}
                   onSelect={(currentValue) => handleTypeChange(currentValue as DriverType)}
                   className="text-xs"
-                  label={option.label}
+                  label={t(option.label)}
                   color={option.color}
-                  description={option.description}
+                  description={t(option.description)}
                   icon={option.icon}
                   disabled={option.disabled}
                 />

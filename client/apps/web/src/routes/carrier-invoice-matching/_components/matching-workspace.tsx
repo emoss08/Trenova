@@ -273,7 +273,7 @@ export default function MatchingWorkspace() {
                   <FilterChip
                     key={chip.value}
                     active={invoiceFilter === chip.value}
-                    label={chip.label}
+                    label={t(chip.label)}
                     onClick={() => setInvoiceFilter(chip.value)}
                   />
                 ))}
@@ -285,7 +285,7 @@ export default function MatchingWorkspace() {
                     <FilterChip
                       key={chip.value}
                       active={matchFilter === chip.value}
-                      label={chip.label}
+                      label={t(chip.label)}
                       onClick={() => setMatchFilter(chip.value)}
                     />
                   ))}
@@ -298,7 +298,7 @@ export default function MatchingWorkspace() {
                     <FilterChip
                       key={chip.value}
                       active={matchViaFilter === chip.value}
-                      label={chip.label}
+                      label={t(chip.label)}
                       onClick={() => setMatchViaFilter(chip.value)}
                     />
                   ))}
@@ -436,6 +436,8 @@ function InvoiceList({
   empty: ListEmpty;
   onClearFilters: () => void;
 }) {
+  const t = useT();
+
   if (loading) {
     return (
       <div className="flex flex-col gap-1.5 p-2">
@@ -449,8 +451,8 @@ function InvoiceList({
   if (invoices.length === 0) {
     return (
       <BillingListEmpty
-        title={empty.title}
-        description={empty.description}
+        title={t(empty.title)}
+        description={t(empty.description)}
         onClearFilters={empty.clear ? onClearFilters : undefined}
       />
     );
@@ -534,8 +536,8 @@ function MatchList({
   if (matches.length === 0) {
     return (
       <BillingListEmpty
-        title={empty.title}
-        description={empty.description}
+        title={t(empty.title)}
+        description={t(empty.description)}
         onClearFilters={empty.clear ? onClearFilters : undefined}
       />
     );

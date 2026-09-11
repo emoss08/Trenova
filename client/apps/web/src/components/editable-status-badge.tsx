@@ -132,9 +132,9 @@ export function EditableStatusBadge<T extends string>({
                   value={option.value}
                   onSelect={(currentValue) => handleStatusChange(currentValue as T)}
                   className="text-xs"
-                  label={option.label}
+                  label={t(option.label)}
                   color={option.color}
-                  description={option.description}
+                  description={t(option.description)}
                   icon={option.icon}
                   disabled={option.disabled}
                 />

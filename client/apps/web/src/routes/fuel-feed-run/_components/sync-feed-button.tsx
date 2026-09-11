@@ -71,7 +71,7 @@ export function SyncFeedButton() {
           .map((choice) => (
             <DropdownMenuItem
               key={choice.value}
-              title={choice.label}
+              title={t(choice.label)}
               onClick={() => mutateAsync(choice.value as FuelCardProvider)}
             />
           ))}

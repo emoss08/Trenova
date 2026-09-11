@@ -345,7 +345,7 @@ export function ReportDefinitionGrid({
         <div className="space-y-6 p-4">
           {groups.map((group) => (
             <section key={group.key} className="space-y-3">
-              <CategoryGroupHeader label={group.label} count={group.items.length} noun="report" />
+              <CategoryGroupHeader label={t(group.label)} count={group.items.length} noun="report" />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {group.items.map((definition, indexInGroup) => (
                   <DefinitionCard

@@ -52,7 +52,7 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
             <Link
               key={definition.id}
               to={href}
-              title={definition.description}
+              title={t(definition.description)}
               className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
             >
               <Icon className="size-3 shrink-0" />

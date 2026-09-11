@@ -398,7 +398,7 @@ function RatingsSection() {
       </div>
       <div className="flex flex-col gap-2">
         {(ratings ?? []).map((rating, index) => (
-          <RatingRow key={rating.key} index={index} label={rating.label} weight={rating.weight} />
+          <RatingRow key={rating.key} index={index} label={t(rating.label)} weight={rating.weight} />
         ))}
       </div>
     </section>

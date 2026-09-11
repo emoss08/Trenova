@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiGoalBar } from "@/components/kpi/kpi-goal-bar";
 import { KpiHero } from "@/components/kpi/kpi-hero";
 import { KpiRing } from "@/components/kpi/kpi-ring";
@@ -15,6 +16,8 @@ const FILL = "h-full !border-0 bg-transparent";
 const EMPTY_MILE_SCALE_MAX = 20;
 
 export function MetricTile({ metric }: { metric: MetricValue }) {
+  const t = useT();
+
   const shared = {
     label: metric.label,
     value: metric.display,
@@ -49,7 +52,7 @@ export function MetricTile({ metric }: { metric: MetricValue }) {
   // Every number on the home screen is a door: the whole tile is the link, not
   // a footer the eye has to find.
   return (
-    <Link to={metric.href} className="flex min-h-0 flex-1 flex-col" aria-label={metric.label}>
+    <Link to={metric.href} className="flex min-h-0 flex-1 flex-col" aria-label={t(metric.label)}>
       {body}
     </Link>
   );

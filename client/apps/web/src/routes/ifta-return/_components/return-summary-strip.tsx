@@ -110,7 +110,7 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
         hint={MPG_EXPLANATION}
       />
       <StatTile
-        label={net.label}
+        label={t(net.label)}
         value={formatIftaMoney(net.magnitude, ret.currencyCode)}
         sub={`${formatIftaMeasure(ret.taxDue, IFTA_MONEY_SCALE)} tax + ${formatIftaMeasure(ret.surchargeDue, IFTA_MONEY_SCALE)} surcharge, in ${ret.currencyCode}`}
         tone={net.isCredit ? "info" : "warn"}

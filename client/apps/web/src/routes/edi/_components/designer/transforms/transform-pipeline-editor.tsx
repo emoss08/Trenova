@@ -243,7 +243,7 @@ function TransformStepEditor({
           <div key={argument.key} className="space-y-1">
             {argument.kind === "path-list" ? (
               <PathInsertField
-                label={argument.label}
+                label={t(argument.label)}
                 value={value}
                 placeholder={argument.placeholder}
                 disabled={disabled}
@@ -251,14 +251,14 @@ function TransformStepEditor({
               />
             ) : argument.kind === "json" ? (
               <TextareaBlock
-                label={argument.label}
+                label={t(argument.label)}
                 value={value}
                 onChange={onValueChange}
                 disabled={disabled}
               />
             ) : (
               <InputBlock
-                label={argument.label}
+                label={t(argument.label)}
                 value={value}
                 onChange={onValueChange}
                 disabled={disabled}

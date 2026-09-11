@@ -38,7 +38,15 @@ const DATE_PATTERN = /^[yMdHhmsaGEwWDFkKSzZX\/\-.,:'\s]+$/;
 const TAILWIND_TOKEN = /^[a-z0-9:\-\/\[\]().%#\s]+$/;
 
 // reject returns a reason string when the value is not human-readable prose, else null.
-export function reject(value, { prop = null } = {}) {
+/**
+ * reject returns a reason string when the value is not human-readable prose, else null.
+ *
+ * `positional` marks a string the extractor found in a place that is user-facing by
+ * construction — a message argument, an enum's Label() return. There the identifier-shaped
+ * heuristics do more harm than good: "suspension" and "termination" are real disciplinary
+ * labels, not variable names, and only their position can tell them apart.
+ */
+export function reject(value, { prop = null, positional = false } = {}) {
   if (prop !== null && NEVER_TEXT_PROPS.has(prop)) return "non-text prop";
 
   const text = value.trim();
@@ -48,13 +56,13 @@ export function reject(value, { prop = null } = {}) {
   if (URL_LIKE.test(text)) return "url or path";
   // Underscored or long all-caps tokens are wire values (ACTIVE, PENDING_REVIEW). Short
   // ones are legitimate labels and must survive: OK, ID, PO, MC, BOL.
-  if (SCREAMING.test(text) && (text.includes("_") || text.length >= 4)) {
+  if (!positional && SCREAMING.test(text) && (text.includes("_") || text.length >= 4)) {
     return "enum wire value";
   }
 
   const words = text.split(/\s+/);
 
-  if (words.length === 1) {
+  if (words.length === 1 && !positional) {
     // A lone identifier-shaped token is a variant, key or slug. A lone capitalised word
     // ("Shipments", "Draft") is a real label and must survive.
     if (SINGLE_LOWER_TOKEN.test(text)) return "lowercase identifier";
@@ -70,7 +78,7 @@ export function reject(value, { prop = null } = {}) {
   // A class list is all-lowercase, carries at least one utility-shaped token
   // ("items-center", "md:flex", "w-[32px]") and never sentence punctuation. Prose stays
   // clear of it: "bill of lading" is lowercase but has no such token.
-  if (words.length > 1 && text === text.toLowerCase() && TAILWIND_TOKEN.test(text)) {
+  if (!positional && words.length > 1 && text === text.toLowerCase() && TAILWIND_TOKEN.test(text)) {
     const hasUtilityToken = words.some((w) => /[-:\/\[]/.test(w));
     const hasSentencePunctuation = /[.,!?;]/.test(text);
     if (hasUtilityToken && !hasSentencePunctuation) return "css class list";

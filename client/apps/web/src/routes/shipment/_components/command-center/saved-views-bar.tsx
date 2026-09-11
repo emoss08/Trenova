@@ -72,7 +72,7 @@ export function SavedViewsBar({
           <ViewTab
             key={v.id}
             id={v.id}
-            label={v.label}
+            label={t(v.label)}
             count={counts[v.id]}
             isActive={view === v.id}
             onSelect={onSelect}

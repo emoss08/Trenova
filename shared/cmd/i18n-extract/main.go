@@ -43,6 +43,11 @@ var messageFields = map[string]struct{}{
 	"Subject":     {},
 }
 
+var labelMethods = map[string]struct{}{
+	"Label":       {},
+	"DisplayName": {},
+}
+
 var noMessage = map[string]struct{}{
 	"NewMultiError":                   {},
 	"NewMultiErrorWithLimit":          {},
@@ -126,6 +131,11 @@ func (e *extractor) parseFile(path string) error {
 	}
 
 	ast.Inspect(file, func(n ast.Node) bool {
+		if fn, isFn := n.(*ast.FuncDecl); isFn {
+			e.recordLabelMethod(fn, rel)
+			return true
+		}
+
 		if kv, isKV := n.(*ast.KeyValueExpr); isKV {
 			e.recordStructField(kv, rel)
 			return true
@@ -193,6 +203,48 @@ func discardedCalls(file *ast.File) map[*ast.CallExpr]bool {
 		return true
 	})
 	return discarded
+}
+
+func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
+	if fn.Recv == nil || fn.Body == nil || fn.Name == nil {
+		return
+	}
+	// dbdialect describes database capabilities to whoever runs the dialect converter
+	// ("advisory locks", "trigram similarity search"). That is developer tooling, and
+	// translating it would put nonsense in front of a translator and nothing in front
+	// of a user.
+	if strings.Contains(rel, "pkg/dbdialect") {
+		return
+	}
+	if _, wanted := labelMethods[fn.Name.Name]; !wanted {
+		return
+	}
+	if fn.Type.Results == nil || len(fn.Type.Results.List) != 1 {
+		return
+	}
+	if ident, ok := fn.Type.Results.List[0].Type.(*ast.Ident); !ok || ident.Name != "string" {
+		return
+	}
+
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		ret, ok := n.(*ast.ReturnStmt)
+		if !ok || len(ret.Results) != 1 {
+			return true
+		}
+
+		msg, ok := stringLiteral(ret.Results[0])
+		if !ok || strings.TrimSpace(msg) == "" {
+			return true
+		}
+
+		e.entries = append(e.entries, entry{
+			Message: msg,
+			File:    filepath.ToSlash(rel),
+			Line:    e.fset.Position(ret.Pos()).Line,
+			Callee:  "label:" + fn.Name.Name,
+		})
+		return true
+	})
 }
 
 func (e *extractor) recordStructField(kv *ast.KeyValueExpr, rel string) {

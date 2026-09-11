@@ -226,8 +226,8 @@ function ProfileAssignmentsCard() {
               <DistanceProfileAutocompleteField<DistanceControlInput>
                 control={control}
                 name={field.name}
-                label={field.label}
-                description={field.description}
+                label={t(field.label)}
+                description={t(field.description)}
                 placeholder={t("Select distance profile")}
                 rules={{ required: true }}
               />

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -79,7 +80,7 @@ export function getColumns(): ColumnDef<ServiceTypeRow>[] {
       header: "Description",
       enableCellEditing: true,
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} truncateLength={100} />
+        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,

@@ -202,7 +202,7 @@ export function StopReconciliationCard({
             {editableFields.map((f) => (
               <InlineField
                 key={f.key}
-                label={f.label}
+                label={t(f.label)}
                 value={f.value}
                 status={f.field.status}
                 onEdit={(v) => onEditField(index, f.key, v)}

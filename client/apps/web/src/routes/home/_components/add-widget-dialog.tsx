@@ -403,7 +403,7 @@ function CategoryRail({
             aria-current={active ? "true" : undefined}
             disabled={tab.count === 0}
             onClick={() => onChange(tab.key)}
-            title={tab.description}
+            title={t(tab.description)}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
               active

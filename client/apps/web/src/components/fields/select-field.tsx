@@ -118,8 +118,8 @@ export function SelectField<T extends FieldValues>({
                 disabled={option.disabled}
                 checked={field.value === option.value}
                 icon={option.icon}
-                label={option.label}
-                description={option.description}
+                label={t(option.label)}
+                description={t(option.description)}
                 searchValue={searchValue}
               />
             ),
@@ -200,7 +200,7 @@ export function SelectField<T extends FieldValues>({
                       groups.map((group, idx) => (
                         <React.Fragment key={group.label}>
                           {idx > 0 && <CommandSeparator />}
-                          <CommandGroup heading={group.label}>
+                          <CommandGroup heading={t(group.label)}>
                             {renderOptions(group.options)}
                           </CommandGroup>
                         </React.Fragment>

@@ -107,9 +107,9 @@ export function EditableWorkerTypeBadge({
                   value={option.value}
                   onSelect={(currentValue) => handleTypeChange(currentValue as WorkerType)}
                   className="text-xs"
-                  label={option.label}
+                  label={t(option.label)}
                   color={option.color}
-                  description={option.description}
+                  description={t(option.description)}
                   icon={option.icon}
                   disabled={option.disabled}
                 />

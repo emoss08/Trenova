@@ -87,7 +87,7 @@ export function SecurityOverview({
             recentActivity.map((activity) => (
               <ActivityItem
                 key={activity.id}
-                title={activity.label}
+                title={t(activity.label)}
                 detail={activity.detail}
                 badge={activity.status}
                 when={formatUnixDateTimeOrDash(activity.occurredAt)}

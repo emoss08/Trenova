@@ -208,8 +208,8 @@ export function DataTableToolbar<TData extends Record<string, any>>({
                 {addRecordActions.map((action) => (
                   <DropdownMenuItem
                     key={action.id}
-                    title={action.label}
-                    description={action.description}
+                    title={t(action.label)}
+                    description={t(action.description)}
                     onClick={action.onClick}
                     startContent={action.icon ? <action.icon className="size-4" /> : undefined}
                   />

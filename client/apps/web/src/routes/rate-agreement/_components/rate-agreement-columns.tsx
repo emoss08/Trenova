@@ -193,7 +193,7 @@ export function getColumns(): ColumnDef<RateAgreementRow>[] {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <DataTableDescription description={row.original.description} />,
+      cell: ({ row }) => <DataTableDescription description={translate(row.original.description)} />,
       size: 280,
       minSize: 200,
       maxSize: 400,
