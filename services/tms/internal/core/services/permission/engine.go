@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -60,6 +61,7 @@ type Params struct {
 	UserRepository        repositories.UserRepository
 	Registry              *permission.Registry
 	RouteRegistry         *permission.RouteRegistry
+	Metrics               *metrics.Registry
 	Logger                *zap.Logger
 }
 
@@ -73,6 +75,7 @@ type engine struct {
 	userRepo      repositories.UserRepository
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
+	metrics       *metrics.Registry
 	l             *zap.Logger
 }
 
@@ -88,6 +91,7 @@ func NewEngine(p Params) services.PermissionEngine {
 		userRepo:      p.UserRepository,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
+		metrics:       p.Metrics,
 		l:             p.Logger.Named("service.permission-engine"),
 	}
 }
@@ -881,6 +885,13 @@ func (e *engine) GetEffectivePermissions(
 		zap.String("orgID", orgID.String()),
 	)
 
+	start := time.Now()
+	defer func() {
+		e.metrics.Permission.RecordCompute(
+			metrics.PermissionPathEffective, time.Since(start),
+		)
+	}()
+
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
 	if err != nil {
 		log.Error("failed to get user role assignments", zap.Error(err))
@@ -899,6 +910,7 @@ func (e *engine) GetEffectivePermissions(
 		log.Error("failed to get roles with inheritance", zap.Error(err))
 		return nil, err
 	}
+	e.metrics.Permission.RecordClosureSize(len(roles))
 
 	return e.buildEffectivePermissions(userID, orgID, roles), nil
 }
@@ -912,6 +924,13 @@ func (e *engine) SimulatePermissions(
 		zap.String("userID", req.UserID.String()),
 		zap.String("orgID", req.OrganizationID.String()),
 	)
+
+	start := time.Now()
+	defer func() {
+		e.metrics.Permission.RecordCompute(
+			metrics.PermissionPathSimulation, time.Since(start),
+		)
+	}()
 
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, req.UserID, req.OrganizationID)
 	if err != nil {
@@ -937,6 +956,7 @@ func (e *engine) SimulatePermissions(
 		log.Error("failed to get roles with inheritance", zap.Error(err))
 		return nil, err
 	}
+	e.metrics.Permission.RecordClosureSize(len(roles))
 
 	return e.buildEffectivePermissions(req.UserID, req.OrganizationID, roles), nil
 }
@@ -1022,11 +1042,18 @@ func (e *engine) getOrComputePermissions(
 	cacheStart := time.Now()
 	cached, err := e.cacheRepo.Get(ctx, key)
 	result.cacheLookupDuration = time.Since(cacheStart)
-	if err != nil {
-		e.l.Warn("cache lookup failed, computing fresh", zap.Error(err))
-	}
 
-	if cached != nil && cached.ExpiresAt > timeutils.NowUnix() {
+	outcome := metrics.PermissionCacheMiss
+	switch {
+	case err != nil:
+		outcome = metrics.PermissionCacheError
+		e.l.Warn("cache lookup failed, computing fresh", zap.Error(err))
+	case cached != nil && cached.ExpiresAt > timeutils.NowUnix():
+		outcome = metrics.PermissionCacheHit
+	}
+	e.metrics.Permission.RecordCacheLookup(outcome, result.cacheLookupDuration)
+
+	if outcome == metrics.PermissionCacheHit {
 		result.perms = cached
 		result.cacheHit = true
 		return result, nil
@@ -1038,6 +1065,7 @@ func (e *engine) getOrComputePermissions(
 	if err != nil {
 		return result, err
 	}
+	e.metrics.Permission.RecordCompute(metrics.PermissionPathCached, result.computeDuration)
 
 	if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
 		e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
@@ -1096,6 +1124,7 @@ func (e *engine) computePermissions(
 	if err != nil {
 		return nil, err
 	}
+	e.metrics.Permission.RecordClosureSize(len(roles))
 
 	maxSensitivity := permission.SensitivityPublic
 	resources := make(map[string]*repositories.CachedResourcePermission)

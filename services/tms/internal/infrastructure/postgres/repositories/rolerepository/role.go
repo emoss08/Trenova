@@ -197,6 +197,15 @@ func (r *repository) GetByID(
 	return role, nil
 }
 
+const roleClosureQuery = `
+SELECT r.id, r.parent_role_ids
+FROM roles r
+WHERE r.id IN (?)
+UNION
+SELECT p.id, p.parent_role_ids
+FROM role_closure c
+JOIN roles p ON p.id = ANY(c.parent_role_ids)`
+
 func (r *repository) GetRolesWithInheritance(
 	ctx context.Context,
 	roleIDs []pulid.ID,
@@ -210,39 +219,18 @@ func (r *repository) GetRolesWithInheritance(
 		return []*permission.Role{}, nil
 	}
 
-	allRoleIDs := make(map[pulid.ID]bool)
-	for _, id := range roleIDs {
-		allRoleIDs[id] = true
-	}
-
-	roles := make([]*permission.Role, 0)
-	err := r.db.DB().
+	db := r.db.DB()
+	roles := make([]*permission.Role, 0, len(roleIDs))
+	err := db.
 		NewSelect().
 		Model(&roles).
 		Relation("Permissions").
-		Where("r.id IN (?)", bun.List(roleIDs)).
+		WithRecursive("role_closure", db.NewRaw(roleClosureQuery, bun.List(roleIDs))).
+		Where("r.id IN (SELECT c.id FROM role_closure c)").
 		Scan(ctx)
 	if err != nil {
-		log.Error("failed to get roles", zap.Error(err))
+		log.Error("failed to get roles with inheritance", zap.Error(err))
 		return nil, err
-	}
-
-	var parentIDs []pulid.ID
-	for _, role := range roles {
-		for _, parentID := range role.ParentRoleIDs {
-			if !allRoleIDs[parentID] {
-				parentIDs = append(parentIDs, parentID)
-				allRoleIDs[parentID] = true
-			}
-		}
-	}
-
-	if len(parentIDs) > 0 {
-		parentRoles, parentErr := r.GetRolesWithInheritance(ctx, parentIDs)
-		if parentErr != nil {
-			return nil, parentErr
-		}
-		roles = append(roles, parentRoles...)
 	}
 
 	return roles, nil

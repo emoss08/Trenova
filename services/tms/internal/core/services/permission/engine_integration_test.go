@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -522,12 +524,16 @@ func setupIntegrationEngine(t *testing.T) (*engine, *bun.DB, *redis.Client) {
 	userRepo := newTestUserRepo(db)
 	cacheRepo := &testPermCacheRepo{client: redisClient}
 
+	metricsRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	require.NoError(t, err)
+
 	eng := &engine{
 		roleRepo:      roleRepo,
 		cacheRepo:     cacheRepo,
 		userRepo:      userRepo,
 		registry:      permission.NewRegistry(),
 		routeRegistry: permission.NewRouteRegistry(),
+		metrics:       metricsRegistry,
 		l:             zap.NewNop().Named("test.permission-engine"),
 	}
 
