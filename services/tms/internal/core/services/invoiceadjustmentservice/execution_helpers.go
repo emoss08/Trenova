@@ -22,7 +22,7 @@ func (s *Service) createReplacementDraftInvoice(
 	item *billingqueue.BillingQueueItem,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	lines []*invoice.InoviceLine,
+	lines []*invoice.InvoiceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) (*invoice.Invoice, error) {
 	entity := &invoice.Invoice{

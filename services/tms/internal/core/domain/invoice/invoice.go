@@ -31,7 +31,7 @@ var (
 	_ bun.BeforeAppendModelHook          = (*Invoice)(nil)
 	_ validationframework.TenantedEntity = (*Invoice)(nil)
 	_ domaintypes.PostgresSearchable     = (*Invoice)(nil)
-	_ bun.BeforeAppendModelHook          = (*InoviceLine)(nil)
+	_ bun.BeforeAppendModelHook          = (*InvoiceLine)(nil)
 	_ bun.BeforeAppendModelHook          = (*Attachment)(nil)
 	_ bun.BeforeAppendModelHook          = (*EmailAttempt)(nil)
 	_ bun.BeforeAppendModelHook          = (*EmailAttemptAttachment)(nil)
@@ -106,12 +106,12 @@ type Invoice struct {
 	Order            *order.Order                   `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Customer         *customer.Customer             `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	PDFDocument      *document.Document             `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Lines            []*InoviceLine                 `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
+	Lines            []*InvoiceLine                 `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
 	Attachments      []*Attachment                  `json:"attachments,omitempty"      bun:"rel:has-many,join:id=invoice_id"`
 	EmailAttempts    []*EmailAttempt                `json:"emailAttempts,omitempty"    bun:"rel:has-many,join:id=invoice_id"`
 }
 
-type InoviceLine struct {
+type InvoiceLine struct {
 	bun.BaseModel `bun:"table:invoice_lines,alias:invl" json:"-"`
 
 	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
@@ -424,11 +424,11 @@ func (i *Invoice) RemovePaymentMinor(amountMinor int64) {
 	}
 }
 
-func (l *InoviceLine) SyncMinorAmount() {
+func (l *InvoiceLine) SyncMinorAmount() {
 	l.AmountMinor = money.MinorUnits(l.Amount)
 }
 
-func (l *InoviceLine) Validate(multiErr *errortypes.MultiError, idx int) {
+func (l *InvoiceLine) Validate(multiErr *errortypes.MultiError, idx int) {
 	prefix := "lines[" + strconv.Itoa(idx) + "]"
 
 	if l.Type == "" || !l.Type.IsValid() {
@@ -524,7 +524,7 @@ func (t *DocumentShareToken) BeforeAppendModel(_ context.Context, query bun.Quer
 	return nil
 }
 
-func (l *InoviceLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (l *InvoiceLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

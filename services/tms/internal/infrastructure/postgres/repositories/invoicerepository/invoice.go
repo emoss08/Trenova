@@ -203,7 +203,7 @@ func (r *repository) GetByIDs(
 		Relation(rel.PDFDocument).
 		Relation(buncolgen.Rel(rel.PDFDocument, buncolgen.DocumentRelations.DocumentType)).
 		Relation(rel.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order(buncolgen.InoviceLineColumns.LineNumber.OrderAsc())
+			return q.Order(buncolgen.InvoiceLineColumns.LineNumber.OrderAsc())
 		}).
 		Scan(ctx)
 	if err != nil {

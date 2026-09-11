@@ -212,14 +212,14 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 		},
 	}
 
-	lines := make([]*invoice.InoviceLine, 0, len(source.Lines))
+	lines := make([]*invoice.InvoiceLine, 0, len(source.Lines))
 	for _, line := range source.Lines {
 		if line == nil {
 			continue
 		}
 		lines = append(lines, line)
 	}
-	slices.SortFunc(lines, func(a, b *invoice.InoviceLine) int {
+	slices.SortFunc(lines, func(a, b *invoice.InvoiceLine) int {
 		return cmp.Compare(a.LineNumber, b.LineNumber)
 	})
 

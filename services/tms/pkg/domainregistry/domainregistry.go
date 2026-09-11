@@ -48,7 +48,7 @@ func RegisterEntities() []any {
 		&dispatchcontrol.DispatchControl{},
 		&tenant.BillingControl{},
 		&invoice.Invoice{},
-		&invoice.InoviceLine{},
+		&invoice.InvoiceLine{},
 		&invoice.Attachment{},
 		&invoice.EmailAttempt{},
 		&invoice.EmailAttemptAttachment{},

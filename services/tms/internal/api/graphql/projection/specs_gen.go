@@ -9420,7 +9420,7 @@ func init() {
 
 	InvoiceLineSpec = TypeSpec{
 		TypeName: "InvoiceLine",
-		FieldMap: buncolgen.InoviceLineFieldMap,
+		FieldMap: buncolgen.InvoiceLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",

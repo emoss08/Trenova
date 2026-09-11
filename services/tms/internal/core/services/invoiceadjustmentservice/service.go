@@ -100,8 +100,8 @@ type previewComputation struct {
 	accountingControl *tenant.AccountingControl
 	preview           *servicesports.InvoiceAdjustmentPreview
 	lines             []*invoiceadjustment.InvoiceAdjustmentLine
-	creditLineItems   []*invoice.InoviceLine
-	replacementLines  []*invoice.InoviceLine
+	creditLineItems   []*invoice.InvoiceLine
+	replacementLines  []*invoice.InvoiceLine
 }
 
 type supportingDocumentRequirementResolution struct {
@@ -111,7 +111,7 @@ type supportingDocumentRequirementResolution struct {
 }
 
 type previewLineValuesRequest struct {
-	sourceLine *invoice.InoviceLine
+	sourceLine *invoice.InvoiceLine
 	input      *servicesports.InvoiceAdjustmentLineInput
 	kind       invoiceadjustment.Kind
 	eligible   decimal.Decimal
@@ -1026,8 +1026,8 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	}
 
 	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(entity.Lines))
-	creditLines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
-	replacementLines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
+	creditLines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))
+	replacementLines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))
 	fullScope := len(req.Lines) == 0 || req.Kind == invoiceadjustment.KindFullReversal
 
 	for _, sourceLine := range entity.Lines {
@@ -1114,7 +1114,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 			if creditQuantity.GreaterThan(decimal.Zero) {
 				unitPrice = creditAmount.Div(creditQuantity)
 			}
-			creditLines = append(creditLines, &invoice.InoviceLine{
+			creditLines = append(creditLines, &invoice.InvoiceLine{
 				LineNumber:  sourceLine.LineNumber,
 				Type:        sourceLine.Type,
 				Description: description,
@@ -1129,7 +1129,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 			if rebillQuantity.GreaterThan(decimal.Zero) {
 				unitPrice = rebillAmount.Div(rebillQuantity)
 			}
-			replacementLines = append(replacementLines, &invoice.InoviceLine{
+			replacementLines = append(replacementLines, &invoice.InvoiceLine{
 				LineNumber:  len(replacementLines) + 1,
 				Type:        sourceLine.Type,
 				Description: description,
@@ -1776,7 +1776,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-) ([]*invoice.InoviceLine, decimal.Decimal, decimal.Decimal, error) {
+) ([]*invoice.InvoiceLine, decimal.Decimal, decimal.Decimal, error) {
 	legIDs := entity.LegShipmentIDs()
 	if len(legIDs) == 0 {
 		return nil, decimal.Zero, decimal.Zero, errortypes.NewValidationError(
@@ -1799,7 +1799,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
-	lines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
+	lines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))
 	total := decimal.Zero
 	nextLineNumber := 1
 	for _, legID := range legIDs {
@@ -1828,7 +1828,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 			if line == nil || !line.ShipmentID.IsNil() {
 				continue
 			}
-			lines = append(lines, &invoice.InoviceLine{
+			lines = append(lines, &invoice.InvoiceLine{
 				LineNumber:  nextLineNumber,
 				Type:        line.Type,
 				Description: line.Description,
@@ -2174,7 +2174,7 @@ func (s *Service) createCreditMemoInvoice(
 	item *billingqueue.BillingQueueItem,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	lines []*invoice.InoviceLine,
+	lines []*invoice.InvoiceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 	postedAt int64,
 ) (*invoice.Invoice, error) {
@@ -2238,7 +2238,7 @@ func (s *Service) createReplacementQueueItem(
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
 	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
-	lines []*invoice.InoviceLine,
+	lines []*invoice.InvoiceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
 	number, err := s.generator.GenerateInvoiceNumber(
@@ -2434,7 +2434,7 @@ func replacementReviewStatus(required bool) invoiceadjustment.ReplacementReviewS
 }
 
 func sumInvoiceLines(
-	lines []*invoice.InoviceLine,
+	lines []*invoice.InvoiceLine,
 	lineType invoice.InvoiceLineType,
 ) decimal.Decimal {
 	total := decimal.Zero
@@ -2452,10 +2452,10 @@ func sumInvoiceLines(
 func buildReplacementLinesForLeg(
 	shp *shipment.Shipment,
 	startLineNumber int,
-) []*invoice.InoviceLine {
-	lines := make([]*invoice.InoviceLine, 0, 1+len(shp.AdditionalCharges))
+) []*invoice.InvoiceLine {
+	lines := make([]*invoice.InvoiceLine, 0, 1+len(shp.AdditionalCharges))
 	freight := shp.FreightChargeAmount.Decimal
-	lines = append(lines, &invoice.InoviceLine{
+	lines = append(lines, &invoice.InvoiceLine{
 		LineNumber:        startLineNumber,
 		ShipmentID:        shp.ID,
 		ShipmentProNumber: shp.ProNumber,
@@ -2487,7 +2487,7 @@ func buildReplacementLinesForLeg(
 			strings.TrimSpace(charge.AccessorialCharge.Description) != "" {
 			description = charge.AccessorialCharge.Description
 		}
-		lines = append(lines, &invoice.InoviceLine{
+		lines = append(lines, &invoice.InvoiceLine{
 			LineNumber:        startLineNumber + len(lines),
 			ShipmentID:        shp.ID,
 			ShipmentProNumber: shp.ProNumber,

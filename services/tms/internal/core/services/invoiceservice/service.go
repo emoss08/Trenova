@@ -871,7 +871,7 @@ func (s *Service) buildInvoiceEntityForOrder(
 		paymentTerm = invoice.PaymentTermNet30
 	}
 
-	lines := make([]*invoice.InoviceLine, 0, len(legs)+len(charges))
+	lines := make([]*invoice.InvoiceLine, 0, len(legs)+len(charges))
 	nextLineNumber := 1
 	for _, leg := range legs {
 		legLines := buildInvoiceLinesForShipment(anchor.BillType, leg, nextLineNumber)
@@ -886,7 +886,7 @@ func (s *Service) buildInvoiceEntityForOrder(
 			continue
 		}
 		amount := signedAmount(anchor.BillType, charge.Amount)
-		lines = append(lines, &invoice.InoviceLine{
+		lines = append(lines, &invoice.InvoiceLine{
 			LineNumber:  nextLineNumber,
 			Type:        invoice.InvoiceLineTypeAccessorial,
 			Description: charge.Description,
@@ -935,7 +935,7 @@ func (s *Service) buildInvoiceEntityForOrder(
 }
 
 type adjustmentInvoiceContext struct {
-	ReplacementLines   []*invoice.InoviceLine `json:"replacementLines"`
+	ReplacementLines   []*invoice.InvoiceLine `json:"replacementLines"`
 	SubtotalAmount     decimal.Decimal        `json:"subtotalAmount"`
 	OtherAmount        decimal.Decimal        `json:"otherAmount"`
 	TotalAmount        decimal.Decimal        `json:"totalAmount"`
@@ -1029,7 +1029,7 @@ func syncInvoiceTotalsFromLines(entity *invoice.Invoice) {
 }
 
 func sumLinesByType(
-	lines []*invoice.InoviceLine,
+	lines []*invoice.InvoiceLine,
 	lineType invoice.InvoiceLineType,
 ) decimal.Decimal {
 	total := decimal.Zero
@@ -1047,7 +1047,7 @@ func sumLinesByType(
 func buildInvoiceLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-) []*invoice.InoviceLine {
+) []*invoice.InvoiceLine {
 	return buildInvoiceLinesForShipment(billType, shp, 1)
 }
 
@@ -1059,10 +1059,10 @@ func buildInvoiceLinesForShipment(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
 	startLineNumber int,
-) []*invoice.InoviceLine {
-	lines := make([]*invoice.InoviceLine, 0, 1+len(shp.AdditionalCharges))
+) []*invoice.InvoiceLine {
+	lines := make([]*invoice.InvoiceLine, 0, 1+len(shp.AdditionalCharges))
 	freightAmount := signedAmount(billType, shp.FreightChargeAmount.Decimal)
-	lines = append(lines, &invoice.InoviceLine{
+	lines = append(lines, &invoice.InvoiceLine{
 		ShipmentID:        shp.ID,
 		ShipmentProNumber: shp.ProNumber,
 		ShipmentBOL:       shp.BOL,
@@ -1102,7 +1102,7 @@ func buildInvoiceLinesForShipment(
 			description = charge.AccessorialCharge.Description
 		}
 
-		lines = append(lines, &invoice.InoviceLine{
+		lines = append(lines, &invoice.InvoiceLine{
 			ShipmentID:        shp.ID,
 			ShipmentProNumber: shp.ProNumber,
 			ShipmentBOL:       shp.BOL,

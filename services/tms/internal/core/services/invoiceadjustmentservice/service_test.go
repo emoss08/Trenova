@@ -86,7 +86,7 @@ func TestValidateSettlementPolicy(t *testing.T) {
 }
 
 func TestSumInvoiceLines(t *testing.T) {
-	lines := []*invoice.InoviceLine{
+	lines := []*invoice.InvoiceLine{
 		{Type: invoice.InvoiceLineTypeFreight, Amount: decimal.NewFromInt(100)},
 		{Type: invoice.InvoiceLineTypeAccessorial, Amount: decimal.NewFromInt(20)},
 	}

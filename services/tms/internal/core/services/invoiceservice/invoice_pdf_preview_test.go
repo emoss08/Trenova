@@ -78,7 +78,7 @@ func previewInvoicePDFEntity() *invoice.Invoice {
 		SubtotalAmount:         decimal.NewFromInt(2800),
 		OtherAmount:            decimal.NewFromInt(150),
 		TotalAmount:            decimal.NewFromInt(2950),
-		Lines: []*invoice.InoviceLine{
+		Lines: []*invoice.InvoiceLine{
 			{
 				LineNumber:  1,
 				Type:        invoice.InvoiceLineTypeFreight,

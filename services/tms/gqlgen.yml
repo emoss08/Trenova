@@ -1295,7 +1295,7 @@ models:
         resolver: true
   InvoiceLine:
     model:
-      - github.com/emoss08/trenova/internal/core/domain/invoice.InoviceLine
+      - github.com/emoss08/trenova/internal/core/domain/invoice.InvoiceLine
     fields:
       quantity:
         resolver: true

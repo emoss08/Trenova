@@ -28,9 +28,9 @@ type InvoiceResolver interface {
 	AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 }
 type InvoiceLineResolver interface {
-	Quantity(ctx context.Context, obj *invoice.InoviceLine) (string, error)
-	UnitPrice(ctx context.Context, obj *invoice.InoviceLine) (string, error)
-	Amount(ctx context.Context, obj *invoice.InoviceLine) (string, error)
+	Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
+	UnitPrice(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
+	Amount(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -853,8 +853,8 @@ func (ec *executionContext) _Invoice_lines(ctx context.Context, field graphql.Co
 			return obj.Lines, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*invoice.InoviceLine) graphql.Marshaler {
-			return ec.marshalOInvoiceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInoviceLineᚄ(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v []*invoice.InvoiceLine) graphql.Marshaler {
+			return ec.marshalOInvoiceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceLineᚄ(ctx, selections, v)
 		},
 		true,
 		false,
@@ -1015,7 +1015,7 @@ func (ec *executionContext) fieldContext_InvoiceEdge_cursor(_ context.Context, f
 	return graphql.NewScalarFieldContext("InvoiceEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_id(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_id(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1038,7 +1038,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_id(_ context.Context, field
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_organizationId(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_organizationId(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1061,7 +1061,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_organizationId(_ context.Co
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1084,7 +1084,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_businessUnitId(_ context.Co
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_invoiceId(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_invoiceId(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1107,7 +1107,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_invoiceId(_ context.Context
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_shipmentId(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_shipmentId(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1130,7 +1130,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_shipmentId(_ context.Contex
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_shipmentProNumber(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_shipmentProNumber(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1153,7 +1153,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_shipmentProNumber(_ context
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_shipmentBol(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_shipmentBol(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1176,7 +1176,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_shipmentBol(_ context.Conte
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_lineNumber(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_lineNumber(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1199,7 +1199,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_lineNumber(_ context.Contex
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_type(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_type(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1222,7 +1222,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_type(_ context.Context, fie
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type InvoiceLineType does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_description(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_description(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1245,7 +1245,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_description(_ context.Conte
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_quantity(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_quantity(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1268,7 +1268,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_quantity(_ context.Context,
 	return graphql.NewScalarFieldContext("InvoiceLine", field, true, true, errors.New("field of type Decimal does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_unitPrice(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_unitPrice(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1291,7 +1291,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_unitPrice(_ context.Context
 	return graphql.NewScalarFieldContext("InvoiceLine", field, true, true, errors.New("field of type Decimal does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_amount(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_amount(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1314,7 +1314,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_amount(_ context.Context, f
 	return graphql.NewScalarFieldContext("InvoiceLine", field, true, true, errors.New("field of type Decimal does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_createdAt(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_createdAt(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1337,7 +1337,7 @@ func (ec *executionContext) fieldContext_InvoiceLine_createdAt(_ context.Context
 	return graphql.NewScalarFieldContext("InvoiceLine", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
-func (ec *executionContext) _InvoiceLine_updatedAt(ctx context.Context, field graphql.CollectedField, obj *invoice.InoviceLine) (ret graphql.Marshaler) {
+func (ec *executionContext) _InvoiceLine_updatedAt(ctx context.Context, field graphql.CollectedField, obj *invoice.InvoiceLine) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1805,7 +1805,7 @@ func (ec *executionContext) _InvoiceEdge(ctx context.Context, sel ast.SelectionS
 
 var invoiceLineImplementors = []string{"InvoiceLine"}
 
-func (ec *executionContext) _InvoiceLine(ctx context.Context, sel ast.SelectionSet, obj *invoice.InoviceLine) graphql.Marshaler {
+func (ec *executionContext) _InvoiceLine(ctx context.Context, sel ast.SelectionSet, obj *invoice.InvoiceLine) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, invoiceLineImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -2077,7 +2077,7 @@ func (ec *executionContext) marshalNInvoiceEdge2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec._InvoiceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNInvoiceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInoviceLine(ctx context.Context, sel ast.SelectionSet, v *invoice.InoviceLine) graphql.Marshaler {
+func (ec *executionContext) marshalNInvoiceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceLine(ctx context.Context, sel ast.SelectionSet, v *invoice.InvoiceLine) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -2179,14 +2179,14 @@ func (ec *executionContext) marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec._Invoice(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOInvoiceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInoviceLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*invoice.InoviceLine) graphql.Marshaler {
+func (ec *executionContext) marshalOInvoiceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*invoice.InvoiceLine) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNInvoiceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInoviceLine(ctx, sel, v[i])
+		return ec.marshalNInvoiceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceLine(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {

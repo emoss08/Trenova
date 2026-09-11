@@ -34,15 +34,15 @@ func (r *invoiceResolver) AppliedAmount(ctx context.Context, obj *invoice.Invoic
 	return obj.AppliedAmount.String(), nil
 }
 
-func (r *invoiceLineResolver) Quantity(ctx context.Context, obj *invoice.InoviceLine) (string, error) {
+func (r *invoiceLineResolver) Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error) {
 	return obj.Quantity.String(), nil
 }
 
-func (r *invoiceLineResolver) UnitPrice(ctx context.Context, obj *invoice.InoviceLine) (string, error) {
+func (r *invoiceLineResolver) UnitPrice(ctx context.Context, obj *invoice.InvoiceLine) (string, error) {
 	return obj.UnitPrice.String(), nil
 }
 
-func (r *invoiceLineResolver) Amount(ctx context.Context, obj *invoice.InoviceLine) (string, error) {
+func (r *invoiceLineResolver) Amount(ctx context.Context, obj *invoice.InvoiceLine) (string, error) {
 	return obj.Amount.String(), nil
 }
 

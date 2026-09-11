@@ -347,7 +347,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 25),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
@@ -371,7 +371,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
@@ -472,7 +472,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyNoAdditionalReview
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
@@ -519,7 +519,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("credit only partial line behavior is unchanged", func(t *testing.T) {
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
@@ -549,7 +549,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Open balance", 1, 80),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -631,7 +631,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAlways
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -676,7 +676,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAlways
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -710,7 +710,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -748,7 +748,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("paid invoice policy can block or require approval", func(t *testing.T) {
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Settled freight", 1, 100),
 		}, invoice.SettlementStatusPaid, decimal.NewFromInt(100))
 
@@ -798,7 +798,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			)
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Documented adjustment", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -860,7 +860,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			)
 		})
 
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(
 				1,
 				invoice.InvoiceLineTypeFreight,
@@ -954,7 +954,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("organization supporting document policy applies when customer inherits", func(t *testing.T) {
-		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Org policy", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -1080,10 +1080,10 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 				control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 			})
 
-			first := h.createPostedInvoice(t, []invoice.InoviceLine{
+			first := h.createPostedInvoice(t, []invoice.InvoiceLine{
 				makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 			}, invoice.SettlementStatusUnpaid, decimal.Zero)
-			second := h.createPostedInvoice(t, []invoice.InoviceLine{
+			second := h.createPostedInvoice(t, []invoice.InvoiceLine{
 				makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 			}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
@@ -1483,7 +1483,7 @@ func (h *integrationHarness) setCustomerSupportingDocumentPolicy(
 
 func (h *integrationHarness) createPostedInvoice(
 	t *testing.T,
-	lines []invoice.InoviceLine,
+	lines []invoice.InvoiceLine,
 	settlementStatus invoice.SettlementStatus,
 	applied decimal.Decimal,
 ) *invoice.Invoice {
@@ -1501,7 +1501,7 @@ func (h *integrationHarness) createPostedInvoice(
 	})
 	require.NoError(t, err)
 
-	lineCopies := make([]*invoice.InoviceLine, 0, len(lines))
+	lineCopies := make([]*invoice.InvoiceLine, 0, len(lines))
 	subtotal := decimal.Zero
 	other := decimal.Zero
 	total := decimal.Zero
@@ -1573,10 +1573,10 @@ func makeInvoiceLine(
 	lineType invoice.InvoiceLineType,
 	description string,
 	quantity, amount int64,
-) invoice.InoviceLine {
+) invoice.InvoiceLine {
 	qty := decimal.NewFromInt(quantity)
 	total := decimal.NewFromInt(amount)
-	return invoice.InoviceLine{
+	return invoice.InvoiceLine{
 		LineNumber:  lineNumber,
 		Type:        lineType,
 		Description: description,

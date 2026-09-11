@@ -37,7 +37,7 @@ func TestResolvePayloadInvoiceIDResolves210Payload(t *testing.T) {
 			Number:       "INV-210",
 			CurrencyCode: "USD",
 			TotalAmount:  decimal.NewFromInt(100),
-			Lines: []*invoice.InoviceLine{
+			Lines: []*invoice.InvoiceLine{
 				{LineNumber: 1, Type: invoice.InvoiceLineTypeFreight, Amount: decimal.NewFromInt(100)},
 			},
 		}, nil).
