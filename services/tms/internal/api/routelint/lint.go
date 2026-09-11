@@ -50,7 +50,7 @@ type registration struct {
 	function string
 }
 
-func ProtectedRoutes(apiDir string, handlersDir string) ([]Route, error) {
+func ProtectedRoutes(apiDir, handlersDir string) ([]Route, error) {
 	registrations, err := protectedRegistrations(filepath.Join(apiDir, routerFileName))
 	if err != nil {
 		return nil, err
@@ -311,7 +311,10 @@ func (w *packageWalker) followDelegation(call *ast.CallExpr, groups map[string]s
 	w.walk(target, basePath)
 }
 
-func groupArgument(args []ast.Expr, groups map[string]string) (string, int, bool) {
+func groupArgument(
+	args []ast.Expr,
+	groups map[string]string,
+) (basePath string, argIndex int, found bool) {
 	for i, arg := range args {
 		if resolved, ok := resolveGroupExpr(arg, groups); ok {
 			return resolved, i, true
@@ -393,11 +396,7 @@ func routeFromCall(call *ast.CallExpr, groups map[string]string) (Route, bool) {
 	if _, isMethod := httpMethods[selector.Sel.Name]; !isMethod {
 		return Route{}, false
 	}
-	group, ok := selector.X.(*ast.Ident)
-	if !ok {
-		return Route{}, false
-	}
-	base, ok := groups[group.Name]
+	base, ok := resolveGroupExpr(selector.X, groups)
 	if !ok {
 		return Route{}, false
 	}
@@ -425,7 +424,7 @@ func stringLiteral(args []ast.Expr) (string, bool) {
 	return value, true
 }
 
-func joinPaths(base string, relative string) string {
+func joinPaths(base, relative string) string {
 	if relative == "" {
 		return base
 	}

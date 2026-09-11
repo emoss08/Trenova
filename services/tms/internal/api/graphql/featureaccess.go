@@ -182,22 +182,22 @@ func selectOptionResource(
 		return "", false
 	}
 
-	switch argument.Value.Kind {
-	case ast.ObjectValue:
-		child := argument.Value.Children.ForName(selectOptionsResourceField)
-		if child == nil {
-			return "", false
-		}
-		if child.Kind == ast.Variable {
-			return variableString(opCtx, child.Raw)
-		}
-
-		return child.Raw, child.Raw != ""
-	case ast.Variable:
+	if argument.Value.Kind == ast.Variable {
 		return objectVariableString(opCtx, argument.Value.Raw, selectOptionsResourceField)
-	default:
+	}
+	if argument.Value.Kind != ast.ObjectValue {
 		return "", false
 	}
+
+	child := argument.Value.Children.ForName(selectOptionsResourceField)
+	if child == nil {
+		return "", false
+	}
+	if child.Kind == ast.Variable {
+		return variableString(opCtx, child.Raw)
+	}
+
+	return child.Raw, child.Raw != ""
 }
 
 func variableString(opCtx *graphql.OperationContext, name string) (string, bool) {
@@ -236,16 +236,14 @@ func (e *FeatureAccessExtension) authorizePolicies(
 ) *gqlerror.Error {
 	checked := make(map[platformcatalog.FeatureKey]struct{}, len(policies))
 	for _, entry := range policies {
-		switch entry.policy.AccessClass {
-		case platformcatalog.RouteAccessClassAccountShell:
+		if entry.policy.AccessClass == platformcatalog.RouteAccessClassAccountShell {
 			continue
-		case platformcatalog.RouteAccessClassProduct:
-		case platformcatalog.RouteAccessClassUnclassified:
-			fallthrough
-		default:
+		}
+		if entry.policy.AccessClass != platformcatalog.RouteAccessClassProduct {
 			if err := e.rejectUnclassified(ctx, opCtx, entry); err != nil {
 				return err
 			}
+
 			continue
 		}
 
@@ -463,6 +461,8 @@ func graphQLOperationName(operation ast.Operation) string {
 		return platformcatalog.GraphQLOperationQuery
 	case ast.Mutation:
 		return platformcatalog.GraphQLOperationMutation
+	case ast.Subscription:
+		return ""
 	default:
 		return ""
 	}

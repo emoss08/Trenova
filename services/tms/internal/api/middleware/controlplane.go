@@ -214,8 +214,13 @@ func (m *ControlPlaneAccessMiddleware) authorizeProductAccess(
 	}
 
 	if primaryDenied != nil {
-		m.logDeniedAccess(c, routePattern, primaryDenied.FeatureKey, primaryDenied.Reason)
-		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(primaryDenied.Reason))
+		reason := strings.TrimSpace(primaryDenied.Reason)
+		if reason == "" {
+			reason = deniedFeatureReason
+		}
+		m.logDeniedAccess(c, routePattern, primaryDenied.FeatureKey, reason)
+		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(reason))
+
 		return nil, false
 	}
 

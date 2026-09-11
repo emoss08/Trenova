@@ -166,7 +166,7 @@ func TestRegistry_RejectsFeatureClaimingShellSource(t *testing.T) {
 		graphQLRootFields: make(map[string]FeatureKey),
 	}
 
-	err := registry.registerGraphQLOwnership(Feature{
+	err := registry.registerGraphQLOwnership(&Feature{
 		Key:            FeatureCoreTMS,
 		GraphQLSources: []GraphQLSource{"select_options.graphqls"},
 	})
@@ -181,12 +181,12 @@ func TestRegistry_RejectsDuplicateGraphQLSource(t *testing.T) {
 		graphQLRootFields: make(map[string]FeatureKey),
 	}
 
-	require.NoError(t, registry.registerGraphQLOwnership(Feature{
+	require.NoError(t, registry.registerGraphQLOwnership(&Feature{
 		Key:            FeatureCoreTMS,
 		GraphQLSources: []GraphQLSource{"shared_thing.graphqls"},
 	}))
 
-	err := registry.registerGraphQLOwnership(Feature{
+	err := registry.registerGraphQLOwnership(&Feature{
 		Key:            FeatureBilling,
 		GraphQLSources: []GraphQLSource{"shared_thing.graphqls"},
 	})
@@ -201,7 +201,7 @@ func TestRegistry_RejectsInvalidRootFieldOperation(t *testing.T) {
 		graphQLRootFields: make(map[string]FeatureKey),
 	}
 
-	err := registry.registerGraphQLOwnership(Feature{
+	err := registry.registerGraphQLOwnership(&Feature{
 		Key:               FeatureCoreTMS,
 		GraphQLRootFields: []GraphQLRootField{{Operation: "Subscription", Field: "thing"}},
 	})

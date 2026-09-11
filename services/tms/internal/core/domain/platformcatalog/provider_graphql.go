@@ -1,5 +1,6 @@
 package platformcatalog
 
+//nolint:exhaustive // only features that own GraphQL surface appear here
 var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	FeatureCoreTMS: {
 		"carrier.graphqls",
@@ -135,6 +136,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	},
 }
 
+//nolint:exhaustive // only features that override individual root fields appear here
 var graphQLRootFieldOwners = map[FeatureKey][]GraphQLRootField{
 	FeatureSettlement: {
 		{Operation: GraphQLOperationQuery, Field: "settlementDisputes"},

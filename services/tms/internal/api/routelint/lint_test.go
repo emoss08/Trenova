@@ -254,3 +254,30 @@ func (h *Handler) registerNested(nested *gin.RouterGroup) {
 		keys,
 	)
 }
+
+func TestProtectedRoutesFollowsChainedGroupRegistrations(t *testing.T) {
+	t.Parallel()
+
+	apiPath, handlersPath := writeLintFixture(t,
+		"\tr.demoHandler.RegisterRoutes(protected)\n",
+		`func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
+	rg.Group("/demo").GET("/", h.list)
+	rg.Group("/demo").Group("/nested").POST("/deep/", h.create)
+}
+`)
+
+	routes, err := ProtectedRoutes(apiPath, handlersPath)
+	require.NoError(t, err)
+
+	keys := make([]string, 0, len(routes))
+	for _, route := range routes {
+		keys = append(keys, route.Key())
+	}
+	require.ElementsMatch(
+		t,
+		[]string{"GET /api/v1/demo/", "POST /api/v1/demo/nested/deep/"},
+		keys,
+		"a route registered directly on a chained group must still be discovered, "+
+			"otherwise it ships unclassified and fails open",
+	)
+}

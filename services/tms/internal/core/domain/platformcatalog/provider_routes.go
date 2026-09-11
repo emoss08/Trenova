@@ -134,7 +134,8 @@ func administrationRouteRefs() []RouteRef {
 			"/api/v1/users/:userID/reset-password/",
 			"/api/v1/users/bulk-update-status/",
 		),
-		routeRefsFor("PUT",
+		routeRefsFor(
+			"PUT",
 			"/api/v1/custom-fields/definitions/:definitionID/",
 			"/api/v1/data-retention/",
 			"/api/v1/email-profiles/:profileID/",
@@ -153,7 +154,8 @@ func administrationRouteRefs() []RouteRef {
 			"/api/v1/custom-fields/definitions/:definitionID/",
 			"/api/v1/users/:userID/",
 		),
-		routeRefsFor("DELETE",
+		routeRefsFor(
+			"DELETE",
 			"/api/v1/custom-fields/definitions/:definitionID/",
 			"/api/v1/email-profiles/:profileID/",
 			"/api/v1/email-suppressions/:suppressionID/",

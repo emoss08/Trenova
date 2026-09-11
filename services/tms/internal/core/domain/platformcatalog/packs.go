@@ -13,6 +13,10 @@ const (
 )
 
 func (p *StaticProvider) Packs() []Pack {
+	return append(platformPacks(), addOnPacks()...)
+}
+
+func platformPacks() []Pack {
 	return []Pack{
 		{
 			Key:         PackProfessional,
@@ -33,6 +37,31 @@ func (p *StaticProvider) Packs() []Pack {
 				FeatureRealtimeNotifications,
 			},
 		},
+		{
+			Key:         PackWorkforce,
+			Name:        "Workforce",
+			Description: "The complete workforce management suite, sellable without any transportation management feature.",
+			Standalone:  true,
+			Features: []FeatureKey{
+				FeatureWorkforceCore,
+				FeatureWorkforceCompliance,
+				FeatureWorkforceTimeOff,
+				FeatureWorkforceTimeTracking,
+				FeatureWorkforceTalent,
+				FeatureWorkforceSafety,
+				FeatureWorkforceBenefits,
+				FeatureWorkforceSelfService,
+				FeatureDocumentManagement,
+				FeatureAdministration,
+				FeatureGlobalSearch,
+				FeatureRealtimeNotifications,
+			},
+		},
+	}
+}
+
+func addOnPacks() []Pack {
+	return []Pack{
 		{
 			Key:         PackDispatchIntel,
 			Name:        "Dispatch Intelligence",
@@ -84,26 +113,6 @@ func (p *StaticProvider) Packs() []Pack {
 			Features: []FeatureKey{
 				FeatureSettlement,
 				FeatureWorkforceCore,
-			},
-		},
-		{
-			Key:         PackWorkforce,
-			Name:        "Workforce",
-			Description: "The complete workforce management suite, sellable without any transportation management feature.",
-			Standalone:  true,
-			Features: []FeatureKey{
-				FeatureWorkforceCore,
-				FeatureWorkforceCompliance,
-				FeatureWorkforceTimeOff,
-				FeatureWorkforceTimeTracking,
-				FeatureWorkforceTalent,
-				FeatureWorkforceSafety,
-				FeatureWorkforceBenefits,
-				FeatureWorkforceSelfService,
-				FeatureDocumentManagement,
-				FeatureAdministration,
-				FeatureGlobalSearch,
-				FeatureRealtimeNotifications,
 			},
 		},
 		{

@@ -182,14 +182,14 @@ func (r *Registry) PackGrantedFeatures(key PackKey) ([]FeatureKey, bool) {
 
 	granted := make(map[FeatureKey]struct{}, len(pack.Features))
 	visited := make(map[PackKey]struct{})
-	r.collectPackFeatures(key, pack, granted, visited)
+	r.collectPackFeatures(key, &pack, granted, visited)
 
 	return sortedFeatureKeys(granted), true
 }
 
 func (r *Registry) collectPackFeatures(
 	key PackKey,
-	pack Pack,
+	pack *Pack,
 	granted map[FeatureKey]struct{},
 	visited map[PackKey]struct{},
 ) {
@@ -206,7 +206,7 @@ func (r *Registry) collectPackFeatures(
 		if !ok {
 			continue
 		}
-		r.collectPackFeatures(requiredKey, requiredPack, granted, visited)
+		r.collectPackFeatures(requiredKey, &requiredPack, granted, visited)
 	}
 }
 
@@ -365,7 +365,7 @@ func (r *Registry) validatePacks() error {
 			seen[featureKey] = struct{}{}
 		}
 
-		if err := r.validatePackClosure(key, pack, seen); err != nil {
+		if err := r.validatePackClosure(key, &pack, seen); err != nil {
 			return err
 		}
 	}
@@ -375,7 +375,7 @@ func (r *Registry) validatePacks() error {
 
 func (r *Registry) validatePackClosure(
 	key PackKey,
-	pack Pack,
+	pack *Pack,
 	included map[FeatureKey]struct{},
 ) error {
 	if pack.Standalone && len(pack.RequiresPacks) > 0 {
@@ -412,7 +412,7 @@ func (r *Registry) validatePackClosure(
 
 func (r *Registry) packProvidedFeatures(
 	key PackKey,
-	pack Pack,
+	pack *Pack,
 	included map[FeatureKey]struct{},
 ) (map[FeatureKey]struct{}, error) {
 	available := make(map[FeatureKey]struct{}, len(included))
@@ -426,7 +426,8 @@ func (r *Registry) packProvidedFeatures(
 		}
 	}
 
-	visited := map[PackKey]struct{}{key: {}}
+	visited := make(map[PackKey]struct{}, len(pack.RequiresPacks)+1)
+	visited[key] = struct{}{}
 	queue := append([]PackKey(nil), pack.RequiresPacks...)
 	for len(queue) > 0 {
 		requiredKey := queue[0]
@@ -476,7 +477,7 @@ func (r *Registry) registerProvider(provider CatalogProvider) error {
 		}
 		r.features[feature.Key] = feature
 
-		if err := r.registerGraphQLOwnership(feature); err != nil {
+		if err := r.registerGraphQLOwnership(&feature); err != nil {
 			return err
 		}
 	}
@@ -503,7 +504,7 @@ func (r *Registry) registerProvider(provider CatalogProvider) error {
 	return nil
 }
 
-func (r *Registry) registerGraphQLOwnership(feature Feature) error {
+func (r *Registry) registerGraphQLOwnership(feature *Feature) error {
 	for _, source := range feature.GraphQLSources {
 		if graphQLSourceIsShell(source) {
 			return fmt.Errorf(
@@ -599,7 +600,10 @@ func (r *Registry) validateFeatures() error {
 			return err
 		}
 
-		if err := r.validateLegacyGrantingFeatures(key, feature.LegacyGrantingFeatures); err != nil {
+		if err := r.validateLegacyGrantingFeatures(
+			key,
+			feature.LegacyGrantingFeatures,
+		); err != nil {
 			return err
 		}
 
