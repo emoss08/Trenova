@@ -32,7 +32,13 @@ function matchBrace(text: string, open: number): number {
 function stringify(value: unknown): string {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "";
-  return String(value);
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+  if (value instanceof Date) return value.toISOString();
+  // An object reaching a placeholder is a caller mistake; "[object Object]" in the UI hides
+  // it, so serialize enough to make it obvious in a screenshot or a bug report.
+  return JSON.stringify(value) ?? "";
 }
 
 function pluralBranch(forms: string, want: PluralForm): string | null {

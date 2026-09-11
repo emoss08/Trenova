@@ -21,6 +21,7 @@ type ReplaceOrganizationMembershipsRequest struct {
 type UpdateMySettingsRequest struct {
 	Timezone   string                 `json:"timezone"`
 	TimeFormat domaintypes.TimeFormat `json:"timeFormat"`
+	Locale     string                 `json:"locale"`
 }
 
 type ProfilePictureURLResponse struct {

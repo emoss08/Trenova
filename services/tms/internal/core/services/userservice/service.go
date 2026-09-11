@@ -477,6 +477,10 @@ func (s *Service) UpdateMySettings(
 	user.Timezone = req.Timezone
 	user.TimeFormat = req.TimeFormat
 
+	if req.Locale != "" {
+		user.Locale = req.Locale
+	}
+
 	return s.Update(ctx, user, tenantInfo.UserID)
 }
 

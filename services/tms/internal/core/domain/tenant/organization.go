@@ -37,6 +37,7 @@ type Organization struct {
 	City                   string    `json:"city"                   bun:"city,type:VARCHAR(100),notnull"`
 	PostalCode             string    `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
 	Timezone               string    `json:"timezone"               bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
+	Locale                 string    `json:"locale"                 bun:"locale,type:VARCHAR(10),notnull,default:'en'"`
 	TaxID                  string    `json:"taxId"                  bun:"tax_id,type:VARCHAR(50)"`
 	BrokerageEnabled       bool      `json:"brokerageEnabled"       bun:"brokerage_enabled,type:BOOLEAN,notnull,default:true"`
 	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" bun:"asset_operations_enabled,type:BOOLEAN,notnull,default:true"`
@@ -77,6 +78,8 @@ func (o *Organization) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&o.Timezone,
 			validation.Required.Error("Timezone is required. Please try again"),
 			validation.By(domainvalidation.ValidateTimezone)),
+		validation.Field(&o.Locale,
+			validation.By(domainvalidation.ValidateLocale)),
 	))
 }
 

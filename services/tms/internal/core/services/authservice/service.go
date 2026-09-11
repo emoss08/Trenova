@@ -678,6 +678,7 @@ func (s *Service) createSession(
 		TenantInfo:            tenantInfo,
 		IsPortalUser:          isPortalUser,
 		MustChangePassword:    user.MustChangePassword,
+		Locale:                user.Locale,
 		ExpiresAt:             expiresAt,
 		AuthProvider:          authn.AuthProvider,
 		ExternalIdentityID:    authn.ExternalIdentityID,

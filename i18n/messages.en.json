@@ -10228,6 +10228,15 @@
       "domain/servicefailure"
     ]
   },
+  "Applies to the interface, and to the emails and documents sent to you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Applies to your organization only": {
     "sites": 1,
     "scope": [
@@ -56219,6 +56228,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Language": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Language is required": {

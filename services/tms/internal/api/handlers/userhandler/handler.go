@@ -505,6 +505,7 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 		userservice.UpdateMySettingsRequest{
 			Timezone:   req.Timezone,
 			TimeFormat: req.TimeFormat,
+			Locale:     req.Locale,
 		},
 	)
 	if err != nil {

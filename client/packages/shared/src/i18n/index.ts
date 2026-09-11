@@ -9,7 +9,6 @@ export { formatMessage } from "@trenova/shared/i18n/format-message";
 export {
   formatList,
   formatNumber,
-  formatPercent,
   formatRelativeTime,
   intlLocale,
 } from "@trenova/shared/i18n/format";
@@ -21,5 +20,6 @@ export {
   setLocale,
   subscribe,
   translate,
+  translateIn,
 } from "@trenova/shared/i18n/runtime";
 export { type TranslateFn, useLocale, useT } from "@trenova/shared/i18n/use-t";

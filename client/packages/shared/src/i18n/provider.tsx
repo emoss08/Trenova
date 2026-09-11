@@ -72,7 +72,13 @@ export function I18nProvider({ children, userLocale, fallback = null }: I18nProv
 
     let cancelled = false;
     loadCatalog(target)
-      .then(() => (cancelled ? undefined : setLocale(target)))
+      .then(() => {
+        if (cancelled) return undefined;
+        // Remembered so the login screen, which has no user to read a preference from,
+        // still comes up in the language this browser last used.
+        storeLocale(target);
+        return setLocale(target);
+      })
       .catch(() => {
         // A catalog that fails to load leaves the app in English rather than blank.
       })

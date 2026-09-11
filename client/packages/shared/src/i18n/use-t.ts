@@ -1,4 +1,4 @@
-import { getLocale, subscribe, translate } from "@trenova/shared/i18n/runtime";
+import { getLocale, subscribe, translateIn } from "@trenova/shared/i18n/runtime";
 import type { Locale } from "@trenova/shared/i18n/generated/locales";
 import { useCallback, useSyncExternalStore } from "react";
 
@@ -16,10 +16,11 @@ export function useLocale(): Locale {
 export function useT(): TranslateFn {
   const locale = useLocale();
 
+  // Bound to the rendered locale, which also gives the returned function a new identity per
+  // language — downstream useMemo over `t` (table column definitions, zod schemas) then
+  // rebuilds instead of holding on to text in the previous language.
   return useCallback(
-    (message: string, ...args: unknown[]) => translate(message, ...args),
-    // The identity of `translate` never changes; `locale` is the real dependency, and
-    // rebinding on it is what makes consumers re-render when the language changes.
+    (message: string, ...args: unknown[]) => translateIn(locale, message, ...args),
     [locale],
   );
 }

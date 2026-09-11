@@ -73,10 +73,20 @@ export async function setLocale(locale: Locale): Promise<void> {
  * never `shipment.header.title` in front of a customer.
  */
 export function translate(message: string, ...args: unknown[]): string {
+  return translateIn(activeLocale, message, ...args);
+}
+
+/**
+ * translateIn renders in an explicitly named locale. useT() binds this to the locale React
+ * has rendered with, so a language switch mid-render cannot produce a component whose text
+ * is half one language and half the other.
+ */
+export function translateIn(locale: Locale, message: string, ...args: unknown[]): string {
   if (message === "") return "";
 
-  const translated = activeMessages[message] ?? message;
-  return formatMessage(activeLocale, translated, args);
+  const messages = locale === activeLocale ? activeMessages : (loaded.get(locale) ?? {});
+  const translated = messages[message] ?? message;
+  return formatMessage(locale, translated, args);
 }
 
 export function hasTranslation(message: string): boolean {

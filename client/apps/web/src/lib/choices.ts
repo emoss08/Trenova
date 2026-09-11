@@ -1,3 +1,4 @@
+import { LOCALE_NAMES, LOCALES, type Locale } from "@trenova/shared/i18n/generated/locales";
 import type { AccountCategory } from "@/types/account-type";
 import type {
   AccountingBasis,
@@ -772,6 +773,14 @@ export const operationChoices: SelectOption[] = [
   { value: "cancel", label: "Cancel" },
   { value: "duplicate", label: "Duplicate" },
 ] satisfies ReadonlyArray<GenericSelectOption<Operation>>;
+
+// Derived from i18n/locales.json via the generated module, so shipping a new language does
+// not also require editing this list. Each option is labelled in its own language, which is
+// how a user who cannot read the current one finds theirs.
+export const localeChoices = LOCALES.map((locale) => ({
+  value: locale,
+  label: LOCALE_NAMES[locale],
+})) satisfies ReadonlyArray<GenericSelectOption<Locale>>;
 
 export const timeFormatChoices = [
   { label: "12 Hour", value: "12-hour" },

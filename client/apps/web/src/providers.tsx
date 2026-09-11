@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import type React from "react";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
@@ -96,13 +97,24 @@ function normalizeOrganizationSettingsSearchParams(search: URLSearchParams) {
   }
 }
 
+// The signed-in user's language is the one their emails and documents already use, so it
+// outranks anything the browser reports. Reading it here rather than inside I18nProvider
+// keeps the provider free of any dependency on how this app stores its session.
+function useUserLocale(): string | null {
+  return useAuthStore((state) => state.user?.locale ?? null);
+}
+
+function LocalizedApp({ children }: { children: React.ReactNode }) {
+  return <I18nProvider userLocale={useUserLocale()}>{children}</I18nProvider>;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <RootErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <NuqsAdapter processUrlSearchParams={normalizeSearchParams}>
           <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
-            {children}
+            <LocalizedApp>{children}</LocalizedApp>
             {/*<ReactQueryDevtools
               buttonPosition="bottom-left"
               initialIsOpen={false}

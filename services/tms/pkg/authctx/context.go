@@ -128,6 +128,7 @@ type SessionAuthContextParams struct {
 	RiskDecisionID         pulid.ID
 	IsPortalUser           bool
 	MustChangePassword     bool
+	Locale                 string
 }
 
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
@@ -146,6 +147,7 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	c.Set(string(RiskDecisionIDKey), p.RiskDecisionID)
 	c.Set(string(IsPortalUserKey), p.IsPortalUser)
 	c.Set(string(MustChangePasswordKey), p.MustChangePassword)
+	c.Set(string(LocaleKey), p.Locale)
 	c.Request = c.Request.WithContext(WithSessionRoleActivation(
 		c.Request.Context(),
 		p.ActiveRoleIDs,

@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, LOCALES } from "@trenova/shared/i18n/generated/locales";
 import { z } from "zod";
 import {
   capabilityFlagSchema,
@@ -79,6 +80,7 @@ export const userSchema = z.object({
   thumbnailUrl: optionalStringSchema,
   timezone: z.string().min(1, { error: "Timezone is required" }),
   timeFormat: TimeFormat.default("12-hour"),
+  locale: z.enum(LOCALES).default(DEFAULT_LOCALE),
   isLocked: z.boolean().default(false),
   mustChangePassword: z.boolean().default(true),
   lastLoginAt: timestampSchema.optional(),
@@ -120,6 +122,7 @@ export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export const updateMySettingsSchema = z.object({
   timezone: z.string().min(1, { error: "Timezone is required" }),
   timeFormat: TimeFormat,
+  locale: z.enum(LOCALES),
 });
 
 export type UpdateMySettings = z.infer<typeof updateMySettingsSchema>;

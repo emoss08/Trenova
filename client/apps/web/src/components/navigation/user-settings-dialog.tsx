@@ -1,9 +1,10 @@
+import { DEFAULT_LOCALE } from "@trenova/shared/i18n/generated/locales";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
+import { localeChoices, timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
@@ -67,6 +68,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     defaultValues: {
       timezone: user?.timezone ?? "",
       timeFormat: user?.timeFormat ?? "12-hour",
+      locale: user?.locale ?? DEFAULT_LOCALE,
     },
   });
 
@@ -82,6 +84,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     settingsForm.reset({
       timezone: user?.timezone ?? "",
       timeFormat: user?.timeFormat ?? "12-hour",
+      locale: user?.locale ?? DEFAULT_LOCALE,
     });
   }, [settingsForm, user]);
 
@@ -308,6 +311,16 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                     label="Time Format"
                     options={timeFormatChoices}
                     rules={{ required: "Time format is required" }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <SelectField
+                    control={settingsForm.control}
+                    name="locale"
+                    label="Language"
+                    description="Applies to the interface, and to the emails and documents sent to you."
+                    options={localeChoices}
+                    rules={{ required: "Language is required" }}
                   />
                 </FormControl>
               </FormGroup>

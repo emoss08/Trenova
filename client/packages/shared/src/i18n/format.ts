@@ -26,14 +26,6 @@ export function formatNumber(value: number, options?: Intl.NumberFormatOptions):
   return new Intl.NumberFormat(intlLocale(), options).format(value);
 }
 
-export function formatPercent(value: number, fractionDigits = 1): string {
-  return new Intl.NumberFormat(intlLocale(), {
-    style: "percent",
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  }).format(value);
-}
-
 export function formatList(
   items: readonly string[],
   type: Intl.ListFormatType = "conjunction",
