@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   DriverSettlementStatusBadge,
@@ -141,6 +142,8 @@ export function SettlementDetail({
 }
 
 function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const isTerminal = settlement.status === "Paid" || settlement.status === "Voided";
 
   return (
@@ -156,7 +159,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
           <ArrowUpRight className="size-3.5" />
-          Open in Workspace
+          {t("Open in Workspace")}
         </Link>
       )}
     </div>
@@ -164,6 +167,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
 }
 
 function SettlementSummary({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -173,31 +178,30 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         />
         {settlement.payProfileName && (
           <span className="text-muted-foreground text-xs">
-            Pay profile: {settlement.payProfileName}
+            {t("Pay profile: {0}", settlement.payProfileName)}
           </span>
         )}
         <span className="text-muted-foreground ml-auto text-xs">
-          {formatDate(settlement.periodStart)} – {formatDate(settlement.periodEnd)} · pays{" "}
-          {formatDate(settlement.payDate)}
+          {t("{0} – {1} · pays {2}", formatDate(settlement.periodStart), formatDate(settlement.periodEnd), formatDate(settlement.payDate))}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryTile label="Gross Earnings">
+        <SummaryTile label={t("Gross Earnings")}>
           <AmountDisplay value={settlement.grossEarningsMinor} currency={settlement.currencyCode} />
         </SummaryTile>
-        <SummaryTile label="Deductions">
+        <SummaryTile label={t("Deductions")}>
           <AmountDisplay
             value={-settlement.deductionsMinor}
             variant="negative"
             currency={settlement.currencyCode}
           />
         </SummaryTile>
-        <SummaryTile label="Miles / Loads">
+        <SummaryTile label={t("Miles / Loads")}>
           <span className="tabular-nums">
-            {Number(settlement.totalMiles).toLocaleString()} mi · {settlement.shipmentCount}
+            {t("{0} mi · {1}", Number(settlement.totalMiles).toLocaleString(), settlement.shipmentCount)}
           </span>
         </SummaryTile>
-        <SummaryTile label="Net Pay" highlight>
+        <SummaryTile label={t("Net Pay")} highlight>
           <AmountDisplay
             value={settlement.netPayMinor}
             variant="positive"
@@ -207,12 +211,12 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
       </div>
       {settlement.carryForwardOutMinor < 0 && (
         <p className="text-xs text-red-600 dark:text-red-400">
-          Deductions exceeded earnings.{" "}
+          {t("Deductions exceeded earnings.")}{" "}
           <AmountDisplay
             value={-settlement.carryForwardOutMinor}
             currency={settlement.currencyCode}
           />{" "}
-          will carry forward to the next settlement.
+          {t("will carry forward to the next settlement.")}
         </p>
       )}
     </div>
@@ -246,11 +250,13 @@ function SummaryTile({
 }
 
 function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
       <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
         <TriangleAlert className="size-4" />
-        Review required before approval
+        {t("Review required before approval")}
       </div>
       <ul className="mt-2 flex flex-col gap-1">
         {(settlement.exceptions ?? []).map((exception) => (
@@ -282,6 +288,8 @@ function SettlementActions({
   onChanged: () => void;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const [reasonAction, setReasonAction] = useState<ReasonAction | null>(null);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
@@ -325,7 +333,7 @@ function SettlementActions({
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("submit")}>
             <Send className="size-3.5" />
-            Submit for Approval
+            {t("Submit for Approval")}
           </Button>
           <Button
             size="sm"
@@ -334,7 +342,7 @@ function SettlementActions({
             onClick={() => runAction.mutate("recalculate")}
           >
             <RefreshCcw className="size-3.5" />
-            Recalculate
+            {t("Recalculate")}
           </Button>
         </>
       )}
@@ -342,7 +350,7 @@ function SettlementActions({
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("approve")}>
             <CheckCheck className="size-3.5" />
-            Approve
+            {t("Approve")}
           </Button>
           <Button
             size="sm"
@@ -351,20 +359,20 @@ function SettlementActions({
             onClick={() => setReasonAction("reject")}
           >
             <Undo2 className="size-3.5" />
-            Reject
+            {t("Reject")}
           </Button>
         </>
       )}
       {status === "Approved" && (
         <Button size="sm" disabled={busy} onClick={() => runAction.mutate("post")}>
           <CheckCheck className="size-3.5" />
-          Post to GL
+          {t("Post to GL")}
         </Button>
       )}
       {status === "Posted" && (
         <Button size="sm" disabled={busy} onClick={() => setPayDialogOpen(true)}>
           <CircleDollarSign className="size-3.5" />
-          Mark Paid
+          {t("Mark Paid")}
         </Button>
       )}
       {(status === "Draft" || status === "PendingApproval") && (
@@ -375,7 +383,7 @@ function SettlementActions({
           onClick={() => setAdjustDialogOpen(true)}
         >
           <Plus className="size-3.5" />
-          Add Adjustment
+          {t("Add Adjustment")}
         </Button>
       )}
       {status !== "Paid" && status !== "Voided" && (
@@ -387,7 +395,7 @@ function SettlementActions({
           onClick={() => setReasonAction("void")}
         >
           <X className="size-3.5" />
-          Void
+          {t("Void")}
         </Button>
       )}
 
@@ -410,11 +418,11 @@ function SettlementActions({
         onChanged={onChanged}
       />
       {status === "Voided" && settlement.voidReason && (
-        <span className="text-muted-foreground text-xs">Voided: {settlement.voidReason}</span>
+        <span className="text-muted-foreground text-xs">{t("Voided: {0}", settlement.voidReason)}</span>
       )}
       <span className="sr-only">
         <Button variant="ghost" onClick={onClose}>
-          Close
+          {t("Close")}
         </Button>
       </span>
     </div>
@@ -432,6 +440,8 @@ function ReasonDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
 
   const mutation = useMutation({
@@ -462,12 +472,12 @@ function ReasonDialog({
         <Textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason (required)"
+          placeholder={t("Reason (required)")}
           rows={3}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant={action === "void" ? "destructive" : "default"}
@@ -493,13 +503,15 @@ function MarkPaidDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [paymentMethod, setPaymentMethod] = useState("ACH");
   const [paymentReference, setPaymentReference] = useState("");
 
   const mutation = useMutation({
     mutationFn: () => markDriverSettlementPaid({ settlementId, paymentMethod, paymentReference }),
     onSuccess: () => {
-      toast.success("Settlement marked paid");
+      toast.success(t("Settlement marked paid"));
       onOpenChange(false);
       onChanged();
     },
@@ -510,14 +522,14 @@ function MarkPaidDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Mark settlement paid</DialogTitle>
-          <DialogDescription>Record how the net pay was disbursed to the driver.</DialogDescription>
+          <DialogTitle>{t("Mark settlement paid")}</DialogTitle>
+          <DialogDescription>{t("Record how the net pay was disbursed to the driver.")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div>
-            <p className="mb-1 text-xs font-medium">Payment method</p>
+            <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
             <p className="text-muted-foreground mb-1 text-[11px]">
-              How the net pay was sent to the driver — recorded on the statement and audit trail.
+              {t("How the net pay was sent to the driver — recorded on the statement and audit trail.")}
             </p>
             <div className="flex gap-2">
               {["ACH", "Check", "InstantPay", "Other"].map((method) => (
@@ -533,23 +545,23 @@ function MarkPaidDialog({
             </div>
           </div>
           <div>
-            <p className="mb-1 text-xs font-medium">Reference</p>
+            <p className="mb-1 text-xs font-medium">{t("Reference")}</p>
             <Input
               value={paymentReference}
               onChange={(e) => setPaymentReference(e.target.value)}
-              placeholder="ACH trace / check number (optional)"
+              placeholder={t("ACH trace / check number (optional)")}
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              The ACH trace or check number so the payment can be reconciled with the bank.
+              {t("The ACH trace or check number so the payment can be reconciled with the bank.")}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            Mark Paid
+            {t("Mark Paid")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -568,6 +580,8 @@ function AddAdjustmentDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [payCodeId, setPayCodeId] = useState<string>("none");
@@ -585,7 +599,7 @@ function AddAdjustmentDialog({
         payCodeId: payCodeId === "none" ? undefined : payCodeId,
       }),
     onSuccess: () => {
-      toast.success("Adjustment added");
+      toast.success(t("Adjustment added"));
       setDescription("");
       setAmount("");
       setPayCodeId("none");
@@ -599,9 +613,9 @@ function AddAdjustmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add manual adjustment</DialogTitle>
+          <DialogTitle>{t("Add manual adjustment")}</DialogTitle>
           <DialogDescription>
-            Positive amounts add pay (layover, breakdown, bonus); negative amounts deduct.
+            {t("Positive amounts add pay (layover, breakdown, bonus); negative amounts deduct.")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
@@ -609,21 +623,21 @@ function AddAdjustmentDialog({
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description (e.g. Layover pay - Detroit 6/12)"
+              placeholder={t("Description (e.g. Layover pay - Detroit 6/12)")}
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Appears as the line item on the driver&apos;s statement — say what and when.
+              {t("Appears as the line item on the driver's statement — say what and when.")}
             </p>
           </div>
           <div>
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Amount (e.g. 150.00 or -75.00)"
+              placeholder={t("Amount (e.g. 150.00 or -75.00)")}
               inputMode="decimal"
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Dollars, not cents; positive adds pay, negative deducts.
+              {t("Dollars, not cents; positive adds pay, negative deducts.")}
             </p>
           </div>
           <div>
@@ -636,10 +650,10 @@ function AddAdjustmentDialog({
               onValueChange={(value) => setPayCodeId(value ?? "none")}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pay code (optional)" />
+                <SelectValue placeholder={t("Pay code (optional)")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No pay code</SelectItem>
+                <SelectItem value="none">{t("No pay code")}</SelectItem>
                 {(payCodes ?? []).map((code) => (
                   <SelectItem key={code.id} value={code.id}>
                     {code.code} — {code.name} ({code.direction})
@@ -648,17 +662,16 @@ function AddAdjustmentDialog({
               </SelectContent>
             </Select>
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Optional — tagging a pay code posts the adjustment to that code&apos;s GL account
-              instead of the default expense account.
+              {t("Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.")}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={!valid || mutation.isPending} onClick={() => mutation.mutate()}>
-            Add Adjustment
+            {t("Add Adjustment")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -675,6 +688,8 @@ function SettlementLines({
   onChanged: () => void;
   readOnly?: boolean;
 }) {
+  const t = useT();
+
   const grouped = useMemo(() => {
     const groups = new Map<string, DriverSettlementLineRow[]>();
     for (const line of settlement.lines ?? []) {
@@ -694,7 +709,7 @@ function SettlementLines({
     mutationFn: (lineId: string) =>
       removeDriverSettlementAdjustment({ settlementId: settlement.id, lineId }),
     onSuccess: () => {
-      toast.success("Adjustment removed");
+      toast.success(t("Adjustment removed"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to remove adjustment"),
@@ -704,7 +719,7 @@ function SettlementLines({
     mutationFn: (payEventId: string) =>
       detachPayEventFromSettlement({ settlementId: settlement.id, payEventId }),
     onSuccess: () => {
-      toast.success("Pay event returned to the unsettled pool");
+      toast.success(t("Pay event returned to the unsettled pool"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to remove pay event"),
@@ -712,7 +727,7 @@ function SettlementLines({
   const canDetach = !readOnly && settlement.status === "Draft";
 
   if (grouped.length === 0) {
-    return <p className="text-muted-foreground text-sm">This settlement has no line items.</p>;
+    return <p className="text-muted-foreground text-sm">{t("This settlement has no line items.")}</p>;
   }
 
   return (
@@ -764,7 +779,7 @@ function SettlementLines({
                               className="size-6"
                               disabled={removeMutation.isPending}
                               onClick={() => removeMutation.mutate(line.id as string)}
-                              aria-label="Remove adjustment"
+                              aria-label={t("Remove adjustment")}
                             >
                               <X className="size-3" />
                             </Button>
@@ -776,8 +791,8 @@ function SettlementLines({
                               className="size-6"
                               disabled={detachMutation.isPending}
                               onClick={() => detachMutation.mutate(line.payEventId as string)}
-                              aria-label="Remove pay event from settlement"
-                              title="Remove this pay event — it returns to the unsettled pool for a later settlement"
+                              aria-label={t("Remove pay event from settlement")}
+                              title={t("Remove this pay event — it returns to the unsettled pool for a later settlement")}
                             >
                               <X className="size-3" />
                             </Button>
@@ -797,6 +812,8 @@ function SettlementLines({
 }
 
 function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const events = [
     { label: "Created", at: settlement.createdAt },
     { label: "Submitted", at: settlement.submittedAt },
@@ -818,7 +835,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
   return (
     <div className="border-t pt-3">
       <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-        History
+        {t("History")}
       </h4>
       <ol className="flex flex-col gap-1">
         {events.map((event) => (

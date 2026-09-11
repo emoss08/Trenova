@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dialog";
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -22,6 +23,8 @@ import { SettlementHistoryEmpty } from "./settlement-history-empty";
 import { SettlementPanel } from "./settlement-panel";
 
 export default function SettlementsTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const [payRows, setPayRows] = useState<DriverSettlementRow[]>([]);
@@ -47,7 +50,7 @@ export default function SettlementsTable() {
     ) => {
       const eligible = eligibleSettlements(rows, action);
       if (eligible.length === 0) {
-        toast.info("None of the selected settlements are in an eligible status for that action.");
+        toast.info(t("None of the selected settlements are in an eligible status for that action."));
         return;
       }
       const result = await bulkDriverSettlementAction({
@@ -69,17 +72,17 @@ export default function SettlementsTable() {
       }
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const openMarkPaidDialog = useCallback((rows: DriverSettlementRow[]) => {
     const eligible = eligibleSettlements(rows, "MarkPaid");
     if (eligible.length === 0) {
-      toast.info("Only posted settlements can be marked paid.");
+      toast.info(t("Only posted settlements can be marked paid."));
       return;
     }
     setPayRows(eligible);
-  }, []);
+  }, [t]);
 
   const dockActions = useMemo<DockAction<DriverSettlementRow>[]>(
     () => [

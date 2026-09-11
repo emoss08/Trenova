@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { CircleDollarSign, FileCheck2, Layers, Wallet, X } from "lucide-react";
 import { useState } from "react";
@@ -28,6 +29,8 @@ const steps = [
 ];
 
 export function PayFlowExplainer() {
+  const t = useT();
+
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(STORAGE_KEY) === "true");
 
   if (dismissed) return null;
@@ -38,7 +41,7 @@ export function PayFlowExplainer() {
         size="icon"
         variant="ghost"
         className="absolute top-2 right-2 size-6"
-        aria-label="Dismiss"
+        aria-label={t("Dismiss")}
         onClick={() => {
           localStorage.setItem(STORAGE_KEY, "true");
           setDismissed(true);
