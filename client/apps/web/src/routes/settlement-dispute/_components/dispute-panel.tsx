@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { usePayCodeOptions } from "@/components/fields/pay-code-select-field";
@@ -38,6 +39,8 @@ export function DisputePanel({
   mode,
   row,
 }: DataTablePanelProps<SettlementDisputeRow>) {
+  const t = useT();
+
   if (mode !== "edit" || !row) {
     return null;
   }
@@ -46,7 +49,7 @@ export function DisputePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title="Settlement Dispute"
+      title={t("Settlement Dispute")}
       description={row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : undefined}
       size="lg"
     >
@@ -56,6 +59,8 @@ export function DisputePanel({
 }
 
 function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const detail = useQuery({
     queryKey: ["settlement-dispute-detail", disputeId],
@@ -70,7 +75,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
   const startReview = useMutation({
     mutationFn: () => startSettlementDisputeReview(disputeId),
     onSuccess: async () => {
-      toast.success("Dispute moved to review");
+      toast.success(t("Dispute moved to review"));
       await invalidate();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to start review"),
@@ -89,7 +94,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
   if (!dispute) {
     return (
       <p className="text-muted-foreground p-6 text-center text-sm">
-        This dispute could not be loaded.
+        {t("This dispute could not be loaded.")}
       </p>
     );
   }
@@ -107,21 +112,20 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <SettlementDisputeStatusBadge status={dispute.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          Submitted {formatDate(dispute.createdAt)}
-          {dispute.worker
+          {t("Submitted {0}{1}", formatDate(dispute.createdAt), dispute.worker
             ? ` by ${`${dispute.worker.firstName} ${dispute.worker.lastName}`.trim()}`
-            : ""}
+            : "")}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{dispute.description}</p>
       </div>
 
       {dispute.settlement ? (
         <div className="border-border rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Settlement</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Settlement")}</p>
           <div className="mt-1 flex items-center justify-between text-sm">
             <span className="font-mono font-medium">{dispute.settlement.settlementNumber}</span>
             <span className="tabular-nums">
-              Net{" "}
+              {t("Net")}{" "}
               <AmountDisplay
                 value={dispute.settlement.netPayMinor}
                 currency={dispute.settlement.currencyCode}
@@ -135,7 +139,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           {dispute.settlementLine ? (
             <>
               <Separator className="my-2" />
-              <p className="text-muted-foreground text-xs font-medium uppercase">Disputed line</p>
+              <p className="text-muted-foreground text-xs font-medium uppercase">{t("Disputed line")}</p>
               <div className="mt-1 flex items-center justify-between text-sm">
                 <span>{dispute.settlementLine.description}</span>
                 <AmountDisplay value={dispute.settlementLine.amountMinor} />
@@ -147,7 +151,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
 
       {isTerminal ? (
         <div className="border-border rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Resolution</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Resolution")}</p>
           <p className="mt-1 text-sm whitespace-pre-wrap">{dispute.resolutionNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatDate(dispute.resolvedAt)}
@@ -182,6 +186,8 @@ function ResolveForm({
   onDone: () => Promise<void>;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const [approve, setApprove] = useState(true);
   const [resolutionNote, setResolutionNote] = useState("");
   const [withAdjustment, setWithAdjustment] = useState(false);
@@ -221,7 +227,7 @@ function ResolveForm({
 
   return (
     <div className="border-border flex flex-col gap-4 rounded-lg border p-3">
-      <p className="text-sm font-semibold">Resolve this dispute</p>
+      <p className="text-sm font-semibold">{t("Resolve this dispute")}</p>
 
       <div className="grid grid-cols-2 gap-2">
         <Button
@@ -229,7 +235,7 @@ function ResolveForm({
           variant={approve ? "default" : "outline"}
           onClick={() => setApprove(true)}
         >
-          Resolve in driver&apos;s favor
+          {t("Resolve in driver's favor")}
         </Button>
         <Button
           type="button"
@@ -239,31 +245,30 @@ function ResolveForm({
             setWithAdjustment(false);
           }}
         >
-          Deny
+          {t("Deny")}
         </Button>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="dispute-resolution-note">Resolution note</Label>
+        <Label htmlFor="dispute-resolution-note">{t("Resolution note")}</Label>
         <Textarea
           id="dispute-resolution-note"
           value={resolutionNote}
           onChange={(event) => setResolutionNote(event.target.value)}
-          placeholder="Explain the outcome — the driver sees this in Dash."
+          placeholder={t("Explain the outcome — the driver sees this in Dash.")}
           rows={3}
         />
         <p className="text-muted-foreground text-[11px]">
-          Shown to the driver verbatim; say what was checked and why the outcome is right.
+          {t("Shown to the driver verbatim; say what was checked and why the outcome is right.")}
         </p>
       </div>
 
       {approve ? (
         <div className="flex items-center justify-between">
           <div>
-            <Label htmlFor="dispute-with-adjustment">Apply a correcting adjustment</Label>
+            <Label htmlFor="dispute-with-adjustment">{t("Apply a correcting adjustment")}</Label>
             <p className="text-muted-foreground text-[11px]">
-              Adds a line to the driver&apos;s open settlement (an off-cycle draft is created if
-              none exists).
+              {t("Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).")}
             </p>
           </div>
           <Switch
@@ -280,21 +285,21 @@ function ResolveForm({
             <Input
               value={adjustmentDescription}
               onChange={(event) => setAdjustmentDescription(event.target.value)}
-              placeholder="Description (e.g. Detention correction - PRO 12345)"
+              placeholder={t("Description (e.g. Detention correction - PRO 12345)")}
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Appears as the line item on the driver&apos;s statement.
+              {t("Appears as the line item on the driver's statement.")}
             </p>
           </div>
           <div>
             <Input
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              placeholder="Amount (e.g. 150.00 or -75.00)"
+              placeholder={t("Amount (e.g. 150.00 or -75.00)")}
               inputMode="decimal"
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Dollars, not cents; positive adds pay, negative deducts.
+              {t("Dollars, not cents; positive adds pay, negative deducts.")}
             </p>
           </div>
           <div>
@@ -310,10 +315,10 @@ function ResolveForm({
               onValueChange={(value) => setPayCodeId(value ?? "none")}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pay code (optional)" />
+                <SelectValue placeholder={t("Pay code (optional)")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No pay code</SelectItem>
+                <SelectItem value="none">{t("No pay code")}</SelectItem>
                 {(payCodes ?? []).map((code) => (
                   <SelectItem key={code.id} value={code.id}>
                     {code.code} — {code.name} ({code.direction})
@@ -322,7 +327,7 @@ function ResolveForm({
               </SelectContent>
             </Select>
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Optional — routes the adjustment to that code&apos;s GL account when posting.
+              {t("Optional — routes the adjustment to that code's GL account when posting.")}
             </p>
           </div>
         </div>

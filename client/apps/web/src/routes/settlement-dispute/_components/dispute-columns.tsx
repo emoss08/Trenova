@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { SettlementDisputeRow } from "@trenova/shared/lib/graphql/driver-portal";
@@ -73,7 +74,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
               {row.original.settlement.settlementNumber}
             </span>
             <span className="text-muted-foreground text-xs">
-              Net{" "}
+              {translate("Net")}{" "}
               <AmountDisplay
                 value={row.original.settlement.netPayMinor}
                 currency={row.original.settlement.currencyCode}
