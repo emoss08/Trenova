@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { pricingFingerprint } from "@/lib/detention-policy";
 import { CalculationReceipt } from "@/routes/detention-desk/_components/calculation-receipt";
@@ -221,6 +222,8 @@ function ScenarioResult({
   definition: ScenarioDefinition;
   result: PreviewResult;
 }) {
+  const t = useT();
+
   const [receiptOpen, setReceiptOpen] = useState(false);
   const suppressed = result.suppressedByGate;
   const currency = result.policySnapshot.currency || "USD";
@@ -243,13 +246,12 @@ function ScenarioResult({
               {formatCurrency(result.billableAmount, currency)}
             </m.p>
             <p className="text-muted-foreground mt-1.5 text-xs tabular-nums">
-              {formatDetentionMinutes(result.roundedMinutes)} billed of{" "}
-              {formatDetentionMinutes(result.rawDwellMinutes)} dwell
+              {t("{0} billed of {1} dwell", formatDetentionMinutes(result.roundedMinutes), formatDetentionMinutes(result.rawDwellMinutes))}
             </p>
           </div>
           <div className="shrink-0 text-right">
             <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-              Net margin
+              {t("Net margin")}
             </p>
             <p
               className={cn(
@@ -272,27 +274,27 @@ function ScenarioResult({
           result.netMargin < 0 ||
           result.billableAmount === 0) && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {suppressed && <Signal tone="bad">Suppressed — notice missed</Signal>}
+            {suppressed && <Signal tone="bad">{t("Suppressed — notice missed")}</Signal>}
             {result.netMargin < 0 && (
               <Signal tone="warn">
                 {`Pays out ${formatCurrency(Math.abs(result.netMargin), currency)} more than it bills`}
               </Signal>
             )}
-            {result.arrivedLate && <Signal tone="neutral">Arrived late</Signal>}
+            {result.arrivedLate && <Signal tone="neutral">{t("Arrived late")}</Signal>}
             {result.capApplied !== "None" && (
               <Signal tone="neutral">{CAP_KIND_LABEL[result.capApplied]}</Signal>
             )}
             {result.billableAmount === 0 && !suppressed && (
-              <Signal tone="neutral">Nothing billable</Signal>
+              <Signal tone="neutral">{t("Nothing billable")}</Signal>
             )}
           </div>
         )}
       </div>
 
       <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
-        <StatCell label="Gross" value={formatCurrency(result.grossAmount, currency)} />
-        <StatCell label="Driver pay" value={formatCurrency(result.driverPayAmount, currency)} />
-        <StatCell label="Status" value={OCCURRENCE_STATUS_LABEL[result.status]} />
+        <StatCell label={t("Gross")} value={formatCurrency(result.grossAmount, currency)} />
+        <StatCell label={t("Driver pay")} value={formatCurrency(result.driverPayAmount, currency)} />
+        <StatCell label={t("Status")} value={OCCURRENCE_STATUS_LABEL[result.status]} />
       </div>
 
       <div className="border-border border-t">
@@ -302,7 +304,7 @@ function ScenarioResult({
           onClick={() => setReceiptOpen((open) => !open)}
           className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between gap-2 px-4 py-2 text-xs transition-colors"
         >
-          <span>How this charge was calculated</span>
+          <span>{t("How this charge was calculated")}</span>
           <ChevronDownIcon
             className={cn("size-3.5 transition-transform", receiptOpen && "rotate-180")}
           />
@@ -350,6 +352,8 @@ function LiveIndicator({ pricing }: { pricing: boolean }) {
  * before the policy ever touches a shipment.
  */
 export function DetentionPolicyPreview() {
+  const t = useT();
+
   const { control } = useFormContext<DetentionPolicy>();
   const values = useWatch({ control });
 
@@ -408,10 +412,10 @@ export function DetentionPolicyPreview() {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
-            Live preview
+            {t("Live preview")}
           </h3>
           <p className="text-muted-foreground mt-1 text-xs">
-            Worked examples priced by the same engine that bills real shipments.
+            {t("Worked examples priced by the same engine that bills real shipments.")}
           </p>
         </div>
         {ready && <LiveIndicator pricing={results.some((query) => query.isFetching)} />}
@@ -421,7 +425,7 @@ export function DetentionPolicyPreview() {
         <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
           <FlaskConicalIcon className="text-muted-foreground/60 size-5" />
           <p className="text-muted-foreground max-w-[16rem] text-xs">
-            Finish these fields on the Terms tab to price the worked examples.
+            {t("Finish these fields on the Terms tab to price the worked examples.")}
           </p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {missing.map((label) => (
@@ -440,7 +444,7 @@ export function DetentionPolicyPreview() {
             items={items}
             value={activeKey}
             onValueChange={setActiveKey}
-            aria-label="Preview scenario"
+            aria-label={t("Preview scenario")}
             fullWidth
           />
 
@@ -454,7 +458,7 @@ export function DetentionPolicyPreview() {
               <div className="flex items-start gap-2.5 px-4 py-6">
                 <TriangleAlertIcon className="mt-px size-4 shrink-0 text-amber-500" />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium">This scenario could not be priced</p>
+                  <p className="text-xs font-medium">{t("This scenario could not be priced")}</p>
                   <p className="text-muted-foreground mt-0.5 text-xs">
                     {active.error instanceof Error
                       ? active.error.message

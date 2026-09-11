@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -43,7 +44,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
           <span className="font-medium">{row.original.name}</span>
           {row.original.isOrgDefault && (
             <Badge variant="outline" className="text-[10px]">
-              Org default
+              {translate("Org default")}
             </Badge>
           )}
         </div>

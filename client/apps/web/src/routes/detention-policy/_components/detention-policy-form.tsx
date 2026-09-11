@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AccessorialChargeAutocompleteField,
   CommodityMultiSelectField,
@@ -53,6 +54,8 @@ const LATE_ARRIVAL_HELP: Record<string, string> = {
  * picking the wrong one is invisible until an invoice is rejected.
  */
 export function DetentionPolicyForm() {
+  const t = useT();
+
   const { control } = useFormContext<DetentionPolicy>();
 
   const isOrgDefault = useWatch({ control, name: "isOrgDefault" });
@@ -66,75 +69,75 @@ export function DetentionPolicyForm() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title="Identity"
-        description="How this policy is referenced across billing and audit"
+        title={t("Identity")}
+        description={t("How this policy is referenced across billing and audit")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="Standard Dry Van Detention"
+              label={t("Name")}
+              placeholder={t("Standard Dry Van Detention")}
               rules={{ required: true }}
               maxLength={100}
-              description="Human-friendly name shown in lists, notices, and audit history."
+              description={t("Human-friendly name shown in lists, notices, and audit history.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="code"
-              label="Code"
-              placeholder="DET-STD"
+              label={t("Code")}
+              placeholder={t("DET-STD")}
               rules={{ required: true }}
               maxLength={50}
-              description="Short identifier quoted on notices and invoices."
+              description={t("Short identifier quoted on notices and invoices.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="status"
-              label="Status"
-              placeholder="Select status"
+              label={t("Status")}
+              placeholder={t("Select status")}
               rules={{ required: true }}
               options={detentionPolicyStatusChoices}
-              description="Only Active policies participate in resolution; Draft lets you build and backtest safely."
+              description={t("Only Active policies participate in resolution; Draft lets you build and backtest safely.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="priority"
-              label="Priority"
+              label={t("Priority")}
               placeholder="0"
-              description="Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override."
+              description={t("Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override.")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Detention terms for standard dry van freight, per the 2026 master agreement"
-              description="Context for the next person who has to understand why these terms exist."
+              label={t("Description")}
+              placeholder={t("Detention terms for standard dry van freight, per the 2026 master agreement")}
+              description={t("Context for the next person who has to understand why these terms exist.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Scope"
-        description="Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type."
+        title={t("Scope")}
+        description={t("Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type.")}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
             <SwitchField
               control={control}
               name="isOrgDefault"
-              label="Organization default"
-              description="The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type."
+              label={t("Organization default")}
+              description={t("The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.")}
               outlined
               position="left"
             />
@@ -146,9 +149,9 @@ export function DetentionPolicyForm() {
                 <CustomerAutocompleteField
                   control={control}
                   name="customerId"
-                  label="Customer"
-                  placeholder="Any customer"
-                  description="Limit this policy to one customer's freight. Specificity +16."
+                  label={t("Customer")}
+                  placeholder={t("Any customer")}
+                  description={t("Limit this policy to one customer's freight. Specificity +16.")}
                   clearable
                 />
               </FormControl>
@@ -156,9 +159,9 @@ export function DetentionPolicyForm() {
                 <LocationAutocompleteField
                   control={control}
                   name="locationId"
-                  label="Facility"
-                  placeholder="Any facility"
-                  description="Limit to one facility. Specificity +32 — facility-level terms outrank customer-wide ones."
+                  label={t("Facility")}
+                  placeholder={t("Any facility")}
+                  description={t("Limit to one facility. Specificity +32 — facility-level terms outrank customer-wide ones.")}
                   clearable
                 />
               </FormControl>
@@ -166,45 +169,45 @@ export function DetentionPolicyForm() {
                 <ShipmentTypeMultiSelectField
                   control={control}
                   name="shipmentTypeIds"
-                  label="Shipment Types"
-                  placeholder="Any shipment type"
-                  description="Only shipments of these types are governed. Specificity +4."
+                  label={t("Shipment Types")}
+                  placeholder={t("Any shipment type")}
+                  description={t("Only shipments of these types are governed. Specificity +4.")}
                 />
               </FormControl>
               <FormControl>
                 <ServiceTypeMultiSelectField
                   control={control}
                   name="serviceTypeIds"
-                  label="Service Types"
-                  placeholder="Any service type"
-                  description="Only these service levels are governed. Specificity +2."
+                  label={t("Service Types")}
+                  placeholder={t("Any service type")}
+                  description={t("Only these service levels are governed. Specificity +2.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <CommodityMultiSelectField
                   control={control}
                   name="commodityIds"
-                  label="Commodities"
-                  placeholder="Any commodity"
-                  description="Only shipments carrying these commodities are governed. Specificity +8."
+                  label={t("Commodities")}
+                  placeholder={t("Any commodity")}
+                  description={t("Only shipments carrying these commodities are governed. Specificity +8.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <MultiCheckboxField
                   control={control}
                   name="stopTypes"
-                  label="Stop Types"
+                  label={t("Stop Types")}
                   options={stopTypeChoices}
-                  description="Leave all unchecked to govern every stop type. Specificity +1."
+                  description={t("Leave all unchecked to govern every stop type. Specificity +1.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField
                   control={control}
                   name="effectiveStartDate"
-                  label="Effective From"
-                  placeholder="No start date"
-                  description="The policy only governs stops arriving on or after this date."
+                  label={t("Effective From")}
+                  placeholder={t("No start date")}
+                  description={t("The policy only governs stops arriving on or after this date.")}
                   clearable
                 />
               </FormControl>
@@ -212,9 +215,9 @@ export function DetentionPolicyForm() {
                 <AutoCompleteDateField
                   control={control}
                   name="effectiveEndDate"
-                  label="Expires"
-                  placeholder="No expiration"
-                  description="The policy stops governing after this date — set it when a contract term ends."
+                  label={t("Expires")}
+                  placeholder={t("No expiration")}
+                  description={t("The policy stops governing after this date — set it when a contract term ends.")}
                   clearable
                 />
               </FormControl>
@@ -225,8 +228,8 @@ export function DetentionPolicyForm() {
             <SwitchField
               control={control}
               name="appointmentStopsOnly"
-              label="Appointment stops only"
-              description="Open (first-come) stops will not accrue detention under this policy."
+              label={t("Appointment stops only")}
+              description={t("Open (first-come) stops will not accrue detention under this policy.")}
               outlined
               position="left"
             />
@@ -235,16 +238,16 @@ export function DetentionPolicyForm() {
       </FormSection>
 
       <FormSection
-        title="The clock"
-        description="When detention starts running, and what happens when the driver is late"
+        title={t("The clock")}
+        description={t("When detention starts running, and what happens when the driver is late")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="clockStartBasis"
-              label="Clock starts at"
-              placeholder="Select clock basis"
+              label={t("Clock starts at")}
+              placeholder={t("Select clock basis")}
               rules={{ required: true }}
               options={detentionClockStartBasisChoices}
               description={CLOCK_START_HELP[clockStartBasis ?? ""]}
@@ -254,8 +257,8 @@ export function DetentionPolicyForm() {
             <SelectField
               control={control}
               name="lateArrivalRule"
-              label="If the driver arrives late"
-              placeholder="Select late arrival rule"
+              label={t("If the driver arrives late")}
+              placeholder={t("Select late arrival rule")}
               rules={{ required: true }}
               options={detentionLateArrivalRuleChoices}
               description={LATE_ARRIVAL_HELP[lateArrivalRule ?? ""]}
@@ -265,10 +268,10 @@ export function DetentionPolicyForm() {
             <NumberField
               control={control}
               name="lateArrivalGraceMinutes"
-              label="Late arrival grace"
+              label={t("Late arrival grace")}
               placeholder="0"
               sideText="min"
-              description="Arrivals inside this buffer are not treated as late."
+              description={t("Arrivals inside this buffer are not treated as late.")}
             />
           </FormControl>
         </FormGroup>
@@ -276,89 +279,88 @@ export function DetentionPolicyForm() {
         {lateArrivalRule === "Forfeit" && (
           <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
             <Badge className="border-none bg-amber-500/20 text-amber-700 dark:text-amber-400">
-              Check the contract
+              {t("Check the contract")}
             </Badge>
             <p className="mt-2 text-sm">
-              Forfeit voids detention entirely on a late arrival, even by one minute. Only select
-              this when the rate confirmation says so.
+              {t("Forfeit voids detention entirely on a late arrival, even by one minute. Only select this when the rate confirmation says so.")}
             </p>
           </div>
         )}
       </FormSection>
 
       <FormSection
-        title="Free time"
-        description="What the contract grants before charges begin, on both the customer and driver sides"
+        title={t("Free time")}
+        description={t("What the contract grants before charges begin, on both the customer and driver sides")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="billingFreeMinutes"
-              label="Free time"
+              label={t("Free time")}
               placeholder="120"
               sideText="min"
               rules={{ required: true }}
-              description="Minutes the customer gets before charges begin. Industry standard is 120."
+              description={t("Minutes the customer gets before charges begin. Industry standard is 120.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="payFreeMinutes"
-              label="Driver pay free time"
-              placeholder="Match customer allowance"
+              label={t("Driver pay free time")}
+              placeholder={t("Match customer allowance")}
               sideText="min"
-              description="Leave empty to match the customer allowance. A longer customer allowance than this means you pay for time you cannot bill."
+              description={t("Leave empty to match the customer allowance. A longer customer allowance than this means you pay for time you cannot bill.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="pickupFreeMinutes"
-              label="Pickup override"
-              placeholder="Use base free time"
+              label={t("Pickup override")}
+              placeholder={t("Use base free time")}
               sideText="min"
-              description="Different allowance for pickup stops, when the contract splits them."
+              description={t("Different allowance for pickup stops, when the contract splits them.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="deliveryFreeMinutes"
-              label="Delivery override"
-              placeholder="Use base free time"
+              label={t("Delivery override")}
+              placeholder={t("Use base free time")}
               sideText="min"
-              description="Different allowance for delivery stops, when the contract splits them."
+              description={t("Different allowance for delivery stops, when the contract splits them.")}
             />
           </FormControl>
           <FormControl cols="full">
             <NumberField
               control={control}
               name="minimumBillableMinutes"
-              label="Minimum billable"
+              label={t("Minimum billable")}
               placeholder="0"
               sideText="min"
-              description="Detention shorter than this bills nothing — filters out trivially small charges."
+              description={t("Detention shorter than this bills nothing — filters out trivially small charges.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Rounding"
-        description="How raw minutes collapse onto the billing increment. Rounding errors are a leading cause of rejected detention invoices."
+        title={t("Rounding")}
+        description={t("How raw minutes collapse onto the billing increment. Rounding errors are a leading cause of rejected detention invoices.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="roundingMode"
-              label="Rounding"
-              placeholder="Select rounding mode"
+              label={t("Rounding")}
+              placeholder={t("Select rounding mode")}
               rules={{ required: true }}
               options={detentionRoundingModeChoices}
-              description="How partial increments are billed once free time is exhausted."
+              description={t("How partial increments are billed once free time is exhausted.")}
             />
           </FormControl>
           {roundingMode !== "Exact" && (
@@ -366,38 +368,38 @@ export function DetentionPolicyForm() {
               <NumberField
                 control={control}
                 name="billingIncrementMinutes"
-                label="Increment"
+                label={t("Increment")}
                 placeholder="15"
                 sideText="min"
                 rules={{ required: true }}
-                description="The billing unit minutes are rounded onto. Typically 15, 30, or 60."
+                description={t("The billing unit minutes are rounded onto. Typically 15, 30, or 60.")}
               />
             </FormControl>
           )}
         </FormGroup>
       </FormSection>
 
-      <FormSection title="Rate" description="What the customer pays once free time is exhausted">
+      <FormSection title={t("Rate")} description={t("What the customer pays once free time is exhausted")}>
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="rateSource"
-              label="Rate source"
-              placeholder="Select rate source"
+              label={t("Rate source")}
+              placeholder={t("Select rate source")}
               rules={{ required: true }}
               options={detentionRateSourceChoices}
-              description="A flat hourly accessorial rate, or a graduated ladder that escalates with dwell."
+              description={t("A flat hourly accessorial rate, or a graduated ladder that escalates with dwell.")}
             />
           </FormControl>
           <FormControl>
             <AccessorialChargeAutocompleteField
               control={control}
               name="accessorialChargeId"
-              label="Accessorial charge"
-              placeholder="Select accessorial charge"
+              label={t("Accessorial charge")}
+              placeholder={t("Select accessorial charge")}
               rules={{ required: true }}
-              description="The billing code detention posts against. Its rate applies when the source is Flat."
+              description={t("The billing code detention posts against. Its rate applies when the source is Flat.")}
             />
           </FormControl>
         </FormGroup>
@@ -410,58 +412,58 @@ export function DetentionPolicyForm() {
       </FormSection>
 
       <FormSection
-        title="Ceilings"
-        description="Caps the contract places on a single stop, day, or shipment"
+        title={t("Ceilings")}
+        description={t("Caps the contract places on a single stop, day, or shipment")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="maxBillableMinutesPerStop"
-              label="Max billable minutes"
-              placeholder="No cap"
+              label={t("Max billable minutes")}
+              placeholder={t("No cap")}
               sideText="min"
-              description="Billable minutes per stop stop accruing here, regardless of dwell."
+              description={t("Billable minutes per stop stop accruing here, regardless of dwell.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxChargePerStop"
-              label="Max charge per stop"
-              placeholder="No cap"
+              label={t("Max charge per stop")}
+              placeholder={t("No cap")}
               sideText="$"
-              description="Dollar ceiling for a single stop's detention."
+              description={t("Dollar ceiling for a single stop's detention.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxChargePerDay"
-              label="Max charge per day"
-              placeholder="No cap"
+              label={t("Max charge per day")}
+              placeholder={t("No cap")}
               sideText="$"
-              description="Allocated across calendar days, so a stay spanning midnight is not charged two full daily maximums."
+              description={t("Allocated across calendar days, so a stay spanning midnight is not charged two full daily maximums.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxChargePerShipment"
-              label="Max charge per shipment"
-              placeholder="No cap"
+              label={t("Max charge per shipment")}
+              placeholder={t("No cap")}
               sideText="$"
-              description="Total detention across every stop on the shipment stops accruing here."
+              description={t("Total detention across every stop on the shipment stops accruing here.")}
             />
           </FormControl>
           <FormControl cols="full">
             <NumberField
               control={control}
               name="convertToLayoverAtMinutes"
-              label="Convert to layover at"
-              placeholder="Never convert"
+              label={t("Convert to layover at")}
+              placeholder={t("Never convert")}
               sideText="min"
-              description="Detention stops accruing here and layover takes over. Industry convention is 1440 (24h)."
+              description={t("Detention stops accruing here and layover takes over. Industry convention is 1440 (24h).")}
             />
           </FormControl>
           {convertToLayover ? (
@@ -469,10 +471,10 @@ export function DetentionPolicyForm() {
               <AccessorialChargeAutocompleteField
                 control={control}
                 name="layoverAccessorialChargeId"
-                label="Layover charge"
-                placeholder="Select layover charge"
+                label={t("Layover charge")}
+                placeholder={t("Select layover charge")}
                 rules={{ required: true }}
-                description="The billing code the stay converts to once the layover boundary is crossed."
+                description={t("The billing code the stay converts to once the layover boundary is crossed.")}
               />
             </FormControl>
           ) : null}
@@ -480,19 +482,19 @@ export function DetentionPolicyForm() {
       </FormSection>
 
       <FormSection
-        title="Customer notice"
-        description="Contracts that pay detention reliably require written notice at or before free-time expiry. Missing it is the most common reason a valid claim goes uncollected."
+        title={t("Customer notice")}
+        description={t("Contracts that pay detention reliably require written notice at or before free-time expiry. Missing it is the most common reason a valid claim goes uncollected.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="notificationRequirement"
-              label="Notice requirement"
-              placeholder="Select requirement"
+              label={t("Notice requirement")}
+              placeholder={t("Select requirement")}
               rules={{ required: true }}
               options={detentionNotificationRequirementChoices}
-              description="Whether the contract obligates a written notice before detention can bill."
+              description={t("Whether the contract obligates a written notice before detention can bill.")}
             />
           </FormControl>
           {notificationRequirement !== "None" && (
@@ -501,8 +503,8 @@ export function DetentionPolicyForm() {
                 <SelectField
                   control={control}
                   name="unnotifiedBehavior"
-                  label="If the notice is missed"
-                  placeholder="Select behavior"
+                  label={t("If the notice is missed")}
+                  placeholder={t("Select behavior")}
                   rules={{ required: true }}
                   options={detentionUnnotifiedBehaviorChoices}
                   description={
@@ -516,28 +518,28 @@ export function DetentionPolicyForm() {
                 <NumberField
                   control={control}
                   name="notificationLeadMinutes"
-                  label="Warn before expiry"
+                  label={t("Warn before expiry")}
                   placeholder="30"
                   sideText="min"
-                  description="Fires while dispatch can still get the truck unloaded."
+                  description={t("Fires while dispatch can still get the truck unloaded.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField
                   control={control}
                   name="notificationDeadlineMinutes"
-                  label="Grace after expiry"
+                  label={t("Grace after expiry")}
                   placeholder="0"
                   sideText="min"
-                  description="How long after free time a notice still satisfies the contract."
+                  description={t("How long after free time a notice still satisfies the contract.")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField
                   control={control}
                   name="autoSendNotice"
-                  label="Send the notice automatically"
-                  description="The sweep emails the customer the moment the notice window opens, using their configured recipients."
+                  label={t("Send the notice automatically")}
+                  description={t("The sweep emails the customer the moment the notice window opens, using their configured recipients.")}
                   outlined
                   position="left"
                 />
@@ -546,8 +548,8 @@ export function DetentionPolicyForm() {
                 <SwitchField
                   control={control}
                   name="attachNoticePdf"
-                  label="Attach the notice as a PDF"
-                  description="Emails a printable copy alongside the message and files it against the shipment, which is what a customer's claims desk asks for in a dispute."
+                  label={t("Attach the notice as a PDF")}
+                  description={t("Emails a printable copy alongside the message and files it against the shipment, which is what a customer's claims desk asks for in a dispute.")}
                   outlined
                   position="left"
                 />
@@ -556,8 +558,8 @@ export function DetentionPolicyForm() {
                 <SwitchField
                   control={control}
                   name="sendDepartureSummary"
-                  label="Send a summary on departure"
-                  description="Customers rarely dispute a number they were told twice while it was happening."
+                  label={t("Send a summary on departure")}
+                  description={t("Customers rarely dispute a number they were told twice while it was happening.")}
                   outlined
                   position="left"
                 />
@@ -568,37 +570,37 @@ export function DetentionPolicyForm() {
       </FormSection>
 
       <FormSection
-        title="Approval"
-        description="Which charges clear automatically and which need a human"
+        title={t("Approval")}
+        description={t("Which charges clear automatically and which need a human")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="autoApproveUnderAmount"
-              label="Auto-approve under"
-              placeholder="Never auto-approve"
+              label={t("Auto-approve under")}
+              placeholder={t("Never auto-approve")}
               sideText="$"
-              description="Charges below this amount post without review."
+              description={t("Charges below this amount post without review.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="requireApprovalOverAmount"
-              label="Require approval over"
-              placeholder="Never require"
+              label={t("Require approval over")}
+              placeholder={t("Never require")}
               sideText="$"
-              description="Charges above this amount always wait for a human."
+              description={t("Charges above this amount always wait for a human.")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="comments"
-              label="Contract notes"
-              placeholder="Section 4.2 of the 2026 master agreement — detention after 2 free hours at $75/hr"
-              description="Reference the clause this policy encodes, so a dispute can cite it."
+              label={t("Contract notes")}
+              placeholder={t("Section 4.2 of the 2026 master agreement — detention after 2 free hours at $75/hr")}
+              description={t("Reference the clause this policy encodes, so a dispute can cite it.")}
             />
           </FormControl>
         </FormGroup>

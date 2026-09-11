@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BAR_TRANSITION, DivergingBar } from "@/components/detention/detention-charts";
 import { pricingFingerprint } from "@/lib/detention-policy";
 import { apiService } from "@/services/api";
@@ -111,12 +112,14 @@ function RevenueComparison({ result }: { result: BacktestResult }) {
 }
 
 function MoverRow({ bucket, scale }: { bucket: BacktestBucket; scale: number }) {
+  const t = useT();
+
   return (
     <div className="flex items-center gap-3 px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs">{bucket.label || bucket.key}</p>
         <p className="text-2xs text-muted-foreground tabular-nums">
-          {bucket.stopCount} stops · {bucket.billableCount} billable
+          {t("{0} stops · {1} billable", bucket.stopCount, bucket.billableCount)}
         </p>
       </div>
 
@@ -135,6 +138,8 @@ function MoverRow({ bucket, scale }: { bucket: BacktestBucket; scale: number }) 
 }
 
 function ResultView({ result, stale }: { result: BacktestResult; stale: boolean }) {
+  const t = useT();
+
   const [dimension, setDimension] = useState(DIMENSIONS[0].value);
 
   const buckets = dimension === "customer" ? result.byCustomer : result.byFacility;
@@ -172,7 +177,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-                Revenue change
+                {t("Revenue change")}
               </p>
               <p
                 className={cn(
@@ -184,9 +189,9 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
               </p>
             </div>
             <p className="text-2xs text-muted-foreground shrink-0 text-right tabular-nums">
-              {result.stopsMatched} of {result.stopsEvaluated} stops matched
+              {t("{0} of {1} stops matched", result.stopsMatched, result.stopsEvaluated)}
               <br />
-              {result.stopsBillable} would bill
+              {t("{0} would bill", result.stopsBillable)}
             </p>
           </div>
 
@@ -206,14 +211,14 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
         </div>
 
         <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
-          <StatCell label="Driver pay" value={formatCurrency(result.proposedDriverPay)} />
+          <StatCell label={t("Driver pay")} value={formatCurrency(result.proposedDriverPay)} />
           <StatCell
-            label="Net margin"
+            label={t("Net margin")}
             value={formatCurrency(result.proposedNetMargin)}
             className={deltaToneClass(result.proposedNetMargin)}
           />
           <StatCell
-            label="Avg per billed stop"
+            label={t("Avg per billed stop")}
             value={formatCurrency(
               result.stopsBillable > 0 ? result.proposedRevenue / result.stopsBillable : 0,
             )}
@@ -223,18 +228,18 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
 
       <Card className="gap-0 overflow-hidden rounded-lg p-0">
         <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
-          <p className="text-xs font-medium">Biggest movers</p>
+          <p className="text-xs font-medium">{t("Biggest movers")}</p>
           <SegmentedControl
             items={DIMENSIONS}
             value={dimension}
             onValueChange={setDimension}
-            aria-label="Group movers by"
+            aria-label={t("Group movers by")}
           />
         </div>
 
         {movers.length === 0 ? (
           <p className="text-muted-foreground px-3 py-6 text-center text-xs">
-            No stops matched this policy in the selected window.
+            {t("No stops matched this policy in the selected window.")}
           </p>
         ) : (
           <div className="divide-border divide-y">
@@ -257,6 +262,8 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
  * collected given the notices we sent".
  */
 export function DetentionBacktest() {
+  const t = useT();
+
   const { control } = useFormContext<DetentionPolicy>();
   const values = useWatch({ control });
   const policy = values as DetentionPolicy;
@@ -300,11 +307,10 @@ export function DetentionBacktest() {
     <div className="flex flex-col gap-3">
       <div className="min-w-0">
         <h3 className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
-          Backtest
+          {t("Backtest")}
         </h3>
         <p className="text-muted-foreground mt-1 text-xs">
-          Re-price settled history under these terms. The engine is the same one that bills live
-          shipments, so the projection is exact rather than estimated.
+          {t("Re-price settled history under these terms. The engine is the same one that bills live shipments, so the projection is exact rather than estimated.")}
         </p>
       </div>
 
@@ -314,7 +320,7 @@ export function DetentionBacktest() {
             items={WINDOW_OPTIONS}
             value={windowValue}
             onValueChange={setWindowValue}
-            aria-label="Backtest window"
+            aria-label={t("Backtest window")}
           />
           <Button type="button" size="sm" className="h-7" disabled={!ready} onClick={run}>
             {mutation.isPending ? (
@@ -329,7 +335,7 @@ export function DetentionBacktest() {
         <div className="border-border flex items-start justify-between gap-3 border-t px-3 py-2.5">
           <div className="min-w-0">
             <Label htmlFor="assume-compliance" className="text-xs font-medium">
-              Assume notices were sent on time
+              {t("Assume notices were sent on time")}
             </Label>
             <p className="text-2xs text-muted-foreground mt-0.5">
               {assumeCompliance
@@ -347,7 +353,7 @@ export function DetentionBacktest() {
 
       {!ready && (
         <div className="border-border flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed px-3 py-2.5">
-          <span className="text-muted-foreground text-xs">Finish on the Terms tab first:</span>
+          <span className="text-muted-foreground text-xs">{t("Finish on the Terms tab first:")}</span>
           {missing.map((label) => (
             <span
               key={label}
@@ -367,7 +373,7 @@ export function DetentionBacktest() {
         >
           <TriangleAlertIcon className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <span className="text-xs">
-            The terms changed since this run — re-run to see what they are worth.
+            {t("The terms changed since this run — re-run to see what they are worth.")}
           </span>
         </button>
       )}
@@ -383,7 +389,7 @@ export function DetentionBacktest() {
         <div className="border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5">
           <TriangleAlertIcon className="mt-px size-4 shrink-0 text-amber-500" />
           <div className="min-w-0">
-            <p className="text-xs font-medium">The backtest could not run</p>
+            <p className="text-xs font-medium">{t("The backtest could not run")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
               {mutation.error instanceof Error
                 ? mutation.error.message
@@ -399,8 +405,7 @@ export function DetentionBacktest() {
         <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
           <HistoryIcon className="text-muted-foreground/60 size-5" />
           <p className="text-muted-foreground max-w-[18rem] text-xs">
-            Run the backtest to see what these terms would have billed over the last{" "}
-            {WINDOW_OPTIONS.find((option) => option.value === windowValue)?.days} days.
+            {t("Run the backtest to see what these terms would have billed over the last {0} days.", WINDOW_OPTIONS.find((option) => option.value === windowValue)?.days)}
           </p>
         </div>
       )}

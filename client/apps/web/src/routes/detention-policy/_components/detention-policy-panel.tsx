@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { apiService } from "@/services/api";
@@ -68,6 +69,8 @@ export function DetentionPolicyPanel({
   mode,
   row,
 }: DataTablePanelProps<DetentionPolicyRow>) {
+  const t = useT();
+
   const form = useForm<DetentionPolicy>({
     resolver: zodResolver(detentionPolicySchema) as Resolver<DetentionPolicy>,
     defaultValues: DEFAULT_POLICY as DetentionPolicy,
@@ -106,7 +109,7 @@ export function DetentionPolicyPanel({
         row={row}
         form={form}
         queryKey="detention-policy-list"
-        title="Detention Policy"
+        title={t("Detention Policy")}
         fieldKey="name"
         formTabs={formTabs}
         mutationFn={(values, currentRow) => {
@@ -122,8 +125,8 @@ export function DetentionPolicyPanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey="detention-policy-list"
-      title="Detention Policy"
-      description="Encode the contract's detention terms and see what they would charge before they touch a shipment."
+      title={t("Detention Policy")}
+      description={t("Encode the contract's detention terms and see what they would charge before they touch a shipment.")}
       formTabs={formTabs}
       mutationFn={(values) => apiService.detentionPolicyService.create(values)}
     />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -22,6 +23,8 @@ const RATE_UNIT_OPTIONS = [
  * construction means operators rarely see that error.
  */
 export function DetentionTierEditor() {
+  const t = useT();
+
   const { control } = useFormContext<DetentionPolicy>();
   const { fields, append, remove } = useFieldArray({ control, name: "tiers" });
   const tiers = useWatch({ control, name: "tiers" }) ?? [];
@@ -50,8 +53,7 @@ export function DetentionTierEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously;
-          the final rung may be open-ended.
+          {t("No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously; the final rung may be open-ended.")}
         </p>
       )}
 
@@ -59,7 +61,7 @@ export function DetentionTierEditor() {
         <div key={field.id} className="rounded-md border p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-medium">
-              Tier {index + 1}
+              {t("Tier")} {index + 1}
               {tiers[index] && (
                 <span className="text-muted-foreground ml-2 font-normal">
                   {formatDetentionMinutes(tiers[index].fromMinute)} –{" "}
@@ -74,7 +76,7 @@ export function DetentionTierEditor() {
               className="h-6 text-xs"
               onClick={() => remove(index)}
             >
-              Remove
+              {t("Remove")}
             </Button>
           </div>
 
@@ -83,43 +85,43 @@ export function DetentionTierEditor() {
               <NumberField
                 control={control}
                 name={`tiers.${index}.fromMinute`}
-                label="From"
+                label={t("From")}
                 placeholder="0"
                 sideText="min"
                 rules={{ required: true }}
-                description="Billable minute this rung starts at."
+                description={t("Billable minute this rung starts at.")}
               />
             </FormControl>
             <FormControl>
               <NumberField
                 control={control}
                 name={`tiers.${index}.toMinute`}
-                label="To"
-                placeholder="Open-ended"
+                label={t("To")}
+                placeholder={t("Open-ended")}
                 sideText="min"
-                description="Leave empty for the final open-ended rung."
+                description={t("Leave empty for the final open-ended rung.")}
               />
             </FormControl>
             <FormControl>
               <NumberField
                 control={control}
                 name={`tiers.${index}.rate`}
-                label="Rate"
+                label={t("Rate")}
                 placeholder="75.00"
                 sideText="$"
                 rules={{ required: true }}
-                description="Amount charged per unit inside this rung."
+                description={t("Amount charged per unit inside this rung.")}
               />
             </FormControl>
             <FormControl>
               <SelectField
                 control={control}
                 name={`tiers.${index}.rateUnit`}
-                label="Unit"
-                placeholder="Select unit"
+                label={t("Unit")}
+                placeholder={t("Select unit")}
                 rules={{ required: true }}
                 options={RATE_UNIT_OPTIONS}
-                description="How the rate applies: per hour, per day, or flat."
+                description={t("How the rate applies: per hour, per day, or flat.")}
               />
             </FormControl>
           </div>
@@ -128,9 +130,9 @@ export function DetentionTierEditor() {
             <InputField
               control={control}
               name={`tiers.${index}.label`}
-              label="Label"
-              placeholder="First 2 hours"
-              description="Shown on the calculation receipt when this rung applies."
+              label={t("Label")}
+              placeholder={t("First 2 hours")}
+              description={t("Shown on the calculation receipt when this rung applies.")}
             />
           </FormControl>
         </div>
@@ -144,11 +146,11 @@ export function DetentionTierEditor() {
           onClick={appendTier}
           disabled={lastIsOpenEnded}
         >
-          Add tier
+          {t("Add tier")}
         </Button>
         {lastIsOpenEnded && (
           <p className="text-muted-foreground mt-1 text-xs">
-            Close the final tier before adding another; only the last rung may be open-ended.
+            {t("Close the final tier before adding another; only the last rung may be open-ended.")}
           </p>
         )}
       </div>
