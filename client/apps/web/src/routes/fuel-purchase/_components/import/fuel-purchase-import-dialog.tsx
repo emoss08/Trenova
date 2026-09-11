@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FuelCardAutocompleteField } from "@/components/autocomplete-fields";
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
 import { InputField } from "@/components/fields/input-field";
@@ -94,6 +95,8 @@ type StatementUploaderProps = {
 };
 
 function StatementUploader({ batch, file, onUploaded, onFailed }: StatementUploaderProps) {
+  const t = useT();
+
   const { uploads, uploadFiles } = useDocumentUpload({
     resourceId: batch.id,
     resourceType: "fuel_purchase_import",
@@ -115,18 +118,20 @@ function StatementUploader({ batch, file, onUploaded, onFailed }: StatementUploa
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3" aria-busy="true">
       <p className="text-sm font-medium">{label}</p>
-      <Progress value={progress} aria-label="Upload progress" />
+      <Progress value={progress} aria-label={t("Upload progress")} />
       <p className="text-muted-foreground text-xs">
-        {progress}% · Nothing is recorded until you review the rows and confirm.
+        {t("{0}% · Nothing is recorded until you review the rows and confirm.", progress)}
       </p>
     </div>
   );
 }
 
 function StepIndicator({ current }: { current: (typeof STEPS)[number]["id"] }) {
+  const t = useT();
+
   const currentIndex = STEPS.findIndex((step) => step.id === current);
   return (
-    <ol className="flex items-center gap-2 text-xs" aria-label="Import steps">
+    <ol className="flex items-center gap-2 text-xs" aria-label={t("Import steps")}>
       {STEPS.map((step, index) => (
         <li key={step.id} className="flex items-center gap-2">
           <span
@@ -177,6 +182,8 @@ export function FuelPurchaseImportDialog({ open, onOpenChange }: FuelPurchaseImp
 }
 
 function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "onOpenChange">) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [batch, setBatch] = useState<FuelPurchaseImportBatch | undefined>();
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -227,7 +234,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
       commitFuelPurchaseImport(current.id, current.version),
     onSuccess: async (committed) => {
       setBatch(committed);
-      toast.success("Statement imported", {
+      toast.success(t("Statement imported"), {
         description: `${committed.committedCount} ${committed.committedCount === 1 ? "purchase" : "purchases"} recorded.`,
       });
       await queryClient.invalidateQueries({ queryKey: [FUEL_PURCHASE_LIST_KEY] });
@@ -244,7 +251,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
   const { mutate: downloadTemplate, isPending: downloadingTemplate } = useMutation({
     mutationFn: () => fetchFuelPurchaseImportTemplate(provider),
     onSuccess: ({ fileName, content }) => downloadCsv(content, fileName),
-    onError: () => toast.error("The template could not be downloaded"),
+    onError: () => toast.error(t("The template could not be downloaded")),
   });
 
   const handleFile = useCallback(
@@ -330,10 +337,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
       >
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Import Fuel Card Statement</DialogTitle>
+            <DialogTitle>{t("Import Fuel Card Statement")}</DialogTitle>
             <DialogDescription>
-              Upload a provider statement, read what it would record, then confirm. Nothing becomes
-              a purchase until you do.
+              {t("Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.")}
             </DialogDescription>
             <StepIndicator current={step} />
           </DialogHeader>
@@ -347,47 +353,47 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                       <SelectField
                         control={form.control}
                         name="provider"
-                        label="Provider"
+                        label={t("Provider")}
                         options={fuelCardProviderChoices}
                         rules={{ required: true }}
-                        placeholder="Select a provider"
+                        placeholder={t("Select a provider")}
                         isReadOnly={busy}
-                        description="Picks the column layout the statement is read with."
+                        description={t("Picks the column layout the statement is read with.")}
                       />
                     </FormControl>
                     <FormControl>
                       <FuelCardAutocompleteField<FuelPurchaseImportSetupValues>
                         control={form.control}
                         name="defaultFuelCardId"
-                        label="Default card"
-                        placeholder="Select a card"
+                        label={t("Default card")}
+                        placeholder={t("Select a card")}
                         clearable
                         disabled={busy}
-                        description="Used for rows the statement cannot match to a card of their own."
+                        description={t("Used for rows the statement cannot match to a card of their own.")}
                       />
                     </FormControl>
                     <FormControl>
                       <SelectField
                         control={form.control}
                         name="defaultFuelType"
-                        label="Default fuel type"
+                        label={t("Default fuel type")}
                         options={iftaFuelTypeChoices}
-                        placeholder="Select a fuel type"
+                        placeholder={t("Select a fuel type")}
                         isClearable
                         isReadOnly={busy}
-                        description="Applied when the statement has no product column."
+                        description={t("Applied when the statement has no product column.")}
                       />
                     </FormControl>
                     <FormControl>
                       <InputField
                         control={form.control}
                         name="defaultCurrency"
-                        label="Currency"
-                        placeholder="USD"
+                        label={t("Currency")}
+                        placeholder={t("USD")}
                         maxLength={3}
                         rules={{ required: true }}
                         readOnly={busy}
-                        description="Three-letter code for amounts the statement does not label."
+                        description={t("Three-letter code for amounts the statement does not label.")}
                       />
                     </FormControl>
                   </FormGroup>
@@ -417,14 +423,14 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
               {problem ? (
                 <Alert variant="destructive">
                   <CircleAlertIcon className="size-4" />
-                  <AlertTitle>The statement could not be staged</AlertTitle>
+                  <AlertTitle>{t("The statement could not be staged")}</AlertTitle>
                   <AlertDescription>{problem}</AlertDescription>
                 </Alert>
               ) : null}
 
               <div className="bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
                 <p className="text-muted-foreground text-xs">
-                  Not sure of the layout? Start from the {provider} template.
+                  {t("Not sure of the layout? Start from the {0} template.", provider)}
                 </p>
                 <Button
                   type="button"
@@ -435,7 +441,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                   className="gap-1.5"
                 >
                   <DownloadIcon className="size-3.5" />
-                  Download template
+                  {t("Download template")}
                 </Button>
               </div>
             </div>
@@ -459,10 +465,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
               {failed ? (
                 <Alert variant="destructive">
                   <CircleAlertIcon className="size-4" />
-                  <AlertTitle>The statement could not be read</AlertTitle>
+                  <AlertTitle>{t("The statement could not be read")}</AlertTitle>
                   <AlertDescription>
-                    {batch.error ?? "No reason was reported."} Every row that failed is listed
-                    below; fix the file and upload it again.
+                    {t("{0} Every row that failed is listed below; fix the file and upload it again.", batch.error ?? "No reason was reported.")}
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -501,8 +506,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
               <p className="text-sm font-medium">{importHeadline(batch)}</p>
               {batch.status === "Committed" ? (
                 <p className="text-muted-foreground text-xs">
-                  They are in the purchases table now and will be counted the next time the
-                  quarter&apos;s return is computed.
+                  {t("They are in the purchases table now and will be counted the next time the quarter's return is computed.")}
                 </p>
               ) : null}
             </div>
@@ -511,7 +515,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
           <DialogFooter>
             {step === "setup" ? (
               <Button type="button" variant="outline" onClick={requestClose} disabled={busy}>
-                Close
+                {t("Close")}
               </Button>
             ) : null}
             {step === "review" ? (
@@ -522,17 +526,17 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                   onClick={requestDiscard}
                   disabled={discarding || committing}
                 >
-                  Discard
+                  {t("Discard")}
                 </Button>
                 {failed ? (
                   <Button type="button" onClick={resetAll}>
-                    Try another file
+                    {t("Try another file")}
                   </Button>
                 ) : (
                   <Button
                     type="button"
                     isLoading={committing}
-                    loadingText="Importing..."
+                    loadingText={t("Importing...")}
                     disabled={!canCommitImport(batch)}
                     onClick={() => batch && commitBatch(batch)}
                   >
@@ -543,7 +547,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
             ) : null}
             {step === "done" ? (
               <Button type="button" onClick={close}>
-                Done
+                {t("Done")}
               </Button>
             ) : null}
           </DialogFooter>
@@ -567,7 +571,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={discarding}>Keep reviewing</AlertDialogCancel>
+            <AlertDialogCancel disabled={discarding}>{t("Keep reviewing")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={confirmDiscard} disabled={discarding}>
               {discarding ? "Discarding..." : "Discard import"}
             </AlertDialogAction>

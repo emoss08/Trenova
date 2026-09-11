@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FuelCardAutocompleteField,
   TractorAutocompleteField,
@@ -39,6 +40,8 @@ export function FuelPurchaseForm({
   imported = false,
   importBatchId,
 }: FuelPurchaseFormProps) {
+  const t = useT();
+
   const { control, getValues, setValue } = useFormContext<FuelPurchaseFormValues>();
   const quantity = useWatch({ control, name: "quantity" });
   const unitPrice = useWatch({ control, name: "unitPrice" });
@@ -98,28 +101,26 @@ export function FuelPurchaseForm({
       {isEdit && imported ? (
         <Alert>
           <FileSpreadsheetIcon className="size-4" />
-          <AlertTitle>Imported from a fuel card statement</AlertTitle>
+          <AlertTitle>{t("Imported from a fuel card statement")}</AlertTitle>
           <AlertDescription>
-            The card and transaction reference came from the statement and are read-only here, so
-            the same statement cannot be counted twice if it is imported again.
-            {importBatchId ? ` Batch ${importBatchId}.` : ""}
+            {t("The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}", importBatchId ? ` Batch ${importBatchId}.` : "")}
           </AlertDescription>
         </Alert>
       ) : null}
 
       <FormSection
-        title="Unit, driver & place"
-        description="Which tractor was fuelled, who was driving, and where the fuel was bought."
+        title={t("Unit, driver & place")}
+        description={t("Which tractor was fuelled, who was driving, and where the fuel was bought.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <TractorAutocompleteField<FuelPurchaseFormValues>
               control={control}
               name="tractorId"
-              label="Tractor"
+              label={t("Tractor")}
               rules={{ required: true }}
-              placeholder="Select a tractor"
-              description="The unit the fuel went into. Its miles and this fuel meet on the return."
+              placeholder={t("Select a tractor")}
+              description={t("The unit the fuel went into. Its miles and this fuel meet on the return.")}
               onOptionChange={prefillWorker}
             />
           </FormControl>
@@ -127,20 +128,20 @@ export function FuelPurchaseForm({
             <WorkerAutocompleteField<FuelPurchaseFormValues>
               control={control}
               name="workerId"
-              label="Driver"
-              placeholder="Select a driver"
+              label={t("Driver")}
+              placeholder={t("Select a driver")}
               clearable
-              description="Filled from the tractor's primary driver when left empty."
+              description={t("Filled from the tractor's primary driver when left empty.")}
             />
           </FormControl>
           <FormControl>
             <AutoCompleteDateTimeField
               control={control}
               name="purchasedAt"
-              label="Purchased at"
+              label={t("Purchased at")}
               rules={{ required: true }}
-              placeholder="Date and time of the purchase"
-              description="Decides which quarter the purchase falls in. Cannot be in the future."
+              placeholder={t("Date and time of the purchase")}
+              description={t("Decides which quarter the purchase falls in. Cannot be in the future.")}
             />
           </FormControl>
           <FormControl>
@@ -148,15 +149,13 @@ export function FuelPurchaseForm({
               <IftaJurisdictionSelectField<FuelPurchaseFormValues>
                 control={control}
                 name="jurisdictionId"
-                label="Jurisdiction"
+                label={t("Jurisdiction")}
                 rules={{ required: true }}
-                placeholder="Select a jurisdiction"
-                description="Where the pump was. This decides which line of the return gets the tax-paid credit."
+                placeholder={t("Select a jurisdiction")}
+                description={t("Where the pump was. This decides which line of the return gets the tax-paid credit.")}
               />
-              <InfoPopover title="Jurisdiction vs vendor state" className="absolute top-0 right-0">
-                The jurisdiction is the state or province the pump stands in, which is what the
-                return credits. A chain&apos;s billing address or the state on the receipt header
-                can be somewhere else entirely, so read the location line, not the vendor line.
+              <InfoPopover title={t("Jurisdiction vs vendor state")} className="absolute top-0 right-0">
+                {t("The jurisdiction is the state or province the pump stands in, which is what the return credits. A chain's billing address or the state on the receipt header can be somewhere else entirely, so read the location line, not the vendor line.")}
               </InfoPopover>
             </div>
           </FormControl>
@@ -164,50 +163,50 @@ export function FuelPurchaseForm({
             <InputField
               control={control}
               name="vendor"
-              label="Vendor"
-              placeholder="e.g. Love's #412"
+              label={t("Vendor")}
+              placeholder={t("e.g. Love's #412")}
               maxLength={200}
-              description="The truck stop or station, as it appears on the receipt."
+              description={t("The truck stop or station, as it appears on the receipt.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="vendorCity"
-              label="City"
-              placeholder="e.g. Amarillo"
+              label={t("City")}
+              placeholder={t("e.g. Amarillo")}
               maxLength={100}
-              description="Helps a reviewer place the stop when the vendor name is ambiguous."
+              description={t("Helps a reviewer place the stop when the vendor name is ambiguous.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Fuel"
-        description="What was bought and what it cost. The total follows quantity × price until you change it."
+        title={t("Fuel")}
+        description={t("What was bought and what it cost. The total follows quantity × price until you change it.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="fuelType"
-              label="Fuel type"
+              label={t("Fuel type")}
               options={iftaFuelTypeChoices}
               rules={{ required: true }}
-              placeholder="Select a fuel type"
-              description="DEF, reefer and other non-IFTA products are tracked as spend only."
+              placeholder={t("Select a fuel type")}
+              description={t("DEF, reefer and other non-IFTA products are tracked as spend only.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="quantityUnit"
-              label="Unit"
+              label={t("Unit")}
               options={fuelQuantityUnitChoices}
               rules={{ required: true }}
-              placeholder="Select a unit"
-              description="Litres are converted to US gallons for the return."
+              placeholder={t("Select a unit")}
+              description={t("Litres are converted to US gallons for the return.")}
             />
           </FormControl>
           <FormControl>
@@ -215,7 +214,7 @@ export function FuelPurchaseForm({
               control={control}
               name="quantity"
               valueType="string"
-              label="Quantity"
+              label={t("Quantity")}
               placeholder="120.500"
               decimalScale={3}
               thousandSeparator
@@ -232,7 +231,7 @@ export function FuelPurchaseForm({
               valueType="string"
               label={`Price per ${unitLabel}`}
               placeholder="3.8990"
-              description="Up to four decimals. Leave empty when only the total is known."
+              description={t("Up to four decimals. Leave empty when only the total is known.")}
             />
           </FormControl>
           <FormControl>
@@ -242,7 +241,7 @@ export function FuelPurchaseForm({
               control={control}
               name="totalAmount"
               valueType="string"
-              label="Total paid"
+              label={t("Total paid")}
               placeholder="469.83"
               rules={{ required: true }}
               description={
@@ -259,7 +258,7 @@ export function FuelPurchaseForm({
                 className="h-auto justify-start px-0 py-0 text-xs"
                 onClick={useComputed}
               >
-                Use computed ({formatCurrency(Number(computed), currencyCode || "USD")})
+                {t("Use computed ({0})", formatCurrency(Number(computed), currencyCode || "USD"))}
               </Button>
             ) : null}
           </FormControl>
@@ -267,9 +266,9 @@ export function FuelPurchaseForm({
             <SelectField
               control={control}
               name="currencyCode"
-              label="Currency"
-              placeholder="USD"
-              description="Three-letter code. Canadian purchases are usually CAD."
+              label={t("Currency")}
+              placeholder={t("USD")}
+              description={t("Three-letter code. Canadian purchases are usually CAD.")}
               options={currencyChoices}
               rules={{ required: true }}
             />
@@ -278,29 +277,29 @@ export function FuelPurchaseForm({
             <NumberField
               control={control}
               name="odometer"
-              label="Odometer"
+              label={t("Odometer")}
               placeholder="412113"
               sideText="mi"
               min={0}
-              description="Reading at the pump, if recorded. Lets fuel be checked against miles run."
+              description={t("Reading at the pump, if recorded. Lets fuel be checked against miles run.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Card & tax"
-        description="How it was paid for and whether fuel tax was included at the pump."
+        title={t("Card & tax")}
+        description={t("How it was paid for and whether fuel tax was included at the pump.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <FuelCardAutocompleteField<FuelPurchaseFormValues>
               control={control}
               name="fuelCardId"
-              label="Fuel card"
-              placeholder="Select a card"
+              label={t("Fuel card")}
+              placeholder={t("Select a card")}
               clearable
               disabled={imported}
-              description="The card the purchase was charged to, when one was used."
+              description={t("The card the purchase was charged to, when one was used.")}
             />
           </FormControl>
           <FormControl>
@@ -310,16 +309,15 @@ export function FuelPurchaseForm({
               valueType="string"
               label={
                 <span className="inline-flex items-center gap-1">
-                  Card last four
-                  <InfoPopover title="Why only the last four">
-                    Statements identify a card by its last four digits, and that is all a purchase
-                    needs to be matched back to it. The full card number is never stored.
+                  {t("Card last four")}
+                  <InfoPopover title={t("Why only the last four")}>
+                    {t("Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. The full card number is never stored.")}
                   </InfoPopover>
                 </span>
               }
               placeholder="4821"
               readOnly={imported}
-              description="From the receipt, when the card is not registered here."
+              description={t("From the receipt, when the card is not registered here.")}
             />
           </FormControl>
           <FormControl cols="full">
@@ -328,28 +326,25 @@ export function FuelPurchaseForm({
               name="transactionReference"
               label={
                 <span className="inline-flex items-center gap-1">
-                  Transaction reference
-                  <InfoPopover title="Why record it">
-                    The reference is unique within the organization. When a statement is imported
-                    later, rows whose reference is already on file are marked as already imported
-                    rather than recorded twice, so keying it here protects the quarter from
-                    double-counting.
+                  {t("Transaction reference")}
+                  <InfoPopover title={t("Why record it")}>
+                    {t("The reference is unique within the organization. When a statement is imported later, rows whose reference is already on file are marked as already imported rather than recorded twice, so keying it here protects the quarter from double-counting.")}
                   </InfoPopover>
                 </span>
               }
-              placeholder="e.g. EFS-77812"
+              placeholder={t("e.g. EFS-77812")}
               maxLength={100}
               readOnly={imported}
-              description="The provider's transaction number from the receipt or statement."
+              description={t("The provider's transaction number from the receipt or statement.")}
             />
           </FormControl>
           <FormControl cols="full">
             <SwitchField
               control={control}
               name="taxPaid"
-              label="Fuel tax paid at the pump"
-              description="Leave on for retail purchases. Turn off for bulk or tax-exempt fuel."
-              tooltip="Bulk or untaxed fuel still counts in the fleet's MPG gallons but earns no tax-paid credit on the return."
+              label={t("Fuel tax paid at the pump")}
+              description={t("Leave on for retail purchases. Turn off for bulk or tax-exempt fuel.")}
+              tooltip={t("Bulk or untaxed fuel still counts in the fleet's MPG gallons but earns no tax-paid credit on the return.")}
               position="left"
               outlined
             />
@@ -358,10 +353,10 @@ export function FuelPurchaseForm({
             <TextareaField
               control={control}
               name="notes"
-              label="Notes"
-              placeholder="e.g. Receipt shows two products; reefer fuel entered separately"
+              label={t("Notes")}
+              placeholder={t("e.g. Receipt shows two products; reefer fuel entered separately")}
               maxLength={2000}
-              description="Anything a reviewer of the quarter should know about this purchase."
+              description={t("Anything a reviewer of the quarter should know about this purchase.")}
             />
           </FormControl>
         </FormGroup>

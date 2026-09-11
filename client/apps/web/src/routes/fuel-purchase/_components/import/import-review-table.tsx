@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   IMPORT_ROW_FILTER_LABELS,
   IMPORT_ROW_FILTER_STATUSES,
@@ -74,6 +75,8 @@ export function ImportReviewTable({
   onFilterChange,
   showFilters = true,
 }: ImportReviewTableProps) {
+  const t = useT();
+
   const query = useInfiniteQuery({
     queryKey: [FUEL_PURCHASE_IMPORT_ROWS_KEY, batch.id, batch.version, filter],
     queryFn: ({ pageParam, signal }) =>
@@ -96,7 +99,7 @@ export function ImportReviewTable({
   return (
     <div className="flex flex-col gap-2">
       {showFilters ? (
-        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Row filter">
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label={t("Row filter")}>
           {FILTERS.map((option) => (
             <Button
               key={option}
@@ -122,16 +125,16 @@ export function ImportReviewTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-xs">Line</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs">Purchased</TableHead>
-                <TableHead className="text-xs">Tractor</TableHead>
-                <TableHead className="text-xs">Where</TableHead>
-                <TableHead className="text-xs">Fuel</TableHead>
-                <TableHead className="text-right text-xs">Gallons</TableHead>
-                <TableHead className="text-right text-xs">Amount</TableHead>
-                <TableHead className="text-xs">Reference</TableHead>
-                <TableHead className="text-xs">Note</TableHead>
+                <TableHead className="w-12 text-xs">{t("Line")}</TableHead>
+                <TableHead className="text-xs">{t("Status")}</TableHead>
+                <TableHead className="text-xs">{t("Purchased")}</TableHead>
+                <TableHead className="text-xs">{t("Tractor")}</TableHead>
+                <TableHead className="text-xs">{t("Where")}</TableHead>
+                <TableHead className="text-xs">{t("Fuel")}</TableHead>
+                <TableHead className="text-right text-xs">{t("Gallons")}</TableHead>
+                <TableHead className="text-right text-xs">{t("Amount")}</TableHead>
+                <TableHead className="text-xs">{t("Reference")}</TableHead>
+                <TableHead className="text-xs">{t("Note")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,7 +149,7 @@ export function ImportReviewTable({
               ) : query.isError ? (
                 <TableRow>
                   <TableCell colSpan={10} className="text-destructive text-xs">
-                    The rows could not be loaded.{" "}
+                    {t("The rows could not be loaded.")}{" "}
                     <Button
                       type="button"
                       variant="link"
@@ -154,14 +157,14 @@ export function ImportReviewTable({
                       className="h-auto px-1 py-0 text-xs"
                       onClick={() => void query.refetch()}
                     >
-                      Retry
+                      {t("Retry")}
                     </Button>
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={10} className="text-muted-foreground text-xs">
-                    No rows in this view.
+                    {t("No rows in this view.")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -234,7 +237,7 @@ export function ImportReviewTable({
             isLoading={query.isFetchingNextPage}
             onClick={() => void query.fetchNextPage()}
           >
-            Load more
+            {t("Load more")}
           </Button>
         ) : null}
       </div>
