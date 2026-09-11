@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { RecurringShipmentRow } from "@/lib/graphql/recurring-shipment-table";
@@ -30,6 +31,8 @@ export function RecurringShipmentPanel({
   mode,
   row,
 }: DataTablePanelProps<RecurringShipmentRow>) {
+  const t = useT();
+
   const form = useForm<RecurringShipment>({
     resolver: zodResolver(recurringShipmentSchema) as Resolver<RecurringShipment>,
     defaultValues: defaultValues as DefaultValues<RecurringShipment>,
@@ -45,7 +48,7 @@ export function RecurringShipmentPanel({
         form={form}
         url="/recurring-shipments/"
         queryKey="recurring-shipment-list"
-        title="Recurring Shipment"
+        title={t("Recurring Shipment")}
         fieldKey="name"
         formComponent={<RecurringShipmentForm mode="edit" />}
       />
@@ -59,7 +62,7 @@ export function RecurringShipmentPanel({
       form={form}
       url="/recurring-shipments/"
       queryKey="recurring-shipment-list"
-      title="Recurring Shipment"
+      title={t("Recurring Shipment")}
       formComponent={<RecurringShipmentForm mode="create" />}
     />
   );
