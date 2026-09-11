@@ -1879,6 +1879,35 @@ func (r *Registry) registerOperationsResources() {
 
 func (r *Registry) registerBillingResources() {
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceInvoiceRun.String(),
+		DisplayName: "Invoice Run",
+		Description: "Consolidated invoice batch preview and commit",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View invoice runs"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Build an invoice run preview",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Adjust invoice run membership",
+			},
+			// Issuing invoices to customers is a separable authority from building
+			// a preview, so a four-eyes billing shop can grant one without the other.
+			{
+				Operation:   OpApprove,
+				DisplayName: "Commit",
+				Description: "Commit an invoice run and issue its invoices",
+			},
+			{Operation: OpCancel, DisplayName: "Cancel", Description: "Discard an invoice run"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceInvoice.String(),
 		DisplayName: "Invoice",
 		Description: "Invoice management",

@@ -33,8 +33,6 @@ func (r *repository) ListConsolidationCandidates(
 		limit = defaultCandidateLimit
 	}
 
-	windowStart := req.PeriodStart - int64(req.LookbackDays)*86_400
-
 	candidates := make([]*repositories.ConsolidationCandidate, 0, limit)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -54,6 +52,11 @@ func (r *repository) ListConsolidationCandidates(
 		ColumnExpr("sp.actual_delivery_date AS service_date").
 		ColumnExpr("sp.total_charge_amount AS total_charge_amount").
 		ColumnExpr("COALESCE(cbp.billing_currency, 'USD') AS currency_code").
+		ColumnExpr("COALESCE(cbp.split_by, 'Customer') AS split_by").
+		ColumnExpr("COALESCE(cbp.section_by, 'Shipment') AS section_by").
+		ColumnExpr("COALESCE(cbp.invoice_detail, 'Detailed') AS invoice_detail").
+		ColumnExpr("COALESCE(cbp.max_shipments_per_invoice, 0) AS max_shipments_per_invoice").
+		ColumnExpr("cbp.min_consolidated_amount AS min_consolidated_amount").
 		ColumnExpr(
 			"COUNT(*) FILTER (WHERE TRUE) OVER (PARTITION BY sp.order_id) AS order_eligible_legs",
 		).
@@ -116,7 +119,10 @@ func (r *repository) ListConsolidationCandidates(
 			shipment.StatusReadyToInvoice,
 			shipment.StatusCompleted,
 		})).
-		Where("COALESCE(sp.actual_delivery_date, bqi.created_at) >= ?", windowStart).
+		Where(
+			"COALESCE(sp.actual_delivery_date, bqi.created_at) >= ? - COALESCE(cbp.consolidation_lookback_days, 30) * 86400",
+			req.PeriodStart,
+		).
 		Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
 		OrderExpr("sp.customer_id ASC, sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
 		Limit(limit).

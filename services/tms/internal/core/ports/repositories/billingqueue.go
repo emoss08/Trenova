@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -48,12 +49,11 @@ type AttachInvoiceRequest struct {
 // delivered inside the period but only approved after it closed; without it those
 // straggle into the next period and the customer's statement is wrong twice.
 type ListConsolidationCandidatesRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"-"`
-	CustomerIDs  []pulid.ID            `json:"-"`
-	PeriodStart  int64                 `json:"-"`
-	PeriodEnd    int64                 `json:"-"`
-	LookbackDays int16                 `json:"-"`
-	Limit        int                   `json:"-"`
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	CustomerIDs []pulid.ID            `json:"-"`
+	PeriodStart int64                 `json:"-"`
+	PeriodEnd   int64                 `json:"-"`
+	Limit       int                   `json:"-"`
 }
 
 // ConsolidationCandidate is one approved billing-queue item flattened with every
@@ -83,6 +83,15 @@ type ConsolidationCandidate struct {
 	// never sees it.
 	OrderEligibleLegs int `bun:"order_eligible_legs"`
 	OrderTotalLegs    int `bun:"order_total_legs"`
+
+	// The customer's own schedule settings ride along so grouping needs no second
+	// lookup per customer, and so the settings the operator configured are the
+	// ones that actually shape the run.
+	SplitBy                customer.InvoiceSplitKey   `bun:"split_by"`
+	SectionBy              customer.InvoiceSectionKey `bun:"section_by"`
+	InvoiceDetail          customer.InvoiceDetail     `bun:"invoice_detail"`
+	MaxShipmentsPerInvoice int16                      `bun:"max_shipments_per_invoice"`
+	MinConsolidatedAmount  decimal.NullDecimal        `bun:"min_consolidated_amount"`
 }
 
 type BillingQueueRepository interface {

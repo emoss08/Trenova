@@ -6147,6 +6147,9 @@
                 "invoiceDate": {
                     "type": "integer"
                 },
+                "invoiceRunId": {
+                    "type": "string"
+                },
                 "isAdjustmentArtifact": {
                     "type": "boolean"
                 },
@@ -6415,6 +6418,297 @@
             "x-enum-varnames": [
                 "StatusDraft",
                 "StatusPosted"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoicerun.GroupStatus": {
+            "enum": [
+                "Pending",
+                "Committed",
+                "Skipped",
+                "Failed"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "GroupStatusPending",
+                "GroupStatusCommitted",
+                "GroupStatusSkipped",
+                "GroupStatusFailed"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun": {
+            "properties": {
+                "builtAt": {
+                    "type": "integer"
+                },
+                "builtById": {
+                    "type": "string"
+                },
+                "businessUnit": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "canceledAt": {
+                    "type": "integer"
+                },
+                "canceledById": {
+                    "type": "string"
+                },
+                "committedAt": {
+                    "type": "integer"
+                },
+                "committedById": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "currencyCode": {
+                    "type": "string"
+                },
+                "customerIds": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "cycle": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.BillingCycle"
+                },
+                "excludedCount": {
+                    "type": "integer"
+                },
+                "failureReason": {
+                    "type": "string"
+                },
+                "groupCount": {
+                    "type": "integer"
+                },
+                "groups": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroup"
+                    },
+                    "type": "array"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoiceCount": {
+                    "type": "integer"
+                },
+                "invoiceDate": {
+                    "type": "integer"
+                },
+                "itemCount": {
+                    "type": "integer"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "periodEnd": {
+                    "type": "integer"
+                },
+                "periodStart": {
+                    "type": "integer"
+                },
+                "source": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.Source"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.Status"
+                },
+                "totalAmount": {
+                    "type": "number"
+                },
+                "totalAmountMinor": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroup": {
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "currencyCode": {
+                    "type": "string"
+                },
+                "customer": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.Customer"
+                },
+                "customerId": {
+                    "type": "string"
+                },
+                "groupKey": {
+                    "type": "string"
+                },
+                "groupLabel": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoice": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.Invoice"
+                },
+                "invoiceId": {
+                    "type": "string"
+                },
+                "itemCount": {
+                    "type": "integer"
+                },
+                "items": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroupItem"
+                    },
+                    "type": "array"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "runId": {
+                    "type": "string"
+                },
+                "skipReason": {
+                    "type": "string"
+                },
+                "splitBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSplitKey"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.GroupStatus"
+                },
+                "subtotalAmount": {
+                    "type": "number"
+                },
+                "subtotalAmountMinor": {
+                    "type": "integer"
+                },
+                "totalAmount": {
+                    "type": "number"
+                },
+                "totalAmountMinor": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroupItem": {
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "amountMinor": {
+                    "type": "integer"
+                },
+                "billingQueueItemId": {
+                    "type": "string"
+                },
+                "bol": {
+                    "type": "string"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "excluded": {
+                    "type": "boolean"
+                },
+                "exclusionReason": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "orderId": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "poNumber": {
+                    "type": "string"
+                },
+                "proNumber": {
+                    "type": "string"
+                },
+                "runId": {
+                    "type": "string"
+                },
+                "serviceDate": {
+                    "type": "integer"
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "sortKey": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoicerun.Source": {
+            "enum": [
+                "Manual",
+                "Scheduled"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "SourceManual",
+                "SourceScheduled"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoicerun.Status": {
+            "enum": [
+                "Building",
+                "Ready",
+                "Committing",
+                "Committed",
+                "Failed",
+                "Canceled"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "StatusBuilding",
+                "StatusReady",
+                "StatusCommitting",
+                "StatusCommitted",
+                "StatusFailed",
+                "StatusCanceled"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortRequirement": {
@@ -12789,7 +13083,8 @@
                 "manual_journal_request",
                 "location_code",
                 "driver_settlement",
-                "carrier_settlement"
+                "carrier_settlement",
+                "invoice_run"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -12805,7 +13100,8 @@
                 "SequenceTypeManualJournalRequest",
                 "SequenceTypeLocationCode",
                 "SequenceTypeDriverSettlement",
-                "SequenceTypeCarrierSettlement"
+                "SequenceTypeCarrierSettlement",
+                "SequenceTypeInvoiceRun"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_tenant.ShipmentControl": {
@@ -15132,6 +15428,58 @@
                     "type": "integer"
                 },
                 "total": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.CommitGroupResult": {
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "groupLabel": {
+                    "type": "string"
+                },
+                "invoiceId": {
+                    "type": "string"
+                },
+                "invoiceNumber": {
+                    "type": "string"
+                },
+                "skipped": {
+                    "type": "boolean"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.CommitInvoiceRunResult": {
+            "properties": {
+                "errorCount": {
+                    "type": "integer"
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CommitGroupResult"
+                    },
+                    "type": "array"
+                },
+                "run": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun"
+                },
+                "skippedCount": {
+                    "type": "integer"
+                },
+                "successCount": {
+                    "type": "integer"
+                },
+                "totalCount": {
                     "type": "integer"
                 }
             },
@@ -18267,6 +18615,26 @@
             },
             "type": "object"
         },
+        "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_invoicerun_InvoiceRun": {
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "next": {
+                    "type": "string"
+                },
+                "previous": {
+                    "type": "string"
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_location_Location": {
             "properties": {
                 "count": {
@@ -19764,6 +20132,79 @@
                         "type": "string"
                     },
                     "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "internal_api_handlers_invoicerunhandler.cancelRequest": {
+            "properties": {
+                "reason": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "internal_api_handlers_invoicerunhandler.exclusionRequest": {
+            "properties": {
+                "itemId": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "internal_api_handlers_invoicerunhandler.membershipRequest": {
+            "properties": {
+                "exclude": {
+                    "items": {
+                        "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.exclusionRequest"
+                    },
+                    "type": "array"
+                },
+                "include": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "moves": {
+                    "items": {
+                        "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.moveRequest"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "internal_api_handlers_invoicerunhandler.moveRequest": {
+            "properties": {
+                "itemId": {
+                    "type": "string"
+                },
+                "targetGroupId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "internal_api_handlers_invoicerunhandler.previewRequest": {
+            "properties": {
+                "customerIds": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "invoiceDate": {
+                    "type": "integer"
+                },
+                "periodEnd": {
+                    "type": "integer"
+                },
+                "periodStart": {
+                    "type": "integer"
                 }
             },
             "type": "object"
@@ -23203,6 +23644,350 @@
                 "summary": "Update billing queue item status",
                 "tags": [
                     "Billing Queue"
+                ]
+            }
+        },
+        "/billing/invoice-runs/": {
+            "get": {
+                "operationId": "listInvoiceRuns",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_invoicerun_InvoiceRun"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List invoice runs",
+                "tags": [
+                    "Invoice Run"
+                ]
+            }
+        },
+        "/billing/invoice-runs/preview/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "previewInvoiceRun",
+                "parameters": [
+                    {
+                        "description": "Preview request",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.previewRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Build an invoice run preview",
+                "tags": [
+                    "Invoice Run"
+                ]
+            }
+        },
+        "/billing/invoice-runs/{runID}/": {
+            "get": {
+                "operationId": "getInvoiceRun",
+                "parameters": [
+                    {
+                        "description": "Invoice run ID",
+                        "in": "path",
+                        "name": "runID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get an invoice run",
+                "tags": [
+                    "Invoice Run"
+                ]
+            }
+        },
+        "/billing/invoice-runs/{runID}/cancel/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "cancelInvoiceRun",
+                "parameters": [
+                    {
+                        "description": "Invoice run ID",
+                        "in": "path",
+                        "name": "runID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Cancel reason",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.cancelRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Cancel an invoice run",
+                "tags": [
+                    "Invoice Run"
+                ]
+            }
+        },
+        "/billing/invoice-runs/{runID}/commit/": {
+            "post": {
+                "operationId": "commitInvoiceRun",
+                "parameters": [
+                    {
+                        "description": "Invoice run ID",
+                        "in": "path",
+                        "name": "runID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CommitInvoiceRunResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Commit an invoice run",
+                "tags": [
+                    "Invoice Run"
+                ]
+            }
+        },
+        "/billing/invoice-runs/{runID}/membership/": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "adjustInvoiceRunMembership",
+                "parameters": [
+                    {
+                        "description": "Invoice run ID",
+                        "in": "path",
+                        "name": "runID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Membership changes",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_invoicerunhandler.membershipRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRun"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Adjust invoice run membership",
+                "tags": [
+                    "Invoice Run"
                 ]
             }
         },
@@ -52255,6 +53040,10 @@
             "x-displayName": "Database Sessions"
         },
         {
+            "name": "Invoice Run",
+            "x-displayName": "Invoice Run"
+        },
+        {
             "name": "Jurisdiction Rules",
             "x-displayName": "Jurisdiction Rules"
         },
@@ -52381,6 +53170,7 @@
         {
             "name": "Other",
             "tags": [
+                "Invoice Run",
                 "Jurisdiction Rules",
                 "Permits",
                 "Rate Agreements",

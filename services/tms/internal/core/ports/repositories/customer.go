@@ -49,7 +49,51 @@ type CustomerSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 }
 
+// AdvanceBilledPeriodRequest moves a customer's billing watermark past the
+// period a run just billed.
+//
+// It only ever moves forward: a retry or an out-of-order run must not drag the
+// watermark backwards and re-bill a period that already produced invoices.
+type AdvanceBilledPeriodRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	CustomerID pulid.ID              `json:"-"`
+	PeriodEnd  int64                 `json:"-"`
+}
+
+// DueBillingSchedule is one statement-billed customer and the settings the
+// scheduler needs to decide whether a period has closed for them.
+//
+// Cross-tenant by design: the sweep runs once for the whole deployment rather
+// than once per organization, so the tenant travels with the row.
+type DueBillingSchedule struct {
+	TenantInfo            pagination.TenantInfo    `bun:"-"`
+	OrganizationID        pulid.ID                 `bun:"organization_id"`
+	BusinessUnitID        pulid.ID                 `bun:"business_unit_id"`
+	CustomerID            pulid.ID                 `bun:"customer_id"`
+	BillingCycle          customer.BillingCycle    `bun:"billing_cycle"`
+	BillingCycleAnchorDay int16                    `bun:"billing_cycle_anchor_day"`
+	BillingCycleTimezone  string                   `bun:"billing_cycle_timezone"`
+	InvoiceDelivery       customer.InvoiceDelivery `bun:"invoice_delivery"`
+	LastBilledPeriodEnd   *int64                   `bun:"last_billed_period_end"`
+}
+
+// Profile rebuilds just enough of the billing profile for the period maths.
+func (d *DueBillingSchedule) Profile() *customer.CustomerBillingProfile {
+	return &customer.CustomerBillingProfile{
+		OrganizationID:        d.OrganizationID,
+		BusinessUnitID:        d.BusinessUnitID,
+		CustomerID:            d.CustomerID,
+		InvoiceDelivery:       d.InvoiceDelivery,
+		BillingCycle:          d.BillingCycle,
+		BillingCycleAnchorDay: d.BillingCycleAnchorDay,
+		BillingCycleTimezone:  d.BillingCycleTimezone,
+		LastBilledPeriodEnd:   d.LastBilledPeriodEnd,
+	}
+}
+
 type CustomerRepository interface {
+	AdvanceBilledPeriod(ctx context.Context, req *AdvanceBilledPeriodRequest) error
+	ListDueBillingSchedules(ctx context.Context) ([]*DueBillingSchedule, error)
 	List(
 		ctx context.Context,
 		req *ListCustomerRequest,

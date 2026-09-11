@@ -245,6 +245,123 @@ func (_c *MockCustomerRepository_GetBillingProfile_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// ListDueBillingSchedules provides a mock function for the type MockCustomerRepository
+func (_mock *MockCustomerRepository) ListDueBillingSchedules(ctx context.Context) ([]*repositories.DueBillingSchedule, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDueBillingSchedules")
+	}
+
+	var r0 []*repositories.DueBillingSchedule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*repositories.DueBillingSchedule, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*repositories.DueBillingSchedule); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.DueBillingSchedule)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerRepository_ListDueBillingSchedules_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDueBillingSchedules'
+type MockCustomerRepository_ListDueBillingSchedules_Call struct {
+	*mock.Call
+}
+
+// ListDueBillingSchedules is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockCustomerRepository_Expecter) ListDueBillingSchedules(ctx any) *MockCustomerRepository_ListDueBillingSchedules_Call {
+	return &MockCustomerRepository_ListDueBillingSchedules_Call{Call: _e.mock.On("ListDueBillingSchedules", ctx)}
+}
+
+func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) Run(run func(ctx context.Context)) *MockCustomerRepository_ListDueBillingSchedules_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(arg0)
+	})
+	return _c
+}
+
+func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) Return(dueBillingSchedules []*repositories.DueBillingSchedule, err error) *MockCustomerRepository_ListDueBillingSchedules_Call {
+	_c.Call.Return(dueBillingSchedules, err)
+	return _c
+}
+
+func (_c *MockCustomerRepository_ListDueBillingSchedules_Call) RunAndReturn(run func(ctx context.Context) ([]*repositories.DueBillingSchedule, error)) *MockCustomerRepository_ListDueBillingSchedules_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AdvanceBilledPeriod provides a mock function for the type MockCustomerRepository
+func (_mock *MockCustomerRepository) AdvanceBilledPeriod(ctx context.Context, req *repositories.AdvanceBilledPeriodRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdvanceBilledPeriod")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.AdvanceBilledPeriodRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockCustomerRepository_AdvanceBilledPeriod_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdvanceBilledPeriod'
+type MockCustomerRepository_AdvanceBilledPeriod_Call struct {
+	*mock.Call
+}
+
+// AdvanceBilledPeriod is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.AdvanceBilledPeriodRequest
+func (_e *MockCustomerRepository_Expecter) AdvanceBilledPeriod(ctx any, req any) *MockCustomerRepository_AdvanceBilledPeriod_Call {
+	return &MockCustomerRepository_AdvanceBilledPeriod_Call{Call: _e.mock.On("AdvanceBilledPeriod", ctx, req)}
+}
+
+func (_c *MockCustomerRepository_AdvanceBilledPeriod_Call) Run(run func(ctx context.Context, req *repositories.AdvanceBilledPeriodRequest)) *MockCustomerRepository_AdvanceBilledPeriod_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.AdvanceBilledPeriodRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.AdvanceBilledPeriodRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerRepository_AdvanceBilledPeriod_Call) Return(err error) *MockCustomerRepository_AdvanceBilledPeriod_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockCustomerRepository_AdvanceBilledPeriod_Call) RunAndReturn(run func(ctx context.Context, req *repositories.AdvanceBilledPeriodRequest) error) *MockCustomerRepository_AdvanceBilledPeriod_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockCustomerRepository
 func (_mock *MockCustomerRepository) GetByID(ctx context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
 	ret := _mock.Called(ctx, req)

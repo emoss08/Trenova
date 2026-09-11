@@ -25,37 +25,40 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	InvoiceService   services.InvoiceService
-	Templates        services.DocumentTemplateResolver
-	InvoiceRepo      repositories.InvoiceRepository
-	DocumentService  services.InvoiceDocumentService
-	UploadService    services.DocumentUploadService
-	DocumentTypeRepo repositories.DocumentTypeRepository
-	AuditService     services.AuditService
-	Logger           *zap.Logger
+	InvoiceService    services.InvoiceService
+	Templates         services.DocumentTemplateResolver
+	InvoiceRepo       repositories.InvoiceRepository
+	DocumentService   services.InvoiceDocumentService
+	UploadService     services.DocumentUploadService
+	DocumentTypeRepo  repositories.DocumentTypeRepository
+	AuditService      services.AuditService
+	InvoiceRunSweeper services.InvoiceRunSweeper
+	Logger            *zap.Logger
 }
 
 type Activities struct {
-	invoiceService   services.InvoiceService
-	templates        services.DocumentTemplateResolver
-	invoiceRepo      repositories.InvoiceRepository
-	documentService  services.InvoiceDocumentService
-	uploadService    services.DocumentUploadService
-	documentTypeRepo repositories.DocumentTypeRepository
-	auditService     services.AuditService
-	logger           *zap.Logger
+	invoiceService    services.InvoiceService
+	templates         services.DocumentTemplateResolver
+	invoiceRepo       repositories.InvoiceRepository
+	documentService   services.InvoiceDocumentService
+	uploadService     services.DocumentUploadService
+	documentTypeRepo  repositories.DocumentTypeRepository
+	auditService      services.AuditService
+	invoiceRunSweeper services.InvoiceRunSweeper
+	logger            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		invoiceService:   p.InvoiceService,
-		templates:        p.Templates,
-		invoiceRepo:      p.InvoiceRepo,
-		documentService:  p.DocumentService,
-		uploadService:    p.UploadService,
-		documentTypeRepo: p.DocumentTypeRepo,
-		auditService:     p.AuditService,
-		logger:           p.Logger.Named("billing-activities"),
+		invoiceService:    p.InvoiceService,
+		templates:         p.Templates,
+		invoiceRepo:       p.InvoiceRepo,
+		documentService:   p.DocumentService,
+		uploadService:     p.UploadService,
+		documentTypeRepo:  p.DocumentTypeRepo,
+		auditService:      p.AuditService,
+		invoiceRunSweeper: p.InvoiceRunSweeper,
+		logger:            p.Logger.Named("billing-activities"),
 	}
 }
 

@@ -61,6 +61,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Send a customer invoice email and supporting documents",
 		},
 		{
+			Name:        ConsolidatedInvoiceRunWorkflowName,
+			Fn:          ConsolidatedInvoiceRunWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Bill every closed, unbilled statement period",
+		},
+		{
 			Name:        GenerateInvoicePDFWorkflowName,
 			Fn:          GenerateInvoicePDFWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),

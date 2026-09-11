@@ -91,6 +91,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
+	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
@@ -406,6 +407,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	invoiceadjustmentservice.New,
 	invoiceservice.New,
+	invoicerunservice.New,
+	// The billing job takes the sweeper interface rather than the concrete
+	// service, because the job package is imported by the invoice service the
+	// run service itself depends on.
+	func(s *invoicerunservice.Service) services.InvoiceRunSweeper { return s },
 	journalentryservice.New,
 	journalreversalservice.New,
 	manualjournalservice.New,
