@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -47,10 +48,12 @@ export function DriverContextRail({
   selectedSettlement: DriverSettlementRow | null;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   if (!workerId) {
     return (
       <div className="bg-card text-muted-foreground hidden items-center justify-center rounded-lg border p-6 text-center text-xs lg:flex">
-        Driver context appears here once a settlement is selected.
+        {t("Driver context appears here once a settlement is selected.")}
       </div>
     );
   }
@@ -67,7 +70,7 @@ export function DriverContextRail({
           <div>
             <h3 className="text-sm font-semibold">{workerName ?? "Driver"}</h3>
             <p className="text-muted-foreground text-[11px]">
-              Everything affecting this driver&apos;s pay — manage it without leaving the workspace.
+              {t("Everything affecting this driver's pay — manage it without leaving the workspace.")}
             </p>
           </div>
           <UnsettledPaySection
@@ -121,6 +124,8 @@ function UnsettledPaySection({
   selectedSettlement: DriverSettlementRow | null;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [holdTarget, setHoldTarget] = useState<DriverPayEventRow | null>(null);
   const { data: events, isLoading } = useQuery({
     queryKey: ["worker-unsettled-events", workerId],
@@ -136,7 +141,7 @@ function UnsettledPaySection({
         payEventIds: [payEventId],
       }),
     onSuccess: () => {
-      toast.success("Pay event added to the settlement");
+      toast.success(t("Pay event added to the settlement"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to add pay event"),
@@ -145,7 +150,7 @@ function UnsettledPaySection({
   const releaseMutation = useMutation({
     mutationFn: (payEventId: string) => releaseDriverPayEvent(payEventId),
     onSuccess: () => {
-      toast.success("Hold released — the event will settle normally");
+      toast.success(t("Hold released — the event will settle normally"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to release hold"),
@@ -153,7 +158,7 @@ function UnsettledPaySection({
 
   if (isLoading) {
     return (
-      <RailSection title="Unsettled Pay" hint="Accrued pay not yet on a settlement.">
+      <RailSection title={t("Unsettled Pay")} hint={t("Accrued pay not yet on a settlement.")}>
         <Skeleton className="h-16 w-full" />
       </RailSection>
     );
@@ -163,12 +168,12 @@ function UnsettledPaySection({
 
   return (
     <RailSection
-      title="Unsettled Pay"
-      hint="Accrued pay not yet on a settlement — attach it, or hold it for a later period."
+      title={t("Unsettled Pay")}
+      hint={t("Accrued pay not yet on a settlement — attach it, or hold it for a later period.")}
     >
       {list.length === 0 ? (
         <p className="text-muted-foreground text-[11px]">
-          Nothing waiting. New pay accrues automatically as moves complete.
+          {t("Nothing waiting. New pay accrues automatically as moves complete.")}
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -194,7 +199,7 @@ function UnsettledPaySection({
               </div>
               {event.onHold && (
                 <p className="mt-1 text-[10px] text-blue-700 dark:text-blue-300">
-                  On hold: {event.holdReason}
+                  {t("On hold: {0}", event.holdReason)}
                 </p>
               )}
               <div className="mt-1.5 flex gap-1">
@@ -205,10 +210,10 @@ function UnsettledPaySection({
                     className="h-6 px-2 text-[10px]"
                     disabled={attachMutation.isPending}
                     onClick={() => attachMutation.mutate(event.id)}
-                    title="Add this pay event to the selected draft settlement"
+                    title={t("Add this pay event to the selected draft settlement")}
                   >
                     <ArrowLeftToLine className="size-3" />
-                    Add to settlement
+                    {t("Add to settlement")}
                   </Button>
                 )}
                 {event.onHold ? (
@@ -220,7 +225,7 @@ function UnsettledPaySection({
                     onClick={() => releaseMutation.mutate(event.id)}
                   >
                     <Play className="size-3" />
-                    Release hold
+                    {t("Release hold")}
                   </Button>
                 ) : (
                   <Button
@@ -228,10 +233,10 @@ function UnsettledPaySection({
                     variant="ghost"
                     className="text-muted-foreground h-6 px-2 text-[10px]"
                     onClick={() => setHoldTarget(event)}
-                    title="Defer this pay to a later settlement — it will skip generation until released"
+                    title={t("Defer this pay to a later settlement — it will skip generation until released")}
                   >
                     <Pause className="size-3" />
-                    Hold
+                    {t("Hold")}
                   </Button>
                 )}
               </div>
@@ -257,13 +262,15 @@ function HoldDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
 
   const mutation = useMutation({
     mutationFn: () =>
       holdDriverPayEvent({ payEventId: event?.id as string, reason: reason.trim() }),
     onSuccess: () => {
-      toast.success("Pay event held — it will skip settlements until released");
+      toast.success(t("Pay event held — it will skip settlements until released"));
       setReason("");
       onOpenChange(false);
       onChanged();
@@ -275,25 +282,24 @@ function HoldDialog({
     <Dialog open={event != null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Hold pay event</DialogTitle>
+          <DialogTitle>{t("Hold pay event")}</DialogTitle>
           <DialogDescription>
-            Held pay stays accrued but is skipped by settlement generation and auto-attach until you
-            release it — use it for disputed loads or pay you want on a later statement.
+            {t("Held pay stays accrued but is skipped by settlement generation and auto-attach until you release it — use it for disputed loads or pay you want on a later statement.")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason (required) — e.g. Disputed detention, awaiting customer confirmation"
+          placeholder={t("Reason (required) — e.g. Disputed detention, awaiting customer confirmation")}
           rows={3}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={!reason.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
             <PauseCircle className="size-4" />
-            Hold Pay
+            {t("Hold Pay")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -302,6 +308,8 @@ function HoldDialog({
 }
 
 function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged: () => void }) {
+  const t = useT();
+
   const { data: earnings, isLoading } = useQuery({
     queryKey: ["worker-recurring-earnings", workerId],
     queryFn: ({ signal }) => fetchWorkerRecurringEarnings(workerId, { signal }),
@@ -335,7 +343,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
 
   if (isLoading) {
     return (
-      <RailSection title="Recurring Earnings" hint="Added each settlement.">
+      <RailSection title={t("Recurring Earnings")} hint={t("Added each settlement.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -345,21 +353,21 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
 
   return (
     <RailSection
-      title="Recurring Earnings"
-      hint="Added automatically each settlement — pause here to skip a period."
+      title={t("Recurring Earnings")}
+      hint={t("Added automatically each settlement — pause here to skip a period.")}
       action={
         <Link
           to="/payroll/earnings"
-          title="Create or edit earnings on the full page"
+          title={t("Create or edit earnings on the full page")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
         >
           <PlusCircle className="size-3" />
-          Manage
+          {t("Manage")}
         </Link>
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">No active earnings for this driver.</p>
+        <p className="text-muted-foreground text-[11px]">{t("No active earnings for this driver.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((earning) => (
@@ -400,6 +408,8 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
 }
 
 function DeductionsSection({ workerId, onChanged }: { workerId: string; onChanged: () => void }) {
+  const t = useT();
+
   const { data: deductions, isLoading } = useQuery({
     queryKey: ["worker-recurring-deductions", workerId],
     queryFn: ({ signal }) => fetchWorkerRecurringDeductions(workerId, { signal }),
@@ -434,7 +444,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
 
   if (isLoading) {
     return (
-      <RailSection title="Recurring Deductions" hint="Withheld each settlement.">
+      <RailSection title={t("Recurring Deductions")} hint={t("Withheld each settlement.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -444,21 +454,21 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
 
   return (
     <RailSection
-      title="Recurring Deductions"
-      hint="Withheld automatically each settlement — pause here to skip a period."
+      title={t("Recurring Deductions")}
+      hint={t("Withheld automatically each settlement — pause here to skip a period.")}
       action={
         <Link
           to="/payroll/deductions"
-          title="Create or edit deductions on the full page"
+          title={t("Create or edit deductions on the full page")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
         >
           <PlusCircle className="size-3" />
-          Manage
+          {t("Manage")}
         </Link>
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">No active deductions for this driver.</p>
+        <p className="text-muted-foreground text-[11px]">{t("No active deductions for this driver.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((deduction) => (
@@ -499,6 +509,8 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
 }
 
 function AdvancesSection({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { data: advances, isLoading } = useQuery({
     queryKey: ["worker-pay-advances", workerId],
     queryFn: ({ signal }) => fetchWorkerPayAdvances(workerId, { signal }),
@@ -506,7 +518,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
 
   if (isLoading) {
     return (
-      <RailSection title="Advances" hint="Recovered automatically from settlements.">
+      <RailSection title={t("Advances")} hint={t("Recovered automatically from settlements.")}>
         <Skeleton className="h-10 w-full" />
       </RailSection>
     );
@@ -518,21 +530,21 @@ function AdvancesSection({ workerId }: { workerId: string }) {
 
   return (
     <RailSection
-      title="Advances"
-      hint="Outstanding balances are recovered automatically on each settlement."
+      title={t("Advances")}
+      hint={t("Outstanding balances are recovered automatically on each settlement.")}
       action={
         <Link
           to="/payroll/advances"
-          title="Issue or write off advances on the full page"
+          title={t("Issue or write off advances on the full page")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
         >
           <PlusCircle className="size-3" />
-          Manage
+          {t("Manage")}
         </Link>
       }
     >
       {outstanding.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">No outstanding advances.</p>
+        <p className="text-muted-foreground text-[11px]">{t("No outstanding advances.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {outstanding.map((advance) => (
@@ -542,7 +554,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
                   {advance.reference || advance.source}
                 </p>
                 <p className="text-muted-foreground text-[10px]">
-                  issued {formatSettlementMonthDay(advance.issuedDate)}
+                  {t("issued {0}", formatSettlementMonthDay(advance.issuedDate))}
                 </p>
               </div>
               <span className="text-[11px] font-semibold">
@@ -560,6 +572,8 @@ function AdvancesSection({ workerId }: { workerId: string }) {
 }
 
 function EscrowSection({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { data: summary, isLoading } = useQuery({
     queryKey: ["worker-earnings-summary", workerId],
     queryFn: ({ signal }) => fetchWorkerEarningsSummary(workerId, { signal }),
@@ -567,7 +581,7 @@ function EscrowSection({ workerId }: { workerId: string }) {
 
   if (isLoading) {
     return (
-      <RailSection title="Escrow" hint="Maintenance reserve balance.">
+      <RailSection title={t("Escrow")} hint={t("Maintenance reserve balance.")}>
         <Skeleton className="h-8 w-full" />
       </RailSection>
     );
@@ -575,15 +589,15 @@ function EscrowSection({ workerId }: { workerId: string }) {
 
   return (
     <RailSection
-      title="Escrow"
-      hint="Reserve funded through settlement contributions; interest accrues per 49 CFR 376.12(k)."
+      title={t("Escrow")}
+      hint={t("Reserve funded through settlement contributions; interest accrues per 49 CFR 376.12(k).")}
       action={
         <Link
           to="/payroll/escrow-accounts"
-          title="Open the escrow ledger"
+          title={t("Open the escrow ledger")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
         >
-          View ledger
+          {t("View ledger")}
         </Link>
       }
     >
