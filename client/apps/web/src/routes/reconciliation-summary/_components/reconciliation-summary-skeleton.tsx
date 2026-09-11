@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -32,8 +33,10 @@ function FigureCardSkeleton({ labelWidth, rate }: { labelWidth: string; rate?: b
  * so it is hidden from assistive technology.
  */
 export function ReconciliationSummarySkeleton() {
+  const t = useT();
+
   return (
-    <div className="space-y-6" aria-busy aria-label="Loading the summary">
+    <div className="space-y-6" aria-busy aria-label={t("Loading the summary")}>
       <div className="contents" aria-hidden>
         <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
           {FIGURE_LABEL_WIDTHS.map((width, index) => (
@@ -48,7 +51,7 @@ export function ReconciliationSummarySkeleton() {
             </CardHeader>
             <CardContent>
               <div className="overflow-hidden rounded-md border">
-                <table aria-label="Exception aging" className="w-full text-sm">
+                <table aria-label={t("Exception aging")} className="w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr>
                       <th className="px-3 py-2 text-left">
@@ -81,7 +84,7 @@ export function ReconciliationSummarySkeleton() {
               <Skeleton className="h-3.5 w-20" />
             </CardHeader>
             <CardContent>
-              <ul aria-label="Work items" className="space-y-3">
+              <ul aria-label={t("Work items")} className="space-y-3">
                 {WORK_ROW_WIDTHS.map((width, index) => (
                   <li key={index} className="flex h-5 items-center justify-between">
                     <Skeleton className={cn("h-3", width)} />
