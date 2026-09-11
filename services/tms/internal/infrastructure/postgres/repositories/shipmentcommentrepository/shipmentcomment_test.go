@@ -62,6 +62,7 @@ func TestListByShipmentID_ReturnsCommentsAndCount(t *testing.T) {
 		}))
 	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentCommentsRequest{
 		ShipmentID: shipmentID,
+		Cursor:     pagination.CursorInfo{IncludeTotalCount: true},
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			Pagination: pagination.Info{Limit: 20},

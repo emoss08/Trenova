@@ -8133,6 +8133,10 @@ definitions:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMoveJurisdictionMile'
                 type: array
             loaded:
+                description: |-
+                    Loaded is false for a deadhead move. It declares no bun default so that
+                    survives the insert: bun writes DEFAULT in place of any zero value whose
+                    field declares one, which would file deadhead miles as loaded.
                 type: boolean
             organizationId:
                 type: string

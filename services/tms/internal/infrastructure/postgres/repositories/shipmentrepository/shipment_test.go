@@ -74,6 +74,7 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 		))
 
 	result, err := repo.GetUnassigned(t.Context(), &repositories.GetUnassignedShipmentsRequest{
+		Cursor: pagination.CursorInfo{IncludeTotalCount: true},
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,

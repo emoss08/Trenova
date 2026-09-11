@@ -429,6 +429,13 @@ func (moveIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
+func (moveIntgStubVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
 type moveIntgStubMatrixRepo struct {
 	repositories.RateMatrixRepository
 }

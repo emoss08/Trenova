@@ -282,6 +282,10 @@ func (f fakeWorkflowRun) GetWithOptions(context.Context, any, client.WorkflowRun
 	return nil
 }
 
+// GetFirstExecutionRunID identifies the run a continue-as-new chain started
+// from. Nothing here continues as new, so the first run is this one.
+func (f fakeWorkflowRun) GetFirstExecutionRunID() string { return f.runID }
+
 type fakeWorkflowStarter struct {
 	enabled bool
 	calls   []workflowCall

@@ -22,8 +22,9 @@ import (
 
 // GetLookupData feeds every lookup() a formula makes, so what it returns and —
 // just as much — what it refuses to return is contract: only active matrices,
-// only single-axis ones, each with exactly its own cells.
-func TestGetLookupDataReturnsOnlyActiveSingleAxisMatrices(t *testing.T) {
+// only the one- and two-axis shapes NewMatrixLookup knows how to index, each
+// with exactly its own cells.
+func TestGetLookupDataReturnsOnlyActiveIndexableMatrices(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
@@ -50,11 +51,21 @@ func TestGetLookupDataReturnsOnlyActiveSingleAxisMatrices(t *testing.T) {
 		axes:       1,
 		cells:      []cellFixture{{min: "0", value: "1"}},
 	})
-	insertLookupFixture(t, ctx, db, lookupFixture{
+	twoAxis := insertLookupFixture(t, ctx, db, lookupFixture{
 		tenantInfo: tenantInfo,
 		code:       "class_grid",
 		status:     domaintypes.StatusActive,
 		axes:       2,
+		cells:      []cellFixture{{key: "SE", value: "100"}},
+	})
+	// NewMatrixLookup indexes one and two axes and silently drops anything
+	// wider, so a three-axis matrix must not reach it — it would cost a query
+	// and its cells on every rebuild and still never answer a lookup.
+	insertLookupFixture(t, ctx, db, lookupFixture{
+		tenantInfo: tenantInfo,
+		code:       "too_many_axes",
+		status:     domaintypes.StatusActive,
+		axes:       3,
 		cells:      []cellFixture{{key: "SE", value: "100"}},
 	})
 
@@ -65,11 +76,24 @@ func TestGetLookupDataReturnsOnlyActiveSingleAxisMatrices(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.Len(t, result, 1, "inactive and multi-axis matrices must not be returned")
-	assert.Equal(t, oneAxis.String(), result[0].Matrix.ID.String())
-	assert.Equal(t, "fuel_tiers", result[0].Matrix.Code)
-	require.Len(t, result[0].Matrix.Dimensions, 1)
-	assert.Len(t, result[0].Cells, 2)
+	require.Len(t, result, 2, "inactive and wider-than-two-axis matrices must not be returned")
+
+	byCode := make(map[string]*repositories.RateMatrixLookupData, len(result))
+	for _, item := range result {
+		byCode[item.Matrix.Code] = item
+	}
+
+	single := byCode["fuel_tiers"]
+	require.NotNil(t, single)
+	assert.Equal(t, oneAxis.String(), single.Matrix.ID.String())
+	require.Len(t, single.Matrix.Dimensions, 1)
+	assert.Len(t, single.Cells, 2)
+
+	grid := byCode["class_grid"]
+	require.NotNil(t, grid)
+	assert.Equal(t, twoAxis.String(), grid.Matrix.ID.String())
+	require.Len(t, grid.Matrix.Dimensions, 2)
+	assert.Len(t, grid.Cells, 1)
 }
 
 type cellFixture struct {
