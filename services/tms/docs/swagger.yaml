@@ -5236,12 +5236,14 @@ definitions:
     github_com_emoss08_trenova_internal_core_domain_permission.DataScope:
         enum:
             - own
+            - team
             - organization
             - business_unit
             - all
         type: string
         x-enum-varnames:
             - DataScopeOwn
+            - DataScopeTeam
             - DataScopeOrganization
             - DataScopeBusinessUnit
             - DataScopeAll
@@ -7632,6 +7634,14 @@ definitions:
             - HoldSourceAPI
             - HoldSourceELD
             - HoldSourceEDI
+    github_com_emoss08_trenova_internal_core_domain_shipment.JurisdictionMileSource:
+        enum:
+            - RouteCalculation
+            - Manual
+        type: string
+        x-enum-varnames:
+            - JurisdictionMileSourceRouteCalculation
+            - JurisdictionMileSourceManual
     github_com_emoss08_trenova_internal_core_domain_shipment.MoveCoverageType:
         enum:
             - unassigned
@@ -8118,6 +8128,10 @@ definitions:
                 type: string
             id:
                 type: string
+            jurisdictionMiles:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMoveJurisdictionMile'
+                type: array
             loaded:
                 type: boolean
             organizationId:
@@ -8134,6 +8148,51 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Stop'
                 type: array
+            updatedAt:
+                type: integer
+            version:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMoveJurisdictionMile:
+        properties:
+            businessUnitId:
+                type: string
+            calculatedAt:
+                type: integer
+            countryCode:
+                type: string
+            createdAt:
+                type: integer
+            dataVersion:
+                type: string
+            distance:
+                type: number
+            distanceProfileId:
+                type: string
+            distanceUnits:
+                type: string
+            ferryDistance:
+                type: number
+            id:
+                type: string
+            jurisdictionCode:
+                type: string
+            loaded:
+                type: boolean
+            organizationId:
+                type: string
+            provider:
+                type: string
+            sequence:
+                type: integer
+            shipmentId:
+                type: string
+            shipmentMoveId:
+                type: string
+            source:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.JurisdictionMileSource'
+            tollDistance:
+                type: number
             updatedAt:
                 type: integer
             version:
@@ -8878,6 +8937,12 @@ definitions:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization'
             organizationId:
                 type: string
+            positionId:
+                description: |-
+                    PositionID is the title the user holds in this organisation. It sits on
+                    the membership rather than the user because a position belongs to one
+                    organisation and the same person may hold different titles in two.
+                type: string
             user:
                 allOf:
                     - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
@@ -9447,8 +9512,12 @@ definitions:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_fleetcode.FleetCode'
             fleetCodeId:
                 type: string
+            fuelType:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_domaintypes.IFTAFuelType'
             id:
                 type: string
+            iftaQualified:
+                type: boolean
             lastKnownLocationId:
                 type: string
             lastKnownLocationName:
@@ -9627,6 +9696,18 @@ definitions:
             - DriverTypeRegional
             - DriverTypeOTR
             - DriverTypeTeam
+    github_com_emoss08_trenova_internal_core_domain_worker.DrugAlcoholStatus:
+        enum:
+            - Unknown
+            - Clear
+            - Pending
+            - Prohibited
+        type: string
+        x-enum-varnames:
+            - DrugAlcoholUnknown
+            - DrugAlcoholClear
+            - DrugAlcoholPending
+            - DrugAlcoholProhibited
     github_com_emoss08_trenova_internal_core_domain_worker.EndorsementType:
         enum:
             - O
@@ -9651,6 +9732,88 @@ definitions:
         x-enum-varnames:
             - GenderMale
             - GenderFemale
+    github_com_emoss08_trenova_internal_core_domain_worker.JobDepartment:
+        enum:
+            - Operations
+            - Safety
+            - Maintenance
+            - Billing
+            - Administration
+            - Sales
+            - HumanResources
+            - Executive
+            - Other
+        type: string
+        x-enum-varnames:
+            - DepartmentOperations
+            - DepartmentSafety
+            - DepartmentMaintenance
+            - DepartmentBilling
+            - DepartmentAdministration
+            - DepartmentSales
+            - DepartmentHumanResources
+            - DepartmentExecutive
+            - DepartmentOther
+    github_com_emoss08_trenova_internal_core_domain_worker.JobPosition:
+        properties:
+            businessUnitId:
+                type: string
+            code:
+                type: string
+            createdAt:
+                type: integer
+            department:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.JobDepartment'
+            description:
+                type: string
+            flsaExempt:
+                description: |-
+                    FLSAExempt says the position is exempt from overtime. It lives on the
+                    position because that is where the duties test is applied — two people
+                    doing the same job are exempt or not together.
+                type: boolean
+            id:
+                type: string
+            isDrivingPosition:
+                description: |-
+                    IsDrivingPosition separates the roster that needs a CDL from the one that
+                    does not, which is the line most compliance rules are drawn along.
+                type: boolean
+            organizationId:
+                type: string
+            reportsTo:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.JobPosition'
+            reportsToPositionId:
+                description: |-
+                    ReportsToPositionID is the shape of the org chart. A person's own manager
+                    is on the worker, because two people in the same position can report to
+                    different managers.
+                type: string
+            status:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_domaintypes.Status'
+            title:
+                type: string
+            updatedAt:
+                type: integer
+            version:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_worker.LeaveType:
+        enum:
+            - FMLA
+            - Medical
+            - Military
+            - Parental
+            - Personal
+            - Other
+        type: string
+        x-enum-varnames:
+            - LeaveTypeFMLA
+            - LeaveTypeMedical
+            - LeaveTypeMilitary
+            - LeaveTypeParental
+            - LeaveTypePersonal
+            - LeaveTypeOther
     github_com_emoss08_trenova_internal_core_domain_worker.PTOStatus:
         enum:
             - Requested
@@ -9681,6 +9844,52 @@ definitions:
             - PTOTypeBereavement
             - PTOTypeMaternity
             - PTOTypePaternity
+    github_com_emoss08_trenova_internal_core_domain_worker.ReturnToDutyStatus:
+        enum:
+            - NotRequired
+            - SAPEvaluation
+            - RTDTestRequired
+            - FollowUpTesting
+            - Complete
+        type: string
+        x-enum-varnames:
+            - ReturnToDutyNotRequired
+            - ReturnToDutySAPEvaluation
+            - ReturnToDutyRTDTestRequired
+            - ReturnToDutyFollowUpTesting
+            - ReturnToDutyComplete
+    github_com_emoss08_trenova_internal_core_domain_worker.SafetyRating:
+        enum:
+            - Excellent
+            - Good
+            - Watch
+            - AtRisk
+        type: string
+        x-enum-varnames:
+            - SafetyRatingExcellent
+            - SafetyRatingGood
+            - SafetyRatingWatch
+            - SafetyRatingAtRisk
+    github_com_emoss08_trenova_internal_core_domain_worker.TrainingHealth:
+        enum:
+            - Current
+            - Scheduled
+            - DueSoon
+            - Overdue
+            - ExpiringSoon
+            - Expired
+            - Failed
+            - Missing
+        type: string
+        x-enum-varnames:
+            - TrainingHealthCurrent
+            - TrainingHealthScheduled
+            - TrainingHealthDueSoon
+            - TrainingHealthOverdue
+            - TrainingHealthExpiringSoon
+            - TrainingHealthExpired
+            - TrainingHealthFailed
+            - TrainingHealthMissing
     github_com_emoss08_trenova_internal_core_domain_worker.Worker:
         properties:
             addressLine1:
@@ -9726,6 +9935,8 @@ definitions:
                 type: string
             lastName:
                 type: string
+            leaveType:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.LeaveType'
             manager:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
             managerId:
@@ -9738,6 +9949,10 @@ definitions:
                 type: string
             portalUser:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            position:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.JobPosition'
+            positionId:
+                type: string
             postalCode:
                 type: string
             profile:
@@ -9832,6 +10047,8 @@ definitions:
                 type: string
             dob:
                 type: integer
+            drugAlcoholStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.DrugAlcoholStatus'
             eldExempt:
                 type: boolean
             endorsement:
@@ -9844,6 +10061,8 @@ definitions:
                 type: string
             isQualified:
                 type: boolean
+            lastClearinghouseQueryAt:
+                type: integer
             lastComplianceCheck:
                 type: integer
             lastDrugTest:
@@ -9866,14 +10085,28 @@ definitions:
                 type: string
             mvrDueDate:
                 type: integer
+            nextClearinghouseQueryDue:
+                type: integer
+            nextCredentialExpiry:
+                type: integer
+            nextTrainingDue:
+                type: integer
             organizationId:
                 type: string
             physicalDueDate:
+                type: integer
+            returnToDutyStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.ReturnToDutyStatus'
+            safetyRating:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.SafetyRating'
+            safetyScore:
                 type: integer
             shortHaulExempt:
                 type: boolean
             terminationDate:
                 type: integer
+            trainingHealth:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_worker.TrainingHealth'
             twicCardNumber:
                 type: string
             twicExpiry:
@@ -10578,6 +10811,10 @@ definitions:
                 type: string
             distanceUnits:
                 type: string
+            jurisdictionMiles:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.JurisdictionMileResult'
+                type: array
             moveId:
                 type: string
             moveIndex:
@@ -10627,6 +10864,19 @@ definitions:
         properties:
             url:
                 type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_ports_services.JurisdictionMileResult:
+        properties:
+            countryCode:
+                type: string
+            distance:
+                type: number
+            distanceUnits:
+                type: string
+            jurisdictionCode:
+                type: string
+            loaded:
+                type: boolean
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.LightPermissionManifest:
         properties:
@@ -10854,6 +11104,8 @@ definitions:
                 type: boolean
             name:
                 type: string
+            permissionCount:
+                type: integer
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness:
         properties:
@@ -11871,6 +12123,44 @@ definitions:
             - EquipmentStatusOOS
             - EquipmentStatusAtMaintenance
             - EquipmentStatusSold
+    github_com_emoss08_trenova_pkg_domaintypes.IFTAFuelType:
+        enum:
+            - Diesel
+            - Gasoline
+            - Gasohol
+            - Propane
+            - CNG
+            - LNG
+            - Ethanol
+            - Methanol
+            - E85
+            - M85
+            - A55
+            - Biodiesel
+            - Electricity
+            - Hydrogen
+            - DEF
+            - Reefer
+            - Other
+        type: string
+        x-enum-varnames:
+            - IFTAFuelTypeDiesel
+            - IFTAFuelTypeGasoline
+            - IFTAFuelTypeGasohol
+            - IFTAFuelTypePropane
+            - IFTAFuelTypeCNG
+            - IFTAFuelTypeLNG
+            - IFTAFuelTypeEthanol
+            - IFTAFuelTypeMethanol
+            - IFTAFuelTypeE85
+            - IFTAFuelTypeM85
+            - IFTAFuelTypeA55
+            - IFTAFuelTypeBiodiesel
+            - IFTAFuelTypeElectricity
+            - IFTAFuelTypeHydrogen
+            - IFTAFuelTypeDEF
+            - IFTAFuelTypeReefer
+            - IFTAFuelTypeOther
     github_com_emoss08_trenova_pkg_domaintypes.OwnershipType:
         enum:
             - CompanyOwned
