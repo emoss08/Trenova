@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { findChoice, stopTypeChoices } from "@/lib/choices";
 import { cn } from "@trenova/shared/lib/utils";
@@ -175,7 +176,7 @@ function renderMinutes(label: string, value?: number | null) {
 
   return (
     <span>
-      {label} {value}m
+      {translate("{0}{1}m", label, value)}
     </span>
   );
 }

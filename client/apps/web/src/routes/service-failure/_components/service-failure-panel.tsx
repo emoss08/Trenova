@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -65,6 +66,8 @@ export function ServiceFailurePanel({
   onOpenChange,
   row,
 }: DataTablePanelProps<ServiceFailureRow>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const form = useForm<ServiceFailureUpdate>({
@@ -97,7 +100,7 @@ export function ServiceFailurePanel({
   >({
     mutationFn: async ({ values }) => apiService.serviceFailureService.update(values.id, values),
     onSuccess: (_data, variables) => {
-      toast.success("Service failure updated");
+      toast.success(t("Service failure updated"));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({
         queryKey: ["serviceFailure", "list-by-shipment", row?.shipmentId],
@@ -130,21 +133,21 @@ export function ServiceFailurePanel({
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <SplitButton
             options={SAVE_OPTIONS}
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
             isLoading={isSubmitting}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             formId="panel-edit-form"
           />
         </>
       }
     >
       {!row ? (
-        <ComponentLoader message="Loading service failure..." />
+        <ComponentLoader message={t("Loading service failure...")} />
       ) : (
         <FormProvider {...form}>
           <Form

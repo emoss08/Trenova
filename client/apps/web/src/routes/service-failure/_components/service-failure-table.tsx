@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -21,6 +22,8 @@ type ServiceFailureTableProps = {
 };
 
 export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const graphql = useMemo(() => createServiceFailureTableGraphQLConfig(shipmentId), [shipmentId]);
   const canApprove = usePermission(Resource.ServiceFailure, Operation.Approve);
@@ -49,11 +52,11 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     switch (action) {
       case "review":
         await apiService.serviceFailureService.review(entity.id, payload);
-        toast.success("Service failure reviewed");
+        toast.success(t("Service failure reviewed"));
         break;
       case "resolve":
         await apiService.serviceFailureService.resolve(entity.id, payload);
-        toast.success("Service failure resolved");
+        toast.success(t("Service failure resolved"));
         break;
       case "void": {
         const notes = window.prompt("Enter a void reason");
@@ -62,7 +65,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
           ...payload,
           notes: notes.trim(),
         });
-        toast.success("Service failure voided");
+        toast.success(t("Service failure voided"));
         break;
       }
     }
@@ -73,7 +76,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     const result = await apiService.serviceFailureService.buildEDI214Payload(row.original.id);
     await navigator.clipboard?.writeText(JSON.stringify(result.payload, null, 2));
     const diagnostics = result.diagnostics.length;
-    toast.success("EDI 214 payload generated", {
+    toast.success(t("EDI 214 payload generated"), {
       description: diagnostics
         ? `${diagnostics} diagnostic item(s); payload copied.`
         : "Payload copied to clipboard.",

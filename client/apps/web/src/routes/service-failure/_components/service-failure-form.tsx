@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ServiceFailureReasonCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -22,6 +23,8 @@ function reasonCodeAppliesToForStop(
 }
 
 export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormProps) {
+  const t = useT();
+
   const { control } = useFormContext<ServiceFailureUpdate>();
   const appliesTo = reasonCodeAppliesToForStop(stopType);
 
@@ -32,8 +35,8 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <ServiceFailureReasonCodeAutocompleteField
             control={control}
             name="reasonCodeId"
-            label="Reason Code"
-            placeholder="Select Reason Code"
+            label={t("Reason Code")}
+            placeholder={t("Select Reason Code")}
             extraSearchParams={appliesTo ? { appliesTo } : undefined}
             clearable
             disabled={disabled}
@@ -43,8 +46,8 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <SwitchField
             control={control}
             name="clearReasonCode"
-            label="Clear Reason Code"
-            description="Removes the assigned reason code while preserving the service failure record."
+            label={t("Clear Reason Code")}
+            description={t("Removes the assigned reason code while preserving the service failure record.")}
             outlined
             position="left"
             disabled={disabled}
@@ -54,8 +57,8 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <TextareaField
             control={control}
             name="notes"
-            label="Operations Notes"
-            placeholder="Customer-facing operational context"
+            label={t("Operations Notes")}
+            placeholder={t("Customer-facing operational context")}
             disabled={disabled}
           />
         </FormControl>
@@ -63,21 +66,21 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
           <TextareaField
             control={control}
             name="internalNotes"
-            label="Internal Notes"
-            placeholder="Internal review notes"
+            label={t("Internal Notes")}
+            placeholder={t("Internal review notes")}
             disabled={disabled}
           />
         </FormControl>
       </FormGroup>
 
-      <FormSection title="EDI Overrides" description="Overrides apply only to this failure.">
+      <FormSection title={t("EDI Overrides")} description={t("Overrides apply only to this failure.")}>
         <FormGroup cols={3}>
           <FormControl>
             <InputField
               control={control}
               name="x12StatusCodeOverride"
-              label="Status Code"
-              placeholder="SD"
+              label={t("Status Code")}
+              placeholder={t("SD")}
               maxLength={3}
               disabled={disabled}
             />
@@ -86,8 +89,8 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
             <InputField
               control={control}
               name="x12ReasonCodeOverride"
-              label="Reason Code"
-              placeholder="NS"
+              label={t("Reason Code")}
+              placeholder={t("NS")}
               maxLength={3}
               disabled={disabled}
             />
@@ -96,8 +99,8 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
             <InputField
               control={control}
               name="x12ExceptionCode"
-              label="Exception Code"
-              placeholder="A3"
+              label={t("Exception Code")}
+              placeholder={t("A3")}
               maxLength={3}
               disabled={disabled}
             />
