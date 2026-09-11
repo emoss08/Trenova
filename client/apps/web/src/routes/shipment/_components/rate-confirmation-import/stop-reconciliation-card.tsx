@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -91,6 +92,8 @@ export function StopReconciliationCard({
   formControl,
   locationFieldName,
 }: StopReconciliationCardProps) {
+  const t = useT();
+
   const isPickup = stop.role === "pickup";
 
   // Build address string for display
@@ -170,7 +173,7 @@ export function StopReconciliationCard({
         <div className="flex items-center gap-1.5">
           {stop.appointmentRequired && (
             <Badge variant="outline" className="text-2xs h-4 px-1">
-              Appt
+              {t("Appt")}
             </Badge>
           )}
         </div>
@@ -193,7 +196,7 @@ export function StopReconciliationCard({
       {editableFields.length > 0 && (
         <details className="group">
           <summary className="text-2xs text-muted-foreground/40 hover:text-muted-foreground cursor-pointer transition-colors">
-            Edit fields
+            {t("Edit fields")}
           </summary>
           <div className="mt-1.5 space-y-px">
             {editableFields.map((f) => (
@@ -214,7 +217,7 @@ export function StopReconciliationCard({
         <LocationAutocompleteField
           control={formControl}
           name={locationFieldName}
-          placeholder="Match to location..."
+          placeholder={t("Match to location...")}
           clearable
         />
       </div>

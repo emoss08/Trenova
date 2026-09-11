@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { queries } from "@/lib/queries";
@@ -17,6 +18,8 @@ function StatCell({ label, children }: { label: string; children: React.ReactNod
 }
 
 export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     ...queries.shipment.profitability(shipmentId),
     staleTime: 60_000,
@@ -46,7 +49,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
     <div className="border-border bg-muted/40 rounded-md border p-2">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Profitability estimate
+          {t("Profitability estimate")}
         </span>
         <ProfitabilityBreakdownPopover
           shipmentId={shipmentId}
@@ -55,7 +58,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
               type="button"
               className="text-2xs text-primary cursor-pointer font-medium hover:underline"
             >
-              View breakdown
+              {t("View breakdown")}
             </button>
           }
         />
@@ -64,10 +67,10 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
         <StatCell label={`Est. cost (${formatPerMile(parseDecimal(data.profile.totalCpm))})`}>
           {formatCurrency(parseDecimal(data.estimatedCost))}
         </StatCell>
-        <StatCell label="Est. profit">
+        <StatCell label={t("Est. profit")}>
           <span style={{ color: toneVar(profitTone) }}>{formatCurrency(profit)}</span>
         </StatCell>
-        <StatCell label="Margin">
+        <StatCell label={t("Margin")}>
           {marginPct !== null ? (
             <MarginPill
               marginPct={marginPct}
@@ -77,7 +80,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
             "—"
           )}
         </StatCell>
-        <StatCell label="RPM vs break-even">
+        <StatCell label={t("RPM vs break-even")}>
           {data.revenuePerLoadedMile !== null &&
           data.revenuePerLoadedMile !== undefined &&
           data.breakEvenRpm !== null &&

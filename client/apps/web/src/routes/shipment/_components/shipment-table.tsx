@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -33,6 +34,8 @@ type ShipmentTableProps = {
 };
 
 export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
+  const t = useT();
+
   const [duplicateShipmentId, setDuplicateShipmentId] = useState<string | null>(null);
   const [cancelShipmentId, setCancelShipmentId] = useState<string | null>(null);
   const [transferOwnershipShipmentId, setTransferOwnershipShipmentId] = useState<string | null>(
@@ -89,12 +92,12 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     mutationFn: (shipmentId: string) => apiService.shipmentService.uncancel(shipmentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Shipment uncanceled", {
-        description: "The shipment has been restored.",
+      toast.success(t("Shipment uncanceled"), {
+        description: t("The shipment has been restored."),
       });
     },
     onError: () => {
-      toast.error("Failed to uncancel shipment");
+      toast.error(t("Failed to uncancel shipment"));
     },
   });
 
@@ -102,12 +105,12 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     mutationFn: (shipmentId: string) => apiService.shipmentService.transferToBilling(shipmentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Transferred to billing", {
-        description: "The shipment has been added to the billing queue.",
+      toast.success(t("Transferred to billing"), {
+        description: t("The shipment has been added to the billing queue."),
       });
     },
     onError: () => {
-      toast.error("Failed to transfer shipment to billing");
+      toast.error(t("Failed to transfer shipment to billing"));
     },
   });
 
@@ -128,7 +131,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
       void queryClient.invalidateQueries({
         queryKey: uploadBillingReadinessQuery.queryKey,
       });
-      toast.success("Document uploaded successfully");
+      toast.success(t("Document uploaded successfully"));
     },
     onError: (error) => {
       toast.error(`Upload failed: ${error.message}`);
@@ -150,7 +153,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
 
       if (isUploading && uploadShipmentId && uploadShipmentId !== shipment.id) {
         setIsUploadOpen(true);
-        toast.warning("Finish the current shipment upload before starting another.");
+        toast.warning(t("Finish the current shipment upload before starting another."));
         return;
       }
 
@@ -158,7 +161,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
       setUploadDocumentType(context ?? null);
       setIsUploadOpen(true);
     },
-    [isUploading, uploadShipmentId],
+    [isUploading, uploadShipmentId, t],
   );
 
   const handleFilesSelected = useCallback(

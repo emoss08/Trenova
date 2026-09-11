@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -17,6 +18,8 @@ export function AcknowledgeRow({
   onAcknowledge: () => void;
   isAcknowledging: boolean;
 }) {
+  const t = useT();
+
   const currentUser = useAuthStore((s) => s.user);
   const acknowledgments = comment.acknowledgments ?? [];
   const hasAcknowledged = acknowledgments.some((ack) => ack.userId === currentUser?.id);
@@ -39,7 +42,7 @@ export function AcknowledgeRow({
           ) : (
             <CheckCheckIcon className="size-3" />
           )}
-          Acknowledge
+          {t("Acknowledge")}
         </Button>
       )}
       {acknowledgments.length > 0 && (
@@ -69,7 +72,7 @@ export function AcknowledgeRow({
                       }
                     />
                     <TooltipContent side="top">
-                      Acknowledged by {ack.user?.name ?? "a teammate"}
+                      {t("Acknowledged by {0}", ack.user?.name ?? "a teammate")}
                     </TooltipContent>
                   </Tooltip>
                 </m.div>
@@ -87,7 +90,7 @@ export function AcknowledgeRow({
       {acknowledgments.length === 0 &&
         comment.requiresAcknowledgment &&
         hasAcknowledged === false && (
-          <span className="text-2xs text-muted-foreground">Acknowledgment requested</span>
+          <span className="text-2xs text-muted-foreground">{t("Acknowledgment requested")}</span>
         )}
     </div>
   );

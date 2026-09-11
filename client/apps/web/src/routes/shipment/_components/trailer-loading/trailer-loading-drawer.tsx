@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,8 @@ export default function LoadPlannerDialog({
   open: boolean;
   onOpenChange: (open: boolean | null) => void;
 }) {
+  const t = useT();
+
   const { data, revenue, calculate, isPending, hasCommodities } = useLoadingOptimization();
   const shipmentMeta = useShipmentMeta();
   const [saving, setSaving] = useState(false);
@@ -53,9 +56,9 @@ export default function LoadPlannerDialog({
         resourceType: "shipment",
         description: "Load Plan",
       });
-      toast.success("Load plan saved to shipment documents");
+      toast.success(t("Load plan saved to shipment documents"));
     } catch {
-      toast.error("Failed to save load plan");
+      toast.error(t("Failed to save load plan"));
     } finally {
       setSaving(false);
     }
@@ -75,9 +78,9 @@ export default function LoadPlannerDialog({
               <ContainerIcon className="text-primary size-4" />
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-sm">Load Planner</DialogTitle>
+              <DialogTitle className="text-sm">{t("Load Planner")}</DialogTitle>
               <DialogDescription className="text-2xs">
-                Commodity placement, weight distribution, and compliance
+                {t("Commodity placement, weight distribution, and compliance")}
               </DialogDescription>
             </div>
           </div>
@@ -124,7 +127,7 @@ export default function LoadPlannerDialog({
                 {data.recommendations.length > 0 && (
                   <div>
                     <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
-                      Recommendations
+                      {t("Recommendations")}
                     </span>
                     <LoadingRecommendations recommendations={data.recommendations} />
                   </div>
@@ -133,7 +136,7 @@ export default function LoadPlannerDialog({
                 {data.warnings.length > 0 && (
                   <div>
                     <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
-                      Alerts
+                      {t("Alerts")}
                     </span>
                     <LoadingWarnings warnings={data.warnings} />
                   </div>
@@ -145,9 +148,9 @@ export default function LoadPlannerDialog({
                   <ContainerIcon className="text-muted-foreground/40 size-7" />
                 </div>
                 <div className="text-center">
-                  <p className="text-foreground text-sm font-medium">No loading plan yet</p>
+                  <p className="text-foreground text-sm font-medium">{t("No loading plan yet")}</p>
                   <p className="text-2xs text-muted-foreground mt-1">
-                    Click below to calculate optimal placement
+                    {t("Click below to calculate optimal placement")}
                   </p>
                 </div>
               </div>
@@ -164,7 +167,7 @@ export default function LoadPlannerDialog({
                 onClick={() => printLoadPlan(data, shipmentMeta)}
               >
                 <PrinterIcon className="size-3.5" />
-                Print
+                {t("Print")}
               </Button>
               <Button
                 type="button"
@@ -177,7 +180,7 @@ export default function LoadPlannerDialog({
                 ) : (
                   <SaveIcon className="size-3.5" />
                 )}
-                Save
+                {t("Save")}
               </Button>
             </>
           )}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { SAVED_VIEWS, type SavedViewId } from "./saved-views";
@@ -49,6 +50,8 @@ export function SavedViewsBar({
   rightSlot?: ReactNode;
   countsEnabled?: boolean;
 }) {
+  const t = useT();
+
   const [{ view }, setUrl] = useCommandCenterUrl();
   const counts = useSavedViewCounts(countsEnabled);
 
@@ -63,7 +66,7 @@ export function SavedViewsBar({
       <div
         className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto"
         role="tablist"
-        aria-label="Saved views"
+        aria-label={t("Saved views")}
       >
         {SAVED_VIEWS.map((v) => (
           <ViewTab

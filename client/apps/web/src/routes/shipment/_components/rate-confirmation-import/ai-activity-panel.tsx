@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AiToolCall,
   AiToolCallContent,
@@ -102,6 +103,8 @@ function SuggestionButton({
   onSend: (text: string) => Promise<void>;
   onAction?: (action: string) => void;
 }) {
+  const t = useT();
+
   const [isInputOpen, setIsInputOpen] = useState(false);
   const [inputVal, setInputVal] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -143,7 +146,7 @@ function SuggestionButton({
                 setSelectedDate(undefined);
               }}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
           </div>
         </div>
@@ -241,13 +244,15 @@ function SuggestionButton({
 }
 
 function ToolResultSummary({ result, name }: { result: string; name: string }) {
+  const t = useT();
+
   try {
     const data = JSON.parse(result);
 
     if (name === "search_customers" && data.customers) {
       const customers = data.customers as Array<{ id: string; name: string }>;
       if (customers.length === 0)
-        return <span className="text-muted-foreground">No customers found</span>;
+        return <span className="text-muted-foreground">{t("No customers found")}</span>;
       return (
         <div className="space-y-1">
           {customers.map((c) => (
@@ -255,7 +260,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
               {c.name}
             </div>
           ))}
-          <div className="text-2xs text-muted-foreground">{data.total} total</div>
+          <div className="text-2xs text-muted-foreground">{t("{0} total", data.total)}</div>
         </div>
       );
     }
@@ -283,7 +288,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
         | undefined;
       const locations = (exactLocations?.length ? exactLocations : fallbackLocations) ?? [];
       if (locations.length === 0)
-        return <span className="text-muted-foreground">No locations found</span>;
+        return <span className="text-muted-foreground">{t("No locations found")}</span>;
       const label = data.noExactMatch ? "Available locations:" : "";
       return (
         <div className="space-y-1">
@@ -301,7 +306,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (name === "search_service_types" && data.serviceTypes) {
       const types = data.serviceTypes as Array<{ id: string; name: string; code: string }>;
       if (types.length === 0)
-        return <span className="text-muted-foreground">No service types found</span>;
+        return <span className="text-muted-foreground">{t("No service types found")}</span>;
       return (
         <div className="space-y-1">
           {types.map((t) => (
@@ -316,7 +321,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (name === "search_shipment_types" && data.shipmentTypes) {
       const types = data.shipmentTypes as Array<{ id: string; name: string }>;
       if (types.length === 0)
-        return <span className="text-muted-foreground">No shipment types found</span>;
+        return <span className="text-muted-foreground">{t("No shipment types found")}</span>;
       return (
         <div className="space-y-1">
           {types.map((t) => (
@@ -331,7 +336,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (name === "search_formula_templates" && data.formulaTemplates) {
       const templates = data.formulaTemplates as Array<{ id: string; name: string }>;
       if (templates.length === 0)
-        return <span className="text-muted-foreground">No rating methods found</span>;
+        return <span className="text-muted-foreground">{t("No rating methods found")}</span>;
       return (
         <div className="space-y-1">
           {templates.map((t) => (
@@ -344,11 +349,11 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     }
 
     if (data.accepted)
-      return <span className="text-2xs text-emerald-500">Accepted: {data.accepted}</span>;
+      return <span className="text-2xs text-emerald-500">{t("Accepted: {0}", data.accepted)}</span>;
     if (data.set)
       return (
         <span className="text-2xs">
-          Set {data.set} = {data.value}
+          {t("Set {0} = {1}", data.set, data.value)}
         </span>
       );
     if (data.set_required) {
@@ -380,6 +385,8 @@ export default function AIActivityPanel({
   onClearCreateError,
   requiredFieldValues,
 }: AIActivityPanelProps) {
+  const t = useT();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [conversationStatus, setConversationStatus] = useState<ConversationStatus>("Active");
@@ -810,7 +817,7 @@ export default function AIActivityPanel({
       <div className="shrink-0 border-b px-3 py-2.5">
         <div className="flex items-center gap-2">
           <SparklesIcon className="text-muted-foreground size-3.5" />
-          <span className="text-xs font-medium">AI Assistant</span>
+          <span className="text-xs font-medium">{t("AI Assistant")}</span>
         </div>
         <div className="mt-2">
           <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
@@ -850,7 +857,7 @@ export default function AIActivityPanel({
             >
               <CheckCircle2Icon className="size-3 text-emerald-500" />
               <span className="text-2xs text-emerald-600 dark:text-emerald-400">
-                Ready to create shipment
+                {t("Ready to create shipment")}
               </span>
             </m.div>
           )}
@@ -907,7 +914,7 @@ export default function AIActivityPanel({
                     msg.text.length === 0 &&
                     msg.toolCalls?.length === 0 && (
                       <TextShimmer as="span" className="text-[13px]" duration={2}>
-                        Thinking
+                        {t("Thinking")}
                       </TextShimmer>
                     )}
 

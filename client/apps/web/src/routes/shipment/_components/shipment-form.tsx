@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { FileTextIcon, LockIcon } from "lucide-react";
 import { parseAsBoolean, useQueryState } from "nuqs";
@@ -80,16 +81,17 @@ export function ShipmentForm() {
 }
 
 function InvoicedBanner() {
+  const t = useT();
+
   return (
     <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/50">
       <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
         <FileTextIcon className="size-4 text-blue-600 dark:text-blue-400" />
       </div>
       <div>
-        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Invoiced</p>
+        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{t("Invoiced")}</p>
         <p className="text-xs text-blue-700 dark:text-blue-300">
-          This shipment has been invoiced. Billing and charge fields are locked. To make financial
-          corrections, issue a credit memo and rebill.
+          {t("This shipment has been invoiced. Billing and charge fields are locked. To make financial corrections, issue a credit memo and rebill.")}
         </p>
       </div>
     </div>
@@ -97,6 +99,8 @@ function InvoicedBanner() {
 }
 
 function SectionLock({ locked, children }: { locked: boolean; children: ReactNode }) {
+  const t = useT();
+
   if (!locked) return children;
 
   return (
@@ -106,7 +110,7 @@ function SectionLock({ locked, children }: { locked: boolean; children: ReactNod
         <div className="bg-muted flex items-center gap-2 rounded-md px-3 py-1.5">
           <LockIcon className="text-muted-foreground size-3.5" />
           <span className="text-muted-foreground text-xs font-medium">
-            Locked — shipment has been invoiced
+            {t("Locked — shipment has been invoiced")}
           </span>
         </div>
       </div>

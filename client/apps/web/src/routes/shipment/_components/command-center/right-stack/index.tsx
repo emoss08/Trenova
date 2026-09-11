@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -54,6 +55,8 @@ const RENDERERS: Record<RightStackModuleId, (props: RendererProps) => React.Reac
 };
 
 export default function RightStack({ backgroundEnabled = true }: { backgroundEnabled?: boolean }) {
+  const t = useT();
+
   const order = useRightStackStore.use.order();
   const hidden = useRightStackStore.use.hidden();
   const show = useRightStackStore.use.show();
@@ -93,13 +96,13 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
   if (visible.length === 0) {
     return (
       <aside className="border-border bg-card flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-6">
-        <p className="text-[11.5px] font-medium">All panels hidden</p>
+        <p className="text-[11.5px] font-medium">{t("All panels hidden")}</p>
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
               <Button variant="outline" size="sm">
                 <PlusIcon className="size-3" />
-                Add panel
+                {t("Add panel")}
               </Button>
             }
           />
@@ -122,7 +125,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
               render={
                 <Button variant="outline" size="xxs">
                   <PlusIcon className="size-2.5" />
-                  Add panel ({restorable.length})
+                  {t("Add panel ({0})", restorable.length)}
                 </Button>
               }
             />

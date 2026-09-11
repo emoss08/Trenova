@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { ShipmentFormSubmission } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -17,25 +18,28 @@ import { useMemo, useState } from "react";
 const STALE_TIME_MS = 60_000;
 
 function FormsErrorState({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
       <OctagonAlertIcon className="text-destructive mx-auto size-5" />
-      <p className="mt-2 text-sm font-medium">Telematics forms could not be loaded</p>
+      <p className="mt-2 text-sm font-medium">{t("Telematics forms could not be loaded")}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
 }
 
 function FormsEmptyState() {
+  const t = useT();
+
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
       <ClipboardListIcon className="text-muted-foreground mx-auto size-5" />
-      <p className="mt-2 text-sm font-medium">No telematics forms for this shipment yet.</p>
+      <p className="mt-2 text-sm font-medium">{t("No telematics forms for this shipment yet.")}</p>
       <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-        Driver form submissions mapped to this shipment appear here once your telematics provider
-        reports them.
+        {t("Driver form submissions mapped to this shipment appear here once your telematics provider reports them.")}
       </p>
     </div>
   );
@@ -51,6 +55,8 @@ function FormsLoadingState() {
 }
 
 function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const hasFields = submission.fields.length > 0;
 
@@ -78,10 +84,10 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
         <div className="flex shrink-0 items-center gap-2">
           {submission.applied ? (
             <Badge variant="active">
-              Applied {submission.appliedFields} {pluralize("field", submission.appliedFields)}
+              {t("Applied {0}{1}", submission.appliedFields, pluralize("field", submission.appliedFields))}
             </Badge>
           ) : (
-            <Badge variant="secondary">Not applied</Badge>
+            <Badge variant="secondary">{t("Not applied")}</Badge>
           )}
           {hasFields ? (
             <ChevronDownIcon
@@ -117,6 +123,8 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
 }
 
 export function TelematicsFormsBlock({ shipmentId }: { shipmentId: string }) {
+  const t = useT();
+
   const statusQuery = useQuery({
     ...queries.telematics.status(),
     staleTime: 5 * 60 * 1000,
@@ -141,7 +149,7 @@ export function TelematicsFormsBlock({ shipmentId }: { shipmentId: string }) {
 
   return (
     <section className="min-w-0">
-      <h4 className="cc-label mb-1.5">Telematics forms</h4>
+      <h4 className="cc-label mb-1.5">{t("Telematics forms")}</h4>
       {submissionsQuery.isPending ? (
         <FormsLoadingState />
       ) : submissionsQuery.isError ? (

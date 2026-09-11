@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -32,6 +33,8 @@ export function ShipmentTransferOwnershipDialog({
   onOpenChange,
   shipmentId,
 }: ShipmentTransferOwnershipDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<TransferOwnershipPayload>({
@@ -55,8 +58,8 @@ export function ShipmentTransferOwnershipDialog({
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Ownership transferred", {
-        description: "The shipment has been transferred to the new owner.",
+      toast.success(t("Ownership transferred"), {
+        description: t("The shipment has been transferred to the new owner."),
       });
     },
   });
@@ -78,8 +81,8 @@ export function ShipmentTransferOwnershipDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Transfer Ownership</DialogTitle>
-          <DialogDescription>Transfer this shipment to a different user.</DialogDescription>
+          <DialogTitle>{t("Transfer Ownership")}</DialogTitle>
+          <DialogDescription>{t("Transfer this shipment to a different user.")}</DialogDescription>
         </DialogHeader>
         <Form
           onSubmit={(e) => {
@@ -92,17 +95,17 @@ export function ShipmentTransferOwnershipDialog({
               <UserAutocompleteField
                 control={control}
                 name="ownerId"
-                label="New Owner"
+                label={t("New Owner")}
                 rules={{ required: true }}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Close
+              {t("Close")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Transferring...">
-              Transfer Ownership
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Transferring...")}>
+              {t("Transfer Ownership")}
             </Button>
           </DialogFooter>
         </Form>

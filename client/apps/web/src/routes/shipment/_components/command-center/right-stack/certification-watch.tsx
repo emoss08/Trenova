@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { HosCertificationSummary } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -23,6 +24,8 @@ function CertificationRow({
   summary: HosCertificationSummary;
   withDivider: boolean;
 }) {
+  const t = useT();
+
   return (
     <div
       className={
@@ -41,7 +44,7 @@ function CertificationRow({
         </Link>
       </div>
       <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
-        {summary.uncertifiedDays} of {summary.totalDays} days
+        {t("{0} of {1} days", summary.uncertifiedDays, summary.totalDays)}
       </span>
     </div>
   );
@@ -63,15 +66,16 @@ function CertificationSkeletonRow({ withDivider }: { withDivider: boolean }) {
 }
 
 function ConnectSamsaraState() {
+  const t = useT();
+
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
       <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
         <PlugZapIcon className="size-4" />
       </span>
-      <p className="text-[11.5px] font-medium">Connect Samsara to track log certification</p>
+      <p className="text-[11.5px] font-medium">{t("Connect Samsara to track log certification")}</p>
       <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
-        Uncertified ELD log visibility turns on once the Samsara telematics integration is enabled
-        for your organization.
+        {t("Uncertified ELD log visibility turns on once the Samsara telematics integration is enabled for your organization.")}
       </p>
       <Button
         variant="outline"
@@ -80,26 +84,30 @@ function ConnectSamsaraState() {
         render={<Link to="/admin/integrations?type=Samsara" />}
       >
         <ExternalLinkIcon className="size-3" />
-        Open Integrations
+        {t("Open Integrations")}
       </Button>
     </div>
   );
 }
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-5 text-center">
       <p className="text-muted-foreground text-[10.5px]">
-        Certification data could not be loaded from Samsara.
+        {t("Certification data could not be loaded from Samsara.")}
       </p>
       <Button variant="outline" size="xs" onClick={onRetry}>
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
 }
 
 export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
+  const t = useT();
+
   const [dateRange] = useState(() => {
     const today = userWallClockNow();
     return {
@@ -150,9 +158,9 @@ export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
         <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
           <ShieldCheckIcon className="size-4" />
         </span>
-        <p className="text-[11.5px] font-medium">All drivers certified — no outstanding logs.</p>
+        <p className="text-[11.5px] font-medium">{t("All drivers certified — no outstanding logs.")}</p>
         <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
-          Every driver has certified their ELD logs for the last {CERTIFICATION_WINDOW_DAYS} days.
+          {t("Every driver has certified their ELD logs for the last {0} days.", CERTIFICATION_WINDOW_DAYS)}
         </p>
       </div>
     );
@@ -169,7 +177,7 @@ export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
   return (
     <ModuleCard
       id="certification"
-      title="Uncertified logs"
+      title={t("Uncertified logs")}
       count={telematicsEnabled && summaryQuery.data ? summaries.length : undefined}
       countTone="warning"
     >

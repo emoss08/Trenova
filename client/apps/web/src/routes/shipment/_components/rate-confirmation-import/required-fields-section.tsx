@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
   FormulaTemplateAutocompleteField,
@@ -17,13 +18,15 @@ type RequiredFieldsSectionProps = {
 };
 
 export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSectionProps) {
+  const t = useT();
+
   return (
     <div className="px-3 py-2">
       {!hasValues && (
         <div className="mb-2 flex items-center gap-2 rounded-md bg-amber-500/[0.06] px-2.5 py-1.5">
           <AlertCircleIcon className="size-3 shrink-0 text-amber-500" />
           <span className="text-2xs text-amber-600 dark:text-amber-400">
-            Complete these fields to create the shipment
+            {t("Complete these fields to create the shipment")}
           </span>
         </div>
       )}
@@ -33,8 +36,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="customerId"
             rules={{ required: true }}
-            label="Customer"
-            placeholder="Select Customer"
+            label={t("Customer")}
+            placeholder={t("Select Customer")}
           />
         </FormControl>
         <FormControl>
@@ -42,8 +45,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="serviceTypeId"
             rules={{ required: true }}
-            label="Service Type"
-            placeholder="Select Service Type"
+            label={t("Service Type")}
+            placeholder={t("Select Service Type")}
           />
         </FormControl>
         <FormControl>
@@ -51,8 +54,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="shipmentTypeId"
             rules={{ required: true }}
-            label="Shipment Type"
-            placeholder="Select Shipment Type"
+            label={t("Shipment Type")}
+            placeholder={t("Select Shipment Type")}
           />
         </FormControl>
         <FormControl>
@@ -60,16 +63,16 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             control={control}
             name="formulaTemplateId"
             rules={{ required: true }}
-            label="Rating Method"
-            placeholder="Select Rating Method"
+            label={t("Rating Method")}
+            placeholder={t("Select Rating Method")}
           />
         </FormControl>
         <FormControl>
           <EquipmentTypeAutocompleteField
             control={control}
             name="tractorTypeId"
-            label="Tractor Type"
-            placeholder="Select Tractor Type"
+            label={t("Tractor Type")}
+            placeholder={t("Select Tractor Type")}
             extraSearchParams={{
               classes: [equipmentClassSchema.enum.Tractor],
             }}
@@ -80,8 +83,8 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
           <EquipmentTypeAutocompleteField
             control={control}
             name="trailerTypeId"
-            label="Trailer Type"
-            placeholder="Select Trailer Type"
+            label={t("Trailer Type")}
+            placeholder={t("Select Trailer Type")}
             extraSearchParams={{
               classes: [equipmentClassSchema.enum.Trailer, equipmentClassSchema.enum.Container],
             }}

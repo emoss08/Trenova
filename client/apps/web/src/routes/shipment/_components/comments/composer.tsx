@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { CommentEditorHandle } from "@trenova/shared/components/comment-editor/comment-editor";
 import { LazyCommentEditor } from "@trenova/shared/components/comment-editor/lazy-comment-editor";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -76,6 +77,8 @@ export function CommentComposer({
   onStopTyping,
   onEscape,
 }: CommentComposerProps) {
+  const t = useT();
+
   const editorRef = useRef<CommentEditorHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachedDocsRef = useRef<Document[]>([]);
@@ -136,11 +139,11 @@ export function CommentComposer({
     const editor = editorRef.current;
     if (!editor || editor.isEmpty() || isSubmitting) return;
     if (isUploading) {
-      toast.error("Wait for attachments to finish uploading");
+      toast.error(t("Wait for attachments to finish uploading"));
       return;
     }
     if (hasFailedUploads) {
-      toast.error("Remove failed attachments before sending");
+      toast.error(t("Remove failed attachments before sending"));
       return;
     }
 
@@ -176,7 +179,7 @@ export function CommentComposer({
     priority,
     clearAll,
     onStopTyping,
-  ]);
+  t]);
 
   const handleDragOver = useCallback((event: DragEvent) => {
     if (event.dataTransfer.types.includes("Files")) {
@@ -200,21 +203,21 @@ export function CommentComposer({
         {!parentCommentId && (
           <>
             <CommentOptionPill
-              label="Type"
+              label={t("Type")}
               icon={<TagIcon className="size-3" />}
               value={commentType}
               options={commentTypeChoices}
               onChange={setCommentType}
             />
             <CommentOptionPill
-              label="Visibility"
+              label={t("Visibility")}
               icon={<EyeIcon className="size-3" />}
               value={visibility}
               options={commentVisibilityChoices}
               onChange={setVisibility}
             />
             <CommentOptionPill
-              label="Priority"
+              label={t("Priority")}
               icon={<FlagIcon className="size-3" />}
               value={priority}
               options={commentPriorityChoices}
@@ -236,7 +239,7 @@ export function CommentComposer({
               </Button>
             }
           />
-          <TooltipContent side="top">Attach files</TooltipContent>
+          <TooltipContent side="top">{t("Attach files")}</TooltipContent>
         </Tooltip>
         <Button
           size="xs"
@@ -268,7 +271,7 @@ export function CommentComposer({
       isSubmitting,
       isUploading,
       hasFailedUploads,
-    ],
+    t],
   );
 
   return (
@@ -307,7 +310,7 @@ export function CommentComposer({
       />
       {!parentCommentId && priority === "Urgent" && (
         <p className="text-2xs text-muted-foreground mt-1">
-          Urgent comments request acknowledgment from viewers.
+          {t("Urgent comments request acknowledgment from viewers.")}
         </p>
       )}
       <input

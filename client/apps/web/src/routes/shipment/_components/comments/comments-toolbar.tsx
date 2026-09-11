@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -85,6 +86,8 @@ export function CommentsToolbar({
   onFiltersChange: (filters: CommentToolbarFilterState) => void;
   isFiltering: boolean;
 }) {
+  const t = useT();
+
   const [filterOpen, setFilterOpen] = useState(false);
   const activeCount = countActiveFilters(filters);
 
@@ -140,10 +143,10 @@ export function CommentsToolbar({
           <Input
             value={filters.search}
             onChange={(event) => onFiltersChange({ ...filters, search: event.target.value })}
-            placeholder="Search comments…"
+            placeholder={t("Search comments…")}
             leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             className="h-7 pl-7 text-xs"
-            aria-label="Search comments"
+            aria-label={t("Search comments")}
           />
           {isFiltering && (
             <span className="border-muted-foreground/40 absolute top-1/2 right-2 size-3 -translate-y-1/2 animate-spin rounded-full border border-t-transparent" />
@@ -159,7 +162,7 @@ export function CommentsToolbar({
                 className="h-7 gap-1.5 px-2 text-xs"
               >
                 <ListFilterIcon className="size-3.5" />
-                Filter
+                {t("Filter")}
                 {activeCount > 0 && (
                   <span className="bg-brand text-2xs rounded-full px-1.5 font-medium text-white">
                     {activeCount}
@@ -170,26 +173,26 @@ export function CommentsToolbar({
           />
           <PopoverContent align="end" className="dark max-h-80 w-52 gap-1 overflow-y-auto p-1">
             <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">
-              Quick filters
+              {t("Quick filters")}
             </div>
             <FilterToggleRow
-              label="Mentions me"
+              label={t("Mentions me")}
               checked={filters.mentionsMe}
               onToggle={() => onFiltersChange({ ...filters, mentionsMe: !filters.mentionsMe })}
             />
             <FilterToggleRow
-              label="Unresolved"
+              label={t("Unresolved")}
               checked={filters.unresolvedOnly}
               onToggle={() =>
                 onFiltersChange({ ...filters, unresolvedOnly: !filters.unresolvedOnly })
               }
             />
             <FilterToggleRow
-              label="Pinned"
+              label={t("Pinned")}
               checked={filters.pinnedOnly}
               onToggle={() => onFiltersChange({ ...filters, pinnedOnly: !filters.pinnedOnly })}
             />
-            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">Priority</div>
+            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">{t("Priority")}</div>
             {commentPriorityChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}
@@ -205,7 +208,7 @@ export function CommentsToolbar({
                 }
               />
             ))}
-            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">Type</div>
+            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">{t("Type")}</div>
             {commentTypeChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}
@@ -244,7 +247,7 @@ export function CommentsToolbar({
             className="text-2xs text-muted-foreground h-5 px-1.5"
             onClick={() => onFiltersChange(EMPTY_TOOLBAR_FILTERS)}
           >
-            Clear all
+            {t("Clear all")}
           </Button>
         </div>
       )}

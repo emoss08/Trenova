@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CommodityAutocompleteField } from "@/components/autocomplete-fields";
 import { EmptyState } from "@/components/empty-state";
 import { NumberField } from "@/components/fields/number-field";
@@ -71,6 +72,8 @@ function CommodityDialog({
   profile: ResolvedModeProfile | null;
   update: (index: number, value: any) => void;
 }) {
+  const t = useT();
+
   const { control, setValue, getValues, setError, clearErrors } = useFormContext<Shipment>();
   const [saving, setSaving] = useState(false);
   const showDimensions = isCapabilitySectionVisible(profile, CAPABILITIES.dimensionalCargo);
@@ -187,8 +190,8 @@ function CommodityDialog({
             <CommodityAutocompleteField
               control={control}
               name={`commodities.${index}.commodityId`}
-              label="Commodity"
-              placeholder="Select commodity"
+              label={t("Commodity")}
+              placeholder={t("Select commodity")}
               onOptionChange={handleCommoditySelected}
             />
           </FormControl>
@@ -196,7 +199,7 @@ function CommodityDialog({
             <NumberField
               control={control}
               name={`commodities.${index}.pieces`}
-              label="Pieces"
+              label={t("Pieces")}
               placeholder="1"
             />
           </FormControl>
@@ -204,7 +207,7 @@ function CommodityDialog({
             <NumberField
               control={control}
               name={`commodities.${index}.weight`}
-              label="Weight (lbs)"
+              label={t("Weight (lbs)")}
               placeholder="0"
             />
           </FormControl>
@@ -213,7 +216,7 @@ function CommodityDialog({
         {showDimensions && <CapabilityExplainer profile={profile} field="commodities" />}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="button" onClick={handleSave} disabled={saving}>
             {saving ? "Checking..." : "Save"}
@@ -225,6 +228,8 @@ function CommodityDialog({
 }
 
 export default function CommoditiesSection() {
+  const t = useT();
+
   const {
     control,
     formState: { errors },
@@ -291,15 +296,15 @@ export default function CommoditiesSection() {
   return (
     <>
       <FormSection
-        title="Commodities"
+        title={t("Commodities")}
         titleCount={commodities.length}
-        description="Cargo items, weights, and hazardous material compliance"
+        description={t("Cargo items, weights, and hazardous material compliance")}
         className="border-border border-t pt-4"
         action={
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
               <PlusIcon className="size-3" />
-              Add Commodity
+              {t("Add Commodity")}
             </Button>
           )
         }
@@ -312,10 +317,10 @@ export default function CommoditiesSection() {
                 showDimensions ? "grid-cols-12" : "grid-cols-10",
               )}
             >
-              <span className={showDimensions ? "col-span-3" : "col-span-4"}>Commodity</span>
-              <span className="col-span-2">Pieces</span>
-              <span className="col-span-2">Weight</span>
-              {showDimensions && <span className="col-span-3">L × W × H</span>}
+              <span className={showDimensions ? "col-span-3" : "col-span-4"}>{t("Commodity")}</span>
+              <span className="col-span-2">{t("Pieces")}</span>
+              <span className="col-span-2">{t("Weight")}</span>
+              {showDimensions && <span className="col-span-3">{t("L × W × H")}</span>}
               <span className="col-span-2" />
             </div>
             <div className="divide-y">
@@ -373,7 +378,7 @@ export default function CommoditiesSection() {
                               <BiohazardIcon className="text-warning size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
-                              Commodity is classified as hazardous material.
+                              {t("Commodity is classified as hazardous material.")}
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -383,7 +388,7 @@ export default function CommoditiesSection() {
                               <BoxesIcon className="text-success size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
-                              Commodity is marked as stackable.
+                              {t("Commodity is marked as stackable.")}
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -393,7 +398,7 @@ export default function CommoditiesSection() {
                               <AlertCircleIcon className="text-destructive size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
-                              Commodity is marked as fragile.
+                              {t("Commodity is marked as fragile.")}
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -403,7 +408,7 @@ export default function CommoditiesSection() {
                       {truncateText(item?.pieces?.toLocaleString() ?? 0, 10)}
                     </span>
                     <span className="text-muted-foreground col-span-2 text-xs">
-                      {truncateText(item?.weight?.toLocaleString() ?? 0, 8)} lbs
+                      {t("{0} lbs", truncateText(item?.weight?.toLocaleString() ?? 0, 8))}
                     </span>
                     {showDimensions && (
                       <span className="text-muted-foreground col-span-3 text-xs">
@@ -452,8 +457,7 @@ export default function CommoditiesSection() {
             </div>
             <div className="border-border bg-muted flex flex-row items-center justify-end gap-3 rounded-b-lg border-t px-4 py-2">
               <span className="text-muted-foreground text-xs">
-                {truncateText(totalPieces.toLocaleString(), 10)} total{" "}
-                {pluralize("piece", totalPieces)}
+                {t("{0} total {1}", truncateText(totalPieces.toLocaleString(), 10), pluralize("piece", totalPieces))}
               </span>
               <div className="flex flex-row items-center gap-0.5">
                 <TooltipProvider>
@@ -461,12 +465,12 @@ export default function CommoditiesSection() {
                     <TooltipTrigger
                       render={
                         <span className="cursor-help text-xs font-medium">
-                          {truncateText(totalWeight.toLocaleString(), 10)} lbs
+                          {t("{0} lbs", truncateText(totalWeight.toLocaleString(), 10))}
                         </span>
                       }
                     />
                     <TooltipContent side="top" sideOffset={10}>
-                      Total weight of all commodities in the shipment (lbs).
+                      {t("Total weight of all commodities in the shipment (lbs).")}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -481,7 +485,7 @@ export default function CommoditiesSection() {
                         }
                       />
                       <TooltipContent side="top" sideOffset={10}>
-                        Maximum shipment weight limit configured by organization.
+                        {t("Maximum shipment weight limit configured by organization.")}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -492,8 +496,8 @@ export default function CommoditiesSection() {
         ) : (
           <EmptyState
             className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
-            title="No Commodities"
-            description="Shipment has no associated commodities"
+            title={t("No Commodities")}
+            description={t("Shipment has no associated commodities")}
             icons={[CaravanIcon, BoxesIcon, TruckIcon]}
             action={{
               label: "Add First Commodity",
@@ -505,7 +509,7 @@ export default function CommoditiesSection() {
         {duplicateCommodityIds.size > 0 && (
           <p className="text-warning flex items-center gap-1 text-xs">
             <TriangleAlertIcon className="size-3.5" />
-            Duplicate commodities detected in this shipment.
+            {t("Duplicate commodities detected in this shipment.")}
           </p>
         )}
       </FormSection>

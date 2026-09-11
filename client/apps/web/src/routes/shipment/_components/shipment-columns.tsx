@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { ShipmentTenderStatusBadge } from "@trenova/shared/components/status-badge";
 import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choices";
@@ -173,7 +174,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
             />
             {typeof weight === "number" && weight > 0 && (
               <span className="font-table text-muted-foreground text-[10px] tabular-nums">
-                {weight.toLocaleString()} lb
+                {translate("{0} lb", weight.toLocaleString())}
               </span>
             )}
           </div>
@@ -253,7 +254,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "revenue",
-      header: () => <div className="text-right">Revenue</div>,
+      header: () => <div className="text-right">{translate("Revenue")}</div>,
       accessorKey: "totalChargeAmount",
       cell: ({ row }) => <RevenueCell shipment={row.original} />,
       size: 140,
@@ -268,7 +269,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "margin",
-      header: () => <div className="text-right">Margin</div>,
+      header: () => <div className="text-right">{translate("Margin")}</div>,
       accessorFn: (row) => row.profitabilityEstimate?.marginPercent ?? null,
       cell: ({ row }) => <MarginCell shipment={row.original} />,
       size: 120,
@@ -282,7 +283,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "actions",
-      header: () => <span className="sr-only">Actions</span>,
+      header: () => <span className="sr-only">{translate("Actions")}</span>,
       cell: ({ row }) => <ActionsCell row={row} actions={rowActions} />,
       size: 56,
       minSize: 56,

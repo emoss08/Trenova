@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   HOS_LIMITS_MS,
   HosClockGauges,
@@ -139,15 +140,16 @@ function HosSkeletonRow({ withDivider }: { withDivider: boolean }) {
 }
 
 function ConnectSamsaraState() {
+  const t = useT();
+
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
       <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
         <PlugZapIcon className="size-4" />
       </span>
-      <p className="text-[11.5px] font-medium">Connect Samsara to watch driver clocks</p>
+      <p className="text-[11.5px] font-medium">{t("Connect Samsara to watch driver clocks")}</p>
       <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
-        Live hours-of-service visibility turns on once the Samsara telematics integration is enabled
-        for your organization.
+        {t("Live hours-of-service visibility turns on once the Samsara telematics integration is enabled for your organization.")}
       </p>
       <Button
         variant="outline"
@@ -156,26 +158,30 @@ function ConnectSamsaraState() {
         render={<Link to="/admin/integrations?type=Samsara" />}
       >
         <ExternalLinkIcon className="size-3" />
-        Open Integrations
+        {t("Open Integrations")}
       </Button>
     </div>
   );
 }
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-5 text-center">
       <p className="text-muted-foreground text-[10.5px]">
-        HOS data could not be loaded from Samsara.
+        {t("HOS data could not be loaded from Samsara.")}
       </p>
       <Button variant="outline" size="xs" onClick={onRetry}>
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
 }
 
 export function HosWatch({ enabled = true }: { enabled?: boolean }) {
+  const t = useT();
+
   const statusQuery = useQuery({
     ...queries.telematics.status(),
     staleTime: 5 * 60 * 1000,
@@ -231,7 +237,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
   } else if (rows.length === 0) {
     body = (
       <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">
-        No HOS data yet — drivers appear once Samsara reports clocks.
+        {t("No HOS data yet — drivers appear once Samsara reports clocks.")}
       </p>
     );
   } else {
@@ -253,7 +259,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
           </span>
           {freshestRecordedAt > 0 && (
             <span className="font-table text-muted-foreground text-[9px] tabular-nums">
-              Updated {formatElapsedTime(freshestRecordedAt * 1000, now)}
+              {t("Updated {0}", formatElapsedTime(freshestRecordedAt * 1000, now))}
             </span>
           )}
         </div>
@@ -264,7 +270,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
   return (
     <ModuleCard
       id="hos"
-      title="HOS watch"
+      title={t("HOS watch")}
       count={telematicsEnabled && hosQuery.data ? urgentCount : undefined}
       countTone={criticalCount > 0 ? "danger" : "warning"}
     >

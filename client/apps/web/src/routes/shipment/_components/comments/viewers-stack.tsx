@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { AnimatePresence, m } from "motion/react";
@@ -6,6 +7,8 @@ import type { ShipmentViewer } from "@/hooks/shipment-comments/use-shipment-view
 const MAX_VISIBLE_VIEWERS = 4;
 
 export function ViewersStack({ viewers }: { viewers: ShipmentViewer[] }) {
+  const t = useT();
+
   if (viewers.length === 0) return null;
 
   const visible = viewers.slice(0, MAX_VISIBLE_VIEWERS);
@@ -45,7 +48,7 @@ export function ViewersStack({ viewers }: { viewers: ShipmentViewer[] }) {
         }
       />
       <TooltipContent side="top">
-        Viewing now: {viewers.map((viewer) => viewer.name).join(", ")}
+        {t("Viewing now: {0}", viewers.map((viewer) => viewer.name).join(", "))}
       </TooltipContent>
     </Tooltip>
   );

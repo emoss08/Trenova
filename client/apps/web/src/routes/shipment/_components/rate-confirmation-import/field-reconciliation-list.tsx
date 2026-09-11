@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
@@ -73,6 +74,8 @@ export function FieldReconciliationList({
   onEdit,
   onReset,
 }: FieldReconciliationListProps) {
+  const t = useT();
+
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (label: string) => {
@@ -157,7 +160,7 @@ export function FieldReconciliationList({
       {ungroupedFields.length > 0 && (
         <div className="mb-1">
           <SectionHeader
-            label="Other"
+            label={t("Other")}
             issueCount={
               ungroupedFields.filter(
                 (f) =>

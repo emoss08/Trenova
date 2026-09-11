@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { DAY_LABEL_HEIGHT_PX, HOUR_TICK_HEIGHT_PX, RAIL_WIDTH_PX } from "./constants";
 import { secondsToX, type DayColumn, type HourTick, type TimeRange } from "./time-scale";
@@ -23,6 +24,8 @@ export function TimelineHeader({
   now,
   driverCount,
 }: TimelineHeaderProps) {
+  const t = useT();
+
   const hasHourRow = hourTicks.length > 0;
   const headerHeight = DAY_LABEL_HEIGHT_PX + (hasHourRow ? HOUR_TICK_HEIGHT_PX : 0);
   const nowInRange = now >= range.start && now < range.end;
@@ -35,7 +38,7 @@ export function TimelineHeader({
         style={{ width: RAIL_WIDTH_PX }}
       >
         <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
-          Drivers · {driverCount}
+          {t("Drivers · {0}", driverCount)}
         </span>
       </div>
       <div className="bg-muted relative shrink-0" style={{ width: canvasWidth }}>

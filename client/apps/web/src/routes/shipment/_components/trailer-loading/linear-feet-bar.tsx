@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { COMMODITY_PALETTE } from "./constants";
 
@@ -22,16 +23,18 @@ export function LinearFeetBar({
   utilization: number;
   commodities?: CommoditySegment[];
 }) {
+  const t = useT();
+
   const isOver = totalLinearFeet > trailerLengthFeet;
 
   return (
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
-          Linear Feet
+          {t("Linear Feet")}
         </span>
         <span className={cn("text-xs font-semibold tabular-nums", isOver && "text-destructive")}>
-          {totalLinearFeet.toFixed(1)} / {trailerLengthFeet} ft
+          {t("{0} / {1} ft", totalLinearFeet.toFixed(1), trailerLengthFeet)}
         </span>
       </div>
 
@@ -75,11 +78,11 @@ export function LinearFeetBar({
                 className={cn("size-2 rounded-sm border", c.palette.dotBg, c.palette.dotBorder)}
               />
               <span className="text-foreground">{c.name}</span>
-              <span className="text-muted-foreground">{c.lengthFeet.toFixed(1)}ft</span>
+              <span className="text-muted-foreground">{t("{0}ft", c.lengthFeet.toFixed(1))}</span>
             </div>
           ))}
           {commodities.length > 4 && (
-            <span className="text-2xs text-muted-foreground">+{commodities.length - 4} more</span>
+            <span className="text-2xs text-muted-foreground">{t("+{0} more", commodities.length - 4)}</span>
           )}
         </div>
       )}

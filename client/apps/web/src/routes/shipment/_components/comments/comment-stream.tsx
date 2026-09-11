@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   MessageScroller,
@@ -54,6 +55,8 @@ export function CommentStream({
   onClearFilters: () => void;
   renderComment: (comment: LocalShipmentComment, highlighted: boolean) => ReactNode;
 }) {
+  const t = useT();
+
   const { scrollToEnd, scrollToMessage } = useMessageScroller();
   const scrollable = useMessageScrollerScrollable();
   const isAtEnd = !scrollable.end;
@@ -123,10 +126,10 @@ export function CommentStream({
     return (
       <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 py-12">
         <MessageSquareIcon className="size-8 opacity-40" />
-        <p className="text-sm font-medium">Comments could not be loaded</p>
+        <p className="text-sm font-medium">{t("Comments could not be loaded")}</p>
         <Button type="button" variant="outline" size="xs" onClick={onRetry}>
           <RotateCcwIcon className="mr-1 size-3" />
-          Try again
+          {t("Try again")}
         </Button>
       </div>
     );
@@ -136,7 +139,7 @@ export function CommentStream({
     return isFiltered ? (
       <div className="text-muted-foreground flex h-full flex-col items-center justify-center py-12">
         <SearchXIcon className="mb-3 size-8 opacity-40" />
-        <p className="text-sm font-medium">No comments match your filters</p>
+        <p className="text-sm font-medium">{t("No comments match your filters")}</p>
         <Button
           type="button"
           variant="ghost"
@@ -144,15 +147,15 @@ export function CommentStream({
           className="mt-2 text-xs"
           onClick={onClearFilters}
         >
-          Clear filters
+          {t("Clear filters")}
         </Button>
       </div>
     ) : (
       <div className="text-muted-foreground flex h-full flex-col items-center justify-center py-12">
         <MessageSquareIcon className="mb-3 size-8 opacity-40" />
-        <p className="text-sm font-medium">No comments yet</p>
+        <p className="text-sm font-medium">{t("No comments yet")}</p>
         <p className="mt-1 max-w-[260px] text-center text-xs">
-          Add operational notes, tag team members, and coordinate on this shipment.
+          {t("Add operational notes, tag team members, and coordinate on this shipment.")}
         </p>
       </div>
     );
@@ -160,12 +163,12 @@ export function CommentStream({
 
   return (
     <MessageScroller className="h-full">
-      <MessageScrollerViewport preserveScrollOnPrepend aria-label="Shipment comments">
+      <MessageScrollerViewport preserveScrollOnPrepend aria-label={t("Shipment comments")}>
         <MessageScrollerContent className="gap-0 px-2 py-2">
           <div ref={sentinelRef} className="h-px shrink-0" />
           {isFetchingNextPage && (
             <div className="flex items-center justify-center py-2">
-              <span className="text-2xs text-muted-foreground">Loading older comments…</span>
+              <span className="text-2xs text-muted-foreground">{t("Loading older comments…")}</span>
             </div>
           )}
           {comments.map((comment, index) => {

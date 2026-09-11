@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -28,6 +29,8 @@ export function ActivityFeed({
   emptyLabel = "No activity yet",
   enabled = true,
 }: Props) {
+  const t = useT();
+
   const query = useShipmentEventsInfinite({ shipmentId, pageSize, enabled });
   const events = useMemo(
     () => query.data?.pages.flatMap((page) => page) ?? [],
@@ -56,7 +59,7 @@ export function ActivityFeed({
     <section className="cc-module-card flex min-h-[260px] flex-col">
       <header className="border-border flex items-center justify-between border-b px-3 py-2">
         <div className="flex items-center gap-2">
-          <h3 className="cc-label text-foreground">Activity stream</h3>
+          <h3 className="cc-label text-foreground">{t("Activity stream")}</h3>
           <span aria-hidden className="bg-success size-1.5 rounded-full" />
           <span className="text-muted-foreground font-mono text-[10px]">live</span>
         </div>
@@ -71,7 +74,7 @@ export function ActivityFeed({
         {hasNextPage && <div ref={sentinelRef} className="h-4" aria-hidden />}
         {isFetchingNextPage && (
           <p className="text-muted-foreground px-3 py-1 text-center font-mono text-[10px]">
-            Loading more…
+            {t("Loading more…")}
           </p>
         )}
       </ScrollArea>
@@ -87,6 +90,8 @@ type FeedBodyProps = {
 };
 
 function FeedBody({ isLoading, isError, events, emptyLabel }: FeedBodyProps) {
+  const t = useT();
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-1 px-3 py-2">
@@ -100,7 +105,7 @@ function FeedBody({ isLoading, isError, events, emptyLabel }: FeedBodyProps) {
   if (isError) {
     return (
       <p className="text-destructive px-3 py-2 text-[11px]">
-        Failed to load activity. Try refreshing.
+        {t("Failed to load activity. Try refreshing.")}
       </p>
     );
   }

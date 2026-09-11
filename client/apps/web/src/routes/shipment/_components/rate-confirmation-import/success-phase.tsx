@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { m } from "motion/react";
 import { CheckIcon, ExternalLinkIcon } from "lucide-react";
@@ -10,6 +11,8 @@ type SuccessPhaseProps = {
 };
 
 export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhaseProps) {
+  const t = useT();
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-8">
       <m.div
@@ -23,27 +26,27 @@ export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhasePr
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-base font-medium">Shipment created</h3>
+          <h3 className="text-base font-medium">{t("Shipment created")}</h3>
           <p className="text-muted-foreground text-xs tabular-nums">{shipmentId}</p>
         </div>
 
         {attachError && (
           <p className="text-muted-foreground text-xs">
-            Document could not be attached: {attachError}
+            {t("Document could not be attached: {0}", attachError)}
           </p>
         )}
 
         {!attachError && (
-          <p className="text-muted-foreground text-xs">Source document attached successfully.</p>
+          <p className="text-muted-foreground text-xs">{t("Source document attached successfully.")}</p>
         )}
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm" render={<Link to="/shipment-management/shipments" />}>
             <ExternalLinkIcon className="size-3" />
-            Open shipments
+            {t("Open shipments")}
           </Button>
           <Button size="sm" onClick={onDone}>
-            Done
+            {t("Done")}
           </Button>
         </div>
       </m.div>

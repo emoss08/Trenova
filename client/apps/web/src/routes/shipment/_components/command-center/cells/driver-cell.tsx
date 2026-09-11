@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -10,6 +11,8 @@ function formatDriverName(first: string | undefined | null, last: string | undef
 }
 
 export function DriverCell({ shipment }: { shipment: Shipment }) {
+  const t = useT();
+
   const move = shipment.moves?.[0] ?? null;
   const assignment = move?.assignment ?? null;
   const driver = assignment?.primaryWorker ?? null;
@@ -48,7 +51,7 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
     return (
       <div className={cn("text-warning inline-flex items-center gap-1 text-[11px] font-medium")}>
         <TriangleAlertIcon className="size-3" />
-        <span>Needs coverage</span>
+        <span>{t("Needs coverage")}</span>
       </div>
     );
   }

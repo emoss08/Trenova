@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,8 @@ export function ActionsCell({
   row: Row<Shipment>;
   actions: RowAction<Shipment>[];
 }) {
+  const t = useT();
+
   const visibleActions = actions.filter((a) => !a.hidden?.(row));
   if (visibleActions.length === 0) return null;
 
@@ -24,7 +27,7 @@ export function ActionsCell({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon-xs" aria-label="Row actions">
+            <Button variant="ghost" size="icon-xs" aria-label={t("Row actions")}>
               <MoreHorizontalIcon className="size-4" />
             </Button>
           }

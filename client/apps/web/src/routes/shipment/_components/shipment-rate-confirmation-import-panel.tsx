@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
@@ -179,6 +180,8 @@ export function ShipmentRateConfirmationImportPanel({
   open,
   onOpenChange,
 }: ShipmentRateConfirmationImportPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [importResourceId, setImportResourceId] = useState(createImportResourceId);
   const [uploadedDocumentId, setUploadedDocumentId] = useState<string | null>(null);
@@ -271,7 +274,7 @@ export function ShipmentRateConfirmationImportPanel({
           queryKey: ["shipment-import-draft", uploadedDocumentId],
         });
       }
-      toast.success("Re-extraction started");
+      toast.success(t("Re-extraction started"));
     },
     onError: (error) => {
       toast.error(`Failed to restart extraction: ${error.message}`);
@@ -393,17 +396,16 @@ export function ShipmentRateConfirmationImportPanel({
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <DialogTitle>Import from Rate Confirmation</DialogTitle>
-                <Badge variant="secondary">Guided workflow</Badge>
+                <DialogTitle>{t("Import from Rate Confirmation")}</DialogTitle>
+                <Badge variant="secondary">{t("Guided workflow")}</Badge>
               </div>
               <DialogDescription>
-                Upload a rate confirmation, wait for extraction to finish, review the shipment
-                draft, and create the shipment without leaving this flow.
+                {t("Upload a rate confirmation, wait for extraction to finish, review the shipment draft, and create the shipment without leaving this flow.")}
               </DialogDescription>
             </div>
             {currentStep !== "success" ? (
               <Button variant="outline" onClick={closeAndReset}>
-                Cancel Import
+                {t("Cancel Import")}
               </Button>
             ) : null}
           </div>
@@ -455,11 +457,10 @@ export function ShipmentRateConfirmationImportPanel({
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <FileUpIcon className="size-4" />
-                  <CardTitle>Upload rate confirmation</CardTitle>
+                  <CardTitle>{t("Upload rate confirmation")}</CardTitle>
                 </div>
                 <CardDescription>
-                  Use a PDF or image of the rate confirmation. We will extract shipment details only
-                  for this import workflow.
+                  {t("Use a PDF or image of the rate confirmation. We will extract shipment details only for this import workflow.")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -497,17 +498,17 @@ export function ShipmentRateConfirmationImportPanel({
                       <div className="flex flex-wrap gap-2">
                         {currentUpload.status === "error" ? (
                           <Button variant="outline" onClick={() => retryUpload(currentUpload.id)}>
-                            Retry Upload
+                            {t("Retry Upload")}
                           </Button>
                         ) : null}
                         {currentUpload.status !== "success" ? (
                           <Button variant="outline" onClick={() => cancelUpload(currentUpload.id)}>
-                            Cancel Upload
+                            {t("Cancel Upload")}
                           </Button>
                         ) : null}
                         {currentUpload.status === "error" ? (
                           <Button variant="ghost" onClick={() => removeUpload(currentUpload.id)}>
-                            Remove File
+                            {t("Remove File")}
                           </Button>
                         ) : null}
                       </div>
@@ -538,7 +539,7 @@ export function ShipmentRateConfirmationImportPanel({
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border p-3">
                     <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      Uploaded File
+                      {t("Uploaded File")}
                     </div>
                     <div className="mt-1 text-sm">
                       {importedDocument?.originalName ?? currentUpload?.file.name ?? "Waiting"}
@@ -546,7 +547,7 @@ export function ShipmentRateConfirmationImportPanel({
                   </div>
                   <div className="rounded-lg border p-3">
                     <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      Content Status
+                      {t("Content Status")}
                     </div>
                     <div className="mt-1 text-sm">
                       {importedDocument?.contentStatus ?? "Uploading"}
@@ -554,7 +555,7 @@ export function ShipmentRateConfirmationImportPanel({
                   </div>
                   <div className="rounded-lg border p-3">
                     <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      Draft Status
+                      {t("Draft Status")}
                     </div>
                     <div className="mt-1 text-sm">
                       {importedDocument?.shipmentDraftStatus ?? "Waiting"}
@@ -567,7 +568,7 @@ export function ShipmentRateConfirmationImportPanel({
                       <AlertCircleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
                       <div className="grid gap-3">
                         <div>
-                          <div className="text-destructive font-medium">Import failed</div>
+                          <div className="text-destructive font-medium">{t("Import failed")}</div>
                           <div className="text-destructive/80 text-sm">{processingFailure}</div>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -580,11 +581,11 @@ export function ShipmentRateConfirmationImportPanel({
                               {retryExtraction.isPending ? (
                                 <LoaderCircleIcon className="size-4 animate-spin" />
                               ) : null}
-                              Retry Extraction
+                              {t("Retry Extraction")}
                             </Button>
                           ) : null}
                           <Button variant="outline" onClick={handleReplaceFile}>
-                            Replace File
+                            {t("Replace File")}
                           </Button>
                         </div>
                       </div>
@@ -592,8 +593,7 @@ export function ShipmentRateConfirmationImportPanel({
                   </div>
                 ) : (
                   <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-                    Stay on this screen while we process the rate confirmation. The workflow will
-                    advance automatically when the shipment draft is ready.
+                    {t("Stay on this screen while we process the rate confirmation. The workflow will advance automatically when the shipment draft is ready.")}
                   </div>
                 )}
               </CardContent>
@@ -604,10 +604,9 @@ export function ShipmentRateConfirmationImportPanel({
         {currentStep === "review" ? (
           <div className="grid gap-4">
             <div className="border-b px-6 pt-6 pb-4">
-              <div className="text-sm font-medium">Review shipment draft</div>
+              <div className="text-sm font-medium">{t("Review shipment draft")}</div>
               <div className="text-muted-foreground mt-1 text-sm">
-                Confirm the extracted details, complete any missing shipment fields, and create the
-                shipment from this draft.
+                {t("Confirm the extracted details, complete any missing shipment fields, and create the shipment from this draft.")}
               </div>
             </div>
             <DocumentShipmentDraftReviewDialog
@@ -632,32 +631,32 @@ export function ShipmentRateConfirmationImportPanel({
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <CheckCircle2Icon className="size-5 text-emerald-600" />
-                  <CardTitle>Shipment created</CardTitle>
+                  <CardTitle>{t("Shipment created")}</CardTitle>
                 </div>
-                <CardDescription>The rate confirmation workflow is complete.</CardDescription>
+                <CardDescription>{t("The rate confirmation workflow is complete.")}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="bg-background/80 rounded-lg border border-emerald-200 p-4">
                   <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    Shipment ID
+                    {t("Shipment ID")}
                   </div>
                   <div className="mt-1 text-sm font-medium">{createdShipmentId}</div>
                 </div>
                 {attachErrorMessage ? (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-                    Shipment creation succeeded, but the source document could not be attached.
+                    {t("Shipment creation succeeded, but the source document could not be attached.")}
                     <div className="mt-1 text-amber-900/80">{attachErrorMessage}</div>
                   </div>
                 ) : (
                   <div className="bg-background/80 rounded-lg border border-emerald-200 p-4 text-sm text-emerald-950">
-                    The source document was attached to the new shipment successfully.
+                    {t("The source document was attached to the new shipment successfully.")}
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" render={<Link to="/shipment-management/shipments" />}>
-                    Open Shipments
+                    {t("Open Shipments")}
                   </Button>
-                  <Button onClick={closeAndReset}>Done</Button>
+                  <Button onClick={closeAndReset}>{t("Done")}</Button>
                 </div>
               </CardContent>
             </Card>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -50,6 +51,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { PermitRecordDialog, PermitWaiveDialog } from "./permit-dialogs";
 
 export default function LoadEnvelopePanel() {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const shipmentId = useWatch({ control, name: "id" });
   const version = useWatch({ control, name: "version" });
@@ -70,8 +73,8 @@ export default function LoadEnvelopePanel() {
 
   return (
     <FormSection
-      title="Load Envelope"
-      description="Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment"
+      title={t("Load Envelope")}
+      description={t("Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment")}
       className="border-border border-t pt-4"
       action={assessment ? <EnvelopeStatusBadge assessment={assessment} /> : null}
     >
@@ -84,24 +87,26 @@ export default function LoadEnvelopePanel() {
           shipmentId={shipmentId as string}
         />
       ) : (
-        <EmptyNotice>The permit assessment could not be loaded for this shipment.</EmptyNotice>
+        <EmptyNotice>{t("The permit assessment could not be loaded for this shipment.")}</EmptyNotice>
       )}
     </FormSection>
   );
 }
 
 function EnvelopeStatusBadge({ assessment }: { assessment: PermitAssessment }) {
+  const t = useT();
+
   if (hasOpenRequirements(assessment)) {
-    return <Badge variant="inactive">Permits outstanding</Badge>;
+    return <Badge variant="inactive">{t("Permits outstanding")}</Badge>;
   }
   if (isOversize(assessment)) {
-    return <Badge variant="active">Permits in place</Badge>;
+    return <Badge variant="active">{t("Permits in place")}</Badge>;
   }
   if (!assessment.routeResolved) {
-    return <Badge variant="outline">Route not resolved</Badge>;
+    return <Badge variant="outline">{t("Route not resolved")}</Badge>;
   }
 
-  return <Badge variant="active">Legal on this route</Badge>;
+  return <Badge variant="active">{t("Legal on this route")}</Badge>;
 }
 
 function EnvelopeBody({
@@ -113,6 +118,8 @@ function EnvelopeBody({
   scheduledPickupAt: number | null | undefined;
   shipmentId: string;
 }) {
+  const t = useT();
+
   const rows = dimensionRows(assessment);
   // The assessment's requirements are freshly derived and carry no ID, so the
   // per-row actions read the persisted set instead. Falling back to the derived
@@ -141,8 +148,7 @@ function EnvelopeBody({
   if (assessment.measurements.widthFeet === 0 && assessment.measurements.lengthFeet === 0) {
     return (
       <EmptyNotice>
-        Add length, width, and height to the commodity lines. Deck fit, permits, escorts, and lead
-        time are all derived from those numbers.
+        {t("Add length, width, and height to the commodity lines. Deck fit, permits, escorts, and lead time are all derived from those numbers.")}
       </EmptyNotice>
     );
   }
@@ -153,9 +159,7 @@ function EnvelopeBody({
 
       {!assessment.routeResolved && (
         <EmptyNotice>
-          No jurisdiction rules matched the stops on this shipment, so no limits were checked. This
-          is not the same as a legal load — add stop locations, or confirm the states on this route
-          have jurisdiction rules configured.
+          {t("No jurisdiction rules matched the stops on this shipment, so no limits were checked. This is not the same as a legal load — add stop locations, or confirm the states on this route have jurisdiction rules configured.")}
         </EmptyNotice>
       )}
 
@@ -166,10 +170,10 @@ function EnvelopeBody({
             meta={
               openCount > 0 ? (
                 <span className="text-2xs text-destructive font-medium tabular-nums">
-                  {openCount} open
+                  {t("{0} open", openCount)}
                 </span>
               ) : (
-                <span className="text-2xs text-muted-foreground">All resolved</span>
+                <span className="text-2xs text-muted-foreground">{t("All resolved")}</span>
               )
             }
           />
@@ -207,9 +211,9 @@ function EnvelopeBody({
         {escorts.length > 0 && (
           <SummaryCard
             icon={<TruckIcon className="size-3.5" />}
-            label="Escort vehicles"
+            label={t("Escort vehicles")}
             value={`${assessment.totalEscorts} for the trip`}
-            hint="Counted once per role across the route, not once per state."
+            hint={t("Counted once per role across the route, not once per state.")}
           >
             <ul className="space-y-0.5">
               {escorts.map((escort) => (
@@ -225,8 +229,8 @@ function EnvelopeBody({
         {restrictions.length > 0 && (
           <SummaryCard
             icon={<ClockIcon className="size-3.5" />}
-            label="Movement restrictions"
-            hint="Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times."
+            label={t("Movement restrictions")}
+            hint={t("Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times.")}
           >
             <ul className="space-y-0.5">
               {restrictions.map((restriction) => (
@@ -242,21 +246,20 @@ function EnvelopeBody({
         {assessment.maxLeadTimeDays > 0 && (
           <SummaryCard
             icon={<CalendarClockIcon className="size-3.5" />}
-            label="Earliest feasible pickup"
+            label={t("Earliest feasible pickup")}
             value={formatToUserTimezone(assessment.earliestPickup, {
               showTimeZone: false,
               showSeconds: false,
             })}
-            hint="Derived from the slowest jurisdiction's permit lead time."
+            hint={t("Derived from the slowest jurisdiction's permit lead time.")}
             tone={pickupTooSoon ? "warning" : undefined}
           >
             <p className="text-muted-foreground text-xs">
-              {assessment.maxLeadTimeDays} day
-              {assessment.maxLeadTimeDays === 1 ? "" : "s"} of permit lead time on this route.
+              {t("{0} day {1} of permit lead time on this route.", assessment.maxLeadTimeDays, assessment.maxLeadTimeDays === 1 ? "" : "s")}
             </p>
             {pickupTooSoon && (
               <p className="mt-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
-                The booked pickup falls inside that window and cannot be permitted in time.
+                {t("The booked pickup falls inside that window and cannot be permitted in time.")}
               </p>
             )}
           </SummaryCard>
@@ -265,14 +268,12 @@ function EnvelopeBody({
         {(assessment.totalEstimatedFee ?? 0) > 0 && (
           <SummaryCard
             icon={<CircleDollarSignIcon className="size-3.5" />}
-            label="Estimated permit fees"
+            label={t("Estimated permit fees")}
             value={`$${(assessment.totalEstimatedFee ?? 0).toLocaleString()}`}
           >
             {assessment.feeIsBaseOnly && (
               <p className="text-muted-foreground text-xs">
-                Base fees only — per-mile charges are excluded because per-state mileage is not
-                available for this route, so the real cost will be higher where a jurisdiction
-                charges by distance.
+                {t("Base fees only — per-mile charges are excluded because per-state mileage is not available for this route, so the real cost will be higher where a jurisdiction charges by distance.")}
               </p>
             )}
           </SummaryCard>
@@ -284,12 +285,10 @@ function EnvelopeBody({
           <ShieldQuestionIcon className="mt-0.5 size-3.5 shrink-0 text-yellow-700 dark:text-yellow-400" />
           <div className="space-y-0.5">
             <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
-              Unconfirmed limits for {unverified.map((j) => j.stateCode).join(", ")}
+              {t("Unconfirmed limits for {0}", unverified.map((j) => j.stateCode).join(", "))}
             </p>
             <p className="text-muted-foreground text-xs">
-              These thresholds came from Trenova&apos;s researched baseline and have not been
-              confirmed against the issuing authority by your organization. Verify them in
-              jurisdiction rules before relying on them for a permit filing.
+              {t("These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.")}
             </p>
           </div>
         </div>
@@ -325,6 +324,8 @@ const METER_FILL: Record<DimensionMeterTone, string> = {
 };
 
 function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
+  const t = useT();
+
   const overCount = rows.filter((row) => row.exceeded).length;
   const hasLimits = rows.some((row) => row.limit !== null);
 
@@ -332,7 +333,7 @@ function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
     <div className="rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
-          Dimensions vs tightest limit
+          {t("Dimensions vs tightest limit")}
         </span>
         {hasLimits && (
           <span
@@ -355,6 +356,8 @@ function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
 }
 
 function DimensionTile({ row }: { row: DimensionRow }) {
+  const t = useT();
+
   const meter = dimensionMeter(row);
 
   return (
@@ -369,11 +372,11 @@ function DimensionTile({ row }: { row: DimensionRow }) {
         {row.headroom !== null &&
           (row.exceeded ? (
             <span className="bg-destructive/15 text-2xs text-destructive rounded-full px-1.5 py-px font-semibold tabular-nums">
-              {formatMeasurement(Math.abs(row.headroom), row.unit)} over
+              {t("{0} over", formatMeasurement(Math.abs(row.headroom), row.unit))}
             </span>
           ) : (
             <span className="text-2xs text-muted-foreground tabular-nums">
-              {formatMeasurement(row.headroom, row.unit)} left
+              {t("{0} left", formatMeasurement(row.headroom, row.unit))}
             </span>
           ))}
       </div>
@@ -424,6 +427,8 @@ function RequirementRow({
   onRecord: () => void;
   onWaive: () => void;
 }) {
+  const t = useT();
+
   const code = requirementStateCode(requirement);
   const stateName = requirement.provenance?.stateName;
   const exceedances = requirement.exceedances ?? [];
@@ -458,12 +463,10 @@ function RequirementRow({
             </div>
           )}
           <p className="text-2xs text-muted-foreground">
-            {requirement.leadTimeDays} day
-            {requirement.leadTimeDays === 1 ? "" : "s"} lead time
-            {requirement.validityDays > 0 && ` · valid ${requirement.validityDays} days`}
+            {t("{0} day {1} lead time {2}", requirement.leadTimeDays, requirement.leadTimeDays === 1 ? "" : "s", requirement.validityDays > 0 && ` · valid ${requirement.validityDays} days`)}
           </p>
           {requirement.status === "Waived" && requirement.waiverReason && (
-            <p className="text-2xs text-muted-foreground">Waived: {requirement.waiverReason}</p>
+            <p className="text-2xs text-muted-foreground">{t("Waived: {0}", requirement.waiverReason)}</p>
           )}
         </div>
       </div>
@@ -471,10 +474,10 @@ function RequirementRow({
         {actionable && (
           <>
             <Button type="button" variant="outline" size="xxs" onClick={onRecord}>
-              Record permit
+              {t("Record permit")}
             </Button>
             <Button type="button" variant="ghost" size="xxs" onClick={onWaive}>
-              Waive
+              {t("Waive")}
             </Button>
           </>
         )}
@@ -492,6 +495,8 @@ const PERMIT_STATUS_VARIANT: Record<PermitStatus, BadgeVariant> = {
 };
 
 function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {
+  const t = useT();
+
   return (
     <li className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-3 py-2.5">
       <div className="flex min-w-0 flex-1 items-start gap-2.5">
@@ -513,7 +518,7 @@ function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {
             short of the last stop, is corrected here rather than by recording
             a second permit beside the first. */}
         <Button type="button" variant="outline" size="xxs" onClick={onEdit}>
-          Edit
+          {t("Edit")}
         </Button>
         <Badge variant={PERMIT_STATUS_VARIANT[permit.status]}>{permit.status}</Badge>
       </div>

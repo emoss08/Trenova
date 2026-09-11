@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -64,6 +65,8 @@ function GradientBar({ from, to }: { from: string; to: string }) {
 }
 
 export function MapLegendPopover() {
+  const t = useT();
+
   return (
     <Popover>
       <Tooltip>
@@ -78,31 +81,31 @@ export function MapLegendPopover() {
         >
           <InfoIcon className="size-4" />
         </TooltipTrigger>
-        <TooltipContent side="bottom">Map legend</TooltipContent>
+        <TooltipContent side="bottom">{t("Map legend")}</TooltipContent>
       </Tooltip>
       <PopoverContent side="bottom" sideOffset={8} className="w-48 gap-0.5 p-3">
         <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-          Legend
+          {t("Legend")}
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
-          <LegendItem swatch={<Dot color="#000" />} label="Vehicle" />
-          <LegendItem swatch={<TruckChip />} label="Live Vehicle" />
-          <LegendItem swatch={<Dot color="#3b82f6" />} label="Pickup Stop" />
-          <LegendItem swatch={<Dot color="#16a34a" />} label="Delivery Stop" />
-          <LegendItem swatch={<DashedLine />} label="Route" />
-          <LegendItem swatch={<Ring color="#3b82f6" />} label="Geofence" />
+          <LegendItem swatch={<Dot color="#000" />} label={t("Vehicle")} />
+          <LegendItem swatch={<TruckChip />} label={t("Live Vehicle")} />
+          <LegendItem swatch={<Dot color="#3b82f6" />} label={t("Pickup Stop")} />
+          <LegendItem swatch={<Dot color="#16a34a" />} label={t("Delivery Stop")} />
+          <LegendItem swatch={<DashedLine />} label={t("Route")} />
+          <LegendItem swatch={<Ring color="#3b82f6" />} label={t("Geofence")} />
         </div>
 
         <Separator className="my-2.5" />
 
         <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-          Overlays
+          {t("Overlays")}
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
-          <LegendItem swatch={<GradientBar from="#22c55e" to="#ef4444" />} label="Traffic" />
-          <LegendItem swatch={<GradientBar from="#a3d9f5" to="#1e3a8a" />} label="Precipitation" />
-          <LegendItem swatch={<GradientBar from="#dbeafe" to="#6366f1" />} label="Wind Speed" />
-          <LegendItem swatch={<GradientBar from="#3b82f6" to="#ef4444" />} label="Temperature" />
+          <LegendItem swatch={<GradientBar from="#22c55e" to="#ef4444" />} label={t("Traffic")} />
+          <LegendItem swatch={<GradientBar from="#a3d9f5" to="#1e3a8a" />} label={t("Precipitation")} />
+          <LegendItem swatch={<GradientBar from="#dbeafe" to="#6366f1" />} label={t("Wind Speed")} />
+          <LegendItem swatch={<GradientBar from="#3b82f6" to="#ef4444" />} label={t("Temperature")} />
         </div>
       </PopoverContent>
     </Popover>

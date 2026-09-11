@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,8 @@ type FuelSurchargeChangeDialogProps = {
 };
 
 export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeChangeDialogProps) {
+  const t = useT();
+
   return (
     <AlertDialog
       open={!!change}
@@ -32,12 +35,11 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <FuelIcon className="text-primary size-4" />
-            Fuel Surcharge Re-Rated
+            {t("Fuel Surcharge Re-Rated")}
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span className="block">
-              A change to this shipment (like an updated stop or distance) re-rated the automatic
-              fuel surcharge from{" "}
+              {t("A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from")}{" "}
               <span className="text-foreground font-medium tabular-nums">
                 {change ? money(change.previousAmount) : ""}
               </span>{" "}
@@ -45,20 +47,19 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
               <span className="text-foreground font-medium tabular-nums">
                 {change ? money(change.nextAmount) : ""}
               </span>
-              . Only one fuel surcharge line is kept — choose which amount to bill.
+              {t(". Only one fuel surcharge line is kept — choose which amount to bill.")}
             </span>
             <span className="block">
-              Keeping the original locks the fuel surcharge so future changes won&apos;t re-rate it.
-              You can unlock it from the charge list at any time.
+              {t("Keeping the original locks the fuel surcharge so future changes won't re-rate it. You can unlock it from the charge list at any time.")}
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => onResolve("keep")}>
-            Keep Original{change ? ` (${money(change.previousAmount)})` : ""}
+            {t("Keep Original{0}", change ? ` (${money(change.previousAmount)})` : "")}
           </AlertDialogCancel>
           <AlertDialogAction onClick={() => onResolve("replace")}>
-            Use New Amount{change ? ` (${money(change.nextAmount)})` : ""}
+            {t("Use New Amount{0}", change ? ` (${money(change.nextAmount)})` : "")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

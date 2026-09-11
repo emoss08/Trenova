@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { CheckboxField } from "@/components/fields/checkbox-field";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
@@ -43,6 +44,8 @@ export function MoveEditDialog({
   onClose: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
 
   if (!state.open) return null;
@@ -73,8 +76,8 @@ export function MoveEditDialog({
                   control={control}
                   name={`moves.${moveIndex}.status`}
                   rules={{ required: true }}
-                  label="Status"
-                  description="Tracks where this move is in its lifecycle, from new through completion"
+                  label={t("Status")}
+                  description={t("Tracks where this move is in its lifecycle, from new through completion")}
                   isReadOnly
                   options={moveStatusChoices}
                 />
@@ -83,8 +86,8 @@ export function MoveEditDialog({
                 <NumberField
                   control={control}
                   name={`moves.${moveIndex}.distance`}
-                  label="Distance (mi)"
-                  description="Total miles for this leg, used for rate calculations and driver pay"
+                  label={t("Distance (mi)")}
+                  description={t("Total miles for this leg, used for rate calculations and driver pay")}
                   placeholder="0"
                 />
               </FormControl>
@@ -92,8 +95,8 @@ export function MoveEditDialog({
                 <CheckboxField
                   control={control}
                   name={`moves.${moveIndex}.loaded`}
-                  label="Loaded"
-                  description="Indicates whether this move is carrying freight or is an empty repositioning leg"
+                  label={t("Loaded")}
+                  description={t("Indicates whether this move is carrying freight or is an empty repositioning leg")}
                 />
               </FormControl>
             </FormGroup>
@@ -103,7 +106,7 @@ export function MoveEditDialog({
         </ScrollArea>
         <DialogFooter className="m-0">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="button" onClick={onClose}>
             {isNew ? "Add Move" : "Save Changes"}
@@ -115,6 +118,8 @@ export function MoveEditDialog({
 }
 
 function StopsList({ moveIndex }: { moveIndex: number }) {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -136,10 +141,10 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-muted-foreground text-xs font-medium">Stops ({fields.length})</span>
+        <span className="text-muted-foreground text-xs font-medium">{t("Stops ({0})", fields.length)}</span>
         <Button type="button" variant="outline" size="xxs" onClick={() => addStop(fields.length)}>
           <PlusIcon className="size-3" />
-          Add Stop
+          {t("Add Stop")}
         </Button>
       </div>
 
@@ -157,13 +162,13 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
         {fields.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
             <MapPinIcon className="text-muted-foreground/40 mb-2 size-4" />
-            <p className="text-muted-foreground text-xs">No stops configured</p>
+            <p className="text-muted-foreground text-xs">{t("No stops configured")}</p>
             <p className="text-muted-foreground/60 mb-3 text-xs">
-              Add at least one pickup and delivery stop.
+              {t("Add at least one pickup and delivery stop.")}
             </p>
             <Button type="button" variant="outline" size="xxs" onClick={() => addStop(0)}>
               <PlusIcon className="size-3" />
-              Add First Stop
+              {t("Add First Stop")}
             </Button>
           </div>
         )}
@@ -183,6 +188,8 @@ function StopCard({
   totalStops: number;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const status = useWatch({
     control,
@@ -226,7 +233,7 @@ function StopCard({
         <div className="flex items-center gap-2">
           <MapPinIcon className="text-muted-foreground size-3" />
           <span className="text-xs font-medium">
-            Stop {stopIndex + 1}
+            {t("Stop {0}", stopIndex + 1)}
             <span className="text-muted-foreground"> / {totalStops}</span>
           </span>
           <Badge variant={stopStatusBadgeVariant[status]} className="text-2xs h-5">
@@ -245,9 +252,9 @@ function StopCard({
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.locationId`}
               rules={{ required: true }}
-              label="Location"
-              description="The facility, warehouse, or yard where the driver will stop"
-              placeholder="Search locations..."
+              label={t("Location")}
+              description={t("The facility, warehouse, or yard where the driver will stop")}
+              placeholder={t("Search locations...")}
             />
           </FormControl>
           <FormControl>
@@ -255,8 +262,8 @@ function StopCard({
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.type`}
               rules={{ required: true }}
-              label="Stop Type"
-              description="Defines the purpose of the stop — pickup, delivery, or a split operation"
+              label={t("Stop Type")}
+              description={t("Defines the purpose of the stop — pickup, delivery, or a split operation")}
               options={stopTypeChoices}
             />
           </FormControl>
@@ -267,8 +274,8 @@ function StopCard({
             <NumberField
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.pieces`}
-              label="Pieces"
-              description="Count of individual freight units (pallets, crates, etc.) handled at this stop"
+              label={t("Pieces")}
+              description={t("Count of individual freight units (pallets, crates, etc.) handled at this stop")}
               placeholder="0"
             />
           </FormControl>
@@ -276,8 +283,8 @@ function StopCard({
             <NumberField
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.weight`}
-              label="Weight (lbs)"
-              description="Combined weight of all freight being loaded or unloaded at this stop"
+              label={t("Weight (lbs)")}
+              description={t("Combined weight of all freight being loaded or unloaded at this stop")}
               placeholder="0"
             />
           </FormControl>
@@ -286,7 +293,7 @@ function StopCard({
         <div>
           <div className="mb-1.5 flex items-center gap-1">
             <CalendarIcon className="text-muted-foreground size-3" />
-            <span className="text-2xs text-muted-foreground font-medium">Scheduling</span>
+            <span className="text-2xs text-muted-foreground font-medium">{t("Scheduling")}</span>
           </div>
           <div className="space-y-1">
             <FormGroup cols={1} dense>
@@ -295,8 +302,8 @@ function StopCard({
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduleType`}
                   rules={{ required: true }}
-                  label="Schedule Type"
-                  description="How this stop is scheduled — an open arrival window or a fixed appointment time"
+                  label={t("Schedule Type")}
+                  description={t("How this stop is scheduled — an open arrival window or a fixed appointment time")}
                   options={stopScheduleTypeChoices}
                 />
               </FormControl>
@@ -308,7 +315,7 @@ function StopCard({
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduledWindowStart`}
                   rules={{ required: true }}
                   label={startLabel}
-                  description="The earliest time the driver is expected to arrive at this stop"
+                  description={t("The earliest time the driver is expected to arrive at this stop")}
                   placeholder={startPlaceholder}
                 />
               </FormControl>
@@ -317,7 +324,7 @@ function StopCard({
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduledWindowEnd`}
                   label={endLabel}
-                  description="The latest acceptable arrival time, leave blank for exact appointments"
+                  description={t("The latest acceptable arrival time, leave blank for exact appointments")}
                   placeholder={endPlaceholder}
                 />
               </FormControl>
@@ -325,18 +332,18 @@ function StopCard({
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualArrival`}
-                  label="Actual Arrival"
-                  description="Recorded time the driver checked in at the facility"
-                  placeholder="Arrival time"
+                  label={t("Actual Arrival")}
+                  description={t("Recorded time the driver checked in at the facility")}
+                  placeholder={t("Arrival time")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualDeparture`}
-                  label="Actual Departure"
-                  description="Recorded time the driver left the facility after loading or unloading"
-                  placeholder="Departure time"
+                  label={t("Actual Departure")}
+                  description={t("Recorded time the driver left the facility after loading or unloading")}
+                  placeholder={t("Departure time")}
                 />
               </FormControl>
             </FormGroup>

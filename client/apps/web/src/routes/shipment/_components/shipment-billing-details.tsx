@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
   FormulaTemplateAutocompleteField,
@@ -49,6 +50,8 @@ import { ProfitabilitySummary } from "./profitability/profitability-summary";
 import { WhyThisRate } from "./why-this-rate";
 
 function Inner({ children }: { children: React.ReactNode }) {
+  const t = useT();
+
   const { control, getValues } = useFormContext<Shipment>();
 
   const serviceTypeId = useWatch({ control, name: "serviceTypeId" });
@@ -71,8 +74,8 @@ function Inner({ children }: { children: React.ReactNode }) {
 
   return (
     <FormSection
-      title="Billing & Rating"
-      description="Customer, rating method, and charge amounts"
+      title={t("Billing & Rating")}
+      description={t("Customer, rating method, and charge amounts")}
       action={<PreviousRatesButton request={previousRatesRequest} />}
       className="border-border border-t pt-4"
     >
@@ -164,6 +167,8 @@ function ChargeSummaryRow({
 }
 
 function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error: string | null }) {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const otherChargeAmount = useWatch({ control, name: "otherChargeAmount" });
   const totalChargeAmount = useWatch({ control, name: "totalChargeAmount" });
@@ -174,7 +179,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
       {isCalculating && (
         <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
           <TextShimmer as="span" className="text-sm font-medium" duration={1.5}>
-            Calculating...
+            {t("Calculating...")}
           </TextShimmer>
         </div>
       )}
@@ -187,17 +192,16 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
         </div>
       )}
       <div className="mb-3">
-        <span className="text-xs font-medium">Charge Summary</span>
+        <span className="text-xs font-medium">{t("Charge Summary")}</span>
         <p className="text-2xs text-muted-foreground mt-0.5">
-          Automatically calculated based on the rating method, freight charges, and any additional
-          accessorial charges.
+          {t("Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.")}
         </p>
       </div>
       <div className="space-y-2">
-        <ChargeSummaryRow label="Freight Charges" value={freightChargeAmount} />
-        <ChargeSummaryRow label="Other Charges" value={otherChargeAmount} />
+        <ChargeSummaryRow label={t("Freight Charges")} value={freightChargeAmount} />
+        <ChargeSummaryRow label={t("Other Charges")} value={otherChargeAmount} />
         <Separator className="my-2" />
-        <ChargeSummaryRow label="Total" value={totalChargeAmount} bold />
+        <ChargeSummaryRow label={t("Total")} value={totalChargeAmount} bold />
       </div>
     </div>
   );
@@ -217,22 +221,21 @@ function ContractRateAppliedAlert({
   rate: ContractRate;
   onDismiss: () => void;
 }) {
+  const t = useT();
+
   return (
     <Alert variant="info" className="mb-3">
       <SparklesIcon className="size-4" />
       <AlertTitle>
-        Rated from {rate.agreementName || "a rate agreement"}
-        {rate.ruleLabel ? ` — ${rate.ruleLabel}` : ""}
+        {t("Rated from {0}{1}", rate.agreementName || "a rate agreement", rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
       </AlertTitle>
       <AlertDescription>
         <span>
-          The rating method and base rate below came from the contract
-          {rate.accessorials.length > 0
+          {t("The rating method and base rate below came from the contract {0} . Change any of them and this shipment is priced by hand instead.", rate.accessorials.length > 0
             ? `, along with ${rate.accessorials.length} automatic ${
                 rate.accessorials.length === 1 ? "charge" : "charges"
               }`
-            : ""}
-          . Change any of them and this shipment is priced by hand instead.
+            : "")}
         </span>
         <Button
           type="button"
@@ -241,7 +244,7 @@ function ContractRateAppliedAlert({
           className="mt-1 h-6 px-1.5"
           onClick={onDismiss}
         >
-          <span className="text-2xs">Dismiss</span>
+          <span className="text-2xs">{t("Dismiss")}</span>
         </Button>
       </AlertDescription>
     </Alert>
@@ -257,6 +260,8 @@ function ContractRateAppliedAlert({
  * require before the shipment is allowed to bill.
  */
 function RateDepartureReason() {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const autoRated = useWatch({ control, name: "autoRated" });
   const agreementId = useWatch({ control, name: "rateAgreementId" });
@@ -271,15 +276,17 @@ function RateDepartureReason() {
       <TextareaField
         control={control}
         name="rateOverrideReason"
-        label="Reason for the rate change"
-        placeholder="Why is this shipment priced differently from its contract?"
-        description="This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report."
+        label={t("Reason for the rate change")}
+        placeholder={t("Why is this shipment priced differently from its contract?")}
+        description={t("This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report.")}
       />
     </div>
   );
 }
 
 function RatingBreakdownCard() {
+  const t = useT();
+
   const { control, getValues } = useFormContext<Shipment>();
   const [showReceipt, setShowReceipt] = useState(false);
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
@@ -303,7 +310,7 @@ function RatingBreakdownCard() {
         <div className="flex flex-col gap-1 w-full">
           <div className="flex justify-between items-center">
             <div className="flex flex-row gap-1">
-              <span className="text-xs font-medium">Rating Breakdown</span>
+              <span className="text-xs font-medium">{t("Rating Breakdown")}</span>
               <AutoRateDialog />
             </div>
             <WhyThisRate shipmentId={shipmentId} />
@@ -317,7 +324,7 @@ function RatingBreakdownCard() {
         <div className="flex items-center gap-1">
           {ratingDetail.versionNumber ? (
             <Badge variant="outline" className="text-2xs font-mono">
-              v{ratingDetail.versionNumber}
+              {t("v{0}", ratingDetail.versionNumber)}
             </Badge>
           ) : null}
         </div>
@@ -352,12 +359,9 @@ function RatingBreakdownCard() {
         >
           <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
           <p className="text-2xs text-muted-foreground">
-            {guardrail.bound === "min" ? "Minimum" : "Maximum"} charge guardrail applied. The
-            formula produced {formatCurrency(guardrail.rawResult)} and was clamped to{" "}
-            {formatCurrency(
+            {t("{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .", guardrail.bound === "min" ? "Minimum" : "Maximum", formatCurrency(guardrail.rawResult), formatCurrency(
               (guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge) ?? 0,
-            )}
-            .
+            ))}
           </p>
         </div>
       )}
@@ -372,7 +376,7 @@ function RatingBreakdownCard() {
               className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs font-medium"
             >
               <ReceiptTextIcon className="size-3.5" />
-              Calculation receipt
+              {t("Calculation receipt")}
               {showReceipt ? (
                 <ChevronDownIcon className="size-3" />
               ) : (
@@ -384,8 +388,7 @@ function RatingBreakdownCard() {
                 to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
                 className="text-2xs text-primary hover:underline"
               >
-                Open template
-                {ratingDetail.versionNumber ? ` v${ratingDetail.versionNumber}` : ""}
+                {t("Open template {0}", ratingDetail.versionNumber ? ` v${ratingDetail.versionNumber}` : "")}
               </Link>
             )}
           </div>
@@ -397,6 +400,8 @@ function RatingBreakdownCard() {
 }
 
 export default function ShipmentBillingDetails() {
+  const t = useT();
+
   const { control, getValues } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
   const shipmentId = getValues("id");
@@ -422,9 +427,9 @@ export default function ShipmentBillingDetails() {
         <OrderAutocompleteField
           control={control}
           name="orderId"
-          label="Order"
-          placeholder="Select Order"
-          description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
+          label={t("Order")}
+          placeholder={t("Select Order")}
+          description={t("Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards.")}
           disabled={!customerId}
           extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
         />
@@ -437,9 +442,9 @@ export default function ShipmentBillingDetails() {
           control={control}
           name="customerId"
           rules={{ required: true }}
-          label="Customer"
-          placeholder="Select Customer"
-          description="Choose the customer who requested this shipment."
+          label={t("Customer")}
+          placeholder={t("Select Customer")}
+          description={t("Choose the customer who requested this shipment.")}
         />
       ),
     },
@@ -450,9 +455,9 @@ export default function ShipmentBillingDetails() {
         <FormulaTemplateAutocompleteField
           control={control}
           name="formulaTemplateId"
-          label="Rating Method"
-          placeholder="Select Rating Method"
-          description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
+          label={t("Rating Method")}
+          placeholder={t("Select Rating Method")}
+          description={t("Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate).")}
           rules={{ required: true }}
         />
       ),
@@ -467,10 +472,10 @@ export default function ShipmentBillingDetails() {
           control={control}
           rules={{ required: true }}
           name="baseRate"
-          label="Base Rate"
-          placeholder="Enter Base Rate"
-          description="Per-unit rate used by the formula template to calculate freight charges."
-          sideText="USD"
+          label={t("Base Rate")}
+          placeholder={t("Enter Base Rate")}
+          description={t("Per-unit rate used by the formula template to calculate freight charges.")}
+          sideText={t("USD")}
         />
       ),
     },

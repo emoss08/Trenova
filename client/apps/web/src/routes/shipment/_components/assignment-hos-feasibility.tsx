@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DriverFeasibility } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -48,6 +49,8 @@ function FeasibilityRow({
   selected: boolean;
   onSelect: ((workerId: string) => void) | null;
 }) {
+  const t = useT();
+
   const verdict = verdictMeta(driver.verdict);
   const duty = driver.dutyStatus ? DUTY_STATUS_META[driver.dutyStatus] : undefined;
   const selectable = onSelect !== null && driver.verdict === "feasible";
@@ -84,15 +87,15 @@ function FeasibilityRow({
         </Badge>
       </div>
       <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums">
-        <span>Drive {formatClockDurationMs(driver.driveRemainingMs)}</span>
+        <span>{t("Drive {0}", formatClockDurationMs(driver.driveRemainingMs))}</span>
         <span aria-hidden>·</span>
-        <span>Shift {formatClockDurationMs(driver.shiftRemainingMs)}</span>
+        <span>{t("Shift {0}", formatClockDurationMs(driver.shiftRemainingMs))}</span>
         <span aria-hidden>·</span>
-        <span>Cycle {formatClockDurationMs(driver.cycleRemainingMs)}</span>
+        <span>{t("Cycle {0}", formatClockDurationMs(driver.cycleRemainingMs))}</span>
         {driver.deadheadMiles !== null && (
           <>
             <span aria-hidden>·</span>
-            <span>~{Math.round(driver.deadheadMiles)} mi away</span>
+            <span>{t("~{0} mi away", Math.round(driver.deadheadMiles))}</span>
           </>
         )}
       </div>
@@ -153,6 +156,8 @@ export function AssignmentHosFeasibility({
   selectedWorkerId?: string | null;
   onSelectWorker: (workerId: string) => void;
 }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState(true);
 
   const statusQuery = useQuery({
@@ -199,7 +204,7 @@ export function AssignmentHosFeasibility({
     body = (
       <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
         <p className="text-muted-foreground text-[10.5px]">
-          Driver feasibility could not be loaded from Samsara.
+          {t("Driver feasibility could not be loaded from Samsara.")}
         </p>
         <Button
           type="button"
@@ -207,14 +212,14 @@ export function AssignmentHosFeasibility({
           size="xs"
           onClick={() => void feasibilityQuery.refetch()}
         >
-          Try again
+          {t("Try again")}
         </Button>
       </div>
     );
   } else if (drivers.length === 0) {
     body = (
       <p className="text-muted-foreground px-3 py-4 text-center text-[10.5px]">
-        No HOS data for any drivers yet.
+        {t("No HOS data for any drivers yet.")}
       </p>
     );
   } else {
@@ -238,8 +243,7 @@ export function AssignmentHosFeasibility({
         <p className="text-destructive flex items-start gap-1.5 text-xs">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            Selected driver has insufficient hours
-            {selectedDriver.reasons.length > 0 ? ` — ${selectedDriver.reasons.join("; ")}` : ""}
+            {t("Selected driver has insufficient hours {0}", selectedDriver.reasons.length > 0 ? ` — ${selectedDriver.reasons.join("; ")}` : "")}
           </span>
         </p>
       )}
@@ -250,13 +254,13 @@ export function AssignmentHosFeasibility({
       >
         <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-semibold">HOS feasibility</span>
+            <span className="text-xs font-semibold">{t("HOS feasibility")}</span>
             {!feasibilityQuery.isLoading && !feasibilityQuery.isError && drivers.length > 0 && (
               <Badge
                 variant={feasibleCount > 0 ? "active" : "warning"}
                 className="h-4 rounded px-1 text-[9px]"
               >
-                {feasibleCount} feasible
+                {t("{0} feasible", feasibleCount)}
               </Badge>
             )}
           </div>

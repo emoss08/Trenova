@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import {
   AlertDialog,
@@ -117,6 +118,8 @@ export function CommentItem({
   isOnline: boolean;
   highlighted?: boolean;
 }) {
+  const t = useT();
+
   const currentUser = useAuthStore((s) => s.user);
   const { allowed: canPin } = usePermission("shipment_comment", Operation.Pin);
   const { allowed: canUnpin } = usePermission("shipment_comment", Operation.Unpin);
@@ -180,7 +183,7 @@ export function CommentItem({
           {comment.pending ? (
             <span className="text-2xs text-muted-foreground flex items-center gap-1">
               <LoaderIcon className="size-3 animate-spin" />
-              Sending…
+              {t("Sending…")}
             </span>
           ) : (
             <span className="text-2xs text-muted-foreground">{relativeTime}</span>
@@ -192,7 +195,7 @@ export function CommentItem({
             <Tooltip>
               <TooltipTrigger render={<PinIcon className="size-3 shrink-0 text-amber-500" />} />
               <TooltipContent side="top">
-                Pinned{comment.pinnedBy?.name ? ` by ${comment.pinnedBy.name}` : ""}
+                {t("Pinned{0}", comment.pinnedBy?.name ? ` by ${comment.pinnedBy.name}` : "")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -231,7 +234,7 @@ export function CommentItem({
 
         {comment.failed && (
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-2xs font-medium text-red-500">Failed to send</span>
+            <span className="text-2xs font-medium text-red-500">{t("Failed to send")}</span>
             <Button
               type="button"
               variant="outline"
@@ -240,7 +243,7 @@ export function CommentItem({
               onClick={actions.onRetry}
             >
               <RotateCcwIcon className="size-2.5" />
-              Retry
+              {t("Retry")}
             </Button>
             <Button
               type="button"
@@ -250,7 +253,7 @@ export function CommentItem({
               onClick={actions.onDiscard}
             >
               <Trash2Icon className="size-2.5" />
-              Discard
+              {t("Discard")}
             </Button>
           </div>
         )}
@@ -258,10 +261,8 @@ export function CommentItem({
         {isResolved && !isEditing && (
           <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
             <CheckCircle2Icon className="size-3 text-emerald-500" />
-            Resolved
-            {comment.resolvedBy?.name ? ` by ${comment.resolvedBy.name}` : ""}
-            {comment.resolvedAt != null &&
-              ` · ${formatDistanceToNow(fromUnixTime(comment.resolvedAt), { addSuffix: true })}`}
+            {t("Resolved {0}{1}", comment.resolvedBy?.name ? ` by ${comment.resolvedBy.name}` : "", comment.resolvedAt != null &&
+              ` · ${formatDistanceToNow(fromUnixTime(comment.resolvedAt), { addSuffix: true })}`)}
           </div>
         )}
 
@@ -299,12 +300,14 @@ export function CommentItem({
 }
 
 function CommentTombstone({ comment }: { comment: LocalShipmentComment }) {
+  const t = useT();
+
   return (
     <div data-comment-id={comment.id} className="flex items-center gap-3 rounded-lg px-2 py-2.5">
       <div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
         <CircleSlashIcon className="text-muted-foreground size-4" />
       </div>
-      <p className="text-muted-foreground text-sm italic">This comment was deleted</p>
+      <p className="text-muted-foreground text-sm italic">{t("This comment was deleted")}</p>
     </div>
   );
 }
@@ -334,6 +337,8 @@ function CommentActions({
   onTogglePin?: (pinned: boolean) => void;
   onToggleResolve: (resolved: boolean) => void;
 }) {
+  const t = useT();
+
   const isPinned = comment.pinnedAt != null;
   const isResolved = comment.resolvedAt != null;
   const hasReplies = (comment.replyCount ?? 0) > 0;
@@ -355,7 +360,7 @@ function CommentActions({
           {onReply && (
             <DropdownMenuItem
               startContent={<ReplyIcon className="mr-2 size-3.5" />}
-              title="Reply"
+              title={t("Reply")}
               onClick={onReply}
             />
           )}
@@ -388,7 +393,7 @@ function CommentActions({
           {canEdit && (
             <DropdownMenuItem
               startContent={<PencilIcon className="mr-2 size-3.5" />}
-              title="Edit"
+              title={t("Edit")}
               onClick={onEdit}
             />
           )}
@@ -398,7 +403,7 @@ function CommentActions({
                 <DropdownMenuItem
                   color="danger"
                   disabled={isDeleting}
-                  title="Delete"
+                  title={t("Delete")}
                   startContent={<TrashIcon className="mr-2 size-3.5" />}
                 />
               }
@@ -409,7 +414,7 @@ function CommentActions({
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete comment?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Delete comment?")}</AlertDialogTitle>
           <AlertDialogDescription>
             {hasReplies
               ? "This comment has replies, so it will be replaced with a deleted-comment placeholder. Its content and attachments are removed permanently."
@@ -417,8 +422,8 @@ function CommentActions({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={onDelete}>{t("Delete")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -436,6 +441,8 @@ function CommentEditForm({
   onCancel: () => void;
   isSubmitting: boolean;
 }) {
+  const t = useT();
+
   const editorRef = useRef<CommentEditorHandle>(null);
   const [commentType, setCommentType] = useState<CommentType>(comment.type);
   const [visibility, setVisibility] = useState<CommentVisibility>(comment.visibility);
@@ -470,21 +477,21 @@ function CommentEditForm({
       {!comment.parentCommentId && (
         <>
           <CommentOptionPill
-            label="Type"
+            label={t("Type")}
             icon={<TagIcon className="size-3" />}
             value={commentType}
             options={commentTypeChoices}
             onChange={setCommentType}
           />
           <CommentOptionPill
-            label="Visibility"
+            label={t("Visibility")}
             icon={<EyeIcon className="size-3" />}
             value={visibility}
             options={commentVisibilityChoices}
             onChange={setVisibility}
           />
           <CommentOptionPill
-            label="Priority"
+            label={t("Priority")}
             icon={<FlagIcon className="size-3" />}
             value={priority}
             options={commentPriorityChoices}
@@ -499,7 +506,7 @@ function CommentEditForm({
           className="text-muted-foreground hover:text-foreground size-6"
           onClick={onCancel}
           disabled={isSubmitting}
-          aria-label="Cancel edit"
+          aria-label={t("Cancel edit")}
         >
           <XIcon className="size-3.5" />
         </Button>
@@ -508,7 +515,7 @@ function CommentEditForm({
           className="size-6"
           onClick={handleSave}
           disabled={isSubmitting}
-          aria-label="Save comment"
+          aria-label={t("Save comment")}
         >
           {isSubmitting ? (
             <LoaderIcon className="size-3.5 animate-spin" />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -40,6 +41,8 @@ export function RecordStopActualDialog({
   isSubmitting: boolean;
   onConfirm: (occurredAt?: number) => void;
 }) {
+  const t = useT();
+
   const inputId = useId();
   const [eventTime, setEventTime] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +83,7 @@ export function RecordStopActualDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5 pb-4">
-          <Label htmlFor={inputId}>Event time (optional)</Label>
+          <Label htmlFor={inputId}>{t("Event time (optional)")}</Label>
           <Input
             id={inputId}
             type="datetime-local"
@@ -93,17 +96,17 @@ export function RecordStopActualDialog({
           {error ? (
             <p className="text-destructive text-xs">{error}</p>
           ) : (
-            <p className="text-muted-foreground text-xs">Leave empty to record the time as now.</p>
+            <p className="text-muted-foreground text-xs">{t("Leave empty to record the time as now.")}</p>
           )}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
             isLoading={isSubmitting}
-            loadingText="Recording..."
+            loadingText={t("Recording...")}
             onClick={handleConfirm}
           >
             {copy.title}

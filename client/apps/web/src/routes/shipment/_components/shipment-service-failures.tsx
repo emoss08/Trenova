@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -53,6 +54,8 @@ type EvaluationSummary = {
 };
 
 export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFailuresProps) {
+  const t = useT();
+
   const shipmentId = shipment?.id ?? "";
   const queryClient = useQueryClient();
   const [evaluationSummary, setEvaluationSummary] = useState<EvaluationSummary | null>(null);
@@ -84,7 +87,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       if (hasStopRows || result.skipped > 0) {
         setEvaluationSummary(summary);
       } else {
-        toast.success("Service failure evaluation complete", {
+        toast.success(t("Service failure evaluation complete"), {
           description: `${summary.created} created, ${summary.updated} updated, 0 skipped.`,
         });
       }
@@ -121,7 +124,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       });
     },
     onSuccess: () => {
-      toast.success("Service failure updated");
+      toast.success(t("Service failure updated"));
       void queryClient.invalidateQueries({ queryKey: ["serviceFailure"] });
       void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
@@ -136,7 +139,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           <AlertTriangleIcon className="size-4 text-amber-500" />
-          {failures.length} service failure{failures.length === 1 ? "" : "s"}
+          {t("{0} service failure{1}", failures.length, failures.length === 1 ? "" : "s")}
         </div>
         <div className="flex items-center gap-1">
           <ActionTooltip content={evaluationTooltip(canCreate.allowed, shipmentId)}>
@@ -147,10 +150,10 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
               onClick={() => evaluateMutation.mutate()}
               disabled={!canCreate.allowed || !shipmentId}
               isLoading={evaluateMutation.isPending}
-              loadingText="Evaluating..."
+              loadingText={t("Evaluating...")}
             >
               <RefreshCwIcon className="size-3.5" />
-              Evaluate
+              {t("Evaluate")}
             </Button>
           </ActionTooltip>
         </div>
@@ -159,7 +162,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       <div className="flex flex-col gap-2">
         {failures.length === 0 && (
           <div className="text-muted-foreground rounded-md border border-dashed py-8 text-center text-sm">
-            No service failures recorded for this shipment.
+            {t("No service failures recorded for this shipment.")}
           </div>
         )}
         {failures.map((failure) => {
@@ -183,8 +186,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                     )}
                   </div>
                   <div className="text-muted-foreground mt-1 text-xs">
-                    {failure.lateMinutes} minute(s) late after {failure.gracePeriodMinutes} minute
-                    grace · <HoverCardTimestamp timestamp={failure.detectedAt} />
+                    {t("{0} minute(s) late after {1} minute grace ·", failure.lateMinutes, failure.gracePeriodMinutes)} <HoverCardTimestamp timestamp={failure.detectedAt} />
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -199,7 +201,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                       type="button"
                       variant="outline"
                       size="icon-xs"
-                      aria-label="Review service failure"
+                      aria-label={t("Review service failure")}
                       disabled={
                         !canApprove.allowed ||
                         failure.status !== "Open" ||
@@ -223,7 +225,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                       type="button"
                       variant="outline"
                       size="icon-xs"
-                      aria-label="Resolve service failure"
+                      aria-label={t("Resolve service failure")}
                       disabled={
                         !canUpdate.allowed ||
                         terminal ||
@@ -242,7 +244,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                       type="button"
                       variant="outline"
                       size="icon-xs"
-                      aria-label="Void service failure"
+                      aria-label={t("Void service failure")}
                       disabled={
                         !canArchive.allowed ||
                         failure.status === "Voided" ||
@@ -259,7 +261,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
               <div className="mt-2 grid gap-2 text-xs sm:grid-cols-[minmax(0,1fr)_180px]">
                 <ServiceFailureStopContext summary={stopSummary} />
                 <div>
-                  <span className="text-muted-foreground">Reason</span>
+                  <span className="text-muted-foreground">{t("Reason")}</span>
                   <p>{failure.reasonCode?.label ?? "Unassigned"}</p>
                 </div>
               </div>
@@ -278,30 +280,29 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Service Failure Evaluation</DialogTitle>
+            <DialogTitle>{t("Service Failure Evaluation")}</DialogTitle>
             <DialogDescription>
-              {evaluationSummary?.created ?? 0} created, {evaluationSummary?.updated ?? 0} updated,{" "}
-              {evaluationSummary?.skipped ?? 0} skipped.
+              {t("{0} created, {1} updated, {2} skipped.", evaluationSummary?.created ?? 0, evaluationSummary?.updated ?? 0, evaluationSummary?.skipped ?? 0)}
             </DialogDescription>
           </DialogHeader>
 
           <div className="bg-muted/20 max-h-[28rem] overflow-y-auto rounded-md border">
             <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-medium">
               <InfoIcon className="size-4 text-amber-500" />
-              Stop Results
+              {t("Stop Results")}
             </div>
             <EvaluationStopGroup
-              label="Created"
+              label={t("Created")}
               count={evaluationSummary?.created ?? 0}
               stops={evaluationSummary?.createdStops ?? []}
             />
             <EvaluationStopGroup
-              label="Updated"
+              label={t("Updated")}
               count={evaluationSummary?.updated ?? 0}
               stops={evaluationSummary?.updatedStops ?? []}
             />
             <EvaluationStopGroup
-              label="Skipped"
+              label={t("Skipped")}
               count={evaluationSummary?.skipped ?? 0}
               stops={evaluationSummary?.skippedStops ?? []}
               renderTrailing={(item) => formatSkippedReason(item.reason)}
@@ -326,6 +327,8 @@ function EvaluationStopGroup({
   stops: ServiceFailureStopSummary[];
   renderTrailing?: (item: ServiceFailureStopSummary) => ReactNode;
 }) {
+  const t = useT();
+
   if (count === 0 && stops.length === 0) {
     return null;
   }
@@ -349,7 +352,7 @@ function EvaluationStopGroup({
         </div>
       ) : (
         <p className="bg-background/70 text-muted-foreground px-3 py-3 text-xs">
-          No stop details were returned.
+          {t("No stop details were returned.")}
         </p>
       )}
     </div>
@@ -357,6 +360,8 @@ function EvaluationStopGroup({
 }
 
 function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure }) {
+  const t = useT();
+
   const trigger = ediReadinessTrigger(failure);
   const readinessQuery = useQuery({
     ...queries.serviceFailure.edi214Readiness(failure.id ?? "", trigger),
@@ -378,7 +383,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
     return (
       <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
         <SendIcon className="size-3.5" />
-        Checking EDI 214 readiness
+        {t("Checking EDI 214 readiness")}
       </div>
     );
   }
@@ -405,21 +410,21 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
       )}
     >
       {blocked ? <CircleAlertIcon className="size-3.5" /> : <SendIcon className="size-3.5" />}
-      <span className="font-medium">Customer EDI 214 {trigger}</span>
+      <span className="font-medium">{t("Customer EDI 214 {0}", trigger)}</span>
       <Badge variant={blocked ? "inactive" : available || ready ? "active" : "secondary"}>
         {label}
       </Badge>
-      {readiness.mandatory && <Badge variant="outline">Mandatory</Badge>}
+      {readiness.mandatory && <Badge variant="outline">{t("Mandatory")}</Badge>}
       {readiness.messageId && (
-        <span className="font-mono text-[11px]">Message {readiness.messageId}</span>
+        <span className="font-mono text-[11px]">{t("Message {0}", readiness.messageId)}</span>
       )}
       {ediStatus?.lastMessageId && (
-        <span className="font-mono text-[11px]">Last {ediStatus.lastMessageId}</span>
+        <span className="font-mono text-[11px]">{t("Last {0}", ediStatus.lastMessageId)}</span>
       )}
       {ediStatus?.deliveryStatus && (
-        <Badge variant="outline">Delivery {ediStatus.deliveryStatus}</Badge>
+        <Badge variant="outline">{t("Delivery {0}", ediStatus.deliveryStatus)}</Badge>
       )}
-      {ediStatus?.ackStatus && <Badge variant="outline">ACK {ediStatus.ackStatus}</Badge>}
+      {ediStatus?.ackStatus && <Badge variant="outline">{t("ACK {0}", ediStatus.ackStatus)}</Badge>}
       {diagnostic && <span className="min-w-0 flex-1 truncate">{diagnostic}</span>}
       {!diagnostic && ediStatus?.lastDiagnostic && (
         <span className="min-w-0 flex-1 truncate">{ediStatus.lastDiagnostic}</span>

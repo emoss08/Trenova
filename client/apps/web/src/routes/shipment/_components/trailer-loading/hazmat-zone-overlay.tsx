@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { CommodityPlacement, HazmatZoneResult } from "@/types/loading-optimization";
 
 export function HazmatZoneOverlay({
@@ -13,6 +14,8 @@ export function HazmatZoneOverlay({
   innerW: number;
   innerH: number;
 }) {
+  const t = useT();
+
   const placementMap = new Map(placements.map((p) => [p.commodityId, p]));
 
   function ftToX(ft: number) {
@@ -71,8 +74,7 @@ export function HazmatZoneOverlay({
               dominantBaseline="middle"
               className={`text-[8px] font-semibold ${satisfied ? "fill-emerald-600 dark:fill-emerald-400" : "fill-destructive"}`}
             >
-              {zone.actualDistanceFeet}ft
-              {zone.requiredDistanceFeet != null ? ` / ${zone.requiredDistanceFeet}ft` : ""}
+              {t("{0}ft {1}", zone.actualDistanceFeet, zone.requiredDistanceFeet != null ? ` / ${zone.requiredDistanceFeet}ft` : "")}
             </text>
           </g>
         );

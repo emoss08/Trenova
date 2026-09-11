@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
@@ -57,13 +58,15 @@ export function DetentionChargeLabel({
   code: string;
   occurrence: DetentionOccurrence | undefined;
 }) {
+  const t = useT();
+
   const risk = occurrence ? detentionRisk(occurrence) : null;
 
   return (
     <>
       <TimerIcon className="text-primary size-3 shrink-0" />
       {code}
-      <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">Detention</span>
+      <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">{t("Detention")}</span>
       {risk && (
         <Tooltip>
           <TooltipTrigger>
@@ -89,6 +92,8 @@ export function DetentionChargeUnit({
   unit: number;
   occurrence: DetentionOccurrence | undefined;
 }) {
+  const t = useT();
+
   if (!occurrence) return <>{unit}</>;
 
   return (
@@ -98,10 +103,10 @@ export function DetentionChargeUnit({
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={6}>
         <p className="max-w-56 text-xs">
-          {formatDetentionMinutes(occurrence.rawDwellMinutes)} on site,{" "}
+          {formatDetentionMinutes(occurrence.rawDwellMinutes)} {t("on site,")}{" "}
           {formatDetentionMinutes(occurrence.freeMinutesGranted)} free
           {occurrence.capApplied !== "None" && (
-            <> · {CAP_KIND_LABEL[occurrence.capApplied]} applied</>
+            <> {t("· {0} applied", CAP_KIND_LABEL[occurrence.capApplied])}</>
           )}
         </p>
       </TooltipContent>

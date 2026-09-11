@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -38,8 +39,10 @@ function capitalizeFirst(str: string): string {
 }
 
 function ActivityTimeline({ activities }: { activities: WeatherAlertActivity[] }) {
+  const t = useT();
+
   if (activities.length === 0) {
-    return <p className="text-muted-foreground text-xs">No activity recorded</p>;
+    return <p className="text-muted-foreground text-xs">{t("No activity recorded")}</p>;
   }
 
   return (
@@ -81,6 +84,8 @@ export function WeatherAlertDetailPanel({
   feature: WeatherAlertFeature;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     ...queries.weatherAlert.detail(alertId),
     enabled: !!alertId,
@@ -135,7 +140,7 @@ export function WeatherAlertDetailPanel({
               <>
                 <div className="px-3 py-2">
                   <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
-                    Recommended Action
+                    {t("Recommended Action")}
                   </span>
                   <p className="text-foreground mt-1 text-xs leading-relaxed">
                     {props.instruction}
@@ -148,7 +153,7 @@ export function WeatherAlertDetailPanel({
             <div className="flex items-center gap-3 px-3 pt-2">
               <div className="text-muted-foreground flex items-center gap-1">
                 <ClockIcon className="size-3" />
-                <span className="text-2xs">Effective</span>
+                <span className="text-2xs">{t("Effective")}</span>
               </div>
               <span className="text-2xs text-foreground tabular-nums">
                 {formatUnixTimestamp(props.effective)}
@@ -157,7 +162,7 @@ export function WeatherAlertDetailPanel({
             <div className="flex items-center gap-3 px-3 pt-1 pb-2">
               <div className="text-muted-foreground flex items-center gap-1">
                 <ClockIcon className="size-3" />
-                <span className="text-2xs">Expires</span>
+                <span className="text-2xs">{t("Expires")}</span>
               </div>
               <span className="text-2xs text-foreground tabular-nums">
                 {formatUnixTimestamp(props.expires)}
@@ -168,11 +173,11 @@ export function WeatherAlertDetailPanel({
 
             <div className="p-3">
               <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
-                Activity
+                {t("Activity")}
               </span>
               <div className="mt-2">
                 {isLoading ? (
-                  <p className="text-muted-foreground text-xs">Loading activity...</p>
+                  <p className="text-muted-foreground text-xs">{t("Loading activity...")}</p>
                 ) : (
                   <ActivityTimeline activities={data?.activities ?? []} />
                 )}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -31,6 +32,8 @@ export function ShipmentCancelDialog({
   onOpenChange,
   shipmentId,
 }: ShipmentCancelDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<CancelFormValues>({
@@ -53,8 +56,8 @@ export function ShipmentCancelDialog({
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Shipment canceled", {
-        description: "The shipment has been canceled.",
+      toast.success(t("Shipment canceled"), {
+        description: t("The shipment has been canceled."),
       });
     },
   });
@@ -76,9 +79,9 @@ export function ShipmentCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Cancel Shipment</DialogTitle>
+          <DialogTitle>{t("Cancel Shipment")}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to cancel this shipment? You can optionally provide a reason.
+            {t("Are you sure you want to cancel this shipment? You can optionally provide a reason.")}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -92,22 +95,22 @@ export function ShipmentCancelDialog({
               <TextareaField
                 control={control}
                 name="cancelReason"
-                label="Cancel Reason"
-                placeholder="Optional reason for cancellation..."
+                label={t("Cancel Reason")}
+                placeholder={t("Optional reason for cancellation...")}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Close
+              {t("Close")}
             </Button>
             <Button
               type="submit"
               variant="destructive"
               isLoading={isSubmitting}
-              loadingText="Canceling..."
+              loadingText={t("Canceling...")}
             >
-              Cancel Shipment
+              {t("Cancel Shipment")}
             </Button>
           </DialogFooter>
         </Form>

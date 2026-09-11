@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,40 +25,42 @@ export function ShipmentSendEDIDialog({
   onOpenChange,
   shipment,
 }: ShipmentSendEDIDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const ediPartner = shipment.customer?.ediPartner;
   const mutation = useMutation({
     mutationFn: () =>
       apiService.ediService.submitLoadTender({ sourceShipmentId: shipment.id ?? "" }),
     onSuccess: async () => {
-      toast.success("EDI load tender submitted");
+      toast.success(t("EDI load tender submitted"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["edi-outbound-transfer-list"] }),
         queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
       ]);
     },
-    onError: () => toast.error("Failed to submit EDI load tender"),
+    onError: () => toast.error(t("Failed to submit EDI load tender")),
   });
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Send EDI Load Tender</AlertDialogTitle>
+          <AlertDialogTitle>{t("Send EDI Load Tender")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {shipment.proNumber ?? "This shipment"} will be tendered to{" "}
+            {t("{0} will be tendered to", shipment.proNumber ?? "This shipment")}
             <span className="text-foreground font-medium">
               {ediPartner
                 ? `${ediPartner.name} (${ediPartner.code})`
                 : "the customer's EDI partner"}
             </span>{" "}
-            for approval by the receiving organization.
+            {t("for approval by the receiving organization.")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            Send Tender
+            {t("Send Tender")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

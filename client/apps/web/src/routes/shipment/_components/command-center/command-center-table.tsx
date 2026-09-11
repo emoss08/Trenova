@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -154,6 +155,8 @@ export function CommandCenterTable({
   onUploadDocument,
   onSummaryChange,
 }: CommandCenterTableProps) {
+  const t = useT();
+
   const [
     { mode: requestedViewMode, expanded: expandedId, page, size: pageSize, q: query },
     setUrl,
@@ -408,7 +411,7 @@ export function CommandCenterTable({
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={table.getVisibleFlatColumns().length}>
-                  No shipments match the current view.
+                  {t("No shipments match the current view.")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -436,7 +439,7 @@ export function CommandCenterTable({
         {dataQuery.isFetching && !isInitialLoading && (
           <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] backdrop-blur-sm">
             <Spinner className="size-3" />
-            Refreshing
+            {t("Refreshing")}
           </div>
         )}
       </div>
@@ -460,7 +463,7 @@ export function CommandCenterTable({
       <SavedViewsBar rightSlot={rightSlot} countsEnabled={countsEnabled} />
       <div className="border-border flex items-center gap-2 border-b px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
-          <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
+          <DataTableSearch value={query} onChange={setQuery} placeholder={t("Search shipments...")} />
         </Suspense>
         <Suspense fallback={<ToolbarButtonSkeleton />}>
           <DataTableFilterBuilder
@@ -477,7 +480,7 @@ export function CommandCenterTable({
               <Skeleton className="ml-auto h-3.5 w-24 shrink-0" />
             ) : (
               <p className="font-table text-muted-foreground ml-auto shrink-0 text-[10.5px] tabular-nums">
-                {rows.length} of {totalCount} results
+                {t("{0} of {1} results", rows.length, totalCount)}
               </p>
             )}
             <Suspense fallback={<ToolbarButtonSkeleton />}>
@@ -519,10 +522,12 @@ function ViewModeToggle({
   viewMode: "table" | "timeline";
   setViewMode: (m: "table" | "timeline") => void;
 }) {
+  const t = useT();
+
   return (
     <div
       role="group"
-      aria-label="View mode"
+      aria-label={t("View mode")}
       className="border-border inline-flex overflow-hidden rounded-md border"
     >
       <button
@@ -537,7 +542,7 @@ function ViewModeToggle({
         )}
       >
         <TableIcon className="size-3" />
-        Table
+        {t("Table")}
       </button>
       <button
         type="button"
@@ -551,7 +556,7 @@ function ViewModeToggle({
         )}
       >
         <ChartGanttIcon className="size-3" />
-        Timeline
+        {t("Timeline")}
       </button>
     </div>
   );
@@ -635,18 +640,20 @@ function CommandCenterFooter({
   onPrev: () => void;
   onNext: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-[11px]">
       {isLoading ? (
         <Skeleton className="h-3.5 w-44" />
       ) : (
         <p className="font-table tabular-nums">
-          {rowCount} rows · page {pageIndex + 1} of {totalPages} · {totalCount} total
+          {t("{0} rows · page {1} of {2} · {3} total", rowCount, pageIndex + 1, totalPages, totalCount)}
         </p>
       )}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <span>Rows</span>
+          <span>{t("Rows")}</span>
           <Select
             value={String(pageSize)}
             onValueChange={(value) => onPageSizeChange(Number(value) as CommandCenterPageSize)}
@@ -669,7 +676,7 @@ function CommandCenterFooter({
           <Button
             variant="ghost"
             size="icon-xs"
-            aria-label="Previous page"
+            aria-label={t("Previous page")}
             disabled={pageIndex === 0}
             onClick={onPrev}
           >
@@ -681,7 +688,7 @@ function CommandCenterFooter({
           <Button
             variant="ghost"
             size="icon-xs"
-            aria-label="Next page"
+            aria-label={t("Next page")}
             disabled={pageIndex >= totalPages - 1}
             onClick={onNext}
           >

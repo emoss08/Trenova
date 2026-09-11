@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Progress } from "@trenova/shared/components/ui/progress";
@@ -28,6 +29,8 @@ export function UploadPhase({
   onCancel,
   onRemove,
 }: UploadPhaseProps) {
+  const t = useT();
+
   const handleRejected = useCallback((rejectedFiles: RejectedFile[]) => {
     for (const { file, reason } of rejectedFiles) {
       toast.error(
@@ -47,9 +50,9 @@ export function UploadPhase({
         className="w-full max-w-md space-y-6"
       >
         <div className="space-y-1 text-center">
-          <h2 className="text-base font-medium">Upload rate confirmation</h2>
+          <h2 className="text-base font-medium">{t("Upload rate confirmation")}</h2>
           <p className="text-muted-foreground text-sm">
-            PDF or image. Shipment details are extracted automatically.
+            {t("PDF or image. Shipment details are extracted automatically.")}
           </p>
         </div>
 
@@ -71,11 +74,11 @@ export function UploadPhase({
                 <div className="truncate text-sm">{currentUpload.file.name}</div>
                 {currentUpload.status === "uploading" && (
                   <TextShimmer as="span" className="text-xs" duration={1.5}>
-                    Uploading
+                    {t("Uploading")}
                   </TextShimmer>
                 )}
                 {currentUpload.status === "success" && (
-                  <span className="text-muted-foreground text-xs">Complete</span>
+                  <span className="text-muted-foreground text-xs">{t("Complete")}</span>
                 )}
               </div>
               {currentUpload.status === "uploading" && (
@@ -99,16 +102,16 @@ export function UploadPhase({
             {currentUpload.status === "error" && (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => onRetry(currentUpload.id)}>
-                  Retry
+                  {t("Retry")}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onRemove(currentUpload.id)}>
-                  Remove
+                  {t("Remove")}
                 </Button>
               </div>
             )}
             {currentUpload.status !== "success" && currentUpload.status !== "error" && (
               <Button variant="ghost" size="sm" onClick={() => onCancel(currentUpload.id)}>
-                Cancel
+                {t("Cancel")}
               </Button>
             )}
           </m.div>

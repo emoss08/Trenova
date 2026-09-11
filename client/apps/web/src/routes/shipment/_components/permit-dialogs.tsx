@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { DocumentUploadSection } from "@/components/document-upload-section";
 import { DateField } from "@/components/fields/date-field/date-field";
@@ -92,6 +93,8 @@ export function PermitRecordDialog({
   /** When set the dialog edits this permit instead of recording a new one. */
   permit?: Permit | null;
 }) {
+  const t = useT();
+
   const invalidate = useInvalidatePermitViews(shipmentId);
   const isEdit = permit !== null;
 
@@ -118,7 +121,7 @@ export function PermitRecordDialog({
       toast.success(isEdit ? "Permit updated" : "Permit recorded", {
         // Both paths re-derive server-side, so a correction can release a hold
         // just as recording one can — or re-raise it, if the expiry moved in.
-        description: "Requirements are re-checked against this permit.",
+        description: t("Requirements are re-checked against this permit."),
       });
       invalidate();
       reset();
@@ -153,9 +156,9 @@ export function PermitRecordDialog({
               <InputField
                 control={control}
                 name="permitNumber"
-                label="Permit Number"
-                description="Exactly as printed on the permit — this is the number enforcement matches at an inspection."
-                placeholder="e.g. 2026-084311"
+                label={t("Permit Number")}
+                description={t("Exactly as printed on the permit — this is the number enforcement matches at an inspection.")}
+                placeholder={t("e.g. 2026-084311")}
                 rules={{ required: true }}
                 maxLength={100}
               />
@@ -164,9 +167,9 @@ export function PermitRecordDialog({
               <UsStateAutocompleteField
                 control={control}
                 name="stateId"
-                label="Issuing State"
-                description="The state that issued this permit. A permit covers one jurisdiction — record one per state on the route."
-                placeholder="Select issuing state"
+                label={t("Issuing State")}
+                description={t("The state that issued this permit. A permit covers one jurisdiction — record one per state on the route.")}
+                placeholder={t("Select issuing state")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -174,9 +177,9 @@ export function PermitRecordDialog({
               <DateField
                 control={control}
                 name="issuedAt"
-                label="Issued"
-                description="The issue date on the permit, not the day it was keyed in."
-                placeholder="Select issue date"
+                label={t("Issued")}
+                description={t("The issue date on the permit, not the day it was keyed in.")}
+                placeholder={t("Select issue date")}
                 clearable
               />
             </FormControl>
@@ -184,9 +187,9 @@ export function PermitRecordDialog({
               <DateField
                 control={control}
                 name="expiresAt"
-                label="Expires"
-                description="Must still cover the final stop, not just dispatch."
-                placeholder="Select expiry date"
+                label={t("Expires")}
+                description={t("Must still cover the final stop, not just dispatch.")}
+                placeholder={t("Select expiry date")}
                 rules={{ required: true }}
                 clearable
               />
@@ -195,8 +198,8 @@ export function PermitRecordDialog({
               <NumberField
                 control={control}
                 name="cost"
-                label="Cost"
-                description="What the state actually charged, so the estimated fees on this load can be reconciled against actuals."
+                label={t("Cost")}
+                description={t("What the state actually charged, so the estimated fees on this load can be reconciled against actuals.")}
                 placeholder="125.00"
               />
             </FormControl>
@@ -204,9 +207,9 @@ export function PermitRecordDialog({
               <TextareaField
                 control={control}
                 name="notes"
-                label="Notes"
-                description="Conditions printed on the permit the driver must honor — approved routing, travel hours, flags, signs, or escort details."
-                placeholder="e.g. I-35 only, daylight travel, flags on all corners"
+                label={t("Notes")}
+                description={t("Conditions printed on the permit the driver must honor — approved routing, travel hours, flags, signs, or escort details.")}
+                placeholder={t("e.g. I-35 only, daylight travel, flags on all corners")}
               />
             </FormControl>
           </FormGroup>
@@ -219,7 +222,7 @@ export function PermitRecordDialog({
             other document on the load. */}
         {isEdit && permit?.id && (
           <div className="border-t pt-3">
-            <p className="mb-2 text-xs font-medium">Permit Document</p>
+            <p className="mb-2 text-xs font-medium">{t("Permit Document")}</p>
             <DocumentUploadSection resourceType="permit" resourceId={permit.id} />
           </div>
         )}
@@ -230,7 +233,7 @@ export function PermitRecordDialog({
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
@@ -262,6 +265,8 @@ export function PermitWaiveDialog({
   shipmentId: string;
   requirement: PermitRequirement | null;
 }) {
+  const t = useT();
+
   const invalidate = useInvalidatePermitViews(shipmentId);
 
   const form = useForm<WaiveRequirementInput>({
@@ -279,8 +284,8 @@ export function PermitWaiveDialog({
         values.reason,
       ),
     onSuccess: () => {
-      toast.success("Requirement waived", {
-        description: "The waiver and its reason are recorded against this shipment.",
+      toast.success(t("Requirement waived"), {
+        description: t("The waiver and its reason are recorded against this shipment."),
       });
       invalidate();
       reset();
@@ -300,7 +305,7 @@ export function PermitWaiveDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Waive Requirement</DialogTitle>
+          <DialogTitle>{t("Waive Requirement")}</DialogTitle>
           <DialogDescription>
             {requirement ? describeRequirement(requirement) : "Waive this permit requirement"}
           </DialogDescription>
@@ -309,9 +314,7 @@ export function PermitWaiveDialog({
         <div className="flex items-start gap-2 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-4 py-3">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-yellow-700 dark:text-yellow-400" />
           <p className="text-muted-foreground text-xs">
-            Waiving does not make the movement legal. It records that your organization accepts the
-            compliance risk and releases the dispatch block. Your reason is the audit trail if the
-            load is stopped.
+            {t("Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.")}
           </p>
         </div>
 
@@ -321,9 +324,9 @@ export function PermitWaiveDialog({
               <TextareaField
                 control={control}
                 name="reason"
-                label="Reason"
-                description="At least 10 characters. Say what makes this movement acceptable."
-                placeholder="Escort booked and route surveyed with the state"
+                label={t("Reason")}
+                description={t("At least 10 characters. Say what makes this movement acceptable.")}
+                placeholder={t("Escort booked and route surveyed with the state")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -337,7 +340,7 @@ export function PermitWaiveDialog({
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
