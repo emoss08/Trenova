@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import type { WorkerChecklistTemplateRow } from "@/lib/graphql/worker-checklist";
@@ -46,7 +47,7 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
           {row.original.code}
           {row.original.isDefault ? (
             <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
-              Default
+              {translate("Default")}
             </Badge>
           ) : null}
         </span>
@@ -118,7 +119,7 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
         return (
           <span className="tabular-nums">
             {row.original.items.length}
-            <span className="text-muted-foreground"> · {required} required</span>
+            <span className="text-muted-foreground"> {translate("· {0} required", required)}</span>
           </span>
         );
       },

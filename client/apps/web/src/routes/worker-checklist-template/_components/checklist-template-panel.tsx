@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -111,6 +112,8 @@ function ChecklistTemplateCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<ChecklistTemplateFormValues>({
     resolver: zodResolver(checklistTemplateFormSchema) as Resolver<ChecklistTemplateFormValues>,
     defaultValues: buildChecklistTemplateDefaults(null),
@@ -120,8 +123,8 @@ function ChecklistTemplateCreatePanel({
     <FormCreatePanel<ChecklistTemplateFormValues, WorkerChecklistTemplateRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Checklist Template"
-      description="Lay out the steps a worker goes through when they join or leave, and who owns each one."
+      title={t("Checklist Template")}
+      description={t("Lay out the steps a worker goes through when they join or leave, and who owns each one.")}
       queryKey={WORKER_CHECKLIST_TEMPLATE_LIST_KEY}
       form={form}
       size="lg"
@@ -143,6 +146,8 @@ function ChecklistTemplateEditPanel({
   onOpenChange: (open: boolean) => void;
   row: WorkerChecklistTemplateRow;
 }) {
+  const t = useT();
+
   const formRow = {
     ...row,
     ...buildChecklistTemplateDefaults(row),
@@ -160,7 +165,7 @@ function ChecklistTemplateEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Checklist Template"
+      title={t("Checklist Template")}
       fieldKey="code"
       queryKey={WORKER_CHECKLIST_TEMPLATE_LIST_KEY}
       form={form}
