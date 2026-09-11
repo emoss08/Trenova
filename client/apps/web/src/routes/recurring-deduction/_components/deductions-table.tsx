@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { runBulkAction } from "@/lib/bulk-run";
 import {
@@ -16,6 +17,8 @@ import { deductionStatusInput, getColumns } from "./deduction-columns";
 import { DeductionPanel } from "./deduction-panel";
 
 export default function DeductionsTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
@@ -23,7 +26,7 @@ export default function DeductionsTable() {
     async (rows: RecurringDeductionRow[], status: string) => {
       const eligible = rows.filter((row) => row.status !== "Completed" && row.status !== status);
       if (eligible.length === 0) {
-        toast.info("No selected deductions can move to that status.");
+        toast.info(t("No selected deductions can move to that status."));
         return;
       }
       await runBulkAction(
@@ -34,7 +37,7 @@ export default function DeductionsTable() {
       );
       await queryClient.invalidateQueries({ queryKey: ["recurring-deduction-list"] });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<RecurringDeductionRow>[]>(
