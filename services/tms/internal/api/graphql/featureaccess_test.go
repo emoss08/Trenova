@@ -731,3 +731,54 @@ func TestFeatureAccess_AdministrationSourcesAreSeparateFromCoreTMS(t *testing.T)
 		require.Equal(t, platformcatalog.FeatureAdministration, policy.FeatureKey)
 	}
 }
+
+func TestFeatureAccess_PrimaryCheckErrorIsNotMaskedByLegacyDenial(t *testing.T) {
+	t.Parallel()
+
+	authorizer := &scriptedAuthorizer{
+		results: map[platformcatalog.FeatureKey]*services.AccessAuthorizeResult{
+			platformcatalog.FeatureFleetMaintenance: {
+				FeatureKey: platformcatalog.FeatureFleetMaintenance,
+				Allowed:    false,
+				Reason:     "fleet not licensed",
+			},
+		},
+		errs: map[platformcatalog.FeatureKey]error{
+			platformcatalog.FeatureWorkforceCore: errAuthorizerUnavailable,
+		},
+	}
+	extension := newFeatureAccessExtension(t, config.GraphQLAccessModeEnforce, authorizer)
+
+	err := extension.MutateOperationContext(
+		newAuthedContext(),
+		newOperationContext(ast.Query, rootField("workers", "worker.graphqls")),
+	)
+
+	require.Error(t, err)
+	require.Contains(t, err.Message, "could not be verified")
+	require.NotContains(t, err.Message, "fleet not licensed")
+}
+
+func TestFeatureAccess_LegacyGrantsCanBeDisabled(t *testing.T) {
+	t.Parallel()
+
+	authorizer := &recordingAuthorizer{
+		allow: map[platformcatalog.FeatureKey]bool{
+			platformcatalog.FeatureFleetMaintenance: true,
+		},
+	}
+	extension := newFeatureAccessExtension(t, config.GraphQLAccessModeEnforce, authorizer)
+	extension.cfg.Platform.ControlPlane.DisableLegacyGrants = true
+
+	err := extension.MutateOperationContext(
+		newAuthedContext(),
+		newOperationContext(ast.Query, rootField("workers", "worker.graphqls")),
+	)
+
+	require.Error(t, err)
+	require.Equal(
+		t,
+		[]platformcatalog.FeatureKey{platformcatalog.FeatureWorkforceCore},
+		authorizer.featureKeys(),
+	)
+}

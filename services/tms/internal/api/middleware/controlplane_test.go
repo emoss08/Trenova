@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,8 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 )
+
+var errControlPlaneUnavailable = errors.New("control plane unavailable")
 
 type fakeAccessAuthorizer struct {
 	result *services.AccessAuthorizeResult
@@ -434,4 +437,144 @@ func newControlPlaneTestRegistry(t *testing.T) *platformcatalog.Registry {
 	})
 	require.NoError(t, err)
 	return registry
+}
+
+type perFeatureAuthorizer struct {
+	results map[platformcatalog.FeatureKey]*services.AccessAuthorizeResult
+	errs    map[platformcatalog.FeatureKey]error
+	asked   []platformcatalog.FeatureKey
+}
+
+func (a *perFeatureAuthorizer) AuthorizeAccess(
+	_ context.Context,
+	req *services.AccessAuthorizeRequest,
+) (*services.AccessAuthorizeResult, error) {
+	a.asked = append(a.asked, req.FeatureKey)
+	if err, ok := a.errs[req.FeatureKey]; ok {
+		return nil, err
+	}
+	if result, ok := a.results[req.FeatureKey]; ok {
+		return result, nil
+	}
+
+	return &services.AccessAuthorizeResult{FeatureKey: req.FeatureKey}, nil
+}
+
+func newLegacyGrantTestMiddleware(
+	t *testing.T,
+	authorizer services.AccessAuthorizer,
+	disableLegacyGrants bool,
+) *ControlPlaneAccessMiddleware {
+	t.Helper()
+
+	middleware := NewControlPlaneAccessMiddleware(ControlPlaneAccessMiddlewareParams{
+		Config: &config.Config{
+			Platform: config.PlatformConfig{
+				ControlPlane: config.PlatformControlPlaneConfig{
+					Enabled:             true,
+					DisableLegacyGrants: disableLegacyGrants,
+				},
+			},
+		},
+		Registry:         newControlPlaneTestRegistry(t),
+		AccessAuthorizer: authorizer,
+		UsageProvider: &fakeUsageProvider{
+			limitResult: &services.UsageLimitCheckResult{
+				MeterKey:  platformcatalog.MeterAPIRequests,
+				Allowed:   true,
+				CheckedAt: 123,
+			},
+		},
+		ErrorHandler: newEntitlementTestErrorHandler(),
+		Logger:       zap.NewNop(),
+	})
+	middleware.now = func() time.Time { return time.Unix(123, 0) }
+
+	return middleware
+}
+
+func serveWorkerRoute(middleware *ControlPlaneAccessMiddleware) *httptest.ResponseRecorder {
+	router := gin.New()
+	router.Use(setEntitlementTestAuthContext())
+	router.Use(func(c *gin.Context) {
+		c.Set("request_id", "req_123")
+		c.Next()
+	})
+	router.GET("/api/v1/workers/", middleware.RequireAccess(), func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
+
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/workers/", nil))
+
+	return recorder
+}
+
+func TestControlPlaneAccessMiddleware_LegacyGrantAllowsMovedRoute(t *testing.T) {
+	t.Parallel()
+
+	authorizer := &perFeatureAuthorizer{
+		results: map[platformcatalog.FeatureKey]*services.AccessAuthorizeResult{
+			platformcatalog.FeatureFleetMaintenance: {
+				FeatureKey: platformcatalog.FeatureFleetMaintenance,
+				Allowed:    true,
+			},
+		},
+	}
+
+	recorder := serveWorkerRoute(newLegacyGrantTestMiddleware(t, authorizer, false))
+
+	require.Equal(t, http.StatusNoContent, recorder.Code)
+	require.Equal(
+		t,
+		[]platformcatalog.FeatureKey{
+			platformcatalog.FeatureWorkforceCore,
+			platformcatalog.FeatureFleetMaintenance,
+		},
+		authorizer.asked,
+	)
+}
+
+func TestControlPlaneAccessMiddleware_LegacyGrantsCanBeDisabled(t *testing.T) {
+	t.Parallel()
+
+	authorizer := &perFeatureAuthorizer{
+		results: map[platformcatalog.FeatureKey]*services.AccessAuthorizeResult{
+			platformcatalog.FeatureFleetMaintenance: {
+				FeatureKey: platformcatalog.FeatureFleetMaintenance,
+				Allowed:    true,
+			},
+		},
+	}
+
+	recorder := serveWorkerRoute(newLegacyGrantTestMiddleware(t, authorizer, true))
+
+	require.NotEqual(t, http.StatusNoContent, recorder.Code)
+	require.Equal(
+		t,
+		[]platformcatalog.FeatureKey{platformcatalog.FeatureWorkforceCore},
+		authorizer.asked,
+	)
+}
+
+func TestControlPlaneAccessMiddleware_PrimaryCheckErrorIsNotMaskedByLegacyDenial(t *testing.T) {
+	t.Parallel()
+
+	authorizer := &perFeatureAuthorizer{
+		results: map[platformcatalog.FeatureKey]*services.AccessAuthorizeResult{
+			platformcatalog.FeatureFleetMaintenance: {
+				FeatureKey: platformcatalog.FeatureFleetMaintenance,
+				Allowed:    false,
+				Reason:     "fleet not licensed",
+			},
+		},
+		errs: map[platformcatalog.FeatureKey]error{
+			platformcatalog.FeatureWorkforceCore: errControlPlaneUnavailable,
+		},
+	}
+
+	recorder := serveWorkerRoute(newLegacyGrantTestMiddleware(t, authorizer, false))
+
+	require.NotEqual(t, http.StatusNoContent, recorder.Code)
+	require.NotContains(t, recorder.Body.String(), "fleet not licensed")
 }

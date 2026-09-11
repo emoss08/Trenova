@@ -8,7 +8,8 @@ const (
 	PackDriverDash    = PackKey("driver-dash")
 	PackSettlement    = PackKey("settlement")
 	PackWorkforce     = PackKey("workforce")
-	PackIntegrations  = PackKey("integrations")
+	PackEDI           = PackKey("edi")
+	PackExchangeRates = PackKey("exchange-rates")
 	PackDocumentAI    = PackKey("document-intelligence")
 )
 
@@ -106,12 +107,20 @@ func (p *StaticProvider) Packs() []Pack {
 			},
 		},
 		{
-			Key:           PackIntegrations,
-			Name:          "Integrations",
-			Description:   "EDI trading-partner exchange and exchange-rate sourcing.",
+			Key:           PackEDI,
+			Name:          "EDI",
+			Description:   "Trading-partner EDI: partners, mapping profiles, templates, transfers, and X12 document exchange.",
 			RequiresPacks: []PackKey{PackProfessional},
 			Features: []FeatureKey{
 				FeatureEDIIntegration,
+			},
+		},
+		{
+			Key:           PackExchangeRates,
+			Name:          "Exchange Rates",
+			Description:   "Provider-sourced currency conversion and settlement quoting for cross-border billing.",
+			RequiresPacks: []PackKey{PackProfessional},
+			Features: []FeatureKey{
 				FeatureExchangeRateIntegration,
 			},
 		},
