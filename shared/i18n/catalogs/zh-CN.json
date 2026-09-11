@@ -361,6 +361,7 @@
   "Automatically close fiscal periods whose end date has passed": "自动关闭结束日期已过的财务期间",
   "Automatically create next fiscal year when current one is nearing end": "当当前财务年度即将结束时，自动创建下一个财务年度",
   "Automatically create next fiscal year when current one is within 60 days of ending": "当当前财务年度距结束 60 天内时，自动创建下一个财务年度",
+  "Automatically ingested prices cannot be deleted": "自动采集的价格无法删除",
   "Automatically mark eligible shipments delayed across tenants": "跨租户自动将符合条件的运单标记为延误",
   "Automatically post a draft invoice after billing approval": "计费批准后自动过账草稿发票",
   "Awaiting SAP referral": "等待转介 SAP",

@@ -361,6 +361,7 @@
   "Automatically close fiscal periods whose end date has passed": "Cerrar automáticamente los períodos fiscales cuya fecha de fin ya pasó",
   "Automatically create next fiscal year when current one is nearing end": "Crear automáticamente el siguiente ejercicio fiscal cuando el actual esté por finalizar",
   "Automatically create next fiscal year when current one is within 60 days of ending": "Crear automáticamente el siguiente ejercicio fiscal cuando al actual le queden 60 días o menos",
+  "Automatically ingested prices cannot be deleted": "Los precios incorporados automáticamente no se pueden eliminar",
   "Automatically mark eligible shipments delayed across tenants": "Marcar automáticamente como retrasados los envíos elegibles en todos los inquilinos",
   "Automatically post a draft invoice after billing approval": "Contabilizar automáticamente una factura en borrador tras la aprobación de facturación",
   "Awaiting SAP referral": "En espera de derivación al SAP",
