@@ -397,6 +397,8 @@ var InvoiceRunGroupColumns = struct {
 	TotalAmount         Column // "total_amount" → qualified: "invrg.total_amount"
 	TotalAmountMinor    Column // "total_amount_minor" → qualified: "invrg.total_amount_minor"
 	CurrencyCode        Column // "currency_code" → qualified: "invrg.currency_code"
+	MinimumAmount       Column // "minimum_amount" → qualified: "invrg.minimum_amount"
+	AutoBill            Column // "auto_bill" → qualified: "invrg.auto_bill"
 	InvoiceID           Column // "invoice_id" → qualified: "invrg.invoice_id"
 	SkipReason          Column // "skip_reason" → qualified: "invrg.skip_reason"
 	Version             Column // "version" → qualified: "invrg.version"
@@ -418,6 +420,8 @@ var InvoiceRunGroupColumns = struct {
 	TotalAmount:         NewColumn("total_amount", "invrg"),
 	TotalAmountMinor:    NewColumn("total_amount_minor", "invrg"),
 	CurrencyCode:        NewColumn("currency_code", "invrg"),
+	MinimumAmount:       NewColumn("minimum_amount", "invrg"),
+	AutoBill:            NewColumn("auto_bill", "invrg"),
 	InvoiceID:           NewColumn("invoice_id", "invrg"),
 	SkipReason:          NewColumn("skip_reason", "invrg"),
 	Version:             NewColumn("version", "invrg"),
@@ -445,6 +449,8 @@ var InvoiceRunGroupFieldMap = map[string]string{
 	"totalAmount":         "total_amount",
 	"totalAmountMinor":    "total_amount_minor",
 	"currencyCode":        "currency_code",
+	"minimumAmount":       "minimum_amount",
+	"autoBill":            "auto_bill",
 	"invoiceId":           "invoice_id",
 	"skipReason":          "skip_reason",
 	"version":             "version",
@@ -470,6 +476,8 @@ var InvoiceRunGroupInsertableColumns = []string{
 	"total_amount",
 	"total_amount_minor",
 	"currency_code",
+	"minimum_amount",
+	"auto_bill",
 	"invoice_id",
 	"skip_reason",
 	"version",
@@ -559,6 +567,8 @@ var InvoiceRunGroupFilter = struct {
 	TotalAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
 	TotalAmountMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmountMinor" → DB: "total_amount_minor"
 	CurrencyCode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	MinimumAmount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minimumAmount" → DB: "minimum_amount"
+	AutoBill            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoBill" → DB: "auto_bill"
 	InvoiceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
 	SkipReason          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skipReason" → DB: "skip_reason"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -609,6 +619,12 @@ var InvoiceRunGroupFilter = struct {
 	},
 	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currencyCode", op, value)
+	},
+	MinimumAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minimumAmount", op, value)
+	},
+	AutoBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoBill", op, value)
 	},
 	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceId", op, value)

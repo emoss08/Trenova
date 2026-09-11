@@ -67,6 +67,7 @@ type Params struct {
 	Realtime            servicesports.RealtimeService
 	WorkflowStarter     servicesports.WorkflowStarter
 	SequenceGenerator   seqgen.Generator
+	SequenceProvider    seqgen.FormatProvider
 	OrderDerivation     servicesports.OrderDerivationService
 	AccountingPolicy    *accountingcontrolpolicyservice.Service
 	BillingPolicy       *billingcontrolpolicyservice.Service
@@ -98,6 +99,7 @@ type Service struct {
 	realtime            servicesports.RealtimeService
 	workflowStarter     servicesports.WorkflowStarter
 	sequenceGenerator   seqgen.Generator
+	sequenceProvider    seqgen.FormatProvider
 	orderDerivation     servicesports.OrderDerivationService
 	accountingPolicy    *accountingcontrolpolicyservice.Service
 	billingPolicy       *billingcontrolpolicyservice.Service
@@ -149,6 +151,7 @@ func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable AP
 		realtime:            p.Realtime,
 		workflowStarter:     p.WorkflowStarter,
 		sequenceGenerator:   p.SequenceGenerator,
+		sequenceProvider:    p.SequenceProvider,
 		orderDerivation:     p.OrderDerivation,
 		accountingPolicy:    p.AccountingPolicy,
 		billingPolicy:       p.BillingPolicy,
@@ -883,6 +886,7 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 		Lines:              lines,
 	}
 
+	applyInvoiceDetail(entity, p.Customer)
 	applyInvoiceScopeHeader(entity, p)
 
 	if p.Customer.State != nil {
@@ -926,6 +930,24 @@ func legsFromShipment(shp *shipment.Shipment) []*shipment.Shipment {
 		return nil
 	}
 	return []*shipment.Shipment{shp}
+}
+
+// applyInvoiceDetail copies the customer's presentation preference onto the
+// invoice, so how it reads is fixed at the moment it was billed.
+func applyInvoiceDetail(entity *invoice.Invoice, cus *customer.Customer) {
+	entity.Detail = customer.InvoiceDetailDetailed
+	entity.SectionBy = customer.InvoiceSectionKeyShipment
+
+	profile := billingProfileOf(cus)
+	if profile == nil {
+		return
+	}
+	if profile.InvoiceDetail.IsValid() {
+		entity.Detail = profile.InvoiceDetail
+	}
+	if profile.SectionBy.IsValid() {
+		entity.SectionBy = profile.SectionBy
+	}
 }
 
 func firstLeg(legs []*shipment.Shipment) *shipment.Shipment {

@@ -70,12 +70,24 @@ func (s *Service) CreateConsolidated(
 
 	number := params.Number
 	if number == "" {
-		generated, err := s.sequenceGenerator.GenerateInvoiceNumber(
+		// Loaded before the transaction so the number honours the customer's own
+		// prefix: one consolidated invoice stands for a month of freight, and a
+		// customer who asked for their prefix expects to see it on it.
+		cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			ID:         customerID,
+			TenantInfo: params.TenantInfo,
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		generated, err := s.generateInvoiceNumber(
 			ctx,
-			params.TenantInfo.OrgID,
-			params.TenantInfo.BuID,
-			"",
-			"",
+			params.TenantInfo,
+			billingProfileOf(cus),
 		)
 		if err != nil {
 			return nil, err

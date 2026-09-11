@@ -85,6 +85,15 @@ func (s *Service) sweepPeriod(
 		Cycle:      string(key.cycle),
 		PeriodEnd:  key.periodEnd,
 	})
+	if err == nil {
+		// Re-read with groups: whether the run may bill without review is a
+		// property of its groups, not of the run row.
+		run, err = s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+			ID:            run.ID,
+			TenantInfo:    tenantInfo,
+			IncludeGroups: true,
+		})
+	}
 	if err != nil {
 		run, err = s.Preview(ctx, &servicesports.PreviewInvoiceRunRequest{
 			TenantInfo:  tenantInfo,
@@ -106,6 +115,13 @@ func (s *Service) sweepPeriod(
 		return
 	}
 
+	// A customer who has not asked to be billed without review keeps their run at
+	// Ready, where a biller sees it waiting. Committing everything automatically
+	// would take the decision away from the people who asked to make it.
+	if !runIsAutoBillable(run) {
+		return
+	}
+
 	commit, err := s.Commit(ctx, &servicesports.CommitInvoiceRunRequest{
 		TenantInfo: tenantInfo,
 		RunID:      run.ID,
@@ -119,4 +135,27 @@ func (s *Service) sweepPeriod(
 	result.InvoicesCreated += commit.SuccessCount
 	result.GroupsSkipped += commit.SkippedCount
 	result.Failed += commit.ErrorCount
+}
+
+// runIsAutoBillable reports whether every group on a scheduled run belongs to a
+// customer who asked to be billed without review.
+//
+// All-or-nothing on purpose: a run mixing auto-bill and review customers is
+// better left whole for a biller than half-committed, which would leave them
+// looking at a run whose numbers no longer match what it billed.
+func runIsAutoBillable(run *invoicerun.InvoiceRun) bool {
+	if len(run.Groups) == 0 {
+		return false
+	}
+
+	for _, group := range run.Groups {
+		if group == nil {
+			continue
+		}
+		if group.Status == invoicerun.GroupStatusPending && !group.AutoBill {
+			return false
+		}
+	}
+
+	return true
 }

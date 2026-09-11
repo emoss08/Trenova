@@ -92,6 +92,7 @@ type ConsolidationCandidate struct {
 	InvoiceDetail          customer.InvoiceDetail     `bun:"invoice_detail"`
 	MaxShipmentsPerInvoice int16                      `bun:"max_shipments_per_invoice"`
 	MinConsolidatedAmount  decimal.NullDecimal        `bun:"min_consolidated_amount"`
+	AutoBill               bool                       `bun:"auto_bill"`
 }
 
 type BillingQueueRepository interface {

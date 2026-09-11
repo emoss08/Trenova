@@ -63,6 +63,13 @@ type Invoice {
   periodEnd: Timestamp
   """Distinct shipments this invoice bills."""
   shipmentCount: Int!
+  """
+  How much charge detail this invoice shows, fixed when it was billed rather
+  than read back from the customer.
+  """
+  detail: InvoiceDetail!
+  """How the lines on this invoice are organised for the reader."""
+  sectionBy: InvoiceSectionKey!
   number: String!
   billType: BillType!
   status: InvoiceStatus!

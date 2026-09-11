@@ -140,13 +140,18 @@ func (s *Service) CreateFromShipments(
 		)
 	}
 
-	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
-		ctx,
-		req.TenantInfo.OrgID,
-		req.TenantInfo.BuID,
-		"",
-		"",
-	)
+	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         shp.CustomerID,
+		TenantInfo: req.TenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	number, err := s.generateInvoiceNumber(ctx, req.TenantInfo, billingProfileOf(cus))
 	if err != nil {
 		return nil, err
 	}
@@ -352,12 +357,29 @@ func (s *Service) CreateFromOrder(
 		)
 	}
 
-	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
+	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ID:         req.OrderID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	orderCustomer, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         ord.CustomerID,
+		TenantInfo: req.TenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	number, err := s.generateInvoiceNumber(
 		ctx,
-		req.TenantInfo.OrgID,
-		req.TenantInfo.BuID,
-		"",
-		"",
+		req.TenantInfo,
+		billingProfileOf(orderCustomer),
 	)
 	if err != nil {
 		return nil, err

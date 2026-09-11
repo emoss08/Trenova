@@ -4351,6 +4351,14 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.Customer'
                 customerId:
                     type: string
+                detail:
+                    allOf:
+                        - $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail'
+                    description: |-
+                        Detail and SectionBy are stamped from the customer's billing profile when
+                        the invoice is created, not read back at render time. A customer who
+                        changes their preference next month must not silently change how an invoice
+                        they were already sent reads.
                 disputeStatus:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_invoice.DisputeStatus'
                 dueDate:
@@ -4423,6 +4431,8 @@ components:
                     type: string
                 scope:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_invoice.Scope'
+                sectionBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey'
                 sendStatus:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus'
                 sentAt:
@@ -4654,6 +4664,11 @@ components:
             type: object
         github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroup:
             properties:
+                autoBill:
+                    description: |-
+                        AutoBill says the customer asked for this to bill without review, so a
+                        scheduled run commits it rather than leaving it for a biller.
+                    type: boolean
                 businessUnitId:
                     type: string
                 createdAt:
@@ -4680,6 +4695,13 @@ components:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroupItem'
                     type: array
+                minimumAmount:
+                    allOf:
+                        - $ref: '#/components/schemas/decimal.NullDecimal'
+                    description: |-
+                        MinimumAmount is the customer's floor for a statement, copied onto the group
+                        when the run is built. A group below it defers to the next period rather
+                        than billing, so a customer is not sent a four-dollar invoice.
                 organizationId:
                     type: string
                 runId:

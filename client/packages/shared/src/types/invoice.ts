@@ -9,6 +9,7 @@ import {
   nullableStringSchema,
   tenantInfoSchema,
 } from "./helpers";
+import { invoiceDetailSchema, invoiceSectionKeySchema } from "./customer";
 import { shipmentSchema } from "./shipment";
 
 export const invoiceStatusSchema = z.enum(["Draft", "Posted"]);
@@ -189,6 +190,8 @@ export const invoiceSchema = z.object({
   id: z.string(),
   billingQueueItemId: z.string(),
   shipmentId: nullableStringSchema,
+    detail: invoiceDetailSchema.default("Detailed"),
+    sectionBy: invoiceSectionKeySchema.default("Shipment"),
   orderId: nullableStringSchema,
   customerId: z.string(),
   number: z.string(),

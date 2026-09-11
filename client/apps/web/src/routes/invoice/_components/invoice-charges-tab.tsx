@@ -38,6 +38,9 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
   );
 
   const isGrouped = groups.length > 1;
+  // A customer on Summary asked not to see every charge line — one row per
+  // shipment is the whole invoice for them.
+  const isSummary = invoice.detail === "Summary" && isGrouped;
 
   function toggle(key: string) {
     setCollapsed((previous) => {
@@ -67,7 +70,17 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
               </tr>
             </thead>
 
-            {isGrouped ? (
+            {isSummary ? (
+              <tbody>
+                {groups.map((group) => (
+                  <SummaryRow
+                    key={group.key}
+                    group={group}
+                    currencyCode={invoice.currencyCode}
+                  />
+                ))}
+              </tbody>
+            ) : isGrouped ? (
               groups.map((group) => (
                 <ShipmentGroupBody
                   key={group.key}
@@ -124,6 +137,35 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
         </div>
       </div>
     </ScrollArea>
+  );
+}
+
+/**
+ * One shipment, one row. The charge breakdown still exists on the invoice — this
+ * is a presentation choice the customer made, not a different invoice.
+ */
+function SummaryRow({
+  group,
+  currencyCode,
+}: {
+  group: InvoiceLineGroup;
+  currencyCode: string;
+}) {
+  const heading = groupHeading(group);
+  const lineLabel = group.lines.length === 1 ? "1 charge" : `${group.lines.length} charges`;
+
+  return (
+    <tr className="hover:bg-muted/50 border-t transition-colors">
+      <td className="px-4 py-3 font-mono text-xs">{heading}</td>
+      <td className="px-4 py-3" colSpan={2}>
+        {group.bol ? `BOL ${group.bol}` : ""}
+      </td>
+      <td className="text-muted-foreground px-4 py-3 text-right text-xs">{lineLabel}</td>
+      <td className="px-4 py-3" />
+      <td className="px-4 py-3 text-right font-medium tabular-nums">
+        {formatCurrency(group.subtotal, currencyCode)}
+      </td>
+    </tr>
   );
 }
 

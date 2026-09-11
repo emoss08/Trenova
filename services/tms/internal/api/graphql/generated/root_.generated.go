@@ -4262,6 +4262,7 @@ type ComplexityRoot struct {
 		CurrencyCode         func(childComplexity int) int
 		Customer             func(childComplexity int) int
 		CustomerID           func(childComplexity int) int
+		Detail               func(childComplexity int) int
 		DisputeStatus        func(childComplexity int) int
 		DueDate              func(childComplexity int) int
 		ID                   func(childComplexity int) int
@@ -4279,6 +4280,7 @@ type ComplexityRoot struct {
 		PeriodStart          func(childComplexity int) int
 		PostedAt             func(childComplexity int) int
 		Scope                func(childComplexity int) int
+		SectionBy            func(childComplexity int) int
 		SendStatus           func(childComplexity int) int
 		SentAt               func(childComplexity int) int
 		ServiceDate          func(childComplexity int) int
@@ -28932,6 +28934,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.CustomerID(childComplexity), true
+	case "Invoice.detail":
+		if e.ComplexityRoot.Invoice.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.Detail(childComplexity), true
 	case "Invoice.disputeStatus":
 		if e.ComplexityRoot.Invoice.DisputeStatus == nil {
 			break
@@ -29034,6 +29042,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.Scope(childComplexity), true
+	case "Invoice.sectionBy":
+		if e.ComplexityRoot.Invoice.SectionBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.SectionBy(childComplexity), true
 	case "Invoice.sendStatus":
 		if e.ComplexityRoot.Invoice.SendStatus == nil {
 			break
@@ -69541,6 +69555,13 @@ type Invoice {
   periodEnd: Timestamp
   """Distinct shipments this invoice bills."""
   shipmentCount: Int!
+  """
+  How much charge detail this invoice shows, fixed when it was billed rather
+  than read back from the customer.
+  """
+  detail: InvoiceDetail!
+  """How the lines on this invoice are organised for the reader."""
+  sectionBy: InvoiceSectionKey!
   number: String!
   billType: BillType!
   status: InvoiceStatus!
@@ -86866,6 +86887,10 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_periodEnd(ctx, field)
 	case "shipmentCount":
 		return ec.fieldContext_Invoice_shipmentCount(ctx, field)
+	case "detail":
+		return ec.fieldContext_Invoice_detail(ctx, field)
+	case "sectionBy":
+		return ec.fieldContext_Invoice_sectionBy(ctx, field)
 	case "number":
 		return ec.fieldContext_Invoice_number(ctx, field)
 	case "billType":

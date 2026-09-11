@@ -7227,6 +7227,11 @@ type Invoice {
   currencyCode: String!
   customer: Customer
   customerId: ID!
+  """
+  How much charge detail this invoice shows, fixed when it was billed rather
+  than read back from the customer.
+  """
+  detail: InvoiceDetail!
   disputeStatus: InvoiceDisputeStatus!
   dueDate: Timestamp
   id: ID!
@@ -7246,6 +7251,8 @@ type Invoice {
   periodStart: Timestamp
   postedAt: Timestamp
   scope: InvoiceScope!
+  """How the lines on this invoice are organised for the reader."""
+  sectionBy: InvoiceSectionKey!
   sendStatus: InvoiceSendStatus!
   sentAt: Timestamp
   serviceDate: Timestamp

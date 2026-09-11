@@ -2,6 +2,7 @@ package invoicerunservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -117,6 +119,13 @@ func (s *Service) commitGroup(
 	included := group.IncludedItems()
 	if len(included) == 0 {
 		return s.skipGroup(ctx, group, &outcome, "Every shipment on this group was excluded")
+	}
+
+	// A customer's floor is a deliberate instruction not to send them a trivial
+	// invoice. The shipments stay billable, so they roll into the next period
+	// rather than being lost.
+	if reason := belowMinimum(group, included); reason != "" {
+		return s.skipGroup(ctx, group, &outcome, reason)
 	}
 
 	legs, reason, err := s.resolveGroupLegs(ctx, tenantInfo, included)
@@ -352,4 +361,27 @@ func (s *Service) resultFromRun(
 	}
 
 	return result
+}
+
+// belowMinimum reports why a group should defer, or empty when it should bill.
+func belowMinimum(
+	group *invoicerun.InvoiceRunGroup,
+	included []*invoicerun.InvoiceRunGroupItem,
+) string {
+	if !group.MinimumAmount.Valid {
+		return ""
+	}
+
+	total := decimal.Zero
+	for _, item := range included {
+		total = total.Add(item.Amount)
+	}
+	if total.GreaterThanOrEqual(group.MinimumAmount.Decimal) {
+		return ""
+	}
+
+	return fmt.Sprintf(
+		"Below this customer's %s minimum — held for the next period",
+		group.MinimumAmount.Decimal.StringFixed(2),
+	)
 }

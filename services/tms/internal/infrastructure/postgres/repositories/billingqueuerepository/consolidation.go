@@ -57,6 +57,7 @@ func (r *repository) ListConsolidationCandidates(
 		ColumnExpr("COALESCE(cbp.invoice_detail, 'Detailed') AS invoice_detail").
 		ColumnExpr("COALESCE(cbp.max_shipments_per_invoice, 0) AS max_shipments_per_invoice").
 		ColumnExpr("cbp.min_consolidated_amount AS min_consolidated_amount").
+		ColumnExpr("COALESCE(cbp.auto_bill, FALSE) AS auto_bill").
 		ColumnExpr(
 			"COUNT(*) FILTER (WHERE TRUE) OVER (PARTITION BY sp.order_id) AS order_eligible_legs",
 		).

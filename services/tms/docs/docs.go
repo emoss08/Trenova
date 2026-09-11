@@ -38114,6 +38114,14 @@ const docTemplate = `{
                 "customerId": {
                     "type": "string"
                 },
+                "detail": {
+                    "description": "Detail and SectionBy are stamped from the customer's billing profile when\nthe invoice is created, not read back at render time. A customer who\nchanges their preference next month must not silently change how an invoice\nthey were already sent reads.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDetail"
+                        }
+                    ]
+                },
                 "disputeStatus": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.DisputeStatus"
                 },
@@ -38221,6 +38229,9 @@ const docTemplate = `{
                 },
                 "scope": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.Scope"
+                },
+                "sectionBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceSectionKey"
                 },
                 "sendStatus": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus"
@@ -38550,6 +38561,10 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroup": {
             "type": "object",
             "properties": {
+                "autoBill": {
+                    "description": "AutoBill says the customer asked for this to bill without review, so a\nscheduled run commits it rather than leaving it for a biller.",
+                    "type": "boolean"
+                },
                 "businessUnitId": {
                     "type": "string"
                 },
@@ -38588,6 +38603,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoicerun.InvoiceRunGroupItem"
                     }
+                },
+                "minimumAmount": {
+                    "description": "MinimumAmount is the customer's floor for a statement, copied onto the group\nwhen the run is built. A group below it defers to the next period rather\nthan billing, so a customer is not sent a four-dollar invoice.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/decimal.NullDecimal"
+                        }
+                    ]
                 },
                 "organizationId": {
                     "type": "string"

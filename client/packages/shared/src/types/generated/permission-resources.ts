@@ -108,6 +108,7 @@ export const Resource = {
   // Billing
   Invoice: "invoice",
   BillingQueue: "billing_queue",
+  InvoiceRun: "invoice_run",
   AccessorialCharge: "accessorial_charge",
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",

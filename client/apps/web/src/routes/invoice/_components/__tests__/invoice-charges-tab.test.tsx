@@ -149,6 +149,52 @@ describe("InvoiceChargesTab", () => {
     expect(screen.getByText("Linehaul B")).toBeInTheDocument();
   });
 
+  it("collapses to one row per shipment when the customer is on Summary", () => {
+    const lines = [
+      line({ id: "l1", lineNumber: 1, shipmentId: "shp_1", shipmentProNumber: "PRO-1", amount: 100 }),
+      line({
+        id: "l2",
+        lineNumber: 2,
+        shipmentId: "shp_1",
+        shipmentProNumber: "PRO-1",
+        type: "Accessorial",
+        description: "Detention",
+        amount: 50,
+      }),
+      line({ id: "l3", lineNumber: 3, shipmentId: "shp_2", shipmentProNumber: "PRO-2", amount: 250 }),
+    ];
+    const invoice = { ...invoiceWith(lines), detail: "Summary" } as Invoice;
+
+    render(<InvoiceChargesTab invoice={invoice} />);
+
+    // The individual charge descriptions are not shown...
+    expect(screen.queryByText("Detention")).not.toBeInTheDocument();
+    // ...but every shipment is, with its own total.
+    expect(screen.getByText("PRO-1")).toBeInTheDocument();
+    expect(screen.getByText("PRO-2")).toBeInTheDocument();
+    expect(screen.getByText("2 charges")).toBeInTheDocument();
+    expect(screen.getByText("$150.00")).toBeInTheDocument();
+  });
+
+  it("shows every charge line when the customer is on Detailed", () => {
+    const lines = [
+      line({ id: "l1", lineNumber: 1, shipmentId: "shp_1", shipmentProNumber: "PRO-1" }),
+      line({
+        id: "l2",
+        lineNumber: 2,
+        shipmentId: "shp_2",
+        shipmentProNumber: "PRO-2",
+        type: "Accessorial",
+        description: "Detention",
+      }),
+    ];
+    const invoice = { ...invoiceWith(lines), detail: "Detailed" } as Invoice;
+
+    render(<InvoiceChargesTab invoice={invoice} />);
+
+    expect(screen.getByText("Detention")).toBeInTheDocument();
+  });
+
   it("sums each section from its own lines, not from the invoice header", () => {
     const lines = [
       line({ id: "l1", lineNumber: 1, shipmentId: "shp_1", amount: 125.5 }),

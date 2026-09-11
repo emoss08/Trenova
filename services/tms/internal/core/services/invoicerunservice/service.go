@@ -254,6 +254,8 @@ func (s *Service) newGroup(
 		SplitBy:        first.SplitBy,
 		Status:         invoicerun.GroupStatusPending,
 		CurrencyCode:   first.CurrencyCode,
+		MinimumAmount:  first.MinConsolidatedAmount,
+		AutoBill:       first.AutoBill,
 		Items:          make([]*invoicerun.InvoiceRunGroupItem, 0, len(members)),
 	}
 

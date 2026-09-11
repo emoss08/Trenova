@@ -38,6 +38,14 @@ type InvoiceRunGroup struct {
 	TotalAmountMinor    int64           `json:"totalAmountMinor"    bun:"total_amount_minor,type:BIGINT,notnull"`
 	CurrencyCode        string          `json:"currencyCode"        bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
 
+	// MinimumAmount is the customer's floor for a statement, copied onto the group
+	// when the run is built. A group below it defers to the next period rather
+	// than billing, so a customer is not sent a four-dollar invoice.
+	MinimumAmount decimal.NullDecimal `json:"minimumAmount" bun:"minimum_amount,type:NUMERIC(19,4),nullzero"`
+	// AutoBill says the customer asked for this to bill without review, so a
+	// scheduled run commits it rather than leaving it for a biller.
+	AutoBill bool `json:"autoBill" bun:"auto_bill,type:BOOLEAN,notnull"`
+
 	InvoiceID  pulid.ID `json:"invoiceId"  bun:"invoice_id,type:VARCHAR(100),nullzero"`
 	SkipReason string   `json:"skipReason" bun:"skip_reason,type:TEXT,nullzero"`
 
