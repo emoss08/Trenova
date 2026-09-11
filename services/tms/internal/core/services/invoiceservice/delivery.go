@@ -403,10 +403,11 @@ func (s *Service) createOrderInvoiceTx(
 		)
 	}
 
-	anchor, txErr := s.createLegQueueItems(txCtx, req.TenantInfo, ord.ID, legs, number)
+	queueItems, txErr := s.createLegQueueItems(txCtx, req.TenantInfo, legs, number)
 	if txErr != nil {
 		return nil, txErr
 	}
+	anchor := queueItems.Anchor
 
 	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
 		ID:         ord.CustomerID,
@@ -433,7 +434,15 @@ func (s *Service) createOrderInvoiceTx(
 		return nil, txErr
 	}
 
-	entity := s.buildInvoiceEntityForOrder(anchor, ord, legs, charges, cus, control)
+	entity := s.buildInvoiceEntity(&buildInvoiceParams{
+		Anchor:       anchor,
+		Scope:        invoice.ScopeOrder,
+		Customer:     cus,
+		Control:      control,
+		Legs:         legs,
+		Order:        ord,
+		OrderCharges: charges,
+	})
 	if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -467,20 +476,31 @@ func (s *Service) createOrderInvoiceTx(
 	return created, nil
 }
 
-// createLegQueueItems creates one approved billing-queue item per billable leg. Only
-// the anchor item carries the invoice number; sibling items leave it null (the
-// billing-queue number is tenant-unique) — the whole group is correlated by OrderID.
+// legQueueItems is the queue items an invoice will bill: the anchor whose id backs
+// the invoice's single-valued FK and idempotency lookup, plus every id so the
+// invoice back-link can be written in one statement.
+type legQueueItems struct {
+	Anchor  *billingqueue.BillingQueueItem
+	ItemIDs []pulid.ID
+}
+
+// createLegQueueItems creates one approved billing-queue item per billable leg.
+//
+// Only the anchor carries the invoice number; siblings leave it null, because the
+// billing-queue number is tenant-unique. Each item takes its order from its own
+// leg rather than from one order-wide value, which is what lets a selection span
+// orders — or carry legs with no order at all.
 func (s *Service) createLegQueueItems(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	orderID pulid.ID,
 	legs []*shipment.Shipment,
 	number string,
-) (*billingqueue.BillingQueueItem, error) {
-	var anchor *billingqueue.BillingQueueItem
+) (*legQueueItems, error) {
+	result := &legQueueItems{ItemIDs: make([]pulid.ID, 0, len(legs))}
+
 	for _, leg := range legs {
 		itemNumber := ""
-		if anchor == nil {
+		if result.Anchor == nil {
 			itemNumber = number
 		}
 
@@ -488,7 +508,7 @@ func (s *Service) createLegQueueItems(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			ShipmentID:     leg.ID,
-			OrderID:        orderID,
+			OrderID:        leg.OrderID,
 			Status:         billingqueue.StatusApproved,
 			BillType:       billingqueue.BillTypeInvoice,
 			Number:         itemNumber,
@@ -496,12 +516,13 @@ func (s *Service) createLegQueueItems(
 		if err != nil {
 			return nil, err
 		}
-		if anchor == nil {
-			anchor = item
+		if result.Anchor == nil {
+			result.Anchor = item
 		}
+		result.ItemIDs = append(result.ItemIDs, item.ID)
 	}
 
-	return anchor, nil
+	return result, nil
 }
 
 func (s *Service) markOrderChargesInvoiced(

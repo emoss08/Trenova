@@ -217,13 +217,14 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 
-	entity := s.buildInvoiceEntity(
-		item,
-		dependencies.Shipment,
-		dependencies.Order,
-		dependencies.Customer,
-		dependencies.BillingControl,
-	)
+	entity := s.buildInvoiceEntity(&buildInvoiceParams{
+		Anchor:   item,
+		Scope:    invoice.ScopeShipment,
+		Customer: dependencies.Customer,
+		Control:  dependencies.BillingControl,
+		Legs:     legsFromShipment(dependencies.Shipment),
+		Order:    dependencies.Order,
+	})
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
 			"billingQueueItemId",
@@ -769,75 +770,169 @@ func (s *Service) EnqueueAutoPost(
 	return err
 }
 
-func (s *Service) buildInvoiceEntity(
-	item *billingqueue.BillingQueueItem,
-	shp *shipment.Shipment,
-	ord *order.Order,
-	cus *customer.Customer,
-	control *tenant.BillingControl,
-) *invoice.Invoice {
-	if item.IsAdjustmentOrigin {
-		if entity := s.buildAdjustmentOriginInvoiceEntity(item, shp, cus, control); entity != nil {
-			if ord != nil {
-				entity.OrderID = ord.ID
-				entity.OrderNumber = ord.OrderNumber
+// buildInvoiceParams is what an invoice is built from, whatever its scope.
+//
+// Grouped by a struct rather than passed positionally because the shapes differ
+// only in which identity the header carries, and a six-argument signature that
+// means different things per scope is how the two builders drifted apart in the
+// first place.
+type buildInvoiceParams struct {
+	Anchor       *billingqueue.BillingQueueItem
+	Scope        invoice.Scope
+	Customer     *customer.Customer
+	Control      *tenant.BillingControl
+	Legs         []*shipment.Shipment
+	Order        *order.Order
+	OrderCharges []*order.OrderCharge
+	RunID        pulid.ID
+	PeriodStart  *int64
+	PeriodEnd    *int64
+	InvoiceDate  int64
+	Number       string
+}
+
+// buildInvoiceEntity builds every shape of invoice from its legs.
+//
+// One builder, because a single-shipment invoice is the one-leg case of a
+// grouped one and a consolidated invoice is the many-order case. Only the header
+// differs: which identity it carries, and whether it names a period.
+func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
+	if p.Anchor.IsAdjustmentOrigin {
+		if entity := s.buildAdjustmentOriginInvoiceEntity(
+			p.Anchor,
+			firstLeg(p.Legs),
+			p.Customer,
+			p.Control,
+		); entity != nil {
+			if p.Order != nil {
+				entity.OrderID = p.Order.ID
+				entity.OrderNumber = p.Order.OrderNumber
 			}
 			return entity
 		}
 	}
 
-	if shp == nil {
+	if len(p.Legs) == 0 {
 		return nil
 	}
 
-	invoiceDate := timeutils.NowUnix()
-	paymentTerm := resolvePaymentTerm(cus, control)
+	invoiceDate := p.InvoiceDate
+	if invoiceDate == 0 {
+		invoiceDate = timeutils.NowUnix()
+	}
+	paymentTerm := resolvePaymentTerm(p.Customer, p.Control)
 	if paymentTerm == "" {
 		paymentTerm = invoice.PaymentTermNet30
 	}
 
-	lines := buildInvoiceLines(item.BillType, shp)
+	number := p.Number
+	if number == "" {
+		number = p.Anchor.Number
+	}
+
+	lines := make([]*invoice.InvoiceLine, 0, len(p.Legs))
+	nextLineNumber := 1
+	for _, leg := range p.Legs {
+		legLines := buildInvoiceLinesForShipment(p.Anchor.BillType, leg, nextLineNumber)
+		lines = append(lines, legLines...)
+		nextLineNumber += len(legLines)
+	}
+
+	// Order-level charges (customs brokerage, an order-wide fuel surcharge) carry
+	// no leg attribution, which is what puts them in the trailing section when the
+	// invoice is rendered.
+	for _, charge := range p.OrderCharges {
+		if charge == nil {
+			continue
+		}
+		amount := signedAmount(p.Anchor.BillType, charge.Amount)
+		lines = append(lines, &invoice.InvoiceLine{
+			LineNumber:  nextLineNumber,
+			Type:        invoice.InvoiceLineTypeAccessorial,
+			Description: charge.Description,
+			Quantity:    decimal.NewFromInt(1),
+			UnitPrice:   amount,
+			Amount:      amount,
+		})
+		nextLineNumber++
+	}
+
 	entity := &invoice.Invoice{
-		OrganizationID:     item.OrganizationID,
-		BusinessUnitID:     item.BusinessUnitID,
-		BillingQueueItemID: item.ID,
-		Scope:              invoice.ScopeShipment,
-		ShipmentID:         shp.ID,
-		ShipmentCount:      1,
-		CustomerID:         cus.ID,
-		OrderID:            orderIDFromOrder(ord),
-		OrderNumber:        orderNumberFromOrder(ord),
-		Number:             item.Number,
-		BillType:           item.BillType,
+		OrganizationID:     p.Anchor.OrganizationID,
+		BusinessUnitID:     p.Anchor.BusinessUnitID,
+		BillingQueueItemID: p.Anchor.ID,
+		Scope:              p.Scope,
+		CustomerID:         p.Customer.ID,
+		Number:             number,
+		BillType:           p.Anchor.BillType,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        paymentTerm,
-		CurrencyCode:       billingCurrencyFromCustomer(cus),
+		CurrencyCode:       billingCurrencyFromCustomer(p.Customer),
 		InvoiceDate:        invoiceDate,
 		DueDate:            invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
-		ShipmentProNumber:  shp.ProNumber,
-		ShipmentBOL:        shp.BOL,
-		ServiceDate:        serviceDateFromShipment(shp),
-		BillToName:         cus.Name,
-		BillToCode:         cus.Code,
-		BillToAddressLine1: cus.AddressLine1,
-		BillToAddressLine2: cus.AddressLine2,
-		BillToCity:         cus.City,
-		BillToPostalCode:   cus.PostalCode,
+		ShipmentCount:      len(p.Legs),
+		BillToName:         p.Customer.Name,
+		BillToCode:         p.Customer.Code,
+		BillToAddressLine1: p.Customer.AddressLine1,
+		BillToAddressLine2: p.Customer.AddressLine2,
+		BillToCity:         p.Customer.City,
+		BillToPostalCode:   p.Customer.PostalCode,
 		AppliedAmount:      decimal.Zero,
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 		DisputeStatus:      invoice.DisputeStatusNone,
 		Lines:              lines,
 	}
 
-	if cus.State != nil {
-		entity.BillToState = cus.State.Abbreviation
-		entity.BillToCountry = cus.State.CountryName
+	applyInvoiceScopeHeader(entity, p)
+
+	if p.Customer.State != nil {
+		entity.BillToState = p.Customer.State.Abbreviation
+		entity.BillToCountry = p.Customer.State.CountryName
 	}
 
 	syncInvoiceTotalsFromLines(entity)
 	entity.SyncMinorAmounts()
 
 	return entity
+}
+
+// applyInvoiceScopeHeader stamps the identity fields that belong to this scope,
+// and only those. A grouped invoice deliberately carries no header shipment, and
+// a consolidated one carries neither shipment nor order — the lines hold the
+// attribution and Scope says so outright.
+func applyInvoiceScopeHeader(entity *invoice.Invoice, p *buildInvoiceParams) {
+	switch p.Scope {
+	case invoice.ScopeShipment:
+		leg := firstLeg(p.Legs)
+		entity.ShipmentID = leg.ID
+		entity.ShipmentProNumber = leg.ProNumber
+		entity.ShipmentBOL = leg.BOL
+		entity.ServiceDate = serviceDateFromShipment(leg)
+		entity.OrderID = orderIDFromOrder(p.Order)
+		entity.OrderNumber = orderNumberFromOrder(p.Order)
+	case invoice.ScopeOrder:
+		entity.OrderID = orderIDFromOrder(p.Order)
+		entity.OrderNumber = orderNumberFromOrder(p.Order)
+	case invoice.ScopeConsolidated:
+		entity.InvoiceRunID = p.RunID
+		entity.PeriodStart = p.PeriodStart
+		entity.PeriodEnd = p.PeriodEnd
+	case invoice.ScopeAdjustment:
+	}
+}
+
+func legsFromShipment(shp *shipment.Shipment) []*shipment.Shipment {
+	if shp == nil {
+		return nil
+	}
+	return []*shipment.Shipment{shp}
+}
+
+func firstLeg(legs []*shipment.Shipment) *shipment.Shipment {
+	if len(legs) == 0 {
+		return nil
+	}
+	return legs[0]
 }
 
 func orderIDFromOrder(ord *order.Order) pulid.ID {
@@ -852,90 +947,6 @@ func orderNumberFromOrder(ord *order.Order) string {
 		return ""
 	}
 	return ord.OrderNumber
-}
-
-// buildInvoiceEntityForOrder builds a single grouped invoice covering every billable
-// leg of an order. Lines are appended per leg (each carrying its shipment identity)
-// and line numbers run continuously across legs. The header carries the order, not a
-// single shipment; the anchor billing-queue item keeps the header's single-valued FK
-// and idempotency lookup working.
-func (s *Service) buildInvoiceEntityForOrder(
-	anchor *billingqueue.BillingQueueItem,
-	ord *order.Order,
-	legs []*shipment.Shipment,
-	charges []*order.OrderCharge,
-	cus *customer.Customer,
-	control *tenant.BillingControl,
-) *invoice.Invoice {
-	invoiceDate := timeutils.NowUnix()
-	paymentTerm := resolvePaymentTerm(cus, control)
-	if paymentTerm == "" {
-		paymentTerm = invoice.PaymentTermNet30
-	}
-
-	lines := make([]*invoice.InvoiceLine, 0, len(legs)+len(charges))
-	nextLineNumber := 1
-	for _, leg := range legs {
-		legLines := buildInvoiceLinesForShipment(anchor.BillType, leg, nextLineNumber)
-		lines = append(lines, legLines...)
-		nextLineNumber += len(legLines)
-	}
-
-	// Order-level charges (customs brokerage, order-wide fuel, etc.) become their own
-	// accessorial lines with no leg attribution.
-	for _, charge := range charges {
-		if charge == nil {
-			continue
-		}
-		amount := signedAmount(anchor.BillType, charge.Amount)
-		lines = append(lines, &invoice.InvoiceLine{
-			LineNumber:  nextLineNumber,
-			Type:        invoice.InvoiceLineTypeAccessorial,
-			Description: charge.Description,
-			Quantity:    decimal.NewFromInt(1),
-			UnitPrice:   amount,
-			Amount:      amount,
-		})
-		nextLineNumber++
-	}
-
-	entity := &invoice.Invoice{
-		OrganizationID:     anchor.OrganizationID,
-		BusinessUnitID:     anchor.BusinessUnitID,
-		BillingQueueItemID: anchor.ID,
-		Scope:              invoice.ScopeOrder,
-		OrderID:            ord.ID,
-		OrderNumber:        ord.OrderNumber,
-		ShipmentCount:      len(legs),
-		CustomerID:         cus.ID,
-		Number:             anchor.Number,
-		BillType:           anchor.BillType,
-		Status:             invoice.StatusDraft,
-		PaymentTerm:        paymentTerm,
-		CurrencyCode:       billingCurrencyFromCustomer(cus),
-		InvoiceDate:        invoiceDate,
-		DueDate:            invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
-		BillToName:         cus.Name,
-		BillToCode:         cus.Code,
-		BillToAddressLine1: cus.AddressLine1,
-		BillToAddressLine2: cus.AddressLine2,
-		BillToCity:         cus.City,
-		BillToPostalCode:   cus.PostalCode,
-		AppliedAmount:      decimal.Zero,
-		SettlementStatus:   invoice.SettlementStatusUnpaid,
-		DisputeStatus:      invoice.DisputeStatusNone,
-		Lines:              lines,
-	}
-
-	if cus.State != nil {
-		entity.BillToState = cus.State.Abbreviation
-		entity.BillToCountry = cus.State.CountryName
-	}
-
-	syncInvoiceTotalsFromLines(entity)
-	entity.SyncMinorAmounts()
-
-	return entity
 }
 
 type adjustmentInvoiceContext struct {
