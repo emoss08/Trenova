@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -38,6 +39,8 @@ export function JurisdictionRuleVerifyDialog({
   onOpenChange: (open: boolean) => void;
   rule: JurisdictionRuleRow | null;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<VerifyJurisdictionRuleInput>({
@@ -64,8 +67,8 @@ export function JurisdictionRuleVerifyDialog({
     mutationFn: async (values: VerifyJurisdictionRuleInput) =>
       api.post(`/jurisdiction-rules/${rule?.id}/verify/`, values),
     onSuccess: () => {
-      toast.success("Verification recorded", {
-        description: "This rule now shows who confirmed it and when.",
+      toast.success(t("Verification recorded"), {
+        description: t("This rule now shows who confirmed it and when."),
       });
       void queryClient.invalidateQueries({ queryKey: ["jurisdiction-rule-list"] });
       onOpenChange(false);
@@ -84,7 +87,7 @@ export function JurisdictionRuleVerifyDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Verify Jurisdiction Rule</DialogTitle>
+          <DialogTitle>{t("Verify Jurisdiction Rule")}</DialogTitle>
           <DialogDescription>
             {rule?.state
               ? `${rule.state.name} (${rule.state.abbreviation})`
@@ -93,9 +96,7 @@ export function JurisdictionRuleVerifyDialog({
         </DialogHeader>
 
         <p className="text-muted-foreground text-xs">
-          This records that someone checked these limits against the state, and does not change
-          them. If the numbers are wrong, edit the rule instead — that clears the verification on
-          its own.
+          {t("This records that someone checked these limits against the state, and does not change them. If the numbers are wrong, edit the rule instead — that clears the verification on its own.")}
         </p>
 
         <FormProvider {...form}>
@@ -104,7 +105,7 @@ export function JurisdictionRuleVerifyDialog({
               <SelectField
                 control={control}
                 name="verificationState"
-                label="Outcome"
+                label={t("Outcome")}
                 options={STATE_CHOICES}
                 rules={{ required: true }}
               />
@@ -113,9 +114,9 @@ export function JurisdictionRuleVerifyDialog({
               <TextareaField
                 control={control}
                 name="sourceNote"
-                label="What you checked"
-                description="At least 10 characters. The next person reading this row follows your note."
-                placeholder="Checked against the state permit office handbook, rev 2026-01"
+                label={t("What you checked")}
+                description={t("At least 10 characters. The next person reading this row follows your note.")}
+                placeholder={t("Checked against the state permit office handbook, rev 2026-01")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -123,7 +124,7 @@ export function JurisdictionRuleVerifyDialog({
               <InputField
                 control={control}
                 name="sourceUrl"
-                label="Source URL"
+                label={t("Source URL")}
                 placeholder="https://"
               />
             </FormControl>
@@ -137,7 +138,7 @@ export function JurisdictionRuleVerifyDialog({
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"

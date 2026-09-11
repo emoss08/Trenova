@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { CheckboxField } from "@/components/fields/checkbox-field";
 import { InputField } from "@/components/fields/input-field";
@@ -18,6 +19,8 @@ const STATUS_CHOICES = [
 ];
 
 export function JurisdictionRuleForm() {
+  const t = useT();
+
   const { control } = useFormContext<JurisdictionRule>();
 
   return (
@@ -27,20 +30,18 @@ export function JurisdictionRuleForm() {
       <Alert>
         <GlobeIcon className="size-4" />
         <AlertDescription>
-          These limits are shared by every organization on the platform, not just yours. To hold
-          your fleet to something stricter, record a carrier override instead. Changing any limit
-          below clears the verification on this rule.
+          {t("These limits are shared by every organization on the platform, not just yours. To hold your fleet to something stricter, record a carrier override instead. Changing any limit below clears the verification on this rule.")}
         </AlertDescription>
       </Alert>
 
-      <FormSection title="Jurisdiction" description="Which state these limits apply to">
+      <FormSection title={t("Jurisdiction")} description={t("Which state these limits apply to")}>
         <FormGroup cols={2}>
           <FormControl>
             <UsStateAutocompleteField
               control={control}
               name="stateId"
-              label="State"
-              placeholder="Select state"
+              label={t("State")}
+              placeholder={t("Select state")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -48,8 +49,8 @@ export function JurisdictionRuleForm() {
             <SelectField
               control={control}
               name="status"
-              label="Status"
-              description="Inactive and draft rules are not used by the permit engine."
+              label={t("Status")}
+              description={t("Inactive and draft rules are not used by the permit engine.")}
               options={STATUS_CHOICES}
               rules={{ required: true }}
             />
@@ -58,15 +59,15 @@ export function JurisdictionRuleForm() {
       </FormSection>
 
       <FormSection
-        title="Legal Limits"
-        description="A load exceeding any of these needs a permit in this state"
+        title={t("Legal Limits")}
+        description={t("A load exceeding any of these needs a permit in this state")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="maxWidthFeet"
-              label="Max Width"
+              label={t("Max Width")}
               sideText="ft"
               placeholder="8.5"
               rules={{ required: true }}
@@ -76,7 +77,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxHeightFeet"
-              label="Max Height"
+              label={t("Max Height")}
               sideText="ft"
               placeholder="13.5"
               rules={{ required: true }}
@@ -86,7 +87,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxLengthFeet"
-              label="Max Length"
+              label={t("Max Length")}
               sideText="ft"
               placeholder="53"
               rules={{ required: true }}
@@ -96,7 +97,7 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="maxWeightPounds"
-              label="Max Weight"
+              label={t("Max Weight")}
               sideText="lbs"
               thousandSeparator
               placeholder="80000"
@@ -107,44 +108,44 @@ export function JurisdictionRuleForm() {
       </FormSection>
 
       <FormSection
-        title="Superload Thresholds"
-        description="Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown."
+        title={t("Superload Thresholds")}
+        description={t("Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="superloadWidthFeet"
-              label="Superload Width"
+              label={t("Superload Width")}
               sideText="ft"
-              placeholder="Leave blank if unknown"
+              placeholder={t("Leave blank if unknown")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="superloadWeightPounds"
-              label="Superload Weight"
+              label={t("Superload Weight")}
               sideText="lbs"
               thousandSeparator
-              placeholder="Leave blank if unknown"
+              placeholder={t("Leave blank if unknown")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Permit Terms"
-        description="How long a permit takes to obtain and how long it lasts"
+        title={t("Permit Terms")}
+        description={t("How long a permit takes to obtain and how long it lasts")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="permitLeadTimeDays"
-              label="Lead Time"
+              label={t("Lead Time")}
               sideText="days"
-              description="Quoting a pickup sooner than this is a missed appointment."
+              description={t("Quoting a pickup sooner than this is a missed appointment.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -152,82 +153,82 @@ export function JurisdictionRuleForm() {
             <NumberField
               control={control}
               name="permitValidityDays"
-              label="Validity"
+              label={t("Validity")}
               sideText="days"
               rules={{ required: true }}
             />
           </FormControl>
           <FormControl>
-            <MoneyField control={control} name="permitBaseFee" label="Base Fee" />
+            <MoneyField control={control} name="permitBaseFee" label={t("Base Fee")} />
           </FormControl>
           <FormControl>
-            <MoneyField control={control} name="permitPerMileFee" label="Per Mile Fee" />
+            <MoneyField control={control} name="permitPerMileFee" label={t("Per Mile Fee")} />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Travel Restrictions"
-        description="When an oversize load may legally move in this state"
+        title={t("Travel Restrictions")}
+        description={t("When an oversize load may legally move in this state")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <CheckboxField
               control={control}
               name="daylightOnly"
-              label="Daylight Only"
+              label={t("Daylight Only")}
               outlined
-              description="Movement confined to daylight hours"
+              description={t("Movement confined to daylight hours")}
             />
           </FormControl>
           <FormControl>
             <CheckboxField
               control={control}
               name="rushHourRestricted"
-              label="Rush Hour Restricted"
+              label={t("Rush Hour Restricted")}
               outlined
-              description="Barred through metro areas at peak times"
+              description={t("Barred through metro areas at peak times")}
             />
           </FormControl>
           <FormControl>
             <CheckboxField
               control={control}
               name="weekendRestricted"
-              label="Weekend Restricted"
+              label={t("Weekend Restricted")}
               outlined
-              description="Movement restricted at weekends"
+              description={t("Movement restricted at weekends")}
             />
           </FormControl>
           <FormControl>
             <CheckboxField
               control={control}
               name="holidayRestricted"
-              label="Holiday Restricted"
+              label={t("Holiday Restricted")}
               outlined
-              description="Movement restricted on public holidays"
+              description={t("Movement restricted on public holidays")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Source"
-        description="What these numbers were taken from. Editing only this keeps the rule's verification."
+        title={t("Source")}
+        description={t("What these numbers were taken from. Editing only this keeps the rule's verification.")}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="sourceNote"
-              label="Source Note"
-              placeholder="Which statute or permit office publication these limits came from"
+              label={t("Source Note")}
+              placeholder={t("Which statute or permit office publication these limits came from")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               control={control}
               name="sourceUrl"
-              label="Source URL"
+              label={t("Source URL")}
               placeholder="https://"
             />
           </FormControl>

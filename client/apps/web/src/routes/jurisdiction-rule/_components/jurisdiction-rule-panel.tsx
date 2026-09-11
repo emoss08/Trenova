@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -69,6 +70,8 @@ export function JurisdictionRulePanel({
   mode,
   row,
 }: DataTablePanelProps<JurisdictionRuleRow>) {
+  const t = useT();
+
   const form = useForm<JurisdictionRule>({
     resolver: zodResolver(jurisdictionRuleSchema) as Resolver<JurisdictionRule>,
     defaultValues: emptyRule() as JurisdictionRule,
@@ -87,7 +90,7 @@ export function JurisdictionRulePanel({
       form={form}
       url="/jurisdiction-rules/"
       queryKey={QUERY_KEY}
-      title="Jurisdiction Rule"
+      title={t("Jurisdiction Rule")}
       formComponent={<JurisdictionRuleForm />}
     />
   );
@@ -101,6 +104,8 @@ function JurisdictionRuleEditPanel({
 }: Pick<DataTablePanelProps<JurisdictionRuleRow>, "open" | "onOpenChange" | "row"> & {
   form: ReturnType<typeof useForm<JurisdictionRule>>;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [verifyOpen, setVerifyOpen] = useState(false);
 
@@ -130,7 +135,7 @@ function JurisdictionRuleEditPanel({
       const clearedVerification =
         row?.verificationState !== "Unverified" && updated?.verificationState === "Unverified";
 
-      toast.success("Changes have been saved", {
+      toast.success(t("Changes have been saved"), {
         description: clearedVerification
           ? "A limit changed, so this rule is unverified again and needs re-checking."
           : "Jurisdiction rule updated successfully",
@@ -158,7 +163,7 @@ function JurisdictionRuleEditPanel({
         footer={
           <>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" form="panel-edit-form" disabled={isSubmitting}>
               {isSubmitting ? "Saving..." : "Save"}
@@ -167,13 +172,13 @@ function JurisdictionRuleEditPanel({
         }
       >
         {!row ? (
-          <ComponentLoader message="Loading Jurisdiction Rule..." />
+          <ComponentLoader message={t("Loading Jurisdiction Rule...")} />
         ) : (
           <>
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border px-4 py-3">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium">Verification</span>
+                  <span className="text-xs font-medium">{t("Verification")}</span>
                   <Badge
                     variant={
                       row.verificationState === "Verified"
@@ -192,7 +197,7 @@ function JurisdictionRuleEditPanel({
               </div>
               <Button type="button" variant="outline" size="sm" onClick={() => setVerifyOpen(true)}>
                 <BadgeCheckIcon className="size-3.5" />
-                Verify
+                {t("Verify")}
               </Button>
             </div>
 
