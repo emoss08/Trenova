@@ -391,6 +391,74 @@ func (_c *MockBillingQueueRepository_List_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ListConsolidationCandidates provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListConsolidationCandidates(ctx context.Context, req *repositories.ListConsolidationCandidatesRequest) ([]*repositories.ConsolidationCandidate, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConsolidationCandidates")
+	}
+
+	var r0 []*repositories.ConsolidationCandidate
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListConsolidationCandidatesRequest) ([]*repositories.ConsolidationCandidate, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListConsolidationCandidatesRequest) []*repositories.ConsolidationCandidate); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.ConsolidationCandidate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListConsolidationCandidatesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ListConsolidationCandidates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConsolidationCandidates'
+type MockBillingQueueRepository_ListConsolidationCandidates_Call struct {
+	*mock.Call
+}
+
+// ListConsolidationCandidates is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListConsolidationCandidatesRequest
+func (_e *MockBillingQueueRepository_Expecter) ListConsolidationCandidates(ctx any, req any) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	return &MockBillingQueueRepository_ListConsolidationCandidates_Call{Call: _e.mock.On("ListConsolidationCandidates", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) Run(run func(ctx context.Context, req *repositories.ListConsolidationCandidatesRequest)) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListConsolidationCandidatesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListConsolidationCandidatesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) Return(candidates []*repositories.ConsolidationCandidate, err error) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	_c.Call.Return(candidates, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListConsolidationCandidatesRequest) ([]*repositories.ConsolidationCandidate, error)) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkPostedForInvoice provides a mock function for the type MockBillingQueueRepository
 func (_mock *MockBillingQueueRepository) MarkPostedForInvoice(ctx context.Context, req *repositories.MarkPostedForInvoiceRequest) (int64, error) {
 	ret := _mock.Called(ctx, req)
