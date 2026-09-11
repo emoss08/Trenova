@@ -210,7 +210,6 @@ credits AP.
 | No outbound webhooks | No webhook domain, service, or subscription; only inbound Samsara and Postmark receivers | No external system can subscribe to Trenova events; blocks any partner ecosystem |
 | No live ETA | `CandidateScore.ProjectedArrival` is dispatch-time only; nothing on shipment or stop | Cannot answer "where is my load and when will it arrive"; no ETA-vs-appointment slip detection |
 | No dock or appointment scheduling | `domain/location/location.go` has no operating hours, doors, capacity, or slots | Appointment windows exist on the stop, but nothing schedules against facility capacity |
-| Fiscal close does no accounting | `fiscalyearservice.Close` flips status and audits; `DefaultRetainedEarningsAccountID` is validated but never written to | No closing entries, no retained-earnings roll-up, no opening-balance carryforward |
 | No consolidated invoicing | `InvoiceLine` carries per-line shipment references, but there is zero grouping logic | Blocks LTL and any statement-billed customer |
 | No tax on invoices | Invoice has Subtotal, Other, and Total only; no tax code, rate, jurisdiction, or line | Blocks Canada GST/HST and any taxable accessorial |
 | Native MFA unimplemented | `iam.MFAAuthenticator` models TOTP and WebAuthn; only `ListMFAAuthenticators` exists. `authservice/service.go:883` only reads `amr` claims from an IdP | A customer without SSO cannot enforce 2FA; SOC2 blocker |
@@ -222,6 +221,56 @@ credits AP.
 | Realtime hard-coupled to one vendor | `realtimeservice` mints JWTs for Foony (`wss://realtime.foony.io`); no self-hosted WebSocket or SSE fallback | A vendor outage means no realtime and no degraded mode |
 | Deployment is single-node | `deploy/` is a Caddyfile, three Dockerfiles, and Prometheus/Grafana. No Kubernetes, Helm, or Terraform | Corroborated by the in-process rate limiter — multi-replica was not designed for |
 | Web app is desktop-only | Four responsive utility classes across roughly 600 `.tsx` files | Operations managers cannot work from a phone |
+
+### Closed Since This Analysis
+
+**Fiscal close now does accounting.** `fiscalcloseservice` computes the year-end
+position from `gl_account_balances_by_period`, posts a `Closing` entry that empties
+revenue, cost of revenue and expense into `DefaultRetainedEarningsAccountID`, and
+posts an `Opening` entry that carries every balance-sheet account into period 1 of
+the next fiscal year. Closing entries land in a year-end adjusting period the close
+creates, so the final operating period keeps showing operating results — which
+required making the `fiscal_periods` no-overlap exclusion partial on `is_adjusting`
+and teaching `GetPeriodByDate` to ignore adjusting periods. `Reopen` reverses both
+entries rather than deleting them, `Activate` no longer un-closes a year behind the
+close's back, and `GET /fiscal-years/:id/close-preview/` returns the entries and
+blockers before anything is written.
+
+The balance sheet follows from that. `glbalanceservice.GetBalanceSheet` now sums
+every period of the fiscal year up to the one asked for, which is a cumulative
+position rather than one period's movement; the opening entry sitting in period 1
+is what makes that a query change instead of a carryforward-balance column. Period
+ordering comes from `period_number`, so the year-end adjusting period only counts
+when a report asks for it by name. The equity roll-up it computes is reported as
+Current Year Earnings, matching the seeded 3030/3040 pair, and 3040 is now flagged
+system and non-postable because its balance is derived rather than journalled.
+
+Fiscal years now generate their adjusting period up front in `Inactive`, so a
+controller can open Period 13 for auditor adjustments before the close rather than
+meeting a period the close invented. `AutoCreateNextFiscalYearWorkflow` no longer
+reads the scheduled-period-close opt-in — keeping the calendar a year ahead is not
+an automation preference once a close needs somewhere to carry balances — and a new
+`FiscalYearCloseReadinessWorkflow` notifies controllers weekly about years past
+their end date that are still open, with the blockers listed. It never closes
+anything: that call depends on audit work no system can observe.
+
+The carryforward deliberately aggregates by GL account and drops the customer tag,
+which is what SAP and Oracle do: customer detail belongs to the AR subledger, not to
+the general ledger. `customer_ledger_entries` is append-only and carries no fiscal
+year, so customer balances were never at risk at the year boundary; tagging the
+opening entry by customer would duplicate the subledger and open each new year with
+a phantom AR movement equal to the prior year's closing balance. What the close owes
+instead is proof that the one total it carries still agrees with the detail, so it
+reconciles `DefaultARAccountID` against the subledger as at year end. The check is
+always computed and shown on the preview; it blocks only when
+`RequireReconciliationToClose` is on and `ReconciliationMode` is not `Disabled`,
+matching the gate the period close already uses.
+
+Still open on the accounting side: `RealizedFXGainAccountID` /
+`RealizedFXLossAccountID` are still never posted to; the income statement remains
+single-period with no YTD column; and the carrier settlement ledger has no
+equivalent control-account reconciliation, because no single GL account pairs with
+it as cleanly as AR does and the AP module it would belong to does not exist yet.
 
 ### Orphaned Schema
 
@@ -353,7 +402,7 @@ A carrier can be fined or fail an audit without these.
 2. Maintenance, work orders, PM schedules, the DVIR defect loop, and equipment
    dispatch eligibility (2.1)
 3. IFTA, fuel purchases, and fuel card ingest; IRP after (2.4)
-4. Fiscal close accounting — closing entries and retained earnings (3)
+4. ~~Fiscal close accounting — closing entries and retained earnings~~ (done)
 5. Native MFA, TOTP and WebAuthn — the model already exists (3)
 
 ### P1 — Commercial Blockers

@@ -141,15 +141,18 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 
 	var arAccountID pulid.ID
 	var writeOffAccountID pulid.ID
+	var retainedEarningsAccountID pulid.ID
 	for i := range rows {
 		switch rows[i].Code {
 		case "1110":
 			arAccountID = rows[i].ID
 		case "6940":
 			writeOffAccountID = rows[i].ID
+		case "3030":
+			retainedEarningsAccountID = rows[i].ID
 		}
 	}
-	if arAccountID.IsNil() || writeOffAccountID.IsNil() {
+	if arAccountID.IsNil() || writeOffAccountID.IsNil() || retainedEarningsAccountID.IsNil() {
 		return fmt.Errorf("required accounting default accounts were not created")
 	}
 
@@ -157,6 +160,7 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 		Model((*tenant.AccountingControl)(nil)).
 		Set("default_ar_account_id = ?", arAccountID).
 		Set("default_write_off_account_id = ?", writeOffAccountID).
+		Set("default_retained_earnings_account_id = ?", retainedEarningsAccountID).
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).
 		Exec(ctx)
@@ -372,6 +376,11 @@ type glAccountSeedData struct {
 	Category    accounttype.Category
 	Parent      string
 	IsSystem    bool
+	// NoManualJE blocks hand-written journal entries against accounts whose
+	// balance the system derives. Current Year Earnings is reported as a
+	// computed roll-up of the year's result, so a posting against it would show
+	// up twice on the balance sheet.
+	NoManualJE bool
 }
 
 func getDefaultTruckingCOA() []glAccountSeedData {
@@ -772,7 +781,9 @@ func getDefaultTruckingCOA() []glAccountSeedData {
 			Code:        "3040",
 			Name:        "Current Year Earnings",
 			Category:    accounttype.CategoryEquity,
-			Description: "Profit or loss for current year",
+			Description: "Profit or loss for current year, derived from the income statement rather than posted",
+			IsSystem:    true,
+			NoManualJE:  true,
 			Parent:      "3000",
 		},
 
@@ -1459,7 +1470,7 @@ func (s *GLAccountSeed) createDefaultCOA(
 			Name:           seed.Name,
 			Description:    seed.Description,
 			IsSystem:       seed.IsSystem,
-			AllowManualJE:  true,
+			AllowManualJE:  !seed.NoManualJE,
 			RequireProject: false,
 		}
 		accounts = append(accounts, account)

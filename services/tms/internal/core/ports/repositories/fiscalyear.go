@@ -48,6 +48,22 @@ type UnlockFiscalYearRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ReopenFiscalYearRequest struct {
+	ID           pulid.ID              `json:"id"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	ReopenedByID pulid.ID              `json:"reopenedById"`
+	ReopenedAt   int64                 `json:"reopenedAt"`
+	ReopenReason string                `json:"reopenReason"`
+}
+
+// GetNextFiscalYearRequest finds the fiscal year that picks up where another one
+// stops, matched on the successor's start date rather than on the year number so
+// that offset calendars resolve the same way calendar years do.
+type GetNextFiscalYearRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	AfterDate  int64                 `json:"afterDate"`
+}
+
 type ActivateFiscalYearRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -56,6 +72,14 @@ type ActivateFiscalYearRequest struct {
 type GetCurrentFiscalYearRequest struct {
 	OrgID pulid.ID `json:"orgId"`
 	BuID  pulid.ID `json:"buId"`
+}
+
+// GetExpiredOpenFiscalYearsRequest finds fiscal years that are still Open after
+// their end date has passed — the ones a controller owes a close.
+type GetExpiredOpenFiscalYearsRequest struct {
+	OrgID      pulid.ID `json:"orgId"`
+	BuID       pulid.ID `json:"buId"`
+	BeforeDate int64    `json:"beforeDate"`
 }
 
 type CountFiscalYearsByTenantRequest struct {
@@ -112,9 +136,21 @@ type FiscalYearRepository interface {
 		ctx context.Context,
 		req DeleteFiscalYearRequest,
 	) error
+	GetNextFiscalYear(
+		ctx context.Context,
+		req GetNextFiscalYearRequest,
+	) (*fiscalyear.FiscalYear, error)
+	GetExpiredOpenFiscalYears(
+		ctx context.Context,
+		req GetExpiredOpenFiscalYearsRequest,
+	) ([]*fiscalyear.FiscalYear, error)
 	Close(
 		ctx context.Context,
 		req CloseFiscalYearRequest,
+	) (*fiscalyear.FiscalYear, error)
+	Reopen(
+		ctx context.Context,
+		req ReopenFiscalYearRequest,
 	) (*fiscalyear.FiscalYear, error)
 	Activate(
 		ctx context.Context,

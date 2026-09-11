@@ -36,5 +36,16 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": "fiscal-year-auto-create",
 			},
 		},
+		{
+			ID:            "fiscal-year-close-readiness",
+			Description:   "Notify controllers about fiscal years past their end date that are still open",
+			Spec:          schedule.Cron("0 3 * * *"), // runs at 3:00 AM UTC
+			Workflow:      FiscalYearCloseReadinessWorkflow,
+			TaskQueue:     temporaltype.FiscalTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "fiscal-year-close-readiness",
+			},
+		},
 	}
 }

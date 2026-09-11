@@ -1131,7 +1131,7 @@ export const fiscalYearStatusChoices = [
   { value: "Draft", label: "Draft", color: "#9333ea" },
   { value: "Open", label: "Open", color: "#16a34a" },
   { value: "Closed", label: "Closed", color: "#dc2626" },
-  { value: "Locked", label: "Locked", color: "#f59e0b" },
+  { value: "PermanentlyClosed", label: "Permanently Closed", color: "#7f1d1d" },
 ] satisfies ReadonlyArray<GenericSelectOption<FiscalYearStatus>>;
 
 export const fiscalPeriodStatusChoices = [

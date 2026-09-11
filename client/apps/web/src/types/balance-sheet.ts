@@ -6,7 +6,7 @@ export const balanceSheetSchema = z.object({
   assets: statementSectionSchema.nullish(),
   liabilities: statementSectionSchema.nullish(),
   equity: statementSectionSchema.nullish(),
-  currentPeriodNetIncomeMinor: z.number().int(),
+  currentYearEarningsMinor: z.number().int(),
   totalAssetsMinor: z.number().int(),
   totalLiabilitiesMinor: z.number().int(),
   totalEquityMinor: z.number().int(),

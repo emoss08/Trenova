@@ -79,3 +79,27 @@ func (r *repository) AppendEntries(ctx context.Context, entries []*customerledge
 	_, err := r.db.DBForContext(ctx).NewInsert().Model(&records).Exec(ctx)
 	return err
 }
+
+// SumBalanceAsOf totals every subledger row up to the date. This is the figure a
+// year-end close compares against the AR control account in the general ledger:
+// the GL carries one reconciliation total, the detail behind it lives here.
+func (r *repository) SumBalanceAsOf(
+	ctx context.Context,
+	req repositories.SumCustomerLedgerBalanceRequest,
+) (int64, error) {
+	var total int64
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		TableExpr("customer_ledger_entries AS cle").
+		ColumnExpr("COALESCE(SUM(cle.amount_minor), 0)").
+		Where("cle.organization_id = ?", req.TenantInfo.OrgID).
+		Where("cle.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("cle.transaction_date <= ?", req.AsOfDate).
+		Scan(ctx, &total)
+	if err != nil {
+		r.l.Error("failed to sum customer ledger balance", zap.Error(err))
+		return 0, err
+	}
+
+	return total, nil
+}
