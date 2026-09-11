@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -158,6 +159,8 @@ function MappingItemRow({
   onRemove: () => void;
   canRemove: boolean;
 }) {
+  const t = useT();
+
   const targetKind = useWatch({ control, name: `items.${index}.targetKind` });
   const isCustom = targetKind === TARGET_KIND.shipmentCustomField;
   const isStop = targetKind === TARGET_KIND.stopField;
@@ -165,7 +168,7 @@ function MappingItemRow({
   return (
     <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-xs font-medium">Field {index + 1}</span>
+        <span className="text-muted-foreground text-xs font-medium">{t("Field {0}", index + 1)}</span>
         <Button
           type="button"
           variant="ghost"
@@ -182,32 +185,32 @@ function MappingItemRow({
         <InputField
           name={`items.${index}.sourceFieldLabel`}
           control={control}
-          label="Source Field Label"
-          placeholder="Trailer Temperature (°F)"
-          description="The exact form field label as it appears in the driver form."
+          label={t("Source Field Label")}
+          placeholder={t("Trailer Temperature (°F)")}
+          description={t("The exact form field label as it appears in the driver form.")}
         />
         <SelectField
           name={`items.${index}.targetKind`}
           control={control}
-          label="Target Kind"
+          label={t("Target Kind")}
           options={TARGET_KIND_OPTIONS}
-          placeholder="Select target"
+          placeholder={t("Select target")}
         />
         {isCustom ? (
           <InputField
             name={`items.${index}.targetCustomFieldKey`}
             control={control}
-            label="Target Custom Field Key"
-            placeholder="e.g. reeferSetpoint"
-            description="The custom field key on the shipment to populate."
+            label={t("Target Custom Field Key")}
+            placeholder={t("e.g. reeferSetpoint")}
+            description={t("The custom field key on the shipment to populate.")}
           />
         ) : (
           <SelectField
             name={`items.${index}.targetField`}
             control={control}
-            label="Target Field"
+            label={t("Target Field")}
             options={isStop ? STOP_FIELD_OPTIONS : SHIPMENT_FIELD_OPTIONS}
-            placeholder="Select field"
+            placeholder={t("Select field")}
           />
         )}
       </div>
@@ -224,6 +227,8 @@ function MappingEditor({
   onCancel: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { control, handleSubmit } = useForm<MappingFormValues>({ defaultValues: initial });
   const itemsArray = useFieldArray({ control, name: "items" });
@@ -245,7 +250,7 @@ function MappingEditor({
       onSaved();
     },
     onError: (error) => {
-      toast.error("Failed to save form mapping", {
+      toast.error(t("Failed to save form mapping"), {
         description: error instanceof Error ? error.message : undefined,
       });
     },
@@ -263,8 +268,8 @@ function MappingEditor({
             <InputField
               name="name"
               control={control}
-              label="Name"
-              placeholder="Reefer temperature capture"
+              label={t("Name")}
+              placeholder={t("Reefer temperature capture")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -272,33 +277,33 @@ function MappingEditor({
             <InputField
               name="templateId"
               control={control}
-              label="Template ID"
-              placeholder="Samsara form template id"
+              label={t("Template ID")}
+              placeholder={t("Samsara form template id")}
               rules={{ required: true }}
-              description="Find this in Samsara under the driver form's settings, or from a form submission."
+              description={t("Find this in Samsara under the driver form's settings, or from a form submission.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               name="templateName"
               control={control}
-              label="Template Name (optional)"
-              placeholder="Reefer Pre-Trip"
+              label={t("Template Name (optional)")}
+              placeholder={t("Reefer Pre-Trip")}
             />
           </FormControl>
           <FormControl cols="full">
             <SwitchField
               name="enabled"
               control={control}
-              label="Enabled"
-              description="Apply this mapping to incoming form submissions."
+              label={t("Enabled")}
+              description={t("Apply this mapping to incoming form submissions.")}
               outlined
             />
           </FormControl>
         </FormGroup>
 
         <div className="border-border flex items-center justify-between gap-2 border-t pt-3">
-          <span className="text-sm font-medium">Field mappings</span>
+          <span className="text-sm font-medium">{t("Field mappings")}</span>
           <Button
             type="button"
             variant="outline"
@@ -306,7 +311,7 @@ function MappingEditor({
             onClick={() => itemsArray.append(emptyItem())}
           >
             <PlusIcon className="size-3" />
-            Add field
+            {t("Add field")}
           </Button>
         </div>
 
@@ -324,14 +329,14 @@ function MappingEditor({
 
         <div className="border-border flex items-center justify-end gap-2 border-t pt-3">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="submit"
             size="sm"
             disabled={!canSave || saveMutation.isPending}
             isLoading={saveMutation.isPending}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
           >
             {initial.id ? "Save changes" : "Create mapping"}
           </Button>
@@ -354,6 +359,8 @@ function MappingRow({
   onToggle: (next: boolean) => void;
   toggling: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="flex items-center gap-3 px-3 py-2.5">
       <div className="min-w-0 flex-1">
@@ -374,7 +381,7 @@ function MappingRow({
         aria-label={`Toggle ${mapping.name}`}
       />
       <Button type="button" variant="outline" size="xs" onClick={onEdit}>
-        Edit
+        {t("Edit")}
       </Button>
       <Button
         type="button"
@@ -391,6 +398,8 @@ function MappingRow({
 }
 
 export function SamsaraFormMappingSection({ open }: { open: boolean }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<MappingFormValues | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TelematicsFormMapping | null>(null);
@@ -413,7 +422,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
       await invalidate();
     },
     onError: (error) => {
-      toast.error("Failed to update mapping", {
+      toast.error(t("Failed to update mapping"), {
         description: error instanceof Error ? error.message : undefined,
       });
     },
@@ -422,12 +431,12 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTelematicsFormMappingGraphQL(id),
     onSuccess: async () => {
-      toast.success("Form mapping deleted");
+      toast.success(t("Form mapping deleted"));
       setPendingDelete(null);
       await invalidate();
     },
     onError: (error) => {
-      toast.error("Failed to delete form mapping", {
+      toast.error(t("Failed to delete form mapping"), {
         description: error instanceof Error ? error.message : undefined,
       });
     },
@@ -446,7 +455,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
   } else if (mappingsQuery.isError) {
     body = (
       <div className="rounded-md border border-dashed p-6 text-center">
-        <p className="text-sm font-medium">Form mappings could not be loaded</p>
+        <p className="text-sm font-medium">{t("Form mappings could not be loaded")}</p>
         <Button
           type="button"
           variant="outline"
@@ -454,16 +463,16 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
           className="mt-3"
           onClick={() => void mappingsQuery.refetch()}
         >
-          Try again
+          {t("Try again")}
         </Button>
       </div>
     );
   } else if (mappings.length === 0) {
     body = (
       <div className="rounded-md border border-dashed p-6 text-center">
-        <p className="text-sm font-medium">No form mappings yet</p>
+        <p className="text-sm font-medium">{t("No form mappings yet")}</p>
         <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-          Map a driver form&apos;s fields onto shipment data.
+          {t("Map a driver form's fields onto shipment data.")}
         </p>
       </div>
     );
@@ -488,15 +497,15 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
     <div className="border-border flex flex-col gap-3 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold">Form field mapping</p>
+          <p className="text-sm font-semibold">{t("Form field mapping")}</p>
           <p className="text-muted-foreground text-xs">
-            Map driver form template fields onto shipment and stop data.
+            {t("Map driver form template fields onto shipment and stop data.")}
           </p>
         </div>
         {editing === null ? (
           <Button type="button" variant="outline" size="sm" onClick={() => setEditing(blankForm())}>
             <PlusIcon className="size-3" />
-            Add mapping
+            {t("Add mapping")}
           </Button>
         ) : null}
       </div>
@@ -522,7 +531,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete form mapping?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete form mapping?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete
                 ? `"${pendingDelete.name}" will no longer apply to incoming form submissions. This cannot be undone.`
@@ -530,7 +539,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteMutation.isPending}
@@ -541,7 +550,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
                 }
               }}
             >
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

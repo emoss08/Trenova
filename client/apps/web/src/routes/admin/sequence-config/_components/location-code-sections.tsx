@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -42,15 +43,16 @@ const componentDescriptions: Record<LocationCodeComponent, string> = {
 };
 
 export function LocationCodeStrategySection({ index }: { index: number }) {
+  const t = useT();
+
   const { control } = useFormContext<SequenceConfigDocument>();
 
   return (
     <Card>
       <CardHeader className="border-b pb-3">
-        <CardTitle>Code Strategy</CardTitle>
+        <CardTitle>{t("Code Strategy")}</CardTitle>
         <CardDescription>
-          Derive readable components from location attributes, then append a sequence. The combined
-          length cannot exceed 32 characters.
+          {t("Derive readable components from location attributes, then append a sequence. The combined length cannot exceed 32 characters.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4 pb-4">
@@ -63,7 +65,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                 const selected = field.value ?? [];
                 return (
                   <div className="space-y-2">
-                    <Label className={fieldState.error ? "text-destructive" : ""}>Components</Label>
+                    <Label className={fieldState.error ? "text-destructive" : ""}>{t("Components")}</Label>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {locationCodeComponents.map((component) => {
                         const Icon = componentIcons[component];
@@ -110,7 +112,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                       })}
                     </div>
                     <p className="text-2xs text-muted-foreground">
-                      Components are applied in the order they are selected.
+                      {t("Components are applied in the order they are selected.")}
                     </p>
                   </div>
                 );
@@ -121,8 +123,8 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
             <NumberField
               control={control}
               name={`configs.${index}.locationCodeStrategy.componentWidth`}
-              label="Component Width"
-              description="Characters drawn from each selected attribute (1–10)."
+              label={t("Component Width")}
+              description={t("Characters drawn from each selected attribute (1–10).")}
               min={1}
               max={10}
             />
@@ -131,8 +133,8 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
             <NumberField
               control={control}
               name={`configs.${index}.locationCodeStrategy.sequenceDigits`}
-              label="Sequence Digits"
-              description="Width of the zero-padded counter (1–10)."
+              label={t("Sequence Digits")}
+              description={t("Width of the zero-padded counter (1–10).")}
               min={1}
               max={10}
             />
@@ -141,29 +143,29 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
             <SelectField
               control={control}
               name={`configs.${index}.locationCodeStrategy.separator`}
-              label="Separator"
-              description="Inserted between the prefix and the sequence."
+              label={t("Separator")}
+              description={t("Inserted between the prefix and the sequence.")}
               options={separatorOptions}
-              placeholder="Select separator"
+              placeholder={t("Select separator")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name={`configs.${index}.locationCodeStrategy.casing`}
-              label="Casing"
-              description="Applied to the derived prefix."
+              label={t("Casing")}
+              description={t("Applied to the derived prefix.")}
               options={casingOptions}
-              placeholder="Select casing"
+              placeholder={t("Select casing")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               control={control}
               name={`configs.${index}.locationCodeStrategy.fallbackPrefix`}
-              label="Fallback Prefix"
-              description="Used when the location name cannot produce a usable prefix."
-              placeholder="LOC"
+              label={t("Fallback Prefix")}
+              description={t("Used when the location name cannot produce a usable prefix.")}
+              placeholder={t("LOC")}
               maxLength={10}
             />
           </FormControl>

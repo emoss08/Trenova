@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -7,6 +8,8 @@ import type { Role } from "@trenova/shared/types/role";
 import { useFormContext } from "react-hook-form";
 
 export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<Role>();
 
   return (
@@ -16,8 +19,8 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Name"
-          placeholder="Enter role name"
+          label={t("Name")}
+          placeholder={t("Enter role name")}
           disabled={isSystemRole}
         />
       </FormControl>
@@ -26,7 +29,7 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
           control={control}
           rules={{ required: true }}
           name="maxSensitivity"
-          label="Max Sensitivity Level"
+          label={t("Max Sensitivity Level")}
           options={fieldSensitivityChoices}
           isReadOnly={isSystemRole}
         />
@@ -35,19 +38,19 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
         <SelectField
           control={control}
           name="coreResponsibility"
-          label="Core Responsibility"
+          label={t("Core Responsibility")}
           options={coreResponsibilityChoices}
           isClearable
           isReadOnly={isSystemRole}
-          placeholder="Select responsibility..."
+          placeholder={t("Select responsibility...")}
         />
       </FormControl>
       <FormControl cols="full">
         <TextareaField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Describe the purpose of this role"
+          label={t("Description")}
+          placeholder={t("Describe the purpose of this role")}
           disabled={isSystemRole}
         />
       </FormControl>

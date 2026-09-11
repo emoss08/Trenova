@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -50,6 +51,8 @@ function EntryDetailRow({ label, value }: { label: string; value: React.ReactNod
 }
 
 function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState(false);
 
   if (!Array.isArray(value) && !isRecordValue(value)) {
@@ -60,13 +63,13 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
       <div className="space-y-1">
         {isSensitiveOmitted && (
           <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
-            Sensitive
+            {t("Sensitive")}
           </Badge>
         )}
         <p className="text-foreground text-xs wrap-break-word">{formatted.value}</p>
         {formatted.transformed && (
           <p className="text-muted-foreground font-mono text-[11px]">
-            Raw: {formatAuditValue(value)}
+            {t("Raw: {0}", formatAuditValue(value))}
           </p>
         )}
       </div>
@@ -107,6 +110,8 @@ function ChangeRow({
   from: unknown;
   to: unknown;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border/60 space-y-2 border-b py-3 last:border-b-0">
       <div className="flex items-start justify-between gap-2">
@@ -115,20 +120,20 @@ function ChangeRow({
         </div>
         <div className="flex items-center gap-1">
           <p className="text-muted-foreground text-xs font-medium">
-            Action: {changeTypeLabel(type)}
+            {t("Action: {0}", changeTypeLabel(type))}
           </p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 rounded-md border border-red-500/20 bg-red-500/8 p-2.5">
           <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-            Previous Value
+            {t("Previous Value")}
           </p>
           <AuditValueCell value={from} path={`${path}.from`} />
         </div>
         <div className="space-y-1 rounded-md border border-green-500/20 bg-green-500/8 p-2.5">
           <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-            Current Value
+            {t("Current Value")}
           </p>
           <AuditValueCell value={to} path={`${path}.to`} />
         </div>
@@ -138,16 +143,18 @@ function ChangeRow({
 }
 
 export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<AuditEntryRow>) {
+  const t = useT();
+
   if (!row) {
     return (
       <DataTablePanelContainer
         open={open}
         onOpenChange={onOpenChange}
-        title="Audit Entry"
-        description="Loading audit details"
+        title={t("Audit Entry")}
+        description={t("Loading audit details")}
         size="xl"
       >
-        <ComponentLoader message="Loading audit entry..." />
+        <ComponentLoader message={t("Loading audit entry...")} />
       </DataTablePanelContainer>
     );
   }
@@ -163,42 +170,42 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
       size="xl"
     >
       <div className="space-y-5">
-        <Section title="Entry Details" description="Detailed information about this audit event">
+        <Section title={t("Entry Details")} description={t("Detailed information about this audit event")}>
           <dl className="border-border/70 rounded-md border px-3">
             <EntryDetailRow
-              label="Event ID"
+              label={t("Event ID")}
               value={<span className="font-mono text-xs break-all">{row.id}</span>}
             />
             <EntryDetailRow
-              label="Resource ID"
+              label={t("Resource ID")}
               value={<span className="font-mono text-xs break-all">{row.resourceId}</span>}
             />
-            <EntryDetailRow label="Operation" value={operationLabel(row.operation)} />
-            <EntryDetailRow label="Resource" value={resourceLabel(row.resource)} />
+            <EntryDetailRow label={t("Operation")} value={operationLabel(row.operation)} />
+            <EntryDetailRow label={t("Resource")} value={resourceLabel(row.resource)} />
             <EntryDetailRow
-              label="User"
+              label={t("User")}
               value={row.user?.name || row.user?.emailAddress || "Unknown user"}
             />
-            <EntryDetailRow label="Critical" value={row.critical ? "Yes" : "No"} />
-            <EntryDetailRow label="IP Address" value={row.ipAddress || "-"} />
-            <EntryDetailRow label="Category" value={row.category || "-"} />
+            <EntryDetailRow label={t("Critical")} value={row.critical ? "Yes" : "No"} />
+            <EntryDetailRow label={t("IP Address")} value={row.ipAddress || "-"} />
+            <EntryDetailRow label={t("Category")} value={row.category || "-"} />
             <EntryDetailRow
-              label="Timestamp"
+              label={t("Timestamp")}
               value={formatToUserTimezone(row.timestamp, {
                 showTimeZone: true,
               })}
             />
-            <EntryDetailRow label="Correlation ID" value={row.correlationId || "-"} />
-            <EntryDetailRow label="User Agent" value={row.userAgent || "-"} />
+            <EntryDetailRow label={t("Correlation ID")} value={row.correlationId || "-"} />
+            <EntryDetailRow label={t("User Agent")} value={row.userAgent || "-"} />
           </dl>
         </Section>
 
-        <Section title="Changes" description="Field-level before/after values">
+        <Section title={t("Changes")} description={t("Field-level before/after values")}>
           <ScrollArea className="h-76">
             <div className="border-border/70 rounded-md border px-3">
               {changedFields.length === 0 ? (
                 <div className="text-muted-foreground py-3 text-xs italic">
-                  No changes recorded.
+                  {t("No changes recorded.")}
                 </div>
               ) : (
                 changedFields.map((change) => (
@@ -214,16 +221,16 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
             </div>
           </ScrollArea>
         </Section>
-        <Section title="Metadata" description="Additional contextual information">
+        <Section title={t("Metadata")} description={t("Additional contextual information")}>
           <ShikiJsonBlock value={row.metadata} searchable />
         </Section>
-        <Section title="Previous State" description="State before the operation">
+        <Section title={t("Previous State")} description={t("State before the operation")}>
           <ShikiJsonBlock value={row.previousState} searchable copyPath />
         </Section>
-        <Section title="Current State" description="State after the operation">
+        <Section title={t("Current State")} description={t("State after the operation")}>
           <ShikiJsonBlock value={row.currentState} searchable copyPath />
         </Section>
-        <Section title="Full Event Data" description="Complete raw event payload">
+        <Section title={t("Full Event Data")} description={t("Complete raw event payload")}>
           <ShikiJsonBlock value={row} searchable copyPath />
         </Section>
       </div>

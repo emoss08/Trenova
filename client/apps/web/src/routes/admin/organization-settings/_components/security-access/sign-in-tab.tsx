@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -120,6 +121,8 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
   onCreateProvider: () => void;
   onEditProvider: (provider: IdentityProvider) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [search, setSearch] = useQueryState("search", identityProviderSearchParser);
   const filteredProviders = useMemo(() => {
@@ -143,7 +146,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
     mutationFn: async (providerId: string) =>
       apiService.organizationService.deleteIdentityProvider(organizationId, providerId),
     onSuccess: async () => {
-      toast.success("Identity provider removed");
+      toast.success(t("Identity provider removed"));
       await queryClient.invalidateQueries({
         queryKey: [identityProviderQueryKey(organizationId)],
       });
@@ -165,22 +168,22 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
   return (
     <div className="space-y-3">
       <ConsoleToolbar
-        title="Identity providers"
-        description="OIDC sign-in providers available to this organization."
+        title={t("Identity providers")}
+        description={t("OIDC sign-in providers available to this organization.")}
         search={search}
         onSearchChange={handleSearchChange}
-        searchPlaceholder="Search providers, domains, or issuer"
+        searchPlaceholder={t("Search providers, domains, or issuer")}
         action={
           <Button size="sm" onClick={onCreateProvider}>
             <PlusIcon />
-            Add provider
+            {t("Add provider")}
           </Button>
         }
       />
       {isLoading ? (
         <RowSkeleton rows={3} />
       ) : isError ? (
-        <ErrorState label="Identity providers could not be loaded." />
+        <ErrorState label={t("Identity providers could not be loaded.")} />
       ) : filteredProviders.length > 0 ? (
         <div className="bg-background overflow-hidden rounded-lg border">
           {filteredProviders.map((provider) => (
@@ -221,6 +224,8 @@ function IdentityProviderPanelController({
   panelParams: IdentityProviderPanelParams;
   setPanelParams: SetIdentityProviderPanelParams;
 }) {
+  const t = useT();
+
   const { panelMode, panelOpen, editingProvider } = panelParams;
   const createForm = useForm<IdentityProviderFormValues>({
     resolver: zodResolver(identityProviderCreateFormSchema) as Resolver<IdentityProviderFormValues>,
@@ -280,7 +285,7 @@ function IdentityProviderPanelController({
       form={editForm}
       url={identityProviderEndpoint(organizationId)}
       queryKey={identityProviderQueryKey(organizationId)}
-      title="Identity Provider"
+      title={t("Identity Provider")}
       fieldKey="name"
       size="lg"
       formComponent={<IdentityProviderForm mode="edit" />}
@@ -298,8 +303,8 @@ function IdentityProviderPanelController({
       form={createForm}
       url={identityProviderEndpoint(organizationId)}
       queryKey={identityProviderQueryKey(organizationId)}
-      title="Identity Provider"
-      description="Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings."
+      title={t("Identity Provider")}
+      description={t("Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings.")}
       size="lg"
       formComponent={<IdentityProviderForm mode="create" />}
       mutationFn={async (values) =>
@@ -323,6 +328,8 @@ const ProviderRow = memo(function ProviderRow({
   onDeleteProvider: (providerId: string) => void;
   isDeleting: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="grid gap-3 border-b p-3 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
       <div className="min-w-0 space-y-2">
@@ -338,8 +345,8 @@ const ProviderRow = memo(function ProviderRow({
               <Badge variant={provider.enabled ? "active" : "inactive"}>
                 {provider.enabled ? "Enabled" : "Disabled"}
               </Badge>
-              {provider.enforceSso && <Badge variant="warning">SSO enforced</Badge>}
-              {provider.autoProvision && <Badge variant="info">Auto-provision</Badge>}
+              {provider.enforceSso && <Badge variant="warning">{t("SSO enforced")}</Badge>}
+              {provider.autoProvision && <Badge variant="info">{t("Auto-provision")}</Badge>}
             </div>
             <div className="text-muted-foreground truncate text-xs">
               {provider.slug || "No slug"}
@@ -347,15 +354,15 @@ const ProviderRow = memo(function ProviderRow({
           </div>
         </div>
         <div className="text-muted-foreground grid gap-2 text-xs md:grid-cols-2">
-          <MetaLine label="Issuer" value={provider.oidcIssuerUrl || "-"} />
-          <MetaLine label="Redirect URI" value={provider.oidcRedirectUrl || "-"} />
-          <MetaLine label="Domains" value={provider.allowedDomains.join(", ") || "Any domain"} />
-          <MetaLine label="Scopes" value={provider.oidcScopes.join(" ") || "Default OIDC scopes"} />
+          <MetaLine label={t("Issuer")} value={provider.oidcIssuerUrl || "-"} />
+          <MetaLine label={t("Redirect URI")} value={provider.oidcRedirectUrl || "-"} />
+          <MetaLine label={t("Domains")} value={provider.allowedDomains.join(", ") || "Any domain"} />
+          <MetaLine label={t("Scopes")} value={provider.oidcScopes.join(" ") || "Default OIDC scopes"} />
         </div>
       </div>
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="outline" onClick={() => onEditProvider(provider)}>
-          Edit
+          {t("Edit")}
         </Button>
         <Button
           size="sm"
@@ -364,7 +371,7 @@ const ProviderRow = memo(function ProviderRow({
           disabled={isDeleting}
         >
           <Trash2Icon />
-          Delete
+          {t("Delete")}
         </Button>
       </div>
     </div>
@@ -372,6 +379,8 @@ const ProviderRow = memo(function ProviderRow({
 });
 
 function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
+  const t = useT();
+
   const { control, getValues, setValue } = useFormContext<IdentityProviderFormValues>();
 
   const applyPreset = (presetSlug: string) => {
@@ -392,8 +401,8 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
   return (
     <div className="space-y-5">
       <FormSection
-        title="Quick start"
-        description="Start with common provider defaults, then adjust tenant-specific values."
+        title={t("Quick start")}
+        description={t("Start with common provider defaults, then adjust tenant-specific values.")}
       >
         <div className="grid gap-2 sm:grid-cols-2">
           {providerPresets.map((preset) => (
@@ -411,8 +420,8 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
       </FormSection>
 
       <FormSection
-        title="Provider"
-        description="Name the sign-in provider and configure the identifier used by hosted login flows."
+        title={t("Provider")}
+        description={t("Name the sign-in provider and configure the identifier used by hosted login flows.")}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -420,9 +429,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               rules={{ required: true }}
               name="name"
-              label="Name"
-              placeholder="Microsoft Entra ID"
-              description="Displayed to administrators and users in sign-in flows."
+              label={t("Name")}
+              placeholder={t("Microsoft Entra ID")}
+              description={t("Displayed to administrators and users in sign-in flows.")}
             />
           </FormControl>
           <FormControl>
@@ -430,17 +439,17 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               rules={{ required: true }}
               name="slug"
-              label="Slug"
+              label={t("Slug")}
               placeholder="entra-id"
-              description="Stable URL-safe provider key used internally for routing."
+              description={t("Stable URL-safe provider key used internally for routing.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="OIDC application"
-        description="Copy these values from the provider application registration."
+        title={t("OIDC application")}
+        description={t("Copy these values from the provider application registration.")}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -448,9 +457,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               rules={{ required: true }}
               name="oidcIssuerUrl"
-              label="Issuer URL"
+              label={t("Issuer URL")}
               placeholder="https://login.microsoftonline.com/{tenant-id}/v2.0"
-              description="OIDC issuer metadata URL for token validation."
+              description={t("OIDC issuer metadata URL for token validation.")}
             />
           </FormControl>
           <FormControl cols="full">
@@ -458,9 +467,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               rules={{ required: true }}
               name="oidcRedirectUrl"
-              label="Redirect URI"
+              label={t("Redirect URI")}
               placeholder="https://app.example.com/auth/callback"
-              description="Callback URI registered in the provider application."
+              description={t("Callback URI registered in the provider application.")}
             />
           </FormControl>
           <FormControl>
@@ -468,9 +477,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               rules={{ required: true }}
               name="oidcClientId"
-              label="Client ID"
-              placeholder="Application client ID"
-              description="Public OIDC client identifier."
+              label={t("Client ID")}
+              placeholder={t("Application client ID")}
+              description={t("Public OIDC client identifier.")}
             />
           </FormControl>
           <FormControl>
@@ -478,7 +487,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               rules={mode === "create" ? { required: true } : undefined}
               name="oidcClientSecret"
-              label="Client secret"
+              label={t("Client secret")}
               type="password"
               placeholder={mode === "edit" ? "Leave blank to keep current secret" : "Client secret"}
               description={
@@ -492,9 +501,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
             <ChipArrayField
               control={control}
               name="oidcScopes"
-              label="OIDC scopes"
-              placeholder="openid email profile"
-              description="Space-separated scopes requested during authentication."
+              label={t("OIDC scopes")}
+              placeholder={t("openid email profile")}
+              description={t("Space-separated scopes requested during authentication.")}
               parseValue={parseWhitespaceSeparatedList}
               formatValue={(value) => value.join(" ")}
               required
@@ -504,17 +513,17 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
       </FormSection>
 
       <FormSection
-        title="Access boundaries"
-        description="Limit domains and tune how federated users are handled after sign-in."
+        title={t("Access boundaries")}
+        description={t("Limit domains and tune how federated users are handled after sign-in.")}
       >
         <FormGroup cols={1}>
           <FormControl>
             <ChipArrayField
               control={control}
               name="allowedDomains"
-              label="Allowed domains"
-              placeholder="example.com, subsidiary.com"
-              description="Comma-separated domains allowed to authenticate. Leave blank to allow any domain."
+              label={t("Allowed domains")}
+              placeholder={t("example.com, subsidiary.com")}
+              description={t("Comma-separated domains allowed to authenticate. Leave blank to allow any domain.")}
               parseValue={parseCommaSeparatedList}
               formatValue={(value) => value.join(", ")}
             />
@@ -523,8 +532,8 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
             <SwitchField
               control={control}
               name="enabled"
-              label="Enabled"
-              description="Allow this provider to appear in sign-in flows."
+              label={t("Enabled")}
+              description={t("Allow this provider to appear in sign-in flows.")}
               outlined
             />
           </FormControl>
@@ -532,8 +541,8 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
             <SwitchField
               control={control}
               name="enforceSso"
-              label="Enforce SSO"
-              description="Require users to authenticate with a federated provider."
+              label={t("Enforce SSO")}
+              description={t("Require users to authenticate with a federated provider.")}
               outlined
             />
           </FormControl>
@@ -541,8 +550,8 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
             <SwitchField
               control={control}
               name="autoProvision"
-              label="Auto-provision users"
-              description="Create user records after successful provider authentication."
+              label={t("Auto-provision users")}
+              description={t("Create user records after successful provider authentication.")}
               outlined
             />
           </FormControl>
@@ -550,8 +559,8 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
             <SwitchField
               control={control}
               name="allowFederatedMfa"
-              label="Trust federated MFA"
-              description="Accept MFA claims from the provider when risk policy allows it."
+              label={t("Trust federated MFA")}
+              description={t("Accept MFA claims from the provider when risk policy allows it.")}
               outlined
             />
           </FormControl>

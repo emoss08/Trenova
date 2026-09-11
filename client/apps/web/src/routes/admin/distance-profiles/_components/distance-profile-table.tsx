@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   AlertDialog,
@@ -28,6 +29,8 @@ const distanceProfileService = new DistanceProfileService();
 const columns = getColumns();
 
 export default function DistanceProfileTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const selectedProfileRef = useRef<DistanceProfileRow | null>(null);
@@ -37,13 +40,13 @@ export default function DistanceProfileTable() {
       await distanceProfileService.delete(id);
     },
     onSuccess: () => {
-      toast.success("Distance profile deleted");
+      toast.success(t("Distance profile deleted"));
       void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
       setDeleteDialogOpen(false);
       selectedProfileRef.current = null;
     },
     onError: (error) => {
-      toast.error("Failed to delete distance profile", {
+      toast.error(t("Failed to delete distance profile"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -52,11 +55,11 @@ export default function DistanceProfileTable() {
   const setDefaultMutation = useMutation({
     mutationFn: (id: string) => distanceProfileService.setDefault(id),
     onSuccess: () => {
-      toast.success("Default distance profile updated");
+      toast.success(t("Default distance profile updated"));
       void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
     },
     onError: (error) => {
-      toast.error("Failed to set default profile", {
+      toast.error(t("Failed to set default profile"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -116,14 +119,13 @@ export default function DistanceProfileTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete Distance Profile</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete Distance Profile")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this distance profile? Default profiles cannot be
-              deleted.
+              {t("Are you sure you want to delete this distance profile? Default profiles cannot be deleted.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -134,7 +136,7 @@ export default function DistanceProfileTable() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

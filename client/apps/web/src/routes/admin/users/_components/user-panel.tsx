@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -9,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { UserForm } from "./user-form";
 
 export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<UserRow>) {
+  const t = useT();
+
   const [panelEntityId] = useQueryState("panelEntityId", parseAsString);
   const editUserId = row?.id ?? panelEntityId ?? undefined;
 
@@ -35,7 +38,7 @@ export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps
         form={form}
         url="/users/"
         queryKey="user-list"
-        title="User"
+        title={t("User")}
         fieldKey="username"
         formComponent={<UserForm isEdit editUserId={editUserId} />}
       />
@@ -49,7 +52,7 @@ export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps
       form={form}
       url="/users/"
       queryKey="user-list"
-      title="User"
+      title={t("User")}
       formComponent={<UserForm />}
     />
   );

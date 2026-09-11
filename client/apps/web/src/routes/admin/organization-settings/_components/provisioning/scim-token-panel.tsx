@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -30,6 +31,8 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   directoryId,
   onProvisioningChange,
 }: SCIMTokenPanelProps) {
+  const t = useT();
+
   const [tokenName, setTokenName] = useState("");
   const [createdToken, setCreatedToken] = useState("");
 
@@ -49,7 +52,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     onSuccess: async (response) => {
       setCreatedToken(response.token);
       setTokenName("");
-      toast.success("SCIM token created");
+      toast.success(t("SCIM token created"));
       await onProvisioningChange();
     },
   });
@@ -57,7 +60,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     mutationFn: async (tokenId: string) =>
       apiService.organizationService.revokeSCIMToken(organizationId, tokenId),
     onSuccess: async () => {
-      toast.success("SCIM token revoked");
+      toast.success(t("SCIM token revoked"));
       await onProvisioningChange();
     },
   });
@@ -68,15 +71,15 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     <div className="bg-background rounded-lg border">
       <PanelHeader
         icon={<KeyRoundIcon />}
-        title="SCIM tokens"
-        description="Issue bearer tokens for directory synchronization."
+        title={t("SCIM tokens")}
+        description={t("Issue bearer tokens for directory synchronization.")}
       />
       <div className="space-y-3">
         <div className="flex w-full flex-col gap-2 sm:flex-row">
           <div className="flex w-full flex-row justify-between gap-1 px-2 pt-2">
             <Input
               value={tokenName}
-              placeholder="Token name"
+              placeholder={t("Token name")}
               onChange={(event) => setTokenName(event.target.value)}
             />
             <Button
@@ -85,7 +88,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
               disabled={createDisabled || tokenName.trim() === ""}
             >
               <PlusIcon />
-              Create token
+              {t("Create token")}
             </Button>
           </div>
         </div>
@@ -97,11 +100,11 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Prefix</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last used</TableHead>
-                  <TableHead className="w-28">Actions</TableHead>
+                  <TableHead>{t("Name")}</TableHead>
+                  <TableHead>{t("Prefix")}</TableHead>
+                  <TableHead>{t("Status")}</TableHead>
+                  <TableHead>{t("Last used")}</TableHead>
+                  <TableHead className="w-28">{t("Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -126,7 +129,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                         disabled={token.status !== "active"}
                         onClick={() => revokeToken(token.id)}
                       >
-                        Revoke
+                        {t("Revoke")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -137,8 +140,8 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
         ) : (
           <EmptyState
             icon={<KeyRoundIcon />}
-            label="No SCIM tokens"
-            description="Create a token and copy it into your directory sync application."
+            label={t("No SCIM tokens")}
+            description={t("Create a token and copy it into your directory sync application.")}
             compact
           />
         )}
@@ -148,6 +151,8 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
 });
 
 function CopyableSecretBlock({ value }: { value: string }) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -155,10 +160,10 @@ function CopyableSecretBlock({ value }: { value: string }) {
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-sm font-medium text-amber-800 dark:text-amber-300">
-            Copy this token now
+            {t("Copy this token now")}
           </div>
           <div className="text-xs text-amber-700/80 dark:text-amber-300/80">
-            The plaintext token is only shown once.
+            {t("The plaintext token is only shown once.")}
           </div>
         </div>
         <Button size="sm" variant="outline" onClick={() => void copy(value, { withToast: true })}>

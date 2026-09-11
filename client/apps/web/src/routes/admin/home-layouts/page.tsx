@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageHeader } from "@/components/page-header";
 import { usePermission } from "@/hooks/use-permission";
 import { useDeleteHomeLayoutPreset, useHomeLayoutPresets } from "@/hooks/use-home-layout";
@@ -32,6 +33,8 @@ import { toast } from "sonner";
 import { useRoleOptions } from "./_components/use-role-options";
 
 export function HomeLayoutsPage() {
+  const t = useT();
+
   const { data: presets, isLoading } = useHomeLayoutPresets();
   const { data: roles } = useRoleOptions();
   const deletePreset = useDeleteHomeLayoutPreset();
@@ -58,15 +61,15 @@ export function HomeLayoutsPage() {
   return (
     <div className="flex flex-col p-6">
       <PageHeader
-        title="Home Screens"
-        description="Author a home screen once and assign it to the roles that should land on it."
+        title={t("Home Screens")}
+        description={t("Author a home screen once and assign it to the roles that should land on it.")}
         className="p-0 py-4"
         actions={
           canCreate ? (
             <Link to="/admin/home-layouts/new">
               <Button size="sm">
                 <PlusIcon className="size-4" />
-                New home screen
+                {t("New home screen")}
               </Button>
             </Link>
           ) : undefined
@@ -101,26 +104,24 @@ export function HomeLayoutsPage() {
             <AlertDialogMedia className="bg-destructive/10 text-destructive">
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete home screen</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete home screen")}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirming && (
                 <>
-                  <strong>{confirming.name}</strong> reaches {confirming.assignedUserCount}{" "}
-                  {confirming.assignedUserCount === 1 ? "person" : "people"}. They will fall back to
-                  the next home screen that matches them. This cannot be undone.
+                  <strong>{confirming.name}</strong> {t("reaches {0} {1}. They will fall back to the next home screen that matches them. This cannot be undone.", confirming.assignedUserCount, confirming.assignedUserCount === 1 ? "person" : "people")}
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirming(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setConfirming(null)}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deletePreset.isPending}
               onClick={() => confirming && void remove(confirming)}
             >
               {deletePreset.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -140,6 +141,8 @@ function PresetRow({
   canDelete: boolean;
   onDelete: () => void;
 }) {
+  const t = useT();
+
   const audience = preset.roleIds
     .map((roleId) => roleNames.get(roleId))
     .filter((name): name is string => name != null);
@@ -154,11 +157,11 @@ function PresetRow({
           >
             {preset.name}
           </Link>
-          {preset.isOrgDefault && <Badge variant="secondary">Org default</Badge>}
+          {preset.isOrgDefault && <Badge variant="secondary">{t("Org default")}</Badge>}
           {preset.locked && (
             <Badge variant="warning" className="gap-1">
               <LockIcon className="size-2.5" />
-              Locked
+              {t("Locked")}
             </Badge>
           )}
         </div>
@@ -185,7 +188,7 @@ function PresetRow({
       <div className="flex shrink-0 items-center gap-2">
         <Link to={`/admin/home-layouts/${preset.id}`}>
           <Button variant="outline" size="sm">
-            Edit
+            {t("Edit")}
           </Button>
         </Link>
         {canDelete && (
@@ -205,18 +208,20 @@ function PresetRow({
 }
 
 function EmptyState({ canCreate }: { canCreate: boolean }) {
+  const t = useT();
+
   return (
     <div className="border-border mt-2 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
       <LayoutGridIcon className="text-muted-foreground/40 size-5" />
-      <p className="text-sm font-medium">No home screens yet</p>
+      <p className="text-sm font-medium">{t("No home screens yet")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">
-        Until you author one, everyone lands on the home screen Trenova ships for their role.
+        {t("Until you author one, everyone lands on the home screen Trenova ships for their role.")}
       </p>
       {canCreate && (
         <Link to="/admin/home-layouts/new" className="pt-1">
           <Button size="sm" variant="outline">
             <PlusIcon className="size-4" />
-            Create one
+            {t("Create one")}
           </Button>
         </Link>
       )}

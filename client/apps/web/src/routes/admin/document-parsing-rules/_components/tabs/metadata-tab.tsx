@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -27,6 +28,8 @@ export default function MetadataTab({ ruleSetId }: { ruleSetId: string }) {
 }
 
 function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
+  const t = useT();
+
   const { data: versions } = useQuery({
     ...queries.documentParsingRule.versions(ruleSet.id!),
     enabled: !!ruleSet.publishedVersionId,
@@ -36,20 +39,19 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
 
   return (
     <FormSection
-      title="Published Version"
-      description="The currently active version used for document parsing in production."
+      title={t("Published Version")}
+      description={t("The currently active version used for document parsing in production.")}
     >
       {publishedVersion ? (
         <div className="grid grid-cols-2 gap-4 rounded-lg border p-4 text-sm">
           <div>
-            <p className="text-muted-foreground">Version</p>
+            <p className="text-muted-foreground">{t("Version")}</p>
             <p className="font-medium">
-              v{publishedVersion.versionNumber}
-              {publishedVersion.label ? ` — ${publishedVersion.label}` : ""}
+              {t("v{0}{1}", publishedVersion.versionNumber, publishedVersion.label ? ` — ${publishedVersion.label}` : "")}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground">Published</p>
+            <p className="text-muted-foreground">{t("Published")}</p>
             <p className="font-medium">
               {publishedVersion.publishedAt
                 ? formatToUserTimezone(publishedVersion.publishedAt)
@@ -57,13 +59,13 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground">Parser Mode</p>
+            <p className="text-muted-foreground">{t("Parser Mode")}</p>
             <p className="font-medium capitalize">
               {publishedVersion.parserMode.replace(/_/g, " ")}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground">Status</p>
+            <p className="text-muted-foreground">{t("Status")}</p>
             <p className="font-medium">{publishedVersion.status}</p>
           </div>
         </div>
@@ -71,8 +73,7 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
         <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
           <PackageIcon className="text-muted-foreground size-5 shrink-0" />
           <p className="text-muted-foreground text-sm">
-            No version has been published yet. Create and publish a version from the Versions tab to
-            start parsing documents with this rule set.
+            {t("No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.")}
           </p>
         </div>
       )}
@@ -81,6 +82,8 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
 }
 
 function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(ruleSetSchema),
     defaultValues: ruleSet,
@@ -127,17 +130,17 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
             </Alert>
           )} */}
           <FormSection
-            title="Rule Set Details"
-            description="Configure the name, document kind, and priority for this rule set."
+            title={t("Rule Set Details")}
+            description={t("Configure the name, document kind, and priority for this rule set.")}
           >
             <FormGroup cols={2}>
               <FormControl>
                 <InputField
                   control={control}
                   name="name"
-                  label="Name"
-                  placeholder="e.g. CH Robinson Rate Confirmation"
-                  description="A descriptive name to identify this rule set."
+                  label={t("Name")}
+                  placeholder={t("e.g. CH Robinson Rate Confirmation")}
+                  description={t("A descriptive name to identify this rule set.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -145,9 +148,9 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                 <SelectField
                   control={control}
                   name="documentKind"
-                  label="Document Kind"
+                  label={t("Document Kind")}
                   options={documentKindChoices}
-                  description="The type of document this rule set is designed to parse."
+                  description={t("The type of document this rule set is designed to parse.")}
                   rules={{ required: true }}
                   warning={{
                     show: showDocumentKindWarning,
@@ -160,8 +163,8 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                 <NumberField
                   control={control}
                   name="priority"
-                  label="Priority"
-                  description="Higher priority rules take precedence when multiple rules match the same document."
+                  label={t("Priority")}
+                  description={t("Higher priority rules take precedence when multiple rules match the same document.")}
                 />
               </FormControl>
             </FormGroup>
@@ -171,16 +174,16 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                 <TextareaField
                   control={control}
                   name="description"
-                  label="Description"
-                  placeholder="Describe when this rule set should be used, what provider or format it targets, and any special considerations..."
-                  description="Helps your team understand the purpose of this rule set."
+                  label={t("Description")}
+                  placeholder={t("Describe when this rule set should be used, what provider or format it targets, and any special considerations...")}
+                  description={t("Helps your team understand the purpose of this rule set.")}
                   minRows={5}
                 />
               </FormControl>
             </FormGroup>
           </FormSection>
         </div>
-        <FormSaveDock saveButtonContent="Save Changes" />
+        <FormSaveDock saveButtonContent={t("Save Changes")} />
       </Form>
     </FormProvider>
   );

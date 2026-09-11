@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import {
   ActivityIcon,
@@ -31,6 +32,8 @@ export function SecurityOverview({
   activePolicyCount: number;
   recentActivity: RecentActivity[];
 }) {
+  const t = useT();
+
   if (isLoading) {
     return <OverviewSkeleton />;
   }
@@ -40,14 +43,14 @@ export function SecurityOverview({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatusTile
           icon={<KeyRoundIcon />}
-          label="Providers"
+          label={t("Providers")}
           value={String(providerCount)}
           detail={providerCount === 1 ? "Enabled provider" : "Enabled providers"}
           tone={providerCount > 0 ? "active" : "muted"}
         />
         <StatusTile
           icon={<LockKeyholeIcon />}
-          label="SSO enforcement"
+          label={t("SSO enforcement")}
           value={enforcedProviderName || "Optional"}
           detail={
             enforcedProviderName ? "Password fallback restricted" : "Password sign-in allowed"
@@ -56,14 +59,14 @@ export function SecurityOverview({
         />
         <StatusTile
           icon={<UsersRoundIcon />}
-          label="SCIM directory"
+          label={t("SCIM directory")}
           value={directoryStatus || "Not connected"}
           detail={directoryStatus ? "Provisioning enabled" : "Directory sync inactive"}
           tone={directoryStatus ? "active" : "muted"}
         />
         <StatusTile
           icon={<ShieldCheckIcon />}
-          label="Active policies"
+          label={t("Active policies")}
           value={String(activePolicyCount)}
           detail={activePolicyCount === 1 ? "Policy evaluating" : "Policies evaluating"}
           tone={activePolicyCount > 0 ? "info" : "muted"}
@@ -72,9 +75,9 @@ export function SecurityOverview({
       <div className="bg-muted/20 rounded-lg border">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div>
-            <div className="text-sm font-medium">Recent security activity</div>
+            <div className="text-sm font-medium">{t("Recent security activity")}</div>
             <div className="text-muted-foreground text-xs">
-              Latest authentication and risk signals
+              {t("Latest authentication and risk signals")}
             </div>
           </div>
           <ActivityIcon className="text-muted-foreground size-4" />
@@ -93,8 +96,8 @@ export function SecurityOverview({
           ) : (
             <EmptyState
               icon={<ActivityIcon />}
-              label="No activity yet"
-              description="Sign-in and risk events will appear here after users authenticate."
+              label={t("No activity yet")}
+              description={t("Sign-in and risk events will appear here after users authenticate.")}
               compact
             />
           )}

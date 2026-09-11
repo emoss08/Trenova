@@ -1,4 +1,5 @@
 const openAILogo = "/integrations/logos/openai_logo.svg";
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -19,6 +20,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -58,7 +61,7 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
     form,
     resourceName: "OpenAI configuration",
     onSuccess: async () => {
-      toast.success("OpenAI integration updated");
+      toast.success(t("OpenAI integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config("OpenAI").queryKey,
@@ -75,20 +78,19 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
       <OpenAIFormHeader />
       <Alert variant="info">
         <SparklesIcon className="size-4" />
-        <AlertTitle>Document AI requires two layers</AlertTitle>
+        <AlertTitle>{t("Document AI requires two layers")}</AlertTitle>
         <AlertDescription>
-          This integration stores the organization OpenAI credential. AI-assisted classification and
-          extraction are still controlled separately in Document Controls.
+          {t("This integration stores the organization OpenAI credential. AI-assisted classification and extraction are still controlled separately in Document Controls.")}
         </AlertDescription>
       </Alert>
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
             <SwitchField
-              label="Enable OpenAI"
+              label={t("Enable OpenAI")}
               control={control}
               name="enabled"
-              description="Toggle AI provider availability for this business unit."
+              description={t("Toggle AI provider availability for this business unit.")}
               outlined
             />
           </FormControl>
@@ -99,22 +101,22 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
               label={`API Key ${hasApiKey ? "(leave blank to keep existing key)" : ""}`}
               autoComplete="off"
               placeholder={hasApiKey ? "********" : "Enter your OpenAI API key"}
-              description="Used for AI-assisted document classification and structured extraction."
+              description={t("Used for AI-assisted document classification and structured extraction.")}
             />
           </FormControl>
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"
             type="submit"
             isLoading={saveMutation.isPending}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            Save Changes
+            {t("Save Changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -123,6 +125,8 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
 }
 
 function OpenAIFormHeader() {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-center gap-4">
@@ -132,14 +136,14 @@ function OpenAIFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={openAILogo} alt="OpenAI Logo" className="size-8" />
+        <LazyImage src={openAILogo} alt={t("OpenAI Logo")} className="size-8" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with OpenAI</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with OpenAI")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">Create an API key in the</p>
+          <p className="text-muted-foreground text-xs">{t("Create an API key in the")}</p>
           <ExternalLink href="https://platform.openai.com/api-keys" className="text-xs">
-            OpenAI dashboard.
+            {t("OpenAI dashboard.")}
           </ExternalLink>
         </div>
       </div>

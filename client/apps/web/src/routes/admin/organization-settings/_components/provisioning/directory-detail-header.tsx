@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,8 @@ export function DirectoryDetailHeader({
   onEdit,
   onDelete,
 }: DirectoryDetailHeaderProps) {
+  const t = useT();
+
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
@@ -44,7 +47,7 @@ export function DirectoryDetailHeader({
             )}
           </div>
           <p className="text-muted-foreground text-sm">
-            Manage SCIM tokens, group-to-role mappings, and provisioning audit events.
+            {t("Manage SCIM tokens, group-to-role mappings, and provisioning audit events.")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -54,7 +57,7 @@ export function DirectoryDetailHeader({
             disabled={!directory}
             onClick={() => directory && onEdit(directory)}
           >
-            Edit directory
+            {t("Edit directory")}
           </Button>
           <Button
             variant="destructive"
@@ -63,21 +66,20 @@ export function DirectoryDetailHeader({
             onClick={() => setConfirmOpen(true)}
           >
             <Trash2Icon />
-            Delete directory
+            {t("Delete directory")}
           </Button>
         </div>
       </div>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete SCIM Directory</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete SCIM Directory")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the selected SCIM directory and its provisioning configuration. This
-              action cannot be undone.
+              {t("This removes the selected SCIM directory and its provisioning configuration. This action cannot be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
+            <AlertDialogCancel variant="outline">{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={!directory || isDeleting}
@@ -87,7 +89,7 @@ export function DirectoryDetailHeader({
                 setConfirmOpen(false);
               }}
             >
-              Delete directory
+              {t("Delete directory")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

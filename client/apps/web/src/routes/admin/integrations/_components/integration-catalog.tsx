@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -208,6 +209,8 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
 }
 
 export function IntegrationCatalogCard() {
+  const t = useT();
+
   const { theme } = useTheme();
   const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
 
@@ -280,7 +283,7 @@ export function IntegrationCatalogCard() {
           <div className="mt-4 flex flex-row items-center gap-1.5">
             <div className="flex shrink-0 flex-row items-center gap-0 text-center text-sm">
               <div className="border-input bg-muted text-muted-foreground flex h-7 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 px-1 font-medium focus:z-10">
-                Sort By
+                {t("Sort By")}
               </div>
               <Select
                 items={sortOptions}
@@ -347,12 +350,12 @@ export function IntegrationCatalogCard() {
           {catalogQuery.isLoading && (
             <div className="text-muted-foreground inline-flex items-center gap-2 text-sm">
               <Spinner className="size-4" />
-              Loading integration catalog...
+              {t("Loading integration catalog...")}
             </div>
           )}
           {!catalogQuery.isLoading && filteredAndSortedItems.length === 0 && (
             <div className="border-border bg-muted/20 text-muted-foreground rounded-md border p-4 text-sm">
-              No integrations match your current search and filter.
+              {t("No integrations match your current search and filter.")}
             </div>
           )}
           {!catalogQuery.isLoading && filteredAndSortedItems.length > 0 && (

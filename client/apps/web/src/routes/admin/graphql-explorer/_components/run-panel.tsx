@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CopyIconButton } from "@/components/copy-icon-button";
 import { JsonViewer, type JsonValue } from "@/components/elements/json-viewer";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
@@ -93,6 +94,8 @@ function HistoryPopover({
   onReplay: (entry: RunHistoryEntry) => void;
   onClear: () => void;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   return (
@@ -101,7 +104,7 @@ function HistoryPopover({
         render={<Button size="sm" variant="outline" className="text-muted-foreground gap-1.5" />}
       >
         <HistoryIcon className="size-3.5" />
-        History
+        {t("History")}
         {entries.length > 0 && (
           <span className="text-2xs text-muted-foreground/70 tabular-nums">{entries.length}</span>
         )}
@@ -109,7 +112,7 @@ function HistoryPopover({
       <PopoverContent align="start" className="w-88 p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
-            Run history
+            {t("Run history")}
           </span>
           {entries.length > 0 && (
             <button
@@ -118,13 +121,13 @@ function HistoryPopover({
               className="text-2xs text-muted-foreground hover:text-destructive flex items-center gap-1 font-medium transition-colors"
             >
               <Trash2Icon className="size-3" />
-              Clear
+              {t("Clear")}
             </button>
           )}
         </div>
         {entries.length === 0 ? (
           <p className="text-muted-foreground px-3 py-6 text-center text-xs">
-            No runs yet for this operation.
+            {t("No runs yet for this operation.")}
           </p>
         ) : (
           <ScrollArea className="flex max-h-72 flex-col [&_[data-slot=scroll-area-viewport]>div]:block!">
@@ -183,6 +186,8 @@ function HistoryPopover({
 }
 
 function InputTypesReference({ typeNames }: { typeNames: string[] }) {
+  const t = useT();
+
   const { catalog } = useCatalog();
   const [open, setOpen] = useState(false);
   const sdl = useMemo(
@@ -210,7 +215,7 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
       >
         <ChevronRightIcon className={cn("size-3 transition-transform", open && "rotate-90")} />
         <BracesIcon className="size-3" />
-        Input types ({typeNames.length})
+        {t("Input types ({0})", typeNames.length)}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <ScrollArea
@@ -225,6 +230,8 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
 }
 
 export function RunPanel({ operation }: { operation: CatalogOperation }) {
+  const t = useT();
+
   const { theme } = useTheme();
   const { catalog } = useCatalog();
   const scaffold = useMemo(
@@ -391,7 +398,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
           {operation.kind === "mutation" && (
             <span className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
               <AlertTriangleIcon className="size-3.5" />
-              Mutation — executes against live data
+              {t("Mutation — executes against live data")}
             </span>
           )}
         </div>
@@ -399,7 +406,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
           <div className="flex items-center gap-2 text-xs">
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
               <span className="size-1.5 rounded-full bg-emerald-500" />
-              OK
+              {t("OK")}
             </span>
             <span className="text-muted-foreground">{formatElapsed(runState.elapsedMs)}</span>
             <span className="text-muted-foreground/60">{formatFileSize(runState.bytes)}</span>
@@ -421,7 +428,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
-            Variables
+            {t("Variables")}
           </span>
           {isDirty && (
             <button
@@ -433,7 +440,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
               className="text-2xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium transition-colors"
             >
               <RotateCcwIcon className="size-3" />
-              Reset
+              {t("Reset")}
             </button>
           )}
         </div>
@@ -464,7 +471,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
-            Response
+            {t("Response")}
           </span>
           {runState.status === "success" && (
             <div className="flex items-center gap-1.5">
@@ -485,7 +492,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                   </button>
                 ))}
               </div>
-              <CopyIconButton value={runState.raw} label="Copy response" size="icon-xxs" />
+              <CopyIconButton value={runState.raw} label={t("Copy response")} size="icon-xxs" />
             </div>
           )}
         </div>
@@ -505,7 +512,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
               >
                 <PlayIcon className="text-muted-foreground/50 size-5" />
                 <p className="text-muted-foreground text-xs">
-                  Run the operation to see the response
+                  {t("Run the operation to see the response")}
                 </p>
               </m.div>
             )}
@@ -519,7 +526,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                 className="flex flex-col items-center justify-center gap-2 px-6 py-12"
               >
                 <Spinner className="text-muted-foreground size-4" />
-                <p className="text-muted-foreground text-xs">Executing…</p>
+                <p className="text-muted-foreground text-xs">{t("Executing…")}</p>
               </m.div>
             )}
             {runState.status === "success" && (

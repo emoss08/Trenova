@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RoleSelectAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -42,6 +43,8 @@ type UserRolesEditorProps = {
 };
 
 export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
@@ -58,12 +61,12 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
         await queryClient.invalidateQueries({
           queryKey: ["user-role-assignments", userId],
         });
-        toast.success("Role unassigned");
+        toast.success(t("Role unassigned"));
       } catch {
-        toast.error("Failed to unassign role");
+        toast.error(t("Failed to unassign role"));
       }
     },
-    [userId, queryClient],
+    [userId, queryClient, t],
   );
 
   if (isLoading) {
@@ -84,7 +87,7 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Assigned Roles</h3>
+        <h3 className="text-sm font-medium">{t("Assigned Roles")}</h3>
         <Button
           type="button"
           size="sm"
@@ -93,13 +96,13 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
           disabled={isDisabled}
         >
           <PlusIcon className="mr-1 size-3.5" />
-          Assign Role
+          {t("Assign Role")}
         </Button>
       </div>
 
       {roleAssignments.length === 0 ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
-          No roles assigned to this user.
+          {t("No roles assigned to this user.")}
         </div>
       ) : (
         <div className="space-y-3">
@@ -192,6 +195,8 @@ function AssignRoleDialog({
   existingRoleIds,
   isDisabled,
 }: AssignRoleDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<AssignRoleFormValues>({
     resolver: zodResolver(assignRoleFormSchema),
@@ -233,7 +238,7 @@ function AssignRoleDialog({
       await queryClient.invalidateQueries({
         queryKey: ["user-role-assignments", userId],
       });
-      toast.success("Role assigned");
+      toast.success(t("Role assigned"));
     },
   });
 
@@ -259,7 +264,7 @@ function AssignRoleDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign Role</DialogTitle>
+          <DialogTitle>{t("Assign Role")}</DialogTitle>
         </DialogHeader>
         <Form
           onSubmit={(event) => {
@@ -272,12 +277,12 @@ function AssignRoleDialog({
               <RoleSelectAutocompleteField<AssignRoleFormValues>
                 control={control}
                 name="roleId"
-                label="Role"
-                placeholder="Select role"
+                label={t("Role")}
+                placeholder={t("Select role")}
                 clearable
                 disabled={isDisabled}
                 filterOption={filterAvailableRole}
-                noResultsMessage="No available roles found."
+                noResultsMessage={t("No available roles found.")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -285,9 +290,9 @@ function AssignRoleDialog({
               <AutoCompleteDateTimeField<AssignRoleFormValues>
                 control={control}
                 name="expiresAt"
-                label="Expires At"
-                description="Leave empty for permanent assignment"
-                placeholder="No expiration"
+                label={t("Expires At")}
+                description={t("Leave empty for permanent assignment")}
+                placeholder={t("No expiration")}
                 clearable
                 disabled={isDisabled}
               />
@@ -295,15 +300,15 @@ function AssignRoleDialog({
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="submit"
               isLoading={isSubmitting || isPending}
-              loadingText="Assigning..."
+              loadingText={t("Assigning...")}
               disabled={isDisabled}
             >
-              Assign Role
+              {t("Assign Role")}
             </Button>
           </DialogFooter>
         </Form>

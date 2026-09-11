@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import {
   AlertDialog,
@@ -75,6 +76,8 @@ export function APIKeyPanel({ open, onOpenChange, mode, row }: DataTablePanelPro
 type CreatePanelProps = Pick<DataTablePanelProps<ApiKeyRow>, "open" | "onOpenChange">;
 
 function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [successToken, setSuccessToken] = useState("");
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -98,7 +101,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
     mutationFn: async (values: ApiKeyPanelFormValues) =>
       apiService.apiKeyService.create(toRequestPayload(values)),
     onSuccess: async (result) => {
-      toast.success("API key created");
+      toast.success(t("API key created"));
       await queryClient.invalidateQueries({ queryKey: ["api-key-list"] });
       reset(getDefaultValues());
       onOpenChange(false);
@@ -134,21 +137,21 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
       <DataTablePanelContainer
         open={open}
         onOpenChange={onOpenChange}
-        title="Create API Key"
-        description="Define the bearer credential and grant only the resources the integration needs."
+        title={t("Create API Key")}
+        description={t("Define the bearer credential and grant only the resources the integration needs.")}
         size="xl"
         footer={
           <>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="submit"
               form="api-key-create-form"
               isLoading={isSubmitting}
-              loadingText="Creating..."
+              loadingText={t("Creating...")}
             >
-              Create API Key
+              {t("Create API Key")}
             </Button>
           </>
         }
@@ -178,6 +181,8 @@ type EditPanelProps = Pick<DataTablePanelProps<ApiKeyRow>, "open" | "onOpenChang
 };
 
 function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [successToken, setSuccessToken] = useState("");
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -230,7 +235,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
     mutationFn: async (values: ApiKeyPanelFormValues) =>
       apiService.apiKeyService.update(row.id, toRequestPayload(values)),
     onSuccess: async () => {
-      toast.success("API key updated");
+      toast.success(t("API key updated"));
       await invalidateData();
       reset(getDefaultValues());
       onOpenChange(false);
@@ -242,7 +247,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   const rotateMutation = useApiMutation({
     mutationFn: async () => apiService.apiKeyService.rotate(row.id),
     onSuccess: async (result) => {
-      toast.success("API key rotated");
+      toast.success(t("API key rotated"));
       await invalidateData();
       onOpenChange(false);
       setSuccessToken(result.token);
@@ -254,7 +259,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   const revokeMutation = useApiMutation({
     mutationFn: async () => apiService.apiKeyService.revoke(row.id),
     onSuccess: async () => {
-      toast.success("API key revoked");
+      toast.success(t("API key revoked"));
       setRevokeDialogOpen(false);
       await invalidateData();
       onOpenChange(false);
@@ -301,7 +306,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                   </Button>
                 }
               />
-              <TooltipContent>Rotate Secret</TooltipContent>
+              <TooltipContent>{t("Rotate Secret")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger
@@ -318,13 +323,13 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                   </Button>
                 }
               />
-              <TooltipContent>Revoke Key</TooltipContent>
+              <TooltipContent>{t("Revoke Key")}</TooltipContent>
             </Tooltip>
           </>
         )}
       </>
     );
-  }, [isRevoked, rotateMutation, revokeMutation, detailQuery.isLoading]);
+  }, [isRevoked, rotateMutation, revokeMutation, detailQuery.isLoading, t]);
 
   return (
     <>
@@ -338,16 +343,16 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
         footer={
           <>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="submit"
               form="api-key-edit-form"
               isLoading={isSubmitting}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               disabled={isRevoked}
             >
-              Save Changes
+              {t("Save Changes")}
             </Button>
           </>
         }
@@ -375,7 +380,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                 <div className="border-destructive/30 bg-destructive/10 flex items-center gap-3 rounded-lg border px-4 py-3">
                   <ShieldAlertIcon className="text-destructive size-4 shrink-0" />
                   <p className="text-destructive text-sm">
-                    This API key has been revoked. All fields are read-only.
+                    {t("This API key has been revoked. All fields are read-only.")}
                   </p>
                 </div>
               )}
@@ -404,20 +409,19 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
             <AlertDialogMedia>
               <ShieldAlertIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
+            <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Revoke this bearer credential immediately. Existing integrations will stop
-              authenticating until a new key is provisioned.
+              {t("Revoke this bearer credential immediately. Existing integrations will stop authenticating until a new key is provisioned.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => revokeMutation.mutate(undefined)}
               disabled={revokeMutation.isPending}
             >
-              Revoke Key
+              {t("Revoke Key")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -435,6 +439,8 @@ function TokenSuccessDialog({
   onOpenChange: (open: boolean) => void;
   token: string;
 }) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   if (!token) {
@@ -447,10 +453,10 @@ function TokenSuccessDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <KeyRoundIcon className="size-4" />
-            Copy this API key now
+            {t("Copy this API key now")}
           </DialogTitle>
           <DialogDescription>
-            This plaintext token is only shown once after create or rotate.
+            {t("This plaintext token is only shown once after create or rotate.")}
           </DialogDescription>
         </DialogHeader>
         <pre className="border-border/70 bg-muted/30 overflow-x-auto rounded-md border p-4 font-mono text-xs">
@@ -459,12 +465,12 @@ function TokenSuccessDialog({
         <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <AlertTriangleIcon className="size-4 shrink-0 text-amber-500" />
           <p className="text-sm text-amber-700 dark:text-amber-400">
-            Store this key securely. It will not be displayed again.
+            {t("Store this key securely. It will not be displayed again.")}
           </p>
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t("Close")}
           </Button>
           <Button type="button" onClick={() => copy(token, { withToast: true })}>
             {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}

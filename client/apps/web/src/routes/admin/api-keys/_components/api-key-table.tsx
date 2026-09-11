@@ -1,5 +1,6 @@
 "use no memo";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   AlertDialog,
@@ -25,6 +26,8 @@ import { getColumns } from "./api-key-columns";
 import { APIKeyPanel } from "./api-key-panel";
 
 export default function APIKeyTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [selectedKey, setSelectedKey] = useState<ApiKeyRow | null>(null);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
@@ -32,7 +35,7 @@ export default function APIKeyTable() {
   const revokeMutation = useApiMutation({
     mutationFn: async (id: ApiKeyRow["id"]) => apiService.apiKeyService.revoke(id),
     onSuccess: async () => {
-      toast.success("API key revoked");
+      toast.success(t("API key revoked"));
       setRevokeDialogOpen(false);
       setSelectedKey(null);
       await queryClient.invalidateQueries({ queryKey: ["api-key-list"] });
@@ -79,14 +82,13 @@ export default function APIKeyTable() {
             <AlertDialogMedia>
               <ShieldAlertIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
+            <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Revoke {selectedKey?.name ?? "this key"} now. Any integration using this bearer token
-              will begin failing authentication immediately.
+              {t("Revoke {0} now. Any integration using this bearer token will begin failing authentication immediately.", selectedKey?.name ?? "this key")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -96,7 +98,7 @@ export default function APIKeyTable() {
               }}
               disabled={revokeMutation.isPending}
             >
-              Revoke Key
+              {t("Revoke Key")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

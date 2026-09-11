@@ -1,4 +1,5 @@
 const googleMapsPinLogo = "/integrations/logos/googleMaps.svg";
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { LazyImage } from "@/components/image";
@@ -18,6 +19,8 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -57,7 +60,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
     form,
     resourceName: "Google Maps configuration",
     onSuccess: async () => {
-      toast.success("Google Maps integration updated");
+      toast.success(t("Google Maps integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config("GoogleMaps").queryKey,
@@ -77,9 +80,9 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
           <FormControl cols="full">
             <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
-                <Label htmlFor="google-enabled">Enable Google Maps</Label>
+                <Label htmlFor="google-enabled">{t("Enable Google Maps")}</Label>
                 <p className="text-muted-foreground text-xs">
-                  Toggle integration state for this business unit.
+                  {t("Toggle integration state for this business unit.")}
                 </p>
               </div>
               <Controller
@@ -107,16 +110,16 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"
             type="submit"
             isLoading={saveMutation.isPending}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            Save Changes
+            {t("Save Changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -125,6 +128,8 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
 }
 
 export function GoogleMapsFormHeader() {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-center gap-4">
@@ -134,17 +139,17 @@ export function GoogleMapsFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={googleMapsPinLogo} alt="Google Maps Logo" className="size-8" />
+        <LazyImage src={googleMapsPinLogo} alt={t("Google Maps Logo")} className="size-8" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with Google Maps</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with Google Maps")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">To get a Google Maps API key, visit the</p>
+          <p className="text-muted-foreground text-xs">{t("To get a Google Maps API key, visit the")}</p>
           <ExternalLink
             href="https://console.cloud.google.com/google/maps-apis/overview"
             className="text-xs"
           >
-            Google Cloud Console.
+            {t("Google Cloud Console.")}
           </ExternalLink>
         </div>
       </div>

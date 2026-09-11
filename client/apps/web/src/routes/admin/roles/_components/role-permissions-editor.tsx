@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
@@ -46,6 +47,8 @@ type RolePermissionsEditorProps = {
 };
 
 export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsEditorProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,12 +82,12 @@ export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsE
       try {
         await removePermission(roleId, permissionId);
         await queryClient.invalidateQueries({ queryKey: ["role", roleId] });
-        toast.success("Permission removed");
+        toast.success(t("Permission removed"));
       } catch {
-        toast.error("Failed to remove permission");
+        toast.error(t("Failed to remove permission"));
       }
     },
-    [roleId, queryClient],
+    [roleId, queryClient, t],
   );
 
   const handleOperationToggle = useCallback(
@@ -100,7 +103,7 @@ export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsE
       }
 
       if (newOps.length === 0) {
-        toast.error("At least one operation is required");
+        toast.error(t("At least one operation is required"));
         return;
       }
 
@@ -112,10 +115,10 @@ export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsE
         });
         await queryClient.invalidateQueries({ queryKey: ["role", roleId] });
       } catch {
-        toast.error("Failed to update permission");
+        toast.error(t("Failed to update permission"));
       }
     },
-    [roleId, queryClient],
+    [roleId, queryClient, t],
   );
 
   const handleDataScopeChange = useCallback(
@@ -128,10 +131,10 @@ export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsE
         });
         await queryClient.invalidateQueries({ queryKey: ["role", roleId] });
       } catch {
-        toast.error("Failed to update permission");
+        toast.error(t("Failed to update permission"));
       }
     },
-    [roleId, queryClient],
+    [roleId, queryClient, t],
   );
 
   if (isLoading) {
@@ -150,18 +153,18 @@ export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsE
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Permissions</h3>
+        <h3 className="text-sm font-medium">{t("Permissions")}</h3>
         {!isSystemRole && (
           <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
             <PlusIcon className="mr-1 size-3.5" />
-            Add
+            {t("Add")}
           </Button>
         )}
       </div>
 
       {permissions.length === 0 ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
-          No permissions configured for this role.
+          {t("No permissions configured for this role.")}
         </div>
       ) : (
         <div className="space-y-3">
@@ -209,6 +212,8 @@ function PermissionRow({
   onDataScopeChange,
   onRemove,
 }: PermissionRowProps) {
+  const t = useT();
+
   const resourceLabel = resourceDef?.displayName ?? permission.resource;
   const availableOperations = resourceDef?.operations ?? [];
 
@@ -239,7 +244,7 @@ function PermissionRow({
             ))}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-muted-foreground text-xs">Scope:</span>
+            <span className="text-muted-foreground text-xs">{t("Scope:")}</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}
@@ -293,6 +298,8 @@ function AddPermissionDialog({
   isSubmitting,
   setIsSubmitting,
 }: AddPermissionDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [selectedResource, setSelectedResource] = useState<string>("");
   const [selectedOperations, setSelectedOperations] = useState<Operation[]>(["read"]);
@@ -315,12 +322,12 @@ function AddPermissionDialog({
 
   const handleSubmit = async () => {
     if (!selectedResource) {
-      toast.error("Please select a resource");
+      toast.error(t("Please select a resource"));
       return;
     }
 
     if (selectedOperations.length === 0) {
-      toast.error("Please select at least one operation");
+      toast.error(t("Please select at least one operation"));
       return;
     }
 
@@ -332,14 +339,14 @@ function AddPermissionDialog({
     })
       .then(async () => {
         await queryClient.invalidateQueries({ queryKey: ["role", roleId] });
-        toast.success("Permission added");
+        toast.success(t("Permission added"));
         onOpenChange(false);
         setSelectedResource("");
         setSelectedOperations(["read"]);
         setSelectedScope("organization");
       })
       .catch(() => {
-        toast.error("Failed to add permission");
+        toast.error(t("Failed to add permission"));
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -364,11 +371,11 @@ function AddPermissionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Permission</DialogTitle>
+          <DialogTitle>{t("Add Permission")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Resource</Label>
+            <Label>{t("Resource")}</Label>
             <Select
               value={selectedResource}
               onValueChange={(value) => handleResourceChange(value ?? "")}
@@ -401,7 +408,7 @@ function AddPermissionDialog({
           {selectedResource && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Operations</Label>
+                <Label>{t("Operations")}</Label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -410,7 +417,7 @@ function AddPermissionDialog({
                     className="h-6 text-xs"
                     onClick={selectAllOperations}
                   >
-                    Select All
+                    {t("Select All")}
                   </Button>
                   <Button
                     type="button"
@@ -419,7 +426,7 @@ function AddPermissionDialog({
                     className="h-6 text-xs"
                     onClick={clearAllOperations}
                   >
-                    Clear
+                    {t("Clear")}
                   </Button>
                 </div>
               </div>
@@ -442,7 +449,7 @@ function AddPermissionDialog({
           )}
 
           <div className="space-y-2">
-            <Label>Data Scope</Label>
+            <Label>{t("Data Scope")}</Label>
             <Select
               value={selectedScope}
               onValueChange={(value) => setSelectedScope(value as DataScope)}
@@ -462,14 +469,14 @@ function AddPermissionDialog({
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedResource || selectedOperations.length === 0}
           >
-            Add Permission
+            {t("Add Permission")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -490,6 +497,8 @@ export function CreateRolePermissionsEditor({
   onRemovePermission,
   onUpdatePermission,
 }: CreateRolePermissionsEditorProps) {
+  const t = useT();
+
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const { data: resourceCategories = [] } = useQuery({
@@ -521,13 +530,13 @@ export function CreateRolePermissionsEditor({
       }
 
       if (newOps.length === 0) {
-        toast.error("At least one operation is required");
+        toast.error(t("At least one operation is required"));
         return;
       }
 
       onUpdatePermission(index, { ...permission, operations: newOps });
     },
-    [onUpdatePermission],
+    [onUpdatePermission, t],
   );
 
   const handleDataScopeChange = useCallback(
@@ -548,16 +557,16 @@ export function CreateRolePermissionsEditor({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Permissions</h3>
+        <h3 className="text-sm font-medium">{t("Permissions")}</h3>
         <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
           <PlusIcon className="mr-1 size-3.5" />
-          Add
+          {t("Add")}
         </Button>
       </div>
 
       {permissions.length === 0 ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
-          No permissions configured. Add permissions to define what this role can do.
+          {t("No permissions configured. Add permissions to define what this role can do.")}
         </div>
       ) : (
         <div className="space-y-3">
@@ -600,6 +609,8 @@ function CreatePermissionRow({
   onDataScopeChange,
   onRemove,
 }: CreatePermissionRowProps) {
+  const t = useT();
+
   const resourceLabel = resourceDef?.displayName ?? permission.resource;
   const availableOperations = resourceDef?.operations ?? [];
 
@@ -629,7 +640,7 @@ function CreatePermissionRow({
             ))}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-muted-foreground text-xs">Scope:</span>
+            <span className="text-muted-foreground text-xs">{t("Scope:")}</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}
@@ -676,6 +687,8 @@ function CreateAddPermissionDialog({
   resourceCategories,
   onAdd,
 }: CreateAddPermissionDialogProps) {
+  const t = useT();
+
   const [selectedResource, setSelectedResource] = useState<string>("");
   const [selectedOperations, setSelectedOperations] = useState<Operation[]>(["read"]);
   const [selectedScope, setSelectedScope] = useState<DataScope>("organization");
@@ -697,12 +710,12 @@ function CreateAddPermissionDialog({
 
   const handleSubmit = () => {
     if (!selectedResource) {
-      toast.error("Please select a resource");
+      toast.error(t("Please select a resource"));
       return;
     }
 
     if (selectedOperations.length === 0) {
-      toast.error("Please select at least one operation");
+      toast.error(t("Please select at least one operation"));
       return;
     }
 
@@ -734,11 +747,11 @@ function CreateAddPermissionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Permission</DialogTitle>
+          <DialogTitle>{t("Add Permission")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Resource</Label>
+            <Label>{t("Resource")}</Label>
             <Select
               value={selectedResource}
               onValueChange={(value) => handleResourceChange(value ?? "")}
@@ -771,7 +784,7 @@ function CreateAddPermissionDialog({
           {selectedResource && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Operations</Label>
+                <Label>{t("Operations")}</Label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -780,7 +793,7 @@ function CreateAddPermissionDialog({
                     className="h-6 text-xs"
                     onClick={selectAllOperations}
                   >
-                    Select All
+                    {t("Select All")}
                   </Button>
                   <Button
                     type="button"
@@ -789,7 +802,7 @@ function CreateAddPermissionDialog({
                     className="h-6 text-xs"
                     onClick={clearAllOperations}
                   >
-                    Clear
+                    {t("Clear")}
                   </Button>
                 </div>
               </div>
@@ -812,7 +825,7 @@ function CreateAddPermissionDialog({
           )}
 
           <div className="space-y-2">
-            <Label>Data Scope</Label>
+            <Label>{t("Data Scope")}</Label>
             <Select
               value={selectedScope}
               onValueChange={(value) => setSelectedScope(value as DataScope)}
@@ -832,14 +845,14 @@ function CreateAddPermissionDialog({
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={!selectedResource || selectedOperations.length === 0}
           >
-            Add Permission
+            {t("Add Permission")}
           </Button>
         </DialogFooter>
       </DialogContent>

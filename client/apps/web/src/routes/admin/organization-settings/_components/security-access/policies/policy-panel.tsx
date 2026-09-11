@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
@@ -60,6 +61,8 @@ export function AccessPolicyPanel({
   onOpenChange,
   onSaved,
 }: AccessPolicyPanelProps) {
+  const t = useT();
+
   const createForm = useForm<AccessPolicyFormValues>({
     resolver: zodResolver(accessPolicyFormSchema) as Resolver<AccessPolicyFormValues>,
     defaultValues: toAccessPolicyFormValues(emptyPolicy),
@@ -95,7 +98,7 @@ export function AccessPolicyPanel({
         row={policy ? (toAccessPolicyFormValues(policy) as AccessPolicyRecord) : null}
         form={editForm}
         queryKey={queryKey}
-        title="Access Policy"
+        title={t("Access Policy")}
         fieldKey="name"
         formComponent={formComponent}
         mutationFn={async (values) => {
@@ -116,8 +119,8 @@ export function AccessPolicyPanel({
       onOpenChange={onOpenChange}
       form={createForm}
       queryKey={queryKey}
-      title="Access Policy"
-      description="Create a priority-ordered authorization decision for a protected resource."
+      title={t("Access Policy")}
+      description={t("Create a priority-ordered authorization decision for a protected resource.")}
       formComponent={formComponent}
       mutationFn={async (values) => {
         const saved = await apiService.organizationService.createAccessPolicy(

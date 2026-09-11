@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DistanceProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -68,6 +69,8 @@ const profileFields = [
 ] as const;
 
 export default function DistanceControlForm() {
+  const t = useT();
+
   const { data } = useSuspenseQuery({
     ...queries.distanceControl.get(),
   });
@@ -107,7 +110,7 @@ export default function DistanceControlForm() {
           <StoredMileageCard />
           <JurisdictionMileageCard />
           <ProfileAssignmentsCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -115,15 +118,16 @@ export default function DistanceControlForm() {
 }
 
 function StoredMileageCard() {
+  const t = useT();
+
   const { control } = useFormContext<DistanceControlInput>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Stored Mileage Policy</CardTitle>
+        <CardTitle>{t("Stored Mileage Policy")}</CardTitle>
         <CardDescription>
-          Configure when lane mileage is reused, how new mileage candidates are captured, and which
-          units are stored for this business unit.
+          {t("Configure when lane mileage is reused, how new mileage candidates are captured, and which units are stored for this business unit.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -132,8 +136,8 @@ function StoredMileageCard() {
             <SwitchField
               control={control}
               name="storeMileage"
-              label="Use Stored Mileage"
-              description="When enabled, calculations check stored lane mileage before calling PC*Miler."
+              label={t("Use Stored Mileage")}
+              description={t("When enabled, calculations check stored lane mileage before calling PC*Miler.")}
               position="left"
             />
           </FormControl>
@@ -141,8 +145,8 @@ function StoredMileageCard() {
             <SwitchField
               control={control}
               name="autoCreateStoredMileage"
-              label="Auto-create Stored Mileage"
-              description="Successful PC*Miler results are buffered for the scheduled stored mileage upsert job."
+              label={t("Auto-create Stored Mileage")}
+              description={t("Successful PC*Miler results are buffered for the scheduled stored mileage upsert job.")}
               position="left"
             />
           </FormControl>
@@ -150,8 +154,8 @@ function StoredMileageCard() {
             <SwitchField
               control={control}
               name="postalCodeFallbackToCity"
-              label="Postal Code Fallback"
-              description="When postal-code matching is unavailable, fall back to city and state lane keys."
+              label={t("Postal Code Fallback")}
+              description={t("When postal-code matching is unavailable, fall back to city and state lane keys.")}
               position="left"
             />
           </FormControl>
@@ -159,8 +163,8 @@ function StoredMileageCard() {
             <SelectField
               control={control}
               name="storedDistanceUnits"
-              label="Stored Distance Units"
-              description="Unit used when storing reusable local mileage records."
+              label={t("Stored Distance Units")}
+              description={t("Unit used when storing reusable local mileage records.")}
               options={distanceProfileDistanceUnitChoices}
               rules={{ required: true }}
             />
@@ -172,15 +176,16 @@ function StoredMileageCard() {
 }
 
 function JurisdictionMileageCard() {
+  const t = useT();
+
   const { control } = useFormContext<DistanceControlInput>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Jurisdiction Mileage</CardTitle>
+        <CardTitle>{t("Jurisdiction Mileage")}</CardTitle>
         <CardDescription>
-          Break each move&apos;s routed distance down by state or province so IFTA returns can
-          attribute miles to the jurisdictions they were driven in.
+          {t("Break each move's routed distance down by state or province so IFTA returns can attribute miles to the jurisdictions they were driven in.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -189,9 +194,9 @@ function JurisdictionMileageCard() {
             <SwitchField
               control={control}
               name="captureJurisdictionMiles"
-              label="Capture jurisdiction miles"
-              description="Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns."
-              tooltip="May be billed by PC*Miler as an additional transaction per route. Routes calculated before this is on have no jurisdiction breakdown until they are recalculated."
+              label={t("Capture jurisdiction miles")}
+              description={t("Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns.")}
+              tooltip={t("May be billed by PC*Miler as an additional transaction per route. Routes calculated before this is on have no jurisdiction breakdown until they are recalculated.")}
               position="left"
             />
           </FormControl>
@@ -202,15 +207,16 @@ function JurisdictionMileageCard() {
 }
 
 function ProfileAssignmentsCard() {
+  const t = useT();
+
   const { control } = useFormContext<DistanceControlInput>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Distance Profile Assignments</CardTitle>
+        <CardTitle>{t("Distance Profile Assignments")}</CardTitle>
         <CardDescription>
-          Assign active PC*Miler profiles to each mileage purpose. These mappings determine routing
-          behavior for shipment moves, rating workflows, and calculator requests.
+          {t("Assign active PC*Miler profiles to each mileage purpose. These mappings determine routing behavior for shipment moves, rating workflows, and calculator requests.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -222,7 +228,7 @@ function ProfileAssignmentsCard() {
                 name={field.name}
                 label={field.label}
                 description={field.description}
-                placeholder="Select distance profile"
+                placeholder={t("Select distance profile")}
                 rules={{ required: true }}
               />
             </FormControl>

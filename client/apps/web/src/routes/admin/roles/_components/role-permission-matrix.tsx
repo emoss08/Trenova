@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -39,6 +40,8 @@ export function RolePermissionMatrix({
   permissions,
   onPermissionsChange,
 }: RolePermissionMatrixProps) {
+  const t = useT();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -210,7 +213,7 @@ export function RolePermissionMatrix({
         <div className="relative flex-1">
           <Input
             leftElement={<SearchIcon className="text-muted-foreground size-4" />}
-            placeholder="Search resources..."
+            placeholder={t("Search resources...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             rightElement={
@@ -230,7 +233,7 @@ export function RolePermissionMatrix({
           />
         </div>
         <Badge variant="outline" className="shrink-0 text-xs font-normal">
-          {permissions.length} selected
+          {t("{0} selected", permissions.length)}
         </Badge>
       </div>
 
@@ -238,9 +241,9 @@ export function RolePermissionMatrix({
         {filteredCategories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <SearchXIcon className="text-muted-foreground/50 size-8" />
-            <p className="mt-3 text-sm font-medium">No resources found</p>
+            <p className="mt-3 text-sm font-medium">{t("No resources found")}</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              No resources match &ldquo;{searchQuery}&rdquo;. Try a different search term.
+              {t("No resources match “{0}”. Try a different search term.", searchQuery)}
             </p>
             <Button
               type="button"
@@ -249,7 +252,7 @@ export function RolePermissionMatrix({
               className="mt-4"
               onClick={() => setSearchQuery("")}
             >
-              Clear search
+              {t("Clear search")}
             </Button>
           </div>
         ) : (
@@ -298,6 +301,8 @@ function CategorySection({
   onToggleAllForCategory,
   onUpdateDataScope,
 }: CategorySectionProps) {
+  const t = useT();
+
   const grantedCount = category.resources.filter((r) => permissionMap.has(r.resource)).length;
 
   return (
@@ -326,7 +331,7 @@ function CategorySection({
               className="h-6 px-2 text-[11px]"
               onClick={() => onToggleAllForCategory(category, "select")}
             >
-              All
+              {t("All")}
             </Button>
             <Button
               type="button"
@@ -335,7 +340,7 @@ function CategorySection({
               className="h-6 px-2 text-[11px]"
               onClick={() => onToggleAllForCategory(category, "clear")}
             >
-              None
+              {t("None")}
             </Button>
           </div>
         </div>

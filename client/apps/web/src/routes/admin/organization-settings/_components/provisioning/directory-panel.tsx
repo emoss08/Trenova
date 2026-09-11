@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { apiService } from "@/services/api";
@@ -44,6 +45,8 @@ export function SCIMDirectoryPanel({
   onOpenChange,
   onSaved,
 }: SCIMDirectoryPanelProps) {
+  const t = useT();
+
   const form = useForm<SCIMDirectoryFormValues>({
     resolver: zodResolver(scimDirectoryFormSchema) as Resolver<SCIMDirectoryFormValues>,
     defaultValues: toSCIMDirectoryFormValues(emptyDirectory),
@@ -59,7 +62,7 @@ export function SCIMDirectoryPanel({
         row={directory ? (toSCIMDirectoryFormValues(directory) as SCIMDirectoryRecord) : null}
         form={form}
         queryKey={queryKey}
-        title="SCIM Directory"
+        title={t("SCIM Directory")}
         fieldKey="tenantSlug"
         size="md"
         formComponent={<SCIMDirectoryForm />}
@@ -81,8 +84,8 @@ export function SCIMDirectoryPanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={queryKey}
-      title="SCIM Directory"
-      description="Configure a SCIM tenant before issuing tokens or mapping directory groups."
+      title={t("SCIM Directory")}
+      description={t("Configure a SCIM tenant before issuing tokens or mapping directory groups.")}
       size="md"
       formComponent={<SCIMDirectoryForm />}
       mutationFn={async (values) => {

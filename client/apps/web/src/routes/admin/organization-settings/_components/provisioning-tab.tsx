@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -23,6 +24,8 @@ export function ProvisioningTab({
   organizationId: string;
   isActive: boolean;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const auditQuery = useQuery(queries.organization.provisioningAudit(organizationId));
   const [directoryPanelMode, setDirectoryPanelMode] = useState<SCIMDirectoryPanelMode>("create");
@@ -79,7 +82,7 @@ export function ProvisioningTab({
     mutationFn: async (directoryId: string) =>
       apiService.organizationService.deleteSCIMDirectory(organizationId, directoryId),
     onSuccess: async (_data, deletedDirectoryId) => {
-      toast.success("SCIM directory removed");
+      toast.success(t("SCIM directory removed"));
       await handleDirectoryDeleted(deletedDirectoryId);
     },
   });
@@ -129,8 +132,8 @@ export function ProvisioningTab({
         ) : (
           <EmptyState
             icon={<UsersRoundIcon />}
-            label="Select a directory"
-            description="Choose or create a SCIM directory before managing tokens and group mappings."
+            label={t("Select a directory")}
+            description={t("Choose or create a SCIM directory before managing tokens and group mappings.")}
           />
         )}
         <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />

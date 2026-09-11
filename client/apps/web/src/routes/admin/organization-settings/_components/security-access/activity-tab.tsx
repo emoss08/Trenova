@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Select,
@@ -67,6 +68,8 @@ function getActivityViewIcon(view: ActivityViewValue) {
 }
 
 export function ActivityTab({ organizationId }: { organizationId: string }) {
+  const t = useT();
+
   const [activityView, setActivityView] = useQueryState("activityView", activityViewParser);
   const [search, setSearch] = useState("");
   const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
@@ -80,11 +83,11 @@ export function ActivityTab({ organizationId }: { organizationId: string }) {
   return (
     <OuterContent>
       <ConsoleToolbar
-        title="Activity console"
-        description="Authentication outcomes, risk decisions, linked identities, and MFA devices."
+        title={t("Activity console")}
+        description={t("Authentication outcomes, risk decisions, linked identities, and MFA devices.")}
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search activity"
+        searchPlaceholder={t("Search activity")}
         action={
           <ActivityViewSelect value={activityView} onValueChange={handleActivityViewChange} />
         }
@@ -230,6 +233,8 @@ function ActivityTableSection({
 }
 
 function AuthEventsSection({ organizationId, search }: { organizationId: string; search: string }) {
+  const t = useT();
+
   const authEventsQuery = useQuery(queries.organization.authEvents(organizationId));
   const records = useMemo(
     () =>
@@ -243,7 +248,7 @@ function AuthEventsSection({ organizationId, search }: { organizationId: string;
   );
 
   if (authEventsQuery.isError) {
-    return <ErrorState label="Authentication events could not be loaded." />;
+    return <ErrorState label={t("Authentication events could not be loaded.")} />;
   }
 
   return <AuthEventsTable records={records} isLoading={authEventsQuery.isLoading} />;
@@ -256,6 +261,8 @@ function RiskDecisionsSection({
   organizationId: string;
   search: string;
 }) {
+  const t = useT();
+
   const riskQuery = useQuery(queries.organization.riskDecisions(organizationId));
   const records = useMemo(
     () =>
@@ -269,7 +276,7 @@ function RiskDecisionsSection({
   );
 
   if (riskQuery.isError) {
-    return <ErrorState label="Risk decisions could not be loaded." />;
+    return <ErrorState label={t("Risk decisions could not be loaded.")} />;
   }
 
   return <RiskDecisionsTable records={records} isLoading={riskQuery.isLoading} />;
@@ -282,6 +289,8 @@ function ExternalIdentitiesSection({
   organizationId: string;
   search: string;
 }) {
+  const t = useT();
+
   const externalIdentityQuery = useQuery(queries.organization.externalIdentities(organizationId));
   const records = useMemo(
     () =>
@@ -295,7 +304,7 @@ function ExternalIdentitiesSection({
   );
 
   if (externalIdentityQuery.isError) {
-    return <ErrorState label="External identities could not be loaded." />;
+    return <ErrorState label={t("External identities could not be loaded.")} />;
   }
 
   return <ExternalIdentitiesTable records={records} isLoading={externalIdentityQuery.isLoading} />;
@@ -308,6 +317,8 @@ function MFAAuthenticatorsSection({
   organizationId: string;
   search: string;
 }) {
+  const t = useT();
+
   const mfaQuery = useQuery(queries.organization.mfaAuthenticators(organizationId));
   const records = useMemo(
     () =>
@@ -321,18 +332,20 @@ function MFAAuthenticatorsSection({
   );
 
   if (mfaQuery.isError) {
-    return <ErrorState label="MFA authenticators could not be loaded." />;
+    return <ErrorState label={t("MFA authenticators could not be loaded.")} />;
   }
 
   return <MFAAuthenticatorsTable records={records} isLoading={mfaQuery.isLoading} />;
 }
 
 function AuthEventsTable({ records, isLoading }: { records: AuthEvent[]; isLoading: boolean }) {
+  const t = useT();
+
   return (
     <ActivityTableShell
       isLoading={isLoading}
       rowCount={records.length}
-      emptyLabel="No authentication events found."
+      emptyLabel={t("No authentication events found.")}
       headers={["Provider", "Outcome", "Risk", "When", "Detail"]}
     >
       {records.map((item) => (
@@ -368,11 +381,13 @@ function RiskDecisionsTable({
   records: RiskDecision[];
   isLoading: boolean;
 }) {
+  const t = useT();
+
   return (
     <ActivityTableShell
       isLoading={isLoading}
       rowCount={records.length}
-      emptyLabel="No risk decisions found."
+      emptyLabel={t("No risk decisions found.")}
       headers={["Outcome", "Reason", "Signals", "When"]}
     >
       {records.map((item) => (
@@ -400,11 +415,13 @@ function ExternalIdentitiesTable({
   records: ExternalIdentity[];
   isLoading: boolean;
 }) {
+  const t = useT();
+
   return (
     <ActivityTableShell
       isLoading={isLoading}
       rowCount={records.length}
-      emptyLabel="No external identities found."
+      emptyLabel={t("No external identities found.")}
       headers={["Identity", "Subject", "Last login", "Created"]}
     >
       {records.map((item) => (
@@ -433,11 +450,13 @@ function MFAAuthenticatorsTable({
   records: MFAAuthenticator[];
   isLoading: boolean;
 }) {
+  const t = useT();
+
   return (
     <ActivityTableShell
       isLoading={isLoading}
       rowCount={records.length}
-      emptyLabel="No MFA authenticators found."
+      emptyLabel={t("No MFA authenticators found.")}
       headers={["Authenticator", "Status", "Verified", "Last used"]}
     >
       {records.map((item) => (
@@ -476,6 +495,8 @@ function ActivityTableShell({
   headers: string[];
   children: ReactNode;
 }) {
+  const t = useT();
+
   if (isLoading) {
     return <RowSkeleton rows={5} />;
   }
@@ -485,7 +506,7 @@ function ActivityTableShell({
       <EmptyState
         icon={<ActivityIcon />}
         label={emptyLabel}
-        description="Try a different filter."
+        description={t("Try a different filter.")}
       />
     );
   }

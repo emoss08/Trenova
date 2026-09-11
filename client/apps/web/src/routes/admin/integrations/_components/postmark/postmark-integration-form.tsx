@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
@@ -32,6 +33,8 @@ const postmarkLogo = "/integrations/logos/postmark_all.png";
 const postmarkWebhookEvents = ["Delivery", "Bounce", "SpamComplaint", "Open", "Click"];
 
 export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -83,7 +86,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
     form,
     resourceName: "Postmark configuration",
     onSuccess: async () => {
-      toast.success("Postmark integration updated");
+      toast.success(t("Postmark integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config("Postmark").queryKey,
@@ -100,20 +103,19 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
       <PostmarkFormHeader />
       <Alert variant="info">
         <MailCheckIcon className="size-4" />
-        <AlertTitle>Transactional email provider</AlertTitle>
+        <AlertTitle>{t("Transactional email provider")}</AlertTitle>
         <AlertDescription>
-          Postmark credentials are stored here. Sender profiles and purpose assignments are managed
-          from Organization Email Profiles.
+          {t("Postmark credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.")}
         </AlertDescription>
       </Alert>
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
             <SwitchField
-              label="Enable Postmark"
+              label={t("Enable Postmark")}
               control={control}
               name="enabled"
-              description="Toggle transactional email delivery for this business unit."
+              description={t("Toggle transactional email delivery for this business unit.")}
               outlined
             />
           </FormControl>
@@ -124,25 +126,25 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
               label={`Server Token ${hasServerToken ? "(leave blank to keep existing token)" : ""}`}
               autoComplete="off"
               placeholder={hasServerToken ? "********" : "Postmark server token"}
-              description="Used by the server for Postmark API calls."
+              description={t("Used by the server for Postmark API calls.")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               name="configuration.baseUrl"
               control={control}
-              label="Base URL"
+              label={t("Base URL")}
               placeholder="https://api.postmarkapp.com"
-              description="Keep the default unless Postmark changes the API endpoint."
+              description={t("Keep the default unless Postmark changes the API endpoint.")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               name="configuration.messageStream"
               control={control}
-              label="Message Stream"
+              label={t("Message Stream")}
               placeholder="outbound"
-              description="Postmark message stream used for transactional sends."
+              description={t("Postmark message stream used for transactional sends.")}
             />
           </FormControl>
           <FormControl cols="full">
@@ -151,28 +153,28 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  Webhook Token
+                  {t("Webhook Token")}
                   <PostmarkWebhookHelpPopover webhookURL={webhookURL} />
                 </span>
               }
               readOnly
-              placeholder="Generated after first save"
-              description="Use this token in the Postmark webhook URL path."
+              placeholder={t("Generated after first save")}
+              description={t("Use this token in the Postmark webhook URL path.")}
             />
           </FormControl>
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"
             type="submit"
             isLoading={saveMutation.isPending}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            Save Changes
+            {t("Save Changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -192,6 +194,8 @@ function buildPostmarkWebhookURL(webhookToken?: string) {
 }
 
 function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -203,7 +207,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground size-3.5 p-0 hover:bg-transparent"
-            aria-label="Postmark webhook setup instructions"
+            aria-label={t("Postmark webhook setup instructions")}
           >
             <InfoIcon className="size-3" />
           </Button>
@@ -211,20 +215,20 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
       />
       <PopoverContent align="start" className="w-88">
         <PopoverHeader>
-          <PopoverTitle>Postmark webhook setup</PopoverTitle>
+          <PopoverTitle>{t("Postmark webhook setup")}</PopoverTitle>
           <PopoverDescription>
-            Keeps email logs current after delivery, bounces, complaints, opens, and clicks.
+            {t("Keeps email logs current after delivery, bounces, complaints, opens, and clicks.")}
           </PopoverDescription>
         </PopoverHeader>
         <div className="space-y-2 text-xs">
           <p className="text-muted-foreground">
-            In Postmark, create a server webhook endpoint over HTTPS and use this URL:
+            {t("In Postmark, create a server webhook endpoint over HTTPS and use this URL:")}
           </p>
           <code className="bg-muted text-foreground block max-w-full overflow-x-auto rounded-md px-2 py-1.5">
             {webhookURL || "Save once to generate the webhook URL."}
           </code>
           <div className="space-y-1">
-            <p className="text-muted-foreground">Enable these Postmark triggers:</p>
+            <p className="text-muted-foreground">{t("Enable these Postmark triggers:")}</p>
             <div className="flex flex-wrap gap-1">
               {postmarkWebhookEvents.map((event) => (
                 <code
@@ -245,7 +249,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             onClick={() => void copy(webhookURL, { withToast: true })}
           >
             {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
-            Copy webhook URL
+            {t("Copy webhook URL")}
           </Button>
         </div>
       </PopoverContent>
@@ -254,6 +258,8 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
 }
 
 function PostmarkFormHeader() {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-center gap-4">
@@ -263,14 +269,14 @@ function PostmarkFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={postmarkLogo} alt="Postmark" className="h-8 w-28 object-contain" />
+        <LazyImage src={postmarkLogo} alt={t("Postmark")} className="h-8 w-28 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with Postmark</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with Postmark")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">Create a server token and webhook in</p>
+          <p className="text-muted-foreground text-xs">{t("Create a server token and webhook in")}</p>
           <ExternalLink href="https://account.postmarkapp.com/servers" className="text-xs">
-            Postmark.
+            {t("Postmark.")}
           </ExternalLink>
         </div>
       </div>

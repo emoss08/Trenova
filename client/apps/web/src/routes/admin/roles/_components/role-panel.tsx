@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -30,6 +31,8 @@ export function RolePanel({ open, onOpenChange, mode, row }: DataTablePanelProps
 type RoleCreatePanelProps = Pick<DataTablePanelProps<Role>, "open" | "onOpenChange">;
 
 function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState<AddPermission[]>([]);
 
@@ -73,8 +76,8 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
       return response;
     },
     onSuccess: () => {
-      toast.success("Changes have been saved", {
-        description: "Role created successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Role created successfully"),
       });
       reset();
       setPermissions([]);
@@ -112,21 +115,21 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title="Add New Role"
-      description="Define the role and configure what it can access."
+      title={t("Add New Role")}
+      description={t("Define the role and configure what it can access.")}
       size="xl"
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="submit"
             form="role-create-form"
             isLoading={isSubmitting}
-            loadingText="Creating..."
+            loadingText={t("Creating...")}
           >
-            Create Role
+            {t("Create Role")}
           </Button>
         </>
       }
@@ -151,6 +154,8 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
 type RoleEditPanelProps = Pick<DataTablePanelProps<Role>, "open" | "onOpenChange" | "row">;
 
 function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<Role>({
@@ -191,8 +196,8 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       return { previousRecord, newValues };
     },
     onSuccess: () => {
-      toast.success("Changes have been saved", {
-        description: "Role updated successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Role updated successfully"),
       });
       reset();
       onOpenChange(false);
@@ -239,28 +244,28 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="submit"
             form="role-edit-form"
             isLoading={isSubmitting}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             disabled={isSystemRole}
           >
-            Save
+            {t("Save")}
           </Button>
         </>
       }
     >
       {!row ? (
-        <ComponentLoader message="Loading Role..." />
+        <ComponentLoader message={t("Loading Role...")} />
       ) : (
         <div className="flex flex-col gap-6">
           {isSystemRole && (
             <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
               <AlertTriangleIcon className="size-4 shrink-0" />
-              <span>This is a system role and cannot be modified.</span>
+              <span>{t("This is a system role and cannot be modified.")}</span>
             </div>
           )}
           <FormProvider {...form}>

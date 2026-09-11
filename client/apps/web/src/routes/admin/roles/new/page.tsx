@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Card,
   CardAction,
@@ -24,6 +25,8 @@ import { RolePermissionMatrix } from "../_components/role-permission-matrix";
 import { RoleTemplateSelector } from "../_components/role-template-selector";
 
 export function RoleCreatePage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState<AddPermission[]>([]);
@@ -52,7 +55,7 @@ export function RoleCreatePage() {
       return response;
     },
     onSuccess: () => {
-      toast.success("Role created successfully");
+      toast.success(t("Role created successfully"));
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       void navigate("/admin/roles");
     },
@@ -80,17 +83,17 @@ export function RoleCreatePage() {
     <FormProvider {...form}>
       <Form onSubmit={onSubmit}>
         <RolePageLayout
-          title="Create Role"
+          title={t("Create Role")}
           isSubmitting={isSubmitting}
-          submitLabel="Create Role"
+          submitLabel={t("Create Role")}
           onSubmit={onSubmit}
           onCancel={handleCancel}
           permissionCount={permissions.length}
         >
           <Card>
             <CardHeader>
-              <CardTitle>Role Details</CardTitle>
-              <CardDescription>Basic information for this role</CardDescription>
+              <CardTitle>{t("Role Details")}</CardTitle>
+              <CardDescription>{t("Basic information for this role")}</CardDescription>
             </CardHeader>
             <CardContent>
               <RoleForm />
@@ -99,8 +102,8 @@ export function RoleCreatePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Permissions</CardTitle>
-              <CardDescription>Configure resource access and operations</CardDescription>
+              <CardTitle>{t("Permissions")}</CardTitle>
+              <CardDescription>{t("Configure resource access and operations")}</CardDescription>
               <CardAction>
                 <RoleTemplateSelector
                   selectedTemplate={selectedTemplate}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   customFieldDefinitionTableGraphQLConfig,
@@ -17,6 +18,8 @@ import { DeleteDefinitionDialog } from "./delete-definition-dialog";
 const customFieldService = new CustomFieldService();
 
 export default function CustomFieldDefinitionTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<CustomFieldDefinitionRow | null>(
@@ -43,7 +46,7 @@ export default function CustomFieldDefinitionTable() {
       });
     },
     onError: (error) => {
-      toast.error("Failed to update custom field", {
+      toast.error(t("Failed to update custom field"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },

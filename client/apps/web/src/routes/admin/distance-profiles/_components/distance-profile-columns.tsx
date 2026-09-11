@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { DistanceProfileRow } from "@/lib/graphql/distance-profile-table";
@@ -11,7 +12,7 @@ export function getColumns(): ColumnDef<DistanceProfileRow>[] {
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate font-medium">{row.original.name}</span>
-          {row.original.isDefault && <Badge variant="info">Default</Badge>}
+          {row.original.isDefault && <Badge variant="info">{translate("Default")}</Badge>}
         </div>
       ),
       meta: {

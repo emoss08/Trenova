@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
@@ -40,6 +41,8 @@ const resendWebhookEvents = [
 ];
 
 export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -91,7 +94,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
     form,
     resourceName: "Resend configuration",
     onSuccess: async () => {
-      toast.success("Resend integration updated");
+      toast.success(t("Resend integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config("Resend").queryKey,
@@ -108,20 +111,19 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
       <ResendFormHeader />
       <Alert variant="info">
         <MailCheckIcon className="size-4" />
-        <AlertTitle>Transactional email provider</AlertTitle>
+        <AlertTitle>{t("Transactional email provider")}</AlertTitle>
         <AlertDescription>
-          Resend credentials are stored here. Sender profiles and purpose assignments are managed
-          from Organization Email Profiles.
+          {t("Resend credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.")}
         </AlertDescription>
       </Alert>
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
             <SwitchField
-              label="Enable Resend"
+              label={t("Enable Resend")}
               control={control}
               name="enabled"
-              description="Toggle transactional email delivery for this business unit."
+              description={t("Toggle transactional email delivery for this business unit.")}
               outlined
             />
           </FormControl>
@@ -132,16 +134,16 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
               label={`API Key ${hasApiKey ? "(leave blank to keep existing key)" : ""}`}
               autoComplete="off"
               placeholder={hasApiKey ? "********" : "re_..."}
-              description="Used by the server for Resend REST API calls."
+              description={t("Used by the server for Resend REST API calls.")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               name="configuration.baseUrl"
               control={control}
-              label="Base URL"
+              label={t("Base URL")}
               placeholder="https://api.resend.com"
-              description="Keep the default unless Resend changes the API endpoint."
+              description={t("Keep the default unless Resend changes the API endpoint.")}
             />
           </FormControl>
           <FormControl cols="full">
@@ -150,39 +152,38 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  Webhook Signing Secret
-                  {hasWebhookSecret ? " (leave blank to keep existing secret)" : ""}
+                  {t("Webhook Signing Secret {0}", hasWebhookSecret ? " (leave blank to keep existing secret)" : "")}
                   <ResendWebhookHelpPopover webhookURL={webhookURL} />
                 </span>
               }
               autoComplete="off"
               placeholder={hasWebhookSecret ? "********" : "whsec_..."}
-              description="Svix signing secret from the Resend webhook endpoint."
+              description={t("Svix signing secret from the Resend webhook endpoint.")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               name="configuration.webhookToken"
               control={control}
-              label="Webhook Token"
+              label={t("Webhook Token")}
               readOnly
-              placeholder="Generated after first save"
-              description="Use this token in the Resend webhook URL path."
+              placeholder={t("Generated after first save")}
+              description={t("Use this token in the Resend webhook URL path.")}
             />
           </FormControl>
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"
             type="submit"
             isLoading={saveMutation.isPending}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            Save Changes
+            {t("Save Changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -202,6 +203,8 @@ function buildResendWebhookURL(webhookToken?: string) {
 }
 
 function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -213,7 +216,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground size-3.5 p-0 hover:bg-transparent"
-            aria-label="Resend webhook setup instructions"
+            aria-label={t("Resend webhook setup instructions")}
           >
             <InfoIcon className="size-3" />
           </Button>
@@ -221,20 +224,20 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
       />
       <PopoverContent align="start" className="w-88">
         <PopoverHeader>
-          <PopoverTitle>Resend webhook setup</PopoverTitle>
+          <PopoverTitle>{t("Resend webhook setup")}</PopoverTitle>
           <PopoverDescription>
-            Keeps email logs current after delivery, bounces, complaints, and other provider events.
+            {t("Keeps email logs current after delivery, bounces, complaints, and other provider events.")}
           </PopoverDescription>
         </PopoverHeader>
         <div className="space-y-2 text-xs">
           <p className="text-muted-foreground">
-            In Resend, create a webhook endpoint and use this URL:
+            {t("In Resend, create a webhook endpoint and use this URL:")}
           </p>
           <code className="bg-muted text-foreground block max-w-full overflow-x-auto rounded-md px-2 py-1.5">
             {webhookURL || "Save once to generate the webhook URL."}
           </code>
           <div className="space-y-1">
-            <p className="text-muted-foreground">Listen for these Resend events:</p>
+            <p className="text-muted-foreground">{t("Listen for these Resend events:")}</p>
             <div className="flex flex-wrap gap-1">
               {resendWebhookEvents.map((event) => (
                 <code
@@ -247,8 +250,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             </div>
           </div>
           <p className="text-muted-foreground">
-            Paste Resend&apos;s signing secret here to verify incoming webhook calls. The
-            integration can be saved before the webhook is configured.
+            {t("Paste Resend's signing secret here to verify incoming webhook calls. The integration can be saved before the webhook is configured.")}
           </p>
           <Button
             type="button"
@@ -259,7 +261,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             onClick={() => void copy(webhookURL, { withToast: true })}
           >
             {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
-            Copy webhook URL
+            {t("Copy webhook URL")}
           </Button>
         </div>
       </PopoverContent>
@@ -268,6 +270,8 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
 }
 
 function ResendFormHeader() {
+  const t = useT();
+
   const { theme } = useTheme();
   const resendLogo = theme === "dark" ? resendLogoDark : resendLogoLight;
 
@@ -280,14 +284,14 @@ function ResendFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={resendLogo} alt="Resend" className="h-8 w-24 object-contain" />
+        <LazyImage src={resendLogo} alt={t("Resend")} className="h-8 w-24 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with Resend</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with Resend")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">Create an API key and webhook in</p>
+          <p className="text-muted-foreground text-xs">{t("Create an API key and webhook in")}</p>
           <ExternalLink href="https://resend.com/api-keys" className="text-xs">
-            Resend.
+            {t("Resend.")}
           </ExternalLink>
         </div>
       </div>

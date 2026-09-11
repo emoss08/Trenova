@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -15,19 +16,21 @@ import type { DistanceProfile } from "@/types/distance-profile";
 import { type Control, useFormContext } from "react-hook-form";
 
 function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> }) {
+  const t = useT();
+
   return (
     <FormSection
-      title="Profile Details"
-      description="Name, lifecycle state, and default selection for this business unit."
+      title={t("Profile Details")}
+      description={t("Name, lifecycle state, and default selection for this business unit.")}
     >
       <FormGroup cols={2}>
         <FormControl>
           <InputField
             control={control}
             name="name"
-            label="Name"
-            placeholder="Default PC*Miler"
-            description="A clear name dispatch and rating teams can recognize."
+            label={t("Name")}
+            placeholder={t("Default PC*Miler")}
+            description={t("A clear name dispatch and rating teams can recognize.")}
             rules={{ required: true }}
             maxLength={100}
           />
@@ -36,9 +39,9 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="status"
-            label="Status"
-            placeholder="Status"
-            description="Inactive profiles cannot be used as the default."
+            label={t("Status")}
+            placeholder={t("Status")}
+            description={t("Inactive profiles cannot be used as the default.")}
             options={distanceProfileStatusChoices}
             rules={{ required: true }}
           />
@@ -47,9 +50,9 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
           <TextareaField
             control={control}
             name="description"
-            label="Description"
-            placeholder="Describe when this routing policy should be used."
-            description="Optional notes that explain the operating policy behind this profile."
+            label={t("Description")}
+            placeholder={t("Describe when this routing policy should be used.")}
+            description={t("Optional notes that explain the operating policy behind this profile.")}
             minRows={3}
           />
         </FormControl>
@@ -57,8 +60,8 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
           <SwitchField
             control={control}
             name="isDefault"
-            label="Default profile"
-            description="Use this profile when no distance override applies to a shipment move."
+            label={t("Default profile")}
+            description={t("Use this profile when no distance override applies to a shipment move.")}
             outlined
           />
         </FormControl>
@@ -68,10 +71,12 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
 }
 
 function ProviderPolicySection({ control }: { control: Control<DistanceProfile> }) {
+  const t = useT();
+
   return (
     <FormSection
-      title="Provider Policy"
-      description="PC*Miler dataset, geography, route type, units, and stop matching policy."
+      title={t("Provider Policy")}
+      description={t("PC*Miler dataset, geography, route type, units, and stop matching policy.")}
       className="border-t py-2"
     >
       <FormGroup cols={2}>
@@ -79,9 +84,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="provider"
-            label="Provider"
-            placeholder="Provider"
-            description="Distance profiles currently support PC*Miler routing policy."
+            label={t("Provider")}
+            placeholder={t("Provider")}
+            description={t("Distance profiles currently support PC*Miler routing policy.")}
             options={distanceProfileProviderChoices}
             rules={{ required: true }}
             isReadOnly
@@ -91,9 +96,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <InputField
             control={control}
             name="dataVersion"
-            label="Data Version"
-            placeholder="Current"
-            description="PC*Miler data version sent with Route Reports requests."
+            label={t("Data Version")}
+            placeholder={t("Current")}
+            description={t("PC*Miler data version sent with Route Reports requests.")}
             rules={{ required: true }}
             maxLength={50}
           />
@@ -102,9 +107,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="region"
-            label="Region"
-            placeholder="Region"
-            description="Routing data region used for all stops in this profile."
+            label={t("Region")}
+            placeholder={t("Region")}
+            description={t("Routing data region used for all stops in this profile.")}
             options={distanceProfileRegionChoices}
             rules={{ required: true }}
             isReadOnly
@@ -114,9 +119,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="routingType"
-            label="Routing Type"
-            placeholder="Routing Type"
-            description="Controls how PC*Miler chooses roads for calculated distance."
+            label={t("Routing Type")}
+            placeholder={t("Routing Type")}
+            description={t("Controls how PC*Miler chooses roads for calculated distance.")}
             options={distanceProfileRoutingTypeChoices}
             rules={{ required: true }}
           />
@@ -125,9 +130,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="distanceUnits"
-            label="Distance Units"
-            placeholder="Distance Units"
-            description="Unit stored on shipment moves and returned in calculation summaries."
+            label={t("Distance Units")}
+            placeholder={t("Distance Units")}
+            description={t("Unit stored on shipment moves and returned in calculation summaries.")}
             options={distanceProfileDistanceUnitChoices}
             rules={{ required: true }}
           />
@@ -136,9 +141,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <SelectField
             control={control}
             name="locationGranularity"
-            label="Location Granularity"
-            placeholder="Location Granularity"
-            description="Determines which location fields are sent to PC*Miler stops."
+            label={t("Location Granularity")}
+            placeholder={t("Location Granularity")}
+            description={t("Determines which location fields are sent to PC*Miler stops.")}
             options={distanceProfileLocationGranularityChoices}
             rules={{ required: true }}
           />
@@ -147,9 +152,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
           <InputField
             control={control}
             name="profileName"
-            label="PC*Miler Profile Name"
-            placeholder="Optional Trimble vehicle profile"
-            description="Optional PC*Miler vehicle profile name for account-specific routing settings."
+            label={t("PC*Miler Profile Name")}
+            placeholder={t("Optional Trimble vehicle profile")}
+            description={t("Optional PC*Miler vehicle profile name for account-specific routing settings.")}
             maxLength={100}
           />
         </FormControl>
@@ -159,10 +164,12 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
 }
 
 function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }) {
+  const t = useT();
+
   return (
     <FormSection
-      title="Route Behavior"
-      description="Road restrictions and supplemental reporting options sent with mileage requests."
+      title={t("Route Behavior")}
+      description={t("Road restrictions and supplemental reporting options sent with mileage requests.")}
       className="border-t py-2"
     >
       <FormGroup cols={2}>
@@ -170,8 +177,8 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
           <SwitchField
             control={control}
             name="highwayOnly"
-            label="Highway only"
-            description="Restrict routing to highways where PC*Miler supports the option."
+            label={t("Highway only")}
+            description={t("Restrict routing to highways where PC*Miler supports the option.")}
             outlined
           />
         </FormControl>
@@ -179,8 +186,8 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
           <SwitchField
             control={control}
             name="tollRoads"
-            label="Allow toll roads"
-            description="Permit toll roads when PC*Miler selects the route."
+            label={t("Allow toll roads")}
+            description={t("Permit toll roads when PC*Miler selects the route.")}
             outlined
           />
         </FormControl>
@@ -188,8 +195,8 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
           <SwitchField
             control={control}
             name="bordersOpen"
-            label="Borders open"
-            description="Allow cross-border routes when stops span supported regions."
+            label={t("Borders open")}
+            description={t("Allow cross-border routes when stops span supported regions.")}
             outlined
           />
         </FormControl>
@@ -197,8 +204,8 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
           <SwitchField
             control={control}
             name="includeTollData"
-            label="Include toll data"
-            description="Request toll reporting details in the PC*Miler response."
+            label={t("Include toll data")}
+            description={t("Request toll reporting details in the PC*Miler response.")}
             outlined
           />
         </FormControl>

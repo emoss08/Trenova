@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { translate } from "@trenova/shared/i18n/runtime";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -125,7 +126,7 @@ export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
       cell: ({ row }) => {
         const lastLogin = row.original.lastLoginAt;
         if (!lastLogin) {
-          return <span className="text-muted-foreground">Never</span>;
+          return <span className="text-muted-foreground">{translate("Never")}</span>;
         }
         return <HoverCardTimestamp timestamp={lastLogin} />;
       },

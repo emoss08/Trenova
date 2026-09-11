@@ -1,6 +1,7 @@
 const eiaLogoLight = "/integrations/logos/eia-light.svg";
 const eiaLogoDark = "/integrations/logos/eia-dark.svg";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
@@ -24,6 +25,8 @@ import { toast } from "sonner";
 const INTEGRATION_TYPE = "EIAFuelPrices";
 
 export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -66,7 +69,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
     form,
     resourceName: "EIA fuel price configuration",
     onSuccess: async () => {
-      toast.success("EIA fuel price integration updated");
+      toast.success(t("EIA fuel price integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config(INTEGRATION_TYPE).queryKey,
@@ -81,13 +84,13 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
   const testConnectionMutation = useMutation({
     mutationFn: () => apiService.integrationService.testConnection(INTEGRATION_TYPE),
     onSuccess: async () => {
-      toast.success("EIA connection successful");
+      toast.success(t("EIA connection successful"));
       await queryClient.invalidateQueries({
         queryKey: queries.integration.catalog().queryKey,
       });
     },
     onError: () => {
-      toast.error("EIA connection test failed");
+      toast.error(t("EIA connection test failed"));
     },
   });
 
@@ -99,10 +102,9 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
           <FormControl cols="full">
             <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
-                <Label htmlFor="eia-enabled">Enable EIA Fuel Prices</Label>
+                <Label htmlFor="eia-enabled">{t("Enable EIA Fuel Prices")}</Label>
                 <p className="text-muted-foreground text-xs">
-                  Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE
-                  regional indices.
+                  {t("Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.")}
                 </p>
               </div>
               <Controller
@@ -127,7 +129,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
             <InputField
               name="configuration.baseUrl"
               control={control}
-              label="Base URL"
+              label={t("Base URL")}
               autoComplete="off"
               placeholder="https://api.eia.gov/v2"
             />
@@ -135,7 +137,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -144,19 +146,19 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
               size="sm"
               onClick={() => testConnectionMutation.mutateAsync()}
               isLoading={testConnectionMutation.isPending}
-              loadingText="Testing..."
+              loadingText={t("Testing...")}
               disabled={configQuery.isLoading || saveMutation.isPending}
             >
-              Test Connection
+              {t("Test Connection")}
             </Button>
             <Button
               size="sm"
               type="submit"
               isLoading={saveMutation.isPending}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              Save Changes
+              {t("Save Changes")}
             </Button>
           </div>
         </DialogFooter>
@@ -166,6 +168,8 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
 }
 
 function EIAFuelPricesFormHeader() {
+  const t = useT();
+
   const { theme } = useTheme();
   const logo = theme === "dark" ? eiaLogoDark : eiaLogoLight;
 
@@ -178,16 +182,16 @@ function EIAFuelPricesFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={logo} alt="EIA Logo" className="h-8 max-w-24 object-contain" />
+        <LazyImage src={logo} alt={t("EIA Logo")} className="h-8 max-w-24 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with EIA Fuel Prices</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with EIA Fuel Prices")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
           <p className="text-muted-foreground text-xs">
-            Free API key powers weekly DOE diesel price ingestion.
+            {t("Free API key powers weekly DOE diesel price ingestion.")}
           </p>
           <ExternalLink href="https://www.eia.gov/opendata/" className="text-xs">
-            Get a key
+            {t("Get a key")}
           </ExternalLink>
         </div>
       </div>

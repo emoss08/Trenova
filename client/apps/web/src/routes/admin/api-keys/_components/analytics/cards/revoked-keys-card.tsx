@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KPICard } from "@/components/kpi/kpi-simple-card";
 import { ShieldOff } from "lucide-react";
 import type { ApiKeyAnalyticsData } from "../analytics-data";
@@ -7,10 +8,12 @@ type Props = {
 };
 
 export function RevokedKeysCard({ data }: Props) {
+  const t = useT();
+
   const { count, percentOfTotal } = data;
 
   return (
-    <KPICard label="Revoked Keys" value={count.toLocaleString()} icon={ShieldOff}>
+    <KPICard label={t("Revoked Keys")} value={count.toLocaleString()} icon={ShieldOff}>
       <div className="mt-1.5 space-y-1">
         <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
           <div
@@ -19,7 +22,7 @@ export function RevokedKeysCard({ data }: Props) {
           />
         </div>
         <div className="text-muted-foreground flex justify-between text-[10px]">
-          <span>{percentOfTotal}% of total</span>
+          <span>{t("{0}% of total", percentOfTotal)}</span>
         </div>
       </div>
     </KPICard>

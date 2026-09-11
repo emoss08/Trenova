@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -48,6 +49,8 @@ function SectionCard({
 }
 
 export function CoreStructureSection({ index }: SectionProps) {
+  const t = useT();
+
   const { control } = useFormContext<SequenceConfigDocument>();
   const useSeparators = useWatch({
     control,
@@ -56,16 +59,16 @@ export function CoreStructureSection({ index }: SectionProps) {
 
   return (
     <SectionCard
-      title="Core Structure"
-      description="Primary sequence components and delimiter behavior."
+      title={t("Core Structure")}
+      description={t("Primary sequence components and delimiter behavior.")}
     >
       <FormControl>
         <InputField
           control={control}
           name={`configs.${index}.prefix`}
-          label="Prefix"
-          placeholder="e.g. PRO"
-          description="Leading literal text included in every generated value."
+          label={t("Prefix")}
+          placeholder={t("e.g. PRO")}
+          description={t("Leading literal text included in every generated value.")}
           maxLength={20}
         />
       </FormControl>
@@ -73,8 +76,8 @@ export function CoreStructureSection({ index }: SectionProps) {
         <NumberField
           control={control}
           name={`configs.${index}.sequenceDigits`}
-          label="Sequence Digits"
-          description="Width of the zero-padded counter (1–10)."
+          label={t("Sequence Digits")}
+          description={t("Width of the zero-padded counter (1–10).")}
           min={1}
           max={10}
         />
@@ -83,8 +86,8 @@ export function CoreStructureSection({ index }: SectionProps) {
         <SwitchField
           control={control}
           name={`configs.${index}.useSeparators`}
-          label="Use Separators"
-          description="Insert a delimiter between each token segment."
+          label={t("Use Separators")}
+          description={t("Insert a delimiter between each token segment.")}
           position="left"
           outlined
         />
@@ -94,9 +97,9 @@ export function CoreStructureSection({ index }: SectionProps) {
           <SelectField
             control={control}
             name={`configs.${index}.separatorChar`}
-            label="Separator Character"
+            label={t("Separator Character")}
             options={separatorOptions}
-            placeholder="Select separator"
+            placeholder={t("Select separator")}
           />
         </FormControl>
       ) : null}
@@ -105,6 +108,8 @@ export function CoreStructureSection({ index }: SectionProps) {
 }
 
 export function DateComponentsSection({ index }: SectionProps) {
+  const t = useT();
+
   const { control } = useFormContext<SequenceConfigDocument>();
   const includeYear = useWatch({
     control,
@@ -113,40 +118,40 @@ export function DateComponentsSection({ index }: SectionProps) {
 
   return (
     <SectionCard
-      title="Date Components"
-      description="Embed period context to make values self-describing."
+      title={t("Date Components")}
+      description={t("Embed period context to make values self-describing.")}
     >
       <FormControl cols="full">
         <div className="grid gap-3 sm:grid-cols-2">
           <SwitchField
             control={control}
             name={`configs.${index}.includeYear`}
-            label="Include Year"
-            description="Embed a 2- or 4-digit year token."
+            label={t("Include Year")}
+            description={t("Embed a 2- or 4-digit year token.")}
             position="left"
             outlined
           />
           <SwitchField
             control={control}
             name={`configs.${index}.includeMonth`}
-            label="Include Month"
-            description="Append the current month as a 2-digit number."
+            label={t("Include Month")}
+            description={t("Append the current month as a 2-digit number.")}
             position="left"
             outlined
           />
           <SwitchField
             control={control}
             name={`configs.${index}.includeWeekNumber`}
-            label="Include ISO Week Number"
-            description="Append the ISO week number for weekly grouping."
+            label={t("Include ISO Week Number")}
+            description={t("Append the ISO week number for weekly grouping.")}
             position="left"
             outlined
           />
           <SwitchField
             control={control}
             name={`configs.${index}.includeDay`}
-            label="Include Day"
-            description="Append the day of the month as 2 digits."
+            label={t("Include Day")}
+            description={t("Append the day of the month as 2 digits.")}
             position="left"
             outlined
           />
@@ -159,7 +164,7 @@ export function DateComponentsSection({ index }: SectionProps) {
             name={`configs.${index}.yearDigits`}
             render={({ field, fieldState }) => (
               <div className="space-y-1.5">
-                <Label className={fieldState.error ? "text-destructive" : ""}>Year Digits</Label>
+                <Label className={fieldState.error ? "text-destructive" : ""}>{t("Year Digits")}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {yearDigitsOptions.map((option) => {
                     const isActive = field.value === option.value;
@@ -186,7 +191,7 @@ export function DateComponentsSection({ index }: SectionProps) {
                   <p className="text-destructive text-xs">{fieldState.error.message}</p>
                 ) : (
                   <p className="text-2xs text-muted-foreground">
-                    How many digits of the year to embed in the code.
+                    {t("How many digits of the year to embed in the code.")}
                   </p>
                 )}
               </div>
@@ -199,19 +204,21 @@ export function DateComponentsSection({ index }: SectionProps) {
 }
 
 export function ContextComponentsSection({ index }: SectionProps) {
+  const t = useT();
+
   const { control } = useFormContext<SequenceConfigDocument>();
 
   return (
     <SectionCard
-      title="Context Components"
-      description="Embed operational identity fields resolved at generation time."
+      title={t("Context Components")}
+      description={t("Embed operational identity fields resolved at generation time.")}
     >
       <FormControl>
         <SwitchField
           control={control}
           name={`configs.${index}.includeLocationCode`}
-          label="Include Location Code"
-          description="Embed the origin location's code, resolved from the shipment."
+          label={t("Include Location Code")}
+          description={t("Embed the origin location's code, resolved from the shipment.")}
           position="left"
           outlined
         />
@@ -220,8 +227,8 @@ export function ContextComponentsSection({ index }: SectionProps) {
         <SwitchField
           control={control}
           name={`configs.${index}.includeBusinessUnitCode`}
-          label="Include Business Unit Code"
-          description="Embed the business unit's code, resolved from the organization."
+          label={t("Include Business Unit Code")}
+          description={t("Embed the business unit's code, resolved from the organization.")}
           position="left"
           outlined
         />
@@ -231,6 +238,8 @@ export function ContextComponentsSection({ index }: SectionProps) {
 }
 
 export function AdvancedSection({ index }: SectionProps) {
+  const t = useT();
+
   const { control } = useFormContext<SequenceConfigDocument>();
   const includeRandomDigits = useWatch({
     control,
@@ -263,15 +272,15 @@ export function AdvancedSection({ index }: SectionProps) {
               className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
             >
               <div className="flex flex-col gap-0.5">
-                <span className="text-base leading-snug font-medium">Advanced</span>
+                <span className="text-base leading-snug font-medium">{t("Advanced")}</span>
                 <span className="text-muted-foreground text-sm">
-                  Validation helpers and custom formatting overrides.
+                  {t("Validation helpers and custom formatting overrides.")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 {enabledCount > 0 ? (
                   <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
-                    {enabledCount} enabled
+                    {t("{0} enabled", enabledCount)}
                   </span>
                 ) : null}
                 <ChevronDownIcon
@@ -291,8 +300,8 @@ export function AdvancedSection({ index }: SectionProps) {
                 <SwitchField
                   control={control}
                   name={`configs.${index}.includeRandomDigits`}
-                  label="Include Random Digits"
-                  description="Append random digits for collision avoidance."
+                  label={t("Include Random Digits")}
+                  description={t("Append random digits for collision avoidance.")}
                   position="left"
                   outlined
                 />
@@ -302,8 +311,8 @@ export function AdvancedSection({ index }: SectionProps) {
                   <NumberField
                     control={control}
                     name={`configs.${index}.randomDigitsCount`}
-                    label="Random Digits Count"
-                    description="Number of random digits to append (1–10)."
+                    label={t("Random Digits Count")}
+                    description={t("Number of random digits to append (1–10).")}
                     min={1}
                     max={10}
                   />
@@ -313,8 +322,8 @@ export function AdvancedSection({ index }: SectionProps) {
                 <SwitchField
                   control={control}
                   name={`configs.${index}.includeCheckDigit`}
-                  label="Include Check Digit"
-                  description="Append a Luhn-computed check digit for validation."
+                  label={t("Include Check Digit")}
+                  description={t("Append a Luhn-computed check digit for validation.")}
                   position="left"
                   outlined
                 />
@@ -323,8 +332,8 @@ export function AdvancedSection({ index }: SectionProps) {
                 <SwitchField
                   control={control}
                   name={`configs.${index}.allowCustomFormat`}
-                  label="Allow Custom Format"
-                  description="Override auto-composition with a token template."
+                  label={t("Allow Custom Format")}
+                  description={t("Override auto-composition with a token template.")}
                   position="left"
                   outlined
                 />
@@ -334,9 +343,9 @@ export function AdvancedSection({ index }: SectionProps) {
                   <InputField
                     control={control}
                     name={`configs.${index}.customFormat`}
-                    label="Custom Format Template"
-                    placeholder="{P}-{Y}{M}-{S}"
-                    description="Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above."
+                    label={t("Custom Format Template")}
+                    placeholder={t("{P}-{Y}{M}-{S}")}
+                    description={t("Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above.")}
                   />
                 </FormControl>
               ) : null}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -84,12 +85,14 @@ function SessionSide({
   queryAge: number;
   align?: "start" | "end";
 }) {
+  const t = useT();
+
   return (
     <div
       className={`flex min-w-0 flex-col gap-1 ${align === "end" ? "items-end text-right" : "items-start text-left"}`}
     >
       <Badge variant="outline" className="w-fit px-0 font-mono">
-        PID {pid}
+        {t("PID {0}", pid)}
       </Badge>
       <span className="text-sm font-medium">{appName || "Unknown app"}</span>
       <span className="text-muted-foreground text-xs">{user || "Unknown user"}</span>
@@ -97,14 +100,16 @@ function SessionSide({
       <div
         className={`mt-1 flex flex-col gap-0.5 ${align === "end" ? "items-end" : "items-start"}`}
       >
-        <AgeBadge label="Tx age" seconds={txAge} />
-        <AgeBadge label="Query age" seconds={queryAge} />
+        <AgeBadge label={t("Tx age")} seconds={txAge} />
+        <AgeBadge label={t("Query age")} seconds={queryAge} />
       </div>
     </div>
   );
 }
 
 function QueryBlock({ label, query }: { label: string; query: string }) {
+  const t = useT();
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
       <span className="text-muted-foreground text-[10px] tracking-wider uppercase">{label}</span>
@@ -114,7 +119,7 @@ function QueryBlock({ label, query }: { label: string; query: string }) {
         </div>
       ) : (
         <div className="bg-muted/50 rounded-md p-2">
-          <span className="text-muted-foreground text-xs">No query text</span>
+          <span className="text-muted-foreground text-xs">{t("No query text")}</span>
         </div>
       )}
     </div>
@@ -122,6 +127,8 @@ function QueryBlock({ label, query }: { label: string; query: string }) {
 }
 
 function TerminateButton({ row }: { row: DatabaseSessionChain }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (pid: number) => apiService.databaseSessionService.terminate(pid),
@@ -145,20 +152,19 @@ function TerminateButton({ row }: { row: DatabaseSessionChain }) {
           />
         }
       >
-        Terminate
+        {t("Terminate")}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Terminate database session?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Terminate database session?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will terminate backend PID {row.blockingPid} to release blocked PID{" "}
-            {row.blockedPid}. The in-flight transaction on the blocker will be cancelled.
+            {t("This will terminate backend PID {0} to release blocked PID {1}. The in-flight transaction on the blocker will be cancelled.", row.blockingPid, row.blockedPid)}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={() => mutation.mutate(row.blockingPid)}>
-            Terminate PID {row.blockingPid}
+            {t("Terminate PID {0}", row.blockingPid)}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -167,12 +173,14 @@ function TerminateButton({ row }: { row: DatabaseSessionChain }) {
 }
 
 function SessionCard({ row }: { row: DatabaseSessionChain }) {
+  const t = useT();
+
   return (
     <Collapsible>
       <Card size="sm">
         <CardHeader className="border-b">
           <CardTitle>
-            PID {row.blockedPid} blocked by PID {row.blockingPid}
+            {t("PID {0} blocked by PID {1}", row.blockedPid, row.blockingPid)}
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
             <Badge variant="secondary">{row.blockedWaitEventType || "Unknown"}</Badge>
@@ -210,13 +218,13 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
         <div className="border-t px-3 py-2">
           <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md py-1 text-xs transition-colors">
             <CodeIcon className="size-3" />
-            <span>Queries</span>
+            <span>{t("Queries")}</span>
             <ChevronDownIcon className="size-3 transition-transform [[data-panel-open]_&]:rotate-180" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-2 grid grid-cols-2 gap-4">
-              <QueryBlock label="Blocked query" query={row.blockedQueryPreview} />
-              <QueryBlock label="Blocking query" query={row.blockingQueryPreview} />
+              <QueryBlock label={t("Blocked query")} query={row.blockedQueryPreview} />
+              <QueryBlock label={t("Blocking query")} query={row.blockingQueryPreview} />
             </div>
           </CollapsibleContent>
         </div>
@@ -252,13 +260,15 @@ function SkeletonCard() {
 }
 
 function EmptyState() {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="bg-muted flex size-14 items-center justify-center rounded-full">
         <ShieldCheckIcon className="text-muted-foreground size-7" />
       </div>
-      <h3 className="mt-4 text-sm font-medium">No blocked sessions</h3>
-      <p className="text-muted-foreground mt-1 text-xs">All database sessions are running clean</p>
+      <h3 className="mt-4 text-sm font-medium">{t("No blocked sessions")}</h3>
+      <p className="text-muted-foreground mt-1 text-xs">{t("All database sessions are running clean")}</p>
     </div>
   );
 }
@@ -272,10 +282,12 @@ function StatusBar({
   isFetching: boolean;
   onRefresh: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground text-sm">
-        {count} blocked {count === 1 ? "session" : "sessions"}
+        {t("{0} blocked {1}", count, count === 1 ? "session" : "sessions")}
       </span>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
@@ -283,7 +295,7 @@ function StatusBar({
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-muted-foreground text-xs">Live</span>
+          <span className="text-muted-foreground text-xs">{t("Live")}</span>
         </div>
         <Tooltip>
           <TooltipTrigger
@@ -293,7 +305,7 @@ function StatusBar({
           >
             <RefreshCwIcon className={`size-3 ${isFetching ? "animate-spin" : ""}`} />
           </TooltipTrigger>
-          <TooltipContent>Refresh</TooltipContent>
+          <TooltipContent>{t("Refresh")}</TooltipContent>
         </Tooltip>
       </div>
     </div>
@@ -301,6 +313,8 @@ function StatusBar({
 }
 
 export function DatabaseSessionsPage() {
+  const t = useT();
+
   const query = useQuery({
     queryKey,
     queryFn: () => apiService.databaseSessionService.listBlocked(),
@@ -312,8 +326,8 @@ export function DatabaseSessionsPage() {
   return (
     <AdminPageLayout>
       <PageHeader
-        title="Database Sessions"
-        description="Inspect lock contention and manually terminate blocking database sessions"
+        title={t("Database Sessions")}
+        description={t("Inspect lock contention and manually terminate blocking database sessions")}
       />
       <div className="p-4">
         <StatusBar

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   PermissionOperationAutocompleteField,
   PermissionResourceAutocompleteField,
@@ -27,6 +28,8 @@ export function AccessPolicyForm({
   resourcesLoading,
   operationsLoading,
 }: AccessPolicyFormProps) {
+  const t = useT();
+
   const { control, setValue } = useFormContext<AccessPolicyFormValues>();
   const selectedResourceName = useWatch({ control, name: "resource" });
   const selectedResource = resources.find((resource) => resource.resource === selectedResourceName);
@@ -36,16 +39,16 @@ export function AccessPolicyForm({
 
   return (
     <>
-      <FormSection title="Policy Decision">
+      <FormSection title={t("Policy Decision")}>
         <FormGroup cols={2}>
           <FormControl cols="full">
             <InputField
               control={control}
               rules={{ required: true }}
               name="name"
-              label="Policy Name"
-              placeholder="Require managed devices for billing exports"
-              description="Administrative name that explains when this policy should match."
+              label={t("Policy Name")}
+              placeholder={t("Require managed devices for billing exports")}
+              description={t("Administrative name that explains when this policy should match.")}
               maxLength={120}
             />
           </FormControl>
@@ -75,9 +78,9 @@ export function AccessPolicyForm({
               control={control}
               rules={{ required: true }}
               name="effect"
-              label="Effect"
-              placeholder="Select effect"
-              description="Authorization decision returned when this policy matches."
+              label={t("Effect")}
+              placeholder={t("Select effect")}
+              description={t("Authorization decision returned when this policy matches.")}
               options={policyEffectOptions}
             />
           </FormControl>
@@ -86,9 +89,9 @@ export function AccessPolicyForm({
               control={control}
               rules={{ required: true, min: 0 }}
               name="priority"
-              label="Priority"
+              label={t("Priority")}
               placeholder="100"
-              description="Lower numbers evaluate first. Use gaps to leave room for future rules."
+              description={t("Lower numbers evaluate first. Use gaps to leave room for future rules.")}
               min={0}
             />
           </FormControl>
@@ -96,8 +99,8 @@ export function AccessPolicyForm({
             <SwitchField
               control={control}
               name="enabled"
-              label="Enabled"
-              description="Evaluate this policy during access decisions."
+              label={t("Enabled")}
+              description={t("Evaluate this policy during access decisions.")}
               outlined
             />
           </FormControl>
@@ -109,6 +112,8 @@ export function AccessPolicyForm({
 }
 
 function PolicyConditionsSection() {
+  const t = useT();
+
   const { control } = useFormContext<AccessPolicyFormValues>();
   const { append, fields, remove } = useFieldArray({
     control,
@@ -126,14 +131,14 @@ function PolicyConditionsSection() {
 
   return (
     <FormSection
-      title="Conditions"
+      title={t("Conditions")}
       titleCount={fields.length}
-      description="Optional claim or context key/value checks persisted with the policy."
+      description={t("Optional claim or context key/value checks persisted with the policy.")}
       className="border-t py-2"
       action={
         <Button type="button" size="sm" variant="outline" onClick={addCondition}>
           <PlusIcon />
-          Add condition
+          {t("Add condition")}
         </Button>
       }
     >
@@ -151,7 +156,7 @@ function PolicyConditionsSection() {
           </div>
         ) : (
           <div className="bg-muted/30 text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-            No conditions. The policy applies whenever the resource and operation match.
+            {t("No conditions. The policy applies whenever the resource and operation match.")}
           </div>
         )}
       </div>
@@ -168,6 +173,8 @@ function ConditionRowFields({
   condition: AccessPolicyConditionRow;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<AccessPolicyFormValues>();
 
   return (
@@ -175,17 +182,17 @@ function ConditionRowFields({
       <InputField
         control={control}
         name={`conditionRows.${index}.key`}
-        label="Condition Key"
-        placeholder="Claim"
-        description="Claim, signal, or context key to evaluate."
+        label={t("Condition Key")}
+        placeholder={t("Claim")}
+        description={t("Claim, signal, or context key to evaluate.")}
         defaultValue={condition.key}
       />
       <InputField
         control={control}
         name={`conditionRows.${index}.value`}
-        label="Condition Value"
-        placeholder="Expected value"
-        description="Expected value for the configured condition key."
+        label={t("Condition Value")}
+        placeholder={t("Expected value")}
+        description={t("Expected value for the configured condition key.")}
         defaultValue={condition.value}
       />
       <div className="flex items-end pb-0.5">

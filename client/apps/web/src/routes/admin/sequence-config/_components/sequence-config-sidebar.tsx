@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SequenceType } from "@/types/sequence-config";
 import { memo } from "react";
@@ -11,9 +12,11 @@ type SidebarProps = {
 };
 
 export function SequenceConfigSidebar({ value, onChange, indexByType }: SidebarProps) {
+  const t = useT();
+
   return (
     <nav
-      aria-label="Sequence configuration sections"
+      aria-label={t("Sequence configuration sections")}
       className="sticky top-4 hidden w-60 shrink-0 self-start md:block"
     >
       <div className="border-border bg-card rounded-md border p-3">
@@ -50,6 +53,8 @@ type SidebarItemProps = {
 };
 
 const SidebarItem = memo(function SidebarItem({ type, index, active, onSelect }: SidebarItemProps) {
+  const t = useT();
+
   const Icon = sequenceIcons[type];
   const { dirtyFields } = useFormState({ name: `configs.${index}` });
   const isDirty = Boolean((dirtyFields as { configs?: unknown[] })?.configs?.[index]);
@@ -71,7 +76,7 @@ const SidebarItem = memo(function SidebarItem({ type, index, active, onSelect }:
         <span className="flex-1 truncate">{sequenceTitles[type]}</span>
         {isDirty ? (
           <span
-            aria-label="Unsaved changes"
+            aria-label={t("Unsaved changes")}
             className="size-1.5 shrink-0 rounded-full bg-amber-500"
           />
         ) : null}

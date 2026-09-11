@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { ChartContainer, type ChartConfig } from "@trenova/shared/components/ui/chart";
 import { Activity } from "lucide-react";
@@ -13,11 +14,13 @@ type Props = {
 };
 
 export function RequestsCard({ data }: Props) {
+  const t = useT();
+
   const { total, sparkline } = data;
 
   return (
     <KpiCard span={2}>
-      <KpiHeader icon={<Activity className="size-[11px]" />} label="Requests (30d)" />
+      <KpiHeader icon={<Activity className="size-[11px]" />} label={t("Requests (30d)")} />
       <div className="relative px-4">
         <p className="text-3xl leading-none font-semibold tracking-tight">
           {total.toLocaleString()}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { TelematicsStatus } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { formatPreciseTimeAgo } from "@/lib/time-utils";
@@ -75,6 +76,8 @@ function HealthSkeleton() {
 }
 
 export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
+  const t = useT();
+
   const statusQuery = useQuery({
     ...queries.telematics.status(),
     refetchInterval: STATUS_REFETCH_MS,
@@ -100,23 +103,23 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
   } else if (statusQuery.isError || !status) {
     body = (
       <p className="border-border text-muted-foreground rounded-md border px-3 py-4 text-center text-xs">
-        Sync status is unavailable right now.
+        {t("Sync status is unavailable right now.")}
       </p>
     );
   } else {
     const vehiclesShort = status.mappedTractors < status.totalTractors;
     body = (
       <div className="divide-border border-border divide-y rounded-md border">
-        <HealthRow label="Provider">
+        <HealthRow label={t("Provider")}>
           <span className="capitalize">{status.provider}</span>
         </HealthRow>
-        <HealthRow label="Last poll">
+        <HealthRow label={t("Last poll")}>
           <span className="tabular-nums">{relativeOrNever(status.lastPolledAt, now)}</span>
         </HealthRow>
-        <HealthRow label="Last success">
+        <HealthRow label={t("Last success")}>
           <span className="tabular-nums">{relativeOrNever(status.lastSuccessAt, now)}</span>
         </HealthRow>
-        <HealthRow label="Failure streak">
+        <HealthRow label={t("Failure streak")}>
           {status.failureCount > 0 ? (
             <>
               {status.lastError && (
@@ -134,19 +137,19 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                 </Tooltip>
               )}
               <Badge variant="inactive" className="h-4 shrink-0 rounded px-1 text-[9.5px]">
-                {status.failureCount} failed
+                {t("{0} failed", status.failureCount)}
               </Badge>
             </>
           ) : (
             <span className="tabular-nums">0</span>
           )}
         </HealthRow>
-        <HealthRow label="Vehicles mapped">
+        <HealthRow label={t("Vehicles mapped")}>
           <span className={cn("tabular-nums", vehiclesShort && "text-warning")}>
-            {status.mappedTractors} of {status.totalTractors}
+            {t("{0} of {1}", status.mappedTractors, status.totalTractors)}
           </span>
         </HealthRow>
-        <HealthRow label="Drivers linked">
+        <HealthRow label={t("Drivers linked")}>
           <span className="tabular-nums">{status.mappedWorkers}</span>
         </HealthRow>
       </div>
@@ -157,9 +160,9 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
     <div className="border-border flex flex-col gap-3 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold">Sync Health</p>
+          <p className="text-sm font-semibold">{t("Sync Health")}</p>
           <p className="text-muted-foreground text-xs">
-            Live polling status for the Samsara telematics feed.
+            {t("Live polling status for the Samsara telematics feed.")}
           </p>
         </div>
         {health && (

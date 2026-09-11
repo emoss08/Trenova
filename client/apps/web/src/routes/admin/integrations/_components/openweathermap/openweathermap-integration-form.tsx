@@ -1,4 +1,5 @@
 const openWeatherMapLogo = "/integrations/logos/open_weather_logo.webp";
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { LazyImage } from "@/components/image";
@@ -18,6 +19,8 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -57,7 +60,7 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
     form,
     resourceName: "OpenWeatherMap configuration",
     onSuccess: async () => {
-      toast.success("OpenWeatherMap integration updated");
+      toast.success(t("OpenWeatherMap integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config("OpenWeatherMap").queryKey,
@@ -77,9 +80,9 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
           <FormControl cols="full">
             <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
-                <Label htmlFor="owm-enabled">Enable OpenWeatherMap</Label>
+                <Label htmlFor="owm-enabled">{t("Enable OpenWeatherMap")}</Label>
                 <p className="text-muted-foreground text-xs">
-                  Toggle integration state for this business unit.
+                  {t("Toggle integration state for this business unit.")}
                 </p>
               </div>
               <Controller
@@ -103,16 +106,16 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"
             type="submit"
             isLoading={saveMutation.isPending}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             disabled={configQuery.isLoading}
           >
-            Save Changes
+            {t("Save Changes")}
           </Button>
         </DialogFooter>
       </Form>
@@ -121,6 +124,8 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
 }
 
 function OpenWeatherMapFormHeader() {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-center gap-4">
@@ -132,16 +137,16 @@ function OpenWeatherMapFormHeader() {
         </div>
         <LazyImage
           src={openWeatherMapLogo}
-          alt="OpenWeatherMap Logo"
+          alt={t("OpenWeatherMap Logo")}
           className="h-8 max-w-28 object-contain"
         />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with OpenWeatherMap</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with OpenWeatherMap")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">To get a free API key, visit</p>
+          <p className="text-muted-foreground text-xs">{t("To get a free API key, visit")}</p>
           <ExternalLink href="https://home.openweathermap.org/api_keys" className="text-xs">
-            OpenWeatherMap API Keys.
+            {t("OpenWeatherMap API Keys.")}
           </ExternalLink>
         </div>
       </div>

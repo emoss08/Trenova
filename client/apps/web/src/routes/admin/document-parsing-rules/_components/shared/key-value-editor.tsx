@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
@@ -68,6 +69,8 @@ function KeyValueEditorInner({
   disabled?: boolean;
   error?: string;
 }) {
+  const t = useT();
+
   const entries = Object.entries(value);
 
   const addEntry = useCallback(() => {
@@ -134,7 +137,7 @@ function KeyValueEditorInner({
         {!disabled && (
           <Button type="button" variant="outline" size="sm" onClick={addEntry} className="gap-1">
             <PlusIcon className="size-3.5" />
-            Add Entry
+            {t("Add Entry")}
           </Button>
         )}
       </div>

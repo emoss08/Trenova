@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useHomeLayoutPreset } from "@/hooks/use-home-layout";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -6,6 +7,8 @@ import { Link, useParams } from "react-router";
 import { PresetEditor } from "../_components/preset-editor";
 
 export function EditHomeLayoutPage() {
+  const t = useT();
+
   const { id } = useParams<{ id: string }>();
   const { data: preset, isLoading, isError } = useHomeLayoutPreset(id);
   useBreadcrumbLabel(preset?.name);
@@ -22,13 +25,13 @@ export function EditHomeLayoutPage() {
   if (isError || !preset) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
-        <p className="text-sm font-medium">That home screen no longer exists</p>
+        <p className="text-sm font-medium">{t("That home screen no longer exists")}</p>
         <p className="text-muted-foreground max-w-sm text-xs">
-          It may have been deleted by another administrator.
+          {t("It may have been deleted by another administrator.")}
         </p>
         <Link to="/admin/home-layouts" className="pt-1">
           <Button variant="outline" size="sm">
-            Back to home screens
+            {t("Back to home screens")}
           </Button>
         </Link>
       </div>

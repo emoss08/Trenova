@@ -1,6 +1,7 @@
 const pcMilerLogoLight = "/integrations/logos/pc-miler-logo-light.png";
 const pcMilerLogoDark = "/integrations/logos/pc-miler-logo-dark.svg";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { InputField } from "@/components/fields/input-field";
@@ -24,6 +25,8 @@ import { toast } from "sonner";
 const INTEGRATION_TYPE = "PCMiler";
 
 export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const configQuery = useQuery({ ...queries.integration.config(INTEGRATION_TYPE), enabled: open });
   const form = useForm<UpdateIntegrationConfigRequest>({
@@ -55,7 +58,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
     form,
     resourceName: "PC*Miler configuration",
     onSuccess: async () => {
-      toast.success("PC*Miler integration updated");
+      toast.success(t("PC*Miler integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config(INTEGRATION_TYPE).queryKey,
@@ -68,10 +71,10 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
   const testConnectionMutation = useMutation({
     mutationFn: () => apiService.integrationService.testConnection(INTEGRATION_TYPE),
     onSuccess: async () => {
-      toast.success("PC*Miler connection successful");
+      toast.success(t("PC*Miler connection successful"));
       await queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey });
     },
-    onError: () => toast.error("PC*Miler connection test failed"),
+    onError: () => toast.error(t("PC*Miler connection test failed")),
   });
 
   return (
@@ -86,9 +89,9 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
               render={({ field }) => (
                 <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
                   <div>
-                    <Label htmlFor="pcmiler-enabled">Enable PC*Miler</Label>
+                    <Label htmlFor="pcmiler-enabled">{t("Enable PC*Miler")}</Label>
                     <p className="text-muted-foreground text-xs">
-                      Toggle mileage rating for this business unit.
+                      {t("Toggle mileage rating for this business unit.")}
                     </p>
                   </div>
                   <Switch
@@ -109,11 +112,11 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
               placeholder={hasApiKey ? "********" : "Enter your Trimble Maps API key"}
             />
           </FormControl>
-          <TextField control={control} name="baseUrl" label="Base URL" />
+          <TextField control={control} name="baseUrl" label={t("Base URL")} />
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -122,19 +125,19 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
               size="sm"
               onClick={() => testConnectionMutation.mutateAsync()}
               isLoading={testConnectionMutation.isPending}
-              loadingText="Testing..."
+              loadingText={t("Testing...")}
               disabled={configQuery.isLoading || saveMutation.isPending}
             >
-              Test Connection
+              {t("Test Connection")}
             </Button>
             <Button
               size="sm"
               type="submit"
               isLoading={saveMutation.isPending}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              Save Changes
+              {t("Save Changes")}
             </Button>
           </div>
         </DialogFooter>
@@ -170,6 +173,8 @@ function TextField({
 }
 
 function PCMilerFormHeader() {
+  const t = useT();
+
   const { theme } = useTheme();
   const logo = theme === "dark" ? pcMilerLogoDark : pcMilerLogoLight;
 
@@ -182,14 +187,14 @@ function PCMilerFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={logo} alt="PC*Miler Logo" className="h-8 max-w-24 object-contain" />
+        <LazyImage src={logo} alt={t("PC*Miler Logo")} className="h-8 max-w-24 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with PC*Miler</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with PC*Miler")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">Configure mileage rating with</p>
+          <p className="text-muted-foreground text-xs">{t("Configure mileage rating with")}</p>
           <ExternalLink href="https://developer.trimblemaps.com/" className="text-xs">
-            Trimble Maps APIs.
+            {t("Trimble Maps APIs.")}
           </ExternalLink>
         </div>
       </div>

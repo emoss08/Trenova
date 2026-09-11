@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -24,17 +25,19 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
 export function GraphQLExplorerPage() {
+  const t = useT();
+
   const { data: index, isError, error, isFetching, refetch } = useCatalogQuery();
 
   return (
     <AdminPageLayout className="flex h-[calc(100vh-3rem)] flex-col">
       <PageHeader
-        title="GraphQL Explorer"
-        description="Browse, search, and run every persisted GraphQL operation in the client"
+        title={t("GraphQL Explorer")}
+        description={t("Browse, search, and run every persisted GraphQL operation in the client")}
         actions={
           index ? (
             <Badge variant="secondary" className="font-normal">
-              {index.catalog.operationCount} operations · {index.catalog.fragmentCount} fragments
+              {t("{0} operations · {1} fragments", index.catalog.operationCount, index.catalog.fragmentCount)}
             </Badge>
           ) : (
             <Skeleton className="h-5 w-44 rounded-md" />
@@ -67,11 +70,13 @@ function CatalogLoadError({
   isRetrying: boolean;
   onRetry: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3">
       <CircleAlertIcon className="text-destructive/60 size-5" />
       <div className="text-center">
-        <p className="text-foreground text-sm font-medium">Operation catalog unavailable</p>
+        <p className="text-foreground text-sm font-medium">{t("Operation catalog unavailable")}</p>
         <p className="text-muted-foreground mt-0.5 max-w-80 text-xs">{message}</p>
       </div>
       <Button type="button" variant="outline" size="xs" onClick={onRetry} disabled={isRetrying}>

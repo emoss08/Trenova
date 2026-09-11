@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RoleAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -25,6 +26,8 @@ export function UserForm({
   isDisabled?: boolean;
   editUserId?: string | null;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<User>();
 
   return (
@@ -34,7 +37,7 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="status"
-          label="Status"
+          label={t("Status")}
           options={statusChoices}
           isReadOnly={isDisabled}
         />
@@ -44,8 +47,8 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Full Name"
-          placeholder="Enter your full name"
+          label={t("Full Name")}
+          placeholder={t("Enter your full name")}
           disabled={isDisabled}
         />
       </FormControl>
@@ -54,7 +57,7 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="username"
-          label="Username"
+          label={t("Username")}
           placeholder="johndoe"
           disabled={isDisabled || isEdit}
           description={isEdit ? "Username cannot be changed" : undefined}
@@ -65,9 +68,9 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="emailAddress"
-          label="Email Address"
+          label={t("Email Address")}
           type="email"
-          placeholder="john@example.com"
+          placeholder={t("john@example.com")}
           disabled={isDisabled}
         />
       </FormControl>
@@ -76,8 +79,8 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="timezone"
-          label="Timezone"
-          placeholder="Select timezone"
+          label={t("Timezone")}
+          placeholder={t("Select timezone")}
           groups={timezoneGroupedChoices}
           isReadOnly={isDisabled}
           renderOption={(option) => (
@@ -97,8 +100,8 @@ export function UserForm({
           control={control}
           rules={{ required: true }}
           name="mustChangePassword"
-          label="Require password change on first login"
-          description="User will be prompted to set a new password after signing in"
+          label={t("Require password change on first login")}
+          description={t("User will be prompted to set a new password after signing in")}
         />
       </FormControl>
       {isEdit && editUserId ? (
@@ -108,9 +111,9 @@ export function UserForm({
           <RoleAutocompleteField
             control={control}
             name="assignments"
-            label="Roles"
-            description="System access permissions and privileges"
-            placeholder="Select roles"
+            label={t("Roles")}
+            description={t("System access permissions and privileges")}
+            placeholder={t("Select roles")}
           />
         </FormControl>
       )}
@@ -128,6 +131,8 @@ function OrganizationMembershipSection({
   userId: string;
   isDisabled: boolean;
 }) {
+  const t = useT();
+
   const [availableOrganizations, setAvailableOrganizations] = useState<UserOrganization[]>([]);
   const [selectedOrgIDs, setSelectedOrgIDs] = useState<string[]>([]);
   const [defaultOrganizationID, setDefaultOrganizationID] = useState<string | null>(null);
@@ -201,28 +206,28 @@ function OrganizationMembershipSection({
     setSelectedOrgIDs(updatedMemberships.map((membership) => membership.organizationId));
     setDefaultOrganizationID(getDefaultOrganizationID(updatedMemberships));
 
-    toast.success("Organization access updated");
+    toast.success(t("Organization access updated"));
     setIsSaving(false);
-  }, [selectedOrgIDs, userId]);
+  }, [selectedOrgIDs, userId, t]);
 
   return (
     <FormControl>
       <div className="border-border space-y-3 rounded-lg border p-4">
         <div className="space-y-1">
-          <h4 className="text-sm font-medium">Organization Access</h4>
+          <h4 className="text-sm font-medium">{t("Organization Access")}</h4>
           <p className="text-muted-foreground text-xs">
-            Choose which organizations this user can access in the current business unit.
+            {t("Choose which organizations this user can access in the current business unit.")}
           </p>
         </div>
 
         {isLoading ? (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Loader2Icon className="size-4 animate-spin" />
-            Loading organizations...
+            {t("Loading organizations...")}
           </div>
         ) : availableOrganizations.length === 0 ? (
           <p className="text-muted-foreground text-xs">
-            No organizations are available for assignment.
+            {t("No organizations are available for assignment.")}
           </p>
         ) : (
           <ScrollArea className="border-border/60 bg-muted flex max-h-42 flex-col gap-2 rounded-md border p-1">
@@ -258,8 +263,7 @@ function OrganizationMembershipSection({
 
         {selectedOrgIDs.length > 0 && defaultOrganizationID && (
           <p className="text-muted-foreground text-xs">
-            Default organization:{" "}
-            {orgByID.get(defaultOrganizationID)?.name ?? defaultOrganizationID}
+            {t("Default organization: {0}", orgByID.get(defaultOrganizationID)?.name ?? defaultOrganizationID)}
           </p>
         )}
 
@@ -272,9 +276,9 @@ function OrganizationMembershipSection({
             onClick={saveMemberships}
             disabled={isDisabled || isLoading || isSaving}
             isLoading={isSaving}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
           >
-            Save Organization Access
+            {t("Save Organization Access")}
           </Button>
         </div>
       </div>
