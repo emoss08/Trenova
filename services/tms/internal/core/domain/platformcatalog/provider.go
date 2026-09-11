@@ -239,6 +239,7 @@ func platformFeatures() []Feature {
 			ProductKey:  ProductPlatform,
 			Name:        "Agent Automation",
 			Description: "Agent runs, proposals, and exception handling.",
+			Routes:      agentAutomationRouteRefs(),
 		},
 		{
 			Key:                    FeatureAdministration,
