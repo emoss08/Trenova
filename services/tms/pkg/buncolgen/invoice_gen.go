@@ -942,6 +942,7 @@ var InvoiceColumns = struct {
 	OrderID                   Column // "order_id" → qualified: "inv.order_id"
 	CustomerID                Column // "customer_id" → qualified: "inv.customer_id"
 	Scope                     Column // "scope" → qualified: "inv.scope"
+	InvoiceRunID              Column // "invoice_run_id" → qualified: "inv.invoice_run_id"
 	PeriodStart               Column // "period_start" → qualified: "inv.period_start"
 	PeriodEnd                 Column // "period_end" → qualified: "inv.period_end"
 	ShipmentCount             Column // "shipment_count" → qualified: "inv.shipment_count"
@@ -1005,6 +1006,7 @@ var InvoiceColumns = struct {
 	OrderID:                   NewColumn("order_id", "inv"),
 	CustomerID:                NewColumn("customer_id", "inv"),
 	Scope:                     NewColumn("scope", "inv"),
+	InvoiceRunID:              NewColumn("invoice_run_id", "inv"),
 	PeriodStart:               NewColumn("period_start", "inv"),
 	PeriodEnd:                 NewColumn("period_end", "inv"),
 	ShipmentCount:             NewColumn("shipment_count", "inv"),
@@ -1074,6 +1076,7 @@ var InvoiceFieldMap = map[string]string{
 	"orderId":                   "order_id",
 	"customerId":                "customer_id",
 	"scope":                     "scope",
+	"invoiceRunId":              "invoice_run_id",
 	"periodStart":               "period_start",
 	"periodEnd":                 "period_end",
 	"shipmentCount":             "shipment_count",
@@ -1141,6 +1144,7 @@ var InvoiceInsertableColumns = []string{
 	"order_id",
 	"customer_id",
 	"scope",
+	"invoice_run_id",
 	"period_start",
 	"period_end",
 	"shipment_count",
@@ -1280,6 +1284,7 @@ var InvoiceFilter = struct {
 	OrderID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderId" → DB: "order_id"
 	CustomerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	Scope                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scope" → DB: "scope"
+	InvoiceRunID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceRunId" → DB: "invoice_run_id"
 	PeriodStart               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodStart" → DB: "period_start"
 	PeriodEnd                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEnd" → DB: "period_end"
 	ShipmentCount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
@@ -1358,6 +1363,9 @@ var InvoiceFilter = struct {
 	},
 	Scope: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("scope", op, value)
+	},
+	InvoiceRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceRunId", op, value)
 	},
 	PeriodStart: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("periodStart", op, value)

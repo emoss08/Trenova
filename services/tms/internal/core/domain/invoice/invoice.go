@@ -50,6 +50,7 @@ type Invoice struct {
 	OrderID                   pulid.ID              `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
 	CustomerID                pulid.ID              `json:"customerId"                bun:"customer_id,type:VARCHAR(100),notnull"`
 	Scope                     Scope                 `json:"scope"                     bun:"scope,type:invoice_scope_enum,notnull,default:'Shipment'"`
+	InvoiceRunID              pulid.ID              `json:"invoiceRunId"              bun:"invoice_run_id,type:VARCHAR(100),nullzero"`
 	PeriodStart               *int64                `json:"periodStart"               bun:"period_start,type:BIGINT,nullzero"`
 	PeriodEnd                 *int64                `json:"periodEnd"                 bun:"period_end,type:BIGINT,nullzero"`
 	ShipmentCount             int                   `json:"shipmentCount"             bun:"shipment_count,type:INTEGER,notnull"`
