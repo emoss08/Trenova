@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { AccessorialChargeRow } from "@/lib/graphql/accessorial-charge-table";
@@ -13,6 +14,8 @@ export function AccessorialChargePanel({
   mode,
   row,
 }: DataTablePanelProps<AccessorialChargeRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(accessorialChargeSchema),
     defaultValues: {
@@ -34,7 +37,7 @@ export function AccessorialChargePanel({
         form={form}
         url="/accessorial-charges/"
         queryKey="accessorial-charge-list"
-        title="Accessorial Charge"
+        title={t("Accessorial Charge")}
         fieldKey="code"
         formComponent={<AccessorialChargeForm />}
       />
@@ -48,7 +51,7 @@ export function AccessorialChargePanel({
       form={form}
       url="/accessorial-charges/"
       queryKey="accessorial-charge-list"
-      title="Accessorial Charge"
+      title={t("Accessorial Charge")}
       formComponent={<AccessorialChargeForm />}
     />
   );

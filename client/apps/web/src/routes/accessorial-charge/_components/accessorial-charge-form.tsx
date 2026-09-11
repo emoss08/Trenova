@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -28,6 +29,8 @@ function getAmountSideText(method: AccessorialCharge["method"], rateUnit?: strin
 }
 
 export function AccessorialChargeForm() {
+  const t = useT();
+
   const { control, setValue } = useFormContext<AccessorialCharge>();
   const method = useWatch({ name: "method" });
   const rateUnit = useWatch({ name: "rateUnit" });
@@ -47,9 +50,9 @@ export function AccessorialChargeForm() {
           control={control}
           rules={{ required: true }}
           name="status"
-          label="Status"
-          placeholder="Status"
-          description="Current processing status of this accessorial charge (active, pending approval, etc.)"
+          label={t("Status")}
+          placeholder={t("Status")}
+          description={t("Current processing status of this accessorial charge (active, pending approval, etc.)")}
           options={statusChoices}
         />
       </FormControl>
@@ -58,9 +61,9 @@ export function AccessorialChargeForm() {
           control={control}
           rules={{ required: true }}
           name="code"
-          label="Code"
-          placeholder="Code"
-          description="Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)"
+          label={t("Code")}
+          placeholder={t("Code")}
+          description={t("Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)")}
         />
       </FormControl>
       <FormControl cols="full">
@@ -68,9 +71,9 @@ export function AccessorialChargeForm() {
           control={control}
           rules={{ required: true }}
           name="description"
-          label="Description"
-          placeholder="Description"
-          description="Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance"
+          label={t("Description")}
+          placeholder={t("Description")}
+          description={t("Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance")}
         />
       </FormControl>
       <FormControl cols={methodIsPerUnit ? 1 : "full"}>
@@ -78,9 +81,9 @@ export function AccessorialChargeForm() {
           control={control}
           rules={{ required: true }}
           name="method"
-          label="Method"
-          placeholder="Method"
-          description="Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)"
+          label={t("Method")}
+          placeholder={t("Method")}
+          description={t("Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)")}
           options={accessorialChargeMethodChoices}
         />
       </FormControl>
@@ -90,9 +93,9 @@ export function AccessorialChargeForm() {
             control={control}
             rules={{ required: methodIsPerUnit }}
             name="rateUnit"
-            label="Rate Unit"
-            placeholder="Rate Unit"
-            description="Unit of measure for this charge (mile, hour, day, stop)"
+            label={t("Rate Unit")}
+            placeholder={t("Rate Unit")}
+            description={t("Unit of measure for this charge (mile, hour, day, stop)")}
             options={rateUnitChoices}
           />
         </FormControl>
@@ -102,8 +105,8 @@ export function AccessorialChargeForm() {
           control={control}
           rules={{ required: true }}
           name="amount"
-          label="Amount"
-          placeholder="Amount"
+          label={t("Amount")}
+          placeholder={t("Amount")}
           sideText={getAmountSideText(method as AccessorialCharge["method"], rateUnit)}
           decimalScale={4}
           thousandSeparator
