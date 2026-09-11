@@ -1,9 +1,12 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import { Spinner } from "./ui/spinner";
 import { TextShimmer } from "./ui/text-shimmer";
 
 export default function LoadingSkeleton() {
+  const t = useT();
+
   return (
     <div className="flex min-h-screen flex-row items-center justify-center text-center">
       <div className="flex w-[700px] flex-col rounded-md border border-border bg-card sm:flex-row sm:items-center sm:justify-center">
@@ -12,14 +15,11 @@ export default function LoadingSkeleton() {
             <Spinner className="size-10" />
           </div>
           <p className="mb-2 text-xl font-semibold">
-            Hang tight! <u className="font-bold underline decoration-blue-600">Trenova</u> is
-            gearing up for you.
+            {t("Hang tight!")} <u className="font-bold underline decoration-blue-600">{t("Trenova")}</u> {t("is gearing up for you.")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            We&apos;re working at lightning speed to get things ready. If this takes longer than a
-            coffee break (10 seconds), please check your internet connection. <br />
-            <u className="text-foreground decoration-blue-600">Still stuck?</u> Your friendly system
-            administrator is just a call away for a swift rescue!
+            {t("We're working at lightning speed to get things ready. If this takes longer than a coffee break (10 seconds), please check your internet connection.")} <br />
+            <u className="text-foreground decoration-blue-600">{t("Still stuck?")}</u> {t("Your friendly system administrator is just a call away for a swift rescue!")}
           </p>
         </div>
       </div>

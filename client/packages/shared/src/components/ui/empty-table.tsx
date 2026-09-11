@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -40,6 +41,8 @@ export function EmptyTable({
   action,
   className,
 }: EmptyTableProps) {
+  const t = useT();
+
   const template = columns
     .map((column) => (column.numeric ? "minmax(3.5rem,0.6fr)" : "minmax(0,1fr)"))
     .join(" ");
@@ -53,7 +56,7 @@ export function EmptyTable({
         onClearFilters ? (
           <Button variant="outline" size="sm" onClick={onClearFilters}>
             <XIcon className="size-3.5" />
-            Clear filters
+            {t("Clear filters")}
           </Button>
         ) : (
           action

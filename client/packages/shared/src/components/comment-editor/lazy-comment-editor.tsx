@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   BoldIcon,
   ItalicIcon,
@@ -44,6 +45,8 @@ function CommentEditorPlaceholder({
 }: Pick<CommentEditorProps, "compact" | "disabled" | "placeholder" | "toolbar"> & {
   onActivate?: () => void;
 }) {
+  const t = useT();
+
   return (
     <div
       className={cn(
@@ -54,7 +57,7 @@ function CommentEditorPlaceholder({
       <div
         role="textbox"
         aria-multiline="true"
-        aria-label="Comment editor"
+        aria-label={t("Comment editor")}
         aria-busy={onActivate == null}
         tabIndex={disabled ? -1 : 0}
         className={cn(

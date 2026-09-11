@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "./ui/button";
 
 type NotFoundPageProps = {
@@ -15,6 +16,8 @@ export function NotFoundPage({
   errorMessage,
   path,
 }: NotFoundPageProps) {
+  const t = useT();
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--foreground)/0.12),transparent_52%)] dark:bg-[radial-gradient(ellipse_at_top,hsl(var(--foreground)/0.08),transparent_52%)]" />
@@ -25,16 +28,15 @@ export function NotFoundPage({
             404
           </p>
           <h1 className="mt-5 text-2xl font-semibold sm:text-3xl">
-            It seems you got a little bit lost
+            {t("It seems you got a little bit lost")}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            The destination you requested does not exist, may have moved, or the URL might be
-            incorrect.
+            {t("The destination you requested does not exist, may have moved, or the URL might be incorrect.")}
           </p>
 
           <div className="mt-9 flex w-full max-w-xl flex-wrap items-center justify-center gap-3">
             <Button onClick={onGoHome} variant="link" className="min-w-36">
-              Go back to homepage
+              {t("Go back to homepage")}
             </Button>
           </div>
         </main>
@@ -45,28 +47,28 @@ export function NotFoundPage({
           {isDev && errorName && errorMessage && (
             <div className="mb-5 rounded-xl border border-border/70 bg-background/60 p-4 text-left">
               <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Development Details
+                {t("Development Details")}
               </p>
               <p className="mt-2 font-mono text-xs text-destructive">
                 {errorName}: {errorMessage}
               </p>
-              {path && <p className="mt-2 text-xs text-muted-foreground">Path: {path}</p>}
+              {path && <p className="mt-2 text-xs text-muted-foreground">{t("Path: {0}", path)}</p>}
             </div>
           )}
 
           <div className="grid gap-5 text-left text-sm text-muted-foreground sm:grid-cols-3">
             <div>
-              <p className="text-[11px] tracking-wide uppercase">Need Help?</p>
-              <p className="mt-2 text-base font-medium text-foreground">support@trenova.com</p>
+              <p className="text-[11px] tracking-wide uppercase">{t("Need Help?")}</p>
+              <p className="mt-2 text-base font-medium text-foreground">{t("support@trenova.com")}</p>
             </div>
             <div>
-              <p className="text-[11px] tracking-wide uppercase">Quick Links</p>
-              <p className="mt-2">Dashboard</p>
-              <p>Shipments</p>
+              <p className="text-[11px] tracking-wide uppercase">{t("Quick Links")}</p>
+              <p className="mt-2">{t("Dashboard")}</p>
+              <p>{t("Shipments")}</p>
             </div>
             <div className="sm:text-right">
-              <p className="text-[11px] tracking-wide uppercase">Navigation</p>
-              <p className="mt-2">Go back to top</p>
+              <p className="text-[11px] tracking-wide uppercase">{t("Navigation")}</p>
+              <p className="mt-2">{t("Go back to top")}</p>
             </div>
           </div>
         </footer>

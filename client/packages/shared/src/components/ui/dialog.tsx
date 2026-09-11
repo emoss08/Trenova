@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import * as React from "react";
 
@@ -44,6 +45,8 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
 }) {
+  const t = useT();
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -62,7 +65,7 @@ function DialogContent({
             render={
               <Button variant="ghost" className="absolute top-2 right-2" size="icon-sm">
                 <XIcon />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">{t("Close")}</span>
               </Button>
             }
           />
@@ -86,6 +89,8 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean;
 }) {
+  const t = useT();
+
   return (
     <div
       data-slot="dialog-footer"
@@ -97,7 +102,7 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline">Close</Button>} />
+        <DialogPrimitive.Close render={<Button variant="outline">{t("Close")}</Button>} />
       )}
     </div>
   );

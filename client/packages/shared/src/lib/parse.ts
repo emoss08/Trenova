@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { ZodSchema } from "zod";
 import { toast } from "sonner";
 
@@ -10,7 +11,7 @@ export async function safeParse<T>(
   if (!result.success) {
     console.error(`Failed to parse ${label ?? "response"}`, result.error);
     toast.error(`Failed to parse ${label ?? "response"}`, {
-      description: "Contact your system administrator for assistance.",
+      description: translate("Contact your system administrator for assistance."),
     });
 
     throw result.error;

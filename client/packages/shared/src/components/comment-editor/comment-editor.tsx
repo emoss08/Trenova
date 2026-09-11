@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Extension, type JSONContent } from "@tiptap/core";
 import Mention from "@tiptap/extension-mention";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -151,6 +153,8 @@ function ToolbarButton({ icon, label, isActive, onClick, disabled }: ToolbarButt
 }
 
 function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean }) {
+  const t = useT();
+
   const [isOpen, setIsOpen] = useState(false);
   const [href, setHref] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -230,7 +234,7 @@ function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean 
               apply();
             }}
           >
-            Apply
+            {t("Apply")}
           </Button>
         </div>
       )}
@@ -500,35 +504,35 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
             <>
               <ToolbarButton
                 icon={<BoldIcon className="size-3.5" />}
-                label="Bold"
+                label={translate("Bold")}
                 isActive={editor.isActive("bold")}
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<ItalicIcon className="size-3.5" />}
-                label="Italic"
+                label={translate("Italic")}
                 isActive={editor.isActive("italic")}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<UnderlineIcon className="size-3.5" />}
-                label="Underline"
+                label={translate("Underline")}
                 isActive={editor.isActive("underline")}
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<ListIcon className="size-3.5" />}
-                label="Bullet list"
+                label={translate("Bullet list")}
                 isActive={editor.isActive("bulletList")}
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<ListOrderedIcon className="size-3.5" />}
-                label="Numbered list"
+                label={translate("Numbered list")}
                 isActive={editor.isActive("orderedList")}
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 disabled={disabled}

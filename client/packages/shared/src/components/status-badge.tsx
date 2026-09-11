@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge, badgeVariants } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
@@ -634,14 +635,16 @@ export function EDIPartnerReadinessBadge({
   completedCount: number;
   totalCount: number;
 }) {
+  const t = useT();
+
   if (ready) {
     return (
       <Badge
         variant="active"
         className="max-h-5"
-        title="All onboarding checklist items are complete."
+        title={t("All onboarding checklist items are complete.")}
       >
-        Ready
+        {t("Ready")}
       </Badge>
     );
   }
@@ -649,9 +652,9 @@ export function EDIPartnerReadinessBadge({
     <Badge
       variant="warning"
       className="max-h-5 tabular-nums"
-      title="Open the partner to see the remaining onboarding checklist items."
+      title={t("Open the partner to see the remaining onboarding checklist items.")}
     >
-      {completedCount}/{totalCount} ready
+      {t("{0}/{1} ready", completedCount, totalCount)}
     </Badge>
   );
 }

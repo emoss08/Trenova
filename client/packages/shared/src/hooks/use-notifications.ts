@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
@@ -205,6 +206,8 @@ export interface MentionReplyInput {
 }
 
 export function useReplyToMention() {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -229,12 +232,14 @@ export function useReplyToMention() {
       });
     },
     onError: () => {
-      toast.error("Couldn't send reply");
+      toast.error(t("Couldn't send reply"));
     },
   });
 }
 
 export function useMarkAllNotificationsRead(scope: NotificationScope = "all") {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -261,7 +266,7 @@ export function useMarkAllNotificationsRead(scope: NotificationScope = "all") {
       queryClient.setQueryData<number>(notificationQueries.unreadCount(scope).queryKey, 0);
     },
     onError: () => {
-      toast.error("Couldn't mark all as read");
+      toast.error(t("Couldn't mark all as read"));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: notificationQueries._def }),
   });
