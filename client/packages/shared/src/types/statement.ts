@@ -64,20 +64,3 @@ export const openStatementListSchema = z.object({
   results: z.array(openStatementSchema).default([]),
   count: z.number().int().default(0),
 });
-
-/**
- * Seconds until a statement bills. Negative means the boundary has passed and
- * the scheduled sweep has not caught up yet, which is a real state worth showing
- * rather than clamping to zero.
- */
-export function secondsUntilBilling(statement: OpenStatement, now: number): number {
-  return statement.periodEnd - now;
-}
-
-/**
- * A statement nothing will come out of: no freight, or every group held under
- * the customer's minimum.
- */
-export function isStatementDormant(statement: OpenStatement): boolean {
-  return statement.shipmentCount === 0 || statement.belowMinimum;
-}

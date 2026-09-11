@@ -1,60 +1,21 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
-import {
-  commitInvoiceRunResultSchema,
-  invoiceRunSchema,
-  type AdjustMembershipInput,
-  type InvoiceRun,
-  type PreviewInvoiceRunInput,
-} from "@trenova/shared/types/invoice-run";
+import { commitInvoiceRunResultSchema } from "@trenova/shared/types/invoice-run";
 import {
   openStatementListSchema,
   openStatementSchema,
   type OpenStatement,
 } from "@trenova/shared/types/statement";
 
-const invoiceRunListSchema = createLimitOffsetResponse(invoiceRunSchema);
-
+/**
+ * Statements are how a biller reaches invoice runs.
+ *
+ * The run endpoints under /billing/invoice-runs exist and are exercised
+ * server-side by the scheduled sweep, but nothing in the client drives a run
+ * directly: billing a statement previews, adjusts and commits one in a single
+ * call. Wrappers for the rest would be code no screen calls.
+ */
 export class InvoiceRunService {
-  public async list(params?: Record<string, string>) {
-    const endpoint = params
-      ? `/billing/invoice-runs/?${new URLSearchParams(params).toString()}`
-      : "/billing/invoice-runs/";
-    const response = await api.get(endpoint);
-    return safeParse(invoiceRunListSchema, response, "InvoiceRunList");
-  }
-
-  public async getById(id: string) {
-    const response = await api.get<InvoiceRun>(`/billing/invoice-runs/${id}/`);
-    return safeParse(invoiceRunSchema, response, "InvoiceRun");
-  }
-
-  public async preview(input: PreviewInvoiceRunInput) {
-    const response = await api.post<InvoiceRun>("/billing/invoice-runs/preview/", input);
-    return safeParse(invoiceRunSchema, response, "InvoiceRun");
-  }
-
-  public async adjustMembership(id: string, input: AdjustMembershipInput) {
-    const response = await api.patch<InvoiceRun>(
-      `/billing/invoice-runs/${id}/membership/`,
-      input,
-    );
-    return safeParse(invoiceRunSchema, response, "InvoiceRun");
-  }
-
-  public async commit(id: string) {
-    const response = await api.post(`/billing/invoice-runs/${id}/commit/`, {});
-    return safeParse(commitInvoiceRunResultSchema, response, "CommitInvoiceRunResult");
-  }
-
-  public async cancel(id: string, reason: string) {
-    const response = await api.post<InvoiceRun>(`/billing/invoice-runs/${id}/cancel/`, {
-      reason,
-    });
-    return safeParse(invoiceRunSchema, response, "InvoiceRun");
-  }
-
   /** Every statement customer's open period, derived live from the billing queue. */
   public async listStatements() {
     const response = await api.get("/billing/statements/");

@@ -112,26 +112,3 @@ export const commitInvoiceRunResultSchema = z.object({
   errorCount: z.number().int().default(0),
 });
 export type CommitInvoiceRunResult = z.infer<typeof commitInvoiceRunResultSchema>;
-
-export type PreviewInvoiceRunInput = {
-  customerIds: string[];
-  periodStart: number;
-  periodEnd: number;
-  invoiceDate?: number;
-};
-
-export type AdjustMembershipInput = {
-  exclude?: { itemId: string; reason: string }[];
-  include?: string[];
-  moves?: { itemId: string; targetGroupId: string }[];
-};
-
-/** A run an operator can still change. */
-export function isRunEditable(status: InvoiceRunStatus): boolean {
-  return status === "Ready";
-}
-
-/** A run that can never change again. */
-export function isRunTerminal(status: InvoiceRunStatus): boolean {
-  return status === "Committed" || status === "Failed" || status === "Canceled";
-}
