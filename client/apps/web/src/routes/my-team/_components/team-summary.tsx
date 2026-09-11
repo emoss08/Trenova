@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import type { TeamSummary } from "@/lib/my-team";
@@ -18,6 +19,8 @@ type TeamSummaryStripProps = {
 const VALUE_CLASS = "font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums";
 
 export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
+  const t = useT();
+
   const goodShare = summary.total > 0 ? summary.goodStanding / summary.total : 0;
   const averageTenure =
     summary.averageTenureDays != null
@@ -37,30 +40,30 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
       <KpiCard span={2}>
         <KpiHeader
           icon={<UsersIcon className="size-[11px]" />}
-          label="On your team"
+          label={t("On your team")}
           info={
-            <InfoPopover title="On your team">
+            <InfoPopover title={t("On your team")}>
               {
                 "Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today."
               }
             </InfoPopover>
           }
         />
-        <NumberFlow value={summary.total} className={VALUE_CLASS} aria-label="On your team" />
+        <NumberFlow value={summary.total} className={VALUE_CLASS} aria-label={t("On your team")} />
         <CompositionBar
           segments={segments}
           size="sm"
           className="mt-auto"
-          aria-label="How they reach you"
+          aria-label={t("How they reach you")}
         />
       </KpiCard>
 
       <KpiCard span={2}>
         <KpiHeader
           icon={<ShieldCheckIcon className="size-[11px]" />}
-          label="In good standing"
+          label={t("In good standing")}
           info={
-            <InfoPopover title="In good standing">
+            <InfoPopover title={t("In good standing")}>
               {
                 "People with nothing critical and nothing on watch: compliance in order, training current, safety rating Excellent or Good."
               }
@@ -73,22 +76,22 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
             size={40}
             strokeWidth={4}
             tone="brand"
-            aria-label="Share of the team in good standing"
+            aria-label={t("Share of the team in good standing")}
           />
           <div className="flex items-baseline gap-1">
             <NumberFlow value={summary.goodStanding} className={VALUE_CLASS} />
-            <span className="text-muted-foreground font-mono text-[11px]">of {summary.total}</span>
+            <span className="text-muted-foreground font-mono text-[11px]">{t("of {0}", summary.total)}</span>
           </div>
         </div>
-        <KpiSub>Compliant, trained and rated Good or better</KpiSub>
+        <KpiSub>{t("Compliant, trained and rated Good or better")}</KpiSub>
       </KpiCard>
 
       <KpiCard span={2}>
         <KpiHeader
           icon={<AlertTriangleIcon className="size-[11px]" />}
-          label="Needing attention"
+          label={t("Needing attention")}
           info={
-            <InfoPopover title="Needing attention">
+            <InfoPopover title={t("Needing attention")}>
               {
                 "Anyone with something that stops them working or should: non-compliant, training that blocks dispatch, or a safety rating of At risk. Watch items alone do not count here."
               }
@@ -98,7 +101,7 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
         <NumberFlow
           value={summary.attention}
           className={cn(VALUE_CLASS, summary.attention > 0 && "text-destructive")}
-          aria-label="Needing attention"
+          aria-label={t("Needing attention")}
         />
         <KpiSub>{describeAttention(summary)}</KpiSub>
       </KpiCard>
@@ -106,9 +109,9 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
       <KpiCard span={2}>
         <KpiHeader
           icon={<HourglassIcon className="size-[11px]" />}
-          label="Average tenure"
+          label={t("Average tenure")}
           info={
-            <InfoPopover title="Average tenure">
+            <InfoPopover title={t("Average tenure")}>
               {
                 "Mean time since hire date across the team, for people with a hire date on file. A leaver is measured to their termination date."
               }

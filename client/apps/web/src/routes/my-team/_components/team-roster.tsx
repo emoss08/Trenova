@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   matchesTeamSearch,
   needsAttention,
@@ -43,6 +44,8 @@ export function TeamRoster({
   includeInactive,
   onIncludeInactiveChange,
 }: TeamRosterProps) {
+  const t = useT();
+
   const [query, setQuery] = useState("");
   const [view, setView] = useState<RosterView>("all");
   const [attentionOnly, setAttentionOnly] = useState(false);
@@ -87,14 +90,14 @@ export function TeamRoster({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h3 id="team-roster-heading" className="sr-only">
-            Roster
+            {t("Roster")}
           </h3>
           <Input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Find someone by name, title or terminal"
-            aria-label="Find someone"
+            placeholder={t("Find someone by name, title or terminal")}
+            aria-label={t("Find someone")}
             leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             inputContainerClassName="w-72 max-w-full"
           />
@@ -105,7 +108,7 @@ export function TeamRoster({
             onClick={() => setAttentionOnly((current) => !current)}
           >
             <AlertTriangleIcon className="size-3.5" />
-            Needs attention
+            {t("Needs attention")}
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -113,7 +116,7 @@ export function TeamRoster({
             items={viewItems}
             value={activeView}
             onValueChange={setView}
-            aria-label="Who to show"
+            aria-label={t("Who to show")}
           />
           <div className="flex items-center gap-2">
             <Switch
@@ -123,7 +126,7 @@ export function TeamRoster({
               onCheckedChange={onIncludeInactiveChange}
             />
             <Label htmlFor={inactiveId} className="text-muted-foreground text-xs font-normal">
-              Include people who have left
+              {t("Include people who have left")}
             </Label>
           </div>
         </div>
@@ -148,7 +151,7 @@ export function TeamRoster({
                 setView("all");
               }}
             >
-              Clear filters
+              {t("Clear filters")}
             </Button>
           ) : null}
         </div>

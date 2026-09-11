@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { TeamMemberRow } from "@/lib/graphql/org-structure";
 import { memberHealth } from "@/lib/my-team";
 import { Avatar, AvatarBadge, AvatarFallback } from "@trenova/shared/components/ui/avatar";
@@ -45,6 +46,8 @@ type MemberIdentityProps = {
 };
 
 export function MemberIdentity({ member, size = "default", className }: MemberIdentityProps) {
+  const t = useT();
+
   const left = member.status !== "Active";
   const secondary = [member.positionTitle, member.fleetCode].filter(Boolean).join(" · ");
 
@@ -56,7 +59,7 @@ export function MemberIdentity({ member, size = "default", className }: MemberId
           <span className="truncate text-sm font-medium">{member.name}</span>
           {left ? (
             <Badge variant="inactive" className="text-2xs h-4 px-1">
-              Left
+              {t("Left")}
             </Badge>
           ) : null}
         </span>

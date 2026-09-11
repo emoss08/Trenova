@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { Anniversary, CoverSource, RecentStarter, TerminalGroup } from "@/lib/my-team";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -22,14 +23,16 @@ type ByTerminalProps = {
 };
 
 export function ByTerminalPanel({ groups, total }: ByTerminalProps) {
+  const t = useT();
+
   return (
     <SectionPanel
-      title="By terminal"
+      title={t("By terminal")}
       icon={<Building2Icon />}
-      help="The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped."
+      help={t("The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.")}
     >
       {groups.length === 0 ? (
-        <SectionPanelQuiet>Nobody to count yet.</SectionPanelQuiet>
+        <SectionPanelQuiet>{t("Nobody to count yet.")}</SectionPanelQuiet>
       ) : (
         <ul className="divide-y">
           {groups.map((group) => (
@@ -46,7 +49,7 @@ export function ByTerminalPanel({ groups, total }: ByTerminalProps) {
                   />
                   <span className="truncate font-medium">{group.code}</span>
                   {group.attention > 0 ? (
-                    <span className="text-muted-foreground">· {group.attention} flagged</span>
+                    <span className="text-muted-foreground">{t("· {0} flagged", group.attention)}</span>
                   ) : null}
                 </span>
                 <span className="text-muted-foreground tabular-nums">{group.count}</span>
@@ -75,16 +78,18 @@ type ComingUpProps = {
 };
 
 export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
+  const t = useT();
+
   const empty = anniversaries.length === 0 && starters.length === 0;
   return (
     <SectionPanel
-      title="Coming up"
+      title={t("Coming up")}
       icon={<CalendarDaysIcon />}
-      help="Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here."
+      help={t("Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here.")}
     >
       {empty ? (
         <SectionPanelQuiet>
-          No anniversaries in the next 30 days, and nobody started this quarter.
+          {t("No anniversaries in the next 30 days, and nobody started this quarter.")}
         </SectionPanelQuiet>
       ) : (
         <ul className="divide-y">
@@ -99,8 +104,7 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                   <span className="truncate text-xs font-medium">{item.member.name}</span>
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
                     <AwardIcon className="size-3" aria-hidden />
-                    {item.years} {item.years === 1 ? "year" : "years"} on{" "}
-                    {formatUnixMonthDay(item.onDate)}
+                    {t("{0}{1} on {2}", item.years, item.years === 1 ? "year" : "years", formatUnixMonthDay(item.onDate))}
                   </span>
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
@@ -120,7 +124,7 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                   <span className="truncate text-xs font-medium">{item.member.name}</span>
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
                     <SparklesIcon className="size-3" aria-hidden />
-                    Started {formatUnixDate(item.member.hireDate)}
+                    {t("Started {0}", formatUnixDate(item.member.hireDate))}
                   </span>
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
@@ -153,17 +157,19 @@ type ApprovalCoverProps = {
 };
 
 export function ApprovalCoverPanel({ covers, isLoading }: ApprovalCoverProps) {
+  const t = useT();
+
   return (
     <SectionPanel
-      title="Approval cover"
+      title={t("Approval cover")}
       icon={<HandshakeIcon />}
-      help="Delegations that put another manager's approvals in your hands today. A delegation never widens what you could approve on your own."
+      help={t("Delegations that put another manager's approvals in your hands today. A delegation never widens what you could approve on your own.")}
       action={
         <Link
           to="/hr/org-structure"
           className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-xs transition-colors"
         >
-          Manage
+          {t("Manage")}
           <ArrowUpRightIcon className="size-3" aria-hidden />
         </Link>
       }
@@ -174,7 +180,7 @@ export function ApprovalCoverPanel({ covers, isLoading }: ApprovalCoverProps) {
           <Skeleton className="h-4 w-1/2" />
         </div>
       ) : covers.length === 0 ? (
-        <SectionPanelQuiet>Nobody has handed you their approvals right now.</SectionPanelQuiet>
+        <SectionPanelQuiet>{t("Nobody has handed you their approvals right now.")}</SectionPanelQuiet>
       ) : (
         <ul className="divide-y">
           {covers.map((cover) => (
