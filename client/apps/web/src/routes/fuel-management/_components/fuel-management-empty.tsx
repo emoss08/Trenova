@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -22,6 +23,8 @@ export function FuelDashboardEmpty({
   onOpenIndices,
   className,
 }: EmptyProps & { onOpenIndices?: () => void }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -31,7 +34,7 @@ export function FuelDashboardEmpty({
       action={
         onOpenIndices ? (
           <Button variant="outline" size="sm" onClick={onOpenIndices}>
-            Open fuel indices
+            {t("Open fuel indices")}
           </Button>
         ) : null
       }
@@ -95,6 +98,8 @@ export function FuelProgramsEmpty({
   onCreate,
   className,
 }: EmptyProps & { onCreate?: () => void }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -105,7 +110,7 @@ export function FuelProgramsEmpty({
         onCreate ? (
           <Button variant="outline" size="sm" onClick={onCreate}>
             <PlusIcon className="size-3.5" />
-            Create a program
+            {t("Create a program")}
           </Button>
         ) : null
       }
@@ -155,6 +160,8 @@ export function FuelIndicesEmpty({
   onCreate,
   className,
 }: EmptyProps & { onCreate?: () => void }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -165,7 +172,7 @@ export function FuelIndicesEmpty({
         onCreate ? (
           <Button variant="outline" size="sm" onClick={onCreate}>
             <PlusIcon className="size-3.5" />
-            Add a custom index
+            {t("Add a custom index")}
           </Button>
         ) : null
       }
@@ -177,13 +184,13 @@ export function FuelIndicesEmpty({
               "text-muted-foreground text-2xs border-b px-3 py-1.5 leading-none",
             )}
           >
-            <span>Code</span>
-            <span>Name</span>
-            <span>Region</span>
-            <span>Source</span>
-            <span>Latest</span>
-            <span>Week</span>
-            <span>Status</span>
+            <span>{t("Code")}</span>
+            <span>{t("Name")}</span>
+            <span>{t("Region")}</span>
+            <span>{t("Source")}</span>
+            <span>{t("Latest")}</span>
+            <span>{t("Week")}</span>
+            <span>{t("Status")}</span>
           </div>
           {GHOST_INDEX_ROWS.map((row, index) => (
             <div

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AccessorialChargeAutocompleteField,
   EquipmentTypeMultiSelectField,
@@ -29,6 +30,8 @@ import { VirtualMatrixPreview } from "./virtual-matrix-preview";
 const TABLE_METHODS = new Set(["TablePerMile", "TablePercent", "TableFlat"]);
 
 export function ProgramForm({ disabled }: { disabled?: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<FuelSurchargeProgramFormValues>();
   const method = useWatch({ control, name: "method" });
   const isTableMethod = TABLE_METHODS.has(method);
@@ -40,11 +43,11 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <InputField
             control={control}
             name="name"
-            label="Name"
-            placeholder="Acme National DOE Program"
+            label={t("Name")}
+            placeholder={t("Acme National DOE Program")}
             rules={{ required: true }}
             maxLength={100}
-            description="Shown on customer profiles and the fuel dashboard."
+            description={t("Shown on customer profiles and the fuel dashboard.")}
             disabled={disabled}
           />
         </FormControl>
@@ -52,11 +55,11 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <InputField
             control={control}
             name="code"
-            label="Code"
-            placeholder="FSC-DOE-STD"
+            label={t("Code")}
+            placeholder={t("FSC-DOE-STD")}
             rules={{ required: true }}
             maxLength={50}
-            description="Short unique identifier for this program."
+            description={t("Short unique identifier for this program.")}
             disabled={disabled}
           />
         </FormControl>
@@ -64,9 +67,9 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <SelectField
             control={control}
             name="status"
-            label="Status"
+            label={t("Status")}
             options={fuelSurchargeProgramStatusChoices}
-            description="Inactive programs stop applying surcharges immediately."
+            description={t("Inactive programs stop applying surcharges immediately.")}
             isReadOnly={disabled}
           />
         </FormControl>
@@ -74,10 +77,10 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <SelectField
             control={control}
             name="method"
-            label="Method"
+            label={t("Method")}
             rules={{ required: true }}
             options={fuelSurchargeMethodChoices}
-            description="Formula methods compute rates from parameters; table methods use explicit price bands."
+            description={t("Formula methods compute rates from parameters; table methods use explicit price bands.")}
             isReadOnly={disabled}
           />
         </FormControl>
@@ -85,28 +88,28 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
           <FuelIndexAutocompleteField
             control={control}
             name="fuelIndexId"
-            label="Fuel Index"
-            placeholder="Select Fuel Index"
+            label={t("Fuel Index")}
+            placeholder={t("Select Fuel Index")}
             rules={{ required: true }}
-            description="The weekly price series this program keys off (DOE region or custom index)."
+            description={t("The weekly price series this program keys off (DOE region or custom index).")}
           />
         </FormControl>
         <FormControl>
           <AccessorialChargeAutocompleteField
             control={control}
             name="accessorialChargeId"
-            label="Accessorial Charge"
-            placeholder="Select Accessorial Charge"
+            label={t("Accessorial Charge")}
+            placeholder={t("Select Accessorial Charge")}
             rules={{ required: true }}
-            description="The catalog charge the generated fuel surcharge line posts against."
+            description={t("The catalog charge the generated fuel surcharge line posts against.")}
           />
         </FormControl>
         <FormControl cols="full">
           <TextareaField
             control={control}
             name="description"
-            label="Description"
-            placeholder="Contract terms, customer references, or maintenance notes"
+            label={t("Description")}
+            placeholder={t("Contract terms, customer references, or maintenance notes")}
             disabled={disabled}
           />
         </FormControl>
@@ -127,6 +130,8 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
 }
 
 function MethodParameters({ disabled, method }: { disabled?: boolean; method: string }) {
+  const t = useT();
+
   const { control } = useFormContext<FuelSurchargeProgramFormValues>();
 
   if (method === "TablePercent") {
@@ -136,9 +141,9 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
           <SelectField
             control={control}
             name="percentBasis"
-            label="Percentage Applies To"
+            label={t("Percentage Applies To")}
             options={fuelSurchargePercentBasisChoices}
-            description="What the band's percentage is taken from — check the customer's contract before changing."
+            description={t("What the band's percentage is taken from — check the customer's contract before changing.")}
             isReadOnly={disabled}
           />
         </FormControl>
@@ -156,12 +161,12 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
         <NumberField
           control={control}
           name="pegPrice"
-          label="Peg Price"
+          label={t("Peg Price")}
           placeholder="1.20"
           rules={{ required: true }}
           decimalScale={4}
-          sideText="$/gal"
-          description="Fuel price at which the surcharge is zero."
+          sideText={t("$/gal")}
+          description={t("Fuel price at which the surcharge is zero.")}
           disabled={disabled}
         />
       </FormControl>
@@ -171,12 +176,12 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
             <NumberField
               control={control}
               name="increment"
-              label="Increment"
+              label={t("Increment")}
               placeholder="0.05"
               rules={{ required: true }}
               decimalScale={4}
-              sideText="$/gal"
-              description="Price step above the peg that triggers a rate increase."
+              sideText={t("$/gal")}
+              description={t("Price step above the peg that triggers a rate increase.")}
               disabled={disabled}
             />
           </FormControl>
@@ -184,12 +189,12 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
             <NumberField
               control={control}
               name="incrementRate"
-              label="Rate per Increment"
+              label={t("Rate per Increment")}
               placeholder="0.01"
               rules={{ required: true }}
               decimalScale={4}
-              sideText="$/mi"
-              description="Per-mile rate added for each full increment above the peg."
+              sideText={t("$/mi")}
+              description={t("Per-mile rate added for each full increment above the peg.")}
               disabled={disabled}
             />
           </FormControl>
@@ -199,12 +204,12 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
           <NumberField
             control={control}
             name="milesPerGallon"
-            label="Miles per Gallon"
+            label={t("Miles per Gallon")}
             placeholder="6.5"
             rules={{ required: true }}
             decimalScale={2}
             sideText="mpg"
-            description="Fleet MPG divisor: rate = (price − peg) ÷ MPG."
+            description={t("Fleet MPG divisor: rate = (price − peg) ÷ MPG.")}
             disabled={disabled}
           />
         </FormControl>
@@ -214,16 +219,17 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
 }
 
 function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; method: string }) {
+  const t = useT();
+
   const { control } = useFormContext<FuelSurchargeProgramFormValues>();
   const isStepMethod = method === "PerMileStep";
 
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="gap-0 border-b pt-3">
-        <CardTitle className="text-sm font-medium">Week Resolution & Rounding</CardTitle>
+        <CardTitle className="text-sm font-medium">{t("Week Resolution & Rounding")}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          Pins exactly which week&apos;s price applies and how rates round — the two most common
-          fuel surcharge dispute sources
+          {t("Pins exactly which week's price applies and how rates round — the two most common fuel surcharge dispute sources")}
         </p>
       </CardHeader>
       <CardContent className="p-4">
@@ -232,9 +238,9 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="dateBasis"
-              label="Date Basis"
+              label={t("Date Basis")}
               options={fuelSurchargeDateBasisChoices}
-              description="Which shipment date selects the price week."
+              description={t("Which shipment date selects the price week.")}
               isReadOnly={disabled}
             />
           </FormControl>
@@ -242,9 +248,9 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="priceEffectiveDay"
-              label="Price Effective Day"
+              label={t("Price Effective Day")}
               options={fuelSurchargeEffectiveDayChoices}
-              description="Monday's DOE price applies starting this weekday."
+              description={t("Monday's DOE price applies starting this weekday.")}
               isReadOnly={disabled}
             />
           </FormControl>
@@ -252,9 +258,9 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="missingPriceFallback"
-              label="Missing Price Behavior"
+              label={t("Missing Price Behavior")}
               options={fuelSurchargeFallbackChoices}
-              description="What happens when the week's price hasn't published yet."
+              description={t("What happens when the week's price hasn't published yet.")}
               isReadOnly={disabled}
             />
           </FormControl>
@@ -263,9 +269,9 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
               <SelectField
                 control={control}
                 name="stepRounding"
-                label="Step Rounding"
+                label={t("Step Rounding")}
                 options={fuelSurchargeStepRoundingChoices}
-                description="How partial increments above the peg count."
+                description={t("How partial increments above the peg count.")}
                 isReadOnly={disabled}
               />
             </FormControl>
@@ -274,9 +280,9 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <SelectField
               control={control}
               name="rateRounding"
-              label="Rate Rounding"
+              label={t("Rate Rounding")}
               options={fuelSurchargeRateRoundingChoices}
-              description="Rounding mode for computed rates and final amounts."
+              description={t("Rounding mode for computed rates and final amounts.")}
               isReadOnly={disabled}
             />
           </FormControl>
@@ -284,10 +290,10 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <NumberField
               control={control}
               name="ratePrecision"
-              label="Rate Precision"
+              label={t("Rate Precision")}
               placeholder="4"
               decimalScale={0}
-              description="Decimal places for the computed per-mile rate (0–6)."
+              description={t("Decimal places for the computed per-mile rate (0–6).")}
               disabled={disabled}
             />
           </FormControl>
@@ -295,11 +301,11 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <NumberField
               control={control}
               name="minAmount"
-              label="Minimum Amount"
-              placeholder="No floor"
+              label={t("Minimum Amount")}
+              placeholder={t("No floor")}
               decimalScale={2}
               sideText="$"
-              description="Optional floor for the surcharge per shipment."
+              description={t("Optional floor for the surcharge per shipment.")}
               disabled={disabled}
             />
           </FormControl>
@@ -307,11 +313,11 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
             <NumberField
               control={control}
               name="maxAmount"
-              label="Maximum Amount"
-              placeholder="No cap"
+              label={t("Maximum Amount")}
+              placeholder={t("No cap")}
               decimalScale={2}
               sideText="$"
-              description="Optional cap for the surcharge per shipment."
+              description={t("Optional cap for the surcharge per shipment.")}
               disabled={disabled}
             />
           </FormControl>
@@ -322,15 +328,16 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
 }
 
 function ApplicabilitySection() {
+  const t = useT();
+
   const { control } = useFormContext<FuelSurchargeProgramFormValues>();
 
   return (
     <Card className="gap-0">
       <CardHeader className="gap-0 border-b pb-3">
-        <CardTitle className="gap-0 text-sm font-medium">Applicability</CardTitle>
+        <CardTitle className="gap-0 text-sm font-medium">{t("Applicability")}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          Leave a filter empty to apply to all — the surcharge only generates when the shipment
-          matches every non-empty filter
+          {t("Leave a filter empty to apply to all — the surcharge only generates when the shipment matches every non-empty filter")}
         </p>
       </CardHeader>
       <CardContent className="p-4">
@@ -339,32 +346,32 @@ function ApplicabilitySection() {
             <ShipmentTypeMultiSelectField
               control={control}
               name="shipmentTypeIds"
-              label="Shipment Types"
-              placeholder="All shipment types"
+              label={t("Shipment Types")}
+              placeholder={t("All shipment types")}
             />
           </FormControl>
           <FormControl>
             <ServiceTypeMultiSelectField
               control={control}
               name="serviceTypeIds"
-              label="Service Types"
-              placeholder="All service types"
+              label={t("Service Types")}
+              placeholder={t("All service types")}
             />
           </FormControl>
           <FormControl>
             <EquipmentTypeMultiSelectField
               control={control}
               name="tractorTypeIds"
-              label="Tractor Types"
-              placeholder="All tractor types"
+              label={t("Tractor Types")}
+              placeholder={t("All tractor types")}
             />
           </FormControl>
           <FormControl>
             <EquipmentTypeMultiSelectField
               control={control}
               name="trailerTypeIds"
-              label="Trailer Types"
-              placeholder="All trailer types"
+              label={t("Trailer Types")}
+              placeholder={t("All trailer types")}
             />
           </FormControl>
         </FormGroup>

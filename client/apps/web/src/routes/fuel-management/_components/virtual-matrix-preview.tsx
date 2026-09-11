@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
@@ -118,6 +119,8 @@ function buildBand(params: FormulaParams, step: number, currentPrice: number | n
 }
 
 export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
+  const t = useT();
+
   const { control, setValue } = useFormContext<FuelSurchargeProgramFormValues>();
   const method = useWatch({ control, name: "method" });
   const pegPrice = useWatch({ control, name: "pegPrice" });
@@ -217,9 +220,9 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
     setValue("method", "TablePerMile", { shouldDirty: true });
     setConvertOpen(false);
     toast.success(`${conversionRows.length} price bands created`, {
-      description: "Adjust any band's range or rate, then save the program.",
+      description: t("Adjust any band's range or rate, then save the program."),
     });
-  }, [conversionRows, setValue]);
+  }, [conversionRows, setValue, t]);
 
   if (rows.length === 0) {
     return null;
@@ -233,11 +236,10 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
             <Eye className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">Live Matrix Preview</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Live Matrix Preview")}</CardTitle>
             <p className="text-muted-foreground text-xs">
-              Rendered from the formula parameters — no rows to maintain.
-              {currentPrice !== null &&
-                ` The highlighted band contains this week's price ($${currentPrice.toFixed(3)}).`}
+              {t("Rendered from the formula parameters — no rows to maintain. {0}", currentPrice !== null &&
+                ` The highlighted band contains this week's price ($${currentPrice.toFixed(3)}).`)}
             </p>
           </div>
         </div>
@@ -250,7 +252,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
           className="gap-1.5"
         >
           <PencilRuler className="size-3.5" />
-          Customize Bands
+          {t("Customize Bands")}
         </Button>
       </CardHeader>
       <CardContent className="p-0">
@@ -258,9 +260,9 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/80 sticky top-0 backdrop-blur">
               <tr className="text-muted-foreground text-left text-xs">
-                <th className="px-4 py-2 font-medium">Fuel Price From</th>
-                <th className="px-4 py-2 font-medium">To</th>
-                <th className="px-4 py-2 font-medium">Rate ($/mi)</th>
+                <th className="px-4 py-2 font-medium">{t("Fuel Price From")}</th>
+                <th className="px-4 py-2 font-medium">{t("To")}</th>
+                <th className="px-4 py-2 font-medium">{t("Rate ($/mi)")}</th>
               </tr>
             </thead>
             <tbody>
@@ -308,6 +310,8 @@ function ConvertToTableDialog({
   conversionRows: FuelSurchargeProgramFormValues["tableRows"];
   onConfirm: () => void;
 }) {
+  const t = useT();
+
   const shown = conversionRows.slice(0, CONVERSION_PREVIEW_LIMIT);
   const hidden = conversionRows.length - shown.length;
 
@@ -315,10 +319,9 @@ function ConvertToTableDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">Make These Bands Editable</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">{t("Make These Bands Editable")}</DialogTitle>
           <DialogDescription>
-            Use this when the formula almost fits but some bands need a different range or rate —
-            like a customer&apos;s own fuel table with uneven brackets.
+            {t("Use this when the formula almost fits but some bands need a different range or rate — like a customer's own fuel table with uneven brackets.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -329,9 +332,9 @@ function ConvertToTableDialog({
                 1
               </span>
               <span className="text-muted-foreground">
-                Your formula&apos;s full schedule is copied into the table on the right —{" "}
-                <span className="text-foreground font-medium">{conversionRows.length} bands</span>{" "}
-                covering every fuel price.
+                {t("Your formula's full schedule is copied into the table on the right —")}{" "}
+                <span className="text-foreground font-medium">{t("{0} bands", conversionRows.length)}</span>{" "}
+                {t("covering every fuel price.")}
               </span>
             </li>
             <li className="flex gap-2.5">
@@ -339,8 +342,7 @@ function ConvertToTableDialog({
                 2
               </span>
               <span className="text-muted-foreground">
-                Every band becomes editable — change any price range or rate, add bands, or delete
-                them. They don&apos;t have to be evenly spaced.
+                {t("Every band becomes editable — change any price range or rate, add bands, or delete them. They don't have to be evenly spaced.")}
               </span>
             </li>
             <li className="flex gap-2.5">
@@ -348,23 +350,22 @@ function ConvertToTableDialog({
                 3
               </span>
               <span className="text-muted-foreground">
-                The formula fields no longer apply. Nothing is saved until you save the program —
-                switching the method back undoes this.
+                {t("The formula fields no longer apply. Nothing is saved until you save the program — switching the method back undoes this.")}
               </span>
             </li>
           </ol>
 
           <div className="flex max-h-64 flex-col overflow-hidden rounded-lg border">
             <div className="bg-muted/60 border-b px-3 py-1.5 text-xs font-medium">
-              Your table will look like this
+              {t("Your table will look like this")}
             </div>
             <div className="flex-1 overflow-y-auto">
               <table className="w-full text-xs">
                 <thead className="bg-muted/80 sticky top-0 backdrop-blur">
                   <tr className="text-muted-foreground text-left">
-                    <th className="px-2.5 py-1.5 font-medium">From</th>
-                    <th className="px-2.5 py-1.5 font-medium">Up To</th>
-                    <th className="px-2.5 py-1.5 font-medium">$/mi</th>
+                    <th className="px-2.5 py-1.5 font-medium">{t("From")}</th>
+                    <th className="px-2.5 py-1.5 font-medium">{t("Up To")}</th>
+                    <th className="px-2.5 py-1.5 font-medium">{t("$/mi")}</th>
                   </tr>
                 </thead>
                 <tbody className="tabular-nums">
@@ -380,7 +381,7 @@ function ConvertToTableDialog({
                   {hidden > 0 && (
                     <tr className="border-t">
                       <td colSpan={3} className="text-muted-foreground px-2.5 py-1.5">
-                        …and {hidden} more bands
+                        {t("…and {0} more bands", hidden)}
                       </td>
                     </tr>
                   )}
@@ -392,10 +393,10 @@ function ConvertToTableDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="button" onClick={onConfirm} disabled={conversionRows.length === 0}>
-            Create {conversionRows.length} Editable Bands
+            {t("Create {0} Editable Bands", conversionRows.length)}
           </Button>
         </DialogFooter>
       </DialogContent>

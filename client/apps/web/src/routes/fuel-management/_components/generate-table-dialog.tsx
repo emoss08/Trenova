@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -127,6 +128,8 @@ export function GenerateTableDialog({
   replaceCount,
   onApply,
 }: GenerateTableDialogProps) {
+  const t = useT();
+
   const [state, setState] = useState<WizardState>(DEFAULT_STATE);
   const openEndedId = useId();
 
@@ -165,7 +168,7 @@ export function GenerateTableDialog({
     onApply(preview);
     onOpenChange(false);
     toast.success(`${preview.length} price bands created`, {
-      description: "Every band is editable — adjust any range or value before saving.",
+      description: t("Every band is editable — adjust any range or value before saving."),
     });
   };
 
@@ -181,19 +184,18 @@ export function GenerateTableDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="size-4" />
-            Generate Price Bands
+            {t("Generate Price Bands")}
           </DialogTitle>
           <DialogDescription>
-            Answer a few questions and the whole table is built for you — the preview updates as you
-            type. Every band stays editable afterward.
+            {t("Answer a few questions and the whole table is built for you — the preview updates as you type. Every band stays editable afterward.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-5 sm:grid-cols-[260px_1fr]">
           <div className="space-y-3.5">
             <WizardField
-              label="Lowest fuel price"
-              helper="Bands start here — usually your peg (base) price."
+              label={t("Lowest fuel price")}
+              helper={t("Bands start here — usually your peg (base) price.")}
               value={state.minPrice}
               onChange={(value) => update({ minPrice: value })}
               prefix="$"
@@ -201,8 +203,8 @@ export function GenerateTableDialog({
               invalid={rangeInvalid}
             />
             <WizardField
-              label="Highest fuel price"
-              helper="Bands stop here. Pick a price fuel is unlikely to exceed."
+              label={t("Highest fuel price")}
+              helper={t("Bands stop here. Pick a price fuel is unlikely to exceed.")}
               value={state.maxPrice}
               onChange={(value) => update({ maxPrice: value })}
               prefix="$"
@@ -210,8 +212,8 @@ export function GenerateTableDialog({
               invalid={rangeInvalid}
             />
             <WizardField
-              label="Band width"
-              helper="How much fuel price each band covers — 5¢ is the industry standard."
+              label={t("Band width")}
+              helper={t("How much fuel price each band covers — 5¢ is the industry standard.")}
               value={state.increment}
               onChange={(value) => update({ increment: value })}
               prefix="$"
@@ -220,7 +222,7 @@ export function GenerateTableDialog({
             />
             <WizardField
               label={`Starting ${valueMeta.label.toLowerCase()}`}
-              helper="Charged in the first (lowest price) band."
+              helper={t("Charged in the first (lowest price) band.")}
               value={state.startValue}
               onChange={(value) => update({ startValue: value })}
               prefix={valueMeta.prefix}
@@ -228,7 +230,7 @@ export function GenerateTableDialog({
               decimalScale={valueMeta.decimalScale}
             />
             <WizardField
-              label="Increase per band"
+              label={t("Increase per band")}
               helper={`How much the ${valueMeta.label.toLowerCase()} goes up from one band to the next.`}
               value={state.valueStep}
               onChange={(value) => update({ valueStep: value })}
@@ -244,11 +246,10 @@ export function GenerateTableDialog({
               />
               <div>
                 <Label htmlFor={openEndedId} className="text-xs font-medium">
-                  Cover prices outside the range
+                  {t("Cover prices outside the range")}
                 </Label>
                 <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
-                  Adds open-ended bottom and top bands so every possible fuel price matches a band.
-                  Recommended.
+                  {t("Adds open-ended bottom and top bands so every possible fuel price matches a band. Recommended.")}
                 </p>
               </div>
             </div>
@@ -256,7 +257,7 @@ export function GenerateTableDialog({
 
           <div className="flex min-h-72 flex-col overflow-hidden rounded-lg border">
             <div className="bg-muted/60 flex items-center justify-between border-b px-3 py-2">
-              <span className="text-xs font-medium">Preview</span>
+              <span className="text-xs font-medium">{t("Preview")}</span>
               <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                 {isFetching && <LoaderCircle className="size-3 animate-spin" />}
                 {valid && !tooMany ? `${preview?.length ?? estimate} bands` : ""}
@@ -272,8 +273,7 @@ export function GenerateTableDialog({
               <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-xs">
                 <TriangleAlert className="size-5 text-amber-500" />
                 <p>
-                  That would create {estimate} bands (limit {MAX_BANDS}). Widen the band width or
-                  narrow the price range.
+                  {t("That would create {0} bands (limit {1}). Widen the band width or narrow the price range.", estimate, MAX_BANDS)}
                 </p>
               </div>
             ) : (
@@ -281,8 +281,8 @@ export function GenerateTableDialog({
                 <table className="w-full text-sm">
                   <thead className="bg-muted/80 sticky top-0 backdrop-blur">
                     <tr className="text-muted-foreground text-left text-xs">
-                      <th className="px-3 py-1.5 font-medium">From</th>
-                      <th className="px-3 py-1.5 font-medium">Up To</th>
+                      <th className="px-3 py-1.5 font-medium">{t("From")}</th>
+                      <th className="px-3 py-1.5 font-medium">{t("Up To")}</th>
                       <th className="px-3 py-1.5 font-medium">{valueMeta.label}</th>
                     </tr>
                   </thead>
@@ -315,14 +315,14 @@ export function GenerateTableDialog({
           </span>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
               onClick={handleApply}
               disabled={!valid || tooMany || isFetching || !preview || preview.length === 0}
             >
-              Use These Bands{preview && !tooMany && valid ? ` (${preview.length})` : ""}
+              {t("Use These Bands{0}", preview && !tooMany && valid ? ` (${preview.length})` : "")}
             </Button>
           </div>
         </DialogFooter>

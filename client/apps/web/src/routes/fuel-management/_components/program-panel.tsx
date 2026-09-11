@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -97,6 +98,8 @@ type ProgramPanelProps = {
 };
 
 export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = !!programId;
 
@@ -179,7 +182,7 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="fuel-program-form" isLoading={isSubmitting}>
             {isEdit ? "Save Changes" : "Create Program"}
@@ -188,7 +191,7 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
       }
     >
       {isEdit && isDetailLoading ? (
-        <ComponentLoader message="Loading Fuel Surcharge Program..." />
+        <ComponentLoader message={t("Loading Fuel Surcharge Program...")} />
       ) : (
         <FormProvider {...form}>
           <Form id="fuel-program-form" onSubmit={handleSubmit(onSubmit)}>

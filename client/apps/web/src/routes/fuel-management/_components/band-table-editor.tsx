@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { queries } from "@/lib/queries";
@@ -218,6 +219,8 @@ const BandRow = memo(function BandRow({
   onInsertAfter,
   onRemove,
 }: BandRowProps) {
+  const t = useT();
+
   const row = useWatch({ control, name: `tableRows.${index}` }) as WatchedRow | undefined;
   const isCurrent = currentPrice !== null && !!row && bandContainsPrice(row, currentPrice);
 
@@ -233,7 +236,7 @@ const BandRow = memo(function BandRow({
         {isCurrent ? (
           <span
             className="bg-primary inline-block size-2 rounded-full"
-            title="This week's price falls in this band"
+            title={t("This week's price falls in this band")}
           />
         ) : (
           index + 1
@@ -243,7 +246,7 @@ const BandRow = memo(function BandRow({
         <BandCell
           control={control}
           name={`tableRows.${index}.priceMin`}
-          placeholder="Any price"
+          placeholder={t("Any price")}
           ariaLabel={`Band ${index + 1} price from`}
           prefix="$"
           decimalScale={4}
@@ -254,7 +257,7 @@ const BandRow = memo(function BandRow({
         <BandCell
           control={control}
           name={`tableRows.${index}.priceMax`}
-          placeholder="No limit"
+          placeholder={t("No limit")}
           ariaLabel={`Band ${index + 1} price up to`}
           prefix="$"
           decimalScale={4}
@@ -281,7 +284,7 @@ const BandRow = memo(function BandRow({
             size="sm"
             onClick={() => onInsertAfter(index)}
             disabled={disabled}
-            title="Insert a band below this one"
+            title={t("Insert a band below this one")}
             className="text-muted-foreground hover:text-foreground size-7 p-0"
           >
             <Plus className="size-3.5" />
@@ -292,7 +295,7 @@ const BandRow = memo(function BandRow({
             size="sm"
             onClick={() => onRemove(index)}
             disabled={disabled}
-            title="Delete this band"
+            title={t("Delete this band")}
             className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-7 p-0"
           >
             <Trash2 className="size-3.5" />
@@ -312,6 +315,8 @@ function SortButton({
   disabled?: boolean;
   onSort: () => void;
 }) {
+  const t = useT();
+
   const watched = useWatch({ control, name: "tableRows" });
   const rows = useDeferredValue(watched);
   const sorted = useMemo(() => isSortedByPrice(rows ?? []), [rows]);
@@ -328,7 +333,7 @@ function SortButton({
       className="gap-1.5"
     >
       <ArrowDownUp className="size-3.5" />
-      Sort by Price
+      {t("Sort by Price")}
     </Button>
   );
 }
@@ -356,6 +361,8 @@ function IssuesStrip({
   disabled?: boolean;
   onFillGap: (gap: { afterIndex: number; from: number; to: number }) => void;
 }) {
+  const t = useT();
+
   const watched = useWatch({ control, name: "tableRows" });
   const rows = useDeferredValue(watched);
   const issues = useMemo(() => computeBandIssues(rows ?? []), [rows]);
@@ -396,7 +403,7 @@ function IssuesStrip({
                 disabled={disabled}
                 className="h-6 shrink-0 px-2 text-xs"
               >
-                Fill Gap
+                {t("Fill Gap")}
               </Button>
             )}
           </div>
@@ -413,6 +420,8 @@ function FooterSummary({
   control: Control<FuelSurchargeProgramFormValues>;
   currentPrice: number | null;
 }) {
+  const t = useT();
+
   const watched = useWatch({ control, name: "tableRows" });
   const deferred = useDeferredValue(watched);
   const rows = useMemo<WatchedRow[]>(() => deferred ?? [], [deferred]);
@@ -446,10 +455,10 @@ function FooterSummary({
       </span>
       {currentPrice !== null && (
         <span>
-          This week&apos;s price:{" "}
+          {t("This week's price:")}{" "}
           <span className="font-medium tabular-nums">{money(currentPrice, 3)}</span>
           {uncovered && (
-            <span className="ml-1 text-amber-600 dark:text-amber-400">— no band covers it</span>
+            <span className="ml-1 text-amber-600 dark:text-amber-400">{t("— no band covers it")}</span>
           )}
         </span>
       )}
@@ -458,6 +467,8 @@ function FooterSummary({
 }
 
 export function BandTableEditor({ method, disabled }: { method: string; disabled?: boolean }) {
+  const t = useT();
+
   const { control, getValues } = useFormContext<FuelSurchargeProgramFormValues>();
   const { fields, append, remove, insert, replace } = useFieldArray({
     control,
@@ -610,10 +621,9 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
             <Table2 className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">Price Band Table</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Price Band Table")}</CardTitle>
             <p className="text-muted-foreground text-xs">
-              Read each row as: when fuel costs at least &ldquo;from&rdquo; and less than &ldquo;up
-              to&rdquo;, {meta.readingHint}.
+              {t("Read each row as: when fuel costs at least “from” and less than “up to”, {0}.", meta.readingHint)}
             </p>
           </div>
         </div>
@@ -629,7 +639,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
               className="gap-1.5"
             >
               <Wand2 className="size-3.5" />
-              Generate
+              {t("Generate")}
             </Button>
             <Button
               type="button"
@@ -640,7 +650,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
               className="gap-1.5"
             >
               <Plus className="size-3.5" />
-              Add Band
+              {t("Add Band")}
             </Button>
           </div>
         )}
@@ -652,10 +662,9 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
             <div className="bg-muted flex size-12 items-center justify-center rounded-full">
               <Table2 className="text-muted-foreground size-5" />
             </div>
-            <p className="mt-3 text-sm font-medium">Build your price band table</p>
+            <p className="mt-3 text-sm font-medium">{t("Build your price band table")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-              The fastest way is the generator — set a price range and increments, and the full
-              table is built for you. Every row stays editable afterward, so uneven bands are fine.
+              {t("The fastest way is the generator — set a price range and increments, and the full table is built for you. Every row stays editable afterward, so uneven bands are fine.")}
             </p>
             <div className="mt-4 flex gap-2">
               <Button
@@ -666,7 +675,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 className="gap-1.5"
               >
                 <Wand2 className="size-3.5" />
-                Generate the Table for Me
+                {t("Generate the Table for Me")}
               </Button>
               <Button
                 type="button"
@@ -677,7 +686,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 className="gap-1.5"
               >
                 <Plus className="size-3.5" />
-                Start From Scratch
+                {t("Start From Scratch")}
               </Button>
             </div>
           </div>
@@ -688,8 +697,8 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 <thead className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
                   <tr className="text-muted-foreground text-left text-xs">
                     <th className="w-10 px-3 py-2 text-center font-medium">#</th>
-                    <th className="px-2 py-2 font-medium">Fuel Price From</th>
-                    <th className="px-2 py-2 font-medium">Up To (not incl.)</th>
+                    <th className="px-2 py-2 font-medium">{t("Fuel Price From")}</th>
+                    <th className="px-2 py-2 font-medium">{t("Up To (not incl.)")}</th>
                     <th className="px-2 py-2 font-medium">{meta.header}</th>
                     <th className="w-16 px-2 py-2" />
                   </tr>
