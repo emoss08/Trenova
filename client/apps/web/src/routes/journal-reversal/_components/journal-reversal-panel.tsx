@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -29,6 +30,8 @@ function CreateReversalPanel({
   open,
   onOpenChange,
 }: Pick<DataTablePanelProps<JournalReversalRow>, "open" | "onOpenChange">) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<CreateReversalForm>({
@@ -62,7 +65,7 @@ function CreateReversalPanel({
       });
     },
     onSuccess: () => {
-      toast.success("Reversal request created");
+      toast.success(t("Reversal request created"));
       void queryClient.invalidateQueries({ queryKey: ["journal-reversal-list"] });
       onOpenChange(false);
       reset();
@@ -84,12 +87,12 @@ function CreateReversalPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title="New Journal Reversal"
-      description="Create a new journal entry reversal request."
+      title={t("New Journal Reversal")}
+      description={t("Create a new journal entry reversal request.")}
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="journal-reversal-create-form" disabled={isSubmitting}>
             <SendIcon className="mr-1.5 size-3.5" />
@@ -112,6 +115,8 @@ function ReversalDetailPanel({
   onOpenChange,
   row,
 }: Pick<DataTablePanelProps<JournalReversalRow>, "open" | "onOpenChange" | "row">) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [rejectionReason, setRejectionReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -132,7 +137,7 @@ function ReversalDetailPanel({
   const { mutateAsync: approve, isPending: isApproving } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.approve(reversal!.id!),
     onSuccess: () => {
-      toast.success("Reversal approved");
+      toast.success(t("Reversal approved"));
       void invalidate();
     },
     resourceName: "Journal Reversal",
@@ -141,7 +146,7 @@ function ReversalDetailPanel({
   const { mutateAsync: postReversal, isPending: isPosting } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.post(reversal!.id!),
     onSuccess: () => {
-      toast.success("Reversal posted");
+      toast.success(t("Reversal posted"));
       void invalidate();
     },
     resourceName: "Journal Reversal",
@@ -150,7 +155,7 @@ function ReversalDetailPanel({
   const { mutateAsync: reject, isPending: isRejecting } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.reject(reversal!.id!, rejectionReason),
     onSuccess: () => {
-      toast.success("Reversal rejected");
+      toast.success(t("Reversal rejected"));
       setShowRejectInput(false);
       setRejectionReason("");
       void invalidate();
@@ -161,7 +166,7 @@ function ReversalDetailPanel({
   const { mutateAsync: cancel, isPending: isCancelling } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.cancel(reversal!.id!, cancelReason),
     onSuccess: () => {
-      toast.success("Reversal cancelled");
+      toast.success(t("Reversal cancelled"));
       setShowCancelInput(false);
       setCancelReason("");
       void invalidate();
@@ -177,32 +182,32 @@ function ReversalDetailPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title="Journal Reversal"
+      title={t("Journal Reversal")}
       description={`Reversal for entry ${reversal.originalJournalEntryId}`}
       headerActions={<AccountingStatusBadge status={reversal.status} />}
     >
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div>
-          <dt className="text-2xs text-muted-foreground font-medium">Original Entry</dt>
+          <dt className="text-2xs text-muted-foreground font-medium">{t("Original Entry")}</dt>
           <dd className="mt-0.5 font-mono text-xs">{reversal.originalJournalEntryId}</dd>
         </div>
         <div>
-          <dt className="text-2xs text-muted-foreground font-medium">Reason Code</dt>
+          <dt className="text-2xs text-muted-foreground font-medium">{t("Reason Code")}</dt>
           <dd className="mt-0.5 text-xs font-medium">{reversal.reasonCode}</dd>
         </div>
         <div className="col-span-2">
-          <dt className="text-2xs text-muted-foreground font-medium">Reason</dt>
+          <dt className="text-2xs text-muted-foreground font-medium">{t("Reason")}</dt>
           <dd className="mt-0.5 text-xs">{reversal.reasonText}</dd>
         </div>
         {reversal.reversalJournalEntryId ? (
           <div>
-            <dt className="text-2xs text-muted-foreground font-medium">Reversal Entry</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Reversal Entry")}</dt>
             <dd className="mt-0.5 font-mono text-xs">{reversal.reversalJournalEntryId}</dd>
           </div>
         ) : null}
         {reversal.rejectionReason ? (
           <div className="col-span-2">
-            <dt className="text-2xs text-muted-foreground font-medium">Rejection Reason</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Rejection Reason")}</dt>
             <dd className="mt-0.5 text-xs text-red-600 dark:text-red-400">
               {reversal.rejectionReason}
             </dd>
@@ -210,7 +215,7 @@ function ReversalDetailPanel({
         ) : null}
         {reversal.cancelReason ? (
           <div className="col-span-2">
-            <dt className="text-2xs text-muted-foreground font-medium">Cancel Reason</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">{t("Cancel Reason")}</dt>
             <dd className="mt-0.5 text-xs">{reversal.cancelReason}</dd>
           </div>
         ) : null}
@@ -220,7 +225,7 @@ function ReversalDetailPanel({
         <>
           <Separator />
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold">Actions</h4>
+            <h4 className="text-xs font-semibold">{t("Actions")}</h4>
             <div className="flex flex-wrap items-center gap-2">
               {reversal.status === "PendingApproval" ? (
                 <>
@@ -235,7 +240,7 @@ function ReversalDetailPanel({
                     disabled={showRejectInput}
                   >
                     <XIcon className="mr-1.5 size-3.5" />
-                    Reject
+                    {t("Reject")}
                   </Button>
                 </>
               ) : null}
@@ -252,7 +257,7 @@ function ReversalDetailPanel({
                   onClick={() => setShowCancelInput(true)}
                   disabled={showCancelInput}
                 >
-                  Cancel Reversal
+                  {t("Cancel Reversal")}
                 </Button>
               ) : null}
             </div>
@@ -264,7 +269,7 @@ function ReversalDetailPanel({
                   rows={2}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Provide a reason for rejection"
+                  placeholder={t("Provide a reason for rejection")}
                 />
                 <div className="flex gap-2">
                   <Button
@@ -283,7 +288,7 @@ function ReversalDetailPanel({
                       setRejectionReason("");
                     }}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                 </div>
               </div>
@@ -296,7 +301,7 @@ function ReversalDetailPanel({
                   rows={2}
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Provide a reason for cancellation"
+                  placeholder={t("Provide a reason for cancellation")}
                 />
                 <div className="flex gap-2">
                   <Button
@@ -315,7 +320,7 @@ function ReversalDetailPanel({
                       setCancelReason("");
                     }}
                   >
-                    Dismiss
+                    {t("Dismiss")}
                   </Button>
                 </div>
               </div>
