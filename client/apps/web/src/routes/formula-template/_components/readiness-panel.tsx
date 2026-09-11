@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -55,6 +56,8 @@ export function ReadinessPanel({
   step: ReadinessStep;
   onReadinessChange?: (ready: boolean | null) => void;
 }) {
+  const t = useT();
+
   const { data, isLoading, isError } = useQuery({
     ...queries.formulaTemplate.readiness(templateId),
     enabled: !!templateId,
@@ -81,8 +84,7 @@ export function ReadinessPanel({
   if (isError || !data) {
     return (
       <div className="text-muted-foreground rounded-md border px-3 py-2 text-xs">
-        The readiness check could not run. The server will still enforce every rule when you
-        confirm.
+        {t("The readiness check could not run. The server will still enforce every rule when you confirm.")}
       </div>
     );
   }
@@ -102,7 +104,7 @@ export function ReadinessPanel({
         <span>{ready ? "Ready to " + step : "Not ready to " + step}</span>
         {failing.length > 0 && (
           <span className="text-destructive font-normal">
-            {failing.length} blocking {failing.length === 1 ? "issue" : "issues"}
+            {t("{0} blocking {1}", failing.length, failing.length === 1 ? "issue" : "issues")}
           </span>
         )}
       </div>

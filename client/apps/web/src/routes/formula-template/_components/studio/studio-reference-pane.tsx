@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   FunctionDoc,
   KnownIdentifiers,
@@ -128,6 +129,8 @@ function FunctionRow({
 }
 
 export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferencePaneProps) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"variables" | "functions">("variables");
   const { isError: schemaUnavailable, refetch: refetchSchema } = useFormulaSchema(schemaId);
@@ -172,8 +175,8 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
       <div className="space-y-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <BookOpenIcon className="text-muted-foreground size-4" />
-          <span className="text-sm font-semibold">Reference</span>
-          <span className="text-muted-foreground text-2xs ml-auto">Click to insert</span>
+          <span className="text-sm font-semibold">{t("Reference")}</span>
+          <span className="text-muted-foreground text-2xs ml-auto">{t("Click to insert")}</span>
         </div>
         {schemaUnavailable && (
           <div
@@ -181,8 +184,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             className="text-2xs flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200"
           >
             <span>
-              Showing the built-in reference; the live schema could not be loaded, so newer
-              variables may be missing and flagged as unknown.
+              {t("Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing and flagged as unknown.")}
             </span>
             <Button
               type="button"
@@ -191,7 +193,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
               className="h-5 shrink-0"
               onClick={() => void refetchSchema()}
             >
-              Retry
+              {t("Retry")}
             </Button>
           </div>
         )}
@@ -202,7 +204,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={`Search variables and functions (${shortcutHint("search")})`}
-            aria-label="Search variables and functions"
+            aria-label={t("Search variables and functions")}
             className="h-7 pl-7 text-xs"
           />
         </div>
@@ -255,7 +257,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           {((activeTab === "variables" && filteredVariables.length === 0) ||
             (activeTab === "functions" && filteredFunctions.length === 0)) && (
             <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-              Nothing matches &quot;{search}&quot;
+              {t("Nothing matches \"{0}\"", search)}
             </p>
           )}
         </div>

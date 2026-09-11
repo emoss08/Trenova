@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -104,6 +105,8 @@ export function ApprovalActionDialog({
   action,
   template,
 }: ApprovalActionDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const [showCommentError, setShowCommentError] = useState(false);
@@ -240,7 +243,7 @@ export function ApprovalActionDialog({
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"

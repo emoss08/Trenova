@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { formulaTemplateStatusChoices, formulaTemplateTypeChoices } from "@/lib/choices";
@@ -118,7 +119,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
             {count}
           </Badge>
         ) : (
-          <span className="text-muted-foreground text-xs">Not in use</span>
+          <span className="text-muted-foreground text-xs">{translate("Not in use")}</span>
         );
       },
       meta: {
@@ -142,7 +143,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
             {count}
           </Badge>
         ) : (
-          <span className="text-muted-foreground text-xs">None</span>
+          <span className="text-muted-foreground text-xs">{translate("None")}</span>
         );
       },
       meta: {
@@ -163,7 +164,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
         row.original.approvedAt ? (
           <HoverCardTimestamp timestamp={row.original.approvedAt} />
         ) : (
-          <span className="text-muted-foreground text-xs">Never</span>
+          <span className="text-muted-foreground text-xs">{translate("Never")}</span>
         ),
       meta: {
         label: "Approved",

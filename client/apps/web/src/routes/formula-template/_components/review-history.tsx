@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -47,9 +48,11 @@ function ReviewEntry({ review }: { review: FormulaTemplateReview }) {
 }
 
 function RoundHeader({ round }: { round: ReviewRound }) {
+  const t = useT();
+
   return (
     <div className="bg-muted/40 text-2xs flex items-center justify-between gap-2 border-b px-3 py-1">
-      <span className="font-medium">Round {round.round}</span>
+      <span className="font-medium">{t("Round {0}", round.round)}</span>
       <span className="text-muted-foreground">
         {round.baseVersionNumber > 0
           ? `against approved v${round.baseVersionNumber}`
@@ -62,6 +65,8 @@ function RoundHeader({ round }: { round: ReviewRound }) {
 
 /** The template's review conversation, newest round first. */
 export function ReviewHistory({ templateId }: { templateId: string }) {
+  const t = useT();
+
   const { data, isLoading, isError } = useQuery({
     ...queries.formulaTemplate.reviews(templateId),
     enabled: !!templateId,
@@ -82,7 +87,7 @@ export function ReviewHistory({ templateId }: { templateId: string }) {
   if (isError) {
     return (
       <div className="text-muted-foreground rounded-md border px-3 py-2 text-xs">
-        The review history could not be loaded.
+        {t("The review history could not be loaded.")}
       </div>
     );
   }
@@ -91,7 +96,7 @@ export function ReviewHistory({ templateId }: { templateId: string }) {
     return (
       <div className="text-muted-foreground flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs">
         <HistoryIcon className="size-3.5" />
-        This template has never been submitted for review.
+        {t("This template has never been submitted for review.")}
       </div>
     );
   }
@@ -100,7 +105,7 @@ export function ReviewHistory({ templateId }: { templateId: string }) {
     <div className="overflow-hidden rounded-md border">
       <div className="flex items-center gap-1.5 border-b px-3 py-2 text-xs font-semibold">
         <HistoryIcon className="size-3.5" />
-        Review history
+        {t("Review history")}
       </div>
       {rounds.map((round) => (
         <div key={round.round}>

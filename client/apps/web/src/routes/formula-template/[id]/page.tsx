@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { saveDemotesToDraft } from "@/lib/formula-template-material";
@@ -120,6 +121,8 @@ function StudioSkeleton() {
 }
 
 export function FormulaStudioEditPage() {
+  const t = useT();
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -169,12 +172,12 @@ export function FormulaStudioEditPage() {
     },
     onSuccess: async (updated) => {
       if (template && updated.status !== template.status && updated.status === "Draft") {
-        toast.success("Formula template saved as a draft", {
+        toast.success(t("Formula template saved as a draft"), {
           description:
-            "The change returned it to Draft. Shipments cannot be rated with it until it is approved again.",
+            t("The change returned it to Draft. Shipments cannot be rated with it until it is approved again."),
         });
       } else {
-        toast.success("Formula template saved");
+        toast.success(t("Formula template saved"));
       }
       // Reseat the form on the saved record right away so the dirty flag —
       // and with it the unsaved-changes guard — clears without waiting for
@@ -211,13 +214,13 @@ export function FormulaStudioEditPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
         <AlertCircleIcon className="text-destructive size-10" />
-        <p className="text-sm font-medium">This formula template could not be loaded.</p>
+        <p className="text-sm font-medium">{t("This formula template could not be loaded.")}</p>
         <Button
           variant="outline"
           size="sm"
           onClick={() => void navigate(formulaTemplateRoutes.list)}
         >
-          Back to Formula Templates
+          {t("Back to Formula Templates")}
         </Button>
       </div>
     );
@@ -257,10 +260,10 @@ export function FormulaStudioEditPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel variant="outline" size="default">
-              Keep editing
+              {t("Keep editing")}
             </AlertDialogCancel>
             <AlertDialogAction variant="destructive" size="default" onClick={confirmDemotingSave}>
-              Save and return to Draft
+              {t("Save and return to Draft")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

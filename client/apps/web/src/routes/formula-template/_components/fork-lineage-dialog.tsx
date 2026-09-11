@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -35,6 +36,8 @@ function LineageNode({
   onNavigateToTemplate,
   isRoot = false,
 }: LineageNodeProps) {
+  const t = useT();
+
   const isCurrent = node.templateId === currentTemplateId;
   const hasChildren = node.forkedTemplates && node.forkedTemplates.length > 0;
 
@@ -72,13 +75,13 @@ function LineageNode({
             <span className="text-sm font-medium">{node.templateName}</span>
             {node.sourceVersion && (
               <span className="text-muted-foreground text-xs">
-                Forked from v{node.sourceVersion}
+                {t("Forked from v{0}", node.sourceVersion)}
               </span>
             )}
           </div>
           {isCurrent && (
             <Badge variant="outline" className="ml-2 text-xs">
-              Current
+              {t("Current")}
             </Badge>
           )}
         </div>
@@ -108,6 +111,8 @@ export function ForkLineageDialog({
   currentTemplateId,
   onNavigateToTemplate,
 }: ForkLineageDialogProps) {
+  const t = useT();
+
   const {
     data: lineage,
     isLoading,
@@ -136,11 +141,10 @@ export function ForkLineageDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitBranchIcon className="size-4" />
-            Fork Lineage
+            {t("Fork Lineage")}
           </DialogTitle>
           <DialogDescription>
-            View the fork history and ancestry of this template. Click on a template to navigate to
-            it.
+            {t("View the fork history and ancestry of this template. Click on a template to navigate to it.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,7 +158,7 @@ export function ForkLineageDialog({
           {error && (
             <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8">
               <AlertCircleIcon className="size-8" />
-              <p className="text-sm">Failed to load lineage data</p>
+              <p className="text-sm">{t("Failed to load lineage data")}</p>
             </div>
           )}
 
@@ -170,7 +174,7 @@ export function ForkLineageDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Close
+            {t("Close")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +84,8 @@ type ChangeSummaryProps = {
 };
 
 function ChangeSummary({ changes }: ChangeSummaryProps) {
+  const t = useT();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const changeEntries = Object.entries(changes);
 
@@ -111,8 +114,7 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
         <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
           <div className="flex items-center gap-2">
             <span className="text-foreground text-sm font-medium">
-              {changeEntries.length} change
-              {changeEntries.length !== 1 ? "s" : ""} will be applied
+              {t("{0} change {1} will be applied", changeEntries.length, changeEntries.length !== 1 ? "s" : "")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -182,6 +184,8 @@ export function RollbackConfirmDialog({
   onConfirm,
   isLoading,
 }: RollbackConfirmDialogProps) {
+  const t = useT();
+
   const [confirmed, setConfirmed] = useState(false);
 
   const { data: diff, isLoading: isLoadingDiff } = useQuery({
@@ -202,13 +206,12 @@ export function RollbackConfirmDialog({
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>Rollback to Version {targetVersion}</AlertDialogTitle>
+          <AlertDialogTitle>{t("Rollback to Version {0}", targetVersion)}</AlertDialogTitle>
           <AlertDialogDescription
             render={
               <div className="space-y-3">
                 <span className="text-muted-foreground block text-sm">
-                  This will restore the template to version {targetVersion}, creating a new version
-                  (v{currentVersion + 1}).
+                  {t("This will restore the template to version {0}, creating a new version (v{1}).", targetVersion, currentVersion + 1)}
                 </span>
 
                 {isLoadingDiff ? (
@@ -221,7 +224,7 @@ export function RollbackConfirmDialog({
                   <div className="flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-sm text-amber-600 dark:text-amber-400">
                     <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
                     <span>
-                      This template is currently used by {totalUsageCount}{" "}
+                      {t("This template is currently used by")} {totalUsageCount}{" "}
                       {usageData.usages.map((u, i) => (
                         <span key={u.type}>
                           {i > 0 && ", "}
@@ -242,7 +245,7 @@ export function RollbackConfirmDialog({
                     onCheckedChange={(checked) => setConfirmed(checked === true)}
                   />
                   <span className="text-sm">
-                    I understand this will create a new version and cannot be undone
+                    {t("I understand this will create a new version and cannot be undone")}
                   </span>
                 </Label>
               </div>
@@ -250,14 +253,14 @@ export function RollbackConfirmDialog({
           />
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={!confirmed || isLoading}
             onClick={onConfirm}
           >
             {isLoading && <Spinner />}
-            Rollback
+            {t("Rollback")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

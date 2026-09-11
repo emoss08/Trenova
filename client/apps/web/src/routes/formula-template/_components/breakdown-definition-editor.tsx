@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ExpressionEditor } from "@/components/formula-editor/expression-editor";
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -34,6 +35,8 @@ export function BreakdownDefinitionEditor({
   knownIdentifiers,
   className,
 }: BreakdownDefinitionEditorProps) {
+  const t = useT();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "breakdownDefinitions",
@@ -58,9 +61,9 @@ export function BreakdownDefinitionEditor({
             <ListTreeIcon className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">Charge Breakdown</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Charge Breakdown")}</CardTitle>
             <p className="text-muted-foreground text-xs">
-              Itemize the total into named components for invoices and audit
+              {t("Itemize the total into named components for invoices and audit")}
             </p>
           </div>
         </div>
@@ -73,7 +76,7 @@ export function BreakdownDefinitionEditor({
           className="gap-1.5"
         >
           <Plus className="size-3.5" />
-          Add
+          {t("Add")}
         </Button>
       </CardHeader>
       <CardContent className="p-4">
@@ -82,9 +85,9 @@ export function BreakdownDefinitionEditor({
             <div className="bg-muted flex size-12 items-center justify-center rounded-full">
               <ListTreeIcon className="text-muted-foreground size-5" />
             </div>
-            <p className="mt-3 text-sm font-medium">No breakdown items</p>
+            <p className="mt-3 text-sm font-medium">{t("No breakdown items")}</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              Add items to break the calculated charge into labeled amounts
+              {t("Add items to break the calculated charge into labeled amounts")}
             </p>
             <Button
               type="button"
@@ -94,7 +97,7 @@ export function BreakdownDefinitionEditor({
               className="mt-4 gap-1.5"
             >
               <Plus className="size-3.5" />
-              Add Item
+              {t("Add Item")}
             </Button>
           </div>
         ) : (
@@ -112,7 +115,7 @@ export function BreakdownDefinitionEditor({
                       htmlFor={`breakdown-${index}-name`}
                       className="text-muted-foreground mb-1.5 block text-xs font-medium"
                     >
-                      Name
+                      {t("Name")}
                     </label>
                     <Input
                       id={`breakdown-${index}-name`}
@@ -128,12 +131,12 @@ export function BreakdownDefinitionEditor({
                       htmlFor={`breakdown-${index}-label`}
                       className="text-muted-foreground mb-1.5 block text-xs font-medium"
                     >
-                      Label
+                      {t("Label")}
                     </label>
                     <Input
                       id={`breakdown-${index}-label`}
                       {...register(`breakdownDefinitions.${index}.label`)}
-                      placeholder="Fuel Surcharge"
+                      placeholder={t("Fuel Surcharge")}
                       className="h-8 text-sm"
                     />
                     <FieldError message={rowErrors?.label?.message} />
@@ -141,14 +144,14 @@ export function BreakdownDefinitionEditor({
 
                   <div className="col-span-5">
                     <span className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                      Expression
+                      {t("Expression")}
                     </span>
                     <ExpressionEditor
                       name={`breakdownDefinitions.${index}.expression`}
                       control={control as never}
                       variant="mini"
                       knownIdentifiers={knownIdentifiers}
-                      placeholder="totalDistance * 0.35"
+                      placeholder={t("totalDistance * 0.35")}
                     />
                   </div>
 
@@ -157,7 +160,7 @@ export function BreakdownDefinitionEditor({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      aria-label="Remove breakdown item"
+                      aria-label={t("Remove breakdown item")}
                       onClick={() => remove(index)}
                       className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     >
@@ -169,7 +172,7 @@ export function BreakdownDefinitionEditor({
             })}
             {atLimit && (
               <p className="text-muted-foreground text-xs">
-                Maximum of {MAX_BREAKDOWN_DEFINITIONS} breakdown items reached.
+                {t("Maximum of {0} breakdown items reached.", MAX_BREAKDOWN_DEFINITIONS)}
               </p>
             )}
           </div>

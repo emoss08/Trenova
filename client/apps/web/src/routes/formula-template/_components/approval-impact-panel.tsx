@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -35,6 +36,8 @@ function MoverRow({ result }: { result: BacktestResult }) {
 }
 
 export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
+  const t = useT();
+
   const { data, isLoading, isError } = useQuery({
     ...queries.formulaTemplate.approvalImpact(templateId),
     enabled: !!templateId,
@@ -54,7 +57,7 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
   if (isError || !data) {
     return (
       <div className="text-muted-foreground rounded-md border px-3 py-2 text-xs">
-        Impact analysis is unavailable right now. You can still approve.
+        {t("Impact analysis is unavailable right now. You can still approve.")}
       </div>
     );
   }
@@ -64,8 +67,7 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
   if (summary.shipmentCount === 0) {
     return (
       <div className="text-muted-foreground rounded-md border px-3 py-2 text-xs">
-        No shipments have been rated with this template yet, so approving has no effect on existing
-        pricing.
+        {t("No shipments have been rated with this template yet, so approving has no effect on existing pricing.")}
       </div>
     );
   }
@@ -83,9 +85,9 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
-        <span className="text-xs font-semibold">Impact on recent shipments</span>
+        <span className="text-xs font-semibold">{t("Impact on recent shipments")}</span>
         <span className="text-2xs text-muted-foreground">
-          last {summary.shipmentCount} rated with this template
+          {t("last {0} rated with this template", summary.shipmentCount)}
         </span>
       </div>
 
@@ -102,12 +104,11 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
         />
         {noChange ? (
           <span className="text-xs">
-            Re-rating produces identical charges — this change is pricing-neutral for existing
-            traffic.
+            {t("Re-rating produces identical charges — this change is pricing-neutral for existing traffic.")}
           </span>
         ) : (
           <span className="text-xs">
-            Re-rating would move totals by{" "}
+            {t("Re-rating would move totals by")}{" "}
             <span
               className={cn(
                 "font-medium tabular-nums",
@@ -116,9 +117,9 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
             >
               {formatSignedCurrency(summary.totalDelta)}
             </span>{" "}
-            ({summary.changedCount} of {summary.evaluatedCount} shipments change
+            ({summary.changedCount} of {summary.evaluatedCount} {t("shipments change")}
             {summary.errorCount > 0 && (
-              <span className="text-destructive">, {summary.errorCount} fail to evaluate</span>
+              <span className="text-destructive">{t(", {0} fail to evaluate", summary.errorCount)}</span>
             )}
             ).
           </span>

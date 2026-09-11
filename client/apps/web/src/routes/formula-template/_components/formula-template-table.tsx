@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { DuplicateAlertDialog } from "@/components/duplicate-alert-dialog";
 import {
@@ -37,6 +38,8 @@ import { getColumns } from "./formula-template-columns";
 import { ImportTemplateDialog } from "./studio/import-template-dialog";
 
 export default function FormulaTemplatesDataTable() {
+  const t = useT();
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -67,7 +70,7 @@ export default function FormulaTemplatesDataTable() {
       .installStandards()
       .then((result) => {
         if (result.installed.length === 0) {
-          toast.info("Standard templates already installed", {
+          toast.info(t("Standard templates already installed"), {
             description: `All ${result.skipped.length} standard templates exist in your organization.`,
           });
         } else {
@@ -89,13 +92,13 @@ export default function FormulaTemplatesDataTable() {
         setInstallDialogOpen(false);
       })
       .catch(() => {
-        toast.error("Failed to install standard templates");
+        toast.error(t("Failed to install standard templates"));
       })
       .finally(async () => {
         setIsInstalling(false);
         await invalidateFormulaTemplate(queryClient);
       });
-  }, [queryClient]);
+  }, [queryClient, t]);
 
   const handleDuplicate = useCallback(
     (row: Row<FormulaTemplateRow>) => {
@@ -124,12 +127,12 @@ export default function FormulaTemplatesDataTable() {
   const requestArchive = useCallback((templates: FormulaTemplateRow[]) => {
     const withIds = templates.filter((template) => template.id);
     if (withIds.length === 0) {
-      toast.error("No formula templates selected");
+      toast.error(t("No formula templates selected"));
       return;
     }
 
     setPendingArchiveRows(withIds);
-  }, []);
+  }, [t]);
 
   const handleConfirmArchive = useCallback(async () => {
     const ids = pendingArchiveRows.flatMap((template) => (template.id ? [template.id] : []));
@@ -218,11 +221,11 @@ export default function FormulaTemplatesDataTable() {
         description: filename,
       });
     } catch {
-      toast.error("Export failed", {
-        description: "Could not export the selected templates. Please try again.",
+      toast.error(t("Export failed"), {
+        description: t("Could not export the selected templates. Please try again."),
       });
     }
-  }, []);
+  }, [t]);
 
   const handleBulkDuplicate = useCallback((rows: FormulaTemplateRow[]) => {
     setPendingDuplicateRows(rows);
@@ -237,18 +240,18 @@ export default function FormulaTemplatesDataTable() {
         templateIds: ids,
       })
       .then(() => {
-        toast.success("Templates duplicated successfully");
+        toast.success(t("Templates duplicated successfully"));
         setIsDuplicateDialogOpen(false);
         setPendingDuplicateRows([]);
       })
       .catch(() => {
-        toast.error("Failed to duplicate templates");
+        toast.error(t("Failed to duplicate templates"));
       })
       .finally(async () => {
         setIsDuplicating(false);
         await invalidateFormulaTemplate(queryClient);
       });
-  }, [pendingDuplicateRows, queryClient]);
+  }, [pendingDuplicateRows, queryClient, t]);
 
   const dockActions = useMemo<DockAction<FormulaTemplateRow>[]>(
     () => [
@@ -311,17 +314,15 @@ export default function FormulaTemplatesDataTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              Install standard templates?
+              {t("Install standard templates?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This adds Trenova&apos;s vetted standard rating templates (Flat Rate, Per Mile, Per
-              CWT, and more) to your organization as Active templates. Templates you already have
-              are left untouched.
+              {t("This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel variant="outline" size="default">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               size="default"
@@ -329,7 +330,7 @@ export default function FormulaTemplatesDataTable() {
               disabled={isInstalling}
               isLoading={isInstalling}
             >
-              Install
+              {t("Install")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -355,16 +356,15 @@ export default function FormulaTemplatesDataTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              Archive {archiveCount} formula {pluralize("template", archiveCount)}?
+              {t("Archive {0} formula {1}?", archiveCount, pluralize("template", archiveCount))}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Archived templates are marked inactive and stop pricing new shipments. Rate agreements
-              and shipments referencing them keep their history.
+              {t("Archived templates are marked inactive and stop pricing new shipments. Rate agreements and shipments referencing them keep their history.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel variant="outline" size="default">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
@@ -373,7 +373,7 @@ export default function FormulaTemplatesDataTable() {
               disabled={isArchiving}
               isLoading={isArchiving}
             >
-              Archive
+              {t("Archive")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

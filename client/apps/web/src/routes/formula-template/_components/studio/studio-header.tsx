@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
@@ -71,6 +72,8 @@ function UsageChip({
   templateId: string;
   status: FormulaTemplate["status"] | undefined;
 }) {
+  const t = useT();
+
   const { data } = useQuery({
     ...queries.formulaTemplate.usage(templateId),
     staleTime: 60_000,
@@ -91,10 +94,10 @@ function UsageChip({
         }
       />
       <HoverCardContent side="bottom" className="w-64 space-y-1.5">
-        <p className="text-sm font-semibold">Where this template is used</p>
+        <p className="text-sm font-semibold">{t("Where this template is used")}</p>
         {data.usages.length === 0 ? (
           <p className="text-muted-foreground text-xs">
-            Nothing references this template yet. Editing it is safe.
+            {t("Nothing references this template yet. Editing it is safe.")}
           </p>
         ) : (
           <div className="space-y-1">
@@ -180,6 +183,8 @@ export function StudioHeader({
   onImport,
   onBacktest,
 }: StudioHeaderProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const { allowed: canSubmit } = usePermission(Resource.FormulaTemplate, Operation.Submit);
   const { allowed: canApprove } = usePermission(Resource.FormulaTemplate, Operation.Approve);
@@ -196,7 +201,7 @@ export function StudioHeader({
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label="Back to formula templates"
+          aria-label={t("Back to formula templates")}
           onClick={() => void navigate(formulaTemplateRoutes.list)}
         >
           <ArrowLeftIcon className="size-4" />
@@ -211,7 +216,7 @@ export function StudioHeader({
             )}
             {template?.currentVersionNumber != null && (
               <Badge variant="outline" className="font-mono text-xs">
-                v{template.currentVersionNumber}
+                {t("v{0}", template.currentVersionNumber)}
               </Badge>
             )}
             {scenarios && scenarios.total > 0 && <ScenarioBadge summary={scenarios} />}
@@ -222,7 +227,7 @@ export function StudioHeader({
                 className="flex items-center gap-1 rounded-sm border border-amber-500/50 bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-600 dark:text-amber-400"
               >
                 <GitBranchIcon className="size-3" />
-                Forked from v{template.sourceVersionNumber}
+                {t("Forked from v{0}", template.sourceVersionNumber)}
               </button>
             )}
           </div>
@@ -274,7 +279,7 @@ export function StudioHeader({
                 onClick={() => onApprovalAction("approve")}
               >
                 <CheckIcon className="size-3" />
-                Approve
+                {t("Approve")}
               </Button>
             )}
             {canReject && (
@@ -287,7 +292,7 @@ export function StudioHeader({
                   onClick={() => onApprovalAction("requestChanges")}
                 >
                   <MessageSquareWarningIcon className="size-3" />
-                  Request Changes
+                  {t("Request Changes")}
                 </Button>
                 <Button
                   type="button"
@@ -297,7 +302,7 @@ export function StudioHeader({
                   onClick={() => onApprovalAction("reject")}
                 >
                   <XIcon className="size-3" />
-                  Reject
+                  {t("Reject")}
                 </Button>
               </>
             )}
@@ -308,7 +313,7 @@ export function StudioHeader({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button type="button" variant="ghost" size="icon-sm" aria-label="More actions">
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={t("More actions")}>
                   <MoreVerticalIcon className="size-4" />
                 </Button>
               }
@@ -316,13 +321,13 @@ export function StudioHeader({
             <DropdownMenuContent align="end" className="min-w-[200px]">
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  title="Version History"
+                  title={t("Version History")}
                   startContent={<ClockIcon className="size-4" />}
                   onClick={onVersionHistory}
                 />
                 <DropdownMenuItem
-                  title="Backtest"
-                  description="Re-rate recent shipments"
+                  title={t("Backtest")}
+                  description={t("Re-rate recent shipments")}
                   startContent={<HistoryIcon className="size-4" />}
                   onClick={onBacktest}
                 />
@@ -330,12 +335,12 @@ export function StudioHeader({
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  title="Fork Template"
+                  title={t("Fork Template")}
                   startContent={<GitForkIcon className="size-4" />}
                   onClick={onFork}
                 />
                 <DropdownMenuItem
-                  title="View Lineage"
+                  title={t("View Lineage")}
                   startContent={<NetworkIcon className="size-4" />}
                   onClick={onLineage}
                 />
@@ -343,12 +348,12 @@ export function StudioHeader({
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  title="Export JSON"
+                  title={t("Export JSON")}
                   startContent={<DownloadIcon className="size-4" />}
                   onClick={onExport}
                 />
                 <DropdownMenuItem
-                  title="Import Templates"
+                  title={t("Import Templates")}
                   startContent={<FileUpIcon className="size-4" />}
                   onClick={onImport}
                 />
@@ -366,7 +371,7 @@ export function StudioHeader({
                   size="sm"
                   onClick={onSave}
                   isLoading={isSubmitting}
-                  loadingText="Saving..."
+                  loadingText={t("Saving...")}
                   disabled={mode === "edit" && !isDirty}
                 >
                   {mode === "create" ? "Create Template" : "Save Changes"}
