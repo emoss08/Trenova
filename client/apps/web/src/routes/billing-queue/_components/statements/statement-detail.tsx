@@ -1,5 +1,9 @@
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
-import { describeBillingSchedule, periodRange } from "@/lib/billing-schedule";
+import {
+  describeBillingSchedule,
+  periodRange,
+  standaloneShipmentCount,
+} from "@/lib/billing-schedule";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -10,7 +14,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { StatementGroup, StatementShipment } from "@trenova/shared/types/statement";
-import { BotIcon, ClockIcon, RotateCcwIcon } from "lucide-react";
+import { BotIcon, ClockIcon, InfoIcon, RotateCcwIcon } from "lucide-react";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -103,6 +107,7 @@ export function StatementDetail({
   }
 
   const offCycle = statement.periodEnd > nowSeconds;
+  const standalone = standaloneShipmentCount(statement);
   const heldCount = heldIds.size;
   const billable = groups.filter((group) => !group.belowMinimum);
 
@@ -188,6 +193,23 @@ export function StatementDetail({
           />
         ) : (
           <div className="flex flex-col gap-2 p-2">
+            {standalone > 1 && (
+              <div className="bg-muted/40 flex items-start gap-2 rounded-lg border p-2.5">
+                <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+                <p className="text-muted-foreground text-xs">
+                  {standalone} shipments aren&apos;t booked as orders, so splitting by order bills
+                  each on its own invoice. If {statement.customerName} expects one invoice for the
+                  period,{" "}
+                  <Link
+                    to={`/billing/configuration-files/customers?panelType=edit&panelEntityId=${statement.customerId}`}
+                    className="text-foreground font-medium underline underline-offset-2"
+                  >
+                    change how they&apos;re split
+                  </Link>
+                  .
+                </p>
+              </div>
+            )}
             {statement.heldCount > 0 && (
               <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-2.5 dark:border-amber-900 dark:bg-amber-950/30">
                 <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />

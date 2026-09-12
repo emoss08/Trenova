@@ -1,4 +1,5 @@
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import type { OpenStatement } from "@trenova/shared/types/statement";
 import type {
   BillingCycle,
   InvoiceDelivery,
@@ -129,6 +130,33 @@ export function describeBillingSchedule(schedule: BillingSchedule): string {
   }
 
   return parts.join(" ");
+}
+
+/**
+ * How many shipments on a statement are billing on their own invoice because the
+ * customer is split by order and those shipments were not booked as orders.
+ *
+ * This measures the configuration's effect; it never overrides it. Choosing how a
+ * customer is invoiced belongs to the people who run the account, and the system
+ * bills exactly what the profile says. The count exists so the statement can
+ * point out a result that may not be what they expected.
+ *
+ * Zero whenever members were not loaded — the list read omits them — so a caller
+ * never shows a note built from a guess.
+ */
+export function standaloneShipmentCount(
+  statement: Pick<OpenStatement, "splitBy" | "groups">,
+): number {
+  if (statement.splitBy !== "CustomerAndOrder") return 0;
+
+  let count = 0;
+  for (const group of statement.groups ?? []) {
+    for (const shipment of group.shipments ?? []) {
+      if (!shipment.orderId) count += 1;
+    }
+  }
+
+  return count;
 }
 
 /**

@@ -1,5 +1,93 @@
+import type { OpenStatement, StatementShipment } from "@trenova/shared/types/statement";
 import { describe, expect, it } from "vitest";
-import { billsInLabel, cadenceLabel, periodRange, splitLabel } from "../billing-schedule";
+import {
+  billsInLabel,
+  cadenceLabel,
+  periodRange,
+  splitLabel,
+  standaloneShipmentCount,
+} from "../billing-schedule";
+
+function shipmentRow(orderId: string | null): StatementShipment {
+  return {
+    billingQueueItemId: `bqi_${Math.random()}`,
+    shipmentId: "shp_1",
+    orderId,
+    proNumber: "PRO-1",
+    bol: null,
+    poNumber: null,
+    orderNumber: null,
+    serviceDate: null,
+    amount: 100,
+  };
+}
+
+function statementWith(
+  splitBy: OpenStatement["splitBy"],
+  groups: StatementShipment[][],
+): Pick<OpenStatement, "splitBy" | "groups"> {
+  return {
+    splitBy,
+    groups: groups.map((shipments, index) => ({
+      key: `g${index}`,
+      label: `Group ${index}`,
+      shipmentCount: shipments.length,
+      totalAmount: 100 * shipments.length,
+      belowMinimum: false,
+      shipments,
+    })),
+  };
+}
+
+// Splitting by order is the customer's configuration and the system honours it.
+// This only measures how many shipments that setting is billing on their own, so
+// the statement can say so without ever refusing to bill.
+describe("standaloneShipmentCount", () => {
+  it("counts the shipments without an order under the order split", () => {
+    const statement = statementWith("CustomerAndOrder", [
+      [shipmentRow(null)],
+      [shipmentRow(null)],
+      [shipmentRow("ord_1"), shipmentRow("ord_1")],
+    ]);
+
+    expect(standaloneShipmentCount(statement)).toBe(2);
+  });
+
+  // Under any other split a missing order changes nothing about the invoices, so
+  // there is nothing to point out.
+  it("is zero for every other split", () => {
+    const statement = statementWith("Customer", [[shipmentRow(null), shipmentRow(null)]]);
+
+    expect(standaloneShipmentCount(statement)).toBe(0);
+  });
+
+  it("treats an empty order id as no order", () => {
+    const statement = statementWith("CustomerAndOrder", [[shipmentRow("")], [shipmentRow("")]]);
+
+    expect(standaloneShipmentCount(statement)).toBe(2);
+  });
+
+  // The list read omits members, so there is nothing to count and no reason to
+  // guess — the detail read, which carries them, is where the note appears.
+  it("is zero when the members were not loaded", () => {
+    expect(
+      standaloneShipmentCount({
+        splitBy: "CustomerAndOrder",
+        groups: [
+          {
+            key: "g",
+            label: "g",
+            shipmentCount: 3,
+            totalAmount: 300,
+            belowMinimum: false,
+            shipments: null,
+          },
+        ],
+      }),
+    ).toBe(0);
+    expect(standaloneShipmentCount({ splitBy: "CustomerAndOrder", groups: null })).toBe(0);
+  });
+});
 
 const NOW = 1_774_000_000;
 const HOUR = 3_600;
