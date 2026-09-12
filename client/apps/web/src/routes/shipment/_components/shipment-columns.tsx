@@ -1,7 +1,11 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { ShipmentTenderStatusBadge } from "@trenova/shared/components/status-badge";
-import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choices";
+import {
+  shipmentBillingStatusChoices,
+  shipmentStatusChoices,
+  shipmentTenderStatusChoices,
+} from "@/lib/choices";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { Customer } from "@trenova/shared/types/customer";
@@ -9,6 +13,7 @@ import type { RowAction, ColumnDef } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { Link } from "react-router";
 import { ActionsCell } from "./command-center/cells/actions-cell";
+import { BillingCell } from "./command-center/cells/billing-cell";
 import { DriverCell } from "./command-center/cells/driver-cell";
 import { EtaCell } from "./command-center/cells/eta-cell";
 import { LaneCell } from "./command-center/cells/lane-cell";
@@ -97,6 +102,24 @@ export function getColumns(
       size: 130,
       minSize: 120,
       maxSize: 170,
+    },
+    {
+      id: "billing",
+      accessorKey: "billingTransferStatus",
+      header: "Billing",
+      cell: ({ row }) => <BillingCell shipment={row.original} />,
+      meta: {
+        apiField: "billingTransferStatus",
+        label: "Billing",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: shipmentBillingStatusChoices,
+        defaultFilterOperator: "eq",
+      },
+      size: 140,
+      minSize: 120,
+      maxSize: 180,
     },
     {
       id: "proBol",
