@@ -58,7 +58,7 @@ tasks:
     desc: Run the extraction and codemod tool tests
     dir: '{{.ROOT_DIR}}'
     cmds:
-      - node --test i18n/tools/
+      - node --test 'i18n/tools/*.test.mjs'
 
   i18n-check:
     desc: Verify every locale catalog is complete and up to date
