@@ -43,7 +43,10 @@ export function HomeEditDock({
       animated
       indicator={
         dirty ? (
-          <ActionDockIndicator title={t("Unsaved layout")} description={t("You have unsaved changes.")} />
+          <ActionDockIndicator
+            title={t("Unsaved layout")}
+            description={t("You have unsaved changes.")}
+          />
         ) : (
           <ActionDockIndicator
             icon={

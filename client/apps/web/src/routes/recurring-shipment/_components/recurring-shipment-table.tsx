@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   recurringShipmentTableGraphQLConfig,
@@ -15,8 +16,10 @@ import { RecurringShipmentPanel } from "./recurring-shipment-panel";
 import { RecurringShipmentRunsDialog } from "./recurring-shipment-runs-dialog";
 
 export default function RecurringShipmentTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [runsSeries, setRunsSeries] = useState<RecurringShipmentRow | null>(null);
   const [runsOpen, setRunsOpen] = useState(false);
 
@@ -65,21 +68,21 @@ export default function RecurringShipmentTable() {
     () => [
       {
         id: "generate-now",
-        label: "Generate Now",
+        label: t("Generate Now"),
         icon: ZapIcon,
         onClick: (row) => handleGenerateNow(row.original),
         disabled: (row) => row.original.status === "Expired",
       },
       {
         id: "toggle-status",
-        label: "Pause / Resume",
+        label: t("Pause / Resume"),
         icon: PauseIcon,
         onClick: (row) => handleToggleStatus(row.original),
         hidden: (row) => row.original.status === "Expired",
       },
       {
         id: "view-runs",
-        label: "View History",
+        label: t("View History"),
         icon: HistoryIcon,
         onClick: (row) => {
           setRunsSeries(row.original);
@@ -87,7 +90,7 @@ export default function RecurringShipmentTable() {
         },
       },
     ],
-    [handleGenerateNow, handleToggleStatus],
+    [handleGenerateNow, handleToggleStatus, t],
   );
 
   return (

@@ -46,7 +46,9 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
             }
           />
           <TooltipContent className="max-w-72">
-            {t("Severity, plus two for an out-of-service order, weighted three times inside six months and twice inside a year. Bars are relative to this fleet's own worst category, not to a national percentile.")}
+            {t(
+              "Severity, plus two for an out-of-service order, weighted three times inside six months and twice inside a year. Bars are relative to this fleet's own worst category, not to a national percentile.",
+            )}
           </TooltipContent>
         </Tooltip>
       </header>
@@ -54,7 +56,9 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
       {inferred ? (
         <Alert variant="warning" className="rounded-none border-x-0 border-t-0">
           <AlertDescription>
-            {t("Some categories were reached from the kind of event rather than from violations somebody keyed in. Record the violation codes off an inspection report and these become the real thing.")}
+            {t(
+              "Some categories were reached from the kind of event rather than from violations somebody keyed in. Record the violation codes off an inspection report and these become the real thing.",
+            )}
           </AlertDescription>
         </Alert>
       ) : null}

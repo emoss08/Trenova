@@ -74,7 +74,9 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
         <DialogHeader>
           <DialogTitle>{t("Close this event")}</DialogTitle>
           <DialogDescription>
-            {t("Say what was done about it — coaching, a repair, a dismissed citation. Points already recorded stay on the scorecard until they roll off.")}
+            {t(
+              "Say what was done about it — coaching, a repair, a dismissed citation. Points already recorded stay on the scorecard until they roll off.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -92,7 +94,9 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
                   name="resolution"
                   label={t("Resolution")}
                   placeholder={t("e.g. Coached on backing procedure; dock damage repaired")}
-                  description={t("Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first.")}
+                  description={t(
+                    "Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first.",
+                  )}
                   rules={{ required: true }}
                   maxLength={4000}
                 />

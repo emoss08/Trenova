@@ -108,7 +108,9 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
 
       {enrollments.length === 0 ? (
         <p className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-          {t("Nothing recorded. A declined plan is worth recording too — “declined” and “nobody asked” are different facts at audit.")}
+          {t(
+            "Nothing recorded. A declined plan is worth recording too — “declined” and “nobody asked” are different facts at audit.",
+          )}
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -131,7 +133,13 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
                   {coverageTierLabel(enrollment.coverageTier)}
                 </span>
                 <span className="text-muted-foreground">
-                  {t("from {0}{1}", formatUnixDate(enrollment.effectiveFrom), enrollment.effectiveTo ? ` ${t("to {0}", formatUnixDate(enrollment.effectiveTo))}` : "")}
+                  {t(
+                    "from {0}{1}",
+                    formatUnixDate(enrollment.effectiveFrom),
+                    enrollment.effectiveTo
+                      ? ` ${t("to {0}", formatUnixDate(enrollment.effectiveTo))}`
+                      : "",
+                  )}
                 </span>
                 {enrollment.waivedReason ? (
                   <span className="text-muted-foreground truncate">{enrollment.waivedReason}</span>

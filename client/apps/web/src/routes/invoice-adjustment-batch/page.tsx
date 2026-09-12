@@ -81,8 +81,10 @@ export function InvoiceAdjustmentBatchPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: "Batch Monitor",
-        description: "Track bulk adjustment submission progress, failures, and created artifacts.",
+        title: t("Batch Monitor"),
+        description: t(
+          "Track bulk adjustment submission progress, failures, and created artifacts.",
+        ),
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
@@ -98,7 +100,10 @@ export function InvoiceAdjustmentBatchPage() {
             label={t("Approvals Pending")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard label={t("Write-Offs")} value={String(summaryQuery.data?.writeOffPending ?? 0)} />
+          <SummaryCard
+            label={t("Write-Offs")}
+            value={String(summaryQuery.data?.writeOffPending ?? 0)}
+          />
         </div>
       }
       sidebar={
@@ -197,7 +202,9 @@ export function InvoiceAdjustmentBatchPage() {
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}
-              description={t("Pick a batch from the list to see how each item ran and what it created.")}
+              description={t(
+                "Pick a batch from the list to see how each item ran and what it created.",
+              )}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -218,9 +225,15 @@ export function InvoiceAdjustmentBatchPage() {
                   <Metric label={t("Succeeded")} value={String(selectedRow.succeededCount)} />
                   <Metric label={t("Failed")} value={String(selectedRow.failedCount)} />
                   <Metric label={t("Pending")} value={String(selectedRow.pendingCount)} />
-                  <Metric label={t("Submitted At")} value={formatTimestamp(selectedRow.submittedAt)} />
+                  <Metric
+                    label={t("Submitted At")}
+                    value={formatTimestamp(selectedRow.submittedAt)}
+                  />
                   <Metric label={t("Status")} value={selectedRow.status} />
-                  <Metric label={t("Last Failure Count")} value={String(selectedRow.lastFailureCount)} />
+                  <Metric
+                    label={t("Last Failure Count")}
+                    value={String(selectedRow.lastFailureCount)}
+                  />
                   <Metric label={t("Idempotency Key")} value={selectedRow.idempotencyKey} />
                 </CardContent>
               </Card>

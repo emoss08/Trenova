@@ -37,8 +37,8 @@ export function JournalEntryDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: "Journal Entry",
-          description: "Loading entry details...",
+          title: t("Journal Entry"),
+          description: t("Loading entry details..."),
         }}
       >
         <div className="space-y-4">
@@ -53,8 +53,8 @@ export function JournalEntryDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: "Journal Entry",
-          description: "Entry not found.",
+          title: t("Journal Entry"),
+          description: t("Entry not found."),
         }}
       >
         <Button variant="outline" onClick={() => void navigate(-1)}>
@@ -153,7 +153,8 @@ export function JournalEntryDetailPage() {
               <CardTitle>{t("Line Items")}</CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-muted-foreground">
-                  {t("Total Debit:")} <AmountDisplay value={entry.totalDebit} className="font-semibold" />
+                  {t("Total Debit:")}{" "}
+                  <AmountDisplay value={entry.totalDebit} className="font-semibold" />
                 </span>
                 <span className="text-muted-foreground">
                   {t("Total Credit:")}{" "}

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -17,7 +18,7 @@ export default function ServiceFailureReasonCodeTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = getColumns();
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({
@@ -40,7 +41,7 @@ export default function ServiceFailureReasonCodeTable() {
   const contextMenuActions: RowAction<ServiceFailureReasonCodeRow>[] = [
     {
       id: "archive",
-      label: "Archive",
+      label: t("Archive"),
       icon: ArchiveIcon,
       variant: "destructive",
       onClick: (row) => void handleArchive(row),
@@ -48,7 +49,7 @@ export default function ServiceFailureReasonCodeTable() {
     },
     {
       id: "activate",
-      label: "Reactivate",
+      label: t("Reactivate"),
       icon: RotateCcwIcon,
       onClick: (row) => void handleActivate(row),
       hidden: (row) => row.original.active,

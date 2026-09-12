@@ -13,7 +13,9 @@ export function MatchConfigEditor() {
     <div className="space-y-4">
       <FormSection
         title={t("Provider Matching")}
-        description={t("Identify documents by their source provider or file name. These criteria are checked before the document content is analyzed.")}
+        description={t(
+          "Identify documents by their source provider or file name. These criteria are checked before the document content is analyzed.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -21,7 +23,9 @@ export function MatchConfigEditor() {
               control={control}
               name="matchConfig.providerFingerprints"
               label={t("Provider Fingerprints")}
-              description={t("Unique identifiers for document providers (e.g. carrier SCAC codes). A document matches if its provider fingerprint appears in this list.")}
+              description={t(
+                "Unique identifiers for document providers (e.g. carrier SCAC codes). A document matches if its provider fingerprint appears in this list.",
+              )}
               placeholder={t("Add fingerprint...")}
             />
           </FormControl>
@@ -30,7 +34,9 @@ export function MatchConfigEditor() {
               control={control}
               name="matchConfig.fileNameContains"
               label={t("File Name Contains")}
-              description={t("Substrings to look for in the uploaded file name. Useful for providers that use consistent naming conventions.")}
+              description={t(
+                "Substrings to look for in the uploaded file name. Useful for providers that use consistent naming conventions.",
+              )}
               placeholder={t("Add pattern...")}
             />
           </FormControl>
@@ -39,7 +45,9 @@ export function MatchConfigEditor() {
 
       <FormSection
         title={t("Content Matching")}
-        description={t("Match documents based on text found within the document body. These criteria help distinguish documents from the same provider that may have different formats.")}
+        description={t(
+          "Match documents based on text found within the document body. These criteria help distinguish documents from the same provider that may have different formats.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -47,7 +55,9 @@ export function MatchConfigEditor() {
               control={control}
               name="matchConfig.requiresAll"
               label={t("Requires All")}
-              description={t("Every term listed here must appear somewhere in the document text for the rule to match.")}
+              description={t(
+                "Every term listed here must appear somewhere in the document text for the rule to match.",
+              )}
               placeholder={t("Add required term...")}
             />
           </FormControl>
@@ -56,7 +66,9 @@ export function MatchConfigEditor() {
               control={control}
               name="matchConfig.requiresAny"
               label={t("Requires Any")}
-              description={t("At least one of these terms must appear in the document text. Use this for documents that vary in wording.")}
+              description={t(
+                "At least one of these terms must appear in the document text. Use this for documents that vary in wording.",
+              )}
               placeholder={t("Add term...")}
             />
           </FormControl>
@@ -65,7 +77,9 @@ export function MatchConfigEditor() {
               control={control}
               name="matchConfig.sectionAnchors"
               label={t("Section Anchors")}
-              description={t("Headings or labels in the document that indicate this rule applies. The parser looks for these strings as section boundaries.")}
+              description={t(
+                "Headings or labels in the document that indicate this rule applies. The parser looks for these strings as section boundaries.",
+              )}
               placeholder={t("Add anchor...")}
             />
           </FormControl>

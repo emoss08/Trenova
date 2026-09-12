@@ -307,41 +307,41 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       items={[
                         {
                           value: "overview",
-                          label: "Overview",
+                          label: t("Overview"),
                           icon: GaugeIcon,
                         },
                         {
                           value: "general",
-                          label: "General Information",
+                          label: t("General Information"),
                           icon: UserIcon,
                           className: cn(hasGeneralErrors && "text-destructive"),
                         },
                         {
                           value: "employment",
-                          label: "Employment Information",
+                          label: t("Employment Information"),
                           icon: BriefcaseIcon,
                           className: cn(hasEmploymentErrors && "text-destructive"),
                         },
                         {
                           value: "compliance",
-                          label: "Compliance Status",
+                          label: t("Compliance Status"),
                           icon: ShieldCheckIcon,
                           className: cn(hasComplianceErrors && "text-destructive"),
                         },
-                        { value: "credentials", label: "Credentials", icon: IdCardIcon },
-                        { value: "checklist", label: "Checklist", icon: ClipboardListIcon },
-                        { value: "training", label: "Training", icon: GraduationCapIcon },
-                        { value: "safety", label: "Safety", icon: ShieldAlertIcon },
-                        { value: "testing", label: "Testing", icon: FlaskConicalIcon },
-                        { value: "dqf", label: "DQ File", icon: FolderCheckIcon },
-                        { value: "reviews", label: "Reviews", icon: ClipboardCheckIcon },
-                        { value: "hos", label: "HOS", icon: Clock4Icon },
-                        { value: "pay", label: "Pay", icon: WalletIcon },
-                        { value: "pto", label: "Time Off", icon: CalendarRangeIcon },
-                        { value: "schedule", label: "Schedule", icon: CalendarClockIcon },
-                        { value: "leave", label: "Leave", icon: HeartPulseIcon },
-                        { value: "documents", label: "Documents", icon: FileTextIcon },
-                        { value: "portal", label: "Portal", icon: SmartphoneIcon },
+                        { value: "credentials", label: t("Credentials"), icon: IdCardIcon },
+                        { value: "checklist", label: t("Checklist"), icon: ClipboardListIcon },
+                        { value: "training", label: t("Training"), icon: GraduationCapIcon },
+                        { value: "safety", label: t("Safety"), icon: ShieldAlertIcon },
+                        { value: "testing", label: t("Testing"), icon: FlaskConicalIcon },
+                        { value: "dqf", label: t("DQ File"), icon: FolderCheckIcon },
+                        { value: "reviews", label: t("Reviews"), icon: ClipboardCheckIcon },
+                        { value: "hos", label: t("HOS"), icon: Clock4Icon },
+                        { value: "pay", label: t("Pay"), icon: WalletIcon },
+                        { value: "pto", label: t("Time Off"), icon: CalendarRangeIcon },
+                        { value: "schedule", label: t("Schedule"), icon: CalendarClockIcon },
+                        { value: "leave", label: t("Leave"), icon: HeartPulseIcon },
+                        { value: "documents", label: t("Documents"), icon: FileTextIcon },
+                        { value: "portal", label: t("Portal"), icon: SmartphoneIcon },
                       ]}
                       activeValue={resolvedTab}
                       onSelect={(value) => void setActiveTab(value)}
@@ -372,7 +372,9 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           <p className="text-muted-foreground text-xs">
                             {employmentView === "details"
                               ? t("Dates, licence and medical details on the record.")
-                              : t("Every hire, transfer, leave and termination, with who recorded it.")}
+                              : t(
+                                  "Every hire, transfer, leave and termination, with who recorded it.",
+                                )}
                           </p>
                         </div>
                         <SegmentedControl<EmploymentView>

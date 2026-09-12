@@ -174,11 +174,7 @@ function renderTimestamp(label: string, timestamp?: number | null) {
 function renderMinutes(label: string, value?: number | null) {
   if (value === undefined || value === null) return null;
 
-  return (
-    <span>
-      {translate("{0} {1}m", label, value)}
-    </span>
-  );
+  return <span>{translate("{0} {1}m", label, value)}</span>;
 }
 
 function textOrUndefined(value?: string | null) {

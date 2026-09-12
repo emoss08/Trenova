@@ -115,14 +115,18 @@ export function RoleSelection({
             `${selectedCount} of ${roles.length} selected`
           ) : (
             <>
-              <Tally value={permissionTotal} /> {t("{0, plural, one {permission} other {permissions}}", permissionTotal)}
+              <Tally value={permissionTotal} />{" "}
+              {t("{0, plural, one {permission} other {permissions}}", permissionTotal)}
             </>
           )
         }
       />
       <StepHeading title={t("Select active roles")}>
         {organizationName
-          ? t("Scope this session at {0}. You can switch later without signing out.", organizationName)
+          ? t(
+              "Scope this session at {0}. You can switch later without signing out.",
+              organizationName,
+            )
           : t("Scope this session. You can switch later without signing out.")}
       </StepHeading>
 

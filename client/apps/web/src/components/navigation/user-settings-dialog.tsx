@@ -5,7 +5,7 @@ import { SensitiveField } from "@/components/fields/sensitive-field";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { localeChoices, timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
+import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
@@ -148,24 +148,27 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     [queryClient],
   );
 
-  const handleFileSelection = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    event.target.value = "";
-    if (!selectedFile) {
-      return;
-    }
+  const handleFileSelection = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = event.target.files?.[0];
+      event.target.value = "";
+      if (!selectedFile) {
+        return;
+      }
 
-    try {
-      validateCroppableImage(selectedFile, "profile pictures");
-      setPendingFile(selectedFile);
-      setIsCropOpen(true);
-    } catch (error) {
-      toast.error(t("Unsupported profile picture"), {
-        description:
-          error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
-      });
-    }
-  }, [t]);
+      try {
+        validateCroppableImage(selectedFile, "profile pictures");
+        setPendingFile(selectedFile);
+        setIsCropOpen(true);
+      } catch (error) {
+        toast.error(t("Unsupported profile picture"), {
+          description:
+            error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+        });
+      }
+    },
+    [t],
+  );
 
   const handleProfilePictureUpload = useCallback(
     async (file: File) => {
@@ -316,16 +319,6 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                     rules={{ required: "Time format is required" }}
                   />
                 </FormControl>
-                <FormControl>
-                  <SelectField
-                    control={settingsForm.control}
-                    name="locale"
-                    label={t("Language")}
-                    description={t("Applies to the interface, and to the emails and documents sent to you.")}
-                    options={localeChoices}
-                    rules={{ required: "Language is required" }}
-                  />
-                </FormControl>
               </FormGroup>
             </Form>
           </div>
@@ -377,7 +370,12 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           <Button type="button" variant="outline" onClick={handleClose}>
             {t("Cancel")}
           </Button>
-          <Button type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText={t("Saving...")}>
+          <Button
+            type="button"
+            onClick={onSubmit}
+            isLoading={isSubmitting}
+            loadingText={t("Saving...")}
+          >
             {t("Save Changes")}
           </Button>
         </DialogFooter>
@@ -387,7 +385,9 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
         open={isCropOpen}
         file={pendingFile}
         title={t("Crop Profile Picture")}
-        description={t("Adjust your image before uploading. Profile pictures are cropped to a square.")}
+        description={t(
+          "Adjust your image before uploading. Profile pictures are cropped to a square.",
+        )}
         {...profilePictureCropConfig}
         confirmLabel={t("Upload Picture")}
         onClose={() => {

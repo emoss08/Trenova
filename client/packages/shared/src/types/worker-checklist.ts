@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 export const checklistKindSchema = z.enum(["Onboarding", "Offboarding", "Custom"]);
@@ -103,14 +104,14 @@ export const checklistTemplateItemFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["credentialTypeId"],
-        message: "Choose which credential this item waits for",
+        message: translate("Choose which credential this item waits for"),
       });
     }
     if (item.kind === "Document" && !item.documentTypeId) {
       ctx.addIssue({
         code: "custom",
         path: ["documentTypeId"],
-        message: "Choose which document type this item waits for",
+        message: translate("Choose which document type this item waits for"),
       });
     }
   });
@@ -141,14 +142,16 @@ export const checklistTemplateFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["isDefault"],
-        message: "A manual checklist cannot be the default — pick the event that should start it",
+        message: translate(
+          "A manual checklist cannot be the default — pick the event that should start it",
+        ),
       });
     }
     if (values.isDefault && values.status !== "Active") {
       ctx.addIssue({
         code: "custom",
         path: ["isDefault"],
-        message: "Only an active template can be the default",
+        message: translate("Only an active template can be the default"),
       });
     }
   });

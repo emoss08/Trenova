@@ -139,7 +139,9 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
     <Alert variant="warning" className="mb-3">
       <TriangleAlertIcon />
       <AlertTitle>
-        {hasSkipped ? t("Some carriers were not offered") : t("Some carriers were offered with warnings")}
+        {hasSkipped
+          ? t("Some carriers were not offered")
+          : t("Some carriers were offered with warnings")}
       </AlertTitle>
       <AlertDescription>
         {hasSkipped && (
@@ -231,7 +233,9 @@ function WaterfallTab({
         <>
           {!usingOverride && (
             <p className="text-muted-foreground text-[11px]">
-              {t("Matched from this move's lane. Offers go out to each carrier in rank order until one accepts.")}
+              {t(
+                "Matched from this move's lane. Offers go out to each carrier in rank order until one accepts.",
+              )}
             </p>
           )}
           <GuideEntriesPreview guide={selectedGuide} />

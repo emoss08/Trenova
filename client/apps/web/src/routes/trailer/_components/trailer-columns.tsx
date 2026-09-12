@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableDateField } from "@/components/editable-date-field";
@@ -69,14 +70,14 @@ function LastInspectionDateCell({ row }: { row: TrailerRow }) {
   return <EditableDateField date={row.lastInspectionDate} onDateChange={handleDateChange} />;
 }
 
-export function getColumns(): ColumnDef<TrailerRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
   return [
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <p>{row.original.code}</p>,
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -86,13 +87,13 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell row={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 150,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -103,7 +104,7 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "equipmentType",
-      header: "Equip. Type",
+      header: t("Equip. Type"),
       cell: ({ row }) => {
         const { equipmentType } = row.original;
 
@@ -133,12 +134,12 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: "Equip. Type",
+        label: t("Equip. Type"),
       },
     },
     {
       accessorKey: "equipmentManufacturer",
-      header: "Equip. Manufacturer",
+      header: t("Equip. Manufacturer"),
       cell: ({ row }) => {
         const { equipmentManufacturer } = row.original;
         if (!equipmentManufacturer) {
@@ -161,7 +162,7 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "fleetCode",
-      header: "Fleet Code",
+      header: t("Fleet Code"),
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
@@ -187,7 +188,7 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "lastKnownLocationName",
-      header: "Last Known Location",
+      header: t("Last Known Location"),
       cell: ({ row }) => {
         const { lastKnownLocationId, lastKnownLocationName } = row.original;
         if (!lastKnownLocationId || !lastKnownLocationName) {
@@ -216,14 +217,14 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
       minSize: 180,
       maxSize: 320,
       meta: {
-        label: "Last Known Location",
+        label: t("Last Known Location"),
         filterable: false,
         sortable: false,
       },
     },
     {
       accessorKey: "lastInspectionDate",
-      header: "Last Inspection Date",
+      header: t("Last Inspection Date"),
       cell: ({ row }) => {
         return <LastInspectionDateCell row={row.original} />;
       },
@@ -232,7 +233,7 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
       maxSize: 300,
       meta: {
         apiField: "lastInspectionDate",
-        label: "Last Inspection Date",
+        label: t("Last Inspection Date"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -241,7 +242,7 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
@@ -250,7 +251,7 @@ export function getColumns(): ColumnDef<TrailerRow>[] {
       maxSize: 250,
       meta: {
         apiField: "createdAt",
-        label: "Created At",
+        label: t("Created At"),
         filterable: false,
         sortable: true,
         filterType: "date",

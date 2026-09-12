@@ -13,7 +13,9 @@ export function JurisdictionRulesPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Jurisdiction Rules")}
-        description={t("Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.")}
+        description={t(
+          "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

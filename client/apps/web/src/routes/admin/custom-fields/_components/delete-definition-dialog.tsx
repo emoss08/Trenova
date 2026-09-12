@@ -104,17 +104,21 @@ export function DeleteDefinitionDialog({
             {hasExistingValues ? (
               <span className="space-y-2">
                 <span className="block">
-                  {t("This custom field has")} <strong>{t("{0} values", usageStats.totalValueCount)}</strong> across{" "}
+                  {t("This custom field has")}{" "}
+                  <strong>{t("{0} values", usageStats.totalValueCount)}</strong> across{" "}
                   <strong>{t("{0} resources", usageStats.resourceCount)}</strong>.
                 </span>
                 <span className="block font-medium">
-                  {t("To remove this field, deactivate it instead. This will hide the field from forms while preserving existing data.")}
+                  {t(
+                    "To remove this field, deactivate it instead. This will hide the field from forms while preserving existing data.",
+                  )}
                 </span>
               </span>
             ) : (
               <span>
-                {t("Are you sure you want to delete the custom field \"")}
-                <strong>{t(definition.label)}</strong>{t("\"? This action cannot be undone.")}
+                {t('Are you sure you want to delete the custom field "')}
+                <strong>{t(definition.label)}</strong>
+                {t('"? This action cannot be undone.')}
               </span>
             )}
           </AlertDialogDescription>

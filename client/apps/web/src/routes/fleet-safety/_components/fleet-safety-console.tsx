@@ -89,7 +89,11 @@ export default function FleetSafetyConsole() {
           )}
         </div>
         <p className="text-muted-foreground text-xs">
-          {t("As of {0}{1}", formatUnixDate(summary.asOf), fleet.isFetching ? ` ${t("· refreshing")}` : "")}
+          {t(
+            "As of {0}{1}",
+            formatUnixDate(summary.asOf),
+            fleet.isFetching ? ` ${t("· refreshing")}` : "",
+          )}
         </p>
       </div>
 

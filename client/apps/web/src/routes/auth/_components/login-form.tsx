@@ -210,7 +210,11 @@ export function LoginForm({
                 }
               />
               {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-              <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Verifying credentials")}>
+              <AuthSubmit
+                type="submit"
+                isLoading={isPending}
+                loadingText={t("Verifying credentials")}
+              >
                 {t("Sign in")}
               </AuthSubmit>
             </>

@@ -280,7 +280,10 @@ export function AutocompleteCommandContent<TOption>({
                 t("No {0} found.", pluralize(toTitleCase(label ?? ""), options.length))}
             </CommandEmpty>
             <span className="text-2xs text-muted-foreground text-center">
-              {t("We can't find any {0} in your organization.", label ? label.toLowerCase() : "results")}
+              {t(
+                "We can't find any {0} in your organization.",
+                label ? label.toLowerCase() : "results",
+              )}
             </span>
             {popoutLink && (
               <Button size="sm" onClick={(event) => openPopoutWindow(popoutLink, event)}>
@@ -311,7 +314,9 @@ export function AutocompleteCommandContent<TOption>({
             </div>
           )}
           {hasNextPage && !isFetchingNextPage && (
-            <div className="text-muted-foreground p-2 text-center text-xs">{t("Scroll for more")}</div>
+            <div className="text-muted-foreground p-2 text-center text-xs">
+              {t("Scroll for more")}
+            </div>
           )}
         </CommandGroup>
       </CommandList>

@@ -17,7 +17,7 @@ import { RateIncreaseDialog } from "./rate-increase-dialog";
 export default function RateAgreementTable() {
   const t = useT();
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const queryClient = useQueryClient();
   const { allowed: canDuplicate } = usePermission(Resource.RateAgreement, Operation.Duplicate);
 
@@ -38,15 +38,15 @@ export default function RateAgreementTable() {
     () => [
       {
         id: "import-rate-sheet",
-        label: "Import Rate Sheet",
-        description: "Upload a CSV or XLSX rate sheet into an agreement.",
+        label: t("Import Rate Sheet"),
+        description: t("Upload a CSV or XLSX rate sheet into an agreement."),
         icon: FileUpIcon,
         onClick: () => setImportOpen(true),
       },
       {
         id: "rate-increase",
-        label: "Apply Rate Increase",
-        description: "Move every rate for a customer, a carrier, or across the board.",
+        label: t("Apply Rate Increase"),
+        description: t("Move every rate for a customer, a carrier, or across the board."),
         icon: TrendingUpIcon,
         onClick: () => {
           setIncreaseSelection([]);
@@ -54,14 +54,14 @@ export default function RateAgreementTable() {
         },
       },
     ],
-    [],
+    [t],
   );
 
   const dockActions = useMemo<DockAction<RateAgreementRow>[]>(
     () => [
       {
         id: "rate-increase-selected",
-        label: "Rate Increase",
+        label: t("Rate Increase"),
         icon: TrendingUpIcon,
         clearSelectionOnSuccess: true,
         onClick: (selectedRows) => {
@@ -70,14 +70,14 @@ export default function RateAgreementTable() {
         },
       },
     ],
-    [],
+    [t],
   );
 
   const contextMenuActions = useMemo<RowAction<RateAgreementRow>[]>(
     () => [
       {
         id: "duplicate-agreement",
-        label: "Duplicate Agreement",
+        label: t("Duplicate Agreement"),
         icon: CopyIcon,
         hidden: () => !canDuplicate,
         onClick: (row) => {
@@ -86,7 +86,7 @@ export default function RateAgreementTable() {
         },
       },
     ],
-    [canDuplicate, duplicateAgreement],
+    [canDuplicate, duplicateAgreement, t],
   );
 
   return (

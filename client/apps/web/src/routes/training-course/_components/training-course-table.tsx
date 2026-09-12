@@ -23,7 +23,7 @@ export default function TrainingCourseTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const { allowed: canArchive } = usePermission(Resource.TrainingCourse, Operation.Archive);
   const { allowed: canRestore } = usePermission(Resource.TrainingCourse, Operation.Restore);
 
@@ -46,7 +46,7 @@ export default function TrainingCourseTable() {
       );
       notifyBulkOutcome(outcome, {
         entity: "course",
-        verbPast: "Deactivated",
+        verbPast: t("Deactivated"),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -66,7 +66,7 @@ export default function TrainingCourseTable() {
       );
       notifyBulkOutcome(outcome, {
         entity: "course",
-        verbPast: "Restored",
+        verbPast: t("Restored"),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -79,8 +79,8 @@ export default function TrainingCourseTable() {
     if (canArchive) {
       actions.push({
         id: "archive",
-        label: "Deactivate",
-        loadingLabel: "Deactivating...",
+        label: t("Deactivate"),
+        loadingLabel: t("Deactivating..."),
         icon: ArchiveIcon,
         variant: "destructive",
         onClick: archiveRows,
@@ -90,22 +90,22 @@ export default function TrainingCourseTable() {
     if (canRestore) {
       actions.push({
         id: "restore",
-        label: "Restore",
-        loadingLabel: "Restoring...",
+        label: t("Restore"),
+        loadingLabel: t("Restoring..."),
         icon: ArchiveRestoreIcon,
         onClick: restoreRows,
         clearSelectionOnSuccess: true,
       });
     }
     return actions;
-  }, [archiveRows, canArchive, canRestore, restoreRows]);
+  }, [archiveRows, canArchive, canRestore, restoreRows, t]);
 
   const contextMenuActions = useMemo<RowAction<TrainingCourseRow>[]>(() => {
     const actions: RowAction<TrainingCourseRow>[] = [];
     if (canArchive) {
       actions.push({
         id: "archive",
-        label: "Deactivate",
+        label: t("Deactivate"),
         icon: ArchiveIcon,
         variant: "destructive",
         hidden: (row) => row.original.status !== "Active",
@@ -116,14 +116,14 @@ export default function TrainingCourseTable() {
     if (canRestore) {
       actions.push({
         id: "restore",
-        label: "Restore",
+        label: t("Restore"),
         icon: ArchiveRestoreIcon,
         hidden: (row) => row.original.status !== "Inactive",
         onClick: (row) => void restoreRows([row.original]),
       });
     }
     return actions;
-  }, [archiveRows, canArchive, canRestore, restoreRows]);
+  }, [archiveRows, canArchive, canRestore, restoreRows, t]);
 
   return (
     <DataTable<TrainingCourseRow>

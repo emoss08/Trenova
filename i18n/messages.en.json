@@ -13634,15 +13634,6 @@
       "domain/servicefailure"
     ]
   },
-  "Applies to the interface, and to the emails and documents sent to you.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Applies to your organization only": {
     "sites": 1,
     "scope": [
@@ -14308,7 +14299,8 @@
       "routes/driver-expense",
       "routes/driver-settlement",
       "routes/formula-template",
-      "routes/settlement-workspace"
+      "routes/settlement-workspace",
+      "routes/worker"
     ]
   },
   "Approved PTO Days": {
@@ -14421,12 +14413,15 @@
     ]
   },
   "Approving...": {
-    "sites": 2,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/edi",
+      "routes/formula-template",
       "routes/journal-reversal",
+      "routes/rate-agreement",
       "routes/worker"
     ]
   },
@@ -14584,7 +14579,7 @@
     ]
   },
   "Archived": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -14592,7 +14587,8 @@
       "apps/web/lib",
       "routes/benefits",
       "routes/edi",
-      "routes/org-structure"
+      "routes/org-structure",
+      "routes/pto-policy"
     ]
   },
   "Archived At": {
@@ -14722,11 +14718,13 @@
     ]
   },
   "Archiving...": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/pto-policy",
+      "routes/rate-agreement",
       "routes/worker"
     ]
   },
@@ -20255,6 +20253,15 @@
       "routes/billing-queue"
     ]
   },
+  "Billing queue: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Billing requirements not met": {
     "sites": 1,
     "scope": [
@@ -22343,7 +22350,7 @@
     ]
   },
   "Canceled": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -22450,7 +22457,7 @@
     ]
   },
   "Cancelled": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -22528,13 +22535,14 @@
     ]
   },
   "Cancelling...": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/fuel-card",
-      "routes/journal-reversal"
+      "routes/journal-reversal",
+      "routes/worker"
     ]
   },
   "Candidate": {
@@ -38195,6 +38203,30 @@
       "domain/permission"
     ]
   },
+  "Deactivated": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/review-template",
+      "routes/training-course",
+      "routes/worker-checklist-template",
+      "routes/worker-credential-type"
+    ]
+  },
+  "Deactivating...": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/review-template",
+      "routes/training-course",
+      "routes/worker-checklist-template",
+      "routes/worker-credential-type"
+    ]
+  },
   "Dead Lettered": {
     "sites": 2,
     "scope": [
@@ -53065,7 +53097,7 @@
     ]
   },
   "Exception": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -66536,7 +66568,7 @@
     ]
   },
   "In Review": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -72221,6 +72253,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Language updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lapsed {0}d ago": {
@@ -90882,7 +90923,7 @@
     ]
   },
   "On Hold": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -102931,15 +102972,6 @@
       "routes/admin"
     ]
   },
-  "PostGIS spatial queries": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Postal Code": {
     "sites": 11,
     "scope": [
@@ -103098,24 +103130,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "PostgreSQL": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Postgres full-text search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Posting Accounts": {
@@ -106491,6 +106505,15 @@
       "routes/invoice-adjustment-batch"
     ]
   },
+  "Queued approval for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Queued behind a higher-ranked carrier; nothing has been sent yet.": {
     "sites": 1,
     "scope": [
@@ -106498,6 +106521,24 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Queued delivery retry for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Queueing retries...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Queueing...": {
@@ -108777,7 +108818,7 @@
     ]
   },
   "Ready for Review": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -112256,7 +112297,7 @@
     ]
   },
   "Rejected": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -112266,7 +112307,9 @@
       "packages/shared/components",
       "packages/shared/lib",
       "routes/driver-expense",
-      "routes/formula-template"
+      "routes/edi",
+      "routes/formula-template",
+      "routes/worker"
     ]
   },
   "Rejected acknowledgments": {
@@ -112315,12 +112358,16 @@
     ]
   },
   "Rejecting...": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/journal-reversal"
+      "routes/edi",
+      "routes/formula-template",
+      "routes/journal-reversal",
+      "routes/rate-agreement",
+      "routes/worker"
     ]
   },
   "Rejection Reason": {
@@ -112398,6 +112445,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Releasing...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/driver-pay-event"
     ]
   },
   "Remaining": {
@@ -113997,6 +114053,24 @@
     ]
   },
   "Reprocess File": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Reprocessed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Reprocessing...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -116072,6 +116146,19 @@
       "domain/permission"
     ]
   },
+  "Restored": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/pto-policy",
+      "routes/review-template",
+      "routes/training-course",
+      "routes/worker-checklist-template",
+      "routes/worker-credential-type"
+    ]
+  },
   "Restoring": {
     "sites": 1,
     "scope": [
@@ -116079,6 +116166,19 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Restoring...": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/pto-policy",
+      "routes/review-template",
+      "routes/training-course",
+      "routes/worker-checklist-template",
+      "routes/worker-credential-type"
     ]
   },
   "Restrict extraction to these document sections": {
@@ -116213,6 +116313,15 @@
     ]
   },
   "Resume Agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "Resuming...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -119477,12 +119586,13 @@
     ]
   },
   "Running...": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/driver-settlement",
       "routes/formula-template"
     ]
   },
@@ -119824,15 +119934,6 @@
       "routes/edi"
     ]
   },
-  "SELECT ... FOR UPDATE row locking": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "SFTP Endpoint": {
     "sites": 1,
     "scope": [
@@ -119912,15 +120013,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "SQLite": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "SSN": {
@@ -125659,7 +125751,7 @@
     ]
   },
   "Sending...": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -125667,6 +125759,7 @@
       "apps/dash/_components",
       "routes/admin",
       "routes/dispatch-console",
+      "routes/formula-template",
       "routes/organization",
       "routes/shipment",
       "routes/worker"
@@ -125768,7 +125861,7 @@
     ]
   },
   "Sent Back to Ops": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -133986,13 +134079,15 @@
     ]
   },
   "Submitting...": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/formula-template",
+      "routes/rate-agreement"
     ]
   },
   "Subscription": {
@@ -134564,6 +134659,15 @@
       "apps/web/lib",
       "domain/fuelpurchase",
       "packages/shared/components"
+    ]
+  },
+  "Suspending...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
     ]
   },
   "Suspension length": {
@@ -152562,12 +152666,31 @@
     ]
   },
   "Updating...": {
-    "sites": 1,
+    "sites": 23,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/settlement-dispute"
+      "routes/account-type",
+      "routes/admin",
+      "routes/carrier",
+      "routes/commodity",
+      "routes/customer",
+      "routes/equipment-manufacturer",
+      "routes/equipment-type",
+      "routes/fleet-code",
+      "routes/hazardous-material",
+      "routes/location",
+      "routes/pay-code",
+      "routes/pay-profile",
+      "routes/recurring-deduction",
+      "routes/recurring-earning",
+      "routes/service-type",
+      "routes/settlement-dispute",
+      "routes/shipment-type",
+      "routes/tractor",
+      "routes/trailer",
+      "routes/worker"
     ]
   },
   "Upload": {
@@ -155286,6 +155409,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "View in billing queue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "View in table": {
@@ -162262,6 +162394,15 @@
       "apps/web/hooks"
     ]
   },
+  "Your emails and documents will use it too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Your expense for {0} was approved and will be reimbursed on your next settlement.": {
     "sites": 1,
     "scope": [
@@ -162975,15 +163116,6 @@
       "routes/scheduling"
     ]
   },
-  "advisory locks": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -163242,15 +163374,6 @@
       "template/report.delivery.email"
     ]
   },
-  "concurrent index creation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -163323,15 +163446,6 @@
       "go/other"
     ]
   },
-  "database session diagnostics": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -163366,15 +163480,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "declarative table partitioning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "did not apply.": {
@@ -165437,15 +165542,6 @@
       "routes/reports"
     ]
   },
-  "exact decimal arithmetic": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -165462,15 +165558,6 @@
     ],
     "areas": [
       "routes/customer-payments"
-    ]
-  },
-  "exclusion constraints": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -165843,15 +165930,6 @@
       "service/samsarasyncservice"
     ]
   },
-  "logical-replication change data capture": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "mapped Samsara driver is deactivated": {
     "sites": 1,
     "scope": [
@@ -165877,15 +165955,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "materialized views": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -166991,15 +167060,6 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
-    ]
-  },
-  "trigram similarity search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {

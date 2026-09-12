@@ -66,7 +66,9 @@ export function DisciplineLadder({
               {t("Discipline")}
             </h4>
             <InfoPopover title={t("Discipline ladder")}>
-              {t("Six rungs from coaching to termination. The next step is one rung above the highest action still active, and drops back as actions expire or are rescinded. It is a suggestion, not a rule: any rung can be issued, and a rung that ends employment is flagged before it is.")}
+              {t(
+                "Six rungs from coaching to termination. The next step is one rung above the highest action still active, and drops back as actions expire or are rescinded. It is a suggestion, not a rule: any rung can be issued, and a rung that ends employment is flagged before it is.",
+              )}
             </InfoPopover>
           </div>
           <p className="mt-0.5 text-xs">
@@ -163,12 +165,23 @@ export function DisciplineLadder({
                       {DISCIPLINARY_STATUS_LABELS[status] ?? status}
                     </Badge>
                     {action.acknowledgedAt ? (
-                      <span className="text-2xs text-muted-foreground uppercase">{t("Acknowledged")}</span>
+                      <span className="text-2xs text-muted-foreground uppercase">
+                        {t("Acknowledged")}
+                      </span>
                     ) : null}
                   </p>
                   <p className="text-xs">{action.reason}</p>
                   <p className="text-muted-foreground text-xs">
-                    {t("Issued {0}{1}{2}{3}{4}", formatUnixDate(action.issuedAt), action.issuedBy?.name ? ` ${t("by {0}", action.issuedBy.name)}` : "", action.expiresAt ? ` ${t("· rolls off {0}", formatUnixDate(action.expiresAt))}` : "", action.suspensionDays ? ` ${t("· {0} days", action.suspensionDays)}` : "", action.rescindReason ? ` ${t("· rescinded: {0}", action.rescindReason)}` : "")}
+                    {t(
+                      "Issued {0}{1}{2}{3}{4}",
+                      formatUnixDate(action.issuedAt),
+                      action.issuedBy?.name ? ` ${t("by {0}", action.issuedBy.name)}` : "",
+                      action.expiresAt
+                        ? ` ${t("· rolls off {0}", formatUnixDate(action.expiresAt))}`
+                        : "",
+                      action.suspensionDays ? ` ${t("· {0} days", action.suspensionDays)}` : "",
+                      action.rescindReason ? ` ${t("· rescinded: {0}", action.rescindReason)}` : "",
+                    )}
                   </p>
                   {action.workerComment ? (
                     <p className="text-muted-foreground mt-1 text-xs">“{action.workerComment}”</p>

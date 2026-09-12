@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -11,11 +11,11 @@ import {
   formatRoutingGuideLane,
 } from "@trenova/shared/types/routing-guide";
 
-export function getColumns(): ColumnDef<RoutingGuideRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<RoutingGuideRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const choice = statusChoices.find((option) => option.value === row.original.status);
         return choice ? (
@@ -28,7 +28,7 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -39,13 +39,13 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 220,
       minSize: 180,
       maxSize: 320,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -53,20 +53,20 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
     },
     {
       id: "lane",
-      header: "Lane",
+      header: t("Lane"),
       cell: ({ row }) => <span className="text-xs">{formatRoutingGuideLane(row.original)}</span>,
       size: 240,
       minSize: 200,
       maxSize: 360,
       meta: {
-        label: "Lane",
+        label: t("Lane"),
         filterable: false,
         sortable: false,
       },
     },
     {
       accessorKey: "specificity",
-      header: "Match Level",
+      header: t("Match Level"),
       cell: ({ row }) => (
         <Badge variant="outline" className="text-[10px]">
           {ROUTING_GUIDE_TIER_LABEL[row.original.specificity ?? 0] ?? "—"}
@@ -76,7 +76,7 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
       minSize: 120,
       maxSize: 170,
       meta: {
-        label: "Match Level",
+        label: t("Match Level"),
         apiField: "specificity",
         filterable: false,
         sortable: true,
@@ -84,12 +84,12 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
     },
     {
       id: "entries",
-      header: "Carriers",
+      header: t("Carriers"),
       cell: ({ row }) => {
         const count = row.original.entries?.length ?? 0;
         return (
           <span className="text-muted-foreground tabular-nums">
-            {translate("{0, plural, one {# carrier} other {# carriers}}", count)}
+            {t("{0, plural, one {# carrier} other {# carriers}}", count)}
           </span>
         );
       },
@@ -97,14 +97,14 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: "Carriers",
+        label: t("Carriers"),
         filterable: false,
         sortable: false,
       },
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
         <DataTableDescription description={row.original.description ?? ""} truncateLength={80} />
       ),
@@ -112,7 +112,7 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
       minSize: 200,
       maxSize: 400,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: false,
         sortable: false,
@@ -120,7 +120,7 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       size: 200,
       minSize: 180,

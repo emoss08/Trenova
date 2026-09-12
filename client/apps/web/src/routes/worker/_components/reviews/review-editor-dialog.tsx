@@ -136,7 +136,9 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
         <DialogHeader>
           <DialogTitle>{t("Start a review")}</DialogTitle>
           <DialogDescription>
-            {t("The template decides what gets rated. Items are copied onto the review, so later template edits will not rewrite it.")}
+            {t(
+              "The template decides what gets rated. Items are copied onto the review, so later template edits will not rewrite it.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -310,7 +312,9 @@ function EditDraft({
         <DialogHeader>
           <DialogTitle>{t(review.title)}</DialogTitle>
           <DialogDescription>
-            {t("Rate every item from 1 to 5 and write the summary the worker will read. Nothing reaches them until you submit.")}
+            {t(
+              "Rate every item from 1 to 5 and write the summary the worker will read. Nothing reaches them until you submit.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -332,7 +336,9 @@ function EditDraft({
                     label={t("Summary")}
                     placeholder={t("The overall picture, in the words you would use to their face")}
                     maxLength={4000}
-                    description={t("The first thing the worker reads once the review is submitted.")}
+                    description={t(
+                      "The first thing the worker reads once the review is submitted.",
+                    )}
                   />
                 </FormControl>
                 <FormControl cols="full">
@@ -398,7 +404,12 @@ function RatingsSection() {
       </div>
       <div className="flex flex-col gap-2">
         {(ratings ?? []).map((rating, index) => (
-          <RatingRow key={rating.key} index={index} label={t(rating.label)} weight={rating.weight} />
+          <RatingRow
+            key={rating.key}
+            index={index}
+            label={t(rating.label)}
+            weight={rating.weight}
+          />
         ))}
       </div>
     </section>
@@ -416,7 +427,9 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">
           {label}
-          <span className="text-muted-foreground ml-1.5 text-[11px]">{t("weight {0}", weight)}</span>
+          <span className="text-muted-foreground ml-1.5 text-[11px]">
+            {t("weight {0}", weight)}
+          </span>
         </p>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((mark) => (

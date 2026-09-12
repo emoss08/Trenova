@@ -205,6 +205,18 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Prefer named exports over default exports
 - Extract repeated logic into custom hooks or shared utilities
 
+## Generated Code
+
+Several generators in this repo fail on code that compiles and passes every test, and the
+CI failure names the command without saying why the generator refused. **Before changing a
+GraphQL schema, removing a database column, or editing user-facing text, read
+[docs/engineering/generated-artifacts.md](docs/engineering/generated-artifacts.md).** It
+lists the five `Codegen Checks` steps with the exact commands to run them locally, and the
+traps that have actually broken `master` — most often `projection.yml`, which requires every
+GraphQL field to resolve to a column, an inferred relation, or a declared override, so
+retiring a column while keeping its deprecated field breaks the build until the field is
+added to `virtuals`.
+
 ## GraphQL (gqlgen)
 
 - Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen` (it retries once, because gqlgen can miss the `models_gen.go` it just wrote when a schema adds a model).

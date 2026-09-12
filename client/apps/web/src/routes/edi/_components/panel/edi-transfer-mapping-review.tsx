@@ -49,7 +49,9 @@ export function MappingReview({
           >
             <div className="bg-muted/20 rounded-md border p-3 text-sm">
               <div className="text-muted-foreground text-xs font-medium">{t("Source value")}</div>
-              <div className="mt-1 font-medium">{row.sourceLabel || t("Unlabeled source value")}</div>
+              <div className="mt-1 font-medium">
+                {row.sourceLabel || t("Unlabeled source value")}
+              </div>
               <div className="text-muted-foreground mt-1 text-xs">{row.entityType}</div>
             </div>
             <TargetLookup
@@ -81,7 +83,9 @@ export function MappingSummary({ mappingRows }: { mappingRows: EDIMappingResolut
   const t = useT();
 
   if (mappingRows.length === 0) {
-    return <EDIEmptyState message={t("No mapping requirements were returned for this transfer.")} />;
+    return (
+      <EDIEmptyState message={t("No mapping requirements were returned for this transfer.")} />
+    );
   }
 
   return (
@@ -107,7 +111,8 @@ export function MappingSummary({ mappingRows }: { mappingRows: EDIMappingResolut
             <div>
               <div className="text-muted-foreground text-xs font-medium">{t("Local record")}</div>
               <div className="mt-1 truncate text-sm">
-                {row.targetLabel || (row.resolved ? t("Mapped local record") : t("No mapping saved"))}
+                {row.targetLabel ||
+                  (row.resolved ? t("Mapped local record") : t("No mapping saved"))}
               </div>
             </div>
           </div>

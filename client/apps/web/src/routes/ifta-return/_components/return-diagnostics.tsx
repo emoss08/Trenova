@@ -104,7 +104,9 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
         <div className="flex flex-col gap-1">
           <CardTitle className="text-sm font-semibold">{t("What the figures leave out")}</CardTitle>
           <p className="text-muted-foreground text-xs">
-            {t("Miles the return could not place, and everything the computation flagged while it ran.")}
+            {t(
+              "Miles the return could not place, and everything the computation flagged while it ran.",
+            )}
           </p>
         </div>
         {canBackfill ? (
@@ -120,13 +122,17 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
             label={t("Unattributed")}
             count={ret.unattributedMoveCount}
             miles={ret.unattributedMiles}
-            hint={t("Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles.")}
+            hint={t(
+              "Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles.",
+            )}
           />
           <CountFigure
             label={t("No tractor")}
             count={ret.noTractorMoveCount}
             miles={ret.noTractorMiles}
-            hint={t("Attributed miles on moves with no tractor assignment, which cannot be placed on a fuel type.")}
+            hint={t(
+              "Attributed miles on moves with no tractor assignment, which cannot be placed on a fuel type.",
+            )}
           />
           <CountFigure
             label={t("Mileage mismatch")}
@@ -171,7 +177,9 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
               <Link to={DISTANCE_CONTROLS_PATH} className="text-brand font-medium hover:underline">
                 {t("distance controls")}
               </Link>
-              {t(". Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.")}
+              {t(
+                ". Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.",
+              )}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -197,7 +205,10 @@ export function BackfillMilesDialog({ open, onOpenChange, ret }: BackfillMilesDi
         <DialogHeader>
           <DialogTitle>{t("Backfill jurisdiction miles")}</DialogTitle>
           <DialogDescription>
-            {t("Every completed move in {0} that has distance but no jurisdiction breakdown is re-routed for its state-by-state report. Each move is a billable distance request, so the quarter is counted first.", ret.period.label)}
+            {t(
+              "Every completed move in {0} that has distance but no jurisdiction breakdown is re-routed for its state-by-state report. Each move is a billable distance request, so the quarter is counted first.",
+              ret.period.label,
+            )}
           </DialogDescription>
         </DialogHeader>
         {open ? <BackfillSession ret={ret} onOpenChange={onOpenChange} /> : null}
@@ -263,7 +274,9 @@ function BackfillSession({
           </span>
         ) : nothingToDo ? (
           <span className="text-xs">
-            {t("Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.")}
+            {t(
+              "Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.",
+            )}
           </span>
         ) : (
           <div className="flex flex-col gap-1">
@@ -271,7 +284,10 @@ function BackfillSession({
               {dryRun.unattributedMoves} {pluralize("move", dryRun.unattributedMoves)}
             </span>
             <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0} miles would be attributed, at one billable distance request per move.", formatIftaMeasure(dryRun.unattributedMiles, IFTA_MILES_DISPLAY_SCALE))}
+              {t(
+                "{0} miles would be attributed, at one billable distance request per move.",
+                formatIftaMeasure(dryRun.unattributedMiles, IFTA_MILES_DISPLAY_SCALE),
+              )}
             </span>
           </div>
         )}

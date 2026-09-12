@@ -87,7 +87,9 @@ export function SubscriptionForm() {
             }}
             render={({ field, fieldState }) => (
               <div className="space-y-2">
-                <Label className={fieldState.error ? "text-destructive" : ""}>{t("Event Types *")}</Label>
+                <Label className={fieldState.error ? "text-destructive" : ""}>
+                  {t("Event Types *")}
+                </Label>
                 <div className="flex gap-6">
                   {(["INSERT", "UPDATE", "DELETE"] as const).map((et) => (
                     <label key={et} className="flex items-center gap-2 text-sm">
@@ -127,7 +129,9 @@ export function SubscriptionForm() {
                     name="watchedColumns"
                     label={t("Watched Columns")}
                     placeholder={t("e.g. status, eta, assigned_driver_id")}
-                    description={t("Comma-separated column names. Only trigger on UPDATE when these columns change. Leave empty to watch all.")}
+                    description={t(
+                      "Comma-separated column names. Only trigger on UPDATE when these columns change. Leave empty to watch all.",
+                    )}
                     value={(field.value ?? []).join(", ")}
                     onChange={(e) => {
                       const val = (e.target as HTMLInputElement).value;
@@ -166,7 +170,9 @@ export function SubscriptionForm() {
               name="customTitle"
               label={t("Custom Title")}
               placeholder={t("e.g. {{new.pro_number}} status changed")}
-              description={t("Available: {{table}}, {{operation}}, {{record_id}}, {{new.field}}, {{old.field}}, {{changed_fields}}")}
+              description={t(
+                "Available: {{table}}, {{operation}}, {{record_id}}, {{new.field}}, {{old.field}}, {{changed_fields}}",
+              )}
               maxLength={500}
             />
           </FormControl>

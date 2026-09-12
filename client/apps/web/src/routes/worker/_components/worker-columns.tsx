@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useT } from "@trenova/shared/i18n/use-t";
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableDriverTypeBadge } from "@/components/editable-driver-type-badge";
 import { EditableWorkerTypeBadge } from "@/components/editable-worker-type-badge";
@@ -114,17 +114,17 @@ function TenureCell({
   );
 }
 
-export function getColumns(): ColumnDef<WorkerRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
   return [
     {
       accessorKey: "wholeName",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => {
         const { firstName, lastName, wholeName } = row.original;
         return <p>{wholeName || `${firstName} ${lastName}`}</p>;
       },
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "wholeName",
         filterable: true,
         sortable: true,
@@ -134,7 +134,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <span className="flex items-center gap-1.5">
           <StatusBadge status={row.original.status} />
@@ -142,9 +142,9 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
             <Badge
               variant="outline"
               className="border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:text-amber-400"
-              title={translate("On leave")}
+              title={t("On leave")}
             >
-              {translate("{0} leave", WORKER_LEAVE_TYPE_LABELS[row.original.leaveType])}
+              {t("{0} leave", WORKER_LEAVE_TYPE_LABELS[row.original.leaveType])}
             </Badge>
           ) : null}
         </span>
@@ -153,7 +153,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       minSize: 120,
       maxSize: 220,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -164,7 +164,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       id: "tenure",
-      header: "Tenure",
+      header: t("Tenure"),
       cell: ({ row }) => (
         <TenureCell
           hireDate={row.original.profile?.hireDate}
@@ -172,17 +172,17 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         />
       ),
       size: 100,
-      meta: { label: "Tenure" },
+      meta: { label: t("Tenure") },
     },
     {
       accessorKey: "type",
-      header: "Type",
+      header: t("Type"),
       cell: ({ row }) => <WorkerTypeCell row={row.original} />,
       size: 140,
       minSize: 120,
       maxSize: 160,
       meta: {
-        label: "Type",
+        label: t("Type"),
         apiField: "type",
         filterable: true,
         sortable: true,
@@ -193,13 +193,13 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "driverType",
-      header: "Driver Type",
+      header: t("Driver Type"),
       cell: ({ row }) => <DriverTypeCell row={row.original} />,
       size: 140,
       minSize: 120,
       maxSize: 160,
       meta: {
-        label: "Driver Type",
+        label: t("Driver Type"),
         apiField: "driverType",
         filterable: true,
         sortable: true,
@@ -210,7 +210,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "fleetCode",
-      header: "Fleet Code",
+      header: t("Fleet Code"),
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
@@ -234,7 +234,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         );
       },
       meta: {
-        label: "Fleet Code",
+        label: t("Fleet Code"),
         apiField: "fleetCode.code",
         filterable: true,
         sortable: false,
@@ -244,7 +244,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "state",
-      header: "State",
+      header: t("State"),
       cell: ({ row }) => {
         const { state } = row.original;
         if (!state) {
@@ -265,7 +265,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         );
       },
       meta: {
-        label: "State",
+        label: t("State"),
         apiField: "state.abbreviation",
         filterable: true,
         sortable: false,
@@ -275,7 +275,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "profile.complianceStatus",
-      header: "Compliance",
+      header: t("Compliance"),
       cell: ({ row }) => {
         const complianceStatus = row.original.profile?.complianceStatus;
         if (!complianceStatus) {
@@ -288,7 +288,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       minSize: 110,
       maxSize: 150,
       meta: {
-        label: "Compliance",
+        label: t("Compliance"),
         apiField: "profile.complianceStatus",
         filterable: true,
         sortable: true,
@@ -299,7 +299,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "profile.trainingHealth",
-      header: "Training",
+      header: t("Training"),
       cell: ({ row }) => {
         const health = row.original.profile?.trainingHealth;
         if (!health) {
@@ -311,7 +311,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       minSize: 110,
       maxSize: 160,
       meta: {
-        label: "Training",
+        label: t("Training"),
         apiField: "profile.trainingHealth",
         filterable: true,
         sortable: true,
@@ -322,7 +322,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "profile.safetyRating",
-      header: "Safety",
+      header: t("Safety"),
       cell: ({ row }) => {
         const profile = row.original.profile;
         if (!profile) {
@@ -331,7 +331,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         const meta = safetyRatingMeta(profile.safetyRating);
         return (
           <div className="flex items-center gap-2">
-            <Badge variant={meta.badgeVariant}>{translate(meta.label)}</Badge>
+            <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
             <span className="text-muted-foreground text-xs tabular-nums">
               {profile.safetyScore}
             </span>
@@ -342,7 +342,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       minSize: 120,
       maxSize: 170,
       meta: {
-        label: "Safety",
+        label: t("Safety"),
         apiField: "profile.safetyRating",
         filterable: true,
         sortable: true,
@@ -353,7 +353,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "profile.drugAlcoholStatus",
-      header: "D&A",
+      header: t("D&A"),
       cell: ({ row }) => {
         const status = row.original.profile?.drugAlcoholStatus;
         if (!status) {
@@ -362,7 +362,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
         const meta = drugAlcoholStatusMeta(status);
         return (
           <Badge variant={meta.tone} title={meta.detail}>
-            {translate(meta.label)}
+            {t(meta.label)}
           </Badge>
         );
       },
@@ -370,7 +370,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       minSize: 110,
       maxSize: 160,
       meta: {
-        label: "D&A",
+        label: t("D&A"),
         apiField: "profile.drugAlcoholStatus",
         filterable: true,
         sortable: true,
@@ -382,11 +382,11 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     {
       id: "nextCredentialExpiry",
       accessorKey: "profile.nextCredentialExpiry",
-      header: "Expires Next",
+      header: t("Expires Next"),
       cell: ({ row }) => {
         const expiry = row.original.profile?.nextCredentialExpiry;
         if (!expiry) {
-          return <p className="text-muted-foreground">{translate("Nothing expiring")}</p>;
+          return <p className="text-muted-foreground">{t("Nothing expiring")}</p>;
         }
         const days = Math.ceil((expiry - getTodayDate()) / 86_400);
         return (
@@ -401,10 +401,10 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
               )}
             >
               {days < 0
-                ? translate("Lapsed {0}d ago", Math.abs(days))
+                ? t("Lapsed {0}d ago", Math.abs(days))
                 : days === 0
-                  ? translate("Expires today")
-                  : translate("in {0}d", days)}
+                  ? t("Expires today")
+                  : t("in {0}d", days)}
             </span>
           </div>
         );
@@ -413,7 +413,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       minSize: 130,
       maxSize: 190,
       meta: {
-        label: "Expires Next",
+        label: t("Expires Next"),
         apiField: "profile.nextCredentialExpiry",
         filterable: true,
         sortable: true,
@@ -423,7 +423,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
@@ -432,7 +432,7 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
       maxSize: 250,
       meta: {
         apiField: "createdAt",
-        label: "Created At",
+        label: t("Created At"),
         filterable: false,
         sortable: true,
         filterType: "date",

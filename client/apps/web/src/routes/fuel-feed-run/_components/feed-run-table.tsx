@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -40,8 +41,10 @@ function FeedRunsEmpty({ hasActiveFilters, onClearFilters }: DataTableEmptyState
 }
 
 export default function FeedRunTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const { allowed: canImport } = usePermission(Resource.FuelPurchaseImport, Operation.Import);
   const [reviewing, setReviewing] = useState<FuelPurchaseImportBatch | null>(null);
 
@@ -60,12 +63,12 @@ export default function FeedRunTable() {
     return [
       {
         id: "review",
-        label: "Review rows",
+        label: t("Review rows"),
         icon: ListChecksIcon,
         onClick: (row) => setReviewing(row.original),
       },
     ];
-  }, [canImport]);
+  }, [canImport, t]);
 
   return (
     <>

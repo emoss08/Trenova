@@ -103,7 +103,9 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? (entry?.index.name ?? "Fuel Index") : "New Custom Fuel Index"}
-      description={t("Custom indices take manually entered weekly prices — ideal for Canadian FCA or contract-dictated pegs")}
+      description={t(
+        "Custom indices take manually entered weekly prices — ideal for Canadian FCA or contract-dictated pegs",
+      )}
       size="md"
       footer={
         <>
@@ -124,7 +126,9 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
                 control={form.control}
                 name="isActive"
                 label={t("Active")}
-                description={t("Inactive indices are hidden from program selection and the dashboard.")}
+                description={t(
+                  "Inactive indices are hidden from program selection and the dashboard.",
+                )}
                 outlined
                 position="left"
               />

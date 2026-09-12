@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 export const performanceReviewStatusSchema = z.enum([
@@ -97,7 +98,7 @@ export const reviewTemplateFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["isDefault"],
-        message: "Only an active template can be the default",
+        message: translate("Only an active template can be the default"),
       });
     }
     const seen = new Set<string>();
@@ -106,7 +107,7 @@ export const reviewTemplateFormSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["items", index, "key"],
-          message: "Item keys must be unique",
+          message: translate("Item keys must be unique"),
         });
       }
       seen.add(item.key);
@@ -126,7 +127,7 @@ export const createReviewFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["periodEnd"],
-        message: "The period must end after it starts",
+        message: translate("The period must end after it starts"),
       });
     }
   });

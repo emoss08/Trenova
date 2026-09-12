@@ -86,7 +86,9 @@ function CloseDialog({
   return (
     <AlertDialogContent className="min-w-md">
       <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">{t("Close Fiscal Period")}</AlertDialogTitle>
+        <AlertDialogTitle className="flex items-center gap-2">
+          {t("Close Fiscal Period")}
+        </AlertDialogTitle>
         <AlertDialogDescription className="space-y-2">
           <p>
             {t("You are about to close")} <strong>{t("Period {0}", record.periodNumber)}</strong>
@@ -98,7 +100,9 @@ function CloseDialog({
             <li>{t("Require reopening to make any changes")}</li>
             <li>{t("Enable locking once all reconciliations are complete")}</li>
           </ul>
-          <p className="text-destructive font-semibold">{t("Are you sure you want to continue?")}</p>
+          <p className="text-destructive font-semibold">
+            {t("Are you sure you want to continue?")}
+          </p>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
@@ -202,7 +206,9 @@ function LockDialog({
   return (
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">{t("Lock Fiscal Period")}</AlertDialogTitle>
+        <AlertDialogTitle className="flex items-center gap-2">
+          {t("Lock Fiscal Period")}
+        </AlertDialogTitle>
         <AlertDialogDescription className="space-y-2">
           <p>
             {t("You are about to lock")} <strong>{t("Period {0}", record.periodNumber)}</strong>
@@ -277,7 +283,9 @@ function UnlockDialog({
             <li>{t("Create an audit trail entry")}</li>
           </ul>
           <p className="text-destructive font-semibold">
-            {t("This action should only be taken in exceptional circumstances with proper authorization.")}
+            {t(
+              "This action should only be taken in exceptional circumstances with proper authorization.",
+            )}
           </p>
         </AlertDialogDescription>
       </AlertDialogHeader>

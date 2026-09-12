@@ -121,10 +121,14 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
               ) : null}
               <InfoPopover title={t("Testing standing")}>
                 <p>
-                  {t("Prohibited while an open violation is still short of return to duty, or a Clearinghouse query found violations. Awaiting result while a collection is at the lab. Clear once a negative result is on file with nothing open. Not on file when no test has been recorded.")}
+                  {t(
+                    "Prohibited while an open violation is still short of return to duty, or a Clearinghouse query found violations. Awaiting result while a collection is at the lab. Clear once a negative result is on file with nothing open. Not on file when no test has been recorded.",
+                  )}
                 </p>
                 <p>
-                  {t("Only Prohibited bars dispatch. Follow-up testing runs after the driver is back at work and is not a bar. The next Clearinghouse query falls due twelve months after the last answered one.")}
+                  {t(
+                    "Only Prohibited bars dispatch. Follow-up testing runs after the driver is back at work and is not a bar. The next Clearinghouse query falls due twelve months after the last answered one.",
+                  )}
                 </p>
               </InfoPopover>
             </div>
@@ -198,7 +202,9 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
           {openViolation.status === "FollowUp" ? (
             <Alert className="mb-2">
               <AlertDescription>
-                {t("The driver is back on duty. Follow-up testing does not bar dispatch on its own; the violation stays open here until the last follow-up test is recorded.")}
+                {t(
+                  "The driver is back on duty. Follow-up testing does not bar dispatch on its own; the violation stays open here until the last follow-up test is recorded.",
+                )}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -257,7 +263,9 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
               >
                 <span className="flex items-center gap-2">
                   <Badge variant="warning">{randomEntryStatusLabel(entry.status)}</Badge>
-                  <span>{entry.substance === "Alcohol" ? t("Alcohol") : t("Controlled substances")}</span>
+                  <span>
+                    {entry.substance === "Alcohol" ? t("Alcohol") : t("Controlled substances")}
+                  </span>
                 </span>
                 {canRecord ? (
                   <Button
@@ -365,7 +373,10 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                   </Badge>
                   {query.violationCount > 0 ? (
                     <span className="text-muted-foreground">
-                      {t("{0, plural, one {# violation} other {# violations}}", query.violationCount)}
+                      {t(
+                        "{0, plural, one {# violation} other {# violations}}",
+                        query.violationCount,
+                      )}
                     </span>
                   ) : null}
                 </span>

@@ -31,7 +31,9 @@ export function NotFoundPage({
             {t("It seems you got a little bit lost")}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            {t("The destination you requested does not exist, may have moved, or the URL might be incorrect.")}
+            {t(
+              "The destination you requested does not exist, may have moved, or the URL might be incorrect.",
+            )}
           </p>
 
           <div className="mt-9 flex w-full max-w-xl flex-wrap items-center justify-center gap-3">
@@ -59,7 +61,9 @@ export function NotFoundPage({
           <div className="grid gap-5 text-left text-sm text-muted-foreground sm:grid-cols-3">
             <div>
               <p className="text-[11px] tracking-wide uppercase">{t("Need Help?")}</p>
-              <p className="mt-2 text-base font-medium text-foreground">{t("support@trenova.com")}</p>
+              <p className="mt-2 text-base font-medium text-foreground">
+                {t("support@trenova.com")}
+              </p>
             </div>
             <div>
               <p className="text-[11px] tracking-wide uppercase">{t("Quick Links")}</p>

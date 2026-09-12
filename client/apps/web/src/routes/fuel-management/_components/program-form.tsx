@@ -80,7 +80,9 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             label={t("Method")}
             rules={{ required: true }}
             options={fuelSurchargeMethodChoices}
-            description={t("Formula methods compute rates from parameters; table methods use explicit price bands.")}
+            description={t(
+              "Formula methods compute rates from parameters; table methods use explicit price bands.",
+            )}
             isReadOnly={disabled}
           />
         </FormControl>
@@ -91,7 +93,9 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             label={t("Fuel Index")}
             placeholder={t("Select Fuel Index")}
             rules={{ required: true }}
-            description={t("The weekly price series this program keys off (DOE region or custom index).")}
+            description={t(
+              "The weekly price series this program keys off (DOE region or custom index).",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -143,7 +147,9 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
             name="percentBasis"
             label={t("Percentage Applies To")}
             options={fuelSurchargePercentBasisChoices}
-            description={t("What the band's percentage is taken from — check the customer's contract before changing.")}
+            description={t(
+              "What the band's percentage is taken from — check the customer's contract before changing.",
+            )}
             isReadOnly={disabled}
           />
         </FormControl>
@@ -229,7 +235,9 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
       <CardHeader className="gap-0 border-b pt-3">
         <CardTitle className="text-sm font-medium">{t("Week Resolution & Rounding")}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          {t("Pins exactly which week's price applies and how rates round — the two most common fuel surcharge dispute sources")}
+          {t(
+            "Pins exactly which week's price applies and how rates round — the two most common fuel surcharge dispute sources",
+          )}
         </p>
       </CardHeader>
       <CardContent className="p-4">
@@ -337,7 +345,9 @@ function ApplicabilitySection() {
       <CardHeader className="gap-0 border-b pb-3">
         <CardTitle className="gap-0 text-sm font-medium">{t("Applicability")}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          {t("Leave a filter empty to apply to all — the surcharge only generates when the shipment matches every non-empty filter")}
+          {t(
+            "Leave a filter empty to apply to all — the surcharge only generates when the shipment matches every non-empty filter",
+          )}
         </p>
       </CardHeader>
       <CardContent className="p-4">

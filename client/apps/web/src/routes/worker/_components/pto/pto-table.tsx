@@ -52,7 +52,7 @@ const REASON_MODE: Record<Exclude<PTOBulkAction, "Approve">, PTOReasonDialogMode
 export default function PTODataTable() {
   const t = useT();
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const invalidate = usePTOInvalidation();
   const { allowed: canApprove } = usePermission(Resource.WorkerPTO, Operation.Approve);
   const { allowed: canReject } = usePermission(Resource.WorkerPTO, Operation.Reject);
@@ -199,9 +199,12 @@ export default function PTODataTable() {
               {t("Approve {0, plural, one {# PTO request} other {# PTO requests}}", approvalCount)}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Workers are notified in Dash and by SMS once their time off is approved. {0}", pendingApproval && pendingApproval.skipped > 0
-                ? ` ${t("{0} selected request{1} not eligible and will be skipped.", pendingApproval.skipped, pendingApproval.skipped === 1 ? " is" : t("s are"))}`
-                : "")}
+              {t(
+                "Workers are notified in Dash and by SMS once their time off is approved. {0}",
+                pendingApproval && pendingApproval.skipped > 0
+                  ? ` ${t("{0} selected request{1} not eligible and will be skipped.", pendingApproval.skipped, pendingApproval.skipped === 1 ? " is" : t("s are"))}`
+                  : "",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

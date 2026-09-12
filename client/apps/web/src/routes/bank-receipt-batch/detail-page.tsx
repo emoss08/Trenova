@@ -76,8 +76,8 @@ export function BankReceiptBatchDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: "Import Batch",
-          description: "Loading...",
+          title: t("Import Batch"),
+          description: t("Loading..."),
         }}
       >
         <div className="mx-4 mt-3 space-y-4">
@@ -97,13 +97,15 @@ export function BankReceiptBatchDetailPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: "Import Batch",
-          description: "Failed to load batch details.",
+          title: t("Import Batch"),
+          description: t("Failed to load batch details."),
         }}
       >
         <div className="mx-4 mt-3">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            {t("Could not load this import batch. It may have been deleted or you may not have permission.")}
+            {t(
+              "Could not load this import batch. It may have been deleted or you may not have permission.",
+            )}
           </div>
           <Button
             variant="ghost"
@@ -199,7 +201,9 @@ export function BankReceiptBatchDetailPage() {
           {receipts.length === 0 ? (
             <EmptyTable
               title={t("No receipts in this batch")}
-              description={t("The file imported with nothing in it, or every line was rejected. Import it again once it has rows.")}
+              description={t(
+                "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.",
+              )}
               columns={RECEIPT_COLUMNS}
             />
           ) : (

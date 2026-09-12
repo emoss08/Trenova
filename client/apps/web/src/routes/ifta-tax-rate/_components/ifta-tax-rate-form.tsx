@@ -47,7 +47,9 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               options={iftaQuarterChoices}
               rules={{ required: true }}
               placeholder={t("Select a quarter")}
-              description={t("Rates change every quarter; the matrix is published shortly before each one.")}
+              description={t(
+                "Rates change every quarter; the matrix is published shortly before each one.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -68,13 +70,18 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               options={iftaFuelTypeChoices}
               rules={{ required: true }}
               placeholder={t("Select a fuel type")}
-              description={t("The matrix lists a separate rate for each fuel; DEF, reefer and other never carry one.")}
+              description={t(
+                "The matrix lists a separate rate for each fuel; DEF, reefer and other never carry one.",
+              )}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
-      <FormSection title={t("Rate")} description={t("USD per US gallon, as printed in the matrix.")}>
+      <FormSection
+        title={t("Rate")}
+        description={t("USD per US gallon, as printed in the matrix.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -95,7 +102,9 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
                 <span className="inline-flex items-center gap-1">
                   {t("Surcharge per gallon")}
                   <InfoPopover title={t("Surcharge")}>
-                    {t("Indiana, Kentucky and Virginia levy a surcharge on fuel consumed in the jurisdiction, on top of the tax on fuel bought there. It is charged on taxable gallons and is never a credit. Leave it empty for jurisdictions that publish no surcharge.")}
+                    {t(
+                      "Indiana, Kentucky and Virginia levy a surcharge on fuel consumed in the jurisdiction, on top of the tax on fuel bought there. It is charged on taxable gallons and is never a credit. Leave it empty for jurisdictions that publish no surcharge.",
+                    )}
                   </InfoPopover>
                 </span>
               }
@@ -108,7 +117,9 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
       </FormSection>
       <FormSection
         title={t("Source")}
-        description={t("Where the figure came from, so a reviewer can check it against the published matrix.")}
+        description={t(
+          "Where the figure came from, so a reviewer can check it against the published matrix.",
+        )}
       >
         <FormGroup cols={1}>
           <FormControl>
@@ -128,7 +139,9 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               label={t("Source note")}
               placeholder={t("e.g. IFTA Inc. tax rate matrix, Q3 2026, downloaded 12 Jul")}
               maxLength={500}
-              description={t("The edition or bulletin, and anything odd about how the figure was read.")}
+              description={t(
+                "The edition or bulletin, and anything odd about how the figure was read.",
+              )}
             />
           </FormControl>
         </FormGroup>

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
@@ -91,8 +92,8 @@ function processingSummary(
 ) {
   if (!document) {
     return {
-      title: "Waiting for uploaded document",
-      description: "The upload must complete before extraction can start.",
+      title: translate("Waiting for uploaded document"),
+      description: translate("The upload must complete before extraction can start."),
       progress: 10,
       variant: "default" as const,
     };
@@ -100,7 +101,7 @@ function processingSummary(
 
   if (document.contentStatus === "Failed") {
     return {
-      title: "Extraction failed",
+      title: translate("Extraction failed"),
       description:
         document.contentError || "We could not extract text from this rate confirmation.",
       progress: 100,
@@ -110,7 +111,7 @@ function processingSummary(
 
   if (draft?.status === "Failed") {
     return {
-      title: "Draft generation failed",
+      title: translate("Draft generation failed"),
       description:
         draft.failureMessage || "We extracted text but could not build a shipment draft.",
       progress: 100,
@@ -120,8 +121,8 @@ function processingSummary(
 
   if (draft?.status === "Ready") {
     return {
-      title: "Shipment draft ready",
-      description: "The extracted shipment draft is ready for review.",
+      title: translate("Shipment draft ready"),
+      description: translate("The extracted shipment draft is ready for review."),
       progress: 100,
       variant: "success" as const,
     };
@@ -133,8 +134,8 @@ function processingSummary(
     document.contentStatus !== "Extracting"
   ) {
     return {
-      title: "No shipment draft available",
-      description: "This file did not produce a usable shipment draft.",
+      title: translate("No shipment draft available"),
+      description: translate("This file did not produce a usable shipment draft."),
       progress: 100,
       variant: "error" as const,
     };
@@ -142,8 +143,10 @@ function processingSummary(
 
   if (document.contentStatus === "Pending") {
     return {
-      title: "Preparing extraction",
-      description: "We are queuing OCR and intelligence work for this rate confirmation.",
+      title: translate("Preparing extraction"),
+      description: translate(
+        "We are queuing OCR and intelligence work for this rate confirmation.",
+      ),
       progress: 35,
       variant: "default" as const,
     };
@@ -151,9 +154,10 @@ function processingSummary(
 
   if (document.contentStatus === "Extracting") {
     return {
-      title: "Extracting shipment details",
-      description:
+      title: translate("Extracting shipment details"),
+      description: translate(
         "We are extracting text, classifying the document, and assembling the shipment draft.",
+      ),
       progress: 70,
       variant: "default" as const,
     };
@@ -161,16 +165,18 @@ function processingSummary(
 
   if (document.shipmentDraftStatus === "Pending") {
     return {
-      title: "Building shipment draft",
-      description: "Extraction finished. We are mapping the results into a shipment draft now.",
+      title: translate("Building shipment draft"),
+      description: translate(
+        "Extraction finished. We are mapping the results into a shipment draft now.",
+      ),
       progress: 85,
       variant: "default" as const,
     };
   }
 
   return {
-    title: "Processing rate confirmation",
-    description: "We are still evaluating the uploaded document.",
+    title: translate("Processing rate confirmation"),
+    description: translate("We are still evaluating the uploaded document."),
     progress: 55,
     variant: "default" as const,
   };
@@ -335,26 +341,26 @@ export function ShipmentRateConfirmationImportPanel({
     () => [
       {
         key: "upload" as const,
-        label: "Upload",
-        description: "Select a rate confirmation file.",
+        label: t("Upload"),
+        description: t("Select a rate confirmation file."),
       },
       {
         key: "processing" as const,
-        label: "Process",
-        description: "Extract shipment data and build the draft.",
+        label: t("Process"),
+        description: t("Extract shipment data and build the draft."),
       },
       {
         key: "review" as const,
-        label: "Review",
-        description: "Confirm the extracted shipment draft.",
+        label: t("Review"),
+        description: t("Confirm the extracted shipment draft."),
       },
       {
         key: "success" as const,
-        label: "Done",
-        description: "Create the shipment and finish import.",
+        label: t("Done"),
+        description: t("Create the shipment and finish import."),
       },
     ],
-    [],
+    [t],
   );
 
   const processStatus = processingSummary(importedDocument, importedDraft);

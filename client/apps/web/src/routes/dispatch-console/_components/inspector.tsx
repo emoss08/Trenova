@@ -153,7 +153,9 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
             size="sm"
             variant="outline"
             className="h-6 px-2 text-[10px]"
-            title={t("Broker this move to a different carrier — the current assignment is replaced")}
+            title={t(
+              "Broker this move to a different carrier — the current assignment is replaced",
+            )}
             onClick={() => openCarrierAssign(move)}
           >
             {t("Replace carrier")}
@@ -276,7 +278,10 @@ function MoveInspector({
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
         <span className="text-muted-foreground text-[10px]">
-          {t("Pickup {0}", move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled")}
+          {t(
+            "Pickup {0}",
+            move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled",
+          )}
         </span>
       </div>
 
@@ -362,7 +367,10 @@ function MoveInspector({
                   ))}
               {!isLoading && candidates.length === 0 && (
                 <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-                  {t("No eligible driver for this move. {0}", !includeBlocked ? ` ${t("Show ineligible drivers to see why.")}` : "")}
+                  {t(
+                    "No eligible driver for this move. {0}",
+                    !includeBlocked ? ` ${t("Show ineligible drivers to see why.")}` : "",
+                  )}
                 </p>
               )}
             </>
@@ -408,7 +416,11 @@ function DriverMatchRow({
         {match.move.destinationState}
       </span>
       <span className="text-muted-foreground text-[10px]">
-        {t("{0} · {1} empty", formatUnixDateTime(match.move.originWindowStart), formatMiles(match.score.deadheadMiles))}
+        {t(
+          "{0} · {1} empty",
+          formatUnixDateTime(match.move.originWindowStart),
+          formatMiles(match.score.deadheadMiles),
+        )}
       </span>
     </button>
   );

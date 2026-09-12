@@ -28,12 +28,16 @@ export function CarrierContactsForm() {
     <div className="space-y-6">
       <FormSection
         title={t("Contacts")}
-        description={t("People at this carrier your team communicates with for dispatch and billing.")}
+        description={t(
+          "People at this carrier your team communicates with for dispatch and billing.",
+        )}
       >
         <div className="flex flex-col gap-3">
           {fields.length === 0 && (
             <p className="text-muted-foreground text-sm">
-              {t("No contacts yet. Add dispatch, billing, and after-hours contacts so your team knows who to reach.")}
+              {t(
+                "No contacts yet. Add dispatch, billing, and after-hours contacts so your team knows who to reach.",
+              )}
             </p>
           )}
 

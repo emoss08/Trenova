@@ -205,8 +205,12 @@ export function SourceDrillDownPage() {
                       <thead className="bg-muted/50 text-muted-foreground text-left">
                         <tr>
                           <th className="px-4 py-2 text-xs font-medium">{t("Account")}</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium">{t("Debits")}</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium">{t("Credits")}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium">
+                            {t("Debits")}
+                          </th>
+                          <th className="px-4 py-2 text-right text-xs font-medium">
+                            {t("Credits")}
+                          </th>
                           <th className="px-4 py-2 text-right text-xs font-medium">{t("Net")}</th>
                         </tr>
                       </thead>

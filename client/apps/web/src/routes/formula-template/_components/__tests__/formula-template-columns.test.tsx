@@ -1,10 +1,13 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { FormulaTemplateRow } from "@/lib/graphql/formula-template-table";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getColumns } from "../formula-template-columns";
 
 function cellFor(accessorKey: string, original: Partial<FormulaTemplateRow>) {
-  const column = getColumns().find((c) => "accessorKey" in c && c.accessorKey === accessorKey);
+  const column = getColumns(translate).find(
+    (c) => "accessorKey" in c && c.accessorKey === accessorKey,
+  );
   if (!column || typeof column.cell !== "function") {
     throw new Error(`no renderable column ${accessorKey}`);
   }

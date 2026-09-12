@@ -66,7 +66,8 @@ export default function EdiTable({ kind }: { kind: EDIPageKind }) {
 }
 
 function PartnersWorkspace() {
-  const columns = useMemo(() => getPartnerColumns(), []);
+  const t = useT();
+  const columns = useMemo(() => getPartnerColumns(t), [t]);
 
   return (
     <div className="flex flex-col gap-4 px-3 pt-3">
@@ -84,7 +85,8 @@ function PartnersWorkspace() {
 }
 
 function MappingProfilesWorkspace() {
-  const columns = useMemo(() => getMappingProfileColumns(), []);
+  const t = useT();
+  const columns = useMemo(() => getMappingProfileColumns(t), [t]);
 
   return (
     <Outer>
@@ -102,7 +104,8 @@ function MappingProfilesWorkspace() {
 }
 
 function CommunicationProfilesWorkspace() {
-  const columns = useMemo(() => getCommunicationProfileColumns(), []);
+  const t = useT();
+  const columns = useMemo(() => getCommunicationProfileColumns(t), [t]);
 
   return (
     <Outer>
@@ -121,7 +124,7 @@ function CommunicationProfilesWorkspace() {
 function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }) {
   const t = useT();
 
-  const columns = useMemo(() => getTransferColumns(direction), [direction]);
+  const columns = useMemo(() => getTransferColumns(direction, t), [direction, t]);
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -149,22 +152,25 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
       await invalidateEDITransfers(queryClient);
       notifyEDIBulkOutcome(result, {
         entity: "transfer",
-        verbPast: "Queued approval for",
+        verbPast: t("Queued approval for"),
         skipped: rows.length - eligible.length,
       });
     },
     [queryClient, t],
   );
 
-  const handleBulkRejectRequest = useCallback((rows: EDITransferRow[]) => {
-    const eligible = rows.filter((row) => ACTIONABLE_TRANSFER_STATUSES.has(row.status));
-    if (eligible.length === 0) {
-      toast.info(t("None of the selected transfers are awaiting review"));
-      return;
-    }
-    setRejectRows(eligible);
-    setRejectOpen(true);
-  }, [t]);
+  const handleBulkRejectRequest = useCallback(
+    (rows: EDITransferRow[]) => {
+      const eligible = rows.filter((row) => ACTIONABLE_TRANSFER_STATUSES.has(row.status));
+      if (eligible.length === 0) {
+        toast.info(t("None of the selected transfers are awaiting review"));
+        return;
+      }
+      setRejectRows(eligible);
+      setRejectOpen(true);
+    },
+    [t],
+  );
 
   const handleBulkRejectConfirm = useCallback(
     async (reason: string) => {
@@ -177,7 +183,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         await invalidateEDITransfers(queryClient);
         notifyEDIBulkOutcome(result, {
           entity: "transfer",
-          verbPast: "Rejected",
+          verbPast: t("Rejected"),
         });
         setRejectOpen(false);
         setRejectRows([]);
@@ -185,7 +191,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         setRejectPending(false);
       }
     },
-    [queryClient, rejectRows],
+    [queryClient, rejectRows, t],
   );
 
   const dockActions = useMemo<DockAction<EDITransferRow>[]>(() => {
@@ -193,22 +199,22 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     return [
       {
         id: "bulk-approve-transfers",
-        label: "Approve",
-        loadingLabel: "Approving...",
+        label: t("Approve"),
+        loadingLabel: t("Approving..."),
         icon: CircleCheckIcon,
         onClick: handleBulkApprove,
         clearSelectionOnSuccess: true,
       },
       {
         id: "bulk-reject-transfers",
-        label: "Reject",
-        loadingLabel: "Rejecting...",
+        label: t("Reject"),
+        loadingLabel: t("Rejecting..."),
         icon: CircleXIcon,
         variant: "destructive",
         onClick: handleBulkRejectRequest,
       },
     ];
-  }, [canUpdate, direction, handleBulkApprove, handleBulkRejectRequest]);
+  }, [canUpdate, direction, handleBulkApprove, handleBulkRejectRequest, t]);
 
   return (
     <Outer>
@@ -235,7 +241,9 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         open={rejectOpen}
         onOpenChange={setRejectOpen}
         title={`Reject ${rejectRows.length} Load Tender(s)`}
-        description={t("The rejection reason is sent back to the trading partner on the outbound 990 response.")}
+        description={t(
+          "The rejection reason is sent back to the trading partner on the outbound 990 response.",
+        )}
         placeholder={t("Explain why these tenders are being rejected")}
         confirmLabel={t("Reject Tenders")}
         isPending={rejectPending}
@@ -248,7 +256,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
 function MessagesWorkspace() {
   const t = useT();
 
-  const columns = useMemo(() => getMessageColumns(), []);
+  const columns = useMemo(() => getMessageColumns(t), [t]);
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -272,7 +280,7 @@ function MessagesWorkspace() {
       await invalidateEDIMessages(queryClient);
       notifyEDIBulkOutcome(result, {
         entity: "message",
-        verbPast: "Queued delivery retry for",
+        verbPast: t("Queued delivery retry for"),
         skipped: rows.length - eligible.length,
       });
     },
@@ -284,14 +292,14 @@ function MessagesWorkspace() {
     return [
       {
         id: "bulk-retry-delivery",
-        label: "Retry Delivery",
-        loadingLabel: "Queueing retries...",
+        label: t("Retry Delivery"),
+        loadingLabel: t("Queueing retries..."),
         icon: RotateCcwIcon,
         onClick: handleBulkRetry,
         clearSelectionOnSuccess: true,
       },
     ];
-  }, [canUpdate, handleBulkRetry]);
+  }, [canUpdate, handleBulkRetry, t]);
 
   return (
     <Outer>
@@ -315,7 +323,7 @@ function MessagesWorkspace() {
 function InboundFilesWorkspace() {
   const t = useT();
 
-  const columns = useMemo(() => getInboundFileColumns(), []);
+  const columns = useMemo(() => getInboundFileColumns(t), [t]);
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -334,7 +342,7 @@ function InboundFilesWorkspace() {
       await invalidateEDIInboundFiles(queryClient);
       notifyEDIBulkOutcome(result, {
         entity: "file",
-        verbPast: "Reprocessed",
+        verbPast: t("Reprocessed"),
         skipped: rows.length - eligible.length,
       });
     },
@@ -346,14 +354,14 @@ function InboundFilesWorkspace() {
     return [
       {
         id: "bulk-reprocess-files",
-        label: "Reprocess",
-        loadingLabel: "Reprocessing...",
+        label: t("Reprocess"),
+        loadingLabel: t("Reprocessing..."),
         icon: RefreshCwIcon,
         onClick: handleBulkReprocess,
         clearSelectionOnSuccess: true,
       },
     ];
-  }, [canUpdate, handleBulkReprocess]);
+  }, [canUpdate, handleBulkReprocess, t]);
 
   return (
     <Outer>
@@ -375,7 +383,8 @@ function InboundFilesWorkspace() {
 }
 
 function TestCasesWorkspace() {
-  const columns = useMemo(() => getTestCaseColumns(), []);
+  const t = useT();
+  const columns = useMemo(() => getTestCaseColumns(t), [t]);
 
   return (
     <Outer>

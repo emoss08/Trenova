@@ -72,7 +72,9 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         <div>
           <h3 className="text-sm font-semibold">{t("Pay Profile")}</h3>
           <p className="text-muted-foreground text-xs">
-            {t("Pay accrues automatically from delivered shipments using the assignment in effect on the delivery date. Manage shared profiles under Payroll → Pay Profiles.")}
+            {t(
+              "Pay accrues automatically from delivered shipments using the assignment in effect on the delivery date. Manage shared profiles under Payroll → Pay Profiles.",
+            )}
           </p>
         </div>
         <Button size="sm" onClick={() => setAssignOpen(true)}>
@@ -88,7 +90,9 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
           <CircleDollarSign className="text-muted-foreground mx-auto size-6" />
           <p className="mt-2 text-sm font-medium">{t("No pay profile assigned")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            {t("This driver will not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and add driver-specific rate overrides if their rates differ from the template.")}
+            {t(
+              "This driver will not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and add driver-specific rate overrides if their rates differ from the template.",
+            )}
           </p>
         </div>
       )}
@@ -103,7 +107,10 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
             </p>
             <p className="text-muted-foreground text-[11px]">
-              {t("{0, plural, one {# pay event} other {# pay events}} awaiting settlement", earnings.accruedEventCount)}
+              {t(
+                "{0, plural, one {# pay event} other {# pay events}} awaiting settlement",
+                earnings.accruedEventCount,
+              )}
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
@@ -216,8 +223,12 @@ function CurrentAssignmentCard({
           />
         )}
         <span className="text-muted-foreground text-xs">
-          {t("since {0}{1}", formatDate(assignment.effectiveFrom), Number(assignment.splitPercent) !== 100 &&
-            ` ${t("· {0}% split", Number(assignment.splitPercent))}`)}
+          {t(
+            "since {0}{1}",
+            formatDate(assignment.effectiveFrom),
+            Number(assignment.splitPercent) !== 100 &&
+              ` ${t("· {0}% split", Number(assignment.splitPercent))}`,
+          )}
         </span>
         <Button
           size="sm"
@@ -278,7 +289,10 @@ function CurrentAssignmentCard({
       )}
       {profile != null && profile.guaranteedPeriodMinimumMinor > 0 && (
         <p className="text-muted-foreground mt-2 text-[11px]">
-          {t("Guaranteed minimum")} <AmountDisplay value={profile.guaranteedPeriodMinimumMinor} /> {t("per pay period — a top-up line is added automatically when period gross falls below the floor.")}
+          {t("Guaranteed minimum")} <AmountDisplay value={profile.guaranteedPeriodMinimumMinor} />{" "}
+          {t(
+            "per pay period — a top-up line is added automatically when period gross falls below the floor.",
+          )}
         </p>
       )}
       <p className="text-muted-foreground mt-2 text-[11px]">
@@ -321,7 +335,9 @@ function EndAssignmentDialog({
         <DialogHeader>
           <DialogTitle>{t("End pay assignment")}</DialogTitle>
           <DialogDescription>
-            {t("The assignment ends today. The driver stops accruing pay for shipments delivered after today until a new profile is assigned; already-accrued pay events are kept.")}
+            {t(
+              "The assignment ends today. The driver stops accruing pay for shipments delivered after today until a new profile is assigned; already-accrued pay events are kept.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

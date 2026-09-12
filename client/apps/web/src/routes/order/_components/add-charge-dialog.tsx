@@ -92,7 +92,9 @@ export function AddChargeDialog({
         <DialogHeader>
           <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
           <DialogDescription>
-            {t("Order-level charges not tied to a single leg roll into the order total and are billed exactly once on the first grouped invoice.")}
+            {t(
+              "Order-level charges not tied to a single leg roll into the order total and are billed exactly once on the first grouped invoice.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormGroup cols={1} className="pb-4">

@@ -135,7 +135,11 @@ function AiTaskList({
             {hasChildren
               ? children
               : tasks.map((task) => (
-                  <AiTaskListItem key={task.id} status={task.status} description={t(task.description)}>
+                  <AiTaskListItem
+                    key={task.id}
+                    status={task.status}
+                    description={t(task.description)}
+                  >
                     {t(task.title)}
                   </AiTaskListItem>
                 ))}

@@ -41,7 +41,9 @@ export function SearchKeepTyping() {
     <div className="flex h-60 flex-col items-center justify-center gap-2">
       <Spinner variant="infinite" className="text-primary size-8" />
       <div className="flex flex-col items-center text-center">
-        <p className="text-foreground text-sm font-medium">{t("Keep typing to search records...")}</p>
+        <p className="text-foreground text-sm font-medium">
+          {t("Keep typing to search records...")}
+        </p>
       </div>
     </div>
   );

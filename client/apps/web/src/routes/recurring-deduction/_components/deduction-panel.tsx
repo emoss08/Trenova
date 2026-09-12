@@ -112,7 +112,9 @@ function DeductionCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Recurring Deduction")}
-      description={t("Applied automatically to each qualifying settlement until its end date or cap.")}
+      description={t(
+        "Applied automatically to each qualifying settlement until its end date or cap.",
+      )}
       queryKey="recurring-deduction-list"
       form={form}
       formComponent={<DeductionForm isEdit={false} />}
@@ -194,7 +196,9 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             control={control}
             name="payCodeId"
             direction="Deduction"
-            description={t("Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.")}
+            description={t(
+              "Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -204,7 +208,9 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             label={t("Frequency")}
             options={recurringDeductionFrequencyChoices}
             rules={{ required: true }}
-            description={t("Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.")}
+            description={t(
+              "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.",
+            )}
           />
         </FormControl>
         {isEdit && (
@@ -215,7 +221,9 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
               label={t("Status")}
               options={recurringDeductionStatusChoices}
               rules={{ required: true }}
-              description={t("Pause to skip upcoming settlements without losing history; completed deductions stop permanently.")}
+              description={t(
+                "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.",
+              )}
             />
           </FormControl>
         )}
@@ -226,7 +234,9 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             label={t("Description")}
             placeholder={t("e.g. Occupational accident insurance")}
             rules={{ required: true }}
-            description={t("Shown verbatim on the driver's settlement statement, so make it recognizable.")}
+            description={t(
+              "Shown verbatim on the driver's settlement statement, so make it recognizable.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -258,7 +268,9 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             name="startDate"
             label={t("Start Date")}
             rules={{ required: true }}
-            description={t("The deduction begins applying to settlements whose period ends after this date.")}
+            description={t(
+              "The deduction begins applying to settlements whose period ends after this date.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -275,14 +287,18 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             name="escrowContribution"
             label={t("Contribute to Escrow Account")}
             disabled={isEdit}
-            description={t("Routes the withheld amount into the driver's active escrow account and stops automatically at the account's funding target.")}
+            description={t(
+              "Routes the withheld amount into the driver's active escrow account and stops automatically at the account's funding target.",
+            )}
             position="left"
           />
         </FormControl>
       </FormGroup>
       {escrowContribution && !isEdit && (
         <p className="text-muted-foreground text-xs">
-          {t("The deduction links to the driver's active escrow account when saved. Open an escrow account for the driver first if one doesn't exist.")}
+          {t(
+            "The deduction links to the driver's active escrow account when saved. Open an escrow account for the driver first if one doesn't exist.",
+          )}
         </p>
       )}
     </div>

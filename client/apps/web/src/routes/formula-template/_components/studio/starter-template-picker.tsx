@@ -73,7 +73,9 @@ export function StarterTemplatePicker() {
           </div>
         ) : standards.isError ? (
           <p className="text-muted-foreground text-xs">
-            {t("The standard library could not be loaded. Write the formula by hand or copy an existing template below.")}
+            {t(
+              "The standard library could not be loaded. Write the formula by hand or copy an existing template below.",
+            )}
           </p>
         ) : matchingStandards.length === 0 ? (
           <p className="text-muted-foreground text-xs">
@@ -112,7 +114,9 @@ export function StarterTemplatePicker() {
           disabled={copying}
         />
         <p className="text-2xs text-muted-foreground">
-          {t("Copies the formula and charge policy into this new template. The original is untouched and keeps its own history.")}
+          {t(
+            "Copies the formula and charge policy into this new template. The original is untouched and keeps its own history.",
+          )}
         </p>
       </div>
     </div>

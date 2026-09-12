@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { recurringEarningStatusChoices } from "@/lib/choices";
@@ -49,18 +49,18 @@ function StatusCell({ row }: { row: RecurringEarningRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<RecurringEarningRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<RecurringEarningRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell row={row.original} />,
       size: 120,
       meta: { apiField: "status" },
     },
     {
       id: "worker",
-      header: "Driver",
+      header: t("Driver"),
       cell: ({ row }) => (
         <span className="text-xs font-medium">
           {row.original.worker
@@ -72,7 +72,7 @@ export function getColumns(): ColumnDef<RecurringEarningRow>[] {
     },
     {
       id: "payCode",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => (
         <span className="text-xs">
           <span className="font-mono font-medium">{row.original.payCode?.code ?? "—"}</span>
@@ -85,17 +85,17 @@ export function getColumns(): ColumnDef<RecurringEarningRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => <span className="text-xs">{translate(row.original.description)}</span>,
+      header: t("Description"),
+      cell: ({ row }) => <span className="text-xs">{t(row.original.description)}</span>,
       size: 220,
       meta: { apiField: "description" },
     },
     {
       accessorKey: "frequency",
-      header: "Frequency",
+      header: t("Frequency"),
       cell: ({ row }) => (
         <span className="text-xs">
-          {row.original.frequency === "EverySettlement" ? translate("Every settlement") : translate("Monthly")}
+          {row.original.frequency === "EverySettlement" ? t("Every settlement") : t("Monthly")}
         </span>
       ),
       size: 110,
@@ -103,7 +103,7 @@ export function getColumns(): ColumnDef<RecurringEarningRow>[] {
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">{translate("Amount")}</div>,
+      header: () => <div className="text-right">{t("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.amountMinor} currency={row.original.currencyCode} />
@@ -114,7 +114,7 @@ export function getColumns(): ColumnDef<RecurringEarningRow>[] {
     },
     {
       id: "progress",
-      header: () => <div className="text-right">{translate("Paid / Cap")}</div>,
+      header: () => <div className="text-right">{t("Paid / Cap")}</div>,
       cell: ({ row }) => {
         const cap = row.original.totalCapMinor;
         return (

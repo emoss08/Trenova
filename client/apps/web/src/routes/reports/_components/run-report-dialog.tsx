@@ -112,7 +112,7 @@ export function RunReportDialog({
           onOpenChange(false);
           toast.success(`"${reportName}" queued for generation`, {
             action: {
-              label: "View runs",
+              label: t("View runs"),
               onClick: () => navigate("/reports/runs"),
             },
           });
@@ -132,6 +132,7 @@ export function RunReportDialog({
     onOpenChange,
     reportName,
     navigate,
+    t,
   ]);
 
   return (

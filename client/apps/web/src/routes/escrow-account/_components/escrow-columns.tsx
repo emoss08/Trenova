@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EscrowAccountStatusBadge } from "@trenova/shared/components/status-badge";
 import type { EscrowAccountRow } from "@/lib/graphql/driver-settlement";
@@ -10,11 +10,11 @@ function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
-export function getColumns(): ColumnDef<EscrowAccountRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <EscrowAccountStatusBadge status={row.original.status as EscrowAccountStatus} />
       ),
@@ -23,7 +23,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       id: "worker",
-      header: "Driver",
+      header: t("Driver"),
       cell: ({ row }) => (
         <span className="text-xs font-medium">
           {row.original.worker
@@ -35,7 +35,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "balanceMinor",
-      header: () => <div className="text-right">{translate("Balance")}</div>,
+      header: () => <div className="text-right">{t("Balance")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay value={row.original.balanceMinor} currency={row.original.currencyCode} />
@@ -46,7 +46,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "targetAmountMinor",
-      header: () => <div className="text-right">{translate("Target")}</div>,
+      header: () => <div className="text-right">{t("Target")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           {row.original.targetAmountMinor > 0 ? (
@@ -64,7 +64,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       id: "funded",
-      header: () => <div className="text-right">{translate("Funded")}</div>,
+      header: () => <div className="text-right">{t("Funded")}</div>,
       cell: ({ row }) => {
         const target = row.original.targetAmountMinor;
         if (target <= 0) return <div className="text-muted-foreground text-right text-xs">—</div>;
@@ -82,7 +82,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "annualInterestRate",
-      header: () => <div className="text-right">{translate("Interest")}</div>,
+      header: () => <div className="text-right">{t("Interest")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">
           {Number(row.original.annualInterestRate) > 0
@@ -95,14 +95,14 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
     },
     {
       accessorKey: "openedDate",
-      header: "Opened",
+      header: t("Opened"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.openedDate)}</span>,
       size: 110,
       meta: { apiField: "openedDate" },
     },
     {
       accessorKey: "lastInterestAccrualDate",
-      header: "Last Interest",
+      header: t("Last Interest"),
       cell: ({ row }) => (
         <span className="text-xs">{formatDate(row.original.lastInterestAccrualDate)}</span>
       ),

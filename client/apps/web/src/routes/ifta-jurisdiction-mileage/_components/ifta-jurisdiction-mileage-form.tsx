@@ -43,10 +43,16 @@ export function IftaJurisdictionMileageForm({
         <Alert>
           <RouteIcon className="size-4" />
           <AlertTitle>
-            {t("Written by {0}", source ? IFTA_MILEAGE_SOURCE_LABELS[source].toLowerCase() : t("the system"))}
+            {t(
+              "Written by {0}",
+              source ? IFTA_MILEAGE_SOURCE_LABELS[source].toLowerCase() : t("the system"),
+            )}
           </AlertTitle>
           <AlertDescription>
-            {t("These miles came from the distance provider or telematics, not from a person, so they are read-only here. To correct a move's miles, add a manual entry for the same move and it replaces these rows on the return. {0}", shipmentMoveId ? ` ${t("Move {0}.", shipmentMoveId)}` : "")}
+            {t(
+              "These miles came from the distance provider or telematics, not from a person, so they are read-only here. To correct a move's miles, add a manual entry for the same move and it replaces these rows on the return. {0}",
+              shipmentMoveId ? ` ${t("Move {0}.", shipmentMoveId)}` : "",
+            )}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -64,7 +70,9 @@ export function IftaJurisdictionMileageForm({
               rules={{ required: true }}
               placeholder={t("Select a tractor")}
               disabled={computed}
-              description={t("The unit that ran the miles. Its fuel type decides which fleet MPG applies.")}
+              description={t(
+                "The unit that ran the miles. Its fuel type decides which fleet MPG applies.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -75,7 +83,9 @@ export function IftaJurisdictionMileageForm({
               rules={{ required: true }}
               placeholder={t("Select a jurisdiction")}
               isReadOnly={computed}
-              description={t("The state or province the miles were run in, not where the trip started.")}
+              description={t(
+                "The state or province the miles were run in, not where the trip started.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -92,7 +102,10 @@ export function IftaJurisdictionMileageForm({
         </FormGroup>
       </FormSection>
 
-      <FormSection title={t("Miles")} description={t("How far, and whether the tractor was under load.")}>
+      <FormSection
+        title={t("Miles")}
+        description={t("How far, and whether the tractor was under load.")}
+      >
         <FormGroup cols={2}>
           <FormControl cols="full">
             <NumberField
@@ -105,14 +118,18 @@ export function IftaJurisdictionMileageForm({
                 <span className="inline-flex items-center gap-1">
                   {t("Miles")}
                   <InfoPopover title={t("Manual miles and the return")}>
-                    {t("Routed miles are captured from every completed move automatically. A manual entry is for travel the system did not see, such as bobtailing to a shop or repositioning between customers, and is added to the jurisdiction's line on the quarter's return at its next recompute. Manual miles are never subtracted, so do not enter miles a move already carries unless the entry names that move.")}
+                    {t(
+                      "Routed miles are captured from every completed move automatically. A manual entry is for travel the system did not see, such as bobtailing to a shop or repositioning between customers, and is added to the jurisdiction's line on the quarter's return at its next recompute. Manual miles are never subtracted, so do not enter miles a move already carries unless the entry names that move.",
+                    )}
                   </InfoPopover>
                 </span>
               }
               placeholder="412.50"
               rules={{ required: true }}
               readOnly={computed}
-              description={t("Above zero, up to two decimals, as read from the odometer or trip sheet.")}
+              description={t(
+                "Above zero, up to two decimals, as read from the odometer or trip sheet.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -120,8 +137,12 @@ export function IftaJurisdictionMileageForm({
               control={control}
               name="loaded"
               label={t("Under load")}
-              description={t("Leave on when the trailer carried freight. Turn off for empty or bobtail miles.")}
-              tooltip={t("Loaded and empty miles are both taxable; the split is kept for the fleet's own reporting.")}
+              description={t(
+                "Leave on when the trailer carried freight. Turn off for empty or bobtail miles.",
+              )}
+              tooltip={t(
+                "Loaded and empty miles are both taxable; the split is kept for the fleet's own reporting.",
+              )}
               position="left"
               outlined
               readOnly={computed}

@@ -118,7 +118,9 @@ export function UnsettledDriversDialog({
           <DialogHeader>
             <DialogTitle>{t("Unsettled drivers")}</DialogTitle>
             <DialogDescription>
-              {t("Every driver holding accrued pay this period. Settle a driver individually to pay them early, or generate for everyone at once — either way, drivers who already have a settlement are skipped and their new accruals attach automatically.")}
+              {t(
+                "Every driver holding accrued pay this period. Settle a driver individually to pay them early, or generate for everyone at once — either way, drivers who already have a settlement are skipped and their new accruals attach automatically.",
+              )}
             </DialogDescription>
           </DialogHeader>
           {summary.openBatchId != null && (
@@ -167,14 +169,18 @@ export function UnsettledDriversDialog({
                     {worker.hasSettlement ? (
                       <span
                         className="text-muted-foreground text-[10px]"
-                        title={t("This driver already has a settlement for the period; accrued pay attaches to their open draft automatically")}
+                        title={t(
+                          "This driver already has a settlement for the period; accrued pay attaches to their open draft automatically",
+                        )}
                       >
                         {t("Has settlement")}
                       </span>
                     ) : worker.eventCount === 0 ? (
                       <span
                         className="text-muted-foreground text-[10px]"
-                        title={t("All of this driver's pay is on hold — release it before settling")}
+                        title={t(
+                          "All of this driver's pay is on hold — release it before settling",
+                        )}
                       >
                         {t("All held")}
                       </span>
@@ -186,7 +192,9 @@ export function UnsettledDriversDialog({
                           className="h-7 px-2 text-[11px]"
                           disabled={settleMutation.isPending}
                           onClick={() => settleMutation.mutate(worker)}
-                          title={t("Create a draft settlement for this driver right now — pay date defaults to today for off-cycle pay")}
+                          title={t(
+                            "Create a draft settlement for this driver right now — pay date defaults to today for off-cycle pay",
+                          )}
                         >
                           {t("Settle now")}
                         </Button>
@@ -194,7 +202,9 @@ export function UnsettledDriversDialog({
                           size="sm"
                           className="h-7 px-2 text-[11px]"
                           onClick={() => setInstantPayWorker(worker)}
-                          title={t("Pay this driver immediately — approve, post, and mark paid in one pass")}
+                          title={t(
+                            "Pay this driver immediately — approve, post, and mark paid in one pass",
+                          )}
                         >
                           <Zap className="size-3" />
                           {t("Pay now")}

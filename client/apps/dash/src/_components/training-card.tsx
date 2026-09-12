@@ -66,7 +66,9 @@ export function TrainingCard() {
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">{t("Nothing has been assigned to you yet.")}</p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          {t("Nothing has been assigned to you yet.")}
+        </p>
       ) : (
         <ul className="mt-3 divide-y divide-border border-t border-border">
           {items.map((item) => (
@@ -75,7 +77,9 @@ export function TrainingCard() {
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        {t("Open a course, take it, then confirm here. Scored courses are closed by your carrier once they enter your result.")}
+        {t(
+          "Open a course, take it, then confirm here. Scored courses are closed by your carrier once they enter your result.",
+        )}
       </p>
     </div>
   );
@@ -136,7 +140,10 @@ function TrainingRow({ item }: { item: PortalTraining }) {
               daysUntilExpiry: item.daysUntilExpiry,
             })}
             {open && item.dueAt ? (
-              <span className="text-muted-foreground"> {t("· by {0}", formatUnixDate(item.dueAt))}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                {t("· by {0}", formatUnixDate(item.dueAt))}
+              </span>
             ) : null}
             {!open && item.expiresAt ? (
               <span className="text-muted-foreground">
@@ -160,7 +167,9 @@ function TrainingRow({ item }: { item: PortalTraining }) {
             </span>
           ) : null}
           {awaitingResult ? (
-            <span className="text-amber-600 dark:text-amber-400">{t("Waiting for your result")}</span>
+            <span className="text-amber-600 dark:text-amber-400">
+              {t("Waiting for your result")}
+            </span>
           ) : null}
           {item.score ? (
             <span className="tabular-nums">{t("Score {0}%", Number(item.score).toFixed(0))}</span>

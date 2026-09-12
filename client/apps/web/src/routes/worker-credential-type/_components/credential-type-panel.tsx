@@ -101,7 +101,9 @@ function CredentialTypeCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Credential Type")}
-      description={t("Add a licence, endorsement or certificate workers can hold, and decide whether it is required.")}
+      description={t(
+        "Add a licence, endorsement or certificate workers can hold, and decide whether it is required.",
+      )}
       queryKey={WORKER_CREDENTIAL_TYPE_LIST_KEY}
       form={form}
       size="lg"

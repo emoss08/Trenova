@@ -48,7 +48,9 @@ export function CarrierRemittanceForm() {
 
       <FormSection
         title={t("Remit-To Address")}
-        description={t("Where payments to this carrier are mailed when it differs from the primary address.")}
+        description={t(
+          "Where payments to this carrier are mailed when it differs from the primary address.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -57,7 +59,9 @@ export function CarrierRemittanceForm() {
               name="remitToName"
               label={t("Remit-To Name")}
               placeholder={t("e.g., Swift Transportation Co. or factoring company")}
-              description={t("Payee name printed on checks. Use the factoring company name when payments are factored.")}
+              description={t(
+                "Payee name printed on checks. Use the factoring company name when payments are factored.",
+              )}
               maxLength={255}
             />
           </FormControl>

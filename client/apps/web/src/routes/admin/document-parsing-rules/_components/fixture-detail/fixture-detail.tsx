@@ -142,7 +142,7 @@ function FixtureForm({
                   <AlertDialogHeader>
                     <AlertDialogTitle>{t("Delete Fixture")}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      {t("This will permanently delete \"{0}\".", fixture.name)}
+                      {t('This will permanently delete "{0}".', fixture.name)}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -161,11 +161,18 @@ function FixtureForm({
 
           <FormSection
             title={t("Fixture Details")}
-            description={t("Identify this fixture with a name and optional metadata used during provider matching.")}
+            description={t(
+              "Identify this fixture with a name and optional metadata used during provider matching.",
+            )}
           >
             <FormGroup cols={2}>
               <FormControl>
-                <InputField control={control} name="name" label={t("Name")} rules={{ required: true }} />
+                <InputField
+                  control={control}
+                  name="name"
+                  label={t("Name")}
+                  rules={{ required: true }}
+                />
               </FormControl>
               <FormControl>
                 <InputField
@@ -191,7 +198,9 @@ function FixtureForm({
 
           <FormSection
             title={t("Text Snapshot")}
-            description={t("The full extracted text of the document. This is the primary input the parser operates on during simulation.")}
+            description={t(
+              "The full extracted text of the document. This is the primary input the parser operates on during simulation.",
+            )}
             action={
               lineCount > 0 ? (
                 <Badge variant="outline" className="font-normal">
@@ -213,7 +222,9 @@ function FixtureForm({
           <FormSection
             title={t("Page Snapshots")}
             titleCount={pageFields.length}
-            description={t("Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot.")}
+            description={t(
+              "Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot.",
+            )}
             action={
               <Button
                 type="button"
@@ -237,7 +248,9 @@ function FixtureForm({
                 <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
                   <FileTextIcon className="text-muted-foreground size-5" />
                   <p className="text-muted-foreground text-xs">
-                    {t("No page snapshots defined. Add pages if the document has page-specific content.")}
+                    {t(
+                      "No page snapshots defined. Add pages if the document has page-specific content.",
+                    )}
                   </p>
                 </div>
               )}

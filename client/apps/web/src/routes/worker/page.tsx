@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
@@ -63,12 +64,14 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 };
 
 export function WorkersPage() {
+  const t = useT();
+
   return (
     <PageLayout
       className="gap-y-2"
       pageHeaderProps={{
-        title: "Workers",
-        description: "Manage and track workers along with their compliance and paid time off",
+        title: t("Workers"),
+        description: t("Manage and track workers along with their compliance and paid time off"),
       }}
     >
       <PTOContent />

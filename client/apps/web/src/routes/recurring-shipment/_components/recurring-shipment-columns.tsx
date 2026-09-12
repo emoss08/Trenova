@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { recurringShipmentStatusChoices } from "@/lib/choices";
@@ -48,11 +49,11 @@ function ScheduleCell({ row }: { row: RecurringShipmentRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<RecurringShipmentRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <RecurringShipmentStatusBadge status={row.original.status} />,
       size: 110,
       minSize: 100,
@@ -68,7 +69,7 @@ export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 220,
       meta: {
@@ -81,7 +82,7 @@ export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
     },
     {
       id: "customer",
-      header: "Customer",
+      header: t("Customer"),
       cell: ({ row }) => (
         <span className="truncate">
           {row.original.customer?.name ?? row.original.customer?.code ?? "—"}
@@ -91,20 +92,20 @@ export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
     },
     {
       id: "lane",
-      header: "Lane",
+      header: t("Lane"),
       cell: ({ row }) => <LaneCell row={row.original} />,
       size: 280,
       minSize: 220,
     },
     {
       id: "schedule",
-      header: "Schedule",
+      header: t("Schedule"),
       cell: ({ row }) => <ScheduleCell row={row.original} />,
       size: 200,
     },
     {
       accessorKey: "nextOccurrenceAt",
-      header: "Next Pickup",
+      header: t("Next Pickup"),
       cell: ({ row }) =>
         row.original.nextOccurrenceAt ? (
           <HoverCardTimestamp timestamp={row.original.nextOccurrenceAt} />
@@ -122,7 +123,7 @@ export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
     },
     {
       accessorKey: "generationCount",
-      header: "Generated",
+      header: t("Generated"),
       cell: ({ row }) => {
         const count = row.original.generationCount ?? 0;
         const max = row.original.maxOccurrences;
@@ -144,7 +145,7 @@ export function getColumns(): ColumnDef<RecurringShipmentRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",

@@ -58,7 +58,9 @@ export function OrderForm({ mode }: OrderFormProps) {
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
-              description={t("Lifecycle stage, derived automatically from the status of the order's shipment legs.")}
+              description={t(
+                "Lifecycle stage, derived automatically from the status of the order's shipment legs.",
+              )}
               options={orderStatusChoices}
               isReadOnly
             />
@@ -121,7 +123,9 @@ export function OrderForm({ mode }: OrderFormProps) {
               name="currencyCode"
               label={t("Currency")}
               placeholder={t("Select currency")}
-              description={t("Currency used for every monetary amount on this order and its invoices.")}
+              description={t(
+                "Currency used for every monetary amount on this order and its invoices.",
+              )}
               options={currencyChoices}
             />
           </FormControl>
@@ -131,7 +135,9 @@ export function OrderForm({ mode }: OrderFormProps) {
               name="quotedAmount"
               label={t("Quoted Amount")}
               placeholder="0.00"
-              description={t("Price quoted to the customer for the whole order, including expected extra charges.")}
+              description={t(
+                "Price quoted to the customer for the whole order, including expected extra charges.",
+              )}
               decimalScale={2}
               thousandSeparator
               sideText={currencyCode}
@@ -143,7 +149,9 @@ export function OrderForm({ mode }: OrderFormProps) {
               name="baseAmount"
               label={t("Base Amount")}
               placeholder="0.00"
-              description={t("Base freight amount before accessorial or other extra charges are applied.")}
+              description={t(
+                "Base freight amount before accessorial or other extra charges are applied.",
+              )}
               decimalScale={2}
               thousandSeparator
               sideText={currencyCode}

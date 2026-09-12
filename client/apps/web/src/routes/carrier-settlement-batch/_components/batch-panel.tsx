@@ -77,7 +77,9 @@ function GenerateBatchPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Carrier Settlement Batch")}
-      description={t("Creates a draft settlement for every carrier with pending cost events in the current period.")}
+      description={t(
+        "Creates a draft settlement for every carrier with pending cost events in the current period.",
+      )}
       queryKey="carrier-settlement-batch-list"
       form={form}
       notice={
@@ -103,7 +105,9 @@ function GenerateBatchPanel({
               name="name"
               label={t("Batch Name")}
               placeholder={t("Defaults to the pay period end date")}
-              description={t("A label for this AP run; if left blank it is named after the period end date.")}
+              description={t(
+                "A label for this AP run; if left blank it is named after the period end date.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -111,11 +115,15 @@ function GenerateBatchPanel({
               control={control}
               name="notes"
               label={t("Notes")}
-              description={t("Anything reviewers should know about this run, e.g. an off-cycle correction.")}
+              description={t(
+                "Anything reviewers should know about this run, e.g. an off-cycle correction.",
+              )}
             />
           </FormControl>
           <p className="text-muted-foreground text-xs">
-            {t("Settlements can auto-post on approval based on your carrier settlement control policy.")}
+            {t(
+              "Settlements can auto-post on approval based on your carrier settlement control policy.",
+            )}
           </p>
         </FormGroup>
       }
@@ -173,7 +181,12 @@ function BatchDetail({ batchId }: { batchId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <CarrierSettlementBatchStatusBadge status={data.status as CarrierSettlementBatchStatus} />
         <span className="text-muted-foreground text-xs">
-          {t("{0} – {1} · pays {2}", formatSettlementDate(data.periodStart), formatSettlementDate(data.periodEnd), formatSettlementDate(data.payDate))}
+          {t(
+            "{0} – {1} · pays {2}",
+            formatSettlementDate(data.periodStart),
+            formatSettlementDate(data.periodEnd),
+            formatSettlementDate(data.payDate),
+          )}
         </span>
         <Button
           size="sm"
@@ -189,17 +202,23 @@ function BatchDetail({ batchId }: { batchId: string }) {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Settlements")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Settlements")}
+          </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Total Gross")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Total Gross")}
+          </p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Total Net")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Total Net")}
+          </p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}

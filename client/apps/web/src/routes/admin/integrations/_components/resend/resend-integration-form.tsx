@@ -113,7 +113,9 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
         <MailCheckIcon className="size-4" />
         <AlertTitle>{t("Transactional email provider")}</AlertTitle>
         <AlertDescription>
-          {t("Resend credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.")}
+          {t(
+            "Resend credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.",
+          )}
         </AlertDescription>
       </Alert>
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
@@ -152,7 +154,10 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  {t("Webhook Signing Secret {0}", hasWebhookSecret ? ` ${t("(leave blank to keep existing secret)")}` : "")}
+                  {t(
+                    "Webhook Signing Secret {0}",
+                    hasWebhookSecret ? ` ${t("(leave blank to keep existing secret)")}` : "",
+                  )}
                   <ResendWebhookHelpPopover webhookURL={webhookURL} />
                 </span>
               }
@@ -226,7 +231,9 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
         <PopoverHeader>
           <PopoverTitle>{t("Resend webhook setup")}</PopoverTitle>
           <PopoverDescription>
-            {t("Keeps email logs current after delivery, bounces, complaints, and other provider events.")}
+            {t(
+              "Keeps email logs current after delivery, bounces, complaints, and other provider events.",
+            )}
           </PopoverDescription>
         </PopoverHeader>
         <div className="space-y-2 text-xs">
@@ -250,7 +257,9 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             </div>
           </div>
           <p className="text-muted-foreground">
-            {t("Paste Resend's signing secret here to verify incoming webhook calls. The integration can be saved before the webhook is configured.")}
+            {t(
+              "Paste Resend's signing secret here to verify incoming webhook calls. The integration can be saved before the webhook is configured.",
+            )}
           </p>
           <Button
             type="button"

@@ -42,7 +42,9 @@ export function BillingUsageTab() {
       <Alert variant="destructive">
         <CircleAlertIcon className="size-4" />
         <AlertTitle>{t("Unable to load billing status")}</AlertTitle>
-        <AlertDescription>{t("The subscription and usage summary could not be loaded.")}</AlertDescription>
+        <AlertDescription>
+          {t("The subscription and usage summary could not be loaded.")}
+        </AlertDescription>
       </Alert>
     );
   }
@@ -214,7 +216,9 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
             {formatPeriod(usage.windowStart, usage.windowEnd)}
           </p>
         </div>
-        <Badge variant={limited ? "info" : "active"}>{limited ? `${percent}%` : t("Unlimited")}</Badge>
+        <Badge variant={limited ? "info" : "active"}>
+          {limited ? `${percent}%` : t("Unlimited")}
+        </Badge>
       </div>
 
       <div className="mt-4">

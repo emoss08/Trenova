@@ -299,6 +299,7 @@ git diff --check
 
 ## Common Mistakes
 
+- Adding GraphQL schema and forgetting `projection.yml`. The generator requires every field to resolve to a column, an inferred relation, or a declared override; a resolver-computed or deprecated field needs a `virtuals` entry or generation aborts. See [Generated Artifacts](generated-artifacts.md).
 - Adding GraphQL schema and forgetting gqlgen.
 - Adding client operations and forgetting to sync the backend persisted manifest.
 - Calling repositories directly from resolvers.

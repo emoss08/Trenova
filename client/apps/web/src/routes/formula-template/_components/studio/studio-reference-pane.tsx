@@ -188,7 +188,9 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             className="text-2xs flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200"
           >
             <span>
-              {t("Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing and flagged as unknown.")}
+              {t(
+                "Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing and flagged as unknown.",
+              )}
             </span>
             <Button
               type="button"
@@ -261,7 +263,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           {((activeTab === "variables" && filteredVariables.length === 0) ||
             (activeTab === "functions" && filteredFunctions.length === 0)) && (
             <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-              {t("Nothing matches \"{0}\"", search)}
+              {t('Nothing matches "{0}"', search)}
             </p>
           )}
         </div>

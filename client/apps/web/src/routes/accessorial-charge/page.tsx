@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
@@ -5,11 +6,13 @@ import { lazy } from "react";
 const Table = lazy(() => import("./_components/accessorial-charge-table"));
 
 export function AccessorialChargesPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Accessorial Charges",
-        description: "Manage and configure accessorial charges for your organization",
+        title: t("Accessorial Charges"),
+        description: t("Manage and configure accessorial charges for your organization"),
       }}
     >
       <DataTableLazyComponent>

@@ -85,7 +85,14 @@ function LeakageRow({
           delay={Math.min(index, 10) * 0.04}
         />
         <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
-          {t("{0} {1} · {2} {3} · {4} each", row.waiverCount, row.waiverCount === 1 ? "waiver" : "waivers", row.approverCount, row.approverCount === 1 ? "approver" : "approvers", formatCurrency(perWaiver))}
+          {t(
+            "{0} {1} · {2} {3} · {4} each",
+            row.waiverCount,
+            row.waiverCount === 1 ? "waiver" : "waivers",
+            row.approverCount,
+            row.approverCount === 1 ? "approver" : "approvers",
+            formatCurrency(perWaiver),
+          )}
         </p>
       </div>
     </m.div>
@@ -132,11 +139,20 @@ export function WaiverLeakage({
       index={index}
       icon={HandCoinsIcon}
       title={t("Waiver leakage")}
-      description={t("Revenue forgiven at someone's discretion, grouped by the coded reason given.")}
+      description={t(
+        "Revenue forgiven at someone's discretion, grouped by the coded reason given.",
+      )}
       footer={
         leader ? (
           <p className="text-2xs text-muted-foreground">
-            <span className="text-foreground font-medium">{reasonLabel(leader.reason)}</span>{t("accounts for {0}% of everything forgiven — {1} across {2} {3}.", Math.round(leaderShare * 100), formatCurrency(leader.waivedAmount), leader.waiverCount, leader.waiverCount === 1 ? "waiver" : "waivers")}
+            <span className="text-foreground font-medium">{reasonLabel(leader.reason)}</span>
+            {t(
+              "accounts for {0}% of everything forgiven — {1} across {2} {3}.",
+              Math.round(leaderShare * 100),
+              formatCurrency(leader.waivedAmount),
+              leader.waiverCount,
+              leader.waiverCount === 1 ? "waiver" : "waivers",
+            )}
           </p>
         ) : null
       }

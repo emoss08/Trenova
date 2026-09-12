@@ -170,7 +170,7 @@ export function FormCreatePanel<
     options: SAVE_OPTIONS,
     selectedOption: defaultAction,
     onOptionSelect: handleOptionSelect,
-    loadingText: "Saving...",
+    loadingText: t("Saving..."),
   };
 
   return (

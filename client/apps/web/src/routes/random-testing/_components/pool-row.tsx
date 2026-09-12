@@ -75,10 +75,18 @@ export function PoolRow({
           <Badge variant="secondary">{pool.code}</Badge>
           {pool.isDefault ? <Badge variant="outline">{t("Default")}</Badge> : null}
           {pool.status !== "Active" ? <Badge variant="inactive">{t("Inactive")}</Badge> : null}
-          {pool.meetsDotMinimums ? null : <Badge variant="warning">{t("Below the DOT minimum")}</Badge>}
+          {pool.meetsDotMinimums ? null : (
+            <Badge variant="warning">{t("Below the DOT minimum")}</Badge>
+          )}
         </div>
         <p className="text-muted-foreground truncate text-xs">
-          {t("{0} · {1}% drug · {2}% alcohol · {3}", randomPeriodLabel(pool.period), pool.drugRatePercent, pool.alcoholRatePercent, drivers)}
+          {t(
+            "{0} · {1}% drug · {2}% alcohol · {3}",
+            randomPeriodLabel(pool.period),
+            pool.drugRatePercent,
+            pool.alcoholRatePercent,
+            drivers,
+          )}
         </p>
         {pool.description ? (
           <p className="text-muted-foreground truncate text-xs">{t(pool.description)}</p>
@@ -120,7 +128,14 @@ export function PoolRow({
           t("Nothing drawn this year")
         ) : (
           <>
-            {t("Drug {0} of {1} · Alcohol {2} of {3}{4}", progress.drugSelected, progress.drugTarget, progress.alcoholSelected, progress.alcoholTarget, progress.onPace ? "" : ` ${t("· a round fell short")}`)}
+            {t(
+              "Drug {0} of {1} · Alcohol {2} of {3}{4}",
+              progress.drugSelected,
+              progress.drugTarget,
+              progress.alcoholSelected,
+              progress.alcoholTarget,
+              progress.onPace ? "" : ` ${t("· a round fell short")}`,
+            )}
           </>
         )}
       </p>

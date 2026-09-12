@@ -72,7 +72,9 @@ export function DashboardSettingsDialog({
         <DialogHeader>
           <DialogTitle>{t("Dashboard controls")}</DialogTitle>
           <DialogDescription>
-            {t("Filters narrow every tile built on the same data. Parameters answer a question a report asks for by name, like a lookback window.")}
+            {t(
+              "Filters narrow every tile built on the same data. Parameters answer a question a report asks for by name, like a lookback window.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -108,13 +110,17 @@ export function DashboardSettingsDialog({
                 onChange={setFilters}
               />
             ) : (
-              <p className="text-muted-foreground px-2 py-4 text-center text-sm">{t("Loading fields…")}</p>
+              <p className="text-muted-foreground px-2 py-4 text-center text-sm">
+                {t("Loading fields…")}
+              </p>
             )
           ) : (
             <ParametersPanel
               parameters={parameters}
               onChange={setParameters}
-              emptyMessage={t("Parameters feed a value into reports that declare one with the same name.")}
+              emptyMessage={t(
+                "Parameters feed a value into reports that declare one with the same name.",
+              )}
             />
           )}
         </div>

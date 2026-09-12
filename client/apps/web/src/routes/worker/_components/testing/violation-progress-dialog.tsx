@@ -102,7 +102,9 @@ export function ViolationProgressDialog({
         <DialogHeader>
           <DialogTitle>{t("Return-to-duty process")}</DialogTitle>
           <DialogDescription>
-            {t("The stage is read off what has been recorded, so it can never drift from the file underneath it.")}
+            {t(
+              "The stage is read off what has been recorded, so it can never drift from the file underneath it.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -117,7 +119,9 @@ export function ViolationProgressDialog({
               <FormControl cols="full">
                 <Alert>
                   <AlertDescription>
-                    {t("The driver returns to duty once a return-to-duty test is recorded and passed — that is done from the test list, not here. Follow-up testing then runs with the driver back at work.")}
+                    {t(
+                      "The driver returns to duty once a return-to-duty test is recorded and passed — that is done from the test list, not here. Follow-up testing then runs with the driver back at work.",
+                    )}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -127,7 +131,9 @@ export function ViolationProgressDialog({
                   name="sapName"
                   label={t("Substance abuse professional")}
                   placeholder={t("Name of the SAP")}
-                  description={t("The substance abuse professional handling the evaluation and follow-up plan.")}
+                  description={t(
+                    "The substance abuse professional handling the evaluation and follow-up plan.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -145,7 +151,9 @@ export function ViolationProgressDialog({
                   name="sapEvaluationCompletedAt"
                   label={t("Evaluation completed")}
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("A passed return-to-duty test only releases the driver once this date is set.")}
+                  description={t(
+                    "A passed return-to-duty test only releases the driver once this date is set.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -172,7 +180,9 @@ export function ViolationProgressDialog({
                   name="followUpEndsAt"
                   label={t("Follow-up programme ends")}
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("When the SAP's follow-up plan ends; it may run up to five years after the return to duty.")}
+                  description={t(
+                    "When the SAP's follow-up plan ends; it may run up to five years after the return to duty.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">

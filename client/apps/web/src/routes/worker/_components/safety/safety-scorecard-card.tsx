@@ -54,10 +54,14 @@ export function SafetyScorecardCard({
           <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
           <InfoPopover title={t("Safety score")}>
             <p>
-              {t("The score starts at 100 and loses 5 for each active point, 10 for each preventable accident, 15 for each out-of-service order and 5 for each disciplinary action still active. Event counts cover the last twelve months.")}
+              {t(
+                "The score starts at 100 and loses 5 for each active point, 10 for each preventable accident, 15 for each out-of-service order and 5 for each disciplinary action still active. Event counts cover the last twelve months.",
+              )}
             </p>
             <p>
-              {t("Points stay active for two years from the date of the event, then roll off. The rating turns to Watch at 6 active points or a score under 75, and to At risk at 10 points or a score under 50.")}
+              {t(
+                "Points stay active for two years from the date of the event, then roll off. The rating turns to Watch at 6 active points or a score under 75, and to At risk at 10 points or a score under 50.",
+              )}
             </p>
           </InfoPopover>
         </div>
@@ -132,9 +136,13 @@ export function SafetyScorecardCard({
           <div className="ml-auto flex flex-col">
             <dt className="text-2xs text-muted-foreground uppercase">{t("Discipline")}</dt>
             <dd className="font-medium tabular-nums">
-              {t("{0} active, highest {1}", scorecard.activeDiscipline, DISCIPLINARY_LEVEL_LABELS[
-                scorecard.highestDiscipline as DisciplinaryLevel
-              ]?.toLowerCase() ?? scorecard.highestDiscipline)}
+              {t(
+                "{0} active, highest {1}",
+                scorecard.activeDiscipline,
+                DISCIPLINARY_LEVEL_LABELS[
+                  scorecard.highestDiscipline as DisciplinaryLevel
+                ]?.toLowerCase() ?? scorecard.highestDiscipline,
+              )}
             </dd>
           </div>
         ) : null}

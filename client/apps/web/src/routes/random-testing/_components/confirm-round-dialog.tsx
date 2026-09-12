@@ -48,8 +48,14 @@ export function ConfirmRoundDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             {finalise
-              ? t("{0} drivers for drug testing and {1} for alcohol become the record for this period. Correcting a name afterwards means voiding the whole round.", action.draw.drugSelected, action.draw.alcoholSelected)
-              : t("The selections are discarded and the period can be drawn again. The voided round stays on file with its seed, so the audit trail shows it happened.")}
+              ? t(
+                  "{0} drivers for drug testing and {1} for alcohol become the record for this period. Correcting a name afterwards means voiding the whole round.",
+                  action.draw.drugSelected,
+                  action.draw.alcoholSelected,
+                )
+              : t(
+                  "The selections are discarded and the period can be drawn again. The voided round stays on file with its seed, so the audit trail shows it happened.",
+                )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

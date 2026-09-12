@@ -66,21 +66,21 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
   const segments: ShareSegment[] = [
     {
       key: "kept",
-      label: "Kept",
+      label: t("Kept"),
       value: kept,
       className: "bg-emerald-500 dark:bg-emerald-400",
       caption: formatCurrency(kept),
     },
     {
       key: "driverPay",
-      label: "Driver pay",
+      label: t("Driver pay"),
       value: driverPay,
       className: "bg-blue-500 dark:bg-blue-400",
       caption: formatCurrency(driverPay),
     },
     {
       key: "waived",
-      label: "Forgiven",
+      label: t("Forgiven"),
       value: waived,
       className: "bg-amber-500 dark:bg-amber-400",
       caption: formatCurrency(waived),
@@ -117,7 +117,15 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
             <NumberFlow value={netMargin} format={CURRENCY_FORMAT} />
           </p>
           <p className="text-2xs text-muted-foreground mt-2 tabular-nums">
-            {t("{0} settled {1} across {2} {3} · {4}% ran past free time {5}", stopCount.toLocaleString(), stopCount === 1 ? "stop" : "stops", rollup.facilityCount, rollup.facilityCount === 1 ? "facility" : "facilities", Math.round(breachRate * 100), rollup.truncated ? ` ${t("· top facilities only")}` : "")}
+            {t(
+              "{0} settled {1} across {2} {3} · {4}% ran past free time {5}",
+              stopCount.toLocaleString(),
+              stopCount === 1 ? "stop" : "stops",
+              rollup.facilityCount,
+              rollup.facilityCount === 1 ? "facility" : "facilities",
+              Math.round(breachRate * 100),
+              rollup.truncated ? ` ${t("· top facilities only")}` : "",
+            )}
           </p>
 
           <div className="mt-4 max-w-xl">
@@ -126,7 +134,9 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
 
           {overrun ? (
             <p className="text-2xs mt-3 text-red-600 dark:text-red-400">
-              {t("Driver detention pay exceeded what was billed — the free-time concessions granted to customers are wider than the driver contract allows for.")}
+              {t(
+                "Driver detention pay exceeded what was billed — the free-time concessions granted to customers are wider than the driver contract allows for.",
+              )}
             </p>
           ) : null}
         </div>

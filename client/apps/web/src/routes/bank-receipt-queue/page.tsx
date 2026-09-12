@@ -186,8 +186,8 @@ export function BankReceiptQueuePage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: "Bank Receipt Work Queue",
-        description: "Review and resolve bank receipt exceptions requiring attention.",
+        title: t("Bank Receipt Work Queue"),
+        description: t("Review and resolve bank receipt exceptions requiring attention."),
       }}
       className="p-0 gap-y-2"
       toolbar={
@@ -208,7 +208,10 @@ export function BankReceiptQueuePage() {
             label={t("In Review")}
             value={String(summaryQuery.data?.inReviewWorkItemCount ?? 0)}
           />
-          <SummaryCard label={t("Exceptions")} value={String(summaryQuery.data?.exceptionCount ?? 0)} />
+          <SummaryCard
+            label={t("Exceptions")}
+            value={String(summaryQuery.data?.exceptionCount ?? 0)}
+          />
         </div>
       }
       sidebar={
@@ -307,7 +310,9 @@ export function BankReceiptQueuePage() {
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}
-              description={t("Pick a work item from the list to review the receipt behind it and settle it.")}
+              description={t(
+                "Pick a work item from the list to review the receipt behind it and settle it.",
+              )}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -371,7 +376,9 @@ function WorkItemDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{workItem.id}</h2>
-          <p className="text-muted-foreground text-sm">{t("Bank Receipt: {0}", workItem.bankReceiptId)}</p>
+          <p className="text-muted-foreground text-sm">
+            {t("Bank Receipt: {0}", workItem.bankReceiptId)}
+          </p>
         </div>
         <Badge variant={STATUS_VARIANTS[workItem.status]}>{STATUS_LABELS[workItem.status]}</Badge>
       </div>
@@ -619,7 +626,10 @@ function WorkItemDetail({
 
           {workItem.status === "Resolved" || workItem.status === "Dismissed" ? (
             <p className="text-muted-foreground text-xs">
-              {t("This work item has been {0}. No further actions available.", workItem.status.toLowerCase())}
+              {t(
+                "This work item has been {0}. No further actions available.",
+                workItem.status.toLowerCase(),
+              )}
             </p>
           ) : null}
         </div>

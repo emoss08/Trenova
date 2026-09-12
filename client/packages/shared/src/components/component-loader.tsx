@@ -9,21 +9,13 @@ export type ComponentLoaderProps = {
   description?: string;
 };
 
-export function ComponentLoader({
-  className,
-  message,
-  description,
-}: ComponentLoaderProps) {
+export function ComponentLoader({ className, message, description }: ComponentLoaderProps) {
   const t = useT();
 
   return (
-    <div
-      className={cn("flex flex-col items-center justify-center p-2", className)}
-    >
+    <div className={cn("flex flex-col items-center justify-center p-2", className)}>
       <Spinner className="size-4" />
-      <p className="mt-2 text-sm text-foreground">
-        {message ?? t("Loading data...")}
-      </p>
+      <p className="mt-2 text-sm text-foreground">{message ?? t("Loading data...")}</p>
       <p className="mt-2 text-sm text-muted-foreground">
         {description ?? t("If this takes too long, please refresh the page.")}
       </p>
@@ -38,9 +30,5 @@ export function SuspenseLoader({
   children: React.ReactNode;
   componentLoaderProps?: ComponentLoaderProps;
 }) {
-  return (
-    <Suspense fallback={<ComponentLoader {...componentLoaderProps} />}>
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<ComponentLoader {...componentLoaderProps} />}>{children}</Suspense>;
 }

@@ -30,7 +30,7 @@ export default function PayEventsTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [holdRows, setHoldRows] = useState<DriverPayEventRow[]>([]);
   const [holdReason, setHoldReason] = useState("");
   const [holdPending, setHoldPending] = useState(false);
@@ -51,15 +51,18 @@ export default function PayEventsTable() {
     [queryClient, t],
   );
 
-  const openHoldDialog = useCallback((rows: DriverPayEventRow[]) => {
-    const eligible = rows.filter((row) => row.status === "Accrued" && !row.onHold);
-    if (eligible.length === 0) {
-      toast.info(t("Only accrued, unheld pay events can be held."));
-      return;
-    }
-    setHoldRows(eligible);
-    setHoldReason("");
-  }, [t]);
+  const openHoldDialog = useCallback(
+    (rows: DriverPayEventRow[]) => {
+      const eligible = rows.filter((row) => row.status === "Accrued" && !row.onHold);
+      if (eligible.length === 0) {
+        toast.info(t("Only accrued, unheld pay events can be held."));
+        return;
+      }
+      setHoldRows(eligible);
+      setHoldReason("");
+    },
+    [t],
+  );
 
   const confirmBulkHold = useCallback(async () => {
     setHoldPending(true);
@@ -80,20 +83,20 @@ export default function PayEventsTable() {
     () => [
       {
         id: "hold",
-        label: "Hold",
+        label: t("Hold"),
         icon: PauseIcon,
         onClick: openHoldDialog,
       },
       {
         id: "release",
-        label: "Release Holds",
-        loadingLabel: "Releasing...",
+        label: t("Release Holds"),
+        loadingLabel: t("Releasing..."),
         icon: PlayIcon,
         onClick: handleBulkRelease,
         clearSelectionOnSuccess: true,
       },
     ],
-    [openHoldDialog, handleBulkRelease],
+    [openHoldDialog, handleBulkRelease, t],
   );
 
   return (
@@ -115,7 +118,9 @@ export default function PayEventsTable() {
               {t("Hold {0, plural, one {# pay event} other {# pay events}}", holdRows.length)}
             </DialogTitle>
             <DialogDescription>
-              {t("Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.")}
+              {t(
+                "Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.",
+              )}
             </DialogDescription>
           </DialogHeader>
           <Textarea

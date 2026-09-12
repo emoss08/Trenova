@@ -163,13 +163,17 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit the shift") : t("Add a shift")}</DialogTitle>
           <DialogDescription>
-            {t("A shift is the days somebody works and when. A rotation longer than a week makes an A/B pair one shift with two assignments rather than two near-identical shifts.")}
+            {t(
+              "A shift is the days somebody works and when. A rotation longer than a week makes an A/B pair one shift with two assignments rather than two near-identical shifts.",
+            )}
           </DialogDescription>
         </DialogHeader>
         {isEdit ? (
           <Alert variant="warning">
             <AlertDescription>
-              {t("The rota is drawn from this pattern every time it is read, so changing the days, start or length redraws every week for everyone assigned, past weeks included.")}
+              {t(
+                "The rota is drawn from this pattern every time it is read, so changing the days, start or length redraws every week for everyone assigned, past weeks included.",
+              )}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -190,7 +194,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label={t("Code")}
                     placeholder={t("e.g. DAY-A")}
                     rules={{ required: true }}
-                    description={t("A short tag the board labels the shift with; it is stored in upper case.")}
+                    description={t(
+                      "A short tag the board labels the shift with; it is stored in upper case.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -200,7 +206,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label={t("Name")}
                     placeholder={t("e.g. Weekday days")}
                     rules={{ required: true }}
-                    description={t("The name dispatchers and drivers see on the rota and on assignments.")}
+                    description={t(
+                      "The name dispatchers and drivers see on the rota and on assignments.",
+                    )}
                   />
                 </FormControl>
 
@@ -264,7 +272,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     step={300}
                     placeholder="06:00"
                     rules={{ required: true }}
-                    description={t("The clock time each working day begins; the finish is worked out from the length.")}
+                    description={t(
+                      "The clock time each working day begins; the finish is worked out from the length.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -277,7 +287,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     max={24}
                     placeholder="10"
                     rules={{ required: true }}
-                    description={t("How many hours each working day runs, in quarter-hour steps and at most a day.")}
+                    description={t(
+                      "How many hours each working day runs, in quarter-hour steps and at most a day.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -289,7 +301,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     max={8}
                     placeholder="1"
                     rules={{ required: true }}
-                    description={t("1 works every week; 2 alternates, which is how an A/B pair is built from one shift.")}
+                    description={t(
+                      "1 works every week; 2 alternates, which is how an A/B pair is built from one shift.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -300,7 +314,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     options={STATUS_OPTIONS}
                     placeholder={t("Pick a status")}
                     rules={{ required: true }}
-                    description={t("A retired shift cannot be assigned, and retiring is refused while anybody is still on it.")}
+                    description={t(
+                      "A retired shift cannot be assigned, and retiring is refused while anybody is still on it.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -308,7 +324,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     control={control}
                     name="color"
                     label={t("Colour")}
-                    description={t("Shown on the rota in this colour so the shift is recognisable at a glance.")}
+                    description={t(
+                      "Shown on the rota in this colour so the shift is recognisable at a glance.",
+                    )}
                   />
                 </FormControl>
                 <FormControl cols="full">
@@ -317,7 +335,9 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     name="description"
                     label={t("Description")}
                     placeholder={t("e.g. Overnight line-haul out of the Dallas yard")}
-                    description={t("Notes for whoever schedules against the shift, such as what it covers or where it starts.")}
+                    description={t(
+                      "Notes for whoever schedules against the shift, such as what it covers or where it starts.",
+                    )}
                   />
                 </FormControl>
               </FormGroup>
@@ -429,7 +449,11 @@ function ShiftPreview({
         <div className="flex items-center gap-2">
           <CalendarDaysIcon className="text-muted-foreground size-3.5 shrink-0" />
           <dd className="tabular-nums">
-            {t("{0, plural, one {# day} other {# days}} · {1} a week", selectedDays.length, formatHours(weeklyMinutes))}
+            {t(
+              "{0, plural, one {# day} other {# days}} · {1} a week",
+              selectedDays.length,
+              formatHours(weeklyMinutes),
+            )}
           </dd>
         </div>
         <div className="flex items-center gap-2">

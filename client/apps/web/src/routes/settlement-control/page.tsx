@@ -13,7 +13,9 @@ export function SettlementControlPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Settlement Control")}
-        description={t("Configure pay periods, accrual triggers, exception policies, and escrow interest")}
+        description={t(
+          "Configure pay periods, accrual triggers, exception policies, and escrow interest",
+        )}
       />
       <SuspenseLoader>
         <div className="p-4">

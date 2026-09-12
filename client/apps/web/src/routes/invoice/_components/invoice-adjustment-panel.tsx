@@ -217,7 +217,9 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
         <DialogHeader className="gap-0 p-4">
           <DialogTitle>{t("Invoice Adjustment")}</DialogTitle>
           <DialogDescription>
-            {t("Preview and submit a policy-controlled credit, reversal, or credit-and-rebill flow.")}
+            {t(
+              "Preview and submit a policy-controlled credit, reversal, or credit-and-rebill flow.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(handleAdjustmentSubmit)}>

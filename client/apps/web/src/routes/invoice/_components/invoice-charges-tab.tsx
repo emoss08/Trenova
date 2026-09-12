@@ -76,11 +76,7 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
             {isSummary ? (
               <tbody>
                 {groups.map((group) => (
-                  <SummaryRow
-                    key={group.key}
-                    group={group}
-                    currencyCode={invoice.currencyCode}
-                  />
+                  <SummaryRow key={group.key} group={group} currencyCode={invoice.currencyCode} />
                 ))}
               </tbody>
             ) : isGrouped ? (
@@ -147,13 +143,7 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
  * One shipment, one row. The charge breakdown still exists on the invoice — this
  * is a presentation choice the customer made, not a different invoice.
  */
-function SummaryRow({
-  group,
-  currencyCode,
-}: {
-  group: InvoiceLineGroup;
-  currencyCode: string;
-}) {
+function SummaryRow({ group, currencyCode }: { group: InvoiceLineGroup; currencyCode: string }) {
   const t = useT();
 
   const heading = groupHeading(group);

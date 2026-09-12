@@ -52,7 +52,9 @@ export function AccessorialChargeForm() {
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
-          description={t("Current processing status of this accessorial charge (active, pending approval, etc.)")}
+          description={t(
+            "Current processing status of this accessorial charge (active, pending approval, etc.)",
+          )}
           options={statusChoices}
         />
       </FormControl>
@@ -63,7 +65,9 @@ export function AccessorialChargeForm() {
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
-          description={t("Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)")}
+          description={t(
+            "Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)",
+          )}
         />
       </FormControl>
       <FormControl cols="full">
@@ -73,7 +77,9 @@ export function AccessorialChargeForm() {
           name="description"
           label={t("Description")}
           placeholder={t("Description")}
-          description={t("Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance")}
+          description={t(
+            "Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance",
+          )}
         />
       </FormControl>
       <FormControl cols={methodIsPerUnit ? 1 : "full"}>
@@ -83,7 +89,9 @@ export function AccessorialChargeForm() {
           name="method"
           label={t("Method")}
           placeholder={t("Method")}
-          description={t("Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)")}
+          description={t(
+            "Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)",
+          )}
           options={accessorialChargeMethodChoices}
         />
       </FormControl>

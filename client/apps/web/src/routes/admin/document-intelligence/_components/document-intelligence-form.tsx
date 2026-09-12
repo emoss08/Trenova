@@ -111,7 +111,9 @@ function PlatformAvailabilityCard() {
       <CardHeader>
         <CardTitle>{t("Platform Availability")}</CardTitle>
         <CardDescription>
-          {t("Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.")}
+          {t(
+            "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -121,7 +123,9 @@ function PlatformAvailabilityCard() {
               control={control}
               name="enableDocumentIntelligence"
               label={t("Enable Document Intelligence")}
-              description={t("Master switch for OCR, document classification, extraction, and indexing workflows.")}
+              description={t(
+                "Master switch for OCR, document classification, extraction, and indexing workflows.",
+              )}
               position="left"
             />
           </FormControl>
@@ -155,7 +159,9 @@ function ClassificationAndExtractionCard() {
       <CardHeader>
         <CardTitle>{t("Classification And Extraction")}</CardTitle>
         <CardDescription>
-          {t("Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.")}
+          {t(
+            "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -165,7 +171,9 @@ function ClassificationAndExtractionCard() {
               control={control}
               name="enableAutoClassification"
               label={t("Enable Automatic Classification")}
-              description={t("Classify uploaded documents into supported kinds as they are processed.")}
+              description={t(
+                "Classify uploaded documents into supported kinds as they are processed.",
+              )}
               position="left"
               disabled={!enabled}
             />
@@ -175,7 +183,9 @@ function ClassificationAndExtractionCard() {
               control={control}
               name="enableAiAssistedClassification"
               label={t("Enable AI-Assisted Classification")}
-              description={t("Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.")}
+              description={t(
+                "Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.",
+              )}
               position="left"
               disabled={!enabled}
             />
@@ -185,7 +195,9 @@ function ClassificationAndExtractionCard() {
               control={control}
               name="enableAutoDocumentTypeAssociate"
               label={t("Enable Automatic Document Type Association")}
-              description={t("Map detected document kinds to existing document types automatically.")}
+              description={t(
+                "Map detected document kinds to existing document types automatically.",
+              )}
               position="left"
               disabled={!enabled}
             />
@@ -195,7 +207,9 @@ function ClassificationAndExtractionCard() {
               control={control}
               name="enableAutoCreateDocumentTypes"
               label={t("Enable Automatic Document Type Creation")}
-              description={t("Create missing document types during auto-association when a mapping does not exist yet.")}
+              description={t(
+                "Create missing document types during auto-association when a mapping does not exist yet.",
+              )}
               position="left"
               disabled={!enabled}
             />
@@ -205,7 +219,9 @@ function ClassificationAndExtractionCard() {
               control={control}
               name="enableAiAssistedExtraction"
               label={t("Enable AI-Assisted Extraction")}
-              description={t("Use the OpenAI integration for structured extraction on supported document kinds.")}
+              description={t(
+                "Use the OpenAI integration for structured extraction on supported document kinds.",
+              )}
               position="left"
               disabled={!enabled}
             />
@@ -253,7 +269,9 @@ function ShipmentDraftCard() {
       <CardHeader>
         <CardTitle>{t("Shipment Draft Extraction")}</CardTitle>
         <CardDescription>
-          {t("Limit structured shipment-draft generation to the resources where operators should be able to review a draft and create a shipment from it.")}
+          {t(
+            "Limit structured shipment-draft generation to the resources where operators should be able to review a draft and create a shipment from it.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -263,7 +281,9 @@ function ShipmentDraftCard() {
               control={control}
               name="enableShipmentDraftExtraction"
               label={t("Enable Shipment Draft Extraction")}
-              description={t("Generate reviewable shipment drafts for supported document kinds such as rate confirmations.")}
+              description={t(
+                "Generate reviewable shipment drafts for supported document kinds such as rate confirmations.",
+              )}
               position="left"
               disabled={!enabled}
             />
@@ -311,7 +331,9 @@ function SearchCard() {
       <CardHeader>
         <CardTitle>{t("Search And Retrieval")}</CardTitle>
         <CardDescription>
-          {t("Control whether extracted text is indexed for document search and retrieval experiences.")}
+          {t(
+            "Control whether extracted text is indexed for document search and retrieval experiences.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -321,7 +343,9 @@ function SearchCard() {
               control={control}
               name="enableFullTextIndexing"
               label={t("Enable Full-Text Indexing")}
-              description={t("Store extracted text in the search index so operators can find documents by content.")}
+              description={t(
+                "Store extracted text in the search index so operators can find documents by content.",
+              )}
               position="left"
               disabled={!enabled}
             />

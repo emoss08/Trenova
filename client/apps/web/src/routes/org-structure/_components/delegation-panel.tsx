@@ -89,16 +89,16 @@ export function DelegationPanel() {
     () => [
       {
         value: "given",
-        label: "Handed out",
+        label: t("Handed out"),
         caption: given.data ? `${inForce(given.data, today)} in force` : undefined,
       },
       {
         value: "received",
-        label: "Covering for",
+        label: t("Covering for"),
         caption: received.data ? `${inForce(received.data, today)} in force` : undefined,
       },
     ],
-    [given.data, received.data, today],
+    [given.data, received.data, today, t],
   );
 
   if (!canRead) return null;
@@ -117,7 +117,9 @@ export function DelegationPanel() {
             {t("Approval cover")}
           </h3>
           <span className="text-muted-foreground hidden truncate text-xs md:inline">
-            {t("Cover widens what the stand-in can act on; it never widens what the manager could approve themselves.")}
+            {t(
+              "Cover widens what the stand-in can act on; it never widens what the manager could approve themselves.",
+            )}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">

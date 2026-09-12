@@ -29,7 +29,9 @@ export function ByTerminalPanel({ groups, total }: ByTerminalProps) {
     <SectionPanel
       title={t("By terminal")}
       icon={<Building2Icon />}
-      help={t("The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.")}
+      help={t(
+        "The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.",
+      )}
     >
       {groups.length === 0 ? (
         <SectionPanelQuiet>{t("Nobody to count yet.")}</SectionPanelQuiet>
@@ -49,7 +51,9 @@ export function ByTerminalPanel({ groups, total }: ByTerminalProps) {
                   />
                   <span className="truncate font-medium">{group.code}</span>
                   {group.attention > 0 ? (
-                    <span className="text-muted-foreground">{t("· {0} flagged", group.attention)}</span>
+                    <span className="text-muted-foreground">
+                      {t("· {0} flagged", group.attention)}
+                    </span>
                   ) : null}
                 </span>
                 <span className="text-muted-foreground tabular-nums">{group.count}</span>
@@ -85,7 +89,9 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
     <SectionPanel
       title={t("Coming up")}
       icon={<CalendarDaysIcon />}
-      help={t("Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here.")}
+      help={t(
+        "Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here.",
+      )}
     >
       {empty ? (
         <SectionPanelQuiet>
@@ -104,7 +110,12 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                   <span className="truncate text-xs font-medium">{item.member.name}</span>
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
                     <AwardIcon className="size-3" aria-hidden />
-                    {t("{0} {1} on {2}", item.years, item.years === 1 ? "year" : "years", formatUnixMonthDay(item.onDate))}
+                    {t(
+                      "{0} {1} on {2}",
+                      item.years,
+                      item.years === 1 ? "year" : "years",
+                      formatUnixMonthDay(item.onDate),
+                    )}
                   </span>
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
@@ -163,7 +174,9 @@ export function ApprovalCoverPanel({ covers, isLoading }: ApprovalCoverProps) {
     <SectionPanel
       title={t("Approval cover")}
       icon={<HandshakeIcon />}
-      help={t("Delegations that put another manager's approvals in your hands today. A delegation never widens what you could approve on your own.")}
+      help={t(
+        "Delegations that put another manager's approvals in your hands today. A delegation never widens what you could approve on your own.",
+      )}
       action={
         <Link
           to="/hr/org-structure"
@@ -180,7 +193,9 @@ export function ApprovalCoverPanel({ covers, isLoading }: ApprovalCoverProps) {
           <Skeleton className="h-4 w-1/2" />
         </div>
       ) : covers.length === 0 ? (
-        <SectionPanelQuiet>{t("Nobody has handed you their approvals right now.")}</SectionPanelQuiet>
+        <SectionPanelQuiet>
+          {t("Nobody has handed you their approvals right now.")}
+        </SectionPanelQuiet>
       ) : (
         <ul className="divide-y">
           {covers.map((cover) => (
@@ -190,7 +205,9 @@ export function ApprovalCoverPanel({ covers, isLoading }: ApprovalCoverProps) {
                 <Badge variant="secondary">{approvalScopeLabel(cover.scope)}</Badge>
               </div>
               <span className="text-muted-foreground text-2xs">
-                {cover.endsAt ? t("Until {0}", formatUnixDate(cover.endsAt)) : t("Until called back")}
+                {cover.endsAt
+                  ? t("Until {0}", formatUnixDate(cover.endsAt))
+                  : t("Until called back")}
                 {cover.reason ? ` · ${cover.reason}` : ""}
               </span>
             </li>

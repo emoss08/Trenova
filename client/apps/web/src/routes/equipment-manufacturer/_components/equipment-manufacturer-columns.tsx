@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -35,13 +35,13 @@ function EquipmentManufacturerStatusCell({ row }: { row: EquipmentManufacturer }
   );
 }
 
-export function getColumns(): ColumnDef<EquipmentManufacturer>[] {
+export function getColumns(t: TranslateFn): ColumnDef<EquipmentManufacturer>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -51,13 +51,13 @@ export function getColumns(): ColumnDef<EquipmentManufacturer>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <EquipmentManufacturerStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 150,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -68,12 +68,12 @@ export function getColumns(): ColumnDef<EquipmentManufacturer>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={50} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={50} />
       ),
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -86,7 +86,7 @@ export function getColumns(): ColumnDef<EquipmentManufacturer>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

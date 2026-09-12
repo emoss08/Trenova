@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { CarrierSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import { carrierSettlementStatusChoices } from "@/lib/choices";
@@ -12,18 +12,18 @@ function carrierName(row: CarrierSettlementRow): string {
   return row.carrier.scac ? `${row.carrier.name} (${row.carrier.scac})` : row.carrier.name;
 }
 
-export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<CarrierSettlementRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <CarrierSettlementStatusBadge status={row.original.status as CarrierSettlementStatus} />
       ),
       size: 150,
       meta: {
         apiField: "status",
-        label: "Status",
+        label: t("Status"),
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -33,14 +33,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "settlementNumber",
-      header: "Settlement #",
+      header: t("Settlement #"),
       cell: ({ row }) => (
         <span className="font-mono text-xs font-medium">{row.original.settlementNumber}</span>
       ),
       size: 150,
       meta: {
         apiField: "settlementNumber",
-        label: "Settlement Number",
+        label: t("Settlement Number"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -49,20 +49,20 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       id: "carrier",
-      header: "Carrier",
+      header: t("Carrier"),
       cell: ({ row }) => <span className="text-xs font-medium">{carrierName(row.original)}</span>,
       size: 200,
     },
     {
       accessorKey: "periodEnd",
-      header: "Period End",
+      header: t("Period End"),
       cell: ({ row }) => (
         <span className="text-xs">{formatSettlementDate(row.original.periodEnd)}</span>
       ),
       size: 110,
       meta: {
         apiField: "periodEnd",
-        label: "Period End",
+        label: t("Period End"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -71,14 +71,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "payDate",
-      header: "Pay Date",
+      header: t("Pay Date"),
       cell: ({ row }) => (
         <span className="text-xs">{formatSettlementDate(row.original.payDate)}</span>
       ),
       size: 110,
       meta: {
         apiField: "payDate",
-        label: "Pay Date",
+        label: t("Pay Date"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -87,14 +87,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "shipmentCount",
-      header: () => <div className="text-right">{translate("Loads")}</div>,
+      header: () => <div className="text-right">{t("Loads")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.shipmentCount}</div>
       ),
       size: 70,
       meta: {
         apiField: "shipmentCount",
-        label: "Shipment Count",
+        label: t("Shipment Count"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -103,7 +103,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "grossCostMinor",
-      header: () => <div className="text-right">{translate("Gross Cost")}</div>,
+      header: () => <div className="text-right">{t("Gross Cost")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.grossCostMinor} currency={row.original.currencyCode} />
@@ -112,7 +112,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
       size: 110,
       meta: {
         apiField: "grossCostMinor",
-        label: "Gross Cost Minor",
+        label: t("Gross Cost Minor"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -121,7 +121,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "adjustmentsMinor",
-      header: () => <div className="text-right">{translate("Adjustments")}</div>,
+      header: () => <div className="text-right">{t("Adjustments")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -134,7 +134,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
       size: 110,
       meta: {
         apiField: "adjustmentsMinor",
-        label: "Adjustments Minor",
+        label: t("Adjustments Minor"),
         filterable: true,
         sortable: true,
         filterType: "number",
@@ -143,7 +143,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "netPayableMinor",
-      header: () => <div className="text-right">{translate("Net Payable")}</div>,
+      header: () => <div className="text-right">{t("Net Payable")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay
@@ -156,7 +156,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
       size: 120,
       meta: {
         apiField: "netPayableMinor",
-        label: "Net Payable Minor",
+        label: t("Net Payable Minor"),
         filterable: true,
         sortable: true,
         filterType: "number",

@@ -84,7 +84,9 @@ export function ActivityTab({ organizationId }: { organizationId: string }) {
     <OuterContent>
       <ConsoleToolbar
         title={t("Activity console")}
-        description={t("Authentication outcomes, risk decisions, linked identities, and MFA devices.")}
+        description={t(
+          "Authentication outcomes, risk decisions, linked identities, and MFA devices.",
+        )}
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder={t("Search activity")}

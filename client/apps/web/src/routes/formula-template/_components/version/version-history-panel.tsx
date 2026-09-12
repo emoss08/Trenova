@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -228,7 +229,9 @@ export function VersionHistoryPanel({
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <AlertCircleIcon className="text-destructive mb-4 size-12" />
                   <p className="text-muted-foreground">{t("Failed to load version history")}</p>
-                  <p className="text-muted-foreground mt-1 text-xs">{t("Please try again later")}</p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t("Please try again later")}
+                  </p>
                 </div>
               ) : versions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -344,9 +347,9 @@ function getChangeBadges(
 
   if (hasExpression) {
     badges.push({
-      label: "Expr",
+      label: translate("Expr"),
       color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-      tooltip: "Expression changed",
+      tooltip: translate("Expression changed"),
     });
   }
 
@@ -360,9 +363,9 @@ function getChangeBadges(
 
   if (hasStatus) {
     badges.push({
-      label: "Status",
+      label: translate("Status"),
       color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-      tooltip: "Status changed",
+      tooltip: translate("Status changed"),
     });
   }
 
@@ -499,7 +502,9 @@ function VersionItem({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-2">
-              <span className="font-mono text-sm font-medium">{t("v{0}", version.versionNumber)}</span>
+              <span className="font-mono text-sm font-medium">
+                {t("v{0}", version.versionNumber)}
+              </span>
               {isCurrent && (
                 <Badge variant="active" className="text-xs">
                   {t("Current")}
@@ -707,7 +712,10 @@ function VersionItem({
               {t("Schedule Activation")}
             </DialogTitle>
             <DialogDescription>
-              {t("Choose when version {0} becomes the rating source. Shipments rated after this date use this version.", version.versionNumber)}
+              {t(
+                "Choose when version {0} becomes the rating source. Shipments rated after this date use this version.",
+                version.versionNumber,
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5 py-2">
@@ -723,9 +731,12 @@ function VersionItem({
             />
             {version.effectiveFrom != null && (
               <p className="text-2xs text-muted-foreground">
-                {t("Currently scheduled for {0}", formatToUserTimezone(version.effectiveFrom, {
-                  showSeconds: false,
-                }))}
+                {t(
+                  "Currently scheduled for {0}",
+                  formatToUserTimezone(version.effectiveFrom, {
+                    showSeconds: false,
+                  }),
+                )}
               </p>
             )}
           </div>
@@ -758,7 +769,9 @@ function VersionItem({
               <TagIcon className="size-4" />
               {t("Manage Tags")}
             </DialogTitle>
-            <DialogDescription>{t("Select tags for version {0}", version.versionNumber)}</DialogDescription>
+            <DialogDescription>
+              {t("Select tags for version {0}", version.versionNumber)}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-1 py-2">
             {VERSION_TAG_OPTIONS.map((option) => (
@@ -783,7 +796,9 @@ function VersionItem({
                   >
                     {t(option.label)}
                   </span>
-                  <span className="text-muted-foreground mt-0.5 text-xs">{t(option.description)}</span>
+                  <span className="text-muted-foreground mt-0.5 text-xs">
+                    {t(option.description)}
+                  </span>
                 </label>
               </div>
             ))}

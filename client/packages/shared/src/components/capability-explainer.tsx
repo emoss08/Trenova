@@ -1,11 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoIcon } from "lucide-react";
-import {
-  describeMatch,
-  enforcementLabel,
-  enforcementTone,
-  rulesForField,
-} from "../lib/capability";
+import { describeMatch, enforcementLabel, enforcementTone, rulesForField } from "../lib/capability";
 import { cn } from "../lib/utils";
 import type { ResolvedCapabilityRule, ResolvedModeProfile } from "../types/shipment";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -43,7 +38,11 @@ export function CapabilityExplainer({ profile, field, className }: CapabilityExp
         <div className="border-b border-border px-4 py-3">
           <p className="text-xs font-medium">{t("Why this field behaves this way")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {t("Resolved from the")} <span className="font-medium">{profile.profileName}</span> {t("profile, matched on {0}.", describeMatch(profile.candidates?.find((c) => c.selected)?.matchedOn))}
+            {t("Resolved from the")} <span className="font-medium">{profile.profileName}</span>{" "}
+            {t(
+              "profile, matched on {0}.",
+              describeMatch(profile.candidates?.find((c) => c.selected)?.matchedOn),
+            )}
           </p>
         </div>
         <ul className="divide-y divide-border">
@@ -70,19 +69,18 @@ function RuleExplanation({ rule }: { rule: ResolvedCapabilityRule }) {
         </span>
       </div>
 
-      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-        {provenance.rationale}
-      </p>
+      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{provenance.rationale}</p>
 
       {provenance.overridden && (
         <div className="mt-2 rounded-md bg-muted px-2.5 py-2">
           <p className="text-[11px] font-medium">
-            {t("Your organization changed this from {0}", enforcementLabel(provenance.defaultEnforcement))}
+            {t(
+              "Your organization changed this from {0}",
+              enforcementLabel(provenance.defaultEnforcement),
+            )}
           </p>
           {provenance.overrideReason && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {provenance.overrideReason}
-            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{provenance.overrideReason}</p>
           )}
         </div>
       )}

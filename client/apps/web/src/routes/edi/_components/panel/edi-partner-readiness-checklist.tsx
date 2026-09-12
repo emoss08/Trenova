@@ -67,7 +67,10 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
           <p className="text-muted-foreground text-sm">
             {data.ready
               ? t("This partner has completed every onboarding step.")
-              : t("{0} onboarding step(s) remaining before this partner is production-ready.", data.totalCount - data.completedCount)}
+              : t(
+                  "{0} onboarding step(s) remaining before this partner is production-ready.",
+                  data.totalCount - data.completedCount,
+                )}
           </p>
         </div>
       </div>
@@ -75,7 +78,12 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
         <div className="flex items-start gap-2 rounded-md border border-yellow-600/30 bg-yellow-600/10 p-3 text-sm text-yellow-800 dark:text-yellow-300">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
           <p>
-            {t("This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.", partner.enabledForInbound ? "inbound" : "", partner.enabledForInbound && partner.enabledForOutbound ? " and " : "", partner.enabledForOutbound ? "outbound" : "")}
+            {t(
+              "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+              partner.enabledForInbound ? "inbound" : "",
+              partner.enabledForInbound && partner.enabledForOutbound ? " and " : "",
+              partner.enabledForOutbound ? "outbound" : "",
+            )}
           </p>
         </div>
       )}

@@ -108,8 +108,13 @@ export function OshaCaseTable({
           </h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
             {cases.length === 1
-              ? t("Form 300. One case recorded; case numbers restart each January. A case is recorded from the worker's safety tab.")
-              : t("Form 300. {0} cases recorded; case numbers restart each January. A case is recorded from the worker's safety tab.", cases.length)}
+              ? t(
+                  "Form 300. One case recorded; case numbers restart each January. A case is recorded from the worker's safety tab.",
+                )
+              : t(
+                  "Form 300. {0} cases recorded; case numbers restart each January. A case is recorded from the worker's safety tab.",
+                  cases.length,
+                )}
           </p>
         </div>
         {cases.length > 0 ? (
@@ -140,14 +145,14 @@ export function OshaCaseTable({
             "A year with no recordable case still posts a 300A with zeros in it.\n" +
             "A case is recorded from the worker's safety tab and lands here."
           }
-          action={{ label: "Open the workers list", to: "/hr/workers" }}
+          action={{ label: t("Open the workers list"), to: "/hr/workers" }}
         />
       ) : rows.length === 0 ? (
         <OshaEmptyLog
           title={t("No case matches")}
           description={t("Nothing in the log fits that search and filter together.")}
           action={{
-            label: "Show every case",
+            label: t("Show every case"),
             onClick: () => {
               onQueryChange("");
               onFilterChange("all");
@@ -167,12 +172,14 @@ export function OshaCaseTable({
                 <TableHead className="w-16 text-center">{t("Column")}</TableHead>
                 <TableHead className="w-16 text-right">
                   <span className="inline-flex items-center gap-1">
-                    <FormMark>K</FormMark>{t("Away")}
+                    <FormMark>K</FormMark>
+                    {t("Away")}
                   </span>
                 </TableHead>
                 <TableHead className="w-20 text-right">
                   <span className="inline-flex items-center gap-1">
-                    <FormMark>L</FormMark>{t("Restricted")}
+                    <FormMark>L</FormMark>
+                    {t("Restricted")}
                   </span>
                 </TableHead>
                 <TableHead className="w-36">{t("Type")}</TableHead>
@@ -188,13 +195,13 @@ export function OshaCaseTable({
                 const actions: RowAction[] = [
                   {
                     id: "open",
-                    label: "Open case",
+                    label: t("Open case"),
                     icon: ClipboardListIcon,
                     onSelect: () => onOpen(entry),
                   },
                   {
                     id: "worker",
-                    label: "Open worker",
+                    label: t("Open worker"),
                     icon: UserRoundIcon,
                     onSelect: () => void navigate(workerRecordHref(entry.workerId, "safety")),
                   },
@@ -202,7 +209,7 @@ export function OshaCaseTable({
                 if (canUpdate) {
                   actions.push({
                     id: "edit",
-                    label: "Edit case",
+                    label: t("Edit case"),
                     icon: PencilIcon,
                     onSelect: () => onEdit(entry),
                   });
@@ -210,7 +217,7 @@ export function OshaCaseTable({
                 if (canDelete) {
                   actions.push({
                     id: "delete",
-                    label: "Delete case",
+                    label: t("Delete case"),
                     icon: Trash2Icon,
                     destructive: true,
                     onSelect: () => onDelete(entry),

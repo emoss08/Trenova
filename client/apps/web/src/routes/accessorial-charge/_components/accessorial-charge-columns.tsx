@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { translate } from "@trenova/shared/i18n/runtime";
+import { useT } from "@trenova/shared/i18n/use-t";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -38,18 +39,20 @@ function formatAmount(row: AccessorialChargeRow): string {
 }
 
 function MethodBadge({ method }: { method: AccessorialChargeRow["method"] }) {
+  const t = useT();
+
   const methodAttributes: Record<AccessorialChargeRow["method"], BadgeAttrProps> = {
     Flat: {
       variant: "active",
-      text: "Flat",
+      text: t("Flat"),
     },
     PerUnit: {
       variant: "indigo",
-      text: "Per Unit",
+      text: t("Per Unit"),
     },
     Percentage: {
       variant: "warning",
-      text: "Percentage",
+      text: t("Percentage"),
     },
   };
   return (
@@ -85,11 +88,11 @@ function AccessorialChargeStatusCell({ row }: { row: AccessorialChargeRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<AccessorialChargeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         return <AccessorialChargeStatusCell row={row.original} />;
       },
@@ -104,7 +107,7 @@ export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => {
         const code = row.original.code;
         return <p>{code}</p>;
@@ -119,7 +122,7 @@ export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
     },
     {
       accessorKey: "method",
-      header: "Method",
+      header: t("Method"),
       cell: ({ row }) => {
         const method = row.original.method;
         return <MethodBadge method={method} />;
@@ -135,9 +138,9 @@ export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 400,
@@ -152,7 +155,7 @@ export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
     },
     {
       accessorKey: "amount",
-      header: "Rate",
+      header: t("Rate"),
       cell: ({ row }) => {
         return <p>{formatAmount(row.original)}</p>;
       },
@@ -166,7 +169,7 @@ export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
@@ -175,7 +178,7 @@ export function getColumns(): ColumnDef<AccessorialChargeRow>[] {
       maxSize: 250,
       meta: {
         apiField: "createdAt",
-        label: "Created At",
+        label: t("Created At"),
         filterable: false,
         sortable: true,
         filterType: "date",

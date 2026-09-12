@@ -75,7 +75,9 @@ export function CustomizeSidebarDialog({
         <DialogHeader>
           <DialogTitle>{t("Customize sidebar")}</DialogTitle>
           <DialogDescription>
-            {t("Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how much activity you see. Your choices follow you across devices.")}
+            {t(
+              "Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how much activity you see. Your choices follow you across devices.",
+            )}
           </DialogDescription>
         </DialogHeader>
         {isReady ? (

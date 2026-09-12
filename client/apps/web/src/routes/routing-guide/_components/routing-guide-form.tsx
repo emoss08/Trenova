@@ -103,7 +103,10 @@ export function RoutingGuideForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <FormSection title={t("Identity")} description={t("How this guide is referenced across dispatch")}>
+      <FormSection
+        title={t("Identity")}
+        description={t("How this guide is referenced across dispatch")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -141,7 +144,9 @@ export function RoutingGuideForm() {
 
       <FormSection
         title={t("Lane")}
-        description={t("Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.")}
+        description={t(
+          "Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.",
+        )}
       >
         <div className="flex flex-col gap-3">
           <SegmentedControl<LaneMatchMode>
@@ -251,7 +256,9 @@ export function RoutingGuideForm() {
 
       <FormSection
         title={t("Carrier Waterfall")}
-        description={t("Ranked carriers with the rate, offer expiry, and channel each is tendered on")}
+        description={t(
+          "Ranked carriers with the rate, offer expiry, and channel each is tendered on",
+        )}
       >
         <RoutingGuideEntryEditor />
       </FormSection>

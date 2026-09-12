@@ -207,7 +207,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                 <Alert variant="warning">
                   <AlertTriangleIcon />
                   <AlertTitle>{t("Token required")}</AlertTitle>
-                  <AlertDescription>{t("Provide a token before enabling Samsara.")}</AlertDescription>
+                  <AlertDescription>
+                    {t("Provide a token before enabling Samsara.")}
+                  </AlertDescription>
                 </Alert>
               </FormControl>
             )}
@@ -215,7 +217,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               <div className="border-border flex flex-col gap-0.5 border-t pt-4">
                 <p className="text-sm font-semibold">{t("Webhooks")}</p>
                 <p className="text-muted-foreground text-xs">
-                  {t("Receive real-time vehicle and driver events from Samsara instead of waiting on polling.")}
+                  {t(
+                    "Receive real-time vehicle and driver events from Samsara instead of waiting on polling.",
+                  )}
                 </p>
               </div>
             </FormControl>
@@ -228,7 +232,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                 }`}
                 autoComplete="off"
                 placeholder={hasWebhookSecret ? "********" : "Enter Samsara webhook signing secret"}
-                description={t("Base64 signing secret from Samsara's webhook configuration, used to verify the X-Samsara-Signature header on incoming events.")}
+                description={t(
+                  "Base64 signing secret from Samsara's webhook configuration, used to verify the X-Samsara-Signature header on incoming events.",
+                )}
               />
             </FormControl>
             <FormControl cols="full">

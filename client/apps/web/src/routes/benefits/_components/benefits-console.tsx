@@ -112,9 +112,12 @@ export default function BenefitsConsole() {
             <span className="text-sm font-medium tabular-nums">{t("Plan year {0}", planYear)}</span>
           )}
           <p className="text-muted-foreground text-xs">
-            {t("Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0}", empty.length > 0
-              ? ` ${t("{0} active plan{1} nobody on {2}.", empty.length, empty.length === 1 ? " has" : t("s have"), empty.length === 1 ? "it" : "them")}`
-              : "")}
+            {t(
+              "Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0}",
+              empty.length > 0
+                ? ` ${t("{0} active plan{1} nobody on {2}.", empty.length, empty.length === 1 ? " has" : t("s have"), empty.length === 1 ? "it" : "them")}`
+                : "",
+            )}
           </p>
         </div>
         {canCreate ? (
@@ -130,7 +133,9 @@ export default function BenefitsConsole() {
           {yearPlans.length === 0 ? (
             <BenefitsEmpty
               title={`No plans for ${planYear}`}
-              description={t("Every plan year is priced on its own, so a year with nothing on offer stays empty until a plan is added for it.")}
+              description={t(
+                "Every plan year is priced on its own, so a year with nothing on offer stays empty until a plan is added for it.",
+              )}
               onAddPlan={canCreate ? () => setDialog({ plan: null }) : undefined}
             />
           ) : (

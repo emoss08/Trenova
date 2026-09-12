@@ -164,7 +164,9 @@ export default function OrganizationSettingsForm() {
 
   if (organizationQuery.isLoading) {
     return (
-      <div className="text-muted-foreground py-8 text-sm">{t("Loading organization settings...")}</div>
+      <div className="text-muted-foreground py-8 text-sm">
+        {t("Loading organization settings...")}
+      </div>
     );
   }
 
@@ -250,24 +252,27 @@ function LogoForm({
     return null;
   }, [rawLogoValue, resolvedLogoURL]);
 
-  const handleLogoFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    event.target.value = "";
-    if (!selectedFile) {
-      return;
-    }
+  const handleLogoFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = event.target.files?.[0];
+      event.target.value = "";
+      if (!selectedFile) {
+        return;
+      }
 
-    try {
-      validateCroppableImage(selectedFile, "logos");
-      setPendingFile(selectedFile);
-      setIsCropOpen(true);
-    } catch (error) {
-      toast.error(t("Unsupported logo file"), {
-        description:
-          error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
-      });
-    }
-  }, [t]);
+      try {
+        validateCroppableImage(selectedFile, "logos");
+        setPendingFile(selectedFile);
+        setIsCropOpen(true);
+      } catch (error) {
+        toast.error(t("Unsupported logo file"), {
+          description:
+            error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+        });
+      }
+    },
+    [t],
+  );
 
   const handleLogoUpload = useCallback(
     async (file: File) => {
@@ -379,7 +384,9 @@ function GeneralForm() {
       <CardHeader>
         <CardTitle>{t("Organization Details")}</CardTitle>
         <CardDescription>
-          {t("Core business identifiers and operational settings that define your organization profile in the system.")}
+          {t(
+            "Core business identifiers and operational settings that define your organization profile in the system.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -470,7 +477,9 @@ function OperatingModelForm() {
       <CardHeader>
         <CardTitle>{t("Operating Model")}</CardTitle>
         <CardDescription>
-          {t("Tailors the menus to the freight this organization actually moves. This controls visibility only — it hides features from menus and navigation. It does not restrict permissions or API access, and it never changes existing records.")}
+          {t(
+            "Tailors the menus to the freight this organization actually moves. This controls visibility only — it hides features from menus and navigation. It does not restrict permissions or API access, and it never changes existing records.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -485,7 +494,9 @@ function OperatingModelForm() {
               fullWidth
             />
             <span className="text-2xs text-muted-foreground">
-              {t("A preset simply sets the two switches below. Adjust either one on its own for a combination the presets do not cover.")}
+              {t(
+                "A preset simply sets the two switches below. Adjust either one on its own for a combination the presets do not cover.",
+              )}
             </span>
           </div>
           <FormGroup cols={1}>
@@ -494,7 +505,9 @@ function OperatingModelForm() {
                 control={control}
                 name="brokerageEnabled"
                 label={t("Brokerage Features")}
-                description={t("Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.")}
+                description={t(
+                  "Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -502,7 +515,9 @@ function OperatingModelForm() {
                 control={control}
                 name="assetOperationsEnabled"
                 label={t("Asset Operations")}
-                description={t("Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet.")}
+                description={t(
+                  "Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet.",
+                )}
               />
             </FormControl>
           </FormGroup>
@@ -546,7 +561,12 @@ function ComplianceForm() {
             />
           </FormControl>
           <FormControl>
-            <InputField control={control} name="taxId" label={t("Tax ID")} placeholder={t("Enter Tax ID")} />
+            <InputField
+              control={control}
+              name="taxId"
+              label={t("Tax ID")}
+              placeholder={t("Enter Tax ID")}
+            />
           </FormControl>
         </FormGroup>
       </CardContent>

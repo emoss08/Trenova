@@ -61,7 +61,9 @@ export function CreateTemplateForm({
             rules={{ required: true }}
             clearable
             disabled={disabled}
-            description={t("The EDI document type that seeds the template direction and transaction set.")}
+            description={t(
+              "The EDI document type that seeds the template direction and transaction set.",
+            )}
             placeholder={t("Document Type")}
             onOptionChange={handleDocumentTypeChange}
           />

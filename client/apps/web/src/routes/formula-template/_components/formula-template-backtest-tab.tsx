@@ -78,7 +78,10 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <StatTile label={t("Shipments")} value={`${summary.evaluatedCount}/${summary.shipmentCount}`} />
+        <StatTile
+          label={t("Shipments")}
+          value={`${summary.evaluatedCount}/${summary.shipmentCount}`}
+        />
         <StatTile label={t("Changed")} value={String(summary.changedCount)} />
         <StatTile
           label={t("Increased")}
@@ -104,9 +107,14 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
 
       {summary.errorCount > 0 && (
         <p className="text-muted-foreground text-xs">
-          {t("{0} {1} {2} . Failed shipments are excluded from the totals below.", summary.currentErrorCount > 0 &&
-            t("{0} could not be re-rated with the current template", summary.currentErrorCount), summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · ", summary.candidateErrorCount > 0 &&
-            t("{0} failed under the candidate", summary.candidateErrorCount))}
+          {t(
+            "{0} {1} {2} . Failed shipments are excluded from the totals below.",
+            summary.currentErrorCount > 0 &&
+              t("{0} could not be re-rated with the current template", summary.currentErrorCount),
+            summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · ",
+            summary.candidateErrorCount > 0 &&
+              t("{0} failed under the candidate", summary.candidateErrorCount),
+          )}
         </p>
       )}
 
@@ -121,7 +129,11 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         </span>
         <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
         <span className="text-muted-foreground ml-auto text-xs">
-          {t("Max increase {0} · Max decrease {1}", formatCurrency(summary.maxIncrease), formatCurrency(summary.maxDecrease))}
+          {t(
+            "Max increase {0} · Max decrease {1}",
+            formatCurrency(summary.maxIncrease),
+            formatCurrency(summary.maxDecrease),
+          )}
         </span>
       </div>
     </div>
@@ -215,7 +227,9 @@ function VersionPicker({
 
   return (
     <div className="w-64">
-      <label className="text-muted-foreground mb-1.5 block text-xs font-medium">{t("Version")}</label>
+      <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+        {t("Version")}
+      </label>
       <Select
         value={hasSelected ? String(value) : ""}
         onValueChange={(next) => {
@@ -287,7 +301,9 @@ export default function FormulaTemplateBacktestTab({
         <div className="mb-3">
           <p className="text-sm font-medium">{t("Backtest Candidate")}</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Re-rate recent shipments priced by this template and compare against their current amounts. Nothing is saved.")}
+            {t(
+              "Re-rate recent shipments priced by this template and compare against their current amounts. Nothing is saved.",
+            )}
           </p>
         </div>
 
@@ -356,7 +372,10 @@ export default function FormulaTemplateBacktestTab({
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-muted-foreground text-xs">
-              {t("{0, plural, one {# shipment} other {# shipments}} re-rated. Click a Pro # to open the shipment.", mutation.data.results.length)}
+              {t(
+                "{0, plural, one {# shipment} other {# shipments}} re-rated. Click a Pro # to open the shipment.",
+                mutation.data.results.length,
+              )}
             </p>
             <Button
               type="button"
@@ -407,7 +426,9 @@ export default function FormulaTemplateBacktestTab({
             <HistoryIcon className="text-muted-foreground mb-3 size-8" />
             <p className="text-sm font-medium">{t("No backtest results yet")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-              {t("Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.")}
+              {t(
+                "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.",
+              )}
               {template?.currentVersionNumber ? (
                 <Badge variant="outline" className="text-2xs ml-1 font-mono">
                   {t("head v{0}", template.currentVersionNumber)}

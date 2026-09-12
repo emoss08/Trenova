@@ -80,7 +80,9 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
               sideText="months"
               min={1}
               placeholder="12"
-              description={t("Closing a review schedules the next one this far out. Leave empty for one-off reviews.")}
+              description={t(
+                "Closing a review schedules the next one this far out. Leave empty for one-off reviews.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -126,7 +128,9 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
           <InfoIcon className="size-4" />
           <AlertTitle>{t("Items are copied when a review starts")}</AlertTitle>
           <AlertDescription>
-            {t("Changes to the rating items only affect reviews started after you save. Reviews already in progress keep the items and weights they were started with.")}
+            {t(
+              "Changes to the rating items only affect reviews started after you save. Reviews already in progress keep the items and weights they were started with.",
+            )}
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3">
@@ -157,7 +161,9 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                     label={t("Key")}
                     placeholder={t("e.g. safety")}
                     rules={{ required: true }}
-                    description={t("Stable identifier kept on every review; must be unique within the template.")}
+                    description={t(
+                      "Stable identifier kept on every review; must be unique within the template.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -178,7 +184,9 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                     min={1}
                     max={10}
                     placeholder="1"
-                    description={t("Relative share of the overall score; the score is the weighted average of items.")}
+                    description={t(
+                      "Relative share of the overall score; the score is the weighted average of items.",
+                    )}
                   />
                 </FormControl>
                 <FormControl className="col-span-3">

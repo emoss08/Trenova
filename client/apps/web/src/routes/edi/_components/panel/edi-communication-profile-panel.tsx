@@ -44,7 +44,9 @@ function notifyConnectionTestResult(result: EDIConnectionTestResult) {
     toast.success(translate("Connection test passed"), { description: describe(["passed"]) });
     return;
   }
-  toast.error(translate("Connection test failed"), { description: describe(["failed", "warning"]) });
+  toast.error(translate("Connection test failed"), {
+    description: describe(["failed", "warning"]),
+  });
 }
 
 type CommunicationProfileEditRow = CommunicationProfileFormValues &
@@ -79,17 +81,22 @@ export function CommunicationProfilePanel({
 
   const formTabs = useMemo<FormTabConfig[]>(
     () => [
-      { value: "overview", label: "Overview", icon: ServerIcon, content: <OverviewTab /> },
-      { value: "transport", label: "Transport", icon: RadioTowerIcon, content: <TransportTab /> },
-      { value: "envelope", label: "Envelope", icon: ShieldCheckIcon, content: <EnvelopeTab /> },
+      { value: "overview", label: t("Overview"), icon: ServerIcon, content: <OverviewTab /> },
+      {
+        value: "transport",
+        label: t("Transport"),
+        icon: RadioTowerIcon,
+        content: <TransportTab />,
+      },
+      { value: "envelope", label: t("Envelope"), icon: ShieldCheckIcon, content: <EnvelopeTab /> },
       {
         value: "secrets",
-        label: "Secrets",
+        label: t("Secrets"),
         icon: KeyRoundIcon,
         content: <SecretsTab profile={profile} />,
       },
     ],
-    [profile],
+    [profile, t],
   );
 
   if (mode === "edit") {
@@ -156,7 +163,9 @@ export function CommunicationProfilePanel({
       url="/edi/communication-profiles/"
       queryKey="edi-communication-profile-list"
       title={t("Communication Profile")}
-      description={t("Configure the transport profile and envelope values used for this organization.")}
+      description={t(
+        "Configure the transport profile and envelope values used for this organization.",
+      )}
       size="xl"
       formTabs={formTabs}
       mutationFn={async (values) => {

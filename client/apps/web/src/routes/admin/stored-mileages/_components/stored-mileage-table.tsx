@@ -20,15 +20,15 @@ import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon, TrashIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./stored-mileage-columns";
 
 const storedMileageService = new StoredMileageService();
-const columns = getColumns();
 
 export default function StoredMileageTable() {
   const t = useT();
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,7 +59,7 @@ export default function StoredMileageTable() {
   const contextMenuActions: RowAction<StoredMileageRow>[] = [
     {
       id: "deactivate",
-      label: "Deactivate",
+      label: t("Deactivate"),
       icon: TrashIcon,
       variant: "destructive",
       disabled: (row) => row.original.status !== "Active",
@@ -93,7 +93,9 @@ export default function StoredMileageTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Deactivate Stored Mileage")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("This keeps the record for audit/history but removes it from future mileage lookups.")}
+              {t(
+                "This keeps the record for audit/history but removes it from future mileage lookups.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

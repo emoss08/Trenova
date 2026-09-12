@@ -79,13 +79,13 @@ function RevenueComparison({ result }: { result: BacktestResult }) {
   const rows = [
     {
       key: "proposed",
-      label: "Proposed",
+      label: t("Proposed"),
       amount: result.proposedRevenue,
       className: "bg-foreground",
     },
     {
       key: "baseline",
-      label: "Billed today",
+      label: t("Billed today"),
       amount: result.baselineRevenue,
       className: "bg-muted-foreground/40",
     },
@@ -164,7 +164,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
       tone: "bad" as const,
       text: `${result.negativeMarginStops} negative margin`,
     },
-    result.truncated && { tone: "neutral" as const, text: "Sample truncated" },
+    result.truncated && { tone: "neutral" as const, text: t("Sample truncated") },
   ].filter((chip): chip is { tone: "warn" | "bad" | "neutral"; text: string } => Boolean(chip));
 
   return (
@@ -312,7 +312,9 @@ export function DetentionBacktest() {
           {t("Backtest")}
         </h3>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Re-price settled history under these terms. The engine is the same one that bills live shipments, so the projection is exact rather than estimated.")}
+          {t(
+            "Re-price settled history under these terms. The engine is the same one that bills live shipments, so the projection is exact rather than estimated.",
+          )}
         </p>
       </div>
 
@@ -355,7 +357,9 @@ export function DetentionBacktest() {
 
       {!ready && (
         <div className="border-border flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed px-3 py-2.5">
-          <span className="text-muted-foreground text-xs">{t("Finish on the Terms tab first:")}</span>
+          <span className="text-muted-foreground text-xs">
+            {t("Finish on the Terms tab first:")}
+          </span>
           {missing.map((label) => (
             <span
               key={label}
@@ -407,7 +411,10 @@ export function DetentionBacktest() {
         <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
           <HistoryIcon className="text-muted-foreground/60 size-5" />
           <p className="text-muted-foreground max-w-[18rem] text-xs">
-            {t("Run the backtest to see what these terms would have billed over the last {0} days.", WINDOW_OPTIONS.find((option) => option.value === windowValue)?.days)}
+            {t(
+              "Run the backtest to see what these terms would have billed over the last {0} days.",
+              WINDOW_OPTIONS.find((option) => option.value === windowValue)?.days,
+            )}
           </p>
         </div>
       )}

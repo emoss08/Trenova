@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -65,11 +65,11 @@ function UserNameCell({ user, isOnline }: { user: UserRow; isOnline: boolean }) 
   );
 }
 
-export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
+export function getColumns(onlineUserIDs: Set<string>, t: TranslateFn): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "User",
+      header: t("User"),
       cell: ({ row }) => (
         <UserNameCell
           user={row.original}
@@ -77,7 +77,7 @@ export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
         />
       ),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -90,10 +90,10 @@ export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <UserStatusCell row={row.original} />,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -107,9 +107,9 @@ export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
     },
     {
       accessorKey: "username",
-      header: "Username",
+      header: t("Username"),
       meta: {
-        label: "Username",
+        label: t("Username"),
         apiField: "username",
         filterable: true,
         sortable: true,
@@ -122,11 +122,11 @@ export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
     },
     {
       accessorKey: "lastLoginAt",
-      header: "Last Login",
+      header: t("Last Login"),
       cell: ({ row }) => {
         const lastLogin = row.original.lastLoginAt;
         if (!lastLogin) {
-          return <span className="text-muted-foreground">{translate("Never")}</span>;
+          return <span className="text-muted-foreground">{t("Never")}</span>;
         }
         return <HoverCardTimestamp timestamp={lastLogin} />;
       },
@@ -143,7 +143,7 @@ export function getColumns(onlineUserIDs: Set<string>): ColumnDef<UserRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",

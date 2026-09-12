@@ -144,7 +144,9 @@ export function RecordResultDialog({
                       name="alcoholConcentration"
                       label={t("Concentration")}
                       placeholder="0.000"
-                      description={t("The breath alcohol concentration from the confirmation test; it decides the result on its own.")}
+                      description={t(
+                        "The breath alcohol concentration from the confirmation test; it decides the result on its own.",
+                      )}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -152,8 +154,12 @@ export function RecordResultDialog({
                     <Alert variant={readingIsViolation ? "destructive" : "default"}>
                       <AlertDescription>
                         {readingIsViolation
-                          ? t("0.04 and above is a violation (49 CFR 382.201). The result will be filed as positive whatever is chosen below.")
-                          : t("0.02 to 0.039 takes the driver off duty for 24 hours but is not a violation (49 CFR 382.505).")}
+                          ? t(
+                              "0.04 and above is a violation (49 CFR 382.201). The result will be filed as positive whatever is chosen below.",
+                            )
+                          : t(
+                              "0.02 to 0.039 takes the driver off duty for 24 hours but is not a violation (49 CFR 382.505).",
+                            )}
                       </AlertDescription>
                     </Alert>
                   </FormControl>
@@ -167,7 +173,9 @@ export function RecordResultDialog({
                   label={t("Result")}
                   options={RESULT_OPTIONS}
                   placeholder={t("Pick a result")}
-                  description={t("A positive, refusal, adulterated or substituted result opens a violation and prohibits the driver at once.")}
+                  description={t(
+                    "A positive, refusal, adulterated or substituted result opens a violation and prohibits the driver at once.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -177,7 +185,9 @@ export function RecordResultDialog({
                   name="resultAt"
                   label={t("Reported on")}
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("When the laboratory or MRO reported the result; it also fills the collection date if none was recorded.")}
+                  description={t(
+                    "When the laboratory or MRO reported the result; it also fills the collection date if none was recorded.",
+                  )}
                 />
               </FormControl>
 
@@ -198,7 +208,9 @@ export function RecordResultDialog({
                       name="mroName"
                       label={t("Medical review officer")}
                       placeholder={t("Name of the MRO")}
-                      description={t("The medical review officer who verified the laboratory result.")}
+                      description={t(
+                        "The medical review officer who verified the laboratory result.",
+                      )}
                     />
                   </FormControl>
                   <FormControl>
@@ -207,7 +219,9 @@ export function RecordResultDialog({
                       name="mroVerifiedAt"
                       label={t("MRO verified on")}
                       placeholder={t("MM/DD/YYYY")}
-                      description={t("When the MRO verified the result; a drug result is not final until then.")}
+                      description={t(
+                        "When the MRO verified the result; a drug result is not final until then.",
+                      )}
                     />
                   </FormControl>
                 </>

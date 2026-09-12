@@ -30,7 +30,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
   const canUpdate = usePermission(Resource.ServiceFailure, Operation.Update);
   const canArchive = usePermission(Resource.ServiceFailure, Operation.Archive);
   const canExport = usePermission(Resource.ServiceFailure, Operation.Export);
-  const columns = getColumns();
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const invalidate = (shipmentId?: string) => {
     void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
@@ -86,7 +86,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
   const contextMenuActions: RowAction<ServiceFailureRow>[] = [
     {
       id: "review",
-      label: "Review",
+      label: t("Review"),
       icon: ShieldCheckIcon,
       onClick: (row) => void handleLifecycle(row, "review"),
       hidden: (row) => !canApprove.allowed || row.original.status !== "Open",
@@ -94,7 +94,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     },
     {
       id: "resolve",
-      label: "Resolve",
+      label: t("Resolve"),
       icon: CheckCircle2Icon,
       onClick: (row) => void handleLifecycle(row, "resolve"),
       hidden: (row) =>
@@ -105,7 +105,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     },
     {
       id: "void",
-      label: "Void",
+      label: t("Void"),
       icon: ArchiveIcon,
       variant: "destructive",
       onClick: (row) => void handleLifecycle(row, "void"),
@@ -113,7 +113,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     },
     {
       id: "edi-214-payload",
-      label: "Build EDI 214 Payload",
+      label: t("Build EDI 214 Payload"),
       icon: ClipboardIcon,
       onClick: (row) => void handleBuildEDI(row),
       hidden: () => !canExport.allowed,

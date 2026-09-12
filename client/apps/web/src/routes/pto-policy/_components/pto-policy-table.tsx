@@ -23,7 +23,7 @@ export default function PTOPolicyTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const { allowed: canArchive } = usePermission(Resource.PTOPolicy, Operation.Archive);
   const { allowed: canRestore } = usePermission(Resource.PTOPolicy, Operation.Restore);
 
@@ -44,7 +44,7 @@ export default function PTOPolicyTable() {
       const outcome = await settleAll(eligible, (row) => archivePtoPolicy(row.id, row.version));
       notifyBulkOutcome(outcome, {
         entity: "policy",
-        verbPast: "Archived",
+        verbPast: t("Archived"),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -62,7 +62,7 @@ export default function PTOPolicyTable() {
       const outcome = await settleAll(eligible, (row) => restorePtoPolicy(row.id, row.version));
       notifyBulkOutcome(outcome, {
         entity: "policy",
-        verbPast: "Restored",
+        verbPast: t("Restored"),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -75,8 +75,8 @@ export default function PTOPolicyTable() {
     if (canArchive) {
       actions.push({
         id: "archive",
-        label: "Archive",
-        loadingLabel: "Archiving...",
+        label: t("Archive"),
+        loadingLabel: t("Archiving..."),
         icon: ArchiveIcon,
         variant: "destructive",
         onClick: archiveRows,
@@ -86,22 +86,22 @@ export default function PTOPolicyTable() {
     if (canRestore) {
       actions.push({
         id: "restore",
-        label: "Restore",
-        loadingLabel: "Restoring...",
+        label: t("Restore"),
+        loadingLabel: t("Restoring..."),
         icon: ArchiveRestoreIcon,
         onClick: restoreRows,
         clearSelectionOnSuccess: true,
       });
     }
     return actions;
-  }, [archiveRows, canArchive, canRestore, restoreRows]);
+  }, [archiveRows, canArchive, canRestore, restoreRows, t]);
 
   const contextMenuActions = useMemo<RowAction<PTOPolicyRow>[]>(() => {
     const actions: RowAction<PTOPolicyRow>[] = [];
     if (canArchive) {
       actions.push({
         id: "archive",
-        label: "Archive",
+        label: t("Archive"),
         icon: ArchiveIcon,
         variant: "destructive",
         hidden: (row) => row.original.status !== "Active",
@@ -112,14 +112,14 @@ export default function PTOPolicyTable() {
     if (canRestore) {
       actions.push({
         id: "restore",
-        label: "Restore",
+        label: t("Restore"),
         icon: ArchiveRestoreIcon,
         hidden: (row) => row.original.status !== "Inactive",
         onClick: (row) => void restoreRows([row.original]),
       });
     }
     return actions;
-  }, [archiveRows, canArchive, canRestore, restoreRows]);
+  }, [archiveRows, canArchive, canRestore, restoreRows, t]);
 
   return (
     <DataTable<PTOPolicyRow>

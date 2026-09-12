@@ -15,7 +15,9 @@ export function APIKeyForm() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">{t("Key Details")}</h3>
         <p className="text-muted-foreground text-sm">
-          {t("Name the credential, document its intended use, and define an expiration if the integration should rotate automatically.")}
+          {t(
+            "Name the credential, document its intended use, and define an expiration if the integration should rotate automatically.",
+          )}
         </p>
       </div>
 
@@ -44,7 +46,9 @@ export function APIKeyForm() {
             control={control}
             name="description"
             label={t("Description")}
-            placeholder={t("Describe the partner system, deployment target, or workflow using this key.")}
+            placeholder={t(
+              "Describe the partner system, deployment target, or workflow using this key.",
+            )}
           />
         </FormControl>
       </FormGroup>

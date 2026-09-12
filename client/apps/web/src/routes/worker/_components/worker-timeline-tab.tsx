@@ -65,10 +65,10 @@ export default function WorkerTimelineTab({
   );
   const kindOptions = useMemo<{ value: KindFilter; label: string }[]>(
     () => [
-      { value: "all", label: "All events" },
+      { value: "all", label: t("All events") },
       ...presentKinds.map((option) => ({ value: option, label: EMPLOYMENT_EVENT_LABELS[option] })),
     ],
-    [presentKinds],
+    [presentKinds, t],
   );
 
   if (eventsQuery.isLoading) {
@@ -90,14 +90,22 @@ export default function WorkerTimelineTab({
           <p className="text-muted-foreground text-xs">
             {events.length === 0
               ? t("Nothing recorded yet.")
-              : t("{0} of {1, plural, one {# event} other {# events}} shown.", visible.length, events.length)}
+              : t(
+                  "{0} of {1, plural, one {# event} other {# events}} shown.",
+                  visible.length,
+                  events.length,
+                )}
           </p>
           <InfoPopover title={t("Employment events")}>
             <p>
-              {t("Recording an event is the only way a worker's employment status moves. A leave or suspension takes them off the dispatch board, a termination ends employment and closes their PTO and pay assignments, a rehire reopens it.")}
+              {t(
+                "Recording an event is the only way a worker's employment status moves. A leave or suspension takes them off the dispatch board, a termination ends employment and closes their PTO and pay assignments, a rehire reopens it.",
+              )}
             </p>
             <p>
-              {t("Amending an event corrects what was written and never replays those effects: a corrected termination date does not move the worker's termination date.")}
+              {t(
+                "Amending an event corrects what was written and never replays those effects: a corrected termination date does not move the worker's termination date.",
+              )}
             </p>
           </InfoPopover>
         </div>
@@ -132,7 +140,9 @@ export default function WorkerTimelineTab({
       {visible.length === 0 ? (
         <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">
           <HistoryIcon className="size-5" />
-          {events.length === 0 ? t("No employment events yet") : t("Nothing matches the selected kinds")}
+          {events.length === 0
+            ? t("No employment events yet")
+            : t("Nothing matches the selected kinds")}
         </div>
       ) : (
         <TimelineList

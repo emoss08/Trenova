@@ -332,7 +332,7 @@ export function DateSuggestionInput({
               </ul>
             ) : (
               <p className="text-muted-foreground px-3 py-1.5 text-xs">
-                {t("No matching date. Try \"t+2\", \"next friday\", or \"07/15\".")}
+                {t('No matching date. Try "t+2", "next friday", or "07/15".')}
               </p>
             )}
           </div>,

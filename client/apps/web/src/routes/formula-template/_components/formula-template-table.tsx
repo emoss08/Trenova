@@ -122,17 +122,20 @@ export default function FormulaTemplatesDataTable() {
     [queryClient],
   );
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
-  const requestArchive = useCallback((templates: FormulaTemplateRow[]) => {
-    const withIds = templates.filter((template) => template.id);
-    if (withIds.length === 0) {
-      toast.error(t("No formula templates selected"));
-      return;
-    }
+  const requestArchive = useCallback(
+    (templates: FormulaTemplateRow[]) => {
+      const withIds = templates.filter((template) => template.id);
+      if (withIds.length === 0) {
+        toast.error(t("No formula templates selected"));
+        return;
+      }
 
-    setPendingArchiveRows(withIds);
-  }, [t]);
+      setPendingArchiveRows(withIds);
+    },
+    [t],
+  );
 
   const handleConfirmArchive = useCallback(async () => {
     const ids = pendingArchiveRows.flatMap((template) => (template.id ? [template.id] : []));
@@ -167,65 +170,68 @@ export default function FormulaTemplatesDataTable() {
     () => [
       {
         id: "fork",
-        label: "Fork Template",
+        label: t("Fork Template"),
         icon: GitForkIcon,
-        group: { id: "fork", label: "Fork" },
+        group: { id: "fork", label: t("Fork") },
         onClick: (row) => setForkDialogTemplate(row.original),
       },
       {
         id: "lineage",
-        label: "View Lineage",
+        label: t("View Lineage"),
         icon: NetworkIcon,
-        group: { id: "fork", label: "Fork" },
+        group: { id: "fork", label: t("Fork") },
         onClick: (row) => setLineageDialogTemplate(row.original),
       },
       {
         id: "duplicate",
-        label: "Duplicate",
+        label: t("Duplicate"),
         icon: CopyIcon,
         group: "actions",
         onClick: handleDuplicate,
       },
       {
         id: "export",
-        label: "Export",
+        label: t("Export"),
         icon: DownloadIcon,
         group: "actions",
         onClick: (row) => handleExportClick(row.original),
       },
       {
         id: "archive",
-        label: "Archive",
+        label: t("Archive"),
         icon: ArchiveIcon,
         variant: "destructive",
         onClick: (row) => requestArchive([row.original]),
       },
     ],
-    [handleDuplicate, handleExportClick, requestArchive],
+    [handleDuplicate, handleExportClick, requestArchive, t],
   );
 
-  const handleBulkExport = useCallback(async (rows: FormulaTemplateRow[]) => {
-    try {
-      const [templates, testCaseLists] = await Promise.all([
-        Promise.all(rows.map((row) => apiService.formulaTemplateService.get(row.id))),
-        Promise.all(rows.map((row) => apiService.formulaTemplateService.listTestCases(row.id))),
-      ]);
-      const testCasesByTemplateId = Object.fromEntries(
-        rows.map((row, index) => [row.id, testCaseLists[index]]),
-      );
+  const handleBulkExport = useCallback(
+    async (rows: FormulaTemplateRow[]) => {
+      try {
+        const [templates, testCaseLists] = await Promise.all([
+          Promise.all(rows.map((row) => apiService.formulaTemplateService.get(row.id))),
+          Promise.all(rows.map((row) => apiService.formulaTemplateService.listTestCases(row.id))),
+        ]);
+        const testCasesByTemplateId = Object.fromEntries(
+          rows.map((row, index) => [row.id, testCaseLists[index]]),
+        );
 
-      const exportData = buildBulkExport(templates, testCasesByTemplateId);
-      const filename = getBulkExportFilename();
-      downloadJson(exportData, filename);
-      toast.success(`Exported ${rows.length} templates`, {
-        description: filename,
-      });
-    } catch {
-      toast.error(t("Export failed"), {
-        description: t("Could not export the selected templates. Please try again."),
-      });
-    }
-  }, [t]);
+        const exportData = buildBulkExport(templates, testCasesByTemplateId);
+        const filename = getBulkExportFilename();
+        downloadJson(exportData, filename);
+        toast.success(`Exported ${rows.length} templates`, {
+          description: filename,
+        });
+      } catch {
+        toast.error(t("Export failed"), {
+          description: t("Could not export the selected templates. Please try again."),
+        });
+      }
+    },
+    [t],
+  );
 
   const handleBulkDuplicate = useCallback((rows: FormulaTemplateRow[]) => {
     setPendingDuplicateRows(rows);
@@ -257,26 +263,26 @@ export default function FormulaTemplatesDataTable() {
     () => [
       {
         id: "duplicate",
-        label: "Duplicate",
+        label: t("Duplicate"),
         icon: CopyIcon,
         onClick: (rows) => handleBulkDuplicate(rows),
       },
       {
         id: "export",
-        label: "Export",
+        label: t("Export"),
         icon: DownloadIcon,
         onClick: (rows) => void handleBulkExport(rows),
       },
       {
         id: "archive",
-        label: "Archive",
+        label: t("Archive"),
         icon: ArchiveIcon,
         variant: "destructive",
         onClick: requestArchive,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkExport, handleBulkDuplicate, requestArchive],
+    [handleBulkExport, handleBulkDuplicate, requestArchive, t],
   );
 
   const archiveCount = pendingArchiveRows.length;
@@ -298,14 +304,14 @@ export default function FormulaTemplatesDataTable() {
         addRecordActions={[
           {
             id: "install-standards",
-            label: "Install Standard Templates",
-            description: "Add the vetted standard rating library (per mile, per CWT, ...).",
+            label: t("Install Standard Templates"),
+            description: t("Add the vetted standard rating library (per mile, per CWT, ...)."),
             onClick: () => setInstallDialogOpen(true),
           },
           {
             id: "import-templates",
-            label: "Import Templates",
-            description: "Import templates from an exported JSON file.",
+            label: t("Import Templates"),
+            description: t("Import templates from an exported JSON file."),
             onClick: () => setImportDialogOpen(true),
           },
         ]}
@@ -317,7 +323,9 @@ export default function FormulaTemplatesDataTable() {
               {t("Install standard templates?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.")}
+              {t(
+                "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -359,7 +367,9 @@ export default function FormulaTemplatesDataTable() {
               {t("Archive {0} formula {1}?", archiveCount, pluralize("template", archiveCount))}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Archived templates are marked inactive and stop pricing new shipments. Rate agreements and shipments referencing them keep their history.")}
+              {t(
+                "Archived templates are marked inactive and stop pricing new shipments. Rate agreements and shipments referencing them keep their history.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

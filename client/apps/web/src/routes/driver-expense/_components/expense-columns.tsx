@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
@@ -28,39 +28,39 @@ function workerName(row: DriverExpenseRow): string {
   return `${row.worker.firstName} ${row.worker.lastName}`.trim() || "—";
 }
 
-export function getColumns(): ColumnDef<DriverExpenseRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<DriverExpenseRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <DriverExpenseStatusBadge status={row.original.status} />,
       size: 110,
       meta: { apiField: "status" },
     },
     {
       accessorKey: "worker",
-      header: "Driver",
+      header: t("Driver"),
       cell: ({ row }) => <span className="text-sm font-medium">{workerName(row.original)}</span>,
       size: 160,
-      meta: { apiField: "workerId", label: "Driver" },
+      meta: { apiField: "workerId", label: t("Driver") },
     },
     {
       accessorKey: "amountMinor",
-      header: "Amount",
+      header: t("Amount"),
       cell: ({ row }) => (
         <span className="text-sm font-medium tabular-nums">
           <AmountDisplay value={row.original.amountMinor} currency={row.original.currencyCode} />
         </span>
       ),
       size: 110,
-      meta: { apiField: "amountMinor", label: "Amount" },
+      meta: { apiField: "amountMinor", label: t("Amount") },
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 max-w-96 text-xs">
-          {translate(row.original.description)}
+          {t(row.original.description)}
         </span>
       ),
       size: 300,
@@ -68,35 +68,35 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
     },
     {
       accessorKey: "incurredDate",
-      header: "Incurred",
+      header: t("Incurred"),
       cell: ({ row }) => (
         <span className="text-xs">{formatUnixDate(row.original.incurredDate)}</span>
       ),
       size: 110,
-      meta: { apiField: "incurredDate", label: "Incurred" },
+      meta: { apiField: "incurredDate", label: t("Incurred") },
     },
     {
       accessorKey: "receiptDocumentId",
-      header: "Receipt",
+      header: t("Receipt"),
       cell: ({ row }) =>
         row.original.receiptDocumentId ? (
-          <Badge variant="secondary">{translate("Attached")}</Badge>
+          <Badge variant="secondary">{t("Attached")}</Badge>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 90,
-      meta: { apiField: "receiptDocumentId", label: "Receipt" },
+      meta: { apiField: "receiptDocumentId", label: t("Receipt") },
     },
     {
       accessorKey: "createdAt",
-      header: "Submitted",
+      header: t("Submitted"),
       cell: ({ row }) => <span className="text-xs">{formatUnixDate(row.original.createdAt)}</span>,
       size: 110,
-      meta: { apiField: "createdAt", label: "Submitted" },
+      meta: { apiField: "createdAt", label: t("Submitted") },
     },
     {
       accessorKey: "reviewedAt",
-      header: "Reviewed",
+      header: t("Reviewed"),
       cell: ({ row }) =>
         row.original.reviewedAt ? (
           <div className="flex flex-col">
@@ -109,7 +109,7 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
           <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 130,
-      meta: { apiField: "reviewedAt", label: "Reviewed" },
+      meta: { apiField: "reviewedAt", label: t("Reviewed") },
     },
   ];
 }

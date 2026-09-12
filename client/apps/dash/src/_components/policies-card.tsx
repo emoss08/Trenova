@@ -74,7 +74,9 @@ export function PoliciesCard() {
           <div className="min-w-0">
             <h2 className="text-sm font-semibold">{t("Policies")}</h2>
             <p className="text-muted-foreground text-xs">
-              {outstanding === 0 ? t("You are up to date.") : t("{0} to read and sign.", outstanding)}
+              {outstanding === 0
+                ? t("You are up to date.")
+                : t("{0} to read and sign.", outstanding)}
             </p>
           </div>
         </div>
@@ -107,11 +109,15 @@ export function PoliciesCard() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{t(policy.title)}</span>
                   <span className="text-muted-foreground block truncate text-xs">
-                    {t("v{0}{1}", policy.versionLabel, policy.acknowledgedAt
-                      ? ` · ${formatShiftDate(policy.acknowledgedAt)}`
-                      : policy.summary
-                        ? ` · ${policy.summary}`
-                        : "")}
+                    {t(
+                      "v{0}{1}",
+                      policy.versionLabel,
+                      policy.acknowledgedAt
+                        ? ` · ${formatShiftDate(policy.acknowledgedAt)}`
+                        : policy.summary
+                          ? ` · ${policy.summary}`
+                          : "",
+                    )}
                   </span>
                 </span>
                 <Badge variant={tone.variant} className="shrink-0">
@@ -181,9 +187,13 @@ function PolicyDrawer({
         <DrawerHeader>
           <DrawerTitle>{policy?.title}</DrawerTitle>
           <DrawerDescription>
-            {t("Version {0}{1}", policy?.versionLabel, policy?.effectiveFrom
-              ? ` ${t("· in force from {0}", formatShiftDate(policy.effectiveFrom))}`
-              : "")}
+            {t(
+              "Version {0}{1}",
+              policy?.versionLabel,
+              policy?.effectiveFrom
+                ? ` ${t("· in force from {0}", formatShiftDate(policy.effectiveFrom))}`
+                : "",
+            )}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -213,7 +223,11 @@ function PolicyDrawer({
             <div className="border-success/40 bg-success/10 text-success-foreground flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
               <CheckIcon className="size-4 shrink-0" />
               {policy?.signatureName
-                ? t("Signed “{0}” on {1}.", policy.signatureName, formatShiftDate(policy.acknowledgedAt ?? 0))
+                ? t(
+                    "Signed “{0}” on {1}.",
+                    policy.signatureName,
+                    formatShiftDate(policy.acknowledgedAt ?? 0),
+                  )
                 : t("Read on {0}.", formatShiftDate(policy?.acknowledgedAt ?? 0))}
             </div>
           ) : (
@@ -225,7 +239,11 @@ function PolicyDrawer({
                   className="mt-0.5"
                 />
                 <span>
-                  {t("I have read {0}{1}", policy?.title ?? t("this policy"), needsSignature ? ` ${t("and agree to it.")}` : ".")}
+                  {t(
+                    "I have read {0}{1}",
+                    policy?.title ?? t("this policy"),
+                    needsSignature ? ` ${t("and agree to it.")}` : ".",
+                  )}
                 </span>
               </label>
               {needsSignature ? (
@@ -256,7 +274,9 @@ function PolicyDrawer({
                     </p>
                   ) : (
                     <p className="text-muted-foreground text-xs">
-                      {t("Your name, the time, and the device you signed from are kept with the signature.")}
+                      {t(
+                        "Your name, the time, and the device you signed from are kept with the signature.",
+                      )}
                     </p>
                   )}
                 </div>

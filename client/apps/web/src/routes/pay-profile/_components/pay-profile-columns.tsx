@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
@@ -87,25 +87,25 @@ function componentSummary(row: PayProfileRow): string {
     .concat(components.length > 3 ? ` +${components.length - 3} more` : "");
 }
 
-export function getColumns(): ColumnDef<PayProfileRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<PayProfileRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell row={row.original} />,
       size: 120,
       meta: { apiField: "status" },
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="text-xs font-medium">{row.original.name}</span>,
       size: 180,
       meta: { apiField: "name" },
     },
     {
       accessorKey: "classification",
-      header: "Type",
+      header: t("Type"),
       cell: ({ row }) => (
         <PayeeClassificationBadge
           classification={row.original.classification as PayeeClassification}
@@ -116,7 +116,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
     },
     {
       id: "components",
-      header: "Pay Components",
+      header: t("Pay Components"),
       cell: ({ row }) => (
         <span className="text-muted-foreground text-xs">{componentSummary(row.original)}</span>
       ),
@@ -124,7 +124,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
     },
     {
       accessorKey: "guaranteedPeriodMinimumMinor",
-      header: () => <div className="text-right">{translate("Guarantee")}</div>,
+      header: () => <div className="text-right">{t("Guarantee")}</div>,
       cell: ({ row }) =>
         row.original.guaranteedPeriodMinimumMinor > 0 ? (
           <div className="text-right">
@@ -141,7 +141,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
     },
     {
       accessorKey: "activeAssignmentCount",
-      header: () => <div className="text-right">{translate("Drivers")}</div>,
+      header: () => <div className="text-right">{t("Drivers")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.activeAssignmentCount}</div>
       ),

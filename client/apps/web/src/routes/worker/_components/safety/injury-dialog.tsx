@@ -236,7 +236,9 @@ export function InjuryDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit case") : t("Record an injury or illness")}</DialogTitle>
           <DialogDescription>
-            {t("Every case is kept, recordable or not — the decision not to record one is itself worth a record.")}
+            {t(
+              "Every case is kept, recordable or not — the decision not to record one is itself worth a record.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -273,7 +275,9 @@ export function InjuryDialog({
                   name="description"
                   label={t("What happened")}
                   placeholder={t("How the injury occurred, as it would read on the 301 form")}
-                  description={t("The narrative for the 301 incident report: what the employee was doing and how it happened.")}
+                  description={t(
+                    "The narrative for the 301 incident report: what the employee was doing and how it happened.",
+                  )}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -293,7 +297,9 @@ export function InjuryDialog({
                   name="bodyPart"
                   label={t("Body part")}
                   placeholder={t("e.g. Lower back")}
-                  description={t("The part of the body affected; it goes in the 300 log description.")}
+                  description={t(
+                    "The part of the body affected; it goes in the 300 log description.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -302,7 +308,9 @@ export function InjuryDialog({
                   name="harmfulAgent"
                   label={t("What harmed them")}
                   placeholder={t("Object or substance")}
-                  description={t("The object or substance that directly caused the injury, as the 300 log asks.")}
+                  description={t(
+                    "The object or substance that directly caused the injury, as the 300 log asks.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -323,7 +331,9 @@ export function InjuryDialog({
                   label={t("Treatment given")}
                   options={TREATMENT_OPTIONS}
                   placeholder={t("Pick the treatment")}
-                  description={t("Feeds the classification suggestion; first aid alone does not make a case recordable.")}
+                  description={t(
+                    "Feeds the classification suggestion; first aid alone does not make a case recordable.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -333,7 +343,9 @@ export function InjuryDialog({
                   name="daysAway"
                   label={t("Days away from work")}
                   placeholder="0"
-                  description={t("Calendar days away from work; drives the classification suggestion and the log totals.")}
+                  description={t(
+                    "Calendar days away from work; drives the classification suggestion and the log totals.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -342,7 +354,9 @@ export function InjuryDialog({
                   name="daysRestricted"
                   label={t("Days on restriction or transfer")}
                   placeholder="0"
-                  description={t("Calendar days on restricted work or job transfer; counted in the DART rate.")}
+                  description={t(
+                    "Calendar days on restricted work or job transfer; counted in the DART rate.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -352,7 +366,9 @@ export function InjuryDialog({
                   label={t("OSHA classification")}
                   options={CLASSIFICATION_OPTIONS}
                   placeholder={t("Pick a classification")}
-                  description={t("The employer's judgement; suggested from treatment and days lost until you choose one yourself.")}
+                  description={t(
+                    "The employer's judgement; suggested from treatment and days lost until you choose one yourself.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -364,7 +380,9 @@ export function InjuryDialog({
                     label={t("Case status")}
                     options={STATUS_OPTIONS}
                     placeholder={t("Pick a status")}
-                    description={t("An open case can still accrue days away or restricted; close it once the count is final.")}
+                    description={t(
+                      "An open case can still accrue days away or restricted; close it once the count is final.",
+                    )}
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -375,7 +393,9 @@ export function InjuryDialog({
                   <AlertDescription>
                     {classificationIsRecordable(classification)
                       ? t("This case goes on the OSHA 300 log.")
-                      : t("This case is kept on file but is not on the 300 log. First aid alone is not recordable (29 CFR 1904.7(b)(5)(ii)).")}
+                      : t(
+                          "This case is kept on file but is not on the 300 log. First aid alone is not recordable (29 CFR 1904.7(b)(5)(ii)).",
+                        )}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -394,7 +414,9 @@ export function InjuryDialog({
                   control={control}
                   name="privacyCase"
                   label={t("Privacy concern case")}
-                  description={t("The name is withheld from the posted log (29 CFR 1904.29(b)(6)).")}
+                  description={t(
+                    "The name is withheld from the posted log (29 CFR 1904.29(b)(6)).",
+                  )}
                 />
               </FormControl>
 
@@ -405,7 +427,9 @@ export function InjuryDialog({
                   label={t("Workers' compensation")}
                   options={CLAIM_OPTIONS}
                   placeholder={t("Pick a status")}
-                  description={t("Tracks the workers' compensation claim; the claim dates are dropped while it is not filed.")}
+                  description={t(
+                    "Tracks the workers' compensation claim; the claim dates are dropped while it is not filed.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>

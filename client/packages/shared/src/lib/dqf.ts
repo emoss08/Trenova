@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 /**
  * Labels and tones for the driver qualification file. The words here mirror
  * the credential and document areas the file is assembled from, so a reader who
@@ -221,23 +222,23 @@ export function verificationNextStep(
 ): VerificationNextStep {
   switch (verification.status) {
     case "Pending":
-      return { action: "request", label: "Send the request" };
+      return { action: "request", label: translate("Send the request") };
     case "Requested": {
       const lastContact = verification.lastFollowUpAt ?? verification.requestedAt ?? now;
       const dueAt = lastContact + DQF_FOLLOW_UP_INTERVAL_DAYS * SECONDS_IN_DAY;
       if (now < dueAt) {
-        return { action: "wait", label: "Waiting on the employer", dueAt };
+        return { action: "wait", label: translate("Waiting on the employer"), dueAt };
       }
       if (verification.followUpCount >= DQF_GOOD_FAITH_FOLLOW_UPS) {
-        return { action: "close", label: "Close as no response" };
+        return { action: "close", label: translate("Close as no response") };
       }
-      return { action: "chase", label: "Chase again" };
+      return { action: "chase", label: translate("Chase again") };
     }
     case "Received":
       if (verification.wasDotRegulated && !verification.drugAlcoholResponseReceivedAt) {
-        return { action: "drugAlcohol", label: "Record the drug and alcohol history" };
+        return { action: "drugAlcohol", label: translate("Record the drug and alcohol history") };
       }
-      return { action: "done", label: "Investigated" };
+      return { action: "done", label: translate("Investigated") };
     default:
       return { action: "done", label: verificationStatusLabel(verification.status) };
   }
@@ -298,8 +299,8 @@ export function dqfNextSteps(file: DQFFileLike, now: number): DQFNextStep[] {
     steps.push({
       id: "employers",
       kind: "employers",
-      label: "Record the driver's previous employers",
-      detail: "Until one is recorded the three-year investigation has not been made.",
+      label: translate("Record the driver's previous employers"),
+      detail: translate("Until one is recorded the three-year investigation has not been made."),
       action: "addEmployer",
       blocking: true,
     });
@@ -327,8 +328,10 @@ export function dqfNextSteps(file: DQFFileLike, now: number): DQFNextStep[] {
     steps.push({
       id: "purge",
       kind: "purge",
-      label: "Review the file for purge",
-      detail: "Held past its retention window. Purging is a deliberate act, never automatic.",
+      label: translate("Review the file for purge"),
+      detail: translate(
+        "Held past its retention window. Purging is a deliberate act, never automatic.",
+      ),
       action: "review",
       blocking: false,
     });

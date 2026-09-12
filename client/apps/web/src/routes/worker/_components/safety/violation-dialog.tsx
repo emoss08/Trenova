@@ -123,7 +123,9 @@ export function ViolationDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Correct the violation") : t("Cite a violation")}</DialogTitle>
           <DialogDescription>
-            {t("One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.")}
+            {t(
+              "One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -142,7 +144,9 @@ export function ViolationDialog({
                   label="BASIC"
                   options={BASIC_OPTIONS}
                   placeholder={t("Pick a BASIC")}
-                  description={t("The CSA category the violation is scored under; each BASIC has its own measure and threshold.")}
+                  description={t(
+                    "The CSA category the violation is scored under; each BASIC has its own measure and threshold.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -180,7 +184,9 @@ export function ViolationDialog({
                   control={control}
                   name="outOfService"
                   label={t("Out of service")}
-                  description={t("Adds two to the weight before the recency multiplier, the way the FMCSA scores it.")}
+                  description={t(
+                    "Adds two to the weight before the recency multiplier, the way the FMCSA scores it.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

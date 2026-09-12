@@ -139,7 +139,9 @@ function VersionList({
           <div className="space-y-1">
             <p className="text-sm font-medium">{t("No versions yet")}</p>
             <p className="text-muted-foreground max-w-xs text-xs">
-              {t("Versions define how documents are parsed. Each version contains match criteria, field extraction rules, and stop definitions. Create a draft to get started.")}
+              {t(
+                "Versions define how documents are parsed. Each version contains match criteria, field extraction rules, and stop definitions. Create a draft to get started.",
+              )}
             </p>
           </div>
         </div>

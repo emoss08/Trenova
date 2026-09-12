@@ -16,6 +16,15 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   "zh-CN": "简体中文",
 };
 
+// A flag is a country, not a language. These name the region each translation is written
+// for, and exist for the language switcher alone - never to infer a locale from.
+export const LOCALE_FLAGS: Record<Locale, string> = {
+  "en": "🇺🇸",
+  "es": "🇲🇽",
+  "zh-TW": "🇹🇼",
+  "zh-CN": "🇨🇳",
+};
+
 export const CATALOG_LOADERS: Record<Locale, () => Promise<Record<string, string>>> = {
   "en": () => import("../catalogs/en.json").then((m) => m.default),
   "es": () => import("../catalogs/es.json").then((m) => m.default),

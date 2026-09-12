@@ -143,13 +143,17 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit the plan") : t("Add a plan")}</DialogTitle>
           <DialogDescription>
-            {t("Each plan year is its own row. The pay code is what a contribution shows up as on a settlement, which is why it is required.")}
+            {t(
+              "Each plan year is its own row. The pay code is what a contribution shows up as on a settlement, which is why it is required.",
+            )}
           </DialogDescription>
         </DialogHeader>
         {isEdit ? (
           <Alert variant="warning">
             <AlertDescription>
-              {t("Each enrolment keeps the price it was made at, so changing a cost here only affects people enrolled from now on; existing deductions are not repriced.")}
+              {t(
+                "Each enrolment keeps the price it was made at, so changing a cost here only affects people enrolled from now on; existing deductions are not repriced.",
+              )}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -169,7 +173,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label={t("Code")}
                   placeholder={t("e.g. MED-PPO")}
                   rules={{ required: true }}
-                  description={t("A short tag that identifies the plan on lists and enrolments, up to 20 characters.")}
+                  description={t(
+                    "A short tag that identifies the plan on lists and enrolments, up to 20 characters.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -179,7 +185,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label={t("Name")}
                   placeholder={t("e.g. Medical PPO")}
                   rules={{ required: true }}
-                  description={t("The plan name workers see when they are enrolled in it or decline it.")}
+                  description={t(
+                    "The plan name workers see when they are enrolled in it or decline it.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -190,7 +198,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   options={TYPE_OPTIONS}
                   placeholder={t("Pick a type")}
                   rules={{ required: true }}
-                  description={t("The kind of cover this is; plans are grouped by it on the benefits page.")}
+                  description={t(
+                    "The kind of cover this is; plans are grouped by it on the benefits page.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -200,7 +210,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label={t("Plan year")}
                   placeholder={t("e.g. 2026")}
                   rules={{ required: true }}
-                  description={t("The year this pricing applies to; set up next year's plan as a new row instead of editing this one.")}
+                  description={t(
+                    "The year this pricing applies to; set up next year's plan as a new row instead of editing this one.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -209,7 +221,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="payCodeId"
                   label={t("Pay code")}
                   required
-                  description={t("The line a contribution shows up as on a settlement, so every deduction can be explained.")}
+                  description={t(
+                    "The line a contribution shows up as on a settlement, so every deduction can be explained.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -219,7 +233,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label={t("Status")}
                   options={STATUS_OPTIONS}
                   placeholder={t("Pick a status")}
-                  description={t("An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled.")}
+                  description={t(
+                    "An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -228,7 +244,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="employeeCostMinor"
                   label={t("Employee cost per period")}
                   placeholder="0.00"
-                  description={t("What the worker pays each pay period; it is deducted from every settlement while they are enrolled.")}
+                  description={t(
+                    "What the worker pays each pay period; it is deducted from every settlement while they are enrolled.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -237,7 +255,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="employerCostMinor"
                   label={t("Employer cost per period")}
                   placeholder="0.00"
-                  description={t("What the company pays each pay period; never deducted, but carried so a total-compensation statement shows what the job is worth.")}
+                  description={t(
+                    "What the company pays each pay period; never deducted, but carried so a total-compensation statement shows what the job is worth.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -246,7 +266,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="carrier"
                   label={t("Carrier")}
                   placeholder={t("e.g. Blue Shield")}
-                  description={t("The insurer or provider that underwrites the plan, shown on the plan card.")}
+                  description={t(
+                    "The insurer or provider that underwrites the plan, shown on the plan card.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -255,7 +277,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="policyNumber"
                   label={t("Policy number")}
                   placeholder={t("e.g. P-100")}
-                  description={t("The carrier's policy or group number, so a query about cover can be matched to the right contract.")}
+                  description={t(
+                    "The carrier's policy or group number, so a query about cover can be matched to the right contract.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -264,7 +288,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="waitingPeriodDays"
                   label={t("Waiting period (days)")}
                   placeholder={t("e.g. 30")}
-                  description={t("How long after hire somebody becomes eligible, up to a year; it is shown on the plan card but not checked when enrolling.")}
+                  description={t(
+                    "How long after hire somebody becomes eligible, up to a year; it is shown on the plan card but not checked when enrolling.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -274,7 +300,9 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label={t("Description")}
                   maxLength={2000}
                   placeholder={t("e.g. PPO with a $500 deductible and a nationwide network")}
-                  description={t("Anything an administrator should know about the plan that the fields above do not say.")}
+                  description={t(
+                    "Anything an administrator should know about the plan that the fields above do not say.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

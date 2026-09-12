@@ -11,6 +11,7 @@
 // across apps/web rather than guessed.
 export const TEXT_PROPS = new Set([
   "label", "description", "placeholder", "title", "subtitle", "heading", "caption",
+  "header", "loadingLabel", "verbPast",
   "loadingText", "hint", "help", "helper", "message", "successMessage", "errorMessage",
   "emptyMessage", "emptyLabel", "empty", "noResultsMessage", "searchPlaceholder",
   "confirmLabel", "confirmText", "cancelLabel", "cancelText", "submitLabel",

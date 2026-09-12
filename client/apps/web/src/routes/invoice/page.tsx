@@ -44,8 +44,10 @@ export function InvoicesPage() {
     <>
       <BillingWorkspaceLayout
         pageHeaderProps={{
-          title: "Invoices",
-          description: "Review draft invoices, confirm billing details, and post completed charges",
+          title: t("Invoices"),
+          description: t(
+            "Review draft invoices, confirm billing details, and post completed charges",
+          ),
         }}
         sidebar={
           <InvoiceSidebar

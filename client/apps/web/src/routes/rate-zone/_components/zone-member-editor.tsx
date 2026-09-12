@@ -43,7 +43,9 @@ export function ZoneMemberEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No places yet. A zone with no members matches nothing, so every lane written against it would quietly never apply.")}
+          {t(
+            "No places yet. A zone with no members matches nothing, so every lane written against it would quietly never apply.",
+          )}
         </p>
       )}
 
@@ -125,7 +127,9 @@ export function ZoneMemberEditor() {
                     name={`members.${index}.city` as never}
                     label={t("City")}
                     placeholder={t("Chicago")}
-                    description={t("Spelling and case do not matter — the city is folded before it is matched")}
+                    description={t(
+                      "Spelling and case do not matter — the city is folded before it is matched",
+                    )}
                   />
                 </FormControl>
               )}

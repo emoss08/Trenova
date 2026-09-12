@@ -132,13 +132,17 @@ export function HosClockGauges({
 
   if (!hasFeed) {
     return (
-      <p className={cn("text-muted-foreground text-[10px]", className)}>{t("No hours-of-service feed")}</p>
+      <p className={cn("text-muted-foreground text-[10px]", className)}>
+        {t("No hours-of-service feed")}
+      </p>
     );
   }
 
   if (isStale) {
     return (
-      <p className={cn("text-warning text-[10px]", className)}>{t("Hours-of-service data is stale")}</p>
+      <p className={cn("text-warning text-[10px]", className)}>
+        {t("Hours-of-service data is stale")}
+      </p>
     );
   }
 

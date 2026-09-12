@@ -60,7 +60,10 @@ export type CashApplicationRow = z.infer<typeof cashApplicationRowSchema>;
 
 export const recordPaymentSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
-  paymentDate: z.number({ error: "Payment date is required" }).int().positive("Payment date is required"),
+  paymentDate: z
+    .number({ error: "Payment date is required" })
+    .int()
+    .positive("Payment date is required"),
   accountingDate: z
     .number({ error: "Accounting date is required" })
     .int()

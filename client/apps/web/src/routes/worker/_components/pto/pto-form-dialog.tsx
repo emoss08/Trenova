@@ -143,7 +143,12 @@ function DaysPreview({
           data-testid="pto-availability-hint"
         >
           {result.allowed
-            ? t("{0} {1} days available on the start date{2}", Number(result.projectedAvailableDays).toFixed(2), ptoType.toLowerCase(), result.enforced ? "" : ` ${t("(not enforced)")}`)
+            ? t(
+                "{0} {1} days available on the start date{2}",
+                Number(result.projectedAvailableDays).toFixed(2),
+                ptoType.toLowerCase(),
+                result.enforced ? "" : ` ${t("(not enforced)")}`,
+              )
             : result.message}
         </p>
       ) : null}
@@ -173,7 +178,11 @@ function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
         <dd>{pto.type}</dd>
         <dt className="text-muted-foreground">{t("Dates")}</dt>
         <dd className="tabular-nums">
-          {t("{0} ({1} days)", formatRange(pto.startDate, pto.endDate), inclusiveDays(pto.startDate, pto.endDate))}
+          {t(
+            "{0} ({1} days)",
+            formatRange(pto.startDate, pto.endDate),
+            inclusiveDays(pto.startDate, pto.endDate),
+          )}
         </dd>
         <dt className="text-muted-foreground">{t("Reason")}</dt>
         <dd>{pto.reason}</dd>
@@ -286,7 +295,9 @@ export function PTOFormDialog({
           <DialogDescription>
             {isEdit
               ? editable
-                ? t("Adjust the dates, type, or reason. The worker is notified once a decision is made.")
+                ? t(
+                    "Adjust the dates, type, or reason. The worker is notified once a decision is made.",
+                  )
                 : t("This request has already been decided.")
               : t("Request time off on behalf of a worker. It will appear in the approval queue.")}
           </DialogDescription>

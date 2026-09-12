@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   accountTypeTableGraphQLConfig,
@@ -16,8 +17,10 @@ import { getColumns } from "./account-type-columns";
 import { AccountTypePanel } from "./account-type-panel";
 
 export default function AccountTypeTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: AccountTypeRow[], status: string) => {
@@ -48,15 +51,15 @@ export default function AccountTypeTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

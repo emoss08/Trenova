@@ -103,14 +103,19 @@ export function FuelPurchaseForm({
           <FileSpreadsheetIcon className="size-4" />
           <AlertTitle>{t("Imported from a fuel card statement")}</AlertTitle>
           <AlertDescription>
-            {t("The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}", importBatchId ? ` ${t("Batch {0}.", importBatchId)}` : "")}
+            {t(
+              "The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}",
+              importBatchId ? ` ${t("Batch {0}.", importBatchId)}` : "",
+            )}
           </AlertDescription>
         </Alert>
       ) : null}
 
       <FormSection
         title={t("Unit, driver & place")}
-        description={t("Which tractor was fuelled, who was driving, and where the fuel was bought.")}
+        description={t(
+          "Which tractor was fuelled, who was driving, and where the fuel was bought.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -120,7 +125,9 @@ export function FuelPurchaseForm({
               label={t("Tractor")}
               rules={{ required: true }}
               placeholder={t("Select a tractor")}
-              description={t("The unit the fuel went into. Its miles and this fuel meet on the return.")}
+              description={t(
+                "The unit the fuel went into. Its miles and this fuel meet on the return.",
+              )}
               onOptionChange={prefillWorker}
             />
           </FormControl>
@@ -141,7 +148,9 @@ export function FuelPurchaseForm({
               label={t("Purchased at")}
               rules={{ required: true }}
               placeholder={t("Date and time of the purchase")}
-              description={t("Decides which quarter the purchase falls in. Cannot be in the future.")}
+              description={t(
+                "Decides which quarter the purchase falls in. Cannot be in the future.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -152,10 +161,17 @@ export function FuelPurchaseForm({
                 label={t("Jurisdiction")}
                 rules={{ required: true }}
                 placeholder={t("Select a jurisdiction")}
-                description={t("Where the pump was. This decides which line of the return gets the tax-paid credit.")}
+                description={t(
+                  "Where the pump was. This decides which line of the return gets the tax-paid credit.",
+                )}
               />
-              <InfoPopover title={t("Jurisdiction vs vendor state")} className="absolute top-0 right-0">
-                {t("The jurisdiction is the state or province the pump stands in, which is what the return credits. A chain's billing address or the state on the receipt header can be somewhere else entirely, so read the location line, not the vendor line.")}
+              <InfoPopover
+                title={t("Jurisdiction vs vendor state")}
+                className="absolute top-0 right-0"
+              >
+                {t(
+                  "The jurisdiction is the state or province the pump stands in, which is what the return credits. A chain's billing address or the state on the receipt header can be somewhere else entirely, so read the location line, not the vendor line.",
+                )}
               </InfoPopover>
             </div>
           </FormControl>
@@ -184,7 +200,9 @@ export function FuelPurchaseForm({
 
       <FormSection
         title={t("Fuel")}
-        description={t("What was bought and what it cost. The total follows quantity × price until you change it.")}
+        description={t(
+          "What was bought and what it cost. The total follows quantity × price until you change it.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -281,7 +299,9 @@ export function FuelPurchaseForm({
               placeholder="412113"
               sideText="mi"
               min={0}
-              description={t("Reading at the pump, if recorded. Lets fuel be checked against miles run.")}
+              description={t(
+                "Reading at the pump, if recorded. Lets fuel be checked against miles run.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -311,7 +331,9 @@ export function FuelPurchaseForm({
                 <span className="inline-flex items-center gap-1">
                   {t("Card last four")}
                   <InfoPopover title={t("Why only the last four")}>
-                    {t("Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. The full card number is never stored.")}
+                    {t(
+                      "Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. The full card number is never stored.",
+                    )}
                   </InfoPopover>
                 </span>
               }
@@ -328,7 +350,9 @@ export function FuelPurchaseForm({
                 <span className="inline-flex items-center gap-1">
                   {t("Transaction reference")}
                   <InfoPopover title={t("Why record it")}>
-                    {t("The reference is unique within the organization. When a statement is imported later, rows whose reference is already on file are marked as already imported rather than recorded twice, so keying it here protects the quarter from double-counting.")}
+                    {t(
+                      "The reference is unique within the organization. When a statement is imported later, rows whose reference is already on file are marked as already imported rather than recorded twice, so keying it here protects the quarter from double-counting.",
+                    )}
                   </InfoPopover>
                 </span>
               }
@@ -343,8 +367,12 @@ export function FuelPurchaseForm({
               control={control}
               name="taxPaid"
               label={t("Fuel tax paid at the pump")}
-              description={t("Leave on for retail purchases. Turn off for bulk or tax-exempt fuel.")}
-              tooltip={t("Bulk or untaxed fuel still counts in the fleet's MPG gallons but earns no tax-paid credit on the return.")}
+              description={t(
+                "Leave on for retail purchases. Turn off for bulk or tax-exempt fuel.",
+              )}
+              tooltip={t(
+                "Bulk or untaxed fuel still counts in the fleet's MPG gallons but earns no tax-paid credit on the return.",
+              )}
               position="left"
               outlined
             />

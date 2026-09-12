@@ -104,7 +104,10 @@ export function ForkTemplateDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">{t("Fork Template")}</DialogTitle>
           <DialogDescription>
-            {t("Create a new template based on “{0}”. The forked template will start with its own version history.", template?.name)}
+            {t(
+              "Create a new template based on “{0}”. The forked template will start with its own version history.",
+              template?.name,
+            )}
           </DialogDescription>
         </DialogHeader>
 

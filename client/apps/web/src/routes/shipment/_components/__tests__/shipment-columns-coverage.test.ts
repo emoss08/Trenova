@@ -1,8 +1,9 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { getColumns } from "@/routes/shipment/_components/shipment-columns";
 import { describe, expect, it } from "vitest";
 
 describe("shipment coverage column", () => {
-  const column = getColumns([]).find((entry) => entry.id === "driver");
+  const column = getColumns([], translate).find((entry) => entry.id === "driver");
 
   it("is registered", () => {
     expect(column).toBeDefined();

@@ -95,7 +95,9 @@ function InvoiceDefaultsCard() {
       <CardHeader>
         <CardTitle>{t("Invoice Defaults")}</CardTitle>
         <CardDescription>
-          {t("Set the organization-level invoice defaults used when customer-specific billing profile settings are not present.")}
+          {t(
+            "Set the organization-level invoice defaults used when customer-specific billing profile settings are not present.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -123,7 +125,9 @@ function InvoiceDefaultsCard() {
               control={control}
               name="defaultPaymentTerm"
               label={t("Default Payment Term")}
-              description={t("Fallback payment term used when a customer billing profile does not define one.")}
+              description={t(
+                "Fallback payment term used when a customer billing profile does not define one.",
+              )}
               options={paymentTermChoices}
               rules={{ required: true }}
             />
@@ -134,7 +138,9 @@ function InvoiceDefaultsCard() {
               name="defaultInvoiceTerms"
               label={t("Default Invoice Terms")}
               placeholder={t("Payment, billing, and remittance terms")}
-              description={t("Default invoice terms text applied when customer-specific terms are not present.")}
+              description={t(
+                "Default invoice terms text applied when customer-specific terms are not present.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -143,7 +149,9 @@ function InvoiceDefaultsCard() {
               name="defaultInvoiceFooter"
               label={t("Default Invoice Footer")}
               placeholder={t("Footer content displayed on invoices")}
-              description={t("Default footer text shown on invoices when no customer-specific footer is configured.")}
+              description={t(
+                "Default footer text shown on invoices when no customer-specific footer is configured.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -164,7 +172,9 @@ function AutomationCard() {
       <CardHeader>
         <CardTitle>{t("Automation Policy")}</CardTitle>
         <CardDescription>
-          {t("Control how shipments move into billing, when invoice drafts are created, and whether posted invoices remain manual-review only or may auto-post when no blocking issues exist.")}
+          {t(
+            "Control how shipments move into billing, when invoice drafts are created, and whether posted invoices remain manual-review only or may auto-post when no blocking issues exist.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -174,7 +184,9 @@ function AutomationCard() {
               control={control}
               name="readyToBillAssignmentMode"
               label={t("Ready-To-Bill Assignment Mode")}
-              description={t("Controls whether eligible shipments are marked ready to bill automatically or only by user action.")}
+              description={t(
+                "Controls whether eligible shipments are marked ready to bill automatically or only by user action.",
+              )}
               options={readyToBillAssignmentModeChoices}
               rules={{ required: true }}
             />
@@ -184,7 +196,9 @@ function AutomationCard() {
               control={control}
               name="billingQueueTransferMode"
               label={t("Billing Queue Transfer Mode")}
-              description={t("Controls whether ready-to-bill shipments enter the billing queue automatically or only by user action.")}
+              description={t(
+                "Controls whether ready-to-bill shipments enter the billing queue automatically or only by user action.",
+              )}
               options={billingQueueTransferModeChoices}
               rules={{ required: true }}
             />
@@ -196,7 +210,9 @@ function AutomationCard() {
                   control={control}
                   name="billingQueueTransferSchedule"
                   label={t("Billing Queue Transfer Schedule")}
-                  description={t("Defines how frequently the automatic billing queue transfer job runs.")}
+                  description={t(
+                    "Defines how frequently the automatic billing queue transfer job runs.",
+                  )}
                   options={transferScheduleChoices}
                   rules={{ required: true }}
                 />
@@ -206,7 +222,9 @@ function AutomationCard() {
                   control={control}
                   name="billingQueueTransferBatchSize"
                   label={t("Billing Queue Transfer Batch Size")}
-                  description={t("Maximum number of ready items processed in a single automatic transfer batch.")}
+                  description={t(
+                    "Maximum number of ready items processed in a single automatic transfer batch.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -217,7 +235,9 @@ function AutomationCard() {
               control={control}
               name="invoiceDraftCreationMode"
               label={t("Invoice Draft Creation Mode")}
-              description={t("Controls whether invoice drafts are created only by users or automatically when items are transferred.")}
+              description={t(
+                "Controls whether invoice drafts are created only by users or automatically when items are transferred.",
+              )}
               options={invoiceDraftCreationModeChoices}
               rules={{ required: true }}
             />
@@ -227,7 +247,9 @@ function AutomationCard() {
               control={control}
               name="invoicePostingMode"
               label={t("Invoice Posting Mode")}
-              description={t("Controls whether invoice posting always requires manual review or may auto-post when no blocking issues remain.")}
+              description={t(
+                "Controls whether invoice posting always requires manual review or may auto-post when no blocking issues remain.",
+              )}
               options={invoicePostingModeChoices}
               rules={{ required: true }}
             />
@@ -239,7 +261,9 @@ function AutomationCard() {
                   control={control}
                   name="autoInvoiceBatchSize"
                   label={t("Auto Invoice Batch Size")}
-                  description={t("Maximum number of invoice drafts created in a single automatic batch.")}
+                  description={t(
+                    "Maximum number of invoice drafts created in a single automatic batch.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -248,7 +272,9 @@ function AutomationCard() {
                   control={control}
                   name="notifyOnAutoInvoiceCreation"
                   label={t("Notify On Auto Invoice Creation")}
-                  description={t("Sends notifications when invoice drafts are created automatically.")}
+                  description={t(
+                    "Sends notifications when invoice drafts are created automatically.",
+                  )}
                   position="left"
                 />
               </FormControl>
@@ -278,7 +304,9 @@ function ExceptionPolicyCard() {
       <CardHeader>
         <CardTitle>{t("Exception Policy")}</CardTitle>
         <CardDescription>
-          {t("Define how shipment billing requirement failures and rate-variance validations affect billing progression, review routing, and blocking behavior.")}
+          {t(
+            "Define how shipment billing requirement failures and rate-variance validations affect billing progression, review routing, and blocking behavior.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -288,7 +316,9 @@ function ExceptionPolicyCard() {
               control={control}
               name="shipmentBillingRequirementEnforcement"
               label={t("Shipment Billing Requirement Enforcement")}
-              description={t("Defines how missing shipment billing requirements affect readiness and billing progression.")}
+              description={t(
+                "Defines how missing shipment billing requirements affect readiness and billing progression.",
+              )}
               options={enforcementLevelChoices}
               rules={{ required: true }}
             />
@@ -298,7 +328,9 @@ function ExceptionPolicyCard() {
               control={control}
               name="rateValidationEnforcement"
               label={t("Rate Validation Enforcement")}
-              description={t("Defines how rate-variance validation results affect invoice workflow progression.")}
+              description={t(
+                "Defines how rate-variance validation results affect invoice workflow progression.",
+              )}
               options={enforcementLevelChoices}
               rules={{ required: true }}
             />
@@ -310,7 +342,9 @@ function ExceptionPolicyCard() {
                 control={control}
                 name="billingExceptionDisposition"
                 label={t("Billing Exception Disposition")}
-                description={t("Determines whether review-required billing exceptions stay with billing or are returned to operations.")}
+                description={t(
+                  "Determines whether review-required billing exceptions stay with billing or are returned to operations.",
+                )}
                 options={billingExceptionDispositionChoices}
                 rules={{ required: true }}
               />
@@ -330,7 +364,9 @@ function ExceptionPolicyCard() {
               control={control}
               name="rateVarianceTolerancePercent"
               label={t("Rate Variance Tolerance Percent")}
-              description={t("Tolerance percentage used when evaluating whether a rate variance can bypass review.")}
+              description={t(
+                "Tolerance percentage used when evaluating whether a rate variance can bypass review.",
+              )}
               rules={{ required: true }}
             />
           </FormControl>
@@ -339,7 +375,9 @@ function ExceptionPolicyCard() {
               control={control}
               name="rateVarianceAutoResolutionMode"
               label={t("Rate Variance Auto Resolution Mode")}
-              description={t("Controls whether review is skipped for rate variances that are within the configured tolerance.")}
+              description={t(
+                "Controls whether review is skipped for rate variances that are within the configured tolerance.",
+              )}
               options={rateVarianceAutoResolutionModeChoices}
               rules={{ required: true }}
             />
@@ -365,7 +403,9 @@ function RatingPolicyCard() {
       <CardHeader>
         <CardTitle>{t("Rating Policy")}</CardTitle>
         <CardDescription>
-          {t("Decide what happens when no rate agreement covers a shipment's lane, and how manual rate overrides are governed.")}
+          {t(
+            "Decide what happens when no rate agreement covers a shipment's lane, and how manual rate overrides are governed.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -375,7 +415,9 @@ function RatingPolicyCard() {
               control={control}
               name="unratedShipmentDisposition"
               label={t("Unrated Shipment Disposition")}
-              description={t("What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed.")}
+              description={t(
+                "What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed.",
+              )}
               options={unratedShipmentDispositionChoices}
               rules={{ required: true }}
             />
@@ -388,7 +430,9 @@ function RatingPolicyCard() {
                 label={t("Fallback Formula Template")}
                 placeholder={t("Select formula template")}
                 clearable
-                description={t("Used when an unrated shipment carries no formula template of its own. Leave empty to require one on the shipment.")}
+                description={t(
+                  "Used when an unrated shipment carries no formula template of its own. Leave empty to require one on the shipment.",
+                )}
               />
             </FormControl>
           )}
@@ -397,7 +441,9 @@ function RatingPolicyCard() {
               control={control}
               name="requireRateOverrideReason"
               label={t("Require Rate Override Reason")}
-              description={t("A manual rate override must say why, so the audit trail explains the departure from the contract.")}
+              description={t(
+                "A manual rate override must say why, so the audit trail explains the departure from the contract.",
+              )}
               position="left"
             />
           </FormControl>
@@ -406,7 +452,9 @@ function RatingPolicyCard() {
               control={control}
               name="enforceMarginFloor"
               label={t("Enforce Margin Floor")}
-              description={t("Blocks rates that fall below an agreement's margin floor instead of only flagging them.")}
+              description={t(
+                "Blocks rates that fall below an agreement's margin floor instead of only flagging them.",
+              )}
               position="left"
             />
           </FormControl>

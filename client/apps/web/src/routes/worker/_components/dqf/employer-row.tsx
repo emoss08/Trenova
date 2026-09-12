@@ -64,7 +64,7 @@ export function EmployerRow({
   if (permissions.canUpdate && next.action === "request") {
     actions.push({
       id: "request",
-      label: "Send the request",
+      label: t("Send the request"),
       icon: SendIcon,
       disabled: busy,
       onSelect: () => onRequest(verification),
@@ -73,7 +73,7 @@ export function EmployerRow({
   if (permissions.canUpdate && verification.status === "Requested") {
     actions.push({
       id: "chase",
-      label: "Chase again",
+      label: t("Chase again"),
       icon: RepeatIcon,
       disabled: busy,
       onSelect: () => onFollowUp(verification),
@@ -179,16 +179,24 @@ export function EmployerRow({
           </p>
         ) : next.action === "close" ? (
           <p className="text-xs">
-            {t("No answer after {0} chases. The good-faith effort is on record; close it as no response.", verification.followUpCount)}
+            {t(
+              "No answer after {0} chases. The good-faith effort is on record; close it as no response.",
+              verification.followUpCount,
+            )}
           </p>
         ) : next.action === "drugAlcohol" ? (
-          <p className="text-xs">{t("Answered without the drug and alcohol history (49 CFR 382.413).")}</p>
+          <p className="text-xs">
+            {t("Answered without the drug and alcohol history (49 CFR 382.413).")}
+          </p>
         ) : null}
 
         {verification.hadAccidents || verification.hadDrugAlcoholViolations ? (
           <p className="text-xs">
             {verification.hadAccidents
-              ? t("{0, plural, one {# accident} other {# accidents}} reported.", verification.accidentCount)
+              ? t(
+                  "{0, plural, one {# accident} other {# accidents}} reported.",
+                  verification.accidentCount,
+                )
               : ""}
             {verification.hadDrugAlcoholViolations ? t("Drug or alcohol violations reported.") : ""}
           </p>

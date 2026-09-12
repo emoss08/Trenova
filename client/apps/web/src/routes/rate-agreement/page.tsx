@@ -13,7 +13,9 @@ export function RateAgreementPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Rate Agreements")}
-        description={t("The contracts that decide what a shipment costs, and the lanes each one prices")}
+        description={t(
+          "The contracts that decide what a shipment costs, and the lanes each one prices",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

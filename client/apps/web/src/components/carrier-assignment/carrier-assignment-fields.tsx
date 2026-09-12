@@ -248,7 +248,9 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
         </div>
         {fields.length === 0 && (
           <p className="text-muted-foreground text-xs">
-            {t("No accessorials. Add lumper fees, detention, or other pass-through charges the carrier bills for this move.")}
+            {t(
+              "No accessorials. Add lumper fees, detention, or other pass-through charges the carrier bills for this move.",
+            )}
           </p>
         )}
         {fields.map((field, index) => (

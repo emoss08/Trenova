@@ -34,7 +34,9 @@ export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteRe
     mutationFn: () => deleteIftaReturn(ret.id, ret.version),
     onSuccess: async () => {
       toast.success(t("Draft deleted"), {
-        description: t("Nothing else changed: the miles, fuel and rates it was built from are kept."),
+        description: t(
+          "Nothing else changed: the miles, fuel and rates it was built from are kept.",
+        ),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -52,7 +54,9 @@ export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteRe
           <AlertDialogTitle>{t("Delete the {0} draft?", quarterLabel(period))}</AlertDialogTitle>
           <AlertDialogDescription>
             <span className="block">
-              {t("The worksheet and every jurisdiction line on it are removed outright. The miles, fuel purchases and rates it was built from are untouched, so generating the quarter again rebuilds it from the same data.")}
+              {t(
+                "The worksheet and every jurisdiction line on it are removed outright. The miles, fuel purchases and rates it was built from are untouched, so generating the quarter again rebuilds it from the same data.",
+              )}
             </span>
             {isDraft ? null : (
               <span className="mt-2 block">

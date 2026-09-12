@@ -28,18 +28,21 @@ export default function EscrowTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [closeRows, setCloseRows] = useState<EscrowAccountRow[]>([]);
   const [pending, setPending] = useState(false);
 
-  const openCloseDialog = useCallback((rows: EscrowAccountRow[]) => {
-    const eligible = rows.filter((row) => row.status === "Active");
-    if (eligible.length === 0) {
-      toast.info(t("Every selected escrow account is already closed."));
-      return;
-    }
-    setCloseRows(eligible);
-  }, [t]);
+  const openCloseDialog = useCallback(
+    (rows: EscrowAccountRow[]) => {
+      const eligible = rows.filter((row) => row.status === "Active");
+      if (eligible.length === 0) {
+        toast.info(t("Every selected escrow account is already closed."));
+        return;
+      }
+      setCloseRows(eligible);
+    },
+    [t],
+  );
 
   const confirmClose = useCallback(async () => {
     setPending(true);
@@ -59,13 +62,13 @@ export default function EscrowTable() {
     () => [
       {
         id: "close",
-        label: "Close Accounts",
+        label: t("Close Accounts"),
         icon: ArchiveIcon,
         variant: "destructive",
         onClick: openCloseDialog,
       },
     ],
-    [openCloseDialog],
+    [openCloseDialog, t],
   );
 
   const withBalance = closeRows.filter((row) => row.balanceMinor !== 0).length;
@@ -86,15 +89,24 @@ export default function EscrowTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t("Close {0, plural, one {# escrow account} other {# escrow accounts}}", closeRows.length)}
+              {t(
+                "Close {0, plural, one {# escrow account} other {# escrow accounts}}",
+                closeRows.length,
+              )}
             </DialogTitle>
             <DialogDescription>
-              {t("Closed accounts stop accepting contributions and accruing interest. Refund or apply each balance first — accounts holding funds cannot be closed.")}
+              {t(
+                "Closed accounts stop accepting contributions and accruing interest. Refund or apply each balance first — accounts holding funds cannot be closed.",
+              )}
             </DialogDescription>
           </DialogHeader>
           {withBalance > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400">
-              {t("{0} selected account{1} a balance and will fail to close until the funds are refunded or applied.", withBalance, withBalance === 1 ? ` ${t("still holds")}` : t("s still hold"))}
+              {t(
+                "{0} selected account{1} a balance and will fail to close until the funds are refunded or applied.",
+                withBalance,
+                withBalance === 1 ? ` ${t("still holds")}` : t("s still hold"),
+              )}
             </p>
           )}
           <DialogFooter>

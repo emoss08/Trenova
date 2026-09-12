@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { DeltaTone } from "@/components/kpi/tone";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 import { formatCompactCurrency } from "@trenova/shared/lib/utils";
@@ -40,7 +41,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "activeShipments":
       return {
         key,
-        label: "Active Shipments",
+        label: translate("Active Shipments"),
         shape: "hero",
         display: String(analytics.activeShipments.count),
         raw: analytics.activeShipments.count,
@@ -52,7 +53,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "revenueToday":
       return {
         key,
-        label: "Revenue Today",
+        label: translate("Revenue Today"),
         shape: "hero",
         display: formatCompactCurrency(analytics.revenueToday.total),
         raw: analytics.revenueToday.total,
@@ -66,7 +67,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "onTimePercent":
       return {
         key,
-        label: "On-Time",
+        label: translate("On-Time"),
         shape: "ring",
         display: analytics.onTimePercent.percent.toFixed(1),
         raw: analytics.onTimePercent.percent,
@@ -82,7 +83,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
       // Lower is better, so the delta tone inverts: a fall is the good news.
       return {
         key,
-        label: "Empty Mile",
+        label: translate("Empty Mile"),
         shape: "goal",
         display: analytics.emptyMilePercent.percent.toFixed(1),
         raw: analytics.emptyMilePercent.percent,
@@ -97,7 +98,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "atRisk":
       return {
         key,
-        label: "At Risk",
+        label: translate("At Risk"),
         shape: "stat",
         display: String(analytics.atRisk.count),
         raw: analytics.atRisk.count,
@@ -109,7 +110,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "unassigned":
       return {
         key,
-        label: "Unassigned",
+        label: translate("Unassigned"),
         shape: "stat",
         display: String(analytics.unassigned.count),
         raw: analytics.unassigned.count,
@@ -121,7 +122,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "readyToDispatch":
       return {
         key,
-        label: "Ready to Dispatch",
+        label: translate("Ready to Dispatch"),
         shape: "stat",
         display: String(analytics.readyToDispatch.count),
         raw: analytics.readyToDispatch.count,
@@ -133,7 +134,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "marginPercent":
       return {
         key,
-        label: "Margin",
+        label: translate("Margin"),
         shape: "stat",
         display: `${analytics.profitability.avgMarginPct.toFixed(1)}%`,
         raw: analytics.profitability.avgMarginPct,
@@ -143,7 +144,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "revenuePerMile":
       return {
         key,
-        label: "Revenue / Mile",
+        label: translate("Revenue / Mile"),
         shape: "stat",
         display: `$${analytics.revenueToday.rpm.toFixed(2)}`,
         raw: analytics.revenueToday.rpm,
@@ -152,7 +153,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
     case "costPerMile":
       return {
         key,
-        label: "Cost / Mile",
+        label: translate("Cost / Mile"),
         shape: "stat",
         display: `$${analytics.profitability.avgCpm.toFixed(2)}`,
         raw: analytics.profitability.avgCpm,
@@ -172,7 +173,7 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
     case "arTotalOpen":
       return {
         key,
-        label: "Open Receivables",
+        label: translate("Open Receivables"),
         shape: "hero",
         display: formatCompactCurrency(minorToMajor(overview?.totalOpenMinor)),
         raw: minorToMajor(overview?.totalOpenMinor),
@@ -182,7 +183,7 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
     case "arOverdue":
       return {
         key,
-        label: "Overdue",
+        label: translate("Overdue"),
         shape: "stat",
         display: formatCompactCurrency(minorToMajor(overview?.overdueMinor)),
         raw: minorToMajor(overview?.overdueMinor),
@@ -193,7 +194,7 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
     case "arDaysSalesOutstanding":
       return {
         key,
-        label: "Days Sales Outstanding",
+        label: translate("Days Sales Outstanding"),
         shape: "stat",
         display: `${(receivables.currentDsoDays ?? 0).toFixed(1)}`,
         raw: receivables.currentDsoDays ?? 0,

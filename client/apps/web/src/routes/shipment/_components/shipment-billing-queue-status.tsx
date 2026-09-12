@@ -16,7 +16,7 @@ export function ShipmentBillingQueueBadge({ status }: { status?: BillingQueueSta
   return (
     <BillingQueueStatusBadge
       status={status}
-      title={t("Billing queue: {0}", billingQueueStatusBadges[status].text)}
+      title={t("Billing queue: {0}", t(billingQueueStatusBadges[status].text))}
     />
   );
 }

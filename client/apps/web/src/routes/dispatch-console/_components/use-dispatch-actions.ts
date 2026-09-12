@@ -135,7 +135,8 @@ export function useDispatchActions() {
       }
       invalidateBoard();
     },
-    onError: (error: Error) => toast.error(t("Unassignment failed"), { description: error.message }),
+    onError: (error: Error) =>
+      toast.error(t("Unassignment failed"), { description: error.message }),
   });
 
   // Carrier coverage is deliberately outside the undo stack: reversing it requires a

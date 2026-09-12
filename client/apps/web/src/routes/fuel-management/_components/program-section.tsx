@@ -65,7 +65,9 @@ export default function ProgramSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          {t("Programs apply automatically to shipments of customers assigned to them — this week's computed rate is shown on each card")}
+          {t(
+            "Programs apply automatically to shipments of customers assigned to them — this week's computed rate is shown on each card",
+          )}
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
           <Plus className="size-3.5" />
@@ -228,7 +230,9 @@ function DeleteProgramDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{t("Delete {0}?", target?.program.name)}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.")}
+            {t(
+              "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.",
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

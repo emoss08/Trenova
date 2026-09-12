@@ -263,7 +263,10 @@ function OrganizationMembershipSection({
 
         {selectedOrgIDs.length > 0 && defaultOrganizationID && (
           <p className="text-muted-foreground text-xs">
-            {t("Default organization: {0}", orgByID.get(defaultOrganizationID)?.name ?? defaultOrganizationID)}
+            {t(
+              "Default organization: {0}",
+              orgByID.get(defaultOrganizationID)?.name ?? defaultOrganizationID,
+            )}
           </p>
         )}
 

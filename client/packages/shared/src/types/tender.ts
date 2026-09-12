@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   decimalNumberSchema,
@@ -109,7 +110,10 @@ export type Tender = z.infer<typeof tenderSchema>;
 export const guideEntryScreeningSchema = z.object({
   carrierName: z.string(),
   rank: z.number().int(),
-  reasons: z.array(z.string()).nullish().transform((value) => value ?? []),
+  reasons: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
 });
 export type GuideEntryScreening = z.infer<typeof guideEntryScreeningSchema>;
 
@@ -172,7 +176,7 @@ export const spotTenderLinePayloadSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["email"],
-        message: "Enter a valid email address",
+        message: translate("Enter a valid email address"),
       });
     }
   })
@@ -196,7 +200,7 @@ export const spotTenderPayloadSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["lines", index, "carrierId"],
-          message: "Carrier is already on this tender",
+          message: translate("Carrier is already on this tender"),
         });
       }
       seen.add(line.carrierId);
@@ -238,7 +242,7 @@ export const recordTenderResponsePayloadSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["declineReason"],
-        message: "A decline reason is required",
+        message: translate("A decline reason is required"),
       });
     }
   });

@@ -70,7 +70,9 @@ export function SummaryStrip({
       />
       <StatTile
         label={t("Utilization")}
-        hint={t("Share of available drivers currently holding work; average empty miles across covered moves with a live position.")}
+        hint={t(
+          "Share of available drivers currently holding work; average empty miles across covered moves with a live position.",
+        )}
         value={<span className="tabular-nums">{Math.round(summary.utilizationPercent)}%</span>}
         sub={<span>{t("{0} avg deadhead", formatMiles(summary.averageDeadheadMiles))}</span>}
       />

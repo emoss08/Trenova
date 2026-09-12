@@ -231,7 +231,7 @@ export function IntegrationCatalogCard() {
     }
   }
   const categoryOptions = [
-    { label: "All Categories", value: "all" },
+    { label: t("All Categories"), value: "all" },
     ...Array.from(uniqueCategories.entries())
       .map(([value, label]) => ({ value, label }))
       .sort((left, right) => left.label.localeCompare(right.label)),

@@ -48,7 +48,7 @@ export function PopoutWindowExample() {
               {
                 width: 800,
                 height: 600,
-                title: "Create Equipment Manufacturer",
+                title: t("Create Equipment Manufacturer"),
                 rememberPosition: true,
               },
             );
@@ -68,7 +68,7 @@ export function PopoutWindowExample() {
               {
                 width: 900,
                 height: 700,
-                title: "Edit Equipment Manufacturer",
+                title: t("Edit Equipment Manufacturer"),
                 rememberPosition: true,
               },
             );
@@ -86,7 +86,7 @@ export function PopoutWindowExample() {
               {
                 width: 1400,
                 height: 900,
-                title: "Shipments",
+                title: t("Shipments"),
                 hideAside: true,
                 rememberPosition: true,
               },

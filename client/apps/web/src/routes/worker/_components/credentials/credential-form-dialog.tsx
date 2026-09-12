@@ -393,7 +393,11 @@ export function CredentialFormDialog({
                       <span className="flex min-w-0 items-center gap-2">
                         <PaperclipIcon className="text-muted-foreground size-4 shrink-0 animate-pulse" />
                         <span className="truncate">
-                          {t("Uploading {0}… {1}%", activeUpload.file.name, Math.round(activeUpload.progress))}
+                          {t(
+                            "Uploading {0}… {1}%",
+                            activeUpload.file.name,
+                            Math.round(activeUpload.progress),
+                          )}
                         </span>
                       </span>
                       <Button

@@ -149,11 +149,15 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
     }
 
     if (isError) {
-      return <div className="p-2 text-sm text-red-500">{translate("Failed to load suggestions")}</div>;
+      return (
+        <div className="p-2 text-sm text-red-500">{translate("Failed to load suggestions")}</div>
+      );
     }
 
     if (items.length === 0) {
-      return <div className="p-2 text-sm text-muted-foreground">{translate("No matches found")}</div>;
+      return (
+        <div className="p-2 text-sm text-muted-foreground">{translate("No matches found")}</div>
+      );
     }
 
     return (
@@ -202,7 +206,9 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
           </div>
         )}
         {hasNextPage && !isFetchingNextPage && (
-          <div className="p-1.5 text-center text-2xs text-muted-foreground">{translate("Scroll for more")}</div>
+          <div className="p-1.5 text-center text-2xs text-muted-foreground">
+            {translate("Scroll for more")}
+          </div>
         )}
       </div>
     );

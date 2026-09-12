@@ -112,7 +112,9 @@ export function AdjustBalanceDialog({
         <DialogHeader>
           <DialogTitle>{t("Adjust PTO Balance")}</DialogTitle>
           <DialogDescription>
-            {t("Post a manual correction to the ledger. Positive amounts add days, negative amounts remove them. The note is kept on the ledger and in the audit log.")}
+            {t(
+              "Post a manual correction to the ledger. Positive amounts add days, negative amounts remove them. The note is kept on the ledger and in the audit log.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -167,7 +169,9 @@ export function AdjustBalanceDialog({
                   placeholder={t("e.g. Credited 2 days for holiday worked")}
                   rules={{ required: true }}
                   maxLength={255}
-                  description={t("Why the balance is being corrected; it stays on the ledger entry.")}
+                  description={t(
+                    "Why the balance is being corrected; it stays on the ledger entry.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

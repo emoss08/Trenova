@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { ReportCatalogField } from "@/lib/graphql/reports";
 import type {
   ReportBoolStyle,
@@ -437,26 +438,26 @@ export function displayStylesForType(fieldType: string): Choice<ReportDisplaySty
     case "int":
     case "decimal":
       return [
-        { value: "number", label: "Number" },
-        { value: "currency", label: "Currency" },
-        { value: "percent", label: "Percent (×100)" },
-        { value: "duration", label: "Duration" },
-        { value: "date", label: "Date & time" },
-        { value: "text", label: "Plain text" },
+        { value: "number", label: translate("Number") },
+        { value: "currency", label: translate("Currency") },
+        { value: "percent", label: translate("Percent (×100)") },
+        { value: "duration", label: translate("Duration") },
+        { value: "date", label: translate("Date & time") },
+        { value: "text", label: translate("Plain text") },
       ];
     case "epoch":
       return [
-        { value: "date", label: "Date & time" },
-        { value: "number", label: "Raw epoch number" },
-        { value: "text", label: "Plain text" },
+        { value: "date", label: translate("Date & time") },
+        { value: "number", label: translate("Raw epoch number") },
+        { value: "text", label: translate("Plain text") },
       ];
     case "bool":
       return [
-        { value: "bool", label: "Yes / No" },
-        { value: "text", label: "Plain text" },
+        { value: "bool", label: translate("Yes / No") },
+        { value: "text", label: translate("Plain text") },
       ];
     default:
-      return [{ value: "text", label: "Plain text" }];
+      return [{ value: "text", label: translate("Plain text") }];
   }
 }
 

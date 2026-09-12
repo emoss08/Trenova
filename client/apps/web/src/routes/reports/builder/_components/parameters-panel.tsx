@@ -55,7 +55,9 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
       {parameters.length === 0 && (
         <p className="text-muted-foreground px-2 py-2 text-center text-sm">
           {emptyMessage ??
-            t("Parameters prompt the runner for values — bind them to filters for reusable reports.")}
+            t(
+              "Parameters prompt the runner for values — bind them to filters for reusable reports.",
+            )}
         </p>
       )}
       {parameters.map((param, paramIndex) => {

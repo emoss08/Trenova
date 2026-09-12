@@ -141,7 +141,9 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
             <MessageScrollerContent className="gap-4">
               {thread.length === 0 ? (
                 <p className="py-10 text-center text-xs text-muted-foreground">
-                  {t("No messages yet. Say something and dispatch sees it on the shipment right away.")}
+                  {t(
+                    "No messages yet. Say something and dispatch sees it on the shipment right away.",
+                  )}
                 </p>
               ) : (
                 thread.map((comment) => (

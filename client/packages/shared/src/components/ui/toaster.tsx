@@ -1,11 +1,6 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 import { useTheme } from "../theme-provider";
-import {
-  ToastErrorIcon,
-  ToastInfoIcon,
-  ToastSuccessIcon,
-  ToastWarningIcon,
-} from "./toast-icons";
+import { ToastErrorIcon, ToastInfoIcon, ToastSuccessIcon, ToastWarningIcon } from "./toast-icons";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme } = useTheme();

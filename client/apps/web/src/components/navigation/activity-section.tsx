@@ -227,7 +227,9 @@ export function ActivityFeed({
     }
     return (
       <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-        {feed.isUnavailable ? t("Activity is not available right now.") : t("Nothing has happened yet.")}
+        {feed.isUnavailable
+          ? t("Activity is not available right now.")
+          : t("Nothing has happened yet.")}
       </p>
     );
   }

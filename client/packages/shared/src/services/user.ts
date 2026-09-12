@@ -45,7 +45,11 @@ export class UserService {
       `${this.base_url}/${userId}/organization-memberships/`,
     );
 
-    return safeParse(userOrganizationMembershipsResponseSchema, response, "User Organization Memberships");
+    return safeParse(
+      userOrganizationMembershipsResponseSchema,
+      response,
+      "User Organization Memberships",
+    );
   }
 
   public async replaceOrganizationMemberships(
@@ -57,7 +61,11 @@ export class UserService {
       request,
     );
 
-    return safeParse(userOrganizationMembershipsResponseSchema, response, "User Organization Memberships");
+    return safeParse(
+      userOrganizationMembershipsResponseSchema,
+      response,
+      "User Organization Memberships",
+    );
   }
 
   public async bulkUpdateStatus(request: BulkUpdateUserStatusRequest) {
@@ -126,11 +134,9 @@ export class UserService {
         `${this.base_url}/${userId}/profile-picture/?variant=${variant}`,
       );
 
-      return (await safeParse(
-        profilePictureUrlResponseSchema,
-        response,
-        "User Profile Picture URL",
-      )).url;
+      return (
+        await safeParse(profilePictureUrlResponseSchema, response, "User Profile Picture URL")
+      ).url;
     } catch (error) {
       if (error instanceof ApiRequestError && error.isNotFoundError()) {
         return null;

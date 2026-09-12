@@ -29,17 +29,17 @@ export function BillingQueueKPIStrip({
   const metrics: StatMetric[] = [
     {
       key: "ReadyForReview",
-      label: "Pending",
+      label: t("Pending"),
       value: stats?.readyForReview ?? 0,
     },
     {
       key: "InReview",
-      label: "In Review",
+      label: t("In Review"),
       value: stats?.inReview ?? 0,
     },
     {
       key: "Exception",
-      label: "Exceptions",
+      label: t("Exceptions"),
       value: (stats?.onHold ?? 0) + (stats?.exception ?? 0) + (stats?.sentBackToOps ?? 0),
     },
     {

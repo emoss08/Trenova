@@ -118,8 +118,8 @@ export function BankReceiptPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: "Bank Receipt Reconciliation",
-        description: "Match imported bank receipts to customer payments and resolve exceptions.",
+        title: t("Bank Receipt Reconciliation"),
+        description: t("Match imported bank receipts to customer payments and resolve exceptions."),
       }}
       className="p-0"
       toolbar={
@@ -251,7 +251,9 @@ export function BankReceiptPage() {
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}
-              description={t("Pick a receipt from the list to see its details and the payments it could be matched to.")}
+              description={t(
+                "Pick a receipt from the list to see its details and the payments it could be matched to.",
+              )}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">

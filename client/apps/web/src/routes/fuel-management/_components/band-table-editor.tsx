@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
@@ -35,21 +36,21 @@ function valueMetaForMethod(method: string): BandValueMeta {
   switch (method) {
     case "TablePercent":
       return {
-        header: "% of Charge",
+        header: translate("% of Charge"),
         suffix: "%",
         decimalScale: 2,
         readingHint: "add that percentage of the freight charge",
       };
     case "TableFlat":
       return {
-        header: "Flat Amount",
+        header: translate("Flat Amount"),
         prefix: "$",
         decimalScale: 2,
         readingHint: "add that flat dollar amount",
       };
     default:
       return {
-        header: "Rate per Mile",
+        header: translate("Rate per Mile"),
         prefix: "$",
         decimalScale: 4,
         readingHint: "charge that rate for every mile",
@@ -458,7 +459,9 @@ function FooterSummary({
           {t("This week's price:")}{" "}
           <span className="font-medium tabular-nums">{money(currentPrice, 3)}</span>
           {uncovered && (
-            <span className="ml-1 text-amber-600 dark:text-amber-400">{t("— no band covers it")}</span>
+            <span className="ml-1 text-amber-600 dark:text-amber-400">
+              {t("— no band covers it")}
+            </span>
           )}
         </span>
       )}
@@ -623,7 +626,10 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
           <div>
             <CardTitle className="text-sm font-medium">{t("Price Band Table")}</CardTitle>
             <p className="text-muted-foreground text-xs">
-              {t("Read each row as: when fuel costs at least “from” and less than “up to”, {0}.", meta.readingHint)}
+              {t(
+                "Read each row as: when fuel costs at least “from” and less than “up to”, {0}.",
+                meta.readingHint,
+              )}
             </p>
           </div>
         </div>
@@ -664,7 +670,9 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
             </div>
             <p className="mt-3 text-sm font-medium">{t("Build your price band table")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-              {t("The fastest way is the generator — set a price range and increments, and the full table is built for you. Every row stays editable afterward, so uneven bands are fine.")}
+              {t(
+                "The fastest way is the generator — set a price range and increments, and the full table is built for you. Every row stays editable afterward, so uneven bands are fine.",
+              )}
             </p>
             <div className="mt-4 flex gap-2">
               <Button

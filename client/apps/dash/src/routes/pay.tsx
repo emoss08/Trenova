@@ -23,7 +23,9 @@ export function DashPayPage() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{t("Pay")}</h1>
-        <p className="text-sm text-muted-foreground">{t("Your settlement statements, newest first.")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("Your settlement statements, newest first.")}
+        </p>
       </div>
 
       <YtdCard />
@@ -62,7 +64,11 @@ export function DashPayPage() {
                       />
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("{0} · Pay date {1}", formatRange(settlement.periodStart, settlement.periodEnd), formatRange(settlement.payDate, settlement.payDate))}
+                      {t(
+                        "{0} · Pay date {1}",
+                        formatRange(settlement.periodStart, settlement.periodEnd),
+                        formatRange(settlement.payDate, settlement.payDate),
+                      )}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">

@@ -91,7 +91,9 @@ export function QuarterPicker({
         ) : (
           <Badge variant="outline">{t("Not generated")}</Badge>
         )}
-        {amendmentNumber > 0 ? <Badge variant="purple">{t("Amendment {0}", amendmentNumber)}</Badge> : null}
+        {amendmentNumber > 0 ? (
+          <Badge variant="purple">{t("Amendment {0}", amendmentNumber)}</Badge>
+        ) : null}
       </div>
       {detail ? (
         <p className="text-muted-foreground flex items-center gap-1.5 text-xs">

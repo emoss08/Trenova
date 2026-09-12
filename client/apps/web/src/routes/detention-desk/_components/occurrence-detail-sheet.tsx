@@ -203,7 +203,9 @@ function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
   const t = useT();
 
   if (evidence.length === 0) {
-    return <p className="text-muted-foreground text-xs">{t("No evidence has been recorded yet.")}</p>;
+    return (
+      <p className="text-muted-foreground text-xs">{t("No evidence has been recorded yet.")}</p>
+    );
   }
 
   return (
@@ -240,7 +242,9 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
 
   if (notices.length === 0) {
     return (
-      <p className="text-muted-foreground text-xs">{t("No notices have been sent for this stop.")}</p>
+      <p className="text-muted-foreground text-xs">
+        {t("No notices have been sent for this stop.")}
+      </p>
     );
   }
 
@@ -323,7 +327,9 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
         <DialogHeader>
           <DialogTitle>{t("Waive this charge")}</DialogTitle>
           <DialogDescription>
-            {t("Waiving forgives the money but keeps the record, so discretionary revenue loss stays measurable instead of disappearing into free text.")}
+            {t(
+              "Waiving forgives the money but keeps the record, so discretionary revenue loss stays measurable instead of disappearing into free text.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -345,7 +351,9 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
                   control={control}
                   name="note"
                   label={t("Note")}
-                  placeholder={t("Dock crew was short-staffed; customer asked for a one-time concession")}
+                  placeholder={t(
+                    "Dock crew was short-staffed; customer asked for a one-time concession",
+                  )}
                   rules={{ required: true }}
                   description={t("Context the next person reviewing this waiver will need.")}
                 />
@@ -400,7 +408,9 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
         <DialogHeader>
           <DialogTitle>{t("Record a dispute")}</DialogTitle>
           <DialogDescription>
-            {t("Recording the customer's rejection keeps the original computation intact — exactly what working the claim requires.")}
+            {t(
+              "Recording the customer's rejection keeps the original computation intact — exactly what working the claim requires.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -411,9 +421,13 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
                   control={control}
                   name="note"
                   label={t("What is the customer disputing?")}
-                  placeholder={t("Customer claims the driver arrived 40 minutes later than our records show")}
+                  placeholder={t(
+                    "Customer claims the driver arrived 40 minutes later than our records show",
+                  )}
                   rules={{ required: true }}
-                  description={t("Their claim, verbatim where possible — it decides which evidence matters.")}
+                  description={t(
+                    "Their claim, verbatim where possible — it decides which evidence matters.",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -473,7 +487,9 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
     },
     onSuccess: () => {
       toast.success(t("Dispute packet copied"), {
-        description: t("The full claim file — receipt, evidence, and notices — is on your clipboard."),
+        description: t(
+          "The full claim file — receipt, evidence, and notices — is on your clipboard.",
+        ),
       });
     },
     resourceName: "Dispute Packet",
@@ -484,7 +500,7 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
   if (occurrence.status === "Pending") {
     actions.push({
       key: "approve",
-      label: "Approve charge",
+      label: t("Approve charge"),
       pendingLabel: "Approving",
       isPending: approve.isPending,
       onSelect: () => approve.mutate(undefined),
@@ -494,7 +510,7 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
   if (occurrence.notificationStatus !== "NotRequired" && occurrence.notificationStatus !== "Sent") {
     actions.push({
       key: "notice",
-      label: "Send notice",
+      label: t("Send notice"),
       pendingLabel: "Sending",
       isPending: sendNotice.isPending,
       onSelect: () => sendNotice.mutate(undefined),
@@ -504,13 +520,13 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
   if (occurrence.status !== "Disputed" && occurrence.billableAmount > 0) {
     actions.push({
       key: "dispute",
-      label: "Record dispute",
+      label: t("Record dispute"),
       onSelect: () => setDisputeOpen(true),
     });
   }
 
   if (occurrence.status !== "Waived" && occurrence.status !== "NotBillable") {
-    actions.push({ key: "waive", label: "Waive", onSelect: () => setWaiveOpen(true) });
+    actions.push({ key: "waive", label: t("Waive"), onSelect: () => setWaiveOpen(true) });
   }
 
   actions.push({
@@ -616,8 +632,10 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
               </SheetTitle>
               <SheetDescription className="truncate text-xs">
                 {occurrence.customerName || t("Unknown customer")}
-                {occurrence.shipmentProNumber && <> {t("· PRO {0}", occurrence.shipmentProNumber)}</>} ·{" "}
-                {occurrence.stopType}
+                {occurrence.shipmentProNumber && (
+                  <> {t("· PRO {0}", occurrence.shipmentProNumber)}</>
+                )}{" "}
+                · {occurrence.stopType}
               </SheetDescription>
             </SheetHeader>
 

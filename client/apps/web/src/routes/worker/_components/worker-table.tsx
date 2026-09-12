@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { driverTypeChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
 import { patchWorker } from "@/lib/graphql/worker-mutations";
@@ -14,8 +15,10 @@ import { getColumns } from "./worker-columns";
 import { WorkerPanel } from "./worker-panel";
 
 export default function WorkerTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   // Held here rather than inside the dock so the dialog keeps the selection
   // after the dock closes it.
   const [trainingTargets, setTrainingTargets] = useState<WorkerRow[] | null>(null);
@@ -94,8 +97,8 @@ export default function WorkerTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
@@ -104,8 +107,8 @@ export default function WorkerTable() {
       {
         id: "type-update",
         type: "select",
-        label: "Update Type",
-        loadingLabel: "Updating...",
+        label: t("Update Type"),
+        loadingLabel: t("Updating..."),
         icon: UserIcon,
         options: workerTypeChoices,
         onSelect: handleBulkTypeUpdate,
@@ -114,8 +117,8 @@ export default function WorkerTable() {
       {
         id: "driver-type-update",
         type: "select",
-        label: "Update Driver Type",
-        loadingLabel: "Updating...",
+        label: t("Update Driver Type"),
+        loadingLabel: t("Updating..."),
         icon: TruckIcon,
         options: driverTypeChoices,
         onSelect: handleBulkDriverTypeUpdate,
@@ -123,12 +126,12 @@ export default function WorkerTable() {
       },
       {
         id: "assign-training",
-        label: "Assign Training",
+        label: t("Assign Training"),
         icon: GraduationCapIcon,
         onClick: (rows) => setTrainingTargets(rows),
       },
     ],
-    [handleBulkStatusUpdate, handleBulkTypeUpdate, handleBulkDriverTypeUpdate],
+    [handleBulkStatusUpdate, handleBulkTypeUpdate, handleBulkDriverTypeUpdate, t],
   );
 
   return (

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import {
@@ -10,13 +11,15 @@ import { getManualJournalColumns } from "./_components/manual-journal-columns";
 import { ManualJournalPanel } from "./_components/manual-journal-panel";
 
 export function ManualJournalsPage() {
-  const columns = useMemo(() => getManualJournalColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getManualJournalColumns(t), [t]);
 
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Manual Journals",
-        description: "Create and manage manual journal entries.",
+        title: t("Manual Journals"),
+        description: t("Create and manage manual journal entries."),
       }}
       className="p-0"
     >

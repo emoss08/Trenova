@@ -157,7 +157,10 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
                 </AlertDialogMedia>
                 <AlertDialogTitle>{t("Delete Rule Set")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t("This will permanently delete \"{0}\" including all versions, fixtures, and simulation results. Any shipments currently using this rule set will fall back to default parsing. This action cannot be undone.", ruleSet.name)}
+                  {t(
+                    'This will permanently delete "{0}" including all versions, fixtures, and simulation results. Any shipments currently using this rule set will fall back to default parsing. This action cannot be undone.',
+                    ruleSet.name,
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

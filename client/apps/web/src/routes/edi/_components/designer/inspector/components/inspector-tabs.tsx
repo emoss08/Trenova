@@ -77,14 +77,20 @@ export default function InspectorTabs({
           <TabsTrigger value="segments">{t("Segments")}</TabsTrigger>
           <TabsTrigger value="diagnostics">{t("Diagnostics")}</TabsTrigger>
           {context.payload ? <TabsTrigger value="payload">{t("Payload")}</TabsTrigger> : null}
-          {context.provenanceRows ? <TabsTrigger value="provenance">{t("Provenance")}</TabsTrigger> : null}
+          {context.provenanceRows ? (
+            <TabsTrigger value="provenance">{t("Provenance")}</TabsTrigger>
+          ) : null}
         </TabsList>
       </div>
       <div className="min-h-0 overflow-auto p-3">
         {countComparison ? (
           <Alert variant="warning" className="mb-3">
             <AlertDescription>
-              {t("SE01 reports {0} segments, but the transaction contains {1}.", countComparison.expectedSegments, countComparison.actualSegments)}
+              {t(
+                "SE01 reports {0} segments, but the transaction contains {1}.",
+                countComparison.expectedSegments,
+                countComparison.actualSegments,
+              )}
             </AlertDescription>
           </Alert>
         ) : null}

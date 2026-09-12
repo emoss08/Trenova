@@ -81,9 +81,9 @@ export function OrgOverview({
           className="mt-auto"
           aria-label={t("Who they are")}
           segments={[
-            { key: "drivers", label: "Drivers", value: people.drivers },
-            { key: "other", label: "Other workers", value: people.nonDriving },
-            { key: "staff", label: "Staff", value: people.staff },
+            { key: "drivers", label: t("Drivers"), value: people.drivers },
+            { key: "other", label: t("Other workers"), value: people.nonDriving },
+            { key: "staff", label: t("Staff"), value: people.staff },
           ]}
         />
       </KpiCard>
@@ -94,9 +94,9 @@ export function OrgOverview({
           label={t("Positions")}
           info={
             <InfoPopover title={t("Positions")}>
-              {
-                t("Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted.")
-              }
+              {t(
+                "Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted.",
+              )}
             </InfoPopover>
           }
         />
@@ -145,14 +145,18 @@ export function OrgOverview({
             label={t("Cover in force")}
             info={
               <InfoPopover title={t("Cover in force")}>
-                {
-                  t("Delegations running today. Ones scheduled to start later and ones that have ended do not count.")
-                }
+                {t(
+                  "Delegations running today. Ones scheduled to start later and ones that have ended do not count.",
+                )}
               </InfoPopover>
             }
           />
           {delegations ? (
-            <NumberFlow value={cover.active} className={VALUE_CLASS} aria-label={t("Cover in force")} />
+            <NumberFlow
+              value={cover.active}
+              className={VALUE_CLASS}
+              aria-label={t("Cover in force")}
+            />
           ) : (
             <Skeleton className="h-6.5 w-10" />
           )}

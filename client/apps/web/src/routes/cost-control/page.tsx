@@ -13,7 +13,9 @@ export function CostControlPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Cost Control")}
-        description={t("Configure the cost-per-mile model that powers shipment profitability estimates")}
+        description={t(
+          "Configure the cost-per-mile model that powers shipment profitability estimates",
+        )}
       />
       <Suspense fallback={<PageSkeleton />}>
         <div className="p-4">

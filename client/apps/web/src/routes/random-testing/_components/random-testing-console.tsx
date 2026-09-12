@@ -159,7 +159,9 @@ export default function RandomTestingConsole() {
         <RandomTestingOverview overview={overview} />
         <RandomTestingEmpty
           title={t("No pool is configured")}
-          description={t("A pool names the drivers in the hat and the annual rates the draws must meet. Draws cannot run until one exists.")}
+          description={t(
+            "A pool names the drivers in the hat and the annual rates the draws must meet. Draws cannot run until one exists.",
+          )}
           onNewPool={canCreate ? () => setPoolDialog({ pool: null }) : undefined}
         />
         <RandomPoolDialog
@@ -182,8 +184,13 @@ export default function RandomTestingConsole() {
         <Alert variant="warning">
           <AlertDescription>
             {overview.missed === 1
-              ? t("A round this year was never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.")
-              : t("{0} rounds this year were never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.", overview.missed)}
+              ? t(
+                  "A round this year was never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.",
+                )
+              : t(
+                  "{0} rounds this year were never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.",
+                  overview.missed,
+                )}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -191,7 +198,9 @@ export default function RandomTestingConsole() {
       <SectionPanel
         title={t("Pools")}
         icon={<LayersIcon />}
-        help={t("Each pool names the drivers in the hat and the annual rates its draws must meet. The strip is this year's rounds: filled is final, dashed is drawn but not final, red was never drawn.")}
+        help={t(
+          "Each pool names the drivers in the hat and the annual rates its draws must meet. The strip is this year's rounds: filled is final, dashed is drawn but not final, red was never drawn.",
+        )}
         count={pools.length}
         hint={`Rounds in ${year}`}
         action={
@@ -226,7 +235,9 @@ export default function RandomTestingConsole() {
       <SectionPanel
         title={t("Rounds")}
         icon={<ListChecksIcon />}
-        help={t("Every draw, newest first. A draft can still be finalised or voided; a final round is the record and only opens.")}
+        help={t(
+          "Every draw, newest first. A draft can still be finalised or voided; a final round is the record and only opens.",
+        )}
         hint={
           rounds.length === draws.length
             ? `${draws.length} round${draws.length === 1 ? "" : "s"}`

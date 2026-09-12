@@ -219,7 +219,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
                 control={control}
                 name="isCurrent"
                 label={t("Current Fiscal Year")}
-                description={t("Active year for transaction posting (only one allowed per organization)")}
+                description={t(
+                  "Active year for transaction posting (only one allowed per organization)",
+                )}
                 position="left"
                 outlined
                 disabled
@@ -230,7 +232,11 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       )}
 
       {isEdit && (
-        <FormSection title={t("Fiscal Periods")} description={t("Manage fiscal periods")} className="py-2">
+        <FormSection
+          title={t("Fiscal Periods")}
+          description={t("Manage fiscal periods")}
+          className="py-2"
+        >
           <LazyLoadComponent>
             <FiscalPeriodTable periods={periods} />
           </LazyLoadComponent>

@@ -72,11 +72,13 @@ function FuelPurchasesEmpty({
 }
 
 export default function FuelPurchaseTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { jurisdictions } = useIftaJurisdictionOptions();
   const columns = useMemo(
-    () => getColumns(jurisdictionFilterOptions(jurisdictions)),
-    [jurisdictions],
+    () => getColumns(jurisdictionFilterOptions(jurisdictions), t),
+    [jurisdictions, t],
   );
   const { allowed: canDelete } = usePermission(Resource.FuelPurchase, Operation.Delete);
   const { allowed: canImport } = usePermission(Resource.FuelPurchaseImport, Operation.Create);
@@ -100,26 +102,28 @@ export default function FuelPurchaseTable() {
     return [
       {
         id: "import-statement",
-        label: "Import card statement",
-        description: "Upload a Comdata, EFS or WEX statement and review it before it is recorded.",
+        label: t("Import card statement"),
+        description: t(
+          "Upload a Comdata, EFS or WEX statement and review it before it is recorded.",
+        ),
         icon: FileSpreadsheetIcon,
         onClick: openImport,
       },
     ];
-  }, [canImport, openImport]);
+  }, [canImport, openImport, t]);
 
   const contextMenuActions = useMemo<RowAction<FuelPurchaseRow>[]>(() => {
     if (!canDelete) return [];
     return [
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: Trash2Icon,
         variant: "destructive",
         onClick: (row) => setDeleting(row.original),
       },
     ];
-  }, [canDelete]);
+  }, [canDelete, t]);
 
   return (
     <>

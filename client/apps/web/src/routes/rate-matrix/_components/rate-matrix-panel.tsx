@@ -55,24 +55,24 @@ export function RateMatrixPanel({
     () => [
       {
         value: "overview",
-        label: "Overview",
+        label: t("Overview"),
         icon: FileTextIcon,
         content: <RateMatrixForm />,
       },
       {
         value: "axes",
-        label: "Axes",
+        label: t("Axes"),
         icon: Grid3x3Icon,
         content: <DimensionEditor />,
       },
       {
         value: "rates",
-        label: "Rates",
+        label: t("Rates"),
         icon: TableIcon,
         content: <MatrixGridEditor rateMatrixId={row?.id} />,
       },
     ],
-    [row?.id],
+    [row?.id, t],
   );
 
   if (mode === "edit") {
@@ -108,7 +108,9 @@ export function RateMatrixPanel({
       size="xl"
       queryKey="rate-matrix-list"
       title={t("Rate Matrix")}
-      description={t("Enter a published tariff as the grid it was published as, and point any lane at it.")}
+      description={t(
+        "Enter a published tariff as the grid it was published as, and point any lane at it.",
+      )}
       formTabs={formTabs}
       mutationFn={(values) => apiService.rateMatrixService.create(values)}
     />

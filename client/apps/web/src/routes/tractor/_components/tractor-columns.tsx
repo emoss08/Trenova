@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-status-badge";
@@ -42,14 +43,14 @@ function StatusCell({ row }: { row: TractorRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<TractorRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
   return [
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <p>{row.original.code}</p>,
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -59,13 +60,13 @@ export function getColumns(): ColumnDef<TractorRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell row={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 150,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -76,7 +77,7 @@ export function getColumns(): ColumnDef<TractorRow>[] {
     },
     {
       accessorKey: "primaryWorker",
-      header: "Primary Worker",
+      header: t("Primary Worker"),
       cell: ({ row }) => {
         const { primaryWorker } = row.original;
 
@@ -104,12 +105,12 @@ export function getColumns(): ColumnDef<TractorRow>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: "Primary Worker",
+        label: t("Primary Worker"),
       },
     },
     {
       accessorKey: "equipmentType",
-      header: "Equip. Type",
+      header: t("Equip. Type"),
       cell: ({ row }) => {
         const { equipmentType } = row.original;
 
@@ -139,12 +140,12 @@ export function getColumns(): ColumnDef<TractorRow>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: "Equip. Type",
+        label: t("Equip. Type"),
       },
     },
     {
       accessorKey: "equipmentManufacturer",
-      header: "Equip. Manufacturer",
+      header: t("Equip. Manufacturer"),
       cell: ({ row }) => {
         const { equipmentManufacturer } = row.original;
         if (!equipmentManufacturer) {
@@ -167,7 +168,7 @@ export function getColumns(): ColumnDef<TractorRow>[] {
     },
     {
       accessorKey: "fleetCode",
-      header: "Fleet Code",
+      header: t("Fleet Code"),
       cell: ({ row }) => {
         const { fleetCode } = row.original;
         if (!fleetCode) {
@@ -193,7 +194,7 @@ export function getColumns(): ColumnDef<TractorRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
@@ -202,7 +203,7 @@ export function getColumns(): ColumnDef<TractorRow>[] {
       maxSize: 250,
       meta: {
         apiField: "createdAt",
-        label: "Created At",
+        label: t("Created At"),
         filterable: false,
         sortable: true,
         filterType: "date",

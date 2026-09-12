@@ -194,17 +194,25 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 />
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>{t("Publish Version {0}", version.versionNumber)}</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      {t("Publish Version {0}", version.versionNumber)}
+                    </AlertDialogTitle>
                     <AlertDialogDescription className="space-y-2">
                       <span>
-                        {t("Publishing will make this version the active rule used for document parsing. This action:")}
+                        {t(
+                          "Publishing will make this version the active rule used for document parsing. This action:",
+                        )}
                       </span>
                       <ul className="text-muted-foreground ml-4 list-disc text-sm">
                         <li>
-                          {t("Activates this version for all incoming documents matching its criteria")}
+                          {t(
+                            "Activates this version for all incoming documents matching its criteria",
+                          )}
                         </li>
                         <li>{t("Archives the currently published version (if any)")}</li>
-                        <li>{t("Makes this version read-only — no further edits will be possible")}</li>
+                        <li>
+                          {t("Makes this version read-only — no further edits will be possible")}
+                        </li>
                       </ul>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -226,7 +234,9 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 <p className="font-medium">{t("Read-only version")}</p>
                 <p className="mt-0.5 text-xs opacity-80">
                   {version.status === "Published"
-                    ? t("Published versions cannot be modified. Create a new version to make changes.")
+                    ? t(
+                        "Published versions cannot be modified. Create a new version to make changes.",
+                      )
                     : t("Archived versions are frozen snapshots of previously published rules.")}
                 </p>
               </div>
@@ -282,7 +292,9 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                   control={control}
                   name="parserMode"
                   label={t("Parser Mode")}
-                  description={t("Merge extends the base parser results. Override replaces them entirely.")}
+                  description={t(
+                    "Merge extends the base parser results. Override replaces them entirely.",
+                  )}
                   options={PARSER_MODE_OPTIONS}
                   isReadOnly={isReadOnly}
                 />

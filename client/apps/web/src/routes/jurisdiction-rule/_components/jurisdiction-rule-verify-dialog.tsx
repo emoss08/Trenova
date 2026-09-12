@@ -96,7 +96,9 @@ export function JurisdictionRuleVerifyDialog({
         </DialogHeader>
 
         <p className="text-muted-foreground text-xs">
-          {t("This records that someone checked these limits against the state, and does not change them. If the numbers are wrong, edit the rule instead — that clears the verification on its own.")}
+          {t(
+            "This records that someone checked these limits against the state, and does not change them. If the numbers are wrong, edit the rule instead — that clears the verification on its own.",
+          )}
         </p>
 
         <FormProvider {...form}>
@@ -115,7 +117,9 @@ export function JurisdictionRuleVerifyDialog({
                 control={control}
                 name="sourceNote"
                 label={t("What you checked")}
-                description={t("At least 10 characters. The next person reading this row follows your note.")}
+                description={t(
+                  "At least 10 characters. The next person reading this row follows your note.",
+                )}
                 placeholder={t("Checked against the state permit office handbook, rev 2026-01")}
                 rules={{ required: true }}
               />

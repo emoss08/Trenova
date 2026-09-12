@@ -504,7 +504,7 @@ export default function CommoditiesSection() {
             description={t("Shipment has no associated commodities")}
             icons={[CaravanIcon, BoxesIcon, TruckIcon]}
             action={{
-              label: "Add First Commodity",
+              label: t("Add First Commodity"),
               onClick: handleAdd,
               icon: PlusIcon,
             }}

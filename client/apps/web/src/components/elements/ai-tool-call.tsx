@@ -111,37 +111,37 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
     > = {
       pending: {
         icon: <Clock className="size-3.5" />,
-        label: "Pending",
+        label: t("Pending"),
         className: "bg-muted text-muted-foreground",
       },
       running: {
         icon: <Loader2 className="size-3.5 animate-spin" />,
-        label: "Running",
+        label: t("Running"),
         className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
       },
       completed: {
         icon: <Check className="size-3.5" />,
-        label: "Completed",
+        label: t("Completed"),
         className: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
       },
       error: {
         icon: <X className="size-3.5" />,
-        label: "Error",
+        label: t("Error"),
         className: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
       },
       "awaiting-approval": {
         icon: <ShieldQuestion className="size-3.5" />,
-        label: "Awaiting Approval",
+        label: t("Awaiting Approval"),
         className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       },
       denied: {
         icon: <AlertTriangle className="size-3.5" />,
-        label: "Denied",
+        label: t("Denied"),
         className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
       },
     };
     return configs[state];
-  }, [state]);
+  }, [state, t]);
 
   return (
     <CollapsiblePrimitive.Trigger

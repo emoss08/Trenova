@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
@@ -12,12 +13,15 @@ const RandomTestingConsole = lazy(() => import("./_components/random-testing-con
 export const prefetch: RoutePrefetch = () => [randomPoolsQuery(), randomDrawsQuery()];
 
 export function RandomTestingPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Random Testing",
-        description:
+        title: t("Random Testing"),
+        description: t(
           "The pools drivers are drawn from and the rounds drawn from them. Each round keeps the seed it was drawn with, so a selection can be re-checked years later.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { SettlementBatchStatusBadge } from "@trenova/shared/components/status-badge";
 import type { SettlementBatchRow } from "@/lib/graphql/driver-settlement";
@@ -11,11 +11,11 @@ function formatDate(unix: number): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
-export function getColumns(): ColumnDef<SettlementBatchRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <SettlementBatchStatusBadge status={row.original.status as SettlementBatchStatus} />
       ),
@@ -24,14 +24,14 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Batch",
+      header: t("Batch"),
       cell: ({ row }) => <span className="text-xs font-medium">{row.original.name}</span>,
       size: 220,
       meta: { apiField: "name" },
     },
     {
       accessorKey: "periodStart",
-      header: "Period",
+      header: t("Period"),
       cell: ({ row }) => (
         <span className="text-xs">
           {formatDate(row.original.periodStart)} – {formatDate(row.original.periodEnd)}
@@ -42,14 +42,14 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "payDate",
-      header: "Pay Date",
+      header: t("Pay Date"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.payDate)}</span>,
       size: 110,
       meta: { apiField: "payDate" },
     },
     {
       accessorKey: "settlementCount",
-      header: () => <div className="text-right">{translate("Settlements")}</div>,
+      header: () => <div className="text-right">{t("Settlements")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.settlementCount}</div>
       ),
@@ -58,7 +58,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "exceptionCount",
-      header: () => <div className="text-right">{translate("Exceptions")}</div>,
+      header: () => <div className="text-right">{t("Exceptions")}</div>,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1 text-xs tabular-nums">
           {row.original.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-amber-500" />}
@@ -70,7 +70,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "totalGrossMinor",
-      header: () => <div className="text-right">{translate("Total Gross")}</div>,
+      header: () => <div className="text-right">{t("Total Gross")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -84,7 +84,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "totalNetMinor",
-      header: () => <div className="text-right">{translate("Total Net")}</div>,
+      header: () => <div className="text-right">{t("Total Net")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

@@ -69,8 +69,9 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
       reopenIftaReturn({ id: ret.id, version: ret.version, reason: values.reason.trim() }),
     onSuccess: async () => {
       toast.success(t("Return reopened"), {
-        description:
-          t("It is a draft again and recomputes with the data on file. The reason is kept with the return."),
+        description: t(
+          "It is a draft again and recomputes with the data on file. The reason is kept with the return.",
+        ),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -92,7 +93,9 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
             <DialogHeader>
               <DialogTitle>{t("Reopen the {0} return?", quarterLabel(period))}</DialogTitle>
               <DialogDescription>
-                {t("The worksheet unlocks and its figures move with the data again, so anything already reported to the base jurisdiction can drift from what is on file. The reason is kept with the return and shown in its audit trail.")}
+                {t(
+                  "The worksheet unlocks and its figures move with the data again, so anything already reported to the base jurisdiction can drift from what is on file. The reason is kept with the return and shown in its audit trail.",
+                )}
               </DialogDescription>
             </DialogHeader>
             <FormGroup cols={1} className="mt-4">
@@ -104,7 +107,9 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
                   placeholder={t("e.g. Oklahoma published its Q2 rate after we finalized")}
                   rules={{ required: true }}
                   maxLength={REOPEN_REASON_MAX}
-                  description={t("Between 10 and 500 characters, kept with the return as the record of why it was unlocked.")}
+                  description={t(
+                    "Between 10 and 500 characters, kept with the return as the record of why it was unlocked.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

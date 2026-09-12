@@ -25,7 +25,9 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             control={control}
             name="active"
             label={t("Active")}
-            description={t("Controls whether this reason is available for detected and manual service failures.")}
+            description={t(
+              "Controls whether this reason is available for detected and manual service failures.",
+            )}
             outlined
             position="left"
             disabled={disabled}

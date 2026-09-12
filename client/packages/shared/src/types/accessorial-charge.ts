@@ -5,15 +5,9 @@ export const rateUnitSchema = z.enum(["Mile", "Hour", "Day", "Stop"]);
 
 export type RateUnit = z.infer<typeof rateUnitSchema>;
 
-export const accessorialChargeMethodSchema = z.enum([
-  "Flat",
-  "PerUnit",
-  "Percentage",
-]);
+export const accessorialChargeMethodSchema = z.enum(["Flat", "PerUnit", "Percentage"]);
 
-export type AccessorialChargeMethod = z.infer<
-  typeof accessorialChargeMethodSchema
->;
+export type AccessorialChargeMethod = z.infer<typeof accessorialChargeMethodSchema>;
 
 export const accessorialChargeSchema = z
   .object({
@@ -30,7 +24,11 @@ export const accessorialChargeSchema = z
     amount: z.preprocess(
       (val) => {
         if (val === "" || val === null || val === undefined) return undefined;
-        const parsed = parseFloat(typeof val === "string" || typeof val === "number" || typeof val === "boolean" ? String(val) : "");
+        const parsed = parseFloat(
+          typeof val === "string" || typeof val === "number" || typeof val === "boolean"
+            ? String(val)
+            : "",
+        );
         return isNaN(parsed) ? undefined : parsed;
       },
       z.number().min(0.01, { message: "Amount must be greater than zero" }),

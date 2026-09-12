@@ -313,8 +313,8 @@ function SortableSortRow({
         value={sortField.direction}
         onValueChange={(val) => onDirectionChange(sortField.field, val as SortDirection)}
         items={[
-          { value: "asc", label: "Ascending" },
-          { value: "desc", label: "Descending" },
+          { value: "asc", label: t("Ascending") },
+          { value: "desc", label: t("Descending") },
         ]}
       >
         <SelectTrigger size="sm" className="w-36">

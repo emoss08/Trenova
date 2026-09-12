@@ -289,7 +289,9 @@ function ActionButton({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
-          <AlertDialogAction onClick={() => mutation.mutate(documentId)}>{t("Confirm")}</AlertDialogAction>
+          <AlertDialogAction onClick={() => mutation.mutate(documentId)}>
+            {t("Confirm")}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -300,10 +302,10 @@ function StatusPipeline({ doc }: { doc: Document }) {
   const t = useT();
 
   const stages = [
-    { label: "Upload", status: "Active" as const },
-    { label: "Preview", status: doc.previewStatus },
-    { label: "Extraction", status: doc.contentStatus },
-    { label: "Draft", status: doc.shipmentDraftStatus },
+    { label: t("Upload"), status: "Active" as const },
+    { label: t("Preview"), status: doc.previewStatus },
+    { label: t("Extraction"), status: doc.contentStatus },
+    { label: t("Draft"), status: doc.shipmentDraftStatus },
   ];
 
   return (
@@ -316,7 +318,9 @@ function StatusPipeline({ doc }: { doc: Document }) {
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-[10px] font-medium tracking-wide uppercase">{t(stage.label)}</span>
+              <span className="text-[10px] font-medium tracking-wide uppercase">
+                {t(stage.label)}
+              </span>
             </TooltipTrigger>
             <TooltipContent>
               {t(stage.label)}: {stage.status}
@@ -415,7 +419,9 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
         <ActionButton
           label={t("Reextract Content")}
           detail={t("Re-process text and structured data")}
-          description={t("Re-run content extraction for this document. This will re-process the document and update extracted text and structured data.")}
+          description={t(
+            "Re-run content extraction for this document. This will re-process the document and update extracted text and structured data.",
+          )}
           icon={FileSearchIcon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.reextract(id)}
@@ -424,7 +430,9 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
         <ActionButton
           label={t("Regenerate Preview")}
           detail={t("Start a new thumbnail workflow")}
-          description={t("Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail.")}
+          description={t(
+            "Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail.",
+          )}
           icon={ImageIcon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.regeneratePreview(id)}
@@ -433,7 +441,9 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
         <ActionButton
           label={t("Resync Search")}
           detail={t("Update the search index projection")}
-          description={t("Re-sync this document's search index entry. This will update the search projection with the latest document data.")}
+          description={t(
+            "Re-sync this document's search index entry. This will update the search projection with the latest document data.",
+          )}
           icon={RefreshCwIcon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.resyncSearch(id)}
@@ -740,7 +750,9 @@ export function DocumentOperationsPage() {
           </div>
           <h3 className="mt-4 text-sm font-medium">{t("No document selected")}</h3>
           <p className="text-muted-foreground mt-1 max-w-[260px] text-center text-xs">
-            {t("Paste a document ID above to view its lifecycle state and available recovery actions")}
+            {t(
+              "Paste a document ID above to view its lifecycle state and available recovery actions",
+            )}
           </p>
         </div>
       )}

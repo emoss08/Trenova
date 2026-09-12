@@ -183,7 +183,9 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{t("Events")}</h4>
+          <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+            {t("Events")}
+          </h4>
           <p className="text-muted-foreground truncate text-xs">
             {t("Accidents, incidents, near misses, citations and inspections. Open ones first.")}
           </p>

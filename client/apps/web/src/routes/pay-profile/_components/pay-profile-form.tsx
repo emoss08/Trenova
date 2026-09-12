@@ -33,7 +33,9 @@ export function PayProfileForm() {
             label={t("Status")}
             options={statusChoices}
             rules={{ required: true }}
-            description={t("Inactive profiles keep their history but cannot be assigned to new drivers.")}
+            description={t(
+              "Inactive profiles keep their history but cannot be assigned to new drivers.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -53,7 +55,9 @@ export function PayProfileForm() {
             label={t("Name")}
             placeholder={t("e.g. OTR Company Driver - Standard")}
             rules={{ required: true }}
-            description={t("A short, unique name dispatchers and payroll staff will recognize when assigning drivers.")}
+            description={t(
+              "A short, unique name dispatchers and payroll staff will recognize when assigning drivers.",
+            )}
           />
         </FormControl>
         <FormControl className="col-span-2">
@@ -62,7 +66,9 @@ export function PayProfileForm() {
             name="description"
             label={t("Description")}
             placeholder={t("When to use this pay package")}
-            description={t("Explain who this package is for and any negotiated terms so future admins know when to apply it.")}
+            description={t(
+              "Explain who this package is for and any negotiated terms so future admins know when to apply it.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -84,7 +90,9 @@ export function PayProfileForm() {
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
-            description={t("Maximum non-taxable per diem per day when splitting pay for tax purposes (IRS cap applies).")}
+            description={t(
+              "Maximum non-taxable per diem per day when splitting pay for tax purposes (IRS cap applies).",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -156,7 +164,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               label={t("Component")}
               options={payComponentKindChoices}
               rules={{ required: true }}
-              description={t("What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.")}
+              description={t(
+                "What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -166,7 +176,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               label={t("Method")}
               options={payCalcMethodChoices}
               rules={{ required: true }}
-              description={t("How the amount is calculated: per mile, percent of revenue, flat, per stop, or per hour.")}
+              description={t(
+                "How the amount is calculated: per mile, percent of revenue, flat, per stop, or per hour.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -193,7 +205,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
                 label={t("Revenue Basis")}
                 options={payRevenueBasisChoices}
                 rules={{ required: true }}
-                description={t("Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.")}
+                description={t(
+                  "Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.",
+                )}
               />
             </FormControl>
           )}
@@ -214,7 +228,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
                 name={`components.${index}.description`}
                 label={t("Label")}
                 placeholder={t("Shown on the settlement statement")}
-                description={t("The exact wording drivers see for this line on their settlement statement.")}
+                description={t(
+                  "The exact wording drivers see for this line on their settlement statement.",
+                )}
               />
             </FormControl>
           )}
@@ -226,7 +242,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
-              description={t("Floor for this component on any single move; short runs are topped up to this amount.")}
+              description={t(
+                "Floor for this component on any single move; short runs are topped up to this amount.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -237,7 +255,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
-              description={t("Cap for this component on any single move; anything above is not paid.")}
+              description={t(
+                "Cap for this component on any single move; anything above is not paid.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -246,7 +266,9 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               name={`components.${index}.isActive`}
               label={t("Active")}
               outlined
-              description={t("Inactive components are kept for history but skipped when computing pay.")}
+              description={t(
+                "Inactive components are kept for history but skipped when computing pay.",
+              )}
             />
           </FormControl>
         </FormGroup>

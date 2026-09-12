@@ -54,7 +54,7 @@ export default function LoadPlannerDialog({
         file,
         resourceId: shipmentMeta.shipmentId,
         resourceType: "shipment",
-        description: "Load Plan",
+        description: t("Load Plan"),
       });
       toast.success(t("Load plan saved to shipment documents"));
     } catch {

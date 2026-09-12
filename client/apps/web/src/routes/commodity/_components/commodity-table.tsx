@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { commodityTableGraphQLConfig, type CommodityRow } from "@/lib/graphql/commodity-table";
 import { statusChoices } from "@/lib/choices";
@@ -13,8 +14,10 @@ import { getColumns } from "./commodity-columns";
 import { CommodityPanel } from "./commodity-panel";
 
 export default function CommodityTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: CommodityRow[], status: string) => {
@@ -45,15 +48,15 @@ export default function CommodityTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

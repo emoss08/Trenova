@@ -179,7 +179,10 @@ function BillingExceptionDetails({ notification }: { notification: Notification 
       )}
       {failures !== null && failures > 0 && (
         <Badge variant="warning" className="text-2xs h-4.5">
-          {t("{0, plural, one {# rate validation failure} other {# rate validation failures}}", failures)}
+          {t(
+            "{0, plural, one {# rate validation failure} other {# rate validation failures}}",
+            failures,
+          )}
         </Badge>
       )}
     </div>

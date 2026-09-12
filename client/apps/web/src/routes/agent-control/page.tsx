@@ -13,7 +13,9 @@ export function AgentControlPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Agent Control")}
-        description={t("Configure the billing exception agent — enablement, shadow mode, and how long proposals wait for a human decision")}
+        description={t(
+          "Configure the billing exception agent — enablement, shadow mode, and how long proposals wait for a human decision",
+        )}
       />
       <SuspenseLoader>
         <div className="p-4">

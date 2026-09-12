@@ -52,7 +52,9 @@ export function ForgotPasswordForm({
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Secure sign-in" />
       <StepHeading title={t("Reset your password")}>
-        {t("Enter the address you sign in with and we'll send you a link to choose a new password.")}
+        {t(
+          "Enter the address you sign in with and we'll send you a link to choose a new password.",
+        )}
       </StepHeading>
 
       <form
@@ -88,11 +90,15 @@ function ForgotPasswordSent({ onBack }: { onBack: () => void }) {
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Link sent" />
       <StepHeading title={t("Check your inbox")}>
-        {t("If that address has an account, a reset link is on its way. The link works once and expires shortly, so use it soon.")}
+        {t(
+          "If that address has an account, a reset link is on its way. The link works once and expires shortly, so use it soon.",
+        )}
       </StepHeading>
 
       <p className="text-subtle-foreground mt-4 mb-0 text-[11.5px]">
-        {t("Nothing arrived? Check spam, then try again — and confirm you used the address your administrator set the account up with.")}
+        {t(
+          "Nothing arrived? Check spam, then try again — and confirm you used the address your administrator set the account up with.",
+        )}
       </p>
 
       <div className="mt-4">

@@ -168,7 +168,8 @@ export function TimeClockPanel({
       toast.success(t("Clocked out"));
       invalidateWorker(id);
     },
-    onError: (error: Error) => toast.error(t("Could not clock out"), { description: error.message }),
+    onError: (error: Error) =>
+      toast.error(t("Could not clock out"), { description: error.message }),
   });
 
   const entry = openEntry.data;
@@ -200,7 +201,9 @@ export function TimeClockPanel({
         <div className="min-w-0">
           <h3 className="text-sm font-medium">{t("Clock")}</h3>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Pick a worker, or choose somebody from the board, to work their clock and see the last two weeks of punches.")}
+            {t(
+              "Pick a worker, or choose somebody from the board, to work their clock and see the last two weeks of punches.",
+            )}
           </p>
         </div>
         <div className="w-full sm:w-72">
@@ -285,7 +288,11 @@ export function TimeClockPanel({
                     </span>
                     <span className="text-muted-foreground tabular-nums">
                       {headroom
-                        ? t("{0} of {1}", formatHours(weekMinutes), formatHours(weekSheet!.overtimeThresholdMinutes))
+                        ? t(
+                            "{0} of {1}",
+                            formatHours(weekMinutes),
+                            formatHours(weekSheet!.overtimeThresholdMinutes),
+                          )
                         : formatHours(weekMinutes)}
                     </span>
                   </div>
@@ -367,7 +374,11 @@ export function TimeClockPanel({
                 {t("Last two weeks")}
               </h3>
               <span className="text-muted-foreground text-xs tabular-nums">
-                {t("{0, plural, one {# punch} other {# punches}} · {1}", entries.length, formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0)))}
+                {t(
+                  "{0, plural, one {# punch} other {# punches}} · {1}",
+                  entries.length,
+                  formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0)),
+                )}
               </span>
             </header>
             {recentEntries.isLoading ? (
@@ -521,7 +532,10 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
               <span className="font-mono tabular-nums">
                 {row.clockedOutAt ? formatHours(row.paidMinutes) : t("Running")}
                 {row.breakMinutes > 0 ? (
-                  <span className="text-muted-foreground"> {t("· {0}m break", row.breakMinutes)}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    {t("· {0}m break", row.breakMinutes)}
+                  </span>
                 ) : null}
               </span>
               {canCorrect && row.clockedOutAt ? (

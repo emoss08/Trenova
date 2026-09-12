@@ -26,8 +26,6 @@ export interface BatchCheckResult {
   >;
 }
 
-export async function checkPermissionsBatch(
-  request: BatchCheckRequest,
-): Promise<BatchCheckResult> {
+export async function checkPermissionsBatch(request: BatchCheckRequest): Promise<BatchCheckResult> {
   return api.post<BatchCheckResult>("/me/permissions/check", request);
 }

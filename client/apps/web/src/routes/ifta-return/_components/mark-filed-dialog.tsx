@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -33,11 +34,11 @@ const FILING_REFERENCE_MAX = 100;
 export function markFiledSchema(finalizedAt: number | null, latestFiledAt: number) {
   return z.object({
     filedAt: z
-      .number({ message: "Choose the date the return was filed." })
+      .number({ message: translate("Choose the date the return was filed.") })
       .min(finalizedAt ?? 0, {
-        message: "A return cannot be filed before it was finalized.",
+        message: translate("A return cannot be filed before it was finalized."),
       })
-      .max(latestFiledAt, { message: "A return cannot be filed in the future." }),
+      .max(latestFiledAt, { message: translate("A return cannot be filed in the future.") }),
     filingReference: z
       .string()
       .nullable()
@@ -100,8 +101,9 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
       }),
     onSuccess: async () => {
       toast.success(t("Return marked filed"), {
-        description:
-          t("It is immutable now. A correction opens a new draft through an amendment, leaving this one as filed."),
+        description: t(
+          "It is immutable now. A correction opens a new draft through an amendment, leaving this one as filed.",
+        ),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -123,7 +125,9 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
             <DialogHeader>
               <DialogTitle>{t("Mark the {0} return filed", quarterLabel(period))}</DialogTitle>
               <DialogDescription>
-                {t("This records that the finalized worksheet went to the base jurisdiction. The return becomes immutable: a correction opens a new draft as an amendment and leaves this one as it was filed.")}
+                {t(
+                  "This records that the finalized worksheet went to the base jurisdiction. The return becomes immutable: a correction opens a new draft as an amendment and leaves this one as it was filed.",
+                )}
               </DialogDescription>
             </DialogHeader>
             <FormGroup cols={2} className="mt-4">

@@ -67,10 +67,7 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
   } = props;
 
   return (
-    <div
-      className={cn("w-full space-y-0.5 overflow-auto", className)}
-      {...skeletonProps}
-    >
+    <div className={cn("w-full space-y-0.5 overflow-auto", className)} {...skeletonProps}>
       <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
         <div className="flex flex-1 items-center space-x-2">
           <Skeleton className="h-7 w-40 lg:w-56" />

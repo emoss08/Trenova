@@ -297,7 +297,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
     if (!operation.hash) {
       setRunState({
         status: "error",
-        message: "This operation has no persisted hash and cannot be executed.",
+        message: t("This operation has no persisted hash and cannot be executed."),
       });
       return;
     }
@@ -346,7 +346,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
       setRunState({ status: "error", message, elapsedMs });
       recordRun({ status: "error", variables, elapsedMs, message });
     }
-  }, [operation.hash, operation.kind, operation.name, operation.sdl, recordRun, variables]);
+  }, [operation.hash, operation.kind, operation.name, operation.sdl, recordRun, variables, t]);
 
   const runRef = useRef(run);
   useEffect(() => {

@@ -212,7 +212,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                         >
                           {t("Okta Admin Console")}
                         </a>
-                        {t(", copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.")}
+                        {t(
+                          ", copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.",
+                        )}
                       </p>
                     </AlertDescription>
                   </Alert>
@@ -230,7 +232,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                           control={control}
                           name="enabled"
                           label={t("Enable Okta sign-in")}
-                          description={t("Allow users to sign in with a \"Continue with Okta\" button.")}
+                          description={t(
+                            'Allow users to sign in with a "Continue with Okta" button.',
+                          )}
                           outlined
                         />
                       </FormControl>
@@ -240,11 +244,13 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                             control={control}
                             name="enforceSso"
                             label={t("Require Okta SSO")}
-                            description={t("Disable password login and require all users to sign in with Okta.")}
+                            description={t(
+                              "Disable password login and require all users to sign in with Okta.",
+                            )}
                             outlined
                             warning={{
                               show: Boolean(enforceSso),
-                              message: "All users will be required to sign in with Okta.",
+                              message: t("All users will be required to sign in with Okta."),
                             }}
                           />
                         </FormControl>
@@ -255,7 +261,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                         <AlertTriangleIcon />
                         <AlertTitle>{t("Password login will be disabled")}</AlertTitle>
                         <AlertDescription>
-                          {t("Users without an Okta account linked to an allowed domain will be locked out. Ensure all users have Okta accounts before enabling this.")}
+                          {t(
+                            "Users without an Okta account linked to an allowed domain will be locked out. Ensure all users have Okta accounts before enabling this.",
+                          )}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -268,15 +276,22 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                       <div className="space-y-3">
                         <SectionHeader
                           title={t("Service Provider")}
-                          description={t("Copy this value into your Okta application configuration.")}
+                          description={t(
+                            "Copy this value into your Okta application configuration.",
+                          )}
                         />
                         <Alert variant="info">
                           <LinkIcon />
                           <AlertDescription>
-                            {t("Add this redirect URL to your Okta app under Sign-in redirect URIs.")}
+                            {t(
+                              "Add this redirect URL to your Okta app under Sign-in redirect URIs.",
+                            )}
                           </AlertDescription>
                         </Alert>
-                        <CopyableInput value={redirectUrl} label={t("Redirect URL (OAuth Callback)")} />
+                        <CopyableInput
+                          value={redirectUrl}
+                          label={t("Redirect URL (OAuth Callback)")}
+                        />
                       </div>
 
                       <Separator />
@@ -344,7 +359,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                               name="allowedDomainsText"
                               label={t("Allowed Email Domains")}
                               placeholder={t("company.com, contractor.com")}
-                              description={t("Comma-separated list. Leave blank to allow all Okta account domains.")}
+                              description={t(
+                                "Comma-separated list. Leave blank to allow all Okta account domains.",
+                              )}
                             />
                           </FormControl>
                         </FormGroup>

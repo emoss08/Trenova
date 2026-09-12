@@ -94,17 +94,17 @@ export function PresetEditor({ preset }: PresetEditorProps) {
 
   const responsibilityItems = useMemo(
     () => [
-      { value: NO_RESPONSIBILITY, label: "No job function" },
+      { value: NO_RESPONSIBILITY, label: t("No job function") },
       ...coreResponsibilityChoices.map(({ value, label }) => ({ value, label })),
     ],
-    [],
+    [t],
   );
   const previewItems = useMemo(
     () => [
-      { value: NO_RESPONSIBILITY, label: "Editing" },
+      { value: NO_RESPONSIBILITY, label: t("Editing") },
       ...(roles.data ?? []).map((role) => ({ value: role.id, label: role.name })),
     ],
-    [roles.data],
+    [roles.data, t],
   );
 
   const patch = (next: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...next }));
@@ -188,14 +188,18 @@ export function PresetEditor({ preset }: PresetEditorProps) {
             <Toggle
               id="preset-org-default"
               label={t("Organization default")}
-              hint={t("Where anyone without a role assignment lands. Only one preset can hold this.")}
+              hint={t(
+                "Where anyone without a role assignment lands. Only one preset can hold this.",
+              )}
               checked={draft.isOrgDefault}
               onChange={(isOrgDefault) => patch({ isOrgDefault })}
             />
             <Toggle
               id="preset-locked"
               label={t("Lock this home screen")}
-              hint={t("People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock.")}
+              hint={t(
+                "People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock.",
+              )}
               checked={draft.locked}
               onChange={(locked) => patch({ locked })}
             />
@@ -289,7 +293,9 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                 )}
               </div>
               <p className="text-2xs text-muted-foreground">
-                {t("Shows what a member of that role resolves to today. Unsaved edits are not included.")}
+                {t(
+                  "Shows what a member of that role resolves to today. Unsaved edits are not included.",
+                )}
               </p>
             </div>
           </div>

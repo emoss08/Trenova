@@ -124,7 +124,9 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
             </span>
           </DetailField>
           <DetailField label={t("Segments")}>{detail.segmentCount}</DetailField>
-          <DetailField label={t("Generated")}>{formatToUserTimezone(detail.generatedAt)}</DetailField>
+          <DetailField label={t("Generated")}>
+            {formatToUserTimezone(detail.generatedAt)}
+          </DetailField>
         </DetailSection>
         {detail.direction === "Outbound" && (
           <DetailSection title={t("Delivery")}>

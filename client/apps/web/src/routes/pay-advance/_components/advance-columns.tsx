@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { PayAdvanceStatusBadge } from "@trenova/shared/components/status-badge";
 import { payAdvanceSourceChoices } from "@/lib/choices";
@@ -11,18 +11,18 @@ function formatDate(unix: number): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
-export function getColumns(): ColumnDef<PayAdvanceRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<PayAdvanceRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <PayAdvanceStatusBadge status={row.original.status as PayAdvanceStatus} />,
       size: 140,
-      meta: { apiField: "status", label: "Status" },
+      meta: { apiField: "status", label: t("Status") },
     },
     {
       id: "worker",
-      header: "Driver",
+      header: t("Driver"),
       cell: ({ row }) => (
         <span className="text-xs font-medium">
           {row.original.worker
@@ -30,12 +30,12 @@ export function getColumns(): ColumnDef<PayAdvanceRow>[] {
             : "—"}
         </span>
       ),
-      meta: { label: "Worker" },
+      meta: { label: t("Worker") },
       size: 180,
     },
     {
       accessorKey: "source",
-      header: "Source",
+      header: t("Source"),
       cell: ({ row }) => (
         <span className="text-xs">
           {payAdvanceSourceChoices.find((choice) => choice.value === row.original.source)?.label ??
@@ -43,47 +43,47 @@ export function getColumns(): ColumnDef<PayAdvanceRow>[] {
         </span>
       ),
       size: 130,
-      meta: { apiField: "source", label: "Source" },
+      meta: { apiField: "source", label: t("Source") },
     },
     {
       accessorKey: "reference",
-      header: "Reference",
+      header: t("Reference"),
       cell: ({ row }) => <span className="font-mono text-xs">{row.original.reference || "—"}</span>,
       size: 140,
-      meta: { apiField: "reference", label: "Reference" },
+      meta: { apiField: "reference", label: t("Reference") },
     },
     {
       accessorKey: "issuedDate",
-      header: "Issued",
+      header: t("Issued"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.issuedDate)}</span>,
       size: 110,
-      meta: { apiField: "issuedDate", label: "Issued Date" },
+      meta: { apiField: "issuedDate", label: t("Issued Date") },
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">{translate("Amount")}</div>,
+      header: () => <div className="text-right">{t("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.amountMinor} currency={row.original.currencyCode} />
         </div>
       ),
       size: 100,
-      meta: { apiField: "amountMinor", label: "Amount Minor" },
+      meta: { apiField: "amountMinor", label: t("Amount Minor") },
     },
     {
       accessorKey: "recoveredMinor",
-      header: () => <div className="text-right">{translate("Recovered")}</div>,
+      header: () => <div className="text-right">{t("Recovered")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.recoveredMinor} currency={row.original.currencyCode} />
         </div>
       ),
       size: 100,
-      meta: { apiField: "recoveredMinor", label: "Recovered Minor" },
+      meta: { apiField: "recoveredMinor", label: t("Recovered Minor") },
     },
     {
       accessorKey: "outstandingMinor",
-      header: () => <div className="text-right">{translate("Outstanding")}</div>,
+      header: () => <div className="text-right">{t("Outstanding")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay
@@ -94,7 +94,7 @@ export function getColumns(): ColumnDef<PayAdvanceRow>[] {
         </div>
       ),
       size: 110,
-      meta: { apiField: "outstandingMinor", label: "Outstanding Minor" },
+      meta: { apiField: "outstandingMinor", label: t("Outstanding Minor") },
     },
   ];
 }

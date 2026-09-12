@@ -72,8 +72,8 @@ export function BankReceiptBatchPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Import Batches",
-        description: "View and create bank receipt import batches.",
+        title: t("Import Batches"),
+        description: t("View and create bank receipt import batches."),
       }}
       className="p-0"
     >
@@ -113,7 +113,9 @@ export function BankReceiptBatchPage() {
         {!isLoading && !isError && batches && batches.length === 0 ? (
           <EmptyTable
             title={t("No batches yet")}
-            description={t("Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched.")}
+            description={t(
+              "Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched.",
+            )}
             columns={BATCH_COLUMNS}
             action={
               <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
@@ -135,7 +137,9 @@ export function BankReceiptBatchPage() {
                   <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Imported")}</th>
                   <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Matched")}</th>
                   <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Exceptions")}</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Total Amount")}</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-medium">
+                    {t("Total Amount")}
+                  </th>
                   <th className="px-3 py-2.5 text-xs font-medium">{t("Created")}</th>
                   <th className="w-10 px-3 py-2.5" />
                 </tr>

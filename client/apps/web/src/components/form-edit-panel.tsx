@@ -186,7 +186,7 @@ export function FormEditPanel<
     options: SAVE_OPTIONS,
     selectedOption: defaultAction,
     onOptionSelect: handleOptionSelect,
-    loadingText: "Saving...",
+    loadingText: t("Saving..."),
   };
 
   return (

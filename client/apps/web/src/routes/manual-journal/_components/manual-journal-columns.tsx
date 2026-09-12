@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { manualJournalStatusChoices } from "@/lib/choices";
@@ -6,17 +6,17 @@ import type { ManualJournalRow } from "@/lib/graphql/manual-journal-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 
-export function getManualJournalColumns(): ColumnDef<ManualJournalRow>[] {
+export function getManualJournalColumns(t: TranslateFn): ColumnDef<ManualJournalRow>[] {
   return [
     {
       accessorKey: "requestNumber",
-      header: "Request #",
+      header: t("Request #"),
       cell: ({ row }) => (
         <span className="font-mono text-xs font-medium">{row.original.requestNumber}</span>
       ),
       meta: {
         apiField: "requestNumber",
-        label: "Request #",
+        label: t("Request #"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -25,11 +25,11 @@ export function getManualJournalColumns(): ColumnDef<ManualJournalRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <AccountingStatusBadge status={row.original.status} />,
       meta: {
         apiField: "status",
-        label: "Status",
+        label: t("Status"),
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -39,11 +39,13 @@ export function getManualJournalColumns(): ColumnDef<ManualJournalRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => <span className="line-clamp-1 text-xs">{translate(row.original.description)}</span>,
+      header: t("Description"),
+      cell: ({ row }) => (
+        <span className="line-clamp-1 text-xs">{t(row.original.description)}</span>
+      ),
       meta: {
         apiField: "description",
-        label: "Description",
+        label: t("Description"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -52,35 +54,35 @@ export function getManualJournalColumns(): ColumnDef<ManualJournalRow>[] {
     },
     {
       accessorKey: "accountingDate",
-      header: "Accounting Date",
+      header: t("Accounting Date"),
       cell: ({ row }) => (
         <span className="text-xs">{formatUnixDate(row.original.accountingDate)}</span>
       ),
       meta: {
         apiField: "accountingDate",
-        label: "Accounting Date",
+        label: t("Accounting Date"),
         sortable: true,
       },
       size: 140,
     },
     {
       accessorKey: "totalDebit",
-      header: "Total Debit",
+      header: t("Total Debit"),
       cell: ({ row }) => <AmountDisplay value={row.original.totalDebit} className="text-xs" />,
       meta: {
         apiField: "totalDebit",
-        label: "Total Debit",
+        label: t("Total Debit"),
         sortable: true,
       },
       size: 130,
     },
     {
       accessorKey: "totalCredit",
-      header: "Total Credit",
+      header: t("Total Credit"),
       cell: ({ row }) => <AmountDisplay value={row.original.totalCredit} className="text-xs" />,
       meta: {
         apiField: "totalCredit",
-        label: "Total Credit",
+        label: t("Total Credit"),
         sortable: true,
       },
       size: 130,

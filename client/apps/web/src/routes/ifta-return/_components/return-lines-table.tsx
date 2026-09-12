@@ -97,7 +97,9 @@ function LineRow({ line }: { line: IftaReturnLine }) {
           <span className="text-muted-foreground text-xs">{line.jurisdiction.name}</span>
           {missingRate ? <Badge variant="inactive">{t("No rate")}</Badge> : null}
           {line.isIftaMember ? null : <Badge variant="outline">{t("Non-member")}</Badge>}
-          {line.jurisdiction.hasSurcharge ? <Badge variant="outline">{t("Surcharge")}</Badge> : null}
+          {line.jurisdiction.hasSurcharge ? (
+            <Badge variant="outline">{t("Surcharge")}</Badge>
+          ) : null}
         </div>
       </TableCell>
       <TableCell className="text-right tabular-nums" title={milesBreakdown(line)}>
@@ -153,7 +155,10 @@ export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
       <CardHeader>
         <CardTitle className="text-sm font-semibold">{t("Jurisdiction lines")}</CardTitle>
         <p className="text-muted-foreground text-xs">
-          {t("One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.", ret.currencyCode)}
+          {t(
+            "One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.",
+            ret.currencyCode,
+          )}
         </p>
       </CardHeader>
       <CardContent>
@@ -180,7 +185,9 @@ export function ReturnLinesTable({ ret }: { ret: IftaReturnView }) {
                     colSpan={COLUMN_COUNT}
                     className="text-muted-foreground py-6 text-center text-xs"
                   >
-                    {t("No jurisdiction carried miles or fuel in this quarter. Attribute the quarter's moves, or record the miles by hand, then recompute.")}
+                    {t(
+                      "No jurisdiction carried miles or fuel in this quarter. Attribute the quarter's moves, or record the miles by hand, then recompute.",
+                    )}
                   </TableCell>
                 </TableRow>
               ) : null}

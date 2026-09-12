@@ -248,7 +248,9 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
       <InspectionsEmptyState
         icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
         title={t("Telematics not connected")}
-        description={t("Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor.")}
+        description={t(
+          "Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor.",
+        )}
         action={
           <Button
             variant="outline"
@@ -281,7 +283,9 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
       <InspectionsEmptyState
         icon={<ClipboardCheckIcon className="text-muted-foreground mx-auto size-6" />}
         title={t("No inspections reported for this tractor.")}
-        description={t("Driver vehicle inspection reports appear here once Samsara reports pre-trip and post-trip inspections.")}
+        description={t(
+          "Driver vehicle inspection reports appear here once Samsara reports pre-trip and post-trip inspections.",
+        )}
       />
     );
   }

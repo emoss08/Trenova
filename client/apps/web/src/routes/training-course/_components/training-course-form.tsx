@@ -184,7 +184,9 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
       <section className="flex flex-col gap-3">
         <SectionTitle
           title={t("Requirement & validity")}
-          hint={t("Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.")}
+          hint={t(
+            "Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.",
+          )}
         />
         <FormGroup cols={2}>
           <FormControl className="col-span-2">
@@ -228,7 +230,9 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               sideText="months"
               min={1}
               placeholder="12"
-              description={t("A completion lapses after this and a renewal is assigned. Leave empty for one-time courses.")}
+              description={t(
+                "A completion lapses after this and a renewal is assigned. Leave empty for one-time courses.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">

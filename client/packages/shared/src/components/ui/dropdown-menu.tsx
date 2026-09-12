@@ -34,10 +34,7 @@ function DropdownMenuContent({
   className,
   ...props
 }: MenuPrimitive.Popup.Props &
-  Pick<
-    MenuPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  Pick<MenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -84,10 +81,7 @@ function DropdownMenuLabel({
   );
 }
 
-type DropdownMenuItemProps = Omit<
-  MenuPrimitive.Item.Props,
-  "title" | "children"
-> & {
+type DropdownMenuItemProps = Omit<MenuPrimitive.Item.Props, "title" | "children"> & {
   title: string;
   inset?: boolean;
   color?: "danger" | "warning" | "info" | "success";
@@ -123,25 +117,16 @@ function DropdownMenuItem({
       )}
       {...props}
     >
-      {startContent && (
-        <span className="mr-2 flex items-center">{startContent}</span>
-      )}
+      {startContent && <span className="mr-2 flex items-center">{startContent}</span>}
       <span className="flex flex-col">
         <span className={cn("text-sm", titleClassProps)}>{title}</span>
         {description && (
-          <span
-            className={cn(
-              "text-2xs text-muted-foreground",
-              descriptionClassProps,
-            )}
-          >
+          <span className={cn("text-2xs text-muted-foreground", descriptionClassProps)}>
             {description}
           </span>
         )}
       </span>
-      {endContent && (
-        <span className="ml-auto flex items-center">{endContent}</span>
-      )}
+      {endContent && <span className="ml-auto flex items-center">{endContent}</span>}
     </MenuPrimitive.Item>
   );
 }
@@ -228,19 +213,10 @@ function DropdownMenuCheckboxItem({
 }
 
 function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
-  return (
-    <MenuPrimitive.RadioGroup
-      data-slot="dropdown-menu-radio-group"
-      {...props}
-    />
-  );
+  return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
 
-function DropdownMenuRadioItem({
-  className,
-  children,
-  ...props
-}: MenuPrimitive.RadioItem.Props) {
+function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.RadioItem.Props) {
   return (
     <MenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
@@ -263,10 +239,7 @@ function DropdownMenuRadioItem({
   );
 }
 
-function DropdownMenuSeparator({
-  className,
-  ...props
-}: MenuPrimitive.Separator.Props) {
+function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
   return (
     <MenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
@@ -276,10 +249,7 @@ function DropdownMenuSeparator({
   );
 }
 
-function DropdownMenuShortcut({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
+function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="dropdown-menu-shortcut"
@@ -307,5 +277,5 @@ export {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 };

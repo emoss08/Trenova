@@ -36,7 +36,9 @@ export function FuelBindingForm() {
     return (
       <div className="flex flex-col gap-3">
         <p className="text-muted-foreground text-sm">
-          {t("This contract has no fuel terms of its own, so fuel comes from the customer's billing profile.")}
+          {t(
+            "This contract has no fuel terms of its own, so fuel comes from the customer's billing profile.",
+          )}
         </p>
         <Button
           type="button"
@@ -55,7 +57,9 @@ export function FuelBindingForm() {
     <div className="space-y-6">
       <FormSection
         title={t("Fuel Terms")}
-        description={t("The program this contract's fuel surcharge reads, and the terms it negotiated over it.")}
+        description={t(
+          "The program this contract's fuel surcharge reads, and the terms it negotiated over it.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -65,7 +69,9 @@ export function FuelBindingForm() {
               name="fuelBinding.fuelSurchargeProgramId"
               label={t("Fuel Program")}
               placeholder={t("Select program")}
-              description={t("Overrides whatever the customer's billing profile names, because one customer can hold several contracts")}
+              description={t(
+                "Overrides whatever the customer's billing profile names, because one customer can hold several contracts",
+              )}
             />
           </FormControl>
 
@@ -84,7 +90,9 @@ export function FuelBindingForm() {
           <Alert>
             <InfoIcon className="size-4" />
             <AlertDescription>
-              {t("A waived binding cannot also change the program's terms — the two describe opposite intentions.")}
+              {t(
+                "A waived binding cannot also change the program's terms — the two describe opposite intentions.",
+              )}
             </AlertDescription>
           </Alert>
         ) : (
@@ -97,7 +105,9 @@ export function FuelBindingForm() {
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={3}
-                description={t("The price the surcharge starts climbing from, when the contract negotiated its own")}
+                description={t(
+                  "The price the surcharge starts climbing from, when the contract negotiated its own",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -108,7 +118,9 @@ export function FuelBindingForm() {
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={4}
-                description={t("What each step above the peg adds, when the contract negotiated its own")}
+                description={t(
+                  "What each step above the peg adds, when the contract negotiated its own",
+                )}
               />
             </FormControl>
             <FormControl>

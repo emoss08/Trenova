@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { classificationIsRecordable } from "@trenova/shared/lib/injury";
 
 const SECONDS_IN_DAY = 86_400;
@@ -200,7 +201,7 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
   const steps: TrackStep[] = [
     {
       id: "close",
-      label: "Every case closed",
+      label: translate("Every case closed"),
       detail: closed
         ? totals.totalRecordableCases === 0
           ? "Nothing recordable this year; the summary still has to be posted"
@@ -210,7 +211,7 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
     },
     {
       id: "figures",
-      label: "Establishment figures recorded",
+      label: translate("Establishment figures recorded"),
       detail: figures
         ? `${summary!.averageEmployees.toLocaleString("en-US")} employees on average over ${summary!.totalHoursWorked.toLocaleString("en-US")} hours`
         : summary
@@ -220,7 +221,7 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
     },
     {
       id: "certify",
-      label: "Certified by an executive",
+      label: translate("Certified by an executive"),
       detail: certified
         ? `${summary?.executiveName?.trim() || "Certified"}${summary?.certifiedAt ? ` on ${formatDate(summary.certifiedAt)}` : ""}`
         : "A company executive signs that the summary is true",
@@ -228,7 +229,7 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
     },
     {
       id: "post",
-      label: "Posted where employees can see it",
+      label: translate("Posted where employees can see it"),
       detail:
         posting.phase === "before"
           ? `Window opens ${formatDate(postFrom)}, in ${plural(posting.days, "day")}`
@@ -239,7 +240,7 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
     },
     {
       id: "submit",
-      label: "Submitted electronically",
+      label: translate("Submitted electronically"),
       detail: submitted
         ? `Sent ${formatDate(summary!.submittedAt!)}`
         : "Due March 2 where the establishment is required to submit",

@@ -96,7 +96,9 @@ function EligibilityCard() {
       <CardHeader>
         <CardTitle>{t("Eligibility Policy")}</CardTitle>
         <CardDescription>
-          {t("Define which invoice states may be adjusted and how accounting dates are assigned when credits, rebills, or related adjustments are created.")}
+          {t(
+            "Define which invoice states may be adjusted and how accounting dates are assigned when credits, rebills, or related adjustments are created.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -106,7 +108,9 @@ function EligibilityCard() {
               control={control}
               name="partiallyPaidInvoiceAdjustmentPolicy"
               label={t("Partially Paid Invoice Adjustment Policy")}
-              description={t("Controls whether partially paid invoices can be adjusted and whether approval is required.")}
+              description={t(
+                "Controls whether partially paid invoices can be adjusted and whether approval is required.",
+              )}
               options={adjustmentEligibilityPolicyChoices}
               rules={{ required: true }}
             />
@@ -116,7 +120,9 @@ function EligibilityCard() {
               control={control}
               name="paidInvoiceAdjustmentPolicy"
               label={t("Paid Invoice Adjustment Policy")}
-              description={t("Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.")}
+              description={t(
+                "Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.",
+              )}
               options={adjustmentEligibilityPolicyChoices}
               rules={{ required: true }}
             />
@@ -126,7 +132,9 @@ function EligibilityCard() {
               control={control}
               name="disputedInvoiceAdjustmentPolicy"
               label={t("Disputed Invoice Adjustment Policy")}
-              description={t("Controls whether disputed invoices can be adjusted and whether approval is required.")}
+              description={t(
+                "Controls whether disputed invoices can be adjusted and whether approval is required.",
+              )}
               options={adjustmentEligibilityPolicyChoices}
               rules={{ required: true }}
             />
@@ -136,7 +144,9 @@ function EligibilityCard() {
               control={control}
               name="adjustmentAccountingDatePolicy"
               label={t("Adjustment Accounting Date Policy")}
-              description={t("Defines whether adjustments use the original invoice accounting date when open or always book in the next open period.")}
+              description={t(
+                "Defines whether adjustments use the original invoice accounting date when open or always book in the next open period.",
+              )}
               options={adjustmentAccountingDatePolicyChoices}
               rules={{ required: true }}
             />
@@ -146,7 +156,9 @@ function EligibilityCard() {
               control={control}
               name="closedPeriodAdjustmentPolicy"
               label={t("Closed Period Adjustment Policy")}
-              description={t("Defines whether closed-period adjustments are disallowed, require reopen, or must post in the next open period with approval.")}
+              description={t(
+                "Defines whether closed-period adjustments are disallowed, require reopen, or must post in the next open period with approval.",
+              )}
               options={closedPeriodAdjustmentPolicyChoices}
               rules={{ required: true }}
             />
@@ -156,7 +168,9 @@ function EligibilityCard() {
               control={control}
               name="rerateVarianceTolerancePercent"
               label={t("Rerate Variance Tolerance Percent")}
-              description={t("Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.")}
+              description={t(
+                "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.",
+              )}
               rules={{ required: true }}
             />
           </FormControl>
@@ -165,7 +179,9 @@ function EligibilityCard() {
               control={control}
               name="replacementInvoiceReviewPolicy"
               label={t("Replacement Invoice Review Policy")}
-              description={t("Defines when a replacement invoice must be reviewed after a credit and rebill workflow changes economic terms.")}
+              description={t(
+                "Defines when a replacement invoice must be reviewed after a credit and rebill workflow changes economic terms.",
+              )}
               options={replacementInvoiceReviewPolicyChoices}
               rules={{ required: true }}
             />
@@ -186,7 +202,9 @@ function DocumentationCard() {
       <CardHeader>
         <CardTitle>{t("Documentation Requirements")}</CardTitle>
         <CardDescription>
-          {t("Define the minimum supporting documentation and business justification required before an adjustment can be completed.")}
+          {t(
+            "Define the minimum supporting documentation and business justification required before an adjustment can be completed.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -196,7 +214,9 @@ function DocumentationCard() {
               control={control}
               name="adjustmentReasonRequirement"
               label={t("Adjustment Reason Requirement")}
-              description={t("Determines whether a structured reason is mandatory before an adjustment can be completed.")}
+              description={t(
+                "Determines whether a structured reason is mandatory before an adjustment can be completed.",
+              )}
               options={requirementPolicyChoices}
               rules={{ required: true }}
             />
@@ -206,7 +226,9 @@ function DocumentationCard() {
               control={control}
               name="adjustmentAttachmentRequirement"
               label={t("Adjustment Attachment Requirement")}
-              description={t("Defines the organization default for when supporting documents are required for invoice adjustments. Customer billing profiles may override this when they set an explicit supporting-document policy.")}
+              description={t(
+                "Defines the organization default for when supporting documents are required for invoice adjustments. Customer billing profiles may override this when they set an explicit supporting-document policy.",
+              )}
               options={adjustmentAttachmentPolicyChoices}
               rules={{ required: true }}
             />
@@ -229,7 +251,9 @@ function ApprovalCard() {
       <CardHeader>
         <CardTitle>{t("Approval Policy")}</CardTitle>
         <CardDescription>
-          {t("Define which adjustments require approval and where amount thresholds apply for standard adjustments and write-offs.")}
+          {t(
+            "Define which adjustments require approval and where amount thresholds apply for standard adjustments and write-offs.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -239,7 +263,9 @@ function ApprovalCard() {
               control={control}
               name="standardAdjustmentApprovalPolicy"
               label={t("Standard Adjustment Approval Policy")}
-              description={t("Defines whether standard invoice adjustments require approval always, never, or only above a configured threshold.")}
+              description={t(
+                "Defines whether standard invoice adjustments require approval always, never, or only above a configured threshold.",
+              )}
               options={approvalPolicyChoices}
               rules={{ required: true }}
             />
@@ -250,7 +276,9 @@ function ApprovalCard() {
                 control={control}
                 name="standardAdjustmentApprovalThreshold"
                 label={t("Standard Adjustment Approval Threshold")}
-                description={t("Adjustment amount above which approval is required when the standard approval policy uses an amount threshold.")}
+                description={t(
+                  "Adjustment amount above which approval is required when the standard approval policy uses an amount threshold.",
+                )}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -260,7 +288,9 @@ function ApprovalCard() {
               control={control}
               name="writeOffApprovalPolicy"
               label={t("Write-Off Approval Policy")}
-              description={t("Defines whether write-offs are disallowed, always require approval, or require approval only above a threshold.")}
+              description={t(
+                "Defines whether write-offs are disallowed, always require approval, or require approval only above a threshold.",
+              )}
               options={writeOffApprovalPolicyChoices}
               rules={{ required: true }}
             />
@@ -271,7 +301,9 @@ function ApprovalCard() {
                 control={control}
                 name="writeOffApprovalThreshold"
                 label={t("Write-Off Approval Threshold")}
-                description={t("Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.")}
+                description={t(
+                  "Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.",
+                )}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -292,7 +324,9 @@ function CreditAndVisibilityCard() {
       <CardHeader>
         <CardTitle>{t("Credit And Visibility")}</CardTitle>
         <CardDescription>
-          {t("Define whether unapplied customer credits are allowed, whether over-crediting can occur, and what external users may see after invoice replacement.")}
+          {t(
+            "Define whether unapplied customer credits are allowed, whether over-crediting can occur, and what external users may see after invoice replacement.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -302,7 +336,9 @@ function CreditAndVisibilityCard() {
               control={control}
               name="customerCreditBalancePolicy"
               label={t("Customer Credit Balance Policy")}
-              description={t("Defines whether invoice adjustments may leave an unapplied customer credit balance.")}
+              description={t(
+                "Defines whether invoice adjustments may leave an unapplied customer credit balance.",
+              )}
               options={customerCreditBalancePolicyChoices}
               rules={{ required: true }}
             />
@@ -312,7 +348,9 @@ function CreditAndVisibilityCard() {
               control={control}
               name="overCreditPolicy"
               label={t("Over-Credit Policy")}
-              description={t("Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.")}
+              description={t(
+                "Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.",
+              )}
               options={overCreditPolicyChoices}
               rules={{ required: true }}
             />
@@ -322,7 +360,9 @@ function CreditAndVisibilityCard() {
               control={control}
               name="supersededInvoiceVisibilityPolicy"
               label={t("Superseded Invoice Visibility Policy")}
-              description={t("Defines whether external customer-facing views show only the current invoice or also expose superseded invoices with status.")}
+              description={t(
+                "Defines whether external customer-facing views show only the current invoice or also expose superseded invoices with status.",
+              )}
               options={supersededInvoiceVisibilityPolicyChoices}
               rules={{ required: true }}
             />

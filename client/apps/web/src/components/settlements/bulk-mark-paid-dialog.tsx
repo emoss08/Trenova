@@ -67,7 +67,9 @@ export function BulkMarkPaidDialog({
             {t("Mark {0, plural, one {# settlement} other {# settlements}} paid", count)}
           </DialogTitle>
           <DialogDescription>
-            {t("Records the disbursement on every selected posted settlement. Use a batch reference (e.g. the ACH file ID) so the whole run reconciles against one bank entry.")}
+            {t(
+              "Records the disbursement on every selected posted settlement. Use a batch reference (e.g. the ACH file ID) so the whole run reconciles against one bank entry.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">

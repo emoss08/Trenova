@@ -114,7 +114,9 @@ function IftaMileageEntryCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Jurisdiction Mileage")}
-      description={t("Record miles a tractor ran in a jurisdiction that routing did not see, such as repositioning between shipments. The entry lands on the quarter's return at its next recompute.")}
+      description={t(
+        "Record miles a tractor ran in a jurisdiction that routing did not see, such as repositioning between shipments. The entry lands on the quarter's return at its next recompute.",
+      )}
       queryKey={IFTA_MILEAGE_ENTRY_LIST_KEY}
       form={form}
       size="md"
@@ -157,7 +159,12 @@ function IftaMileageEntryEditPanel({
       title={t("Jurisdiction Mileage")}
       titleComponent={(record) => (
         <span>
-          {t("{0}{1} · {2} mi", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.miles)}
+          {t(
+            "{0}{1} · {2} mi",
+            record.tractor?.code ? `${record.tractor.code} · ` : "",
+            record.jurisdiction.code,
+            record.miles,
+          )}
         </span>
       )}
       queryKey={IFTA_MILEAGE_ENTRY_LIST_KEY}

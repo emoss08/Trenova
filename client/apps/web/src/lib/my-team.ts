@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { ApprovalDelegationRow, TeamMemberRow } from "@/lib/graphql/org-structure";
 import { delegationState } from "@trenova/shared/lib/org-structure";
 import { tenureParts } from "@trenova/shared/lib/tenure";
@@ -96,9 +97,9 @@ export function attentionReasons(member: TeamMemberRow): AttentionReason[] {
   const reasons: AttentionReason[] = [];
 
   if (member.complianceStatus === "NonCompliant") {
-    reasons.push({ key: "compliance", label: "Non-compliant", severity: "critical" });
+    reasons.push({ key: "compliance", label: translate("Non-compliant"), severity: "critical" });
   } else if (member.complianceStatus === "Pending") {
-    reasons.push({ key: "compliance", label: "Compliance pending", severity: "watch" });
+    reasons.push({ key: "compliance", label: translate("Compliance pending"), severity: "watch" });
   }
 
   const training = trainingHealthMetaOf(member.trainingHealth);
@@ -117,9 +118,9 @@ export function attentionReasons(member: TeamMemberRow): AttentionReason[] {
   }
 
   if (member.safetyRating === "AtRisk") {
-    reasons.push({ key: "safety", label: "Safety at risk", severity: "critical" });
+    reasons.push({ key: "safety", label: translate("Safety at risk"), severity: "critical" });
   } else if (member.safetyRating === "Watch") {
-    reasons.push({ key: "safety", label: "Safety watch", severity: "watch" });
+    reasons.push({ key: "safety", label: translate("Safety watch"), severity: "watch" });
   }
 
   return reasons.sort((a, b) => severityRank(a.severity) - severityRank(b.severity));

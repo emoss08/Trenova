@@ -13,7 +13,9 @@ export function DetentionPolicyPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Detention Policies")}
-        description={t("Encode each contract's detention terms and see what they would charge before they touch a shipment")}
+        description={t(
+          "Encode each contract's detention terms and see what they would charge before they touch a shipment",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

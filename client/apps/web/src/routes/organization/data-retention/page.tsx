@@ -73,7 +73,9 @@ export function DataRetentionPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Data Retention")}
-        description={t("Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.")}
+        description={t(
+          "Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.",
+        )}
       />
       <div className="flex flex-col gap-4 p-4">
         {isLoading ? (
@@ -89,7 +91,10 @@ export function DataRetentionPage() {
               void handleSubmit((values) => mutation.mutate(values))(event);
             }}
           >
-            <FormSection title={t("Retention Windows")} className="bg-muted/20 rounded-md border p-3">
+            <FormSection
+              title={t("Retention Windows")}
+              className="bg-muted/20 rounded-md border p-3"
+            >
               <FormGroup cols={1}>
                 <FormControl>
                   <NumberField
@@ -97,7 +102,9 @@ export function DataRetentionPage() {
                     name="auditRetentionPeriod"
                     label={t("Audit Retention (days)")}
                     rules={{ required: true }}
-                    description={t("Audit entries older than this are deleted by the nightly audit retention purge.")}
+                    description={t(
+                      "Audit entries older than this are deleted by the nightly audit retention purge.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -105,7 +112,9 @@ export function DataRetentionPage() {
                     control={control}
                     name="ediInboundFileRetentionPeriod"
                     label={t("EDI Inbound File Retention (days)")}
-                    description={t("Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever.")}
+                    description={t(
+                      "Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever.",
+                    )}
                   />
                 </FormControl>
                 <FormControl>
@@ -113,7 +122,9 @@ export function DataRetentionPage() {
                     control={control}
                     name="ediMessageRetentionPeriod"
                     label={t("EDI Message Retention (days)")}
-                    description={t("Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.")}
+                    description={t(
+                      "Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.",
+                    )}
                   />
                 </FormControl>
               </FormGroup>

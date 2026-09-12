@@ -160,14 +160,17 @@ export function DocumentUploadSection({
     setIsDragging(false);
   }, []);
 
-  const handleDownload = useCallback(async (doc: Document) => {
-    try {
-      const url = await apiService.documentService.getDownloadUrl(doc.id);
-      window.open(url, "_blank");
-    } catch {
-      toast.error(t("Failed to get download URL"));
-    }
-  }, [t]);
+  const handleDownload = useCallback(
+    async (doc: Document) => {
+      try {
+        const url = await apiService.documentService.getDownloadUrl(doc.id);
+        window.open(url, "_blank");
+      } catch {
+        toast.error(t("Failed to get download URL"));
+      }
+    },
+    [t],
+  );
 
   const handleDelete = useCallback(
     (doc: Document) => {
@@ -216,7 +219,9 @@ export function DocumentUploadSection({
           <p className="text-muted-foreground text-sm">
             {uploadMutation.isPending ? t("Uploading...") : t("Drop files here or click to upload")}
           </p>
-          <p className="text-muted-foreground/70 text-xs">{t("PDF, Images, Documents up to 50MB")}</p>
+          <p className="text-muted-foreground/70 text-xs">
+            {t("PDF, Images, Documents up to 50MB")}
+          </p>
           <input
             ref={fileInputRef}
             type="file"

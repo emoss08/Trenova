@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -8,16 +9,16 @@ import { documentCategoryChoices, documentClassificationChoices } from "@/lib/ch
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<DocumentType>[] {
+export function getColumns(t: TranslateFn): ColumnDef<DocumentType>[] {
   return [
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => (
         <DataTableColorColumn color={row.original.color ?? undefined} text={row.original.code} />
       ),
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -27,10 +28,10 @@ export function getColumns(): ColumnDef<DocumentType>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => row.original.name,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -40,7 +41,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
     },
     {
       accessorKey: "documentClassification",
-      header: "Classification",
+      header: t("Classification"),
       cell: ({ row }) => {
         const choice = documentClassificationChoices.find(
           (c) => c.value === row.original.documentClassification,
@@ -55,7 +56,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: "Classification",
+        label: t("Classification"),
         apiField: "documentClassification",
         filterable: true,
         sortable: true,
@@ -66,7 +67,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
     },
     {
       accessorKey: "documentCategory",
-      header: "Category",
+      header: t("Category"),
       cell: ({ row }) => {
         const choice = documentCategoryChoices.find(
           (c) => c.value === row.original.documentCategory,
@@ -81,7 +82,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: "Category",
+        label: t("Category"),
         apiField: "documentCategory",
         filterable: true,
         sortable: true,
@@ -92,7 +93,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
         <DataTableDescription
           description={row.original.description ?? undefined}
@@ -100,7 +101,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
         />
       ),
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -113,7 +114,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

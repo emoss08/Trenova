@@ -24,11 +24,7 @@ export const settlementCategoryLabels: Record<string, string> = {
   AdvanceRecovery: "Advance recovery",
 };
 
-const deductionCategories = new Set<string>([
-  "Deduction",
-  "EscrowContribution",
-  "AdvanceRecovery",
-]);
+const deductionCategories = new Set<string>(["Deduction", "EscrowContribution", "AdvanceRecovery"]);
 
 export function isDeductionCategory(category: string): boolean {
   return deductionCategories.has(category);

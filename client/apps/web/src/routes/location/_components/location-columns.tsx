@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
@@ -34,11 +35,11 @@ function LocationStatusCell({ row }: { row: LocationRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<LocationRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<LocationRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <LocationStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
@@ -54,7 +55,7 @@ export function getColumns(): ColumnDef<LocationRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
       size: 120,
       minSize: 80,
@@ -69,7 +70,7 @@ export function getColumns(): ColumnDef<LocationRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span>{row.original.name}</span>,
       meta: {
         apiField: "name",
@@ -81,7 +82,7 @@ export function getColumns(): ColumnDef<LocationRow>[] {
     },
     {
       accessorKey: "city",
-      header: "City",
+      header: t("City"),
       cell: ({ row }) => <span>{row.original.city || "-"}</span>,
       size: 150,
       minSize: 100,
@@ -96,7 +97,7 @@ export function getColumns(): ColumnDef<LocationRow>[] {
     },
     {
       accessorKey: "postalCode",
-      header: "Postal Code",
+      header: t("Postal Code"),
       cell: ({ row }) => <span>{row.original.postalCode || "-"}</span>,
       size: 120,
       minSize: 80,
@@ -111,7 +112,7 @@ export function getColumns(): ColumnDef<LocationRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

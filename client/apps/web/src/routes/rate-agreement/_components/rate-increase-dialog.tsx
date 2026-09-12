@@ -211,24 +211,24 @@ export function RateIncreaseDialog({
           {
             value: "selected" as const,
             label: `Selected Agreements (${selectedAgreements.length})`,
-            description: "Only the agreements picked in the table",
+            description: t("Only the agreements picked in the table"),
           },
         ]
       : []),
     {
       value: "customer",
-      label: "One Customer",
-      description: "Every active agreement billing one customer",
+      label: t("One Customer"),
+      description: t("Every active agreement billing one customer"),
     },
     {
       value: "carrier",
-      label: "One Carrier",
-      description: "Every active agreement paying one carrier",
+      label: t("One Carrier"),
+      description: t("Every active agreement paying one carrier"),
     },
     {
       value: "party",
-      label: "Across the Board",
-      description: "Every active agreement of a party type",
+      label: t("Across the Board"),
+      description: t("Every active agreement of a party type"),
     },
   ];
 
@@ -241,7 +241,9 @@ export function RateIncreaseDialog({
             {t("General Rate Increase")}
           </DialogTitle>
           <DialogDescription>
-            {t("Every affected lane is closed out and succeeded at the new rate from the effective date. The old rates stay in history, and nothing moves until you have read the preview.")}
+            {t(
+              "Every affected lane is closed out and succeeded at the new rate from the effective date. The old rates stay in history, and nothing moves until you have read the preview.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -277,7 +279,9 @@ export function RateIncreaseDialog({
                     name="customerId"
                     label={t("Customer")}
                     placeholder={t("Select customer")}
-                    description={t("Every active agreement billing this customer takes the increase.")}
+                    description={t(
+                      "Every active agreement billing this customer takes the increase.",
+                    )}
                   />
                 </FormControl>
               )}
@@ -288,7 +292,9 @@ export function RateIncreaseDialog({
                     name="carrierId"
                     label={t("Carrier")}
                     placeholder={t("Select carrier")}
-                    description={t("Every active agreement paying this carrier takes the increase.")}
+                    description={t(
+                      "Every active agreement paying this carrier takes the increase.",
+                    )}
                   />
                 </FormControl>
               )}
@@ -299,7 +305,9 @@ export function RateIncreaseDialog({
                     name="partyType"
                     label={t("Party Type")}
                     options={ratePartyTypeChoices}
-                    description={t("Customer agreements raise what you bill; carrier agreements raise what you pay.")}
+                    description={t(
+                      "Customer agreements raise what you bill; carrier agreements raise what you pay.",
+                    )}
                   />
                 </FormControl>
               )}
@@ -309,7 +317,9 @@ export function RateIncreaseDialog({
                   name="effectiveFrom"
                   label={t("Takes Effect")}
                   rules={{ required: true }}
-                  description={t("The announced date. Shipments before it keep pricing at the old rates.")}
+                  description={t(
+                    "The announced date. Shipments before it keep pricing at the old rates.",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -395,7 +405,10 @@ export function RateIncreaseDialog({
               <Alert variant="destructive">
                 <CircleAlertIcon className="size-4" />
                 <AlertDescription>
-                  {t("This decrease would push {0} lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.", plan.negativeCount)}
+                  {t(
+                    "This decrease would push {0} lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.",
+                    plan.negativeCount,
+                  )}
                 </AlertDescription>
               </Alert>
             )}

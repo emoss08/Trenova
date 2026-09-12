@@ -49,7 +49,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
     () => [
       {
         value: "documents",
-        label: "Documents",
+        label: t("Documents"),
         icon: FileTextIcon,
         content: DocumentsTab,
         contentProps: {
@@ -58,7 +58,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         },
       },
     ],
-    [row?.id],
+    [row?.id, t],
   );
 
   if (mode === "edit") {

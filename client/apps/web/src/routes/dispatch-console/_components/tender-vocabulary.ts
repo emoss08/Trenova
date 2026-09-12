@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
@@ -40,13 +41,13 @@ export function tenderChipMeta(summary: TenderChipSummary): TenderChipMeta {
       return { label: `${TENDER_MODE_LABEL[summary.mode]}${position}${carrier}`, tone: "info" };
     }
     case "Accepted":
-      return { label: "Tender accepted", tone: "active" };
+      return { label: translate("Tender accepted"), tone: "active" };
     case "NeedsReview":
-      return { label: "Tender needs review", tone: "attention" };
+      return { label: translate("Tender needs review"), tone: "attention" };
     case "Exhausted":
-      return { label: "Tender exhausted", tone: "attention" };
+      return { label: translate("Tender exhausted"), tone: "attention" };
     case "Canceled":
-      return { label: "Tender canceled", tone: "attention" };
+      return { label: translate("Tender canceled"), tone: "attention" };
   }
 }
 

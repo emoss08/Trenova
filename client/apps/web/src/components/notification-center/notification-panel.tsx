@@ -224,7 +224,9 @@ export default function NotificationPanel({
         {isError && !isLoading && (
           <div className="flex flex-col items-center justify-center gap-3 py-16">
             <CircleAlertIcon className="text-destructive/60 size-5" />
-            <p className="text-2xs text-muted-foreground">{t("Notifications couldn't be loaded.")}</p>
+            <p className="text-2xs text-muted-foreground">
+              {t("Notifications couldn't be loaded.")}
+            </p>
             <Button type="button" variant="outline" size="xs" onClick={() => void refetch()}>
               {t("Try again")}
             </Button>

@@ -39,7 +39,9 @@ export function TransportProfileFields({
 
   if (method === "Internal") {
     return (
-      <EDIEmptyState message={t("Internal communication is enabled through accepted organization connections.")} />
+      <EDIEmptyState
+        message={t("Internal communication is enabled through accepted organization connections.")}
+      />
     );
   }
 
@@ -55,7 +57,9 @@ export function TransportProfileFields({
                 label={t("Local AS2 ID")}
                 placeholder="TRENOVA"
                 rules={{ required: true }}
-                description={t("Our AS2 identifier that the partner uses to address messages to us.")}
+                description={t(
+                  "Our AS2 identifier that the partner uses to address messages to us.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -65,7 +69,9 @@ export function TransportProfileFields({
                 label={t("Partner AS2 ID")}
                 placeholder="PARTNERCO"
                 rules={{ required: true }}
-                description={t("The partner's AS2 identifier that we address outbound messages to.")}
+                description={t(
+                  "The partner's AS2 identifier that we address outbound messages to.",
+                )}
               />
             </FormControl>
             <FormControl cols="full">
@@ -89,7 +95,9 @@ export function TransportProfileFields({
                 label={t("MDN Mode")}
                 options={mdnModeOptions}
                 rules={{ required: true }}
-                description={t("Synchronous MDNs return in the HTTP response; asynchronous MDNs post back to the return URL.")}
+                description={t(
+                  "Synchronous MDNs return in the HTTP response; asynchronous MDNs post back to the return URL.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -125,7 +133,9 @@ export function TransportProfileFields({
                 name="config.compressionAlgorithm"
                 label={t("Compression")}
                 options={as2CompressionOptions}
-                description={t("Compresses outbound payloads before encryption to reduce transfer size.")}
+                description={t(
+                  "Compresses outbound payloads before encryption to reduce transfer size.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -143,7 +153,9 @@ export function TransportProfileFields({
                 name="config.requireSignedInbound"
                 label={t("Require Signed Inbound")}
                 options={as2InboundRequirementOptions}
-                description={t("Reject inbound documents that are not signed by the partner. Automatic requires a signature when a partner signing certificate is configured.")}
+                description={t(
+                  "Reject inbound documents that are not signed by the partner. Automatic requires a signature when a partner signing certificate is configured.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -152,7 +164,9 @@ export function TransportProfileFields({
                 name="config.requireEncryptedInbound"
                 label={t("Require Encrypted Inbound")}
                 options={as2InboundRequirementOptions}
-                description={t("Reject inbound documents that are not encrypted to us. Automatic requires encryption when a local certificate and private key are configured.")}
+                description={t(
+                  "Reject inbound documents that are not encrypted to us. Automatic requires encryption when a local certificate and private key are configured.",
+                )}
               />
             </FormControl>
           </FormGroup>
@@ -164,7 +178,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.localCertificate"
                 label={t("Local Certificate (PEM)")}
-                description={t("Our public certificate. Partners use it to encrypt to us and verify our signatures; pair it with the private key secret.")}
+                description={t(
+                  "Our public certificate. Partners use it to encrypt to us and verify our signatures; pair it with the private key secret.",
+                )}
               />
             </FormControl>
             <FormControl cols="full">
@@ -172,7 +188,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.partnerSigningCertificate"
                 label={t("Partner Signing Certificate (PEM)")}
-                description={t("Used to verify inbound signatures and signed MDNs from this partner.")}
+                description={t(
+                  "Used to verify inbound signatures and signed MDNs from this partner.",
+                )}
               />
             </FormControl>
             <FormControl cols="full">
@@ -180,7 +198,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.partnerEncryptionCertificate"
                 label={t("Partner Encryption Certificate (PEM)")}
-                description={t("Used to encrypt outbound documents. Leave blank to reuse the signing certificate.")}
+                description={t(
+                  "Used to encrypt outbound documents. Leave blank to reuse the signing certificate.",
+                )}
               />
             </FormControl>
           </FormGroup>
@@ -223,7 +243,9 @@ export function TransportProfileFields({
               label={t("Mailbox ID")}
               placeholder="MB123456"
               rules={{ required: true }}
-              description={t("The mailbox identifier assigned by the VAN provider for routing documents.")}
+              description={t(
+                "The mailbox identifier assigned by the VAN provider for routing documents.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -232,7 +254,9 @@ export function TransportProfileFields({
               name="config.accountId"
               label={t("Account ID")}
               placeholder={t("ACCT-0001")}
-              description={t("The account identifier with the VAN provider, if separate from the mailbox.")}
+              description={t(
+                "The account identifier with the VAN provider, if separate from the mailbox.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -278,7 +302,9 @@ function DeliveryRetrySection({ control }: ProfileFieldsProps) {
             label={t("Initial Backoff (seconds)")}
             type="number"
             placeholder="30"
-            description={t("Wait before the first retry; doubles each attempt. Defaults to 30 seconds.")}
+            description={t(
+              "Wait before the first retry; doubles each attempt. Defaults to 30 seconds.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -288,7 +314,9 @@ function DeliveryRetrySection({ control }: ProfileFieldsProps) {
             label={t("Max Backoff (seconds)")}
             type="number"
             placeholder="900"
-            description={t("Upper bound on the retry backoff. Defaults to 900 seconds (15 minutes).")}
+            description={t(
+              "Upper bound on the retry backoff. Defaults to 900 seconds (15 minutes).",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -412,7 +440,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label={t("ISA Sender Qualifier")}
             placeholder={t("ZZ")}
             rules={{ required: true }}
-            description={t("The qualifier code that identifies the type of our ISA sender ID (e.g. 01, ZZ).")}
+            description={t(
+              "The qualifier code that identifies the type of our ISA sender ID (e.g. 01, ZZ).",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -432,7 +462,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label={t("ISA Receiver Qualifier")}
             placeholder={t("ZZ")}
             rules={{ required: true }}
-            description={t("The qualifier code that identifies the type of the partner's ISA receiver ID.")}
+            description={t(
+              "The qualifier code that identifies the type of the partner's ISA receiver ID.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -442,7 +474,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label={t("ISA Receiver ID")}
             placeholder="PARTNERCO"
             rules={{ required: true }}
-            description={t("The partner's receiver identifier placed in the ISA interchange header.")}
+            description={t(
+              "The partner's receiver identifier placed in the ISA interchange header.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -462,7 +496,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label={t("GS Receiver ID")}
             placeholder="PARTNERCO"
             rules={{ required: true }}
-            description={t("The partner's application receiver code placed in the GS functional group header.")}
+            description={t(
+              "The partner's application receiver code placed in the GS functional group header.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -482,7 +518,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label={t("Environment")}
             options={environmentOptions}
             rules={{ required: true }}
-            description={t("Whether this envelope targets the partner's test or production system.")}
+            description={t(
+              "Whether this envelope targets the partner's test or production system.",
+            )}
           />
         </FormControl>
         <FormControl cols="full">
@@ -491,7 +529,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             name="config.acknowledgmentPreference"
             label={t("Acknowledgment Preference")}
             options={acknowledgmentOptions}
-            description={t("Which functional acknowledgments (997/999) to request from the partner.")}
+            description={t(
+              "Which functional acknowledgments (997/999) to request from the partner.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -540,7 +580,9 @@ export function SecretProfileFields({
                   control={control}
                   name="secrets.privateKey"
                   label={t("AS2 Private Key (PEM)")}
-                  description={t("Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.")}
+                  description={t(
+                    "Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">

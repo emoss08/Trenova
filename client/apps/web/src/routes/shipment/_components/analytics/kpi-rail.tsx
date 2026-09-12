@@ -191,10 +191,10 @@ export default function KpiRail() {
         icon={<TruckIcon {...ICON_PROPS} />}
         info={<KpiInfoPopover {...KPI_INFO.activeShipments} />}
         breakdown={[
-          { label: "In-transit", value: breakdown.inTransit, color: "var(--brand)" },
-          { label: "At-risk", value: breakdown.atRisk, color: "var(--destructive)" },
-          { label: "Loading", value: breakdown.loading, color: "var(--info)" },
-          { label: "Done", value: breakdown.done, color: "var(--success)" },
+          { label: t("In-transit"), value: breakdown.inTransit, color: "var(--brand)" },
+          { label: t("At-risk"), value: breakdown.atRisk, color: "var(--destructive)" },
+          { label: t("Loading"), value: breakdown.loading, color: "var(--info)" },
+          { label: t("Done"), value: breakdown.done, color: "var(--success)" },
         ]}
         span={3}
       />

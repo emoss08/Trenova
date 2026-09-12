@@ -85,16 +85,16 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
 
   const details: { label: string; value: string }[] = [];
   if (shipment.pieces != null) {
-    details.push({ label: "Pieces", value: shipment.pieces.toLocaleString() });
+    details.push({ label: t("Pieces"), value: shipment.pieces.toLocaleString() });
   }
   if (shipment.weight != null) {
-    details.push({ label: "Weight", value: `${shipment.weight.toLocaleString()} lbs` });
+    details.push({ label: t("Weight"), value: `${shipment.weight.toLocaleString()} lbs` });
   }
   if (totalMileage > 0) {
-    details.push({ label: "Mileage", value: `${totalMileage.toLocaleString()} mi` });
+    details.push({ label: t("Mileage"), value: `${totalMileage.toLocaleString()} mi` });
   }
   if (shipment.totalChargeAmount != null && Number(shipment.totalChargeAmount) > 0) {
-    details.push({ label: "Total", value: formatCurrency(Number(shipment.totalChargeAmount)) });
+    details.push({ label: t("Total"), value: formatCurrency(Number(shipment.totalChargeAmount)) });
   }
 
   return (

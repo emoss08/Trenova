@@ -1,19 +1,19 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { EDIMappingProfileRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
+export function getMappingProfileColumns(t: TranslateFn): ColumnDef<EDIMappingProfileRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 240,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -23,7 +23,7 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
     },
     {
       accessorKey: "partner.name",
-      header: "Partner",
+      header: t("Partner"),
       cell: ({ row }) =>
         row.original.partner ? (
           `${row.original.partner.code} — ${row.original.partner.name}`
@@ -32,7 +32,7 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
         ),
       size: 260,
       meta: {
-        label: "Partner",
+        label: t("Partner"),
         apiField: "ediPartnerId",
         filterable: false,
         sortable: false,
@@ -40,11 +40,11 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => row.original.description || <DataTablePlaceholder />,
       size: 280,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -54,19 +54,19 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
     },
     {
       id: "mappings",
-      header: "Mappings",
+      header: t("Mappings"),
       cell: ({ row }) => {
         const rowEntries = row.original.entries;
         const count = rowEntries ? rowEntries.length : 0;
         return count > 0 ? (
           <Badge variant="secondary">{count.toLocaleString()}</Badge>
         ) : (
-          <DataTablePlaceholder text={translate("None")} />
+          <DataTablePlaceholder text={t("None")} />
         );
       },
       size: 120,
       meta: {
-        label: "Mappings",
+        label: t("Mappings"),
         apiField: "entries",
         filterable: false,
         sortable: false,
@@ -74,11 +74,11 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfileRow>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt ?? undefined} />,
       size: 180,
       meta: {
-        label: "Updated",
+        label: t("Updated"),
         apiField: "updatedAt",
         filterable: false,
         sortable: true,

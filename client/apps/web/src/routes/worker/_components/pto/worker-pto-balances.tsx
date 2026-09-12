@@ -112,10 +112,14 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
             <h3 className="text-sm font-semibold">{t("Balances")}</h3>
             <InfoPopover title={t("Balances")}>
               <p>
-                {t("Kept in days and built from the ledger: accruals post from the policy on its schedule, approved time off draws down, adjustments correct by hand. Available is the balance less requests still awaiting a decision.")}
+                {t(
+                  "Kept in days and built from the ledger: accruals post from the policy on its schedule, approved time off draws down, adjustments correct by hand. Available is the balance less requests still awaiting a decision.",
+                )}
               </p>
               <p>
-                {t("A cap on the policy, or on the worker's tenure tier, stops accrual above it. A policy marked informational shows the figures without holding requests to them.")}
+                {t(
+                  "A cap on the policy, or on the worker's tenure tier, stops accrual above it. A policy marked informational shows the figures without holding requests to them.",
+                )}
               </p>
             </InfoPopover>
           </div>
@@ -132,7 +136,12 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button size="sm" variant="ghost" className="size-8" aria-label={t("Balance actions")}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="size-8"
+                    aria-label={t("Balance actions")}
+                  >
                     <EllipsisIcon />
                   </Button>
                 }
@@ -165,7 +174,9 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
           <ScaleIcon className="text-muted-foreground mx-auto size-6" />
           <p className="mt-2 text-sm font-medium">{t("No PTO policy assigned")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            {t("Time off is not tracked against a balance until this worker is enrolled in a policy.")}
+            {t(
+              "Time off is not tracked against a balance until this worker is enrolled in a policy.",
+            )}
           </p>
         </div>
       )}
@@ -203,7 +214,12 @@ function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) 
       <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
         {assignment.ptoPolicy.code}
       </Badge>
-      {t("{0} · since {1}{2}", assignment.ptoPolicy.name, formatUnixDateMedium(assignment.effectiveFrom), !assignment.ptoPolicy.enforceBalance ? ` ${t("· informational")}` : "")}
+      {t(
+        "{0} · since {1}{2}",
+        assignment.ptoPolicy.name,
+        formatUnixDateMedium(assignment.effectiveFrom),
+        !assignment.ptoPolicy.enforceBalance ? ` ${t("· informational")}` : "",
+      )}
     </p>
   );
 }
@@ -281,7 +297,12 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
       ) : null}
       {balance.nextAccrual ? (
         <p className="text-muted-foreground mt-2 flex items-center gap-1 text-[11px]">
-          <CalendarSyncIcon className="size-3" />{t("+{0} on {1}", formatPtoDays(balance.nextAccrual.nominalDays), formatUnixDateMedium(balance.nextAccrual.effectiveAt))}
+          <CalendarSyncIcon className="size-3" />
+          {t(
+            "+{0} on {1}",
+            formatPtoDays(balance.nextAccrual.nominalDays),
+            formatUnixDateMedium(balance.nextAccrual.effectiveAt),
+          )}
         </p>
       ) : null}
     </div>

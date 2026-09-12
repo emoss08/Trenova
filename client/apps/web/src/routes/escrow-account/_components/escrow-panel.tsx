@@ -95,7 +95,9 @@ function OpenEscrowPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Escrow Account")}
-      description={t("One active escrow account per driver; contributions flow in from settlements via a recurring deduction.")}
+      description={t(
+        "One active escrow account per driver; contributions flow in from settlements via a recurring deduction.",
+      )}
       queryKey="escrow-account-list"
       form={form}
       formComponent={
@@ -108,7 +110,9 @@ function OpenEscrowPanel({
               placeholder={t("Select owner-operator")}
               ownerOperatorsOnly
               rules={{ required: true }}
-              description={t("Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.")}
+              description={t(
+                "Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -119,7 +123,9 @@ function OpenEscrowPanel({
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
-              description={t("Contributions stop automatically once the balance reaches this target.")}
+              description={t(
+                "Contributions stop automatically once the balance reaches this target.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -130,7 +136,9 @@ function OpenEscrowPanel({
               decimalScale={2}
               fixedDecimalScale
               sideText="%"
-              description={t("Defaults to your settlement control rate. Interest accrues at least quarterly.")}
+              description={t(
+                "Defaults to your settlement control rate. Interest accrues at least quarterly.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -216,7 +224,11 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       <div className="flex flex-wrap items-center gap-2">
         <EscrowAccountStatusBadge status={account.status as EscrowAccountStatus} />
         <span className="text-muted-foreground text-xs">
-          {t("Opened {0}{1}", formatDate(account.openedDate), account.closedDate ? ` ${t("· Closed {0}", formatDate(account.closedDate))}` : "")}
+          {t(
+            "Opened {0}{1}",
+            formatDate(account.openedDate),
+            account.closedDate ? ` ${t("· Closed {0}", formatDate(account.closedDate))}` : "",
+          )}
         </span>
         {account.status === "Active" && (
           <div className="ml-auto flex gap-2">
@@ -253,7 +265,9 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Interest Rate")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Interest Rate")}
+          </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
             {Number(account.annualInterestRate) > 0
               ? t("{0}% / yr", Number(account.annualInterestRate).toFixed(2))
@@ -306,7 +320,9 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </table>
         </div>
         <p className="text-muted-foreground mt-2 text-[11px]">
-          {t("This ledger satisfies the transaction-level accounting owed to lessors under 49 CFR 376.12(k); interest accrues at least quarterly.")}
+          {t(
+            "This ledger satisfies the transaction-level accounting owed to lessors under 49 CFR 376.12(k); interest accrues at least quarterly.",
+          )}
         </p>
       </div>
 
@@ -315,7 +331,9 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           <DialogHeader>
             <DialogTitle>{t("Record escrow adjustment")}</DialogTitle>
             <DialogDescription>
-              {t("Positive amounts add to the balance; negative amounts apply funds (e.g. a repair paid from escrow).")}
+              {t(
+                "Positive amounts add to the balance; negative amounts apply funds (e.g. a repair paid from escrow).",
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
@@ -327,7 +345,9 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 inputMode="decimal"
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
-                {t("Dollars, not cents; positive deposits into escrow, negative applies funds out.")}
+                {t(
+                  "Dollars, not cents; positive deposits into escrow, negative applies funds out.",
+                )}
               </p>
             </div>
             <div>
@@ -337,7 +357,9 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 placeholder={t("Description (required)")}
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
-                {t("Recorded permanently on the ledger — 49 CFR 376.12(k) requires every escrow transaction to be accounted for.")}
+                {t(
+                  "Recorded permanently on the ledger — 49 CFR 376.12(k) requires every escrow transaction to be accounted for.",
+                )}
               </p>
             </div>
           </div>
@@ -361,7 +383,8 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
             <DialogTitle>{t("Close escrow account")}</DialogTitle>
             <DialogDescription>
               {t("The remaining balance of")}{" "}
-              <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} /> {t("will be refunded to the driver as a ledger entry. This cannot be undone.")}
+              <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} />{" "}
+              {t("will be refunded to the driver as a ledger entry. This cannot be undone.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

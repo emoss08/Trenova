@@ -27,7 +27,7 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
   const cancelRun = useCancelReportRun();
   const { allowed: canExport } = usePermission(Resource.Report, Operation.Export);
 
-  const columns = useMemo(() => getReportRunColumns(), []);
+  const columns = useMemo(() => getReportRunColumns(t), [t]);
   const graphql = useMemo(
     () => reportRunsTableGraphQLConfig(definitionId ? { definitionId } : undefined),
     [definitionId],
@@ -37,14 +37,14 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
     () => [
       {
         id: "download",
-        label: "Download",
+        label: t("Download"),
         icon: DownloadIcon,
         hidden: (row) => !canExport || !isDownloadable(row.original),
         onClick: (row) => downloadReportRun(row.original),
       },
       {
         id: "cancel",
-        label: "Cancel Run",
+        label: t("Cancel Run"),
         icon: BanIcon,
         variant: "destructive",
         hidden: (row) => !isReportRunActive(row.original.status),

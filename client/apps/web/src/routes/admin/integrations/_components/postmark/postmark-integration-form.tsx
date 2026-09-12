@@ -105,7 +105,9 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
         <MailCheckIcon className="size-4" />
         <AlertTitle>{t("Transactional email provider")}</AlertTitle>
         <AlertDescription>
-          {t("Postmark credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.")}
+          {t(
+            "Postmark credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.",
+          )}
         </AlertDescription>
       </Alert>
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
@@ -274,7 +276,9 @@ function PostmarkFormHeader() {
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">{t("Connect with Postmark")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">{t("Create a server token and webhook in")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("Create a server token and webhook in")}
+          </p>
           <ExternalLink href="https://account.postmarkapp.com/servers" className="text-xs">
             {t("Postmark.")}
           </ExternalLink>

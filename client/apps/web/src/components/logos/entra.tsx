@@ -5,5 +5,7 @@ import { LazyImage } from "@/components/image";
 export function EntraLogo({ className }: { className?: string }) {
   const t = useT();
 
-  return <LazyImage src={entraLogo} alt={t("Microsoft Entra ID")} className={className || "size-6"} />;
+  return (
+    <LazyImage src={entraLogo} alt={t("Microsoft Entra ID")} className={className || "size-6"} />
+  );
 }

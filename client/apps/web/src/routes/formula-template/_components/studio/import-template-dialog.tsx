@@ -150,7 +150,9 @@ export function ImportTemplateDialog({
             {t("Import Templates")}
           </DialogTitle>
           <DialogDescription>
-            {t("Import a formula template export. Imported templates are created as drafts and must go through review before they can price shipments.")}
+            {t(
+              "Import a formula template export. Imported templates are created as drafts and must go through review before they can price shipments.",
+            )}
           </DialogDescription>
         </DialogHeader>
 

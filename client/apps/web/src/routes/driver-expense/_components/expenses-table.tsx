@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   driverExpenseTableGraphQLConfig,
@@ -9,7 +10,9 @@ import { getColumns } from "./expense-columns";
 import { ExpensePanel } from "./expense-panel";
 
 export default function ExpensesTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<DriverExpenseRow>

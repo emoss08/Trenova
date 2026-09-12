@@ -332,7 +332,10 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
               </KbdGroup>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t("Arrow keys move a month and T returns to today {0}", canCreate ? t(". Drag across days to request time off.") : ".")}
+              {t(
+                "Arrow keys move a month and T returns to today {0}",
+                canCreate ? t(". Drag across days to request time off.") : ".",
+              )}
             </TooltipContent>
           </Tooltip>
         </div>

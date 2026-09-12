@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   routingGuideTableGraphQLConfig,
@@ -9,7 +10,9 @@ import { getColumns } from "./routing-guide-columns";
 import { RoutingGuidePanel } from "./routing-guide-panel";
 
 export default function RoutingGuideTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<RoutingGuideRow>

@@ -29,7 +29,9 @@ export function RateMatrixForm() {
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
-              description={t("An inactive matrix stops pricing, and every lane pointing at it stops with it")}
+              description={t(
+                "An inactive matrix stops pricing, and every lane pointing at it stops with it",
+              )}
               options={statusChoices}
             />
           </FormControl>
@@ -59,7 +61,9 @@ export function RateMatrixForm() {
               name="description"
               label={t("Description")}
               placeholder={t("Zone-to-zone base rates by weight break, published July 2025")}
-              description={t("Where this tariff came from, so the next person knows what they are amending")}
+              description={t(
+                "Where this tariff came from, so the next person knows what they are amending",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -67,7 +71,9 @@ export function RateMatrixForm() {
 
       <FormSection
         title={t("Pricing")}
-        description={t("What the numbers in the grid mean and how a looked-up rate becomes a charge.")}
+        description={t(
+          "What the numbers in the grid mean and how a looked-up rate becomes a charge.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -77,7 +83,9 @@ export function RateMatrixForm() {
               name="formulaTemplateId"
               label={t("Rating Method")}
               placeholder={t("Select rating method")}
-              description={t("The formula template that says what each number in the grid means — the same grid is a per-mile tariff or a flat table depending on which template prices it")}
+              description={t(
+                "The formula template that says what each number in the grid means — the same grid is a per-mile tariff or a flat table depending on which template prices it",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -87,7 +95,9 @@ export function RateMatrixForm() {
               name="currency"
               label={t("Currency")}
               placeholder={t("Select currency")}
-              description={t("The currency the numbers in the grid are in, converted at rating time when it differs from the contract's")}
+              description={t(
+                "The currency the numbers in the grid are in, converted at rating time when it differs from the contract's",
+              )}
               options={currencyChoices}
             />
           </FormControl>

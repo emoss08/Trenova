@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   settlementBatchTableGraphQLConfig,
@@ -9,7 +10,9 @@ import { getColumns } from "./batch-columns";
 import { BatchPanel } from "./batch-panel";
 
 export default function BatchesTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<SettlementBatchRow>

@@ -115,26 +115,26 @@ export function CommentsToolbar({
     if (filters.mentionsMe) {
       pills.push({
         key: "mentions-me",
-        label: "Mentions me",
+        label: t("Mentions me"),
         onRemove: () => onFiltersChange({ ...filters, mentionsMe: false }),
       });
     }
     if (filters.unresolvedOnly) {
       pills.push({
         key: "unresolved",
-        label: "Unresolved",
+        label: t("Unresolved"),
         onRemove: () => onFiltersChange({ ...filters, unresolvedOnly: false }),
       });
     }
     if (filters.pinnedOnly) {
       pills.push({
         key: "pinned",
-        label: "Pinned",
+        label: t("Pinned"),
         onRemove: () => onFiltersChange({ ...filters, pinnedOnly: false }),
       });
     }
     return pills;
-  }, [filters, onFiltersChange]);
+  }, [filters, onFiltersChange, t]);
 
   return (
     <div className="border-border border-b px-4 py-2">

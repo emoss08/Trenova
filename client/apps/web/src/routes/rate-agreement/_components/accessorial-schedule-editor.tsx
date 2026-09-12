@@ -41,7 +41,9 @@ export function AccessorialScheduleEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No negotiated accessorials. Without one, every accessorial is priced at the organization default instead of at what the contract says.")}
+          {t(
+            "No negotiated accessorials. Without one, every accessorial is priced at the organization default instead of at what the contract says.",
+          )}
         </p>
       )}
 
@@ -56,7 +58,9 @@ export function AccessorialScheduleEditor() {
               <p className="text-sm font-medium">
                 {t("Accessorial")} {index + 1}
                 {row?.waived && (
-                  <span className="text-muted-foreground ml-2 text-xs font-normal">{t("Waived")}</span>
+                  <span className="text-muted-foreground ml-2 text-xs font-normal">
+                    {t("Waived")}
+                  </span>
                 )}
               </p>
               <Button
@@ -164,7 +168,9 @@ export function AccessorialScheduleEditor() {
                   control={control}
                   name={`accessorials.${index}.autoApply` as never}
                   label={t("Auto Apply")}
-                  description={t("Added to every shipment this contract prices, so it never depends on somebody remembering")}
+                  description={t(
+                    "Added to every shipment this contract prices, so it never depends on somebody remembering",
+                  )}
                   outlined
                 />
               </FormControl>
@@ -173,7 +179,9 @@ export function AccessorialScheduleEditor() {
                   control={control}
                   name={`accessorials.${index}.waived` as never}
                   label={t("Waived")}
-                  description={t("The contract gives this service away, which is a stated term rather than an omission")}
+                  description={t(
+                    "The contract gives this service away, which is a stated term rather than an omission",
+                  )}
                   outlined
                 />
               </FormControl>
@@ -187,7 +195,9 @@ export function AccessorialScheduleEditor() {
                     name={`accessorials.${index}.applyCondition` as never}
                     label={t("Apply Condition")}
                     placeholder={t("totalStops > 2")}
-                    description={t("An expression in the same language the rating formulas use. Leave empty to apply to every shipment.")}
+                    description={t(
+                      "An expression in the same language the rating formulas use. Leave empty to apply to every shipment.",
+                    )}
                   />
                 </FormControl>
               </FormGroup>

@@ -113,7 +113,9 @@ export function JsonEditor() {
       <div className="border-muted bg-muted/30 flex items-start gap-2 rounded-md border p-2.5">
         <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
         <p className="text-muted-foreground text-xs">
-          {t("The JSON editor and the Rule Builder share the same underlying data. Edits made here must be applied to take effect in the builder, and vice versa. Use “Refresh from Builder” to pull the latest builder state into this editor.")}
+          {t(
+            "The JSON editor and the Rule Builder share the same underlying data. Edits made here must be applied to take effect in the builder, and vice versa. Use “Refresh from Builder” to pull the latest builder state into this editor.",
+          )}
         </p>
       </div>
 
@@ -138,7 +140,9 @@ export function JsonEditor() {
               }
             />
             <TooltipContent>
-              {t("Validate the JSON and push it into the form. This overwrites the Rule Builder state.")}
+              {t(
+                "Validate the JSON and push it into the form. This overwrites the Rule Builder state.",
+              )}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -157,12 +161,18 @@ export function JsonEditor() {
               }
             />
             <TooltipContent>
-              {t("Discard any unapplied JSON edits and reload from the current Rule Builder state.")}
+              {t(
+                "Discard any unapplied JSON edits and reload from the current Rule Builder state.",
+              )}
             </TooltipContent>
           </Tooltip>
         </div>
         <span className="text-muted-foreground text-xs">
-          {t("{0, plural, one {# line} other {# lines}} · {1} chars", lineCount, charCount.toLocaleString())}
+          {t(
+            "{0, plural, one {# line} other {# lines}} · {1} chars",
+            lineCount,
+            charCount.toLocaleString(),
+          )}
         </span>
       </div>
 

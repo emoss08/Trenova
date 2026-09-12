@@ -229,7 +229,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
           <div className="flex min-w-0 flex-col">
             <span className="text-sm">{t("Base Rate")}</span>
-            <span className="text-muted-foreground text-[11px]">{t("Per-unit rate before formula")}</span>
+            <span className="text-muted-foreground text-[11px]">
+              {t("Per-unit rate before formula")}
+            </span>
           </div>
           {editingFreight ? (
             <div className="flex items-center gap-1">

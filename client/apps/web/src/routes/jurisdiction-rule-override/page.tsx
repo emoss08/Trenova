@@ -13,7 +13,9 @@ export function JurisdictionRuleOverridesPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Carrier Overrides")}
-        description={t("Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.")}
+        description={t(
+          "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

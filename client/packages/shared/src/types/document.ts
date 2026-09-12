@@ -13,12 +13,7 @@ export const documentStatusSchema = z.enum([
 
 export type DocumentStatus = z.infer<typeof documentStatusSchema>;
 
-export const documentPreviewStatusSchema = z.enum([
-  "Pending",
-  "Ready",
-  "Failed",
-  "Unsupported",
-]);
+export const documentPreviewStatusSchema = z.enum(["Pending", "Ready", "Failed", "Unsupported"]);
 
 export type DocumentPreviewStatus = z.infer<typeof documentPreviewStatusSchema>;
 
@@ -38,18 +33,11 @@ export const documentShipmentDraftStatusSchema = z.enum([
 ]);
 
 export type DocumentContentStatus = z.infer<typeof documentContentStatusSchema>;
-export type DocumentShipmentDraftStatus = z.infer<
-  typeof documentShipmentDraftStatusSchema
->;
+export type DocumentShipmentDraftStatus = z.infer<typeof documentShipmentDraftStatusSchema>;
 
-export const documentProcessingProfileSchema = z.enum([
-  "none",
-  "rate_confirmation_import",
-]);
+export const documentProcessingProfileSchema = z.enum(["none", "rate_confirmation_import"]);
 
-export type DocumentProcessingProfile = z.infer<
-  typeof documentProcessingProfileSchema
->;
+export type DocumentProcessingProfile = z.infer<typeof documentProcessingProfileSchema>;
 
 export const documentSchema = z.object({
   id: z.string(),
@@ -72,7 +60,9 @@ export const documentSchema = z.object({
   description: z.string().nullable().optional(),
   resourceId: z.string(),
   resourceType: z.string(),
-  processingProfile: documentProcessingProfileSchema.nullish().transform((value) => value ?? "none"),
+  processingProfile: documentProcessingProfileSchema
+    .nullish()
+    .transform((value) => value ?? "none"),
   expirationDate: z.number().nullable().optional(),
   tags: z.array(z.string()).nullable().optional(),
   isPublic: z.boolean(),
@@ -103,9 +93,7 @@ export const bulkUploadDocumentResponseSchema = z.object({
   successCount: z.number(),
 });
 
-export type BulkUploadDocumentResponse = z.infer<
-  typeof bulkUploadDocumentResponseSchema
->;
+export type BulkUploadDocumentResponse = z.infer<typeof bulkUploadDocumentResponseSchema>;
 
 export const downloadUrlResponseSchema = z.object({
   url: z.string(),
@@ -160,14 +148,8 @@ export const documentIntelligenceSchema = z
     classificationReason: z.string().optional(),
     missingFields: z.array(z.string()).optional().default([]),
     signals: z.array(z.string()).optional().default([]),
-    conflicts: z
-      .array(documentIntelligenceConflictSchema)
-      .optional()
-      .default([]),
-    fields: z
-      .record(z.string(), documentIntelligenceFieldSchema)
-      .optional()
-      .default({}),
+    conflicts: z.array(documentIntelligenceConflictSchema).optional().default([]),
+    fields: z.record(z.string(), documentIntelligenceFieldSchema).optional().default({}),
     stops: z.array(documentIntelligenceStopSchema).optional().default([]),
     rawExcerpt: z.string().optional(),
   })
@@ -177,9 +159,7 @@ export const documentIntelligenceAIDiagnosticsSchema = z
   .object({
     fallbackAnalysis: documentIntelligenceSchema.optional(),
     candidateAnalysis: documentIntelligenceSchema.nullable().optional(),
-    acceptanceStatus: z
-      .enum(["not_attempted", "accepted", "rejected"])
-      .optional(),
+    acceptanceStatus: z.enum(["not_attempted", "accepted", "rejected"]).optional(),
     rejectionReason: z.string().optional(),
   })
   .passthrough();
@@ -286,7 +266,9 @@ export const documentUploadSessionSchema = z.object({
   lineageId: z.string().nullable().optional(),
   resourceId: z.string(),
   resourceType: z.string(),
-  processingProfile: documentProcessingProfileSchema.nullish().transform((value) => value ?? "none"),
+  processingProfile: documentProcessingProfileSchema
+    .nullish()
+    .transform((value) => value ?? "none"),
   documentTypeId: z.string().nullable().optional(),
   originalName: z.string(),
   contentType: z.string(),
@@ -328,36 +310,20 @@ export const documentUploadPartTargetSchema = z.object({
 });
 
 export type DocumentUploadSession = z.infer<typeof documentUploadSessionSchema>;
-export type DocumentUploadSessionStatus = z.infer<
-  typeof documentUploadSessionStatusSchema
->;
-export type DocumentUploadStrategy = z.infer<
-  typeof documentUploadStrategySchema
->;
+export type DocumentUploadSessionStatus = z.infer<typeof documentUploadSessionStatusSchema>;
+export type DocumentUploadStrategy = z.infer<typeof documentUploadStrategySchema>;
 export type DocumentUploadPart = z.infer<typeof documentUploadPartSchema>;
-export type DocumentUploadSessionState = z.infer<
-  typeof documentUploadSessionStateSchema
->;
-export type DocumentUploadPartTarget = z.infer<
-  typeof documentUploadPartTargetSchema
->;
+export type DocumentUploadSessionState = z.infer<typeof documentUploadSessionStateSchema>;
+export type DocumentUploadPartTarget = z.infer<typeof documentUploadPartTargetSchema>;
 export type DocumentContent = z.infer<typeof documentContentSchema>;
-export type DocumentIntelligenceField = z.infer<
-  typeof documentIntelligenceFieldSchema
->;
-export type DocumentIntelligenceConflict = z.infer<
-  typeof documentIntelligenceConflictSchema
->;
-export type DocumentIntelligenceStop = z.infer<
-  typeof documentIntelligenceStopSchema
->;
+export type DocumentIntelligenceField = z.infer<typeof documentIntelligenceFieldSchema>;
+export type DocumentIntelligenceConflict = z.infer<typeof documentIntelligenceConflictSchema>;
+export type DocumentIntelligenceStop = z.infer<typeof documentIntelligenceStopSchema>;
 export type DocumentIntelligence = z.infer<typeof documentIntelligenceSchema>;
 export type DocumentIntelligenceAIDiagnostics = z.infer<
   typeof documentIntelligenceAIDiagnosticsSchema
 >;
-export type DocumentStructuredData = z.infer<
-  typeof documentStructuredDataSchema
->;
+export type DocumentStructuredData = z.infer<typeof documentStructuredDataSchema>;
 export type DocumentShipmentDraft = z.infer<typeof documentShipmentDraftSchema>;
 
 export const documentPacketItemStatusSchema = z.enum([
@@ -465,23 +431,43 @@ export const importAssistantChatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
   text: z.string(),
-  toolCalls: z.array(importAssistantToolCallRecordSchema).nullish().transform((v) => v ?? []),
-  suggestions: z.array(importAssistantSuggestionSchema).nullish().transform((v) => v ?? []),
+  toolCalls: z
+    .array(importAssistantToolCallRecordSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  suggestions: z
+    .array(importAssistantSuggestionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
   createdAt: z.number(),
 });
 
 export const importAssistantChatResponseSchema = z.object({
   message: z.string(),
   conversationId: z.string(),
-  actions: z.array(importAssistantActionSchema).nullish().transform((v) => v ?? []),
-  suggestions: z.array(importAssistantSuggestionSchema).nullish().transform((v) => v ?? []),
-  toolCalls: z.array(importAssistantToolCallRecordSchema).nullish().transform((v) => v ?? []),
+  actions: z
+    .array(importAssistantActionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  suggestions: z
+    .array(importAssistantSuggestionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  toolCalls: z
+    .array(importAssistantToolCallRecordSchema)
+    .nullish()
+    .transform((v) => v ?? []),
 });
 
 export const conversationStatusSchema = z.enum(["Active", "Completed", "Superseded"]);
 export type ConversationStatus = z.infer<typeof conversationStatusSchema>;
 
-export const conversationStatusReasonSchema = z.enum(["", "reextract", "shipment_created", "manual_restart"]);
+export const conversationStatusReasonSchema = z.enum([
+  "",
+  "reextract",
+  "shipment_created",
+  "manual_restart",
+]);
 export type ConversationStatusReason = z.infer<typeof conversationStatusReasonSchema>;
 
 export const importAssistantChatHistoryResponseSchema = z.object({
@@ -492,7 +478,10 @@ export const importAssistantChatHistoryResponseSchema = z.object({
   turnCount: z.number().default(0),
   lastMessageAt: z.number().nullable().optional(),
   updatedAt: z.number().default(0),
-  messages: z.array(importAssistantChatMessageSchema).nullish().transform((v) => v ?? []),
+  messages: z
+    .array(importAssistantChatMessageSchema)
+    .nullish()
+    .transform((v) => v ?? []),
 });
 
 export type ImportAssistantAction = z.infer<typeof importAssistantActionSchema>;
@@ -500,7 +489,9 @@ export type ImportAssistantSuggestion = z.infer<typeof importAssistantSuggestion
 export type ImportAssistantToolCallRecord = z.infer<typeof importAssistantToolCallRecordSchema>;
 export type ImportAssistantChatMessage = z.infer<typeof importAssistantChatMessageSchema>;
 export type ImportAssistantChatResponse = z.infer<typeof importAssistantChatResponseSchema>;
-export type ImportAssistantChatHistoryResponse = z.infer<typeof importAssistantChatHistoryResponseSchema>;
+export type ImportAssistantChatHistoryResponse = z.infer<
+  typeof importAssistantChatHistoryResponseSchema
+>;
 
 export interface ImportAssistantChatParams {
   message: string;

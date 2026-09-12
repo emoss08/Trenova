@@ -70,7 +70,13 @@ function CustomerRow({
           ) : null}
         </div>
         <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-          {t("{0} billed · {1} paid out · {2} {3}", formatCurrency(row.billedAmount), formatCurrency(row.driverPayAmount), row.stopCount, row.stopCount === 1 ? "stop" : "stops")}
+          {t(
+            "{0} billed · {1} paid out · {2} {3}",
+            formatCurrency(row.billedAmount),
+            formatCurrency(row.driverPayAmount),
+            row.stopCount,
+            row.stopCount === 1 ? "stop" : "stops",
+          )}
         </p>
       </div>
 
@@ -126,7 +132,9 @@ export function CustomerMargin({
       index={index}
       icon={UsersIcon}
       title={t("Customer margin")}
-      description={t("Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.")}
+      description={t(
+        "Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.",
+      )}
       action={
         rows.length > 1 ? (
           <SegmentedControl

@@ -88,7 +88,9 @@ export function RescindActionDialog({
         <DialogHeader>
           <DialogTitle>{t("Rescind this {0}", label)}</DialogTitle>
           <DialogDescription>
-            {t("Use this when the action should not have been issued. It stops counting toward the next rung immediately; the row and your reason stay on the record.")}
+            {t(
+              "Use this when the action should not have been issued. It stops counting toward the next rung immediately; the row and your reason stay on the record.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -106,7 +108,9 @@ export function RescindActionDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. The delay was the shipper's, not the driver's")}
-                  description={t("Saved on the rescinded row so an auditor can see why the action was withdrawn.")}
+                  description={t(
+                    "Saved on the rescinded row so an auditor can see why the action was withdrawn.",
+                  )}
                   rules={{ required: true }}
                   maxLength={255}
                 />

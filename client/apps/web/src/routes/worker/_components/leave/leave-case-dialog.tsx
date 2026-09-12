@@ -133,7 +133,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit leave case") : t("Open a leave case")}</DialogTitle>
           <DialogDescription>
-            {t("A case is one qualifying reason. The entitlement is drawn down by the days recorded against it, so a case open for months has used nothing until days are.")}
+            {t(
+              "A case is one qualifying reason. The entitlement is drawn down by the days recorded against it, so a case open for months has used nothing until days are.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -164,7 +166,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   options={FREQUENCY_OPTIONS}
                   rules={{ required: true }}
                   placeholder={t("Pick a pattern")}
-                  description={t("Continuous is one block of time; intermittent and reduced schedule are recorded day by day.")}
+                  description={t(
+                    "Continuous is one block of time; intermittent and reduced schedule are recorded day by day.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -173,7 +177,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="reason"
                   label={t("Qualifying reason")}
                   placeholder={t("e.g. Serious health condition of a parent")}
-                  description={t("The one qualifying reason this case covers; open another case for a different reason.")}
+                  description={t(
+                    "The one qualifying reason this case covers; open another case for a different reason.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -182,7 +188,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="startsAt"
                   label={t("Leave begins")}
                   placeholder={t("First day of leave")}
-                  description={t("The first day of the leave; the expected end cannot be before it.")}
+                  description={t(
+                    "The first day of the leave; the expected end cannot be before it.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -192,7 +200,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="endsAt"
                   label={t("Expected to end")}
                   placeholder={t("Leave empty if not yet known")}
-                  description={t("When the leave is expected to finish; closing the case fills it in if still blank.")}
+                  description={t(
+                    "When the leave is expected to finish; closing the case fills it in if still blank.",
+                  )}
                 />
               </FormControl>
               {isEdit ? null : (
@@ -213,7 +223,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="eligibilityHoursWorked"
                   label={t("Hours worked in the prior year")}
                   placeholder={t("e.g. 1800")}
-                  description={t("For the 1,250-hour eligibility test. There is no timeclock here, so it is recorded by hand.")}
+                  description={t(
+                    "For the 1,250-hour eligibility test. There is no timeclock here, so it is recorded by hand.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -221,14 +233,18 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   control={control}
                   name="militaryCaregiver"
                   label={t("Military caregiver leave")}
-                  description={t("Raises the entitlement to 26 weeks for the period (29 CFR 825.127).")}
+                  description={t(
+                    "Raises the entitlement to 26 weeks for the period (29 CFR 825.127).",
+                  )}
                 />
               </FormControl>
               {frequency === "Intermittent" || frequency === "ReducedSchedule" ? (
                 <FormControl cols="full">
                   <Alert>
                     <AlertDescription>
-                      {t("Intermittent leave is recorded day by day in hours, in the smallest increment the organisation uses for any other absence (29 CFR 825.205).")}
+                      {t(
+                        "Intermittent leave is recorded day by day in hours, in the smallest increment the organisation uses for any other absence (29 CFR 825.205).",
+                      )}
                     </AlertDescription>
                   </Alert>
                 </FormControl>

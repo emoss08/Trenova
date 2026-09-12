@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   EDIPartnerDocumentProfile,
   EDITemplate,
@@ -70,7 +71,7 @@ const ediDocumentSourceInputsByTransactionSet: Record<string, EDIDocumentSourceI
 export function getEDIDocumentSourceInputs(transactionSet?: string | null) {
   return (
     ediDocumentSourceInputsByTransactionSet[transactionSet ?? ""] ?? [
-      { field: "payload", label: "Payload JSON", placeholder: "" },
+      { field: "payload", label: translate("Payload JSON"), placeholder: "" },
     ]
   );
 }

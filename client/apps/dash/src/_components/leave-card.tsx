@@ -48,7 +48,12 @@ export function LeaveCard() {
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t("Family & medical leave")}</p>
           <p className="text-muted-foreground text-xs">
-            {t("{0} · {1} to {2}", measurementMethodLabel(entitlement.method), formatUnixDateMedium(entitlement.window.from), formatUnixDateMedium(entitlement.window.through))}
+            {t(
+              "{0} · {1} to {2}",
+              measurementMethodLabel(entitlement.method),
+              formatUnixDateMedium(entitlement.window.from),
+              formatUnixDateMedium(entitlement.window.through),
+            )}
           </p>
         </div>
         {entitlement.exhausted ? <Badge variant="inactive">{t("Used up")}</Badge> : null}
@@ -59,7 +64,11 @@ export function LeaveCard() {
         <span className="text-muted-foreground ml-1 text-xs font-normal">{t("hours left")}</span>
       </p>
       <p className="text-muted-foreground text-xs">
-        {t("{0} of {1} weeks", formatLeaveHours(entitlement.remainingWeeks), formatLeaveHours(entitlement.totalWeeks))}
+        {t(
+          "{0} of {1} weeks",
+          formatLeaveHours(entitlement.remainingWeeks),
+          formatLeaveHours(entitlement.totalWeeks),
+        )}
       </p>
       <Progress value={usedPercent} className="mt-2" />
 
@@ -86,15 +95,25 @@ export function LeaveCard() {
               <Badge variant="secondary">{leaveFrequencyLabel(row.frequency)}</Badge>
             </div>
             <p className="text-muted-foreground mt-0.5">
-              {t("{0} {1} · {2} h taken {3}", formatUnixDateMedium(row.startsAt), row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : ` ${t("– ongoing")}`, formatLeaveHours(row.hoursUsed), row.hoursCharged !== row.hoursUsed
-                ? ` ${t("({0} h counted)", formatLeaveHours(row.hoursCharged))}`
-                : "")}
+              {t(
+                "{0} {1} · {2} h taken {3}",
+                formatUnixDateMedium(row.startsAt),
+                row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : ` ${t("– ongoing")}`,
+                formatLeaveHours(row.hoursUsed),
+                row.hoursCharged !== row.hoursUsed
+                  ? ` ${t("({0} h counted)", formatLeaveHours(row.hoursCharged))}`
+                  : "",
+              )}
             </p>
             {row.certificationStatus === "NotRequired" ? null : (
               <p className="text-muted-foreground mt-0.5">
-                {t("Certification {0}{1}", certificationStatusLabel(row.certificationStatus).toLowerCase(), row.certificationDueAt
-                  ? ` ${t("· due {0}", formatUnixDateMedium(row.certificationDueAt))}`
-                  : "")}
+                {t(
+                  "Certification {0}{1}",
+                  certificationStatusLabel(row.certificationStatus).toLowerCase(),
+                  row.certificationDueAt
+                    ? ` ${t("· due {0}", formatUnixDateMedium(row.certificationDueAt))}`
+                    : "",
+                )}
               </p>
             )}
           </li>

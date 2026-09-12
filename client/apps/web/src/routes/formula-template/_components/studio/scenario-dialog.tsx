@@ -146,7 +146,9 @@ export function ScenarioDialog({
             {editing ? t("Edit Scenario") : t("New Scenario")}
           </DialogTitle>
           <DialogDescription>
-            {t("A scenario pins the charge this formula must produce for a known set of inputs. It re-runs on demand and must pass before the template can be approved.")}
+            {t(
+              "A scenario pins the charge this formula must produce for a known set of inputs. It re-runs on demand and must pass before the template can be approved.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -223,7 +225,10 @@ export function ScenarioDialog({
                 className="gap-1.5"
               >
                 <SparklesIcon className="size-3" />
-                {t("Use current sample data {0}", currentSample.result != null && ` (${formatCurrency(currentSample.result)})`)}
+                {t(
+                  "Use current sample data {0}",
+                  currentSample.result != null && ` (${formatCurrency(currentSample.result)})`,
+                )}
               </Button>
             )}
 

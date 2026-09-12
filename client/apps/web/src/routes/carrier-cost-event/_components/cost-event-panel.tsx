@@ -77,7 +77,9 @@ export function CostEventPanel({
           </table>
         </div>
         <p className="text-muted-foreground text-[11px]">
-          {t("Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.")}
+          {t(
+            "Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.",
+          )}
         </p>
       </div>
     </DataTablePanelContainer>

@@ -27,9 +27,9 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
 
   if (detail.ratePerMile != null) {
     derivation.push(
-      { label: "Rate per mile", value: money(detail.ratePerMile, 4) },
+      { label: t("Rate per mile"), value: money(detail.ratePerMile, 4) },
       {
-        label: "Billed miles",
+        label: t("Billed miles"),
         value: detail.miles != null ? detail.miles.toFixed(1) : null,
       },
     );
@@ -41,29 +41,29 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
         label: grossBasis ? "Percent of linehaul + accessorials" : "Percent of linehaul",
         value: `${detail.percent.toFixed(2)}%`,
       },
-      { label: "Linehaul base", value: money(detail.linehaulBase) },
+      { label: t("Linehaul base"), value: money(detail.linehaulBase) },
     );
     if (grossBasis) {
-      derivation.push({ label: "Accessorial base", value: money(detail.accessorialBase) });
+      derivation.push({ label: t("Accessorial base"), value: money(detail.accessorialBase) });
     }
   }
   if (detail.bandValue != null) {
     derivation.push({
-      label: "Matched band",
+      label: t("Matched band"),
       value: `${money(detail.bandMin) ?? "Open"} – ${money(detail.bandMax) ?? "Open"}`,
     });
   }
   if (detail.pegPrice != null) {
-    derivation.push({ label: "Peg price", value: money(detail.pegPrice, 4) });
+    derivation.push({ label: t("Peg price"), value: money(detail.pegPrice, 4) });
   }
   if (detail.increment != null && detail.incrementRate != null) {
     derivation.push({
-      label: "Escalator",
+      label: t("Escalator"),
       value: `${money(detail.incrementRate, 4)}/mi per ${money(detail.increment)}`,
     });
   }
   if (detail.milesPerGallon != null) {
-    derivation.push({ label: "MPG divisor", value: detail.milesPerGallon.toFixed(2) });
+    derivation.push({ label: t("MPG divisor"), value: detail.milesPerGallon.toFixed(2) });
   }
 
   return (

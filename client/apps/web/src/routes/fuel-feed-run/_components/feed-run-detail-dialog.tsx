@@ -62,10 +62,7 @@ export function FeedRunDetailDialog({
   // The run being worked out is passed in rather than read from the closure:
   // it is what the mutation acts on, and the version it carries is what the
   // server checks, so it has to be the one the button was pressed on.
-  const { mutate, isPending } = useApiMutation<
-    FuelPurchaseImportResolveResult,
-    ResolveVariables
-  >({
+  const { mutate, isPending } = useApiMutation<FuelPurchaseImportResolveResult, ResolveVariables>({
     resourceName: "Import",
     mutationFn: ({ batchId, version }) => resolveFuelPurchaseImportRows(batchId, version),
     onSuccess: async (result) => {
@@ -101,10 +98,15 @@ export function FeedRunDetailDialog({
             </span>
           </DialogTitle>
           <DialogDescription>
-            {t("{0} {1} posted, {2} waiting.", batch?.feedReference
-              ? t("Read {0}.", batch.feedReference)
-              : t("Read from the provider's API."), batch?.committedCount ?? 0, held)}
-                  </DialogDescription>
+            {t(
+              "{0} {1} posted, {2} waiting.",
+              batch?.feedReference
+                ? t("Read {0}.", batch.feedReference)
+                : t("Read from the provider's API."),
+              batch?.committedCount ?? 0,
+              held,
+            )}
+          </DialogDescription>
         </DialogHeader>
 
         {batch ? (

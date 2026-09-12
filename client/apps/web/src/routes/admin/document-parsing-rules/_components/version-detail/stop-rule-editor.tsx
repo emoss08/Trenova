@@ -53,7 +53,9 @@ export function StopRuleEditor() {
     <FormSection
       title={t("Stops")}
       titleCount={fields.length}
-      description={t("Stops represent physical locations in a shipment — pickup points, delivery destinations, or intermediate stops. Each stop defines how to extract address and scheduling details.")}
+      description={t(
+        "Stops represent physical locations in a shipment — pickup points, delivery destinations, or intermediate stops. Each stop defines how to extract address and scheduling details.",
+      )}
       action={
         <Button
           type="button"
@@ -92,7 +94,9 @@ export function StopRuleEditor() {
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
           <MapPinIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-muted-foreground text-sm font-medium">{t("No stop rules defined")}</p>
+            <p className="text-muted-foreground text-sm font-medium">
+              {t("No stop rules defined")}
+            </p>
             <p className="text-muted-foreground/70 mt-0.5 text-xs">
               {t("Add stops to extract pickup and delivery locations from the document.")}
             </p>
@@ -259,7 +263,9 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
         <div>
           <h4 className="text-sm font-medium">{t("Extractors ({0})", fields.length)}</h4>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Each extractor pulls a specific piece of data (name, address, date) from this stop.")}
+            {t(
+              "Each extractor pulls a specific piece of data (name, address, date) from this stop.",
+            )}
           </p>
         </div>
         <Button

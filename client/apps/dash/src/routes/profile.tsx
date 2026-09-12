@@ -190,7 +190,9 @@ function PushNotificationsCard() {
             <p className="text-xs text-muted-foreground">
               {supported
                 ? t("Load assignments, settlements, and pay updates — even when Dash is closed.")
-                : t("Not supported in this browser. On iPhone, add Dash to your Home Screen first.")}
+                : t(
+                    "Not supported in this browser. On iPhone, add Dash to your Home Screen first.",
+                  )}
             </p>
           </div>
         </div>

@@ -186,7 +186,9 @@ export default function Workspace() {
               <BillingDetailUnselected
                 layout="tabs"
                 title={t("Nothing open")}
-                description={t("Pick a settlement from the queue to review its cost lines, approve it and post it here.")}
+                description={t(
+                  "Pick a settlement from the queue to review its cost lines, approve it and post it here.",
+                )}
               />
             )}
           </div>

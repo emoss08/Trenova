@@ -83,7 +83,7 @@ export default function ReconciliationWorkspace({
     <div className="flex min-h-0 flex-1 flex-col">
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel defaultSize={35} minSize={20}>
-          <SuspenseLoader componentLoaderProps={{ message: "Loading document preview..." }}>
+          <SuspenseLoader componentLoaderProps={{ message: t("Loading document preview...") }}>
             <DocumentPreviewPanel documentId={documentId} fileName={fileName} />
           </SuspenseLoader>
         </ResizablePanel>
@@ -171,7 +171,7 @@ export default function ReconciliationWorkspace({
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={25} minSize={18} collapsible collapsedSize={0}>
-          <SuspenseLoader componentLoaderProps={{ message: "Loading AI activity panel..." }}>
+          <SuspenseLoader componentLoaderProps={{ message: t("Loading AI activity panel...") }}>
             <AIActivityPanel
               documentId={documentId}
               state={state}

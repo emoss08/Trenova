@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { AuditEntryRow } from "@/lib/graphql/audit-log-table";
@@ -10,16 +11,16 @@ const auditResourceFilterOptions = Object.values(Resource).map((value) => ({
   label: resourceLabel(value),
 }));
 
-export function getColumns(): ColumnDef<AuditEntryRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<AuditEntryRow>[] {
   return [
     {
       accessorKey: "resourceId",
-      header: "Resource ID",
+      header: t("Resource ID"),
       size: 220,
       minSize: 180,
       maxSize: 260,
       meta: {
-        label: "Resource ID",
+        label: t("Resource ID"),
         apiField: "resourceId",
         filterable: true,
         sortable: true,
@@ -29,13 +30,13 @@ export function getColumns(): ColumnDef<AuditEntryRow>[] {
     },
     {
       accessorKey: "comment",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => row.original.comment || "-",
       size: 360,
       minSize: 300,
       maxSize: 480,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "comment",
         filterable: true,
         sortable: true,
@@ -45,13 +46,13 @@ export function getColumns(): ColumnDef<AuditEntryRow>[] {
     },
     {
       accessorKey: "resource",
-      header: "Resource",
+      header: t("Resource"),
       cell: ({ row }) => resourceLabel(row.original.resource),
       size: 170,
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: "Resource",
+        label: t("Resource"),
         apiField: "resource",
         filterable: true,
         sortable: true,
@@ -62,13 +63,13 @@ export function getColumns(): ColumnDef<AuditEntryRow>[] {
     },
     {
       accessorKey: "operation",
-      header: "Action",
+      header: t("Action"),
       cell: ({ row }) => operationLabel(row.original.operation),
       size: 150,
       minSize: 120,
       maxSize: 180,
       meta: {
-        label: "Action",
+        label: t("Action"),
         apiField: "operation",
         filterable: true,
         sortable: true,
@@ -79,13 +80,13 @@ export function getColumns(): ColumnDef<AuditEntryRow>[] {
     },
     {
       accessorKey: "timestamp",
-      header: "Timestamp",
+      header: t("Timestamp"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.timestamp} />,
       size: 200,
       minSize: 170,
       maxSize: 240,
       meta: {
-        label: "Timestamp",
+        label: t("Timestamp"),
         apiField: "timestamp",
         filterable: true,
         sortable: true,
@@ -95,7 +96,7 @@ export function getColumns(): ColumnDef<AuditEntryRow>[] {
     },
     {
       accessorKey: "user",
-      header: "User",
+      header: t("User"),
       cell: ({ row }) => {
         const user = row.original.user;
         const name = user?.name || "Unknown User";
@@ -124,7 +125,7 @@ export function getColumns(): ColumnDef<AuditEntryRow>[] {
       minSize: 220,
       maxSize: 320,
       meta: {
-        label: "User",
+        label: t("User"),
         apiField: "user.name",
         filterable: false,
         sortable: false,

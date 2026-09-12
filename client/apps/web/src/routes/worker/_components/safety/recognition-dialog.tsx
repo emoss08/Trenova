@@ -103,7 +103,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
         <DialogHeader>
           <DialogTitle>{t("Record recognition")}</DialogTitle>
           <DialogDescription>
-            {t("The other half of the safety record. Visible recognition reaches the driver in Dash; internal notes stay with the office.")}
+            {t(
+              "The other half of the safety record. Visible recognition reaches the driver in Dash; internal notes stay with the office.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -122,7 +124,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   label={t("Kind")}
                   options={KIND_OPTIONS}
                   placeholder={t("Pick a kind")}
-                  description={t("What the recognition is for; it is shown with the title on the safety record.")}
+                  description={t(
+                    "What the recognition is for; it is shown with the title on the safety record.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -142,7 +146,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   name="title"
                   label={t("Title")}
                   placeholder={t("e.g. One year accident-free")}
-                  description={t("The headline on the record; it is also the subject of the driver's notification when shared.")}
+                  description={t(
+                    "The headline on the record; it is also the subject of the driver's notification when shared.",
+                  )}
                   rules={{ required: true }}
                   maxLength={120}
                 />
@@ -153,7 +159,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   name="message"
                   label={t("Message")}
                   placeholder={t("What you want the driver to read")}
-                  description={t("Optional detail that goes out with the notification when the recognition is shared.")}
+                  description={t(
+                    "Optional detail that goes out with the notification when the recognition is shared.",
+                  )}
                   maxLength={2000}
                 />
               </FormControl>

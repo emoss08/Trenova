@@ -72,7 +72,9 @@ export function PayEventPanel({
           </table>
         </div>
         <p className="text-muted-foreground text-[11px]">
-          {t("Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.")}
+          {t(
+            "Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.",
+          )}
         </p>
       </div>
     </DataTablePanelContainer>

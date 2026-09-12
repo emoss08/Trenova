@@ -240,11 +240,16 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
               className={cn("text-xs text-muted-foreground", overdrawn && "text-destructive")}
               data-testid="pto-request-days"
             >
-              {t("{0, plural, one {# day} other {# days}} {1} {2}", requestedDays, available !== null
-                ? ` ${t("· {0} available", available.toFixed(available % 1 === 0 ? 0 : 2))}`
-                : "", overdrawn
-                ? ` ${t("— more than you have banked; your manager may still approve it if days accrue by then.")}`
-                : "")}
+              {t(
+                "{0, plural, one {# day} other {# days}} {1} {2}",
+                requestedDays,
+                available !== null
+                  ? ` ${t("· {0} available", available.toFixed(available % 1 === 0 ? 0 : 2))}`
+                  : "",
+                overdrawn
+                  ? ` ${t("— more than you have banked; your manager may still approve it if days accrue by then.")}`
+                  : "",
+              )}
             </p>
           ) : null}
           <Textarea

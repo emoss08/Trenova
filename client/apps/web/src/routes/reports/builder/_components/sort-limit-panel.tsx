@@ -140,8 +140,12 @@ export function SortLimitPanel({
         </div>
         <p className="text-2xs text-muted-foreground">
           {hasMeasureFilters
-            ? t("Totals are unavailable while measure filters are set — the total would count groups the report excludes.")
-            : t("Totals are computed from every matching record, so an average stays an average instead of averaging the rows on screen.")}
+            ? t(
+                "Totals are unavailable while measure filters are set — the total would count groups the report excludes.",
+              )
+            : t(
+                "Totals are computed from every matching record, so an average stays an average instead of averaging the rows on screen.",
+              )}
         </p>
       </div>
     </div>

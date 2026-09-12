@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { ShipmentTenderStatusBadge } from "@trenova/shared/components/status-badge";
 import {
@@ -44,26 +44,29 @@ function getAppointmentStop(stop: Stop | null) {
   return stop?.scheduleType === "Appointment" ? stop : null;
 }
 
-export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipment>[] {
+export function getColumns(
+  rowActions: RowAction<Shipment>[],
+  t: TranslateFn,
+): ColumnDef<Shipment>[] {
   return [
     {
       id: "lane",
-      header: "Lane",
+      header: t("Lane"),
       accessorFn: () => null,
       cell: ({ row }) => <LaneCell shipment={row.original} />,
       size: 280,
       minSize: 240,
       maxSize: 360,
-      meta: { label: "Lane", sortable: false, filterable: false },
+      meta: { label: t("Lane"), sortable: false, filterable: false },
     },
     {
       id: "status",
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell shipment={row.original} />,
       meta: {
         apiField: "status",
-        label: "Status",
+        label: t("Status"),
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -77,7 +80,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     {
       id: "tenderStatus",
       accessorKey: "tenderStatus",
-      header: "Tender",
+      header: t("Tender"),
       cell: ({ row }) => {
         const status = row.original.tenderStatus;
 
@@ -89,7 +92,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       },
       meta: {
         apiField: "tenderStatus",
-        label: "Tender Status",
+        label: t("Tender Status"),
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -120,7 +123,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "proBol",
-      header: "PRO / BOL",
+      header: t("PRO / BOL"),
       accessorFn: (row) => row.proNumber ?? row.bol ?? "",
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
@@ -136,7 +139,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: "PRO Number",
+        label: t("PRO Number"),
         apiField: "proNumber",
         filterable: true,
         sortable: true,
@@ -147,7 +150,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     {
       id: "order",
       accessorKey: "orderNumber",
-      header: "Order",
+      header: t("Order"),
       cell: ({ row }) => {
         const { orderId, orderNumber } = row.original;
         if (!orderId) return "—";
@@ -165,7 +168,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       minSize: 110,
       maxSize: 180,
       meta: {
-        label: "Order",
+        label: t("Order"),
         apiField: "orderId",
         filterable: false,
         sortable: false,
@@ -174,7 +177,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     {
       id: "customer",
       accessorKey: "customer",
-      header: "Customer",
+      header: t("Customer"),
       size: 220,
       minSize: 180,
       maxSize: 300,
@@ -197,7 +200,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
             />
             {typeof weight === "number" && weight > 0 && (
               <span className="font-table text-muted-foreground text-[10px] tabular-nums">
-                {translate("{0} lb", weight.toLocaleString())}
+                {t("{0} lb", weight.toLocaleString())}
               </span>
             )}
           </div>
@@ -205,7 +208,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       },
       meta: {
         apiField: "customer.name",
-        label: "Customer Name",
+        label: t("Customer Name"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -214,27 +217,27 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "driver",
-      header: "Coverage",
+      header: t("Coverage"),
       accessorFn: () => null,
       cell: ({ row }) => <DriverCell shipment={row.original} />,
       size: 200,
       minSize: 160,
       maxSize: 260,
-      meta: { label: "Coverage", sortable: false, filterable: false },
+      meta: { label: t("Coverage"), sortable: false, filterable: false },
     },
     {
       id: "eta",
-      header: "ETA",
+      header: t("ETA"),
       accessorFn: () => null,
       cell: ({ row }) => <EtaCell shipment={row.original} />,
       size: 160,
       minSize: 140,
       maxSize: 200,
-      meta: { label: "ETA", sortable: false, filterable: false },
+      meta: { label: t("ETA"), sortable: false, filterable: false },
     },
     {
       id: "pickupAppointment",
-      header: "Pickup Appt",
+      header: t("Pickup Appt"),
       accessorFn: (row) => getAppointmentStop(getOriginStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
         <span className="font-table text-[11.5px] tabular-nums">
@@ -246,7 +249,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       maxSize: 220,
       meta: {
         apiField: "pickupAppointment.scheduledWindowStart",
-        label: "Pickup Appointment",
+        label: t("Pickup Appointment"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -255,7 +258,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "deliveryAppointment",
-      header: "Delivery Appt",
+      header: t("Delivery Appt"),
       accessorFn: (row) =>
         getAppointmentStop(getDestinationStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
@@ -268,7 +271,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       maxSize: 220,
       meta: {
         apiField: "deliveryAppointment.scheduledWindowStart",
-        label: "Delivery Appointment",
+        label: t("Delivery Appointment"),
         filterable: true,
         sortable: true,
         filterType: "date",
@@ -277,14 +280,14 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "revenue",
-      header: () => <div className="text-right">{translate("Revenue")}</div>,
+      header: () => <div className="text-right">{t("Revenue")}</div>,
       accessorKey: "totalChargeAmount",
       cell: ({ row }) => <RevenueCell shipment={row.original} />,
       size: 140,
       minSize: 120,
       maxSize: 180,
       meta: {
-        label: "Revenue",
+        label: t("Revenue"),
         apiField: "totalChargeAmount",
         sortable: true,
         filterable: false,
@@ -292,27 +295,27 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "margin",
-      header: () => <div className="text-right">{translate("Margin")}</div>,
+      header: () => <div className="text-right">{t("Margin")}</div>,
       accessorFn: (row) => row.profitabilityEstimate?.marginPercent ?? null,
       cell: ({ row }) => <MarginCell shipment={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 160,
       meta: {
-        label: "Margin",
+        label: t("Margin"),
         sortable: false,
         filterable: false,
       },
     },
     {
       id: "actions",
-      header: () => <span className="sr-only">{translate("Actions")}</span>,
+      header: () => <span className="sr-only">{t("Actions")}</span>,
       cell: ({ row }) => <ActionsCell row={row} actions={rowActions} />,
       size: 56,
       minSize: 56,
       maxSize: 56,
       enableHiding: false,
-      meta: { label: "Actions", sortable: false, filterable: false },
+      meta: { label: t("Actions"), sortable: false, filterable: false },
     },
   ];
 }

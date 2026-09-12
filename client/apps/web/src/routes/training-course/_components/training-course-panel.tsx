@@ -113,7 +113,9 @@ function TrainingCourseCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Training Course")}
-      description={t("Add a course workers can be assigned, and decide whether it is required, how it is taken, and what passes.")}
+      description={t(
+        "Add a course workers can be assigned, and decide whether it is required, how it is taken, and what passes.",
+      )}
       queryKey={TRAINING_COURSE_LIST_KEY}
       form={form}
       size="lg"

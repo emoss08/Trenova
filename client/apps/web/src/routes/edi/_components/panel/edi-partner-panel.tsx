@@ -145,7 +145,9 @@ function CreatePartnerPanel({
       open={open}
       onOpenChange={handleOpenChange}
       title={t("New EDI Partner")}
-      description={t("Create an external trading partner or request an internal organization connection.")}
+      description={t(
+        "Create an external trading partner or request an internal organization connection.",
+      )}
       size="xl"
       footer={
         <>

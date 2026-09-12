@@ -126,7 +126,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
   if (!rateAgreementId) {
     return (
       <p className="text-muted-foreground text-sm">
-        {t("Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.")}
+        {t(
+          "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.",
+        )}
       </p>
     );
   }
@@ -139,7 +141,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         <div className="mb-3">
           <p className="text-sm font-medium">{t("Replay Historical Shipments")}</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Every shipment is re-rated against its own facts — the weight it had, the lane it ran, the day it shipped — so the result is what would have been invoiced. Nothing it produces touches a shipment.")}
+            {t(
+              "Every shipment is re-rated against its own facts — the weight it had, the lane it ran, the day it shipped — so the result is what would have been invoiced. Nothing it produces touches a shipment.",
+            )}
           </p>
         </div>
 
@@ -217,7 +221,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
           <FlaskConicalIcon className="text-muted-foreground mb-3 size-8" />
           <p className="text-sm font-medium">{t("No simulation has run yet")}</p>
           <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-            {t("Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.")}
+            {t(
+              "Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.",
+            )}
           </p>
         </div>
       )}
@@ -227,7 +233,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
           <div>
             <p className="text-sm font-medium">{t("Lanes That Did Nothing")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {t("These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.")}
+              {t(
+                "These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.",
+              )}
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border">
@@ -271,7 +279,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
           <div>
             <p className="text-sm font-medium">{t("Shipments This Would Have Moved")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {t("Largest increases first — the shipment that will produce the phone call is what this list is for.")}
+              {t(
+                "Largest increases first — the shipment that will produce the phone call is what this list is for.",
+              )}
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border">
@@ -377,7 +387,11 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
             </span>
             <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
             <span className="text-muted-foreground ml-auto text-xs">
-              {t("Max increase {0} · Max decrease {1}", formatCurrency(summary.maxIncrease), formatCurrency(summary.maxDecrease))}
+              {t(
+                "Max increase {0} · Max decrease {1}",
+                formatCurrency(summary.maxIncrease),
+                formatCurrency(summary.maxDecrease),
+              )}
             </span>
           </div>
         </>

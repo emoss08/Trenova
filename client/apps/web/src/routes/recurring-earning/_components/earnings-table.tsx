@@ -20,7 +20,7 @@ export default function EarningsTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: RecurringEarningRow[], status: string) => {
@@ -44,28 +44,28 @@ export default function EarningsTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: [
           {
             value: "Active",
-            label: "Resume",
+            label: t("Resume"),
             color: "#15803d",
-            description: "Future settlements include the earning again.",
+            description: t("Future settlements include the earning again."),
           },
           {
             value: "Paused",
-            label: "Pause",
+            label: t("Pause"),
             color: "#d97706",
-            description: "Future settlements skip the earning; history is kept.",
+            description: t("Future settlements skip the earning; history is kept."),
           },
         ],
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

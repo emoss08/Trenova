@@ -60,7 +60,9 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
 
       {data.changeCount === 0 ? (
         <p className="text-muted-foreground px-3 py-2 text-xs">
-          {t("The content matches what is already approved; approving records a fresh review without changing any rate.")}
+          {t(
+            "The content matches what is already approved; approving records a fresh review without changing any rate.",
+          )}
         </p>
       ) : (
         <div className="space-y-2 p-3">

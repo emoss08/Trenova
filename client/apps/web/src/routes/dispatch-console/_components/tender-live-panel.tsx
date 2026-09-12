@@ -82,7 +82,9 @@ function TenderCancelDialog({
         <DialogHeader>
           <DialogTitle>{t("Cancel Tender")}</DialogTitle>
           <DialogDescription>
-            {t("Outstanding offers are withdrawn and carriers can no longer accept. The reason is recorded on the tender.")}
+            {t(
+              "Outstanding offers are withdrawn and carriers can no longer accept. The reason is recorded on the tender.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -145,7 +147,10 @@ function RecordResponseDialog({
         <DialogHeader>
           <DialogTitle>{t("Record Carrier Response")}</DialogTitle>
           <DialogDescription>
-            {t("{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.", offer.carrier?.name ?? t("The carrier"))}
+            {t(
+              "{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.",
+              offer.carrier?.name ?? t("The carrier"),
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -350,7 +355,9 @@ export function TenderLivePanel({
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         {tender.routingGuide && (
-          <span className="text-muted-foreground text-[10px]">{t("via {0}", tender.routingGuide.name)}</span>
+          <span className="text-muted-foreground text-[10px]">
+            {t("via {0}", tender.routingGuide.name)}
+          </span>
         )}
       </div>
 
@@ -359,7 +366,9 @@ export function TenderLivePanel({
           <TriangleAlertIcon className="size-4" aria-hidden />
           <AlertTitle>{t("Carrier accepted, but auto-assignment failed")}</AlertTitle>
           <AlertDescription>
-            {t("The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender.")}
+            {t(
+              "The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender.",
+            )}
             {onAssignManually && canAssignMove && (
               <Button
                 size="sm"

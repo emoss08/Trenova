@@ -97,8 +97,11 @@ export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () =>
       {latestWeek && (
         <p className="text-muted-foreground text-sm">
           {t("Latest DOE price week:")}{" "}
-          <span className="text-foreground font-medium">{t("Mon {0}", formatWeekOf(latestWeek))}</span>
-          {" · "}{t("surcharge rates roll forward on each program's effective day")}
+          <span className="text-foreground font-medium">
+            {t("Mon {0}", formatWeekOf(latestWeek))}
+          </span>
+          {" · "}
+          {t("surcharge rates roll forward on each program's effective day")}
         </p>
       )}
 
@@ -184,7 +187,9 @@ function IndexPriceCard({
         )}
       </div>
       <p className="text-2xs text-muted-foreground mt-1">
-        {entry.latest ? t("Week of {0}", shortDate(entry.latest.priceDate)) : t("No price data yet")}
+        {entry.latest
+          ? t("Week of {0}", shortDate(entry.latest.priceDate))
+          : t("No price data yet")}
       </p>
     </button>
   );
@@ -220,7 +225,9 @@ function PriceTrendChart({
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">{t("{0} — weekly diesel price", indexName)}</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          {t("{0} — weekly diesel price", indexName)}
+        </CardTitle>
         <div className="flex gap-1">
           {RANGE_OPTIONS.map((option) => (
             <Button

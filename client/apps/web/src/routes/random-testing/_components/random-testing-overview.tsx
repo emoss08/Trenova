@@ -33,9 +33,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           label={t("Owed now")}
           info={
             <InfoPopover title={t("Owed now")}>
-              {
-                t("Active pools whose current round has not been drawn. Missed means a past round of this year was never drawn, which a DOT audit will find.")
-              }
+              {t(
+                "Active pools whose current round has not been drawn. Missed means a past round of this year was never drawn, which a DOT audit will find.",
+              )}
             </InfoPopover>
           }
           right={overview.missed > 0 ? <Badge variant="inactive">{t("Missed")}</Badge> : null}
@@ -45,7 +45,10 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           {overview.missed > 0
             ? t("{0, plural, one {# round} other {# rounds}} missed this year", overview.missed)
             : overview.owedNow > 0
-              ? t("{0} waiting on this period's draw", overview.owedNow === 1 ? t("A pool is") : t("Pools are"))
+              ? t(
+                  "{0} waiting on this period's draw",
+                  overview.owedNow === 1 ? t("A pool is") : t("Pools are"),
+                )
               : overview.activePools === 0
                 ? t("No active pool to draw from")
                 : t("Every current round is drawn")}
@@ -58,9 +61,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           label={t("Rounds this year")}
           info={
             <InfoPopover title={t("Rounds this year")}>
-              {
-                t("Draws made this year that were not voided. A draft round can still change; a final one is the record.")
-              }
+              {t(
+                "Draws made this year that were not voided. A draft round can still change; a final one is the record.",
+              )}
             </InfoPopover>
           }
         />
@@ -82,9 +85,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           label={t("Selected this year")}
           info={
             <InfoPopover title={t("Selected this year")}>
-              {
-                t("Drivers picked across this year's rounds against what those rounds asked for. Short means a pool was smaller than its target.")
-              }
+              {t(
+                "Drivers picked across this year's rounds against what those rounds asked for. Short means a pool was smaller than its target.",
+              )}
             </InfoPopover>
           }
           right={
@@ -94,7 +97,11 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           }
         />
         <div className="flex items-baseline gap-1">
-          <NumberFlow value={selected} className={VALUE_CLASS} aria-label={t("Selected this year")} />
+          <NumberFlow
+            value={selected}
+            className={VALUE_CLASS}
+            aria-label={t("Selected this year")}
+          />
           {target > 0 ? (
             <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
               / {target}
@@ -102,7 +109,11 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           ) : null}
         </div>
         <div className="mt-auto flex flex-col gap-1">
-          <RateLine label={t("Drug")} selected={overview.drugSelected} target={overview.drugTarget} />
+          <RateLine
+            label={t("Drug")}
+            selected={overview.drugSelected}
+            target={overview.drugTarget}
+          />
           <RateLine
             label={t("Alcohol")}
             selected={overview.alcoholSelected}
@@ -117,9 +128,9 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           label={t("In the hat")}
           info={
             <InfoPopover title={t("In the hat")}>
-              {
-                t("Drivers eligible at the most recent draw. It changes as people join and leave the pool.")
-              }
+              {t(
+                "Drivers eligible at the most recent draw. It changes as people join and leave the pool.",
+              )}
             </InfoPopover>
           }
         />
@@ -140,7 +151,13 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
             : t("No round has been drawn yet")}
         </KpiSub>
         <KpiSub>
-          {t("{0, plural, one {# active pool} other {# active pools}}{1}", overview.activePools, overview.belowMinimum > 0 ? ` ${t("· {0} below the DOT minimum", overview.belowMinimum)}` : "")}
+          {t(
+            "{0, plural, one {# active pool} other {# active pools}}{1}",
+            overview.activePools,
+            overview.belowMinimum > 0
+              ? ` ${t("· {0} below the DOT minimum", overview.belowMinimum)}`
+              : "",
+          )}
         </KpiSub>
       </KpiCard>
     </div>

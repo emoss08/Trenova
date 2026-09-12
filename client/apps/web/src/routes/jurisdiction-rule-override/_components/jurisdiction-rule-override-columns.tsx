@@ -1,15 +1,15 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { overriddenLimits } from "@trenova/shared/lib/permit";
 import { truncateText } from "@trenova/shared/lib/utils";
 import type { JurisdictionRuleOverride } from "@/types/jurisdiction-rule-override";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
+export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleOverride>[] {
   return [
     {
       accessorKey: "state",
-      header: "State",
+      header: t("State"),
       cell: ({ row }) => (
         <span className="text-sm font-medium">
           {row.original.state?.abbreviation ?? "—"}
@@ -17,11 +17,11 @@ export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
         </span>
       ),
       size: 200,
-      meta: { label: "State", apiField: "stateId", sortable: true },
+      meta: { label: t("State"), apiField: "stateId", sortable: true },
     },
     {
       id: "overrides",
-      header: "Narrows",
+      header: t("Narrows"),
       cell: ({ row }) => {
         const applied = overriddenLimits(row.original);
 
@@ -34,22 +34,22 @@ export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
             ))}
           </div>
         ) : (
-          <span className="text-muted-foreground">{translate("Nothing")}</span>
+          <span className="text-muted-foreground">{t("Nothing")}</span>
         );
       },
       size: 320,
-      meta: { label: "Narrows" },
+      meta: { label: t("Narrows") },
     },
     {
       accessorKey: "reason",
-      header: "Reason",
+      header: t("Reason"),
       cell: ({ row }) => (
         <span className="text-muted-foreground text-sm">
           {truncateText(row.original.reason, 80)}
         </span>
       ),
       size: 300,
-      meta: { label: "Reason", apiField: "reason", filterable: true, filterType: "text" },
+      meta: { label: t("Reason"), apiField: "reason", filterable: true, filterType: "text" },
     },
   ];
 }

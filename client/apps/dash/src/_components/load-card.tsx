@@ -2,7 +2,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatRange, formatUnixTime } from "@trenova/shared/lib/date";
-import { recordMyStopAction, type PortalLoad, type PortalStop } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  recordMyStopAction,
+  type PortalLoad,
+  type PortalStop,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PortalStopAction } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -213,7 +217,11 @@ export function StopTimeline({
                       : "bg-green-600 text-white",
                   )}
                 >
-                  {checkIn.isPending ? t("Saving...") : action === "Arrive" ? t("Arrive") : t("Depart")}
+                  {checkIn.isPending
+                    ? t("Saving...")
+                    : action === "Arrive"
+                      ? t("Arrive")
+                      : t("Depart")}
                 </button>
               ) : null}
               {showDirections && (stop.addressLine || stop.locationName) && !isDone ? (

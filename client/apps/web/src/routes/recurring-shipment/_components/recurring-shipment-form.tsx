@@ -60,14 +60,20 @@ function SchedulePreview() {
             </>
           ) : (
             <span className="text-muted-foreground">
-              {t("Custom schedule — occurrences follow the raw cron expression in {0}.", timezoneLabel(timezone))}
+              {t(
+                "Custom schedule — occurrences follow the raw cron expression in {0}.",
+                timezoneLabel(timezone),
+              )}
             </span>
           )}
         </span>
         <span className="text-2xs text-muted-foreground">
           {autoGenerate
             ? t("Shipments are {0}.", lead)
-            : t("Auto-generation is off — occurrences wait for someone to generate them, and would be {0}.", lead)}
+            : t(
+                "Auto-generation is off — occurrences wait for someone to generate them, and would be {0}.",
+                lead,
+              )}
         </span>
       </div>
     </div>
@@ -119,7 +125,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               placeholder={t("Select status")}
               rules={{ required: true }}
               options={statusChoices}
-              description={t("Only Active series generate. Pause to hold the lane without losing its history.")}
+              description={t(
+                "Only Active series generate. Pause to hold the lane without losing its history.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -129,7 +137,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               label={t("Source Shipment")}
               placeholder={t("Search by Pro # or BOL...")}
               rules={{ required: "Source shipment is required" }}
-              description={t("Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.")}
+              description={t(
+                "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -138,7 +148,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="description"
               label={t("Description")}
               placeholder={t("Weekly dry van out of the Elk Grove DC, per the 2026 Acme contract")}
-              description={t("Context for the next dispatcher who has to understand why this lane exists.")}
+              description={t(
+                "Context for the next dispatcher who has to understand why this lane exists.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -168,7 +180,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
                   )}
                 </span>
               )}
-              description={t("Occurrence times are interpreted here, so the schedule holds across daylight saving shifts.")}
+              description={t(
+                "Occurrence times are interpreted here, so the schedule holds across daylight saving shifts.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -181,7 +195,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               rules={{ required: true }}
               min={0}
               max={60}
-              description={t("How many days before pickup the shipment is created. Give dispatch enough runway to assign a truck.")}
+              description={t(
+                "How many days before pickup the shipment is created. Give dispatch enough runway to assign a truck.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -192,7 +208,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
 
       <FormSection
         title={t("Series window")}
-        description={t("The boundaries that stop the series on their own. Leave them empty for a lane that runs indefinitely.")}
+        description={t(
+          "The boundaries that stop the series on their own. Leave them empty for a lane that runs indefinitely.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -201,7 +219,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="startDate"
               label={t("Start Date")}
               placeholder={t("Starts immediately")}
-              description={t("The first day the series may generate. Occurrences before it are ignored.")}
+              description={t(
+                "The first day the series may generate. Occurrences before it are ignored.",
+              )}
               clearable
             />
           </FormControl>
@@ -230,7 +250,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
 
       <FormSection
         title={t("Blocked days")}
-        description={t("Days the lane cannot run, and what happens to an occurrence that lands on one")}
+        description={t(
+          "Days the lane cannot run, and what happens to an occurrence that lands on one",
+        )}
       >
         <FormGroup cols={1}>
           <FormControl>
@@ -274,7 +296,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               control={control}
               name="autoGenerate"
               label={t("Generate shipments automatically")}
-              description={t("Turn this off to keep the series as an on-demand template — occurrences are only created when someone runs Generate Now.")}
+              description={t(
+                "Turn this off to keep the series as an on-demand template — occurrences are only created when someone runs Generate Now.",
+              )}
               outlined
               position="left"
             />
@@ -282,7 +306,9 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
           {mode === "edit" && (
             <FormControl>
               <p className="text-2xs text-muted-foreground">
-                {t("Changing the schedule recalculates the next pickup from the next future occurrence. Shipments that have already been generated are never modified.")}
+                {t(
+                  "Changing the schedule recalculates the next pickup from the next future occurrence. Shipments that have already been generated are never modified.",
+                )}
               </p>
             </FormControl>
           )}

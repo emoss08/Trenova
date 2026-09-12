@@ -165,12 +165,16 @@ export default function CostControlForm() {
           <CostBasisCard />
           <CategoryRatesCard
             title={t("Variable Costs")}
-            description={t("Per-mile costs that scale with miles driven. Each category uses its industry benchmark unless you override it or map it to GL actuals.")}
+            description={t(
+              "Per-mile costs that scale with miles driven. Each category uses its industry benchmark unless you override it or map it to GL actuals.",
+            )}
             behavior="Variable"
           />
           <CategoryRatesCard
             title={t("Fixed Costs")}
-            description={t("Ownership and overhead costs normalized to a per-mile rate. When GL actuals are enabled, fixed categories divide by planned monthly miles when set.")}
+            description={t(
+              "Ownership and overhead costs normalized to a per-mile rate. When GL actuals are enabled, fixed categories divide by planned monthly miles when set.",
+            )}
             behavior="Fixed"
           />
           <GLActualsCard />
@@ -192,7 +196,9 @@ function CostBasisCard() {
       <CardHeader>
         <CardTitle>{t("Cost Basis")}</CardTitle>
         <CardDescription>
-          {t("Core assumptions behind the cost-per-mile estimate: fuel pricing, fleet efficiency, and how deadhead miles are attributed to shipment cost.")}
+          {t(
+            "Core assumptions behind the cost-per-mile estimate: fuel pricing, fleet efficiency, and how deadhead miles are attributed to shipment cost.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -202,7 +208,9 @@ function CostBasisCard() {
               control={control}
               name="useLiveFuelPrice"
               label={t("Use Live Fuel Price")}
-              description={t("Derives the fuel cost per mile from the latest fuel index price divided by fleet MPG instead of the static benchmark.")}
+              description={t(
+                "Derives the fuel cost per mile from the latest fuel index price divided by fleet MPG instead of the static benchmark.",
+              )}
               position="left"
             />
           </FormControl>
@@ -223,7 +231,9 @@ function CostBasisCard() {
               control={control}
               name="milesPerGallon"
               label={t("Fleet Miles Per Gallon")}
-              description={t("Average fleet fuel efficiency used to convert diesel price per gallon into cost per mile.")}
+              description={t(
+                "Average fleet fuel efficiency used to convert diesel price per gallon into cost per mile.",
+              )}
               rules={{ required: true }}
             />
           </FormControl>
@@ -232,7 +242,9 @@ function CostBasisCard() {
               control={control}
               name="includeDeadheadMiles"
               label={t("Include Deadhead Miles")}
-              description={t("Charges empty repositioning miles to the shipment cost estimate. Industry practice is to include them.")}
+              description={t(
+                "Charges empty repositioning miles to the shipment cost estimate. Industry practice is to include them.",
+              )}
               position="left"
             />
           </FormControl>
@@ -241,7 +253,9 @@ function CostBasisCard() {
               control={control}
               name="targetMarginPercent"
               label={t("Target Margin Percent")}
-              description={t("Margin threshold used to color-code shipment profitability. Margins below this show as thin; defaults to 10% when unset.")}
+              description={t(
+                "Margin threshold used to color-code shipment profitability. Margins below this show as thin; defaults to 10% when unset.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -368,7 +382,9 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
               checked={isGLActual}
               onCheckedChange={(checked) => setRateSource(checked ? "GLActual" : "Benchmark")}
               label={t("Use GL Actuals")}
-              description={t("Derive this rate from posted GL expenses divided by fleet miles over the rolling window.")}
+              description={t(
+                "Derive this rate from posted GL expenses divided by fleet miles over the rolling window.",
+              )}
             />
           </FormControl>
         )}
@@ -379,7 +395,9 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
           name={`categories.${index}.glAccountIds`}
           label={t("Mapped GL Accounts")}
           placeholder={t("Select GL accounts")}
-          description={t("Expense accounts whose postings feed this category when GL actuals are enabled.")}
+          description={t(
+            "Expense accounts whose postings feed this category when GL actuals are enabled.",
+          )}
           clearable
         />
       </FormControl>
@@ -425,7 +443,9 @@ function GLActualsCard() {
       <CardHeader>
         <CardTitle>{t("GL Actuals")}</CardTitle>
         <CardDescription>
-          {t("When enabled, categories mapped to GL accounts derive their per-mile rate from real posted expenses over a rolling window, replacing benchmarks as your ledger fills in.")}
+          {t(
+            "When enabled, categories mapped to GL accounts derive their per-mile rate from real posted expenses over a rolling window, replacing benchmarks as your ledger fills in.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -435,7 +455,9 @@ function GLActualsCard() {
               control={control}
               name="glActualsEnabled"
               label={t("Enable GL Actuals")}
-              description={t("Allow categories with mapped GL accounts to use posted expense actuals.")}
+              description={t(
+                "Allow categories with mapped GL accounts to use posted expense actuals.",
+              )}
               position="left"
             />
           </FormControl>
@@ -446,7 +468,9 @@ function GLActualsCard() {
                   control={control}
                   name="glRollingMonths"
                   label={t("Rolling Window (Months)")}
-                  description={t("Number of trailing months of GL activity used to compute actual rates. Three months smooths lumpy maintenance spend.")}
+                  description={t(
+                    "Number of trailing months of GL activity used to compute actual rates. Three months smooths lumpy maintenance spend.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -455,7 +479,9 @@ function GLActualsCard() {
                   control={control}
                   name="plannedMonthlyMiles"
                   label={t("Planned Monthly Miles")}
-                  description={t("Divisor floor for fixed categories so low-mileage months do not inflate fixed cost per mile. Leave empty to always divide by actual fleet miles.")}
+                  description={t(
+                    "Divisor floor for fixed categories so low-mileage months do not inflate fixed cost per mile. Leave empty to always divide by actual fleet miles.",
+                  )}
                 />
               </FormControl>
             </>

@@ -87,7 +87,9 @@ function CreateTestCasePanel({
       open={open}
       onOpenChange={handleOpenChange}
       title={t("New EDI Test Case")}
-      description={t("Bind a document profile to a payload and expected validation outcome for partner certification.")}
+      description={t(
+        "Bind a document profile to a payload and expected validation outcome for partner certification.",
+      )}
       size="xl"
       footer={
         <>
@@ -215,7 +217,9 @@ function TestCaseEditPanel({
         open={open}
         onOpenChange={onOpenChange}
         title={testCase?.name ?? "EDI Test Case"}
-        description={t("Run the stored payload through the partner's template and inspect the rendered X12.")}
+        description={t(
+          "Run the stored payload through the partner's template and inspect the rendered X12.",
+        )}
         size="xl"
         footer={
           <>
@@ -360,7 +364,9 @@ function TestCaseVerdict({
           </p>
           {!passed && (
             <p className="text-muted-foreground text-xs">
-              {t("Review the inspector diagnostics, then either fix the payload/template or update the expected counts and codes.")}
+              {t(
+                "Review the inspector diagnostics, then either fix the payload/template or update the expected counts and codes.",
+              )}
             </p>
           )}
           <CodeDiffLine label={t("Missing warning codes")} codes={warningDiff.missing} />
@@ -464,7 +470,9 @@ function TestCaseForm({
               label={t("Expected Warning Codes")}
               disabled={disabled}
               placeholder={t("missing_optional_element, value_truncated")}
-              description={t("Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's warning codes to match exactly.")}
+              description={t(
+                "Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's warning codes to match exactly.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -474,14 +482,18 @@ function TestCaseForm({
               label={t("Expected Error Codes")}
               disabled={disabled}
               placeholder="missing_required_element"
-              description={t("Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's error codes to match exactly.")}
+              description={t(
+                "Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's error codes to match exactly.",
+              )}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
         title={t("Document Payload")}
-        description={t("Structured payload rendered through the profile's template when the preview runs.")}
+        description={t(
+          "Structured payload rendered through the profile's template when the preview runs.",
+        )}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
@@ -489,7 +501,9 @@ function TestCaseForm({
               control={control}
               name="payloadJson"
               label={t("Payload")}
-              description={t("JSON document payload, e.g. {\"transactionSet\":\"204\",\"loadTender\":{...}}")}
+              description={t(
+                'JSON document payload, e.g. {"transactionSet":"204","loadTender":{...}}',
+              )}
               disabled={disabled}
               height="320px"
             />

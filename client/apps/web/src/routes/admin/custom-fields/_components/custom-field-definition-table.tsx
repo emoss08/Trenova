@@ -66,33 +66,33 @@ export default function CustomFieldDefinitionTable() {
     [toggleActive],
   );
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const contextMenuActions = useMemo<RowAction<CustomFieldDefinitionRow>[]>(
     () => [
       {
         id: "deactivate",
-        label: "Deactivate",
+        label: t("Deactivate"),
         icon: PowerOffIcon,
         onClick: handleToggleActive,
         hidden: (row) => !row.original.isActive,
       },
       {
         id: "activate",
-        label: "Activate",
+        label: t("Activate"),
         icon: PowerIcon,
         onClick: handleToggleActive,
         hidden: (row) => row.original.isActive,
       },
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: TrashIcon,
         variant: "destructive",
         onClick: handleDelete,
       },
     ],
-    [handleToggleActive, handleDelete],
+    [handleToggleActive, handleDelete, t],
   );
 
   return (

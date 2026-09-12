@@ -13,7 +13,9 @@ export function RateZonePage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Rate Zones")}
-        description={t("Name a market area once and price against it, instead of listing every postal prefix it covers")}
+        description={t(
+          "Name a market area once and price against it, instead of listing every postal prefix it covers",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

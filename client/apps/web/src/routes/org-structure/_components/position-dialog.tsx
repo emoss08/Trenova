@@ -149,7 +149,9 @@ export function PositionDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit the position") : t("Add a position")}</DialogTitle>
           <DialogDescription>
-            {t("A terminal is where somebody works; a position is what they do. Headcount is read both ways.")}
+            {t(
+              "A terminal is where somebody works; a position is what they do. Headcount is read both ways.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -168,7 +170,9 @@ export function PositionDialog({
                   label={t("Code")}
                   placeholder={t("e.g. DRV-OTR")}
                   rules={{ required: true }}
-                  description={t("A short identifier that must be unique across the organisation, whatever its case.")}
+                  description={t(
+                    "A short identifier that must be unique across the organisation, whatever its case.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -177,7 +181,9 @@ export function PositionDialog({
                   name="title"
                   label={t("Title")}
                   placeholder={t("e.g. Over-the-Road Driver")}
-                  description={t("The name of the job as it appears on the chart and on each holder's record.")}
+                  description={t(
+                    "The name of the job as it appears on the chart and on each holder's record.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -210,7 +216,9 @@ export function PositionDialog({
                   options={reportsToOptions}
                   placeholder={t("Pick a position")}
                   isClearable
-                  description={t("The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.")}
+                  description={t(
+                    "The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -218,7 +226,9 @@ export function PositionDialog({
                   control={control}
                   name="isDrivingPosition"
                   label={t("Driving position")}
-                  description={t("Needs a CDL and is filled from the worker roster; a front-office position is filled by people who log in. This is the line most compliance rules are drawn along.")}
+                  description={t(
+                    "Needs a CDL and is filled from the worker roster; a front-office position is filled by people who log in. This is the line most compliance rules are drawn along.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -226,7 +236,9 @@ export function PositionDialog({
                   control={control}
                   name="flsaExempt"
                   label={t("Exempt from overtime")}
-                  description={t("Under the Fair Labor Standards Act. Recorded per position because that is where the duties test is applied.")}
+                  description={t(
+                    "Under the Fair Labor Standards Act. Recorded per position because that is where the duties test is applied.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -234,7 +246,9 @@ export function PositionDialog({
                   control={control}
                   name="description"
                   label={t("Description")}
-                  placeholder={t("e.g. Runs regional lanes out of the home terminal on a five-day schedule")}
+                  placeholder={t(
+                    "e.g. Runs regional lanes out of the home terminal on a five-day schedule",
+                  )}
                   description={t("Optional notes on the duties and expectations of the role.")}
                   maxLength={2000}
                 />

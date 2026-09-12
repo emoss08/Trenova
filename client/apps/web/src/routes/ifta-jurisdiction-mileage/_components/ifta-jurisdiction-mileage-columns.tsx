@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -29,11 +30,12 @@ const SOURCE_VARIANTS: Record<IftaMileageSource, BadgeVariant> = {
 
 export function getColumns(
   jurisdictionOptions: readonly GenericSelectOption<string>[],
+  t: TranslateFn,
 ): ColumnDef<IftaMileageEntryRow>[] {
   return [
     {
       accessorKey: "traveledAt",
-      header: "Travelled",
+      header: t("Travelled"),
       cell: ({ row }) => (
         <span className="font-table tabular-nums">{formatUnixDate(row.original.traveledAt)}</span>
       ),
@@ -48,7 +50,7 @@ export function getColumns(
     },
     {
       id: "tractor",
-      header: "Tractor",
+      header: t("Tractor"),
       cell: ({ row }) => {
         const { tractor } = row.original;
 
@@ -79,7 +81,7 @@ export function getColumns(
     },
     {
       accessorKey: "jurisdictionId",
-      header: "Jurisdiction",
+      header: t("Jurisdiction"),
       cell: ({ row }) => (
         <span className="font-table">{jurisdictionLabel(row.original.jurisdiction)}</span>
       ),
@@ -97,7 +99,7 @@ export function getColumns(
     },
     {
       accessorKey: "miles",
-      header: "Miles",
+      header: t("Miles"),
       cell: ({ row }) => (
         <span className="font-table block text-left tabular-nums">
           {formatDecimalString(row.original.miles, IFTA_MILES_SCALE)}
@@ -114,7 +116,7 @@ export function getColumns(
     },
     {
       accessorKey: "loaded",
-      header: "Loaded",
+      header: t("Loaded"),
       cell: ({ row }) => <BooleanBadge value={row.original.loaded} />,
       size: 90,
       meta: {
@@ -129,7 +131,7 @@ export function getColumns(
     },
     {
       accessorKey: "source",
-      header: "Source",
+      header: t("Source"),
       cell: ({ row }) => (
         <Badge variant={SOURCE_VARIANTS[row.original.source]} className="px-1.5 py-0 text-[10px]">
           {IFTA_MILEAGE_SOURCE_LABELS[row.original.source]}
@@ -148,7 +150,7 @@ export function getColumns(
     },
     {
       accessorKey: "notes",
-      header: "Notes",
+      header: t("Notes"),
       cell: ({ row }) => (
         <span className="block max-w-[28ch] truncate text-xs" title={row.original.notes ?? ""}>
           {row.original.notes ?? "—"}
@@ -165,7 +167,7 @@ export function getColumns(
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"
@@ -182,7 +184,7 @@ export function getColumns(
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"

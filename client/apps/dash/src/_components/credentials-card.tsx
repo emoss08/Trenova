@@ -83,7 +83,9 @@ export function CredentialsCard() {
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        {t("Renewed a card? Upload a photo and your carrier will update the record after checking it.")}
+        {t(
+          "Renewed a card? Upload a photo and your carrier will update the record after checking it.",
+        )}
       </p>
     </div>
   );

@@ -37,7 +37,9 @@ function BillingControlAlert() {
         <div className="flex flex-col">
           <p className="text-sm font-semibold">{t("Critical Financial Configuration")}</p>
           <p className="text-xs">
-            {t("Billing Control settings directly impact your organization's revenue processing, financial reporting, and customer invoicing. Changes to these settings should be made infrequently and only after thorough review by financial stakeholders.")}
+            {t(
+              "Billing Control settings directly impact your organization's revenue processing, financial reporting, and customer invoicing. Changes to these settings should be made infrequently and only after thorough review by financial stakeholders.",
+            )}
           </p>
         </div>
       </div>

@@ -29,7 +29,9 @@ export function CarrierForm() {
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
-              description={t("Controls whether this carrier appears in active lookups. Do Not Use blocks the carrier from new assignments.")}
+              description={t(
+                "Controls whether this carrier appears in active lookups. Do Not Use blocks the carrier from new assignments.",
+              )}
               options={carrierStatusChoices}
             />
           </FormControl>
@@ -40,7 +42,9 @@ export function CarrierForm() {
               name="code"
               label={t("Code")}
               placeholder={t("e.g., SWFT")}
-              description={t("Short alphanumeric identifier used in load references and quick-search. Must be unique across your organization.")}
+              description={t(
+                "Short alphanumeric identifier used in load references and quick-search. Must be unique across your organization.",
+              )}
               maxLength={10}
             />
           </FormControl>
@@ -51,7 +55,9 @@ export function CarrierForm() {
               name="name"
               label={t("Name")}
               placeholder={t("e.g., Swift Transportation Co.")}
-              description={t("Full legal name of the carrier. This appears on rate confirmations and all printed documents.")}
+              description={t(
+                "Full legal name of the carrier. This appears on rate confirmations and all printed documents.",
+              )}
               maxLength={255}
             />
           </FormControl>
@@ -61,7 +67,9 @@ export function CarrierForm() {
               name="dbaName"
               label={t("DBA Name")}
               placeholder={t("Doing business as")}
-              description={t("Trade name the carrier operates under when it differs from the legal name.")}
+              description={t(
+                "Trade name the carrier operates under when it differs from the legal name.",
+              )}
               maxLength={255}
             />
           </FormControl>
@@ -72,7 +80,9 @@ export function CarrierForm() {
               name="carrierType"
               label={t("Carrier Type")}
               placeholder={t("Carrier Type")}
-              description={t("Operating authority classification: common, contract, broker, or exempt.")}
+              description={t(
+                "Operating authority classification: common, contract, broker, or exempt.",
+              )}
               options={carrierTypeChoices}
             />
           </FormControl>
@@ -101,7 +111,9 @@ export function CarrierForm() {
               name="mcNumber"
               label={t("MC Number")}
               placeholder={t("e.g., 987654")}
-              description={t("Motor carrier (operating authority) number. Digits only, up to 12 characters.")}
+              description={t(
+                "Motor carrier (operating authority) number. Digits only, up to 12 characters.",
+              )}
               maxLength={12}
             />
           </FormControl>
@@ -111,7 +123,9 @@ export function CarrierForm() {
               name="scac"
               label="SCAC"
               placeholder={t("e.g., SWFT")}
-              description={t("Standard Carrier Alpha Code: 2-4 uppercase letters used on EDI documents and BOLs.")}
+              description={t(
+                "Standard Carrier Alpha Code: 2-4 uppercase letters used on EDI documents and BOLs.",
+              )}
               maxLength={4}
             />
           </FormControl>
@@ -140,7 +154,9 @@ export function CarrierForm() {
               name="addressLine2"
               label={t("Address Line 2")}
               placeholder={t("Suite, floor, building, etc.")}
-              description={t("Additional address details such as suite number, floor, or building name.")}
+              description={t(
+                "Additional address details such as suite number, floor, or building name.",
+              )}
               maxLength={150}
             />
           </FormControl>
@@ -207,7 +223,9 @@ export function CarrierForm() {
               name="externalId"
               label={t("External ID")}
               placeholder={t("e.g., TMS-10042")}
-              description={t("Identifier from an external system (ERP, load board, EDI partner ID) for cross-system reconciliation.")}
+              description={t(
+                "Identifier from an external system (ERP, load board, EDI partner ID) for cross-system reconciliation.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">

@@ -166,7 +166,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     },
     {
       value: "documents",
-      label: "Documents",
+      label: t("Documents"),
       icon: FileTextIcon,
       hideFooter: true,
       content: DocumentsTab,
@@ -188,7 +188,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     },
     {
       value: "history",
-      label: "History",
+      label: t("History"),
       icon: HistoryIcon,
       hideFooter: true,
       content: AuditTab,

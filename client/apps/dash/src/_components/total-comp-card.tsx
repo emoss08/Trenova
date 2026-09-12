@@ -49,14 +49,22 @@ export function TotalCompCard() {
         {formatMinor(data.totalCompensationMinor)}
       </p>
       <p className="text-muted-foreground text-xs">
-        {t("{0} paid {1} {2}", formatMinor(data.grossPayMinor), data.employerBenefitMinor > 0
-          ? ` ${t("· {0} the company puts in", formatMinor(data.employerBenefitMinor))}`
-          : "", share > 0 ? ` ${t("· {0}% of it is benefits", share)}` : "")}
+        {t(
+          "{0} paid {1} {2}",
+          formatMinor(data.grossPayMinor),
+          data.employerBenefitMinor > 0
+            ? ` ${t("· {0} the company puts in", formatMinor(data.employerBenefitMinor))}`
+            : "",
+          share > 0 ? ` ${t("· {0}% of it is benefits", share)}` : "",
+        )}
       </p>
 
       {data.employeeBenefitMinor > 0 ? (
         <p className="text-muted-foreground mt-2 text-xs">
-          {t("You contribute {0} a period. That is not counted in the figure above — it is money you paid, not money the job gave you.", formatMinor(data.employeeBenefitMinor))}
+          {t(
+            "You contribute {0} a period. That is not counted in the figure above — it is money you paid, not money the job gave you.",
+            formatMinor(data.employeeBenefitMinor),
+          )}
         </p>
       ) : null}
 
@@ -78,7 +86,11 @@ export function TotalCompCard() {
                 </span>
               </span>
               <span className="text-muted-foreground shrink-0 tabular-nums">
-                {t("{0} you · {1} them", formatMinor(enrollment.employeeCostMinor), formatMinor(enrollment.employerCostMinor))}
+                {t(
+                  "{0} you · {1} them",
+                  formatMinor(enrollment.employeeCostMinor),
+                  formatMinor(enrollment.employerCostMinor),
+                )}
               </span>
             </li>
           ))}

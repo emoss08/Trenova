@@ -38,9 +38,9 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           label={t("Drivers")}
           info={
             <InfoPopover title={t("Drivers")}>
-              {
-                t("Active drivers in the counting window, with the bar showing how they are rated. Every rating stays on the bar, zero or not.")
-              }
+              {t(
+                "Active drivers in the counting window, with the bar showing how they are rated. Every rating stays on the bar, zero or not.",
+              )}
             </InfoPopover>
           }
         />
@@ -67,9 +67,9 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           label={t("Average score")}
           info={
             <InfoPopover title={t("Average score")}>
-              {
-                t("Mean safety score across those drivers, out of 100. At risk and watch are the two ratings that need a look.")
-              }
+              {t(
+                "Mean safety score across those drivers, out of 100. At risk and watch are the two ratings that need a look.",
+              )}
             </InfoPopover>
           }
         />
@@ -109,9 +109,9 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           label={t("Events in window")}
           info={
             <InfoPopover title={t("Events in window")}>
-              {
-                t("Safety events dated inside the counting window: accidents, inspections, citations and the rest. Open and preventable are counted separately.")
-              }
+              {t(
+                "Safety events dated inside the counting window: accidents, inspections, citations and the rest. Open and preventable are counted separately.",
+              )}
             </InfoPopover>
           }
         />

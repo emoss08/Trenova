@@ -1,3 +1,4 @@
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -9,13 +10,13 @@ import { useMemo } from "react";
 import { scimGroupMappingPanelQueryKey } from "./constants";
 import { SCIMGroupMappingPanel } from "./mapping-panel";
 
-function getColumns(): ColumnDef<SCIMGroupRoleMappingRow>[] {
+function getColumns(t: TranslateFn): ColumnDef<SCIMGroupRoleMappingRow>[] {
   return [
     {
       accessorKey: "externalGroupId",
-      header: "External Group ID",
+      header: t("External Group ID"),
       meta: {
-        label: "External Group ID",
+        label: t("External Group ID"),
         apiField: "externalGroupId",
         filterable: true,
         sortable: true,
@@ -25,9 +26,9 @@ function getColumns(): ColumnDef<SCIMGroupRoleMappingRow>[] {
     },
     {
       accessorKey: "displayName",
-      header: "Display Name",
+      header: t("Display Name"),
       meta: {
-        label: "Display Name",
+        label: t("Display Name"),
         apiField: "displayName",
         filterable: true,
         sortable: true,
@@ -37,7 +38,7 @@ function getColumns(): ColumnDef<SCIMGroupRoleMappingRow>[] {
     },
     {
       accessorKey: "role",
-      header: "Role",
+      header: t("Role"),
       cell: ({ row }) => {
         const { role } = row.original;
 
@@ -64,7 +65,7 @@ function getColumns(): ColumnDef<SCIMGroupRoleMappingRow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: "Role",
+        label: t("Role"),
       },
     },
   ];
@@ -77,7 +78,9 @@ export default function SCIMGroupRoleMappingsTable({
   organizationId: string;
   directoryId: string;
 }) {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
   const queryKey = scimGroupMappingPanelQueryKey(organizationId, directoryId);
   const graphql = useMemo(
     () => createSCIMGroupRoleMappingTableGraphQLConfig(directoryId),

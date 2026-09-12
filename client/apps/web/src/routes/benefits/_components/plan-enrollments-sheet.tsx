@@ -73,7 +73,13 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
           <SheetTitle>{plan?.name ?? t("Plan")}</SheetTitle>
           <SheetDescription>
             {plan
-              ? t("{0} · {1} · {2} employee, {3} employer per period", plan.code, plan.planYear, formatMinor(plan.employeeCostMinor, plan.currencyCode), formatMinor(plan.employerCostMinor, plan.currencyCode))
+              ? t(
+                  "{0} · {1} · {2} employee, {3} employer per period",
+                  plan.code,
+                  plan.planYear,
+                  formatMinor(plan.employeeCostMinor, plan.currencyCode),
+                  formatMinor(plan.employerCostMinor, plan.currencyCode),
+                )
               : t("Loading")}
           </SheetDescription>
         </SheetHeader>

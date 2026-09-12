@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDIPartnerReadinessBadge, StatusBadge } from "@trenova/shared/components/status-badge";
@@ -9,15 +9,15 @@ import { statusChoices } from "@/lib/choices";
 import type { EDIPartner } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
+export function getPartnerColumns(t: TranslateFn): ColumnDef<EDIPartner>[] {
   return [
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
       size: 140,
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -27,11 +27,11 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => row.original.name,
       size: 220,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -41,13 +41,13 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       accessorKey: "internalOrganization.name",
-      header: "Target Organization",
+      header: t("Target Organization"),
       cell: ({ row }) =>
         row.original.internalOrganization?.name ??
         row.original.internalOrganizationId ?? <DataTablePlaceholder />,
       size: 240,
       meta: {
-        label: "Target Organization",
+        label: t("Target Organization"),
         apiField: "internalOrganizationId",
         filterable: false,
         sortable: false,
@@ -55,18 +55,20 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       id: "direction",
-      header: "Direction",
+      header: t("Direction"),
       cell: ({ row }) => (
         <div className="flex gap-1">
-          <Badge variant={row.original.enabledForInbound ? "secondary" : "outline"}>{translate("Inbound")}</Badge>
+          <Badge variant={row.original.enabledForInbound ? "secondary" : "outline"}>
+            {t("Inbound")}
+          </Badge>
           <Badge variant={row.original.enabledForOutbound ? "secondary" : "outline"}>
-            {translate("Outbound")}
+            {t("Outbound")}
           </Badge>
         </div>
       ),
       size: 180,
       meta: {
-        label: "Direction",
+        label: t("Direction"),
         apiField: "direction",
         filterable: false,
         sortable: false,
@@ -74,21 +76,21 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       id: "readiness",
-      header: "Readiness",
+      header: t("Readiness"),
       cell: ({ row }) => <PartnerReadinessCell partnerId={row.original.id ?? ""} />,
       size: 120,
       enableSorting: false,
       meta: {
-        label: "Readiness",
+        label: t("Readiness"),
       },
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 120,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -99,7 +101,7 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       accessorKey: "connection.status",
-      header: "Connection",
+      header: t("Connection"),
       cell: ({ row }) => {
         const connection = row.original.connection as
           | { status?: string; method?: string }
@@ -109,7 +111,7 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
       },
       size: 180,
       meta: {
-        label: "Connection",
+        label: t("Connection"),
         apiField: "ediConnectionId",
         filterable: false,
         sortable: false,
@@ -117,7 +119,7 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       accessorKey: "defaultTransport.name",
-      header: "Profile",
+      header: t("Profile"),
       cell: ({ row }) => {
         const profile = row.original.defaultTransport as
           | { name?: string; method?: string }
@@ -131,7 +133,7 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
       },
       size: 220,
       meta: {
-        label: "Profile",
+        label: t("Profile"),
         apiField: "defaultTransportId",
         filterable: false,
         sortable: false,
@@ -139,11 +141,11 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt ?? undefined} />,
       size: 180,
       meta: {
-        label: "Updated",
+        label: t("Updated"),
         apiField: "updatedAt",
         filterable: false,
         sortable: true,

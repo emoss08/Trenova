@@ -18,9 +18,10 @@ export function FuelManagementPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Fuel Management",
-        description:
+        title: t("Fuel Management"),
+        description: t(
           "DOE diesel prices, fuel surcharge programs, and automatic surcharge application",
+        ),
       }}
     >
       <Tabs

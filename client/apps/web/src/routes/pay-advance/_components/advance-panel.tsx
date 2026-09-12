@@ -92,7 +92,9 @@ function IssueAdvancePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Pay Advance")}
-      description={t("Records a cash or money-code advance recovered from the driver's future settlements.")}
+      description={t(
+        "Records a cash or money-code advance recovered from the driver's future settlements.",
+      )}
       queryKey="pay-advance-list"
       form={form}
       formComponent={
@@ -104,7 +106,9 @@ function IssueAdvancePanel({
               label={t("Driver")}
               placeholder={t("Select driver")}
               rules={{ required: true }}
-              description={t("The driver receiving the advance; recovery is deducted from their next settlement.")}
+              description={t(
+                "The driver receiving the advance; recovery is deducted from their next settlement.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -114,7 +118,9 @@ function IssueAdvancePanel({
               label={t("Source")}
               options={payAdvanceSourceChoices}
               rules={{ required: true }}
-              description={t("How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.")}
+              description={t(
+                "How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -123,7 +129,9 @@ function IssueAdvancePanel({
               name="reference"
               label={t("Reference")}
               placeholder={t("Money code / check number")}
-              description={t("The money-code or check number so the advance can be matched to the card statement.")}
+              description={t(
+                "The money-code or check number so the advance can be matched to the card statement.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -144,7 +152,9 @@ function IssueAdvancePanel({
               fixedDecimalScale
               sideText={t("USD")}
               rules={{ required: true }}
-              description={t("The full amount advanced; it is recovered automatically from upcoming settlements.")}
+              description={t(
+                "The full amount advanced; it is recovered automatically from upcoming settlements.",
+              )}
             />
           </FormControl>
           <FormControl className="col-span-2">
@@ -152,7 +162,9 @@ function IssueAdvancePanel({
               control={control}
               name="notes"
               label={t("Notes")}
-              description={t("Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.")}
+              description={t(
+                "Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -208,13 +220,17 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Recovered")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Recovered")}
+          </p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.recoveredMinor} currency={row.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Outstanding")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Outstanding")}
+          </p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={row.outstandingMinor}

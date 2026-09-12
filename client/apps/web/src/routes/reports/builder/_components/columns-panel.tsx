@@ -99,7 +99,7 @@ function ComputedOperandField({
   const isTarget = computedOperandIsTarget(operand);
   const choices = disallowTarget
     ? measures
-    : [...measures, { value: TARGET_OPTION, label: "Target value…" }];
+    : [...measures, { value: TARGET_OPTION, label: t("Target value…") }];
 
   return (
     <div className="flex flex-col gap-1">
@@ -270,8 +270,8 @@ function SortableColumnRow({
   const canBeDimension = !crossesToMany;
   const canBeMeasure = aggregations.length > 0;
   const kindChoices = [
-    ...(canBeDimension ? [{ value: "dimension", label: "Dimension" }] : []),
-    ...(canBeMeasure ? [{ value: "measure", label: "Measure" }] : []),
+    ...(canBeDimension ? [{ value: "dimension", label: t("Dimension") }] : []),
+    ...(canBeMeasure ? [{ value: "measure", label: t("Measure") }] : []),
   ];
   const isComputed = column.kind === "computed";
 
@@ -509,7 +509,7 @@ export function ColumnsPanel({ index, ir, onChange }: ColumnsPanelProps) {
       {
         id: uniqueColumnId(ir, "calc"),
         kind: "computed",
-        label: "Calculation",
+        label: t("Calculation"),
         computed,
       },
     ]);

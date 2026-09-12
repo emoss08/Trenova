@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
@@ -28,7 +29,7 @@ export function buildReviewTemplateDefaults(
       status: "Active",
       isDefault: false,
       cadenceMonths: 12,
-      items: [{ key: "safety", label: "Safe driving", description: null, weight: 3 }],
+      items: [{ key: "safety", label: translate("Safe driving"), description: null, weight: 3 }],
     };
   }
   return {
@@ -99,7 +100,9 @@ function ReviewTemplateCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Review Template")}
-      description={t("Decide what a review rates, how much each item counts, and how often the review comes round.")}
+      description={t(
+        "Decide what a review rates, how much each item counts, and how often the review comes round.",
+      )}
       queryKey={REVIEW_TEMPLATE_LIST_KEY}
       form={form}
       size="lg"

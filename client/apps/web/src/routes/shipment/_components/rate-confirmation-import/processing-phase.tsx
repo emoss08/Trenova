@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BorderBeam } from "@trenova/shared/components/ui/border-beam";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -35,13 +36,13 @@ function getSteps(
   if (hasFailed) {
     const failAt = doc?.contentStatus === "Failed" ? 0 : draft?.status === "Failed" ? 2 : 1;
     return [
-      { label: "Extracting text", state: failAt === 0 ? "error" : "complete" },
+      { label: translate("Extracting text"), state: failAt === 0 ? "error" : "complete" },
       {
-        label: "Classifying document",
+        label: translate("Classifying document"),
         state: failAt <= 1 ? (failAt === 1 ? "error" : "pending") : "complete",
       },
       {
-        label: "Building shipment draft",
+        label: translate("Building shipment draft"),
         state: failAt <= 2 ? (failAt === 2 ? "error" : "pending") : "complete",
       },
     ];
@@ -49,40 +50,40 @@ function getSteps(
 
   if (!doc) {
     return [
-      { label: "Extracting text", state: "pending" },
-      { label: "Classifying document", state: "pending" },
-      { label: "Building shipment draft", state: "pending" },
+      { label: translate("Extracting text"), state: "pending" },
+      { label: translate("Classifying document"), state: "pending" },
+      { label: translate("Building shipment draft"), state: "pending" },
     ];
   }
 
   if (doc.contentStatus === "Pending") {
     return [
-      { label: "Extracting text", state: "active" },
-      { label: "Classifying document", state: "pending" },
-      { label: "Building shipment draft", state: "pending" },
+      { label: translate("Extracting text"), state: "active" },
+      { label: translate("Classifying document"), state: "pending" },
+      { label: translate("Building shipment draft"), state: "pending" },
     ];
   }
 
   if (doc.contentStatus === "Extracting") {
     return [
-      { label: "Extracting text", state: "complete" },
-      { label: "Classifying document", state: "active" },
-      { label: "Building shipment draft", state: "pending" },
+      { label: translate("Extracting text"), state: "complete" },
+      { label: translate("Classifying document"), state: "active" },
+      { label: translate("Building shipment draft"), state: "pending" },
     ];
   }
 
   if (doc.shipmentDraftStatus === "Pending") {
     return [
-      { label: "Extracting text", state: "complete" },
-      { label: "Classifying document", state: "complete" },
-      { label: "Building shipment draft", state: "active" },
+      { label: translate("Extracting text"), state: "complete" },
+      { label: translate("Classifying document"), state: "complete" },
+      { label: translate("Building shipment draft"), state: "active" },
     ];
   }
 
   return [
-    { label: "Extracting text", state: "active" },
-    { label: "Classifying document", state: "pending" },
-    { label: "Building shipment draft", state: "pending" },
+    { label: translate("Extracting text"), state: "active" },
+    { label: translate("Classifying document"), state: "pending" },
+    { label: translate("Building shipment draft"), state: "pending" },
   ];
 }
 

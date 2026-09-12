@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { driverTypeSchema } from "./worker";
 
@@ -90,14 +91,14 @@ export const credentialFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["number"],
-        message: "This credential type requires a number",
+        message: translate("This credential type requires a number"),
       });
     }
     if (values.requiresExpiry && values.expiresAt == null) {
       ctx.addIssue({
         code: "custom",
         path: ["expiresAt"],
-        message: "This credential type requires an expiry date",
+        message: translate("This credential type requires an expiry date"),
       });
     }
     if (
@@ -108,7 +109,7 @@ export const credentialFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["expiresAt"],
-        message: "Expiry must be after the issue date",
+        message: translate("Expiry must be after the issue date"),
       });
     }
   });

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 export const safetyEventKindSchema = z.enum([
@@ -148,14 +149,14 @@ export const safetyEventFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["inspectionResult"],
-        message: "Record how the inspection went",
+        message: translate("Record how the inspection went"),
       });
     }
     if (values.kind !== "Inspection" && values.inspectionResult !== null) {
       ctx.addIssue({
         code: "custom",
         path: ["inspectionResult"],
-        message: "Only inspections carry a result",
+        message: translate("Only inspections carry a result"),
       });
     }
   });
@@ -190,14 +191,14 @@ export const issueActionFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["suspensionDays"],
-        message: "How many days is the suspension?",
+        message: translate("How many days is the suspension?"),
       });
     }
     if (values.level !== "Suspension" && values.suspensionDays !== null) {
       ctx.addIssue({
         code: "custom",
         path: ["suspensionDays"],
-        message: "Only suspensions carry days",
+        message: translate("Only suspensions carry days"),
       });
     }
   });

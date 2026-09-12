@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { documentTypeTableGraphQLConfig } from "@/lib/graphql/document-type-table";
 import type { DocumentType } from "@trenova/shared/types/document-type";
@@ -7,7 +8,9 @@ import { getColumns } from "./document-type-columns";
 import { DocumentTypePanel } from "./document-type-panel";
 
 export default function DocumentTypeTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<DocumentType>

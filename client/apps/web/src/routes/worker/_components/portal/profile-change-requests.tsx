@@ -74,10 +74,14 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
           <ClipboardPenIcon className="text-muted-foreground size-4" />
           <h3 className="text-sm font-semibold">{t("Profile changes")}</h3>
         </div>
-        {pendingCount > 0 ? <Badge variant="warning">{t("{0} waiting on you", pendingCount)}</Badge> : null}
+        {pendingCount > 0 ? (
+          <Badge variant="warning">{t("{0} waiting on you", pendingCount)}</Badge>
+        ) : null}
       </div>
       <p className="text-muted-foreground mt-1 text-xs">
-        {t("Changes the driver asked for from Dash. An approval writes exactly what is listed onto the record — nothing else.")}
+        {t(
+          "Changes the driver asked for from Dash. An approval writes exactly what is listed onto the record — nothing else.",
+        )}
       </p>
 
       <ul className="mt-3 flex flex-col gap-2">
@@ -117,7 +121,9 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
               <ChangeList changes={request.changes} className="mt-2" />
               {request.note ? <p className="text-muted-foreground mt-2">“{request.note}”</p> : null}
               {request.decisionNote ? (
-                <p className="text-muted-foreground mt-1">{t("Office: {0}", request.decisionNote)}</p>
+                <p className="text-muted-foreground mt-1">
+                  {t("Office: {0}", request.decisionNote)}
+                </p>
               ) : null}
             </li>
           );
@@ -215,7 +221,9 @@ function DecideDialog({
     <Dialog open={state !== null} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{approve ? t("Apply this change") : t("Turn this request down")}</DialogTitle>
+          <DialogTitle>
+            {approve ? t("Apply this change") : t("Turn this request down")}
+          </DialogTitle>
           <DialogDescription>
             {approve
               ? t("The listed fields are written onto the record and the driver is told.")

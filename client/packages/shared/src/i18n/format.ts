@@ -3,10 +3,7 @@
 // Before this existed the client hardcoded "en-US" in a dozen formatters, which meant a
 // Spanish or Chinese user still saw 1,234.56 and March 3, 2026. Numbers, dates and
 // currency are as much a part of a translation as the words are.
-import {
-  DEFAULT_LOCALE,
-  type Locale,
-} from "@trenova/shared/i18n/generated/locales";
+import { DEFAULT_LOCALE, type Locale } from "@trenova/shared/i18n/generated/locales";
 import { getLocale } from "@trenova/shared/i18n/runtime";
 
 // The product's English is US English, so `en` resolves to en-US rather than the bare tag.

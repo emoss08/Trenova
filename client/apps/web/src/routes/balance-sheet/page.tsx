@@ -27,8 +27,8 @@ export function BalanceSheetPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Balance Sheet",
-        description: "Assets, liabilities, and equity as of a fiscal period.",
+        title: t("Balance Sheet"),
+        description: t("Assets, liabilities, and equity as of a fiscal period."),
       }}
       className="p-0"
     >
@@ -38,7 +38,9 @@ export function BalanceSheetPage() {
         {!periodId ? (
           <FinancialReportEmpty
             title={t("Pick a period")}
-            description={t("Choose a fiscal period above and the assets, liabilities and equity as they stood at its close are laid out here.")}
+            description={t(
+              "Choose a fiscal period above and the assets, liabilities and equity as they stood at its close are laid out here.",
+            )}
           />
         ) : isLoading ? (
           <div className="space-y-4">

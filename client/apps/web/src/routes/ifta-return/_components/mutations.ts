@@ -14,8 +14,9 @@ export function useGenerateIftaReturn(period: IftaPeriodKey) {
     mutationFn: () => generateIftaReturn({ year: period.year, quarter: period.quarter }),
     onSuccess: async () => {
       toast.success(`${quarterLabel(period)} return generated`, {
-        description:
-          t("The draft is computed from the miles, fuel and rates on file now. Recompute it whenever late data lands."),
+        description: t(
+          "The draft is computed from the miles, fuel and rates on file now. Recompute it whenever late data lands.",
+        ),
       });
       await invalidateIftaReturn(queryClient, period);
     },

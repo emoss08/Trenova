@@ -64,7 +64,9 @@ export function LaneHistoryPopover({
           </p>
         </div>
         <ScrollArea className="h-70 px-3 pb-2">
-          {isLoading && <p className="text-2xs text-muted-foreground">{t("Reading the lineage…")}</p>}
+          {isLoading && (
+            <p className="text-2xs text-muted-foreground">{t("Reading the lineage…")}</p>
+          )}
           {!isLoading && (history?.length ?? 0) === 0 && (
             <p className="text-2xs text-muted-foreground">
               {t("Nothing recorded yet — history begins the first time this lane is saved.")}

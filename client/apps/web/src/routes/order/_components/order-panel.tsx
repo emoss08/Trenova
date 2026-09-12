@@ -80,7 +80,7 @@ export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         tabs={[
           {
             value: "history",
-            label: "History",
+            label: t("History"),
             icon: HistoryIcon,
             hideFooter: true,
             content: AuditTab,

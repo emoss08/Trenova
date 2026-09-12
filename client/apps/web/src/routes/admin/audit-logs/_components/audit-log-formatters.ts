@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { SelectOption } from "@trenova/shared/types/fields";
@@ -245,7 +246,7 @@ export function formatAuditValueWithDates(
     return {
       value: formatToUserTimezone(value, { showTimeZone: true }),
       transformed: true,
-      hint: "Unix timestamp",
+      hint: translate("Unix timestamp"),
     };
   }
 
@@ -255,7 +256,7 @@ export function formatAuditValueWithDates(
       return {
         value: formatToUserTimezone(asNumber, { showTimeZone: true }),
         transformed: true,
-        hint: "Unix timestamp",
+        hint: translate("Unix timestamp"),
       };
     }
   }

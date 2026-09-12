@@ -88,8 +88,8 @@ export function ShipmentsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Shipments",
-        description: "Operations command center for shipments, assignments, and exceptions.",
+        title: t("Shipments"),
+        description: t("Operations command center for shipments, assignments, and exceptions."),
         context: (
           <>
             {summary && (

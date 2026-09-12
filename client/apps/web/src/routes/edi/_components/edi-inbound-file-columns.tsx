@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDIInboundFileStatusBadge } from "@trenova/shared/components/status-badge";
@@ -6,15 +7,15 @@ import { ediConnectionMethodChoices, ediInboundFileStatusChoices } from "@/lib/c
 import type { EDIInboundFileRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
+export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <EDIInboundFileStatusBadge status={row.original.status} />,
       size: 150,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -25,7 +26,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
     },
     {
       accessorKey: "fileName",
-      header: "File",
+      header: t("File"),
       cell: ({ row }) => (
         <div className="min-w-0">
           <div className="truncate font-medium">{row.original.fileName}</div>
@@ -34,7 +35,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
       ),
       size: 280,
       meta: {
-        label: "File",
+        label: t("File"),
         apiField: "fileName",
         filterable: true,
         sortable: true,
@@ -44,7 +45,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
     },
     {
       id: "partner",
-      header: "Partner",
+      header: t("Partner"),
       cell: ({ row }) =>
         row.original.partner?.name ? (
           <div className="min-w-0">
@@ -58,7 +59,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
         ),
       size: 220,
       meta: {
-        label: "Partner",
+        label: t("Partner"),
         apiField: "ediPartnerId",
         filterable: false,
         sortable: false,
@@ -66,11 +67,11 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
     },
     {
       accessorKey: "method",
-      header: "Method",
+      header: t("Method"),
       cell: ({ row }) => <Badge variant="outline">{row.original.method}</Badge>,
       size: 110,
       meta: {
-        label: "Method",
+        label: t("Method"),
         apiField: "method",
         filterable: true,
         sortable: false,
@@ -81,7 +82,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
     },
     {
       accessorKey: "transactionCount",
-      header: "Transactions",
+      header: t("Transactions"),
       cell: ({ row }) =>
         row.original.transactionCount > 0 ? (
           <Badge variant="secondary">{row.original.transactionCount}</Badge>
@@ -90,7 +91,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
         ),
       size: 120,
       meta: {
-        label: "Transactions",
+        label: t("Transactions"),
         apiField: "transactionCount",
         filterable: false,
         sortable: true,
@@ -98,7 +99,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
     },
     {
       accessorKey: "interchangeControlNumber",
-      header: "Control Number",
+      header: t("Control Number"),
       cell: ({ row }) =>
         row.original.interchangeControlNumber ? (
           <span className="font-mono text-xs">{row.original.interchangeControlNumber}</span>
@@ -107,7 +108,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
         ),
       size: 140,
       meta: {
-        label: "Control Number",
+        label: t("Control Number"),
         apiField: "interchangeControlNumber",
         filterable: true,
         sortable: false,
@@ -117,11 +118,11 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFileRow>[] {
     },
     {
       accessorKey: "receivedAt",
-      header: "Received",
+      header: t("Received"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.receivedAt} />,
       size: 180,
       meta: {
-        label: "Received",
+        label: t("Received"),
         apiField: "receivedAt",
         filterable: false,
         sortable: true,

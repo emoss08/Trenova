@@ -15,7 +15,9 @@ export function CarrierSettlementControlPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Carrier Settlement Control")}
-        description={t("Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts")}
+        description={t(
+          "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts",
+        )}
       />
       <SuspenseLoader>
         <div className="p-4">

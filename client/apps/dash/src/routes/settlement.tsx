@@ -101,7 +101,12 @@ export function DashSettlementPage() {
         </p>
         <p className="text-sm text-muted-foreground">
           {data.paidAt
-            ? t("Paid {0}{1}{2}", formatRange(data.paidAt, data.paidAt), data.paymentMethod ? ` ${t("via {0}", data.paymentMethod)}` : "", data.paymentReference ? ` (${data.paymentReference})` : "")
+            ? t(
+                "Paid {0}{1}{2}",
+                formatRange(data.paidAt, data.paidAt),
+                data.paymentMethod ? ` ${t("via {0}", data.paymentMethod)}` : "",
+                data.paymentReference ? ` (${data.paymentReference})` : "",
+              )
             : t("Pay date {0}", formatRange(data.payDate, data.payDate))}
         </p>
 

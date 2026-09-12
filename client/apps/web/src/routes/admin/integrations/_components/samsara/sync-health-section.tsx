@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TelematicsStatus } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
@@ -32,19 +33,19 @@ const HEALTH_TEXT_CLASS: Record<HealthTone, string> = {
 
 function computeHealth(status: TelematicsStatus, now: number): { label: string; tone: HealthTone } {
   if (!status.lastPolledAt) {
-    return { label: "Not started", tone: "muted" };
+    return { label: translate("Not started"), tone: "muted" };
   }
   const successAgeMs = status.lastSuccessAt ? now - status.lastSuccessAt * 1000 : Infinity;
   if (status.failureCount > 0) {
     if (successAgeMs <= DEGRADED_WINDOW_MS) {
-      return { label: "Degraded", tone: "warning" };
+      return { label: translate("Degraded"), tone: "warning" };
     }
-    return { label: "Failing", tone: "destructive" };
+    return { label: translate("Failing"), tone: "destructive" };
   }
   if (successAgeMs <= HEALTHY_WINDOW_MS) {
-    return { label: "Healthy", tone: "success" };
+    return { label: translate("Healthy"), tone: "success" };
   }
-  return { label: "Stale", tone: "warning" };
+  return { label: translate("Stale"), tone: "warning" };
 }
 
 function relativeOrNever(unixSeconds: number | null, now: number): string {

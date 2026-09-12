@@ -138,7 +138,9 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
         open={open}
         onOpenChange={onOpenChange}
         title={t("Create API Key")}
-        description={t("Define the bearer credential and grant only the resources the integration needs.")}
+        description={t(
+          "Define the bearer credential and grant only the resources the integration needs.",
+        )}
         size="xl"
         footer={
           <>
@@ -411,7 +413,9 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Revoke this bearer credential immediately. Existing integrations will stop authenticating until a new key is provisioned.")}
+              {t(
+                "Revoke this bearer credential immediately. Existing integrations will stop authenticating until a new key is provisioned.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -60,11 +60,19 @@ export function DeleteIftaTaxRateDialog({
           <AlertDialogDescription>
             {rate ? (
               <span className="block">
-                {t("The {0} rate for {1} in {2} ( {3} per gallon) will be removed.", IFTA_FUEL_TYPE_LABELS[rate.fuelType].toLowerCase(), jurisdictionLabel(rate.jurisdiction), periodLabel(rate.year, rate.quarter), rate.ratePerGallon)}
+                {t(
+                  "The {0} rate for {1} in {2} ( {3} per gallon) will be removed.",
+                  IFTA_FUEL_TYPE_LABELS[rate.fuelType].toLowerCase(),
+                  jurisdictionLabel(rate.jurisdiction),
+                  periodLabel(rate.year, rate.quarter),
+                  rate.ratePerGallon,
+                )}
               </span>
             ) : null}
             <span className="mt-2 block">
-              {t("Rates are global. Every organization's return for that quarter will report a missing rate on this line the next time it is recomputed, and none of them can be finalized until a rate is published again.")}
+              {t(
+                "Rates are global. Every organization's return for that quarter will report a missing rate on this line the next time it is recomputed, and none of them can be finalized until a rate is published again.",
+              )}
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>

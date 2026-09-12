@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod/v4";
 import { roleSchema } from "./role";
 import { createLimitOffsetResponse } from "./server";
@@ -191,7 +192,7 @@ export const accessPolicyFormSchema = accessPolicySchema
       if (hasKey && !hasValue) {
         ctx.addIssue({
           code: "custom",
-          message: "Condition value is required when a key is provided",
+          message: translate("Condition value is required when a key is provided"),
           path: ["conditionRows", index, "value"],
         });
       }
@@ -199,7 +200,7 @@ export const accessPolicyFormSchema = accessPolicySchema
       if (hasValue && !hasKey) {
         ctx.addIssue({
           code: "custom",
-          message: "Condition key is required when a value is provided",
+          message: translate("Condition key is required when a value is provided"),
           path: ["conditionRows", index, "key"],
         });
       }

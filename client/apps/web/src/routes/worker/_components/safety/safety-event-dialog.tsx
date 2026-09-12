@@ -236,7 +236,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   label={t("What happened")}
                   options={KIND_OPTIONS}
                   placeholder={t("Pick an event type")}
-                  description={t("Sets which fields apply and what the points suggestion starts from.")}
+                  description={t(
+                    "Sets which fields apply and what the points suggestion starts from.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -247,7 +249,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   label={t("Severity")}
                   options={SEVERITY_OPTIONS}
                   placeholder={t("Pick a severity")}
-                  description={t("Drives the suggested points; more severe events count for more on the scorecard.")}
+                  description={t(
+                    "Drives the suggested points; more severe events count for more on the scorecard.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -256,7 +260,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   control={control}
                   name="occurredAt"
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("Points roll off two years after this date, not after the date you record it.")}
+                  description={t(
+                    "Points roll off two years after this date, not after the date you record it.",
+                  )}
                   label={t("When")}
                   rules={{ required: true }}
                 />
@@ -267,7 +273,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="location"
                   label={t("Where")}
                   placeholder={t("e.g. I-80 WB, Joliet IL")}
-                  description={t("Where it happened, so the event can be matched to an inspection report or citation.")}
+                  description={t(
+                    "Where it happened, so the event can be matched to an inspection report or citation.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -275,8 +283,12 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   control={control}
                   name="description"
                   label={t("What happened")}
-                  placeholder={t("Plain description of the event, as it would read in a file review")}
-                  description={t("The narrative of the event as it will read in the driver's file and to an auditor.")}
+                  placeholder={t(
+                    "Plain description of the event, as it would read in a file review",
+                  )}
+                  description={t(
+                    "The narrative of the event as it will read in the driver's file and to an auditor.",
+                  )}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -291,7 +303,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                       label={t("Outcome")}
                       options={RESULT_OPTIONS}
                       placeholder={t("Pick an outcome")}
-                      description={t("Only a failed or out-of-service inspection carries points; a clean one records none.")}
+                      description={t(
+                        "Only a failed or out-of-service inspection carries points; a clean one records none.",
+                      )}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -302,7 +316,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                       label={t("Level")}
                       options={LEVEL_OPTIONS}
                       placeholder={t("Pick a level")}
-                      description={t("The North American Standard inspection level from the report, 1 to 6.")}
+                      description={t(
+                        "The North American Standard inspection level from the report, 1 to 6.",
+                      )}
                       isClearable
                     />
                   </FormControl>
@@ -315,7 +331,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                     control={control}
                     name="preventable"
                     label={t("Preventable")}
-                    description={t("Could the driver reasonably have avoided it? This drives the scorecard penalty.")}
+                    description={t(
+                      "Could the driver reasonably have avoided it? This drives the scorecard penalty.",
+                    )}
                     position="left"
                     outlined
                   />
@@ -342,7 +360,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   name="referenceNumber"
                   label={t("Reference")}
                   placeholder={t("Citation or report number")}
-                  description={t("The citation, report or claim number, so the event can be matched to its paperwork.")}
+                  description={t(
+                    "The citation, report or claim number, so the event can be matched to its paperwork.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -350,7 +370,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   control={control}
                   name="fineAmount"
                   label={t("Fine")}
-                  description={t("Any fine assessed against the driver or the carrier for this event.")}
+                  description={t(
+                    "Any fine assessed against the driver or the carrier for this event.",
+                  )}
                   placeholder="0.00"
                   sideText="$"
                 />
@@ -360,7 +382,9 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   control={control}
                   name="costAmount"
                   label={t("Cost to the carrier")}
-                  description={t("What the event cost the carrier in damage, towing, cargo or claims.")}
+                  description={t(
+                    "What the event cost the carrier in damage, towing, cargo or claims.",
+                  )}
                   placeholder="0.00"
                   sideText="$"
                 />

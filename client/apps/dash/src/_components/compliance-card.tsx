@@ -173,7 +173,9 @@ function PendingChangeNotice() {
         ))}
       </ul>
       {latest.decisionNote ? (
-        <p className="text-muted-foreground mt-1">{t("Your carrier said: {0}", latest.decisionNote)}</p>
+        <p className="text-muted-foreground mt-1">
+          {t("Your carrier said: {0}", latest.decisionNote)}
+        </p>
       ) : null}
     </div>
   );
@@ -251,7 +253,9 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
           <DrawerTitle>{t("Update contact details")}</DrawerTitle>
           <DrawerDescription>
             {requiresApproval
-              ? t("Your carrier checks contact changes before they land on your record. Only the fields you change are sent.")
+              ? t(
+                  "Your carrier checks contact changes before they land on your record. Only the fields you change are sent.",
+                )
               : t("Keep your phone and address current so dispatch and payroll can reach you.")}
           </DrawerDescription>
         </DrawerHeader>
@@ -302,7 +306,11 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
             disabled={!canSave || save.isPending}
             onClick={() => save.mutate()}
           >
-            {save.isPending ? t("Sending...") : requiresApproval ? t("Send for approval") : t("Save")}
+            {save.isPending
+              ? t("Sending...")
+              : requiresApproval
+                ? t("Send for approval")
+                : t("Save")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

@@ -37,7 +37,9 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
   if (!rateAgreementId) {
     return (
       <p className="text-muted-foreground text-sm">
-        {t("Save the agreement first. Versions record the terms as they stood, and there are no terms until there is a contract.")}
+        {t(
+          "Save the agreement first. Versions record the terms as they stood, and there are no terms until there is a contract.",
+        )}
       </p>
     );
   }
@@ -48,7 +50,9 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
         <ClockIcon className="text-muted-foreground mb-3 size-8" />
         <p className="text-sm font-medium">{t("No versions recorded yet")}</p>
         <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-          {t("A version is written when the negotiated header terms change, so a dispute can always read the contract as it stood on a date.")}
+          {t(
+            "A version is written when the negotiated header terms change, so a dispute can always read the contract as it stood on a date.",
+          )}
         </p>
       </div>
     );

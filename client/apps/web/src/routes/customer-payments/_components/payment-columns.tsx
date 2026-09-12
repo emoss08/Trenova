@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { PlainCustomerPaymentStatusBadge } from "@trenova/shared/components/status-badge";
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
@@ -10,11 +10,11 @@ function formatDate(unix: number): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
-export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <PlainCustomerPaymentStatusBadge status={row.original.status as CustomerPaymentStatus} />
       ),
@@ -23,7 +23,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "referenceNumber",
-      header: "Reference",
+      header: t("Reference"),
       cell: ({ row }) => (
         <span className="font-mono text-xs font-medium">{row.original.referenceNumber || "—"}</span>
       ),
@@ -32,7 +32,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       id: "customer",
-      header: "Customer",
+      header: t("Customer"),
       cell: ({ row }) => (
         <span className="text-xs font-medium">
           {row.original.customer
@@ -44,28 +44,28 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "paymentMethod",
-      header: "Method",
+      header: t("Method"),
       cell: ({ row }) => <span className="text-xs">{row.original.paymentMethod}</span>,
       size: 90,
       meta: { apiField: "paymentMethod" },
     },
     {
       accessorKey: "paymentDate",
-      header: "Payment Date",
+      header: t("Payment Date"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.paymentDate)}</span>,
       size: 120,
       meta: { apiField: "paymentDate" },
     },
     {
       accessorKey: "accountingDate",
-      header: "Accounting Date",
+      header: t("Accounting Date"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.accountingDate)}</span>,
       size: 120,
       meta: { apiField: "accountingDate" },
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">{translate("Amount")}</div>,
+      header: () => <div className="text-right">{t("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.amountMinor} className="text-xs font-semibold" />
@@ -76,7 +76,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "appliedAmountMinor",
-      header: () => <div className="text-right">{translate("Applied")}</div>,
+      header: () => <div className="text-right">{t("Applied")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -90,7 +90,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "unappliedAmountMinor",
-      header: () => <div className="text-right">{translate("Unapplied")}</div>,
+      header: () => <div className="text-right">{t("Unapplied")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -108,7 +108,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       id: "applications",
-      header: "Invoices",
+      header: t("Invoices"),
       cell: ({ row }) => (
         <span className="text-muted-foreground text-xs tabular-nums">
           {row.original.applications?.length ?? 0}

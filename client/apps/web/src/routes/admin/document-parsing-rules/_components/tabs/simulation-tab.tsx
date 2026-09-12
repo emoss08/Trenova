@@ -92,7 +92,11 @@ function VersionSelect({
                     {selected.status}
                   </Badge>
                   <span className="truncate">
-                    {t("Version {0}{1}", selected.versionNumber, selected.label ? ` — ${selected.label}` : "")}
+                    {t(
+                      "Version {0}{1}",
+                      selected.versionNumber,
+                      selected.label ? ` — ${selected.label}` : "",
+                    )}
                   </span>
                 </>
               ) : (
@@ -222,7 +226,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
             <CardTitle>{t("Rule Simulation")}</CardTitle>
           </div>
           <CardDescription>
-            {t("Run a rule version against sample document text to verify parsing behavior before publishing. Useful for testing new rules, debugging extraction issues, or comparing results against a known baseline.")}
+            {t(
+              "Run a rule version against sample document text to verify parsing behavior before publishing. Useful for testing new rules, debugging extraction issues, or comparing results against a known baseline.",
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -230,7 +236,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
           <div className="space-y-4">
             <SectionHeading
               title={t("Document Input")}
-              description={t("Select the rule version to test and provide the document text to parse.")}
+              description={t(
+                "Select the rule version to test and provide the document text to parse.",
+              )}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -241,7 +249,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                   value={selectedVersionId}
                   onChange={setSelectedVersionId}
                 />
-                <HelpText>{t("Only Draft and Published versions are available for simulation.")}</HelpText>
+                <HelpText>
+                  {t("Only Draft and Published versions are available for simulation.")}
+                </HelpText>
               </div>
             </div>
 
@@ -262,7 +272,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                 minRows={8}
               />
               <HelpText>
-                {t("The raw text content extracted from the document. This is what the rule engine parses to extract fields, stops, and other structured data.")}
+                {t(
+                  "The raw text content extracted from the document. This is what the rule engine parses to extract fields, stops, and other structured data.",
+                )}
               </HelpText>
             </div>
           </div>
@@ -271,7 +283,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
           <div className="space-y-4">
             <SectionHeading
               title={t("Optional Context")}
-              description={t("Additional metadata that helps the rule engine match and parse more accurately.")}
+              description={t(
+                "Additional metadata that helps the rule engine match and parse more accurately.",
+              )}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -283,7 +297,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                   placeholder={t("e.g. rate_confirmation_ch_robinson.pdf")}
                 />
                 <HelpText>
-                  {t("Used by fileNameContains match rules. Provide the original document file name to test file-name-based matching.")}
+                  {t(
+                    "Used by fileNameContains match rules. Provide the original document file name to test file-name-based matching.",
+                  )}
                 </HelpText>
               </div>
               <div className="flex flex-col gap-0.5">
@@ -294,7 +310,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                   placeholder={t("e.g. ch_robinson")}
                 />
                 <HelpText>
-                  {t("A known provider identifier used by providerFingerprints match rules. Simulates what the document intelligence pipeline would detect.")}
+                  {t(
+                    "A known provider identifier used by providerFingerprints match rules. Simulates what the document intelligence pipeline would detect.",
+                  )}
                 </HelpText>
               </div>
             </div>
@@ -304,12 +322,14 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
               <Textarea
                 value={baselineJson}
                 onChange={(e) => setBaselineJson(e.target.value)}
-                placeholder={t("{\"fields\": {}, \"stops\": [], \"overallConfidence\": 0.95, ...}")}
+                placeholder={t('{"fields": {}, "stops": [], "overallConfidence": 0.95, ...}')}
                 className="min-h-[80px] font-mono text-xs"
                 minRows={3}
               />
               <HelpText>
-                {t("Provide a previous analysis result as JSON to enable diff comparison. The simulation will show what changed between the baseline and the new candidate result — useful when iterating on rules to ensure changes produce the expected improvements.")}
+                {t(
+                  "Provide a previous analysis result as JSON to enable diff comparison. The simulation will show what changed between the baseline and the new candidate result — useful when iterating on rules to ensure changes produce the expected improvements.",
+                )}
               </HelpText>
             </div>
           </div>
@@ -361,7 +381,9 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
               <div className="flex items-start gap-1.5 pt-1">
                 <InfoIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
                 <p className="text-2xs text-muted-foreground">
-                  {t("Check that the selected version has valid rule configuration and the document text is not empty. If the issue persists, verify the rule version status on the Versions tab.")}
+                  {t(
+                    "Check that the selected version has valid rule configuration and the document text is not empty. If the issue persists, verify the rule version status on the Versions tab.",
+                  )}
                 </p>
               </div>
             </div>

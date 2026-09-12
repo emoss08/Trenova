@@ -76,7 +76,9 @@ export function LaneScopeFields<T extends FieldValues>({
           name={names.scopeType as never}
           label={`${label} Scope`}
           placeholder={t("Select scope")}
-          description={t("How narrowly this end of the lane is written. A narrower scope beats a wider one covering the same load.")}
+          description={t(
+            "How narrowly this end of the lane is written. A narrower scope beats a wider one covering the same load.",
+          )}
           options={rateScopeTypeChoices}
         />
       </FormControl>
@@ -139,7 +141,9 @@ export function LaneScopeFields<T extends FieldValues>({
               name={names.city as never}
               label={`${label} City`}
               placeholder={t("City")}
-              description={t("Spelling and case do not matter — the city is folded before it is matched")}
+              description={t(
+                "Spelling and case do not matter — the city is folded before it is matched",
+              )}
             />
           </FormControl>
         </>

@@ -28,7 +28,9 @@ export function RateZoneForm() {
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
-              description={t("An inactive zone stops matching, and every lane written against it stops with it")}
+              description={t(
+                "An inactive zone stops matching, and every lane written against it stops with it",
+              )}
               options={statusChoices}
             />
           </FormControl>
@@ -39,7 +41,9 @@ export function RateZoneForm() {
               name="kind"
               label={t("Zone Kind")}
               placeholder={t("Select kind")}
-              description={t("What sort of area this is, which is how somebody else reads it later")}
+              description={t(
+                "What sort of area this is, which is how somebody else reads it later",
+              )}
               options={rateZoneKindChoices}
             />
           </FormControl>
@@ -69,7 +73,9 @@ export function RateZoneForm() {
               name="description"
               label={t("Description")}
               placeholder={t("Atlantic and Gulf states from Virginia through Louisiana")}
-              description={t("What the zone actually covers, for the next person deciding whether to reuse it")}
+              description={t(
+                "What the zone actually covers, for the next person deciding whether to reuse it",
+              )}
             />
           </FormControl>
         </FormGroup>

@@ -152,7 +152,9 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
         </ul>
       ) : !pendingFile && features.allowLoadDocumentUpload ? (
         <p className="text-xs text-muted-foreground">
-          {t("Snap the signed POD or BOL right after delivery — billing can't invoice without it, and faster paperwork means faster pay.")}
+          {t(
+            "Snap the signed POD or BOL right after delivery — billing can't invoice without it, and faster paperwork means faster pay.",
+          )}
         </p>
       ) : null}
     </div>

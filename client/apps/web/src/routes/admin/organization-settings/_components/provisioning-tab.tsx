@@ -133,7 +133,9 @@ export function ProvisioningTab({
           <EmptyState
             icon={<UsersRoundIcon />}
             label={t("Select a directory")}
-            description={t("Choose or create a SCIM directory before managing tokens and group mappings.")}
+            description={t(
+              "Choose or create a SCIM directory before managing tokens and group mappings.",
+            )}
           />
         )}
         <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />

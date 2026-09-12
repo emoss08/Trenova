@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   nonNegativeDecimalString,
@@ -39,16 +40,16 @@ const optionalLastFour = z
 
 export function createFuelPurchaseFormSchema(now: number) {
   return z.object({
-    tractorId: z.string().min(1, { message: "Choose the tractor that was fuelled" }),
+    tractorId: z.string().min(1, { message: translate("Choose the tractor that was fuelled") }),
     workerId: z.string().nullable(),
     jurisdictionId: z
       .string()
-      .min(1, { message: "Choose the jurisdiction the fuel was bought in" }),
+      .min(1, { message: translate("Choose the jurisdiction the fuel was bought in") }),
     purchasedAt: z
       .number()
       .int()
-      .positive({ message: "Enter when the fuel was bought" })
-      .max(now, { message: "A purchase cannot be in the future" }),
+      .positive({ message: translate("Enter when the fuel was bought") })
+      .max(now, { message: translate("A purchase cannot be in the future") }),
     vendor: optionalText(200, "the vendor"),
     vendorCity: optionalText(100, "the city"),
     fuelType: iftaFuelTypeSchema,
@@ -69,11 +70,11 @@ export function createFuelPurchaseFormSchema(now: number) {
       .string()
       .trim()
       .toUpperCase()
-      .regex(CURRENCY_PATTERN, { message: "Use a three-letter currency code" }),
+      .regex(CURRENCY_PATTERN, { message: translate("Use a three-letter currency code") }),
     odometer: z
       .number()
-      .int({ message: "Odometer is whole miles" })
-      .min(0, { message: "Odometer cannot be negative" })
+      .int({ message: translate("Odometer is whole miles") })
+      .min(0, { message: translate("Odometer cannot be negative") })
       .nullable(),
     fuelCardId: z.string().nullable(),
     cardLastFour: optionalLastFour,

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 export const costBehaviorSchema = z.enum(["Fixed", "Variable"]);
@@ -46,14 +47,14 @@ export const costCategoryFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["overrideRatePerMile"],
-        message: "Override rate is required when the rate source is Override",
+        message: translate("Override rate is required when the rate source is Override"),
       });
     }
     if (values.rateSource === "GLActual" && values.glAccountIds.length === 0) {
       ctx.addIssue({
         code: "custom",
         path: ["glAccountIds"],
-        message: "Map at least one GL account to use GL actuals for this category",
+        message: translate("Map at least one GL account to use GL actuals for this category"),
       });
     }
   });
@@ -92,7 +93,7 @@ export const costControlSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["fuelIndexId"],
-        message: "Fuel index is required when live fuel pricing is enabled",
+        message: translate("Fuel index is required when live fuel pricing is enabled"),
       });
     }
   });

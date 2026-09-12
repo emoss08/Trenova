@@ -275,7 +275,9 @@ export default function SchedulingConsole() {
                 {visibleRows.length === 0 ? (
                   <RotaEmpty
                     title={t("Nobody matches that")}
-                    description={t("Nothing on the board fits the search. Clear it to see the whole week again.")}
+                    description={t(
+                      "Nothing on the board fits the search. Clear it to see the whole week again.",
+                    )}
                     onClearFilters={() => setSearch("")}
                   />
                 ) : (
@@ -305,7 +307,9 @@ export default function SchedulingConsole() {
                 );
               })}
               <span className="text-muted-foreground ml-auto">
-                {t("A ringed cell is a conflict. The small number is loads dispatch already assigned. The cover row counts who can work each day.")}
+                {t(
+                  "A ringed cell is a conflict. The small number is loads dispatch already assigned. The cover row counts who can work each day.",
+                )}
               </span>
             </div>
           </TabsContent>
@@ -316,7 +320,9 @@ export default function SchedulingConsole() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <p className="text-muted-foreground max-w-2xl text-xs">
-                  {t("A pattern is a mask of working days plus a start and a length. An A/B pair is a single two-week shift and two assignments at different offsets — not two near-identical shifts.")}
+                  {t(
+                    "A pattern is a mask of working days plus a start and a length. An A/B pair is a single two-week shift and two assignments at different offsets — not two near-identical shifts.",
+                  )}
                 </p>
                 {templatesQuery.data ? (
                   <p className="text-xs tabular-nums" aria-label={t("Pattern summary")}>
@@ -334,7 +340,10 @@ export default function SchedulingConsole() {
                       </>
                     ) : null}
                     {stats.retired > 0 ? (
-                      <span className="text-muted-foreground"> {t("· {0} retired", stats.retired)}</span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        {t("· {0} retired", stats.retired)}
+                      </span>
                     ) : null}
                   </p>
                 ) : null}
@@ -356,7 +365,9 @@ export default function SchedulingConsole() {
             ) : templates.length === 0 ? (
               <ShiftsEmpty
                 title={t("No shifts yet")}
-                description={t("A shift is a pattern of days and hours. Add one, then put workers on it from their Schedule tab and the board fills in.")}
+                description={t(
+                  "A shift is a pattern of days and hours. Add one, then put workers on it from their Schedule tab and the board fills in.",
+                )}
                 onCreate={canCreateShift ? () => setDialog({ template: null }) : undefined}
               />
             ) : (

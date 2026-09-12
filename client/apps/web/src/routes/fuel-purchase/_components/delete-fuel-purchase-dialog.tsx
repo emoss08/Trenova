@@ -61,13 +61,24 @@ export function DeleteFuelPurchaseDialog({
           <AlertDialogDescription>
             {purchase ? (
               <span className="block">
-                {t("{0} gallons of {1} bought in {2} on {3}{4} will be removed outright.", purchase.gallons, purchase.fuelType.toLowerCase(), purchase.jurisdiction.code, formatUnixDateTime(purchase.purchasedAt), purchase.tractor?.code ? ` ${t("for tractor {0}", purchase.tractor.code)}` : "")}
+                {t(
+                  "{0} gallons of {1} bought in {2} on {3}{4} will be removed outright.",
+                  purchase.gallons,
+                  purchase.fuelType.toLowerCase(),
+                  purchase.jurisdiction.code,
+                  formatUnixDateTime(purchase.purchasedAt),
+                  purchase.tractor?.code ? ` ${t("for tractor {0}", purchase.tractor.code)}` : "",
+                )}
               </span>
             ) : null}
             <span className="mt-2 block">
-              {t("A return already generated for {0} keeps its figures until it is recomputed, so recompute the return after deleting if the quarter is still open. {1}", quarter ?? t("its quarter"), purchase?.source === "CardImport"
-                ? ` ${t("Importing the same statement again will record this row afresh.")}`
-                : "")}
+              {t(
+                "A return already generated for {0} keeps its figures until it is recomputed, so recompute the return after deleting if the quarter is still open. {1}",
+                quarter ?? t("its quarter"),
+                purchase?.source === "CardImport"
+                  ? ` ${t("Importing the same statement again will record this row afresh.")}`
+                  : "",
+              )}
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>

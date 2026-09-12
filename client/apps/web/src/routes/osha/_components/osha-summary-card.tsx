@@ -47,7 +47,10 @@ export function OshaSummaryCard({
   const holdReason = blocker ? certifyBlockerMessage(blocker, totals.openCases) : null;
 
   return (
-    <section aria-label={t("Form 300A")} className="bg-card flex min-w-0 flex-col rounded-lg border">
+    <section
+      aria-label={t("Form 300A")}
+      className="bg-card flex min-w-0 flex-col rounded-lg border"
+    >
       <header className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -63,7 +66,11 @@ export function OshaSummaryCard({
             )}
           </div>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Form 300A. Post it from {0} to {1}, where employees can read it.", formatUnixDateMedium(log.postFrom), formatUnixDateMedium(log.postThrough))}
+            {t(
+              "Form 300A. Post it from {0} to {1}, where employees can read it.",
+              formatUnixDateMedium(log.postFrom),
+              formatUnixDateMedium(log.postThrough),
+            )}
           </p>
         </div>
         {canUpdate || canCertify ? (
@@ -174,20 +181,30 @@ export function OshaSummaryCard({
                 ) : null}
               </p>
               <p className="text-muted-foreground">
-                {t("Certified {0}{1}", formatUnixDateMedium(summary?.certifiedAt), summary?.executivePhone?.trim() ? ` · ${summary.executivePhone.trim()}` : "")}
+                {t(
+                  "Certified {0}{1}",
+                  formatUnixDateMedium(summary?.certifiedAt),
+                  summary?.executivePhone?.trim() ? ` · ${summary.executivePhone.trim()}` : "",
+                )}
               </p>
               <p className="text-muted-foreground">
                 {summary?.submittedAt
-                  ? t("Submitted electronically {0}{1}", formatUnixDateMedium(summary.submittedAt), summary.submissionReference?.trim()
+                  ? t(
+                      "Submitted electronically {0}{1}",
+                      formatUnixDateMedium(summary.submittedAt),
+                      summary.submissionReference?.trim()
                         ? t(", reference {0}", summary.submissionReference.trim())
-                        : "")
+                        : "",
+                    )
                   : t("Not yet submitted electronically")}
               </p>
             </div>
           ) : (
             <div className="flex flex-col gap-1 text-xs">
               <p className="text-muted-foreground">
-                {t("A company executive certifies that they have examined the log and believe the summary is correct and complete.")}
+                {t(
+                  "A company executive certifies that they have examined the log and believe the summary is correct and complete.",
+                )}
               </p>
               {summary?.executiveName?.trim() ? (
                 <p>

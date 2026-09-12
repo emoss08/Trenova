@@ -77,7 +77,9 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
       <TriangleAlertIcon className="size-5 text-amber-500" />
       <p className="text-muted-foreground max-w-[20rem] text-xs">
-        {t("These figures could not be loaded. The window may be too wide, or the aggregation timed out.")}
+        {t(
+          "These figures could not be loaded. The window may be too wide, or the aggregation timed out.",
+        )}
       </p>
       <Button type="button" size="sm" variant="outline" className="h-7" onClick={onRetry}>
         <RotateCwIcon className="mr-1.5 size-3.5" />

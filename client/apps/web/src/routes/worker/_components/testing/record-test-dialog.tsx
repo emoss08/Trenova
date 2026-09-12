@@ -129,7 +129,9 @@ export function RecordTestDialog({
         <DialogHeader>
           <DialogTitle>{t("Record a collection")}</DialogTitle>
           <DialogDescription>
-            {t("One record per substance analysed. A collection covering both drug and alcohol is two records, because only the drug half has a medical review officer.")}
+            {t(
+              "One record per substance analysed. A collection covering both drug and alcohol is two records, because only the drug half has a medical review officer.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -148,7 +150,9 @@ export function RecordTestDialog({
                   label={t("Reason for the test")}
                   options={TYPE_OPTIONS}
                   placeholder={t("Pick a reason")}
-                  description={t("Reasonable suspicion and post-accident tests must say what prompted them.")}
+                  description={t(
+                    "Reasonable suspicion and post-accident tests must say what prompted them.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -159,7 +163,9 @@ export function RecordTestDialog({
                   label={t("What is analysed")}
                   options={SUBSTANCE_OPTIONS}
                   placeholder={t("Pick a substance")}
-                  description={t("Drug results go through an MRO; alcohol results are graded by the concentration.")}
+                  description={t(
+                    "Drug results go through an MRO; alcohol results are graded by the concentration.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -170,7 +176,9 @@ export function RecordTestDialog({
                     control={control}
                     name="reason"
                     label={t("What prompted it")}
-                    placeholder={t("What the supervisor observed, or the accident that triggered the collection")}
+                    placeholder={t(
+                      "What the supervisor observed, or the accident that triggered the collection",
+                    )}
                     description={t("Kept with the test as the documented basis for ordering it.")}
                     rules={{ required: true }}
                     maxLength={2000}
@@ -193,7 +201,9 @@ export function RecordTestDialog({
                   name="collectedAt"
                   label={t("Collected on")}
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("Entering a date marks the specimen as collected; leave it blank if it has not been taken yet.")}
+                  description={t(
+                    "Entering a date marks the specimen as collected; leave it blank if it has not been taken yet.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -220,7 +230,9 @@ export function RecordTestDialog({
                   name="specimenId"
                   label={t("Specimen ID")}
                   placeholder={t("CCF specimen number")}
-                  description={t("The specimen ID from the custody and control form, for matching the laboratory report.")}
+                  description={t(
+                    "The specimen ID from the custody and control form, for matching the laboratory report.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -228,7 +240,9 @@ export function RecordTestDialog({
                   control={control}
                   name="isDot"
                   label={t("DOT test")}
-                  description={t("Turn off for a company-policy test that is not made under 49 CFR 382.")}
+                  description={t(
+                    "Turn off for a company-policy test that is not made under 49 CFR 382.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">

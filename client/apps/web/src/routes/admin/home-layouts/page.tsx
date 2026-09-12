@@ -62,7 +62,9 @@ export function HomeLayoutsPage() {
     <div className="flex flex-col p-6">
       <PageHeader
         title={t("Home Screens")}
-        description={t("Author a home screen once and assign it to the roles that should land on it.")}
+        description={t(
+          "Author a home screen once and assign it to the roles that should land on it.",
+        )}
         className="p-0 py-4"
         actions={
           canCreate ? (
@@ -108,7 +110,12 @@ export function HomeLayoutsPage() {
             <AlertDialogDescription>
               {confirming && (
                 <>
-                  <strong>{confirming.name}</strong> {t("reaches {0} {1}. They will fall back to the next home screen that matches them. This cannot be undone.", confirming.assignedUserCount, confirming.assignedUserCount === 1 ? "person" : "people")}
+                  <strong>{confirming.name}</strong>{" "}
+                  {t(
+                    "reaches {0} {1}. They will fall back to the next home screen that matches them. This cannot be undone.",
+                    confirming.assignedUserCount,
+                    confirming.assignedUserCount === 1 ? "person" : "people",
+                  )}
                 </>
               )}
             </AlertDialogDescription>

@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -8,11 +8,11 @@ import type { DetentionPolicyRow } from "@/lib/graphql/detention-policy-table";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const choice = detentionPolicyStatusChoices.find(
           (option) => option.value === row.original.status,
@@ -27,7 +27,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -38,13 +38,13 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{row.original.name}</span>
           {row.original.isOrgDefault && (
             <Badge variant="outline" className="text-[10px]">
-              {translate("Org default")}
+              {t("Org default")}
             </Badge>
           )}
         </div>
@@ -53,7 +53,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       minSize: 200,
       maxSize: 320,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -61,7 +61,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => (
         <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
           {row.original.code}
@@ -71,7 +71,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       minSize: 120,
       maxSize: 180,
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -79,7 +79,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "billingFreeMinutes",
-      header: "Free Time",
+      header: t("Free Time"),
       cell: ({ row }) => (
         <span className="tabular-nums">
           {formatDetentionMinutes(row.original.billingFreeMinutes)}
@@ -89,7 +89,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: "Free Time",
+        label: t("Free Time"),
         apiField: "billingFreeMinutes",
         filterable: false,
         sortable: true,
@@ -97,7 +97,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "rateSource",
-      header: "Rate Source",
+      header: t("Rate Source"),
       cell: ({ row }) => {
         const choice = detentionRateSourceChoices.find(
           (option) => option.value === row.original.rateSource,
@@ -108,7 +108,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: "Rate Source",
+        label: t("Rate Source"),
         apiField: "rateSource",
         filterable: true,
         sortable: true,
@@ -119,7 +119,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "specificityScore",
-      header: "Specificity",
+      header: t("Specificity"),
       cell: ({ row }) => (
         <span className="text-muted-foreground tabular-nums">{row.original.specificityScore}</span>
       ),
@@ -127,7 +127,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: "Specificity",
+        label: t("Specificity"),
         apiField: "specificityScore",
         filterable: false,
         sortable: true,
@@ -135,15 +135,15 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={80} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={80} />
       ),
       size: 280,
       minSize: 200,
       maxSize: 400,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: false,
         sortable: false,
@@ -151,7 +151,7 @@ export function getColumns(): ColumnDef<DetentionPolicyRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       size: 200,
       minSize: 180,

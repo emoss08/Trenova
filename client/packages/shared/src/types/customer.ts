@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   decimalStringSchema,
@@ -140,7 +141,7 @@ export const customerBillingProfileSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["fuelSurchargeProgramId"],
-        message: "Select the fuel surcharge program to apply for this customer",
+        message: translate("Select the fuel surcharge program to apply for this customer"),
       });
     }
   });

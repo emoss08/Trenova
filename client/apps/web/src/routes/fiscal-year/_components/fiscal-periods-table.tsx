@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -159,18 +160,18 @@ function getAvailableActions(status: string) {
   }[] = [];
 
   if (status === "Open") {
-    actions.push({ id: "close", label: "Close Period", icon: XCircleIcon });
+    actions.push({ id: "close", label: translate("Close Period"), icon: XCircleIcon });
   }
   if (status === "Closed") {
     actions.push({
       id: "reopen",
-      label: "Reopen Period",
+      label: translate("Reopen Period"),
       icon: RotateCcwIcon,
     });
-    actions.push({ id: "lock", label: "Lock Period", icon: LockIcon });
+    actions.push({ id: "lock", label: translate("Lock Period"), icon: LockIcon });
   }
   if (status === "Locked") {
-    actions.push({ id: "unlock", label: "Unlock Period", icon: UnlockIcon });
+    actions.push({ id: "unlock", label: translate("Unlock Period"), icon: UnlockIcon });
   }
 
   return actions;

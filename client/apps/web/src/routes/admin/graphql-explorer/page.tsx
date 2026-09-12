@@ -37,7 +37,11 @@ export function GraphQLExplorerPage() {
         actions={
           index ? (
             <Badge variant="secondary" className="font-normal">
-              {t("{0} operations · {1} fragments", index.catalog.operationCount, index.catalog.fragmentCount)}
+              {t(
+                "{0} operations · {1} fragments",
+                index.catalog.operationCount,
+                index.catalog.fragmentCount,
+              )}
             </Badge>
           ) : (
             <Skeleton className="h-5 w-44 rounded-md" />

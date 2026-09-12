@@ -211,7 +211,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         >
                           {t("Microsoft Entra ID")}
                         </a>
-                        {t(", copy the redirect URL below into the app's authentication settings, then paste the credentials here.")}
+                        {t(
+                          ", copy the redirect URL below into the app's authentication settings, then paste the credentials here.",
+                        )}
                       </p>
                     </AlertDescription>
                   </Alert>
@@ -230,7 +232,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                           control={control}
                           name="enabled"
                           label={t("Enable Entra ID sign-in")}
-                          description={t("Allow users to sign in with a \"Continue with Microsoft Entra ID\" button.")}
+                          description={t(
+                            'Allow users to sign in with a "Continue with Microsoft Entra ID" button.',
+                          )}
                           outlined
                         />
                       </FormControl>
@@ -240,11 +244,13 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             control={control}
                             name="enforceSso"
                             label={t("Require Entra ID SSO")}
-                            description={t("Disable password login and require all users to sign in with Entra ID.")}
+                            description={t(
+                              "Disable password login and require all users to sign in with Entra ID.",
+                            )}
                             outlined
                             warning={{
                               show: Boolean(enforceSso),
-                              message: "All users will be required to sign in with Entra ID.",
+                              message: t("All users will be required to sign in with Entra ID."),
                             }}
                           />
                         </FormControl>
@@ -255,7 +261,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         <AlertTriangleIcon />
                         <AlertTitle>{t("Password login will be disabled")}</AlertTitle>
                         <AlertDescription>
-                          {t("Users without an Entra ID account linked to an allowed domain will be locked out. Ensure all users have Entra ID accounts before enabling this.")}
+                          {t(
+                            "Users without an Entra ID account linked to an allowed domain will be locked out. Ensure all users have Entra ID accounts before enabling this.",
+                          )}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -274,10 +282,15 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         <Alert variant="info">
                           <LinkIcon />
                           <AlertDescription>
-                            {t("Add this redirect URL to your Entra ID app under Authentication > Redirect URIs.")}
+                            {t(
+                              "Add this redirect URL to your Entra ID app under Authentication > Redirect URIs.",
+                            )}
                           </AlertDescription>
                         </Alert>
-                        <CopyableInput value={redirectUrl} label={t("Redirect URL (OAuth Callback)")} />
+                        <CopyableInput
+                          value={redirectUrl}
+                          label={t("Redirect URL (OAuth Callback)")}
+                        />
                       </div>
 
                       <Separator />
@@ -286,7 +299,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       <div className="space-y-3">
                         <SectionHeader
                           title={t("Identity Provider")}
-                          description={t("Paste these values from your Microsoft Entra ID app registration.")}
+                          description={t(
+                            "Paste these values from your Microsoft Entra ID app registration.",
+                          )}
                         />
                         <FormGroup cols={1}>
                           <FormControl cols="full">
@@ -338,7 +353,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                               name="allowedDomainsText"
                               label={t("Allowed Email Domains")}
                               placeholder={t("company.com, contractor.com")}
-                              description={t("Comma-separated list. Leave blank to allow all Entra ID account domains.")}
+                              description={t(
+                                "Comma-separated list. Leave blank to allow all Entra ID account domains.",
+                              )}
                             />
                           </FormControl>
                         </FormGroup>
@@ -350,7 +367,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       <div className="space-y-3">
                         <SectionHeader
                           title={t("Tenant Login URL")}
-                          description={t("Share this URL with your users for Entra ID SSO sign-in.")}
+                          description={t(
+                            "Share this URL with your users for Entra ID SSO sign-in.",
+                          )}
                         />
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">

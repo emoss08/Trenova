@@ -140,7 +140,9 @@ function PTOPolicyCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("PTO Policy")}
-      description={t("Define how each type of paid time off accrues, caps, and carries over for the workers you assign to it.")}
+      description={t(
+        "Define how each type of paid time off accrues, caps, and carries over for the workers you assign to it.",
+      )}
       queryKey={PTO_POLICY_LIST_KEY}
       form={form}
       size="lg"

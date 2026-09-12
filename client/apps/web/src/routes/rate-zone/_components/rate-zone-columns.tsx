@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -6,11 +6,11 @@ import { statusChoices } from "@/lib/choices";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { RateZoneRow } from "@/lib/graphql/rate-tables";
 
-export function getColumns(): ColumnDef<RateZoneRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<RateZoneRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const choice = statusChoices.find((option) => option.value === row.original.status);
 
@@ -24,7 +24,7 @@ export function getColumns(): ColumnDef<RateZoneRow>[] {
       minSize: 100,
       maxSize: 130,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -35,13 +35,13 @@ export function getColumns(): ColumnDef<RateZoneRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-mono text-xs">{row.original.code}</span>,
       size: 120,
       minSize: 100,
       maxSize: 160,
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -49,13 +49,13 @@ export function getColumns(): ColumnDef<RateZoneRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       size: 240,
       minSize: 200,
       maxSize: 320,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -63,13 +63,13 @@ export function getColumns(): ColumnDef<RateZoneRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => <DataTableDescription description={translate(row.original.description)} />,
+      header: t("Description"),
+      cell: ({ row }) => <DataTableDescription description={t(row.original.description)} />,
       size: 320,
       minSize: 220,
       maxSize: 440,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -77,13 +77,13 @@ export function getColumns(): ColumnDef<RateZoneRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       size: 150,
       minSize: 130,
       maxSize: 190,
       meta: {
-        label: "Created",
+        label: t("Created"),
         apiField: "createdAt",
         filterable: true,
         sortable: true,

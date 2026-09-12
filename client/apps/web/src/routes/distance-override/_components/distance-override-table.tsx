@@ -58,19 +58,19 @@ export default function DistanceOverrideTable() {
     setDeleteDialogOpen(true);
   }, []);
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const contextMenuActions = useMemo<RowAction<DistanceOverrideRow>[]>(
     () => [
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: TrashIcon,
         variant: "destructive",
         onClick: handleDelete,
       },
     ],
-    [handleDelete],
+    [handleDelete, t],
   );
 
   return (
@@ -92,7 +92,9 @@ export default function DistanceOverrideTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete Distance Override")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Are you sure you want to delete this distance override? This action cannot be undone.")}
+              {t(
+                "Are you sure you want to delete this distance override? This action cannot be undone.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

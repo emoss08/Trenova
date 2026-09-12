@@ -47,7 +47,9 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
             control={control}
             name="clearReasonCode"
             label={t("Clear Reason Code")}
-            description={t("Removes the assigned reason code while preserving the service failure record.")}
+            description={t(
+              "Removes the assigned reason code while preserving the service failure record.",
+            )}
             outlined
             position="left"
             disabled={disabled}
@@ -73,7 +75,10 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
         </FormControl>
       </FormGroup>
 
-      <FormSection title={t("EDI Overrides")} description={t("Overrides apply only to this failure.")}>
+      <FormSection
+        title={t("EDI Overrides")}
+        description={t("Overrides apply only to this failure.")}
+      >
         <FormGroup cols={3}>
           <FormControl>
             <InputField

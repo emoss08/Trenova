@@ -114,7 +114,10 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
         <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
           <div className="flex items-center gap-2">
             <span className="text-foreground text-sm font-medium">
-              {t("{0, plural, one {# change} other {# changes}} will be applied", changeEntries.length)}
+              {t(
+                "{0, plural, one {# change} other {# changes}} will be applied",
+                changeEntries.length,
+              )}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -211,7 +214,11 @@ export function RollbackConfirmDialog({
             render={
               <div className="space-y-3">
                 <span className="text-muted-foreground block text-sm">
-                  {t("This will restore the template to version {0}, creating a new version (v{1}).", targetVersion, currentVersion + 1)}
+                  {t(
+                    "This will restore the template to version {0}, creating a new version (v{1}).",
+                    targetVersion,
+                    currentVersion + 1,
+                  )}
                 </span>
 
                 {isLoadingDiff ? (
@@ -233,7 +240,9 @@ export function RollbackConfirmDialog({
                       ))}
                       .{" "}
                       {templateStatus === "Active" || templateStatus === "InReview"
-                        ? t("Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again.")
+                        ? t(
+                            "Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again.",
+                          )
                         : t("Rolling back changes the content the next approval will review.")}
                     </span>
                   </div>

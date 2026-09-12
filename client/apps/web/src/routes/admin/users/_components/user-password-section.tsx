@@ -53,7 +53,9 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
             {isResetting ? t("Sending...") : t("Send Reset Email")}
           </Button>
           <p className="text-muted-foreground text-2xs">
-            {t("Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.")}
+            {t(
+              "Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.",
+            )}
           </p>
           <Button
             type="button"

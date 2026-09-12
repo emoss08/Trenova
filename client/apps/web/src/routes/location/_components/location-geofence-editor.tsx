@@ -263,7 +263,9 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
           />
           <div className="text-foreground relative z-10 flex flex-col items-center gap-4 text-center text-sm">
             <span>
-              {t("Google Maps is not configured for this environment, so the geofence editor cannot be displayed.")}
+              {t(
+                "Google Maps is not configured for this environment, so the geofence editor cannot be displayed.",
+              )}
             </span>
             {canCreateIntegrations ? (
               <Button onClick={() => navigate("/admin/integrations?type=GoogleMaps")}>

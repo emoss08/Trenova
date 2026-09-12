@@ -15,12 +15,7 @@ export type InvoiceRunStatus = z.infer<typeof invoiceRunStatusSchema>;
 export const invoiceRunSourceSchema = z.enum(["Manual", "Scheduled"]);
 export type InvoiceRunSource = z.infer<typeof invoiceRunSourceSchema>;
 
-export const invoiceRunGroupStatusSchema = z.enum([
-  "Pending",
-  "Committed",
-  "Skipped",
-  "Failed",
-]);
+export const invoiceRunGroupStatusSchema = z.enum(["Pending", "Committed", "Skipped", "Failed"]);
 export type InvoiceRunGroupStatus = z.infer<typeof invoiceRunGroupStatusSchema>;
 
 export const invoiceRunGroupItemSchema = z.object({
@@ -57,9 +52,7 @@ export const invoiceRunGroupSchema = z.object({
   currencyCode: z.string().default("USD"),
   invoiceId: nullableStringSchema,
   skipReason: nullableStringSchema,
-  customer: z
-    .object({ id: z.string(), name: z.string(), code: z.string().nullish() })
-    .nullish(),
+  customer: z.object({ id: z.string(), name: z.string(), code: z.string().nullish() }).nullish(),
   items: z.array(invoiceRunGroupItemSchema).default([]),
 });
 export type InvoiceRunGroup = z.infer<typeof invoiceRunGroupSchema>;

@@ -87,10 +87,17 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               {preview ? (
                 <span className="font-mono">
-                  {t("ISA {0} / GS {1} / ST {2} provisional", preview.interchangeControlNumber, preview.groupControlNumber, preview.transactionControlNumber)}
+                  {t(
+                    "ISA {0} / GS {1} / ST {2} provisional",
+                    preview.interchangeControlNumber,
+                    preview.groupControlNumber,
+                    preview.transactionControlNumber,
+                  )}
                 </span>
               ) : (
-                <span>{t("Control numbers are provisional until Generate archives the message.")}</span>
+                <span>
+                  {t("Control numbers are provisional until Generate archives the message.")}
+                </span>
               )}
               <Button
                 type="button"

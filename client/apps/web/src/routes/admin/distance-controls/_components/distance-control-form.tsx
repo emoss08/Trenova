@@ -127,7 +127,9 @@ function StoredMileageCard() {
       <CardHeader>
         <CardTitle>{t("Stored Mileage Policy")}</CardTitle>
         <CardDescription>
-          {t("Configure when lane mileage is reused, how new mileage candidates are captured, and which units are stored for this business unit.")}
+          {t(
+            "Configure when lane mileage is reused, how new mileage candidates are captured, and which units are stored for this business unit.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -137,7 +139,9 @@ function StoredMileageCard() {
               control={control}
               name="storeMileage"
               label={t("Use Stored Mileage")}
-              description={t("When enabled, calculations check stored lane mileage before calling PC*Miler.")}
+              description={t(
+                "When enabled, calculations check stored lane mileage before calling PC*Miler.",
+              )}
               position="left"
             />
           </FormControl>
@@ -146,7 +150,9 @@ function StoredMileageCard() {
               control={control}
               name="autoCreateStoredMileage"
               label={t("Auto-create Stored Mileage")}
-              description={t("Successful PC*Miler results are buffered for the scheduled stored mileage upsert job.")}
+              description={t(
+                "Successful PC*Miler results are buffered for the scheduled stored mileage upsert job.",
+              )}
               position="left"
             />
           </FormControl>
@@ -155,7 +161,9 @@ function StoredMileageCard() {
               control={control}
               name="postalCodeFallbackToCity"
               label={t("Postal Code Fallback")}
-              description={t("When postal-code matching is unavailable, fall back to city and state lane keys.")}
+              description={t(
+                "When postal-code matching is unavailable, fall back to city and state lane keys.",
+              )}
               position="left"
             />
           </FormControl>
@@ -185,7 +193,9 @@ function JurisdictionMileageCard() {
       <CardHeader>
         <CardTitle>{t("Jurisdiction Mileage")}</CardTitle>
         <CardDescription>
-          {t("Break each move's routed distance down by state or province so IFTA returns can attribute miles to the jurisdictions they were driven in.")}
+          {t(
+            "Break each move's routed distance down by state or province so IFTA returns can attribute miles to the jurisdictions they were driven in.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -195,8 +205,12 @@ function JurisdictionMileageCard() {
               control={control}
               name="captureJurisdictionMiles"
               label={t("Capture jurisdiction miles")}
-              description={t("Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns.")}
-              tooltip={t("May be billed by PC*Miler as an additional transaction per route. Routes calculated before this is on have no jurisdiction breakdown until they are recalculated.")}
+              description={t(
+                "Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns.",
+              )}
+              tooltip={t(
+                "May be billed by PC*Miler as an additional transaction per route. Routes calculated before this is on have no jurisdiction breakdown until they are recalculated.",
+              )}
               position="left"
             />
           </FormControl>
@@ -216,7 +230,9 @@ function ProfileAssignmentsCard() {
       <CardHeader>
         <CardTitle>{t("Distance Profile Assignments")}</CardTitle>
         <CardDescription>
-          {t("Assign active PC*Miler profiles to each mileage purpose. These mappings determine routing behavior for shipment moves, rating workflows, and calculator requests.")}
+          {t(
+            "Assign active PC*Miler profiles to each mileage purpose. These mappings determine routing behavior for shipment moves, rating workflows, and calculator requests.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>

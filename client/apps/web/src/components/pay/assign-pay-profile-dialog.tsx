@@ -134,7 +134,9 @@ export function AssignPayProfileDialog({
         <DialogHeader>
           <DialogTitle>{t("Assign Pay Profile")}</DialogTitle>
           <DialogDescription>
-            {t("The driver's pay is computed from this profile for every shipment delivered on or after the effective date. Any currently-open assignment ends automatically — no cleanup needed.")}
+            {t(
+              "The driver's pay is computed from this profile for every shipment delivered on or after the effective date. Any currently-open assignment ends automatically — no cleanup needed.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -148,7 +150,9 @@ export function AssignPayProfileDialog({
                     label={t("Driver")}
                     placeholder={t("Select driver")}
                     rules={{ required: true }}
-                    description={t("The driver who will be paid under this profile from the effective date forward.")}
+                    description={t(
+                      "The driver who will be paid under this profile from the effective date forward.",
+                    )}
                   />
                 </FormControl>
               )}
@@ -166,7 +170,9 @@ export function AssignPayProfileDialog({
                       value: option.id,
                     }))}
                     rules={{ required: true }}
-                    description={t("Profiles are shared templates — set driver-specific rates below instead of cloning profiles.")}
+                    description={t(
+                      "Profiles are shared templates — set driver-specific rates below instead of cloning profiles.",
+                    )}
                   />
                 </FormControl>
               )}
@@ -176,7 +182,9 @@ export function AssignPayProfileDialog({
                   name="effectiveFrom"
                   label={t("Effective From")}
                   rules={{ required: true }}
-                  description={t("Pay for shipments delivered on or after this date uses this assignment.")}
+                  description={t(
+                    "Pay for shipments delivered on or after this date uses this assignment.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -195,7 +203,9 @@ export function AssignPayProfileDialog({
                   name="notes"
                   label={t("Notes")}
                   placeholder={t("e.g. Negotiated rate bump at 1-year anniversary")}
-                  description={t("Why this assignment or rate was set — kept in the assignment history for audits.")}
+                  description={t(
+                    "Why this assignment or rate was set — kept in the assignment history for audits.",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -206,7 +216,9 @@ export function AssignPayProfileDialog({
           <div className="rounded-lg border p-3">
             <p className="text-xs font-medium">{t("Driver-Specific Rate Overrides")}</p>
             <p className="text-muted-foreground mb-2 text-[11px]">
-              {t("Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.")}
+              {t(
+                "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
+              )}
             </p>
             <div className="flex flex-col gap-2">
               {activeComponents.map((component) => (
@@ -218,7 +230,11 @@ export function AssignPayProfileDialog({
                     {component.description || `${component.kind} (${component.method})`}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
-                    {t("profile: {0}{1}", Number(component.rate), component.method === "PercentOfRevenue" ? "%" : "")}
+                    {t(
+                      "profile: {0}{1}",
+                      Number(component.rate),
+                      component.method === "PercentOfRevenue" ? "%" : "",
+                    )}
                   </span>
                   <Input
                     value={overrides[component.id] ?? ""}

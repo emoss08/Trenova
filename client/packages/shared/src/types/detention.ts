@@ -68,9 +68,7 @@ export const detentionNotificationStatusSchema = z.enum([
   "Missed",
   "Failed",
 ]);
-export type DetentionNotificationStatus = z.infer<
-  typeof detentionNotificationStatusSchema
->;
+export type DetentionNotificationStatus = z.infer<typeof detentionNotificationStatusSchema>;
 
 export const waiverReasonSchema = z.enum([
   "Weather",
@@ -209,8 +207,7 @@ export const detentionPolicySchema = z
     path: ["tiers"],
   })
   .refine(
-    (data) =>
-      data.notificationRequirement !== "Required" || data.unnotifiedBehavior !== "Bill",
+    (data) => data.notificationRequirement !== "Required" || data.unnotifiedBehavior !== "Bill",
     {
       error: "A required notice must Flag or Suppress billing when it is missed",
       path: ["unnotifiedBehavior"],

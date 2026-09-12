@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
@@ -7,22 +7,24 @@ import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { communicationProfileMethods, profileStatusOptions } from "./edi-schemas";
 
-export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProfileRow>[] {
+export function getCommunicationProfileColumns(
+  t: TranslateFn,
+): ColumnDef<EDICommunicationProfileRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div>
           <div className="font-medium">{row.original.name}</div>
           <div className="text-muted-foreground text-xs">
-            {row.original.description || translate("No description")}
+            {row.original.description || t("No description")}
           </div>
         </div>
       ),
       size: 280,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -32,11 +34,11 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
     },
     {
       accessorKey: "method",
-      header: "Method",
+      header: t("Method"),
       cell: ({ row }) => <Badge variant="outline">{row.original.method}</Badge>,
       size: 120,
       meta: {
-        label: "Method",
+        label: t("Method"),
         apiField: "method",
         filterable: true,
         sortable: true,
@@ -50,11 +52,11 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 120,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -65,12 +67,12 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
     },
     {
       accessorKey: "partner.name",
-      header: "Partner",
+      header: t("Partner"),
       cell: ({ row }) =>
         row.original.partner?.name ?? row.original.ediPartnerId ?? <DataTablePlaceholder />,
       size: 220,
       meta: {
-        label: "Partner",
+        label: t("Partner"),
         apiField: "ediPartnerId",
         filterable: true,
         sortable: false,
@@ -80,7 +82,7 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
     },
     {
       id: "secretState",
-      header: "Secrets",
+      header: t("Secrets"),
       cell: ({ row }) => {
         const secretState = row.original.secretState;
 
@@ -100,7 +102,7 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
       },
       size: 220,
       meta: {
-        label: "Secrets",
+        label: t("Secrets"),
         apiField: "secretState",
         filterable: false,
         sortable: false,
@@ -108,11 +110,11 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt ?? undefined} />,
       size: 180,
       meta: {
-        label: "Updated",
+        label: t("Updated"),
         apiField: "updatedAt",
         filterable: false,
         sortable: true,

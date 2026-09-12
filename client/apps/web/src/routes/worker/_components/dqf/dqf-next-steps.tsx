@@ -29,7 +29,9 @@ export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{t("Next steps")}</h4>
+        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+          {t("Next steps")}
+        </h4>
         {steps.length > 0 ? (
           <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
             {steps.length}

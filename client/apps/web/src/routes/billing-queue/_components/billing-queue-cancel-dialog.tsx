@@ -55,7 +55,9 @@ export function BillingQueueCancelDialog({
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
           <DialogTitle>{t("Cancel Billing Queue Item")}</DialogTitle>
-          <DialogDescription>{t("This item will be removed from the billing queue.")}</DialogDescription>
+          <DialogDescription>
+            {t("This item will be removed from the billing queue.")}
+          </DialogDescription>
         </DialogHeader>
         <Textarea
           placeholder={t("Reason for cancellation...")}

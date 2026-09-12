@@ -53,7 +53,9 @@ export function DetentionTierEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously; the final rung may be open-ended.")}
+          {t(
+            "No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously; the final rung may be open-ended.",
+          )}
         </p>
       )}
 

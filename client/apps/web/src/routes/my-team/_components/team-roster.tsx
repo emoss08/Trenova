@@ -59,15 +59,15 @@ export function TeamRoster({
 
   const viewItems = useMemo<SegmentedControlItem<RosterView>[]>(() => {
     const items: SegmentedControlItem<RosterView>[] = [
-      { value: "all", label: "Everyone", caption: String(rows.length) },
-      { value: "direct", label: "Direct", caption: String(counts.direct) },
-      { value: "terminal", label: "Terminal", caption: String(counts.terminal) },
+      { value: "all", label: t("Everyone"), caption: String(rows.length) },
+      { value: "direct", label: t("Direct"), caption: String(counts.direct) },
+      { value: "terminal", label: t("Terminal"), caption: String(counts.terminal) },
     ];
     if (counts.covering > 0) {
-      items.push({ value: "covering", label: "Covering", caption: String(counts.covering) });
+      items.push({ value: "covering", label: t("Covering"), caption: String(counts.covering) });
     }
     return items;
-  }, [counts, rows.length]);
+  }, [counts, rows.length, t]);
 
   const activeView: RosterView = view === "covering" && counts.covering === 0 ? "all" : view;
 

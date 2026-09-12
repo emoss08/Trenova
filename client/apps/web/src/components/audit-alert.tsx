@@ -11,7 +11,9 @@ export function AuditAlert() {
         <div className="flex flex-col">
           <p className="text-sm font-medium">{t("Audit Logs Processing")}</p>
           <p className="text-xs dark:text-red-100">
-            {t("Audit logs are processed in batches and may take a few moments to appear. If logs are not immediately visible, please refresh the page after a brief wait.")}
+            {t(
+              "Audit logs are processed in batches and may take a few moments to appear. If logs are not immediately visible, please refresh the page after a brief wait.",
+            )}
           </p>
         </div>
       </div>

@@ -74,11 +74,17 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
         <DialogHeader>
           <DialogTitle>{t("Void this payroll run")}</DialogTitle>
           <DialogDescription>
-            {t("{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.", run
-              ? t("{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.", formatShiftDate(run.periodStart), formatShiftDate(
-                  run.periodEnd - 86400,
-                ), run.timesheetCount)
-              : "")}
+            {t(
+              "{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.",
+              run
+                ? t(
+                    "{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.",
+                    formatShiftDate(run.periodStart),
+                    formatShiftDate(run.periodEnd - 86400),
+                    run.timesheetCount,
+                  )
+                : "",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -96,7 +102,9 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
                   name="reason"
                   label={t("Why")}
                   placeholder={t("e.g. Wrong period — the Friday sheets were still open")}
-                  description={t("Kept with the voided run so the reopened weeks can be explained later.")}
+                  description={t(
+                    "Kept with the voided run so the reopened weeks can be explained later.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>

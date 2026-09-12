@@ -145,7 +145,9 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               label={t("Accounting Date")}
               rules={{ required: "Accounting date is required" }}
               disabled={!isDraft}
-              description={t("The GL date for this entry. It must fall within an open fiscal period.")}
+              description={t(
+                "The GL date for this entry. It must fall within an open fiscal period.",
+              )}
               placeholder={t("Select date")}
             />
           </FormControl>
@@ -169,7 +171,9 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               label={t("Fiscal Year")}
               disabled={!isDraft}
               placeholder={t("Select fiscal year")}
-              description={t("Requested fiscal year. The posting period is resolved from the accounting date.")}
+              description={t(
+                "Requested fiscal year. The posting period is resolved from the accounting date.",
+              )}
               onOptionChange={() => setValue("requestedFiscalPeriodId", "")}
             />
           </FormControl>
@@ -190,7 +194,9 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
       <FormSection
         title={t("Line Items")}
         titleCount={lines.length}
-        description={t("Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.")}
+        description={t(
+          "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.",
+        )}
         className="border-border border-t pt-4"
       >
         {isDraft ? (

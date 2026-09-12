@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { SettlementDisputeRow } from "@trenova/shared/lib/graphql/driver-portal";
@@ -40,25 +40,25 @@ function workerName(row: SettlementDisputeRow): string {
   return `${row.worker.firstName} ${row.worker.lastName}`.trim() || "—";
 }
 
-export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<SettlementDisputeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <SettlementDisputeStatusBadge status={row.original.status} />,
       size: 110,
       meta: { apiField: "status" },
     },
     {
       accessorKey: "worker",
-      header: "Driver",
+      header: t("Driver"),
       cell: ({ row }) => <span className="text-sm font-medium">{workerName(row.original)}</span>,
       size: 160,
-      meta: { apiField: "workerId", label: "Driver" },
+      meta: { apiField: "workerId", label: t("Driver") },
     },
     {
       accessorKey: "category",
-      header: "Category",
+      header: t("Category"),
       cell: ({ row }) => (
         <span className="text-xs">
           {disputeCategoryLabels[row.original.category] ?? row.original.category}
@@ -69,7 +69,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
     },
     {
       accessorKey: "settlement",
-      header: "Settlement",
+      header: t("Settlement"),
       cell: ({ row }) =>
         row.original.settlement ? (
           <div className="flex flex-col">
@@ -77,7 +77,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
               {row.original.settlement.settlementNumber}
             </span>
             <span className="text-muted-foreground text-xs">
-              {translate("Net")}{" "}
+              {t("Net")}{" "}
               <AmountDisplay
                 value={row.original.settlement.netPayMinor}
                 currency={row.original.settlement.currencyCode}
@@ -88,14 +88,14 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
           <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 150,
-      meta: { apiField: "settlementId", label: "Settlement" },
+      meta: { apiField: "settlementId", label: t("Settlement") },
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 max-w-96 text-xs">
-          {translate(row.original.description)}
+          {t(row.original.description)}
         </span>
       ),
       size: 320,
@@ -103,14 +103,14 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Submitted",
+      header: t("Submitted"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.createdAt)}</span>,
       size: 110,
-      meta: { apiField: "createdAt", label: "Submitted" },
+      meta: { apiField: "createdAt", label: t("Submitted") },
     },
     {
       accessorKey: "resolvedAt",
-      header: "Resolved",
+      header: t("Resolved"),
       cell: ({ row }) =>
         row.original.resolvedAt ? (
           <div className="flex flex-col">
@@ -123,7 +123,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
           <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 130,
-      meta: { apiField: "resolvedAt", label: "Resolved" },
+      meta: { apiField: "resolvedAt", label: t("Resolved") },
     },
   ];
 }

@@ -33,7 +33,9 @@ export default function IndexSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          {t("DOE indices ingest automatically each week via the EIA integration — custom indices take manually entered weekly prices (e.g. Canadian FCA or contract-specific pegs)")}
+          {t(
+            "DOE indices ingest automatically each week via the EIA integration — custom indices take manually entered weekly prices (e.g. Canadian FCA or contract-specific pegs)",
+          )}
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
           <Plus className="size-3.5" />

@@ -118,7 +118,9 @@ function RecognitionPolicyCard() {
       <CardHeader>
         <CardTitle>{t("Recognition Policy")}</CardTitle>
         <CardDescription>
-          {t("Define the organization accounting basis and the revenue and expense recognition policies that must remain compatible with that basis.")}
+          {t(
+            "Define the organization accounting basis and the revenue and expense recognition policies that must remain compatible with that basis.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -128,7 +130,9 @@ function RecognitionPolicyCard() {
               control={control}
               name="accountingBasis"
               label={t("Accounting Basis")}
-              description={t("Sets the organization’s primary accounting basis and constrains the valid recognition policies.")}
+              description={t(
+                "Sets the organization’s primary accounting basis and constrains the valid recognition policies.",
+              )}
               options={accountingBasisChoices}
               rules={{ required: true }}
             />
@@ -138,7 +142,9 @@ function RecognitionPolicyCard() {
               control={control}
               name="revenueRecognitionPolicy"
               label={t("Revenue Recognition Policy")}
-              description={t("Defines the event that recognizes revenue for organization-controlled accounting entries.")}
+              description={t(
+                "Defines the event that recognizes revenue for organization-controlled accounting entries.",
+              )}
               options={revenueRecognitionPolicyChoices}
               rules={{ required: true }}
             />
@@ -148,7 +154,9 @@ function RecognitionPolicyCard() {
               control={control}
               name="expenseRecognitionPolicy"
               label={t("Expense Recognition Policy")}
-              description={t("Defines the event that recognizes expense for organization-controlled accounting entries.")}
+              description={t(
+                "Defines the event that recognizes expense for organization-controlled accounting entries.",
+              )}
               options={expenseRecognitionPolicyChoices}
               rules={{ required: true }}
             />
@@ -180,7 +188,9 @@ function JournalPolicyCard() {
       <CardHeader>
         <CardTitle>{t("Journal Policy")}</CardTitle>
         <CardDescription>
-          {t("Configure automatic journal creation, manual journal policy, and the chart-of-account defaults required for accounting automation.")}
+          {t(
+            "Configure automatic journal creation, manual journal policy, and the chart-of-account defaults required for accounting automation.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -190,7 +200,9 @@ function JournalPolicyCard() {
               control={control}
               name="journalPostingMode"
               label={t("Journal Posting Mode")}
-              description={t("Controls whether journals are created only by explicit user action or automatically from configured source events.")}
+              description={t(
+                "Controls whether journals are created only by explicit user action or automatically from configured source events.",
+              )}
               options={journalPostingModeChoices}
               rules={{ required: true }}
             />
@@ -200,7 +212,9 @@ function JournalPolicyCard() {
               <div className="flex flex-col gap-3">
                 <Label className="text-sm font-medium">{t("Auto-Post Source Events")}</Label>
                 <p className="text-muted-foreground text-sm">
-                  {t("Select the posted business events that are allowed to generate journal entries automatically.")}
+                  {t(
+                    "Select the posted business events that are allowed to generate journal entries automatically.",
+                  )}
                 </p>
                 <FormGroup cols={2}>
                   {journalSourceEventChoices.map((option) => {
@@ -227,7 +241,9 @@ function JournalPolicyCard() {
               control={control}
               name="manualJournalEntryPolicy"
               label={t("Manual Journal Entry Policy")}
-              description={t("Defines whether users may create manual journals broadly, only for adjustments, or not at all.")}
+              description={t(
+                "Defines whether users may create manual journals broadly, only for adjustments, or not at all.",
+              )}
               options={manualJournalEntryPolicyChoices}
               rules={{ required: true }}
             />
@@ -237,7 +253,9 @@ function JournalPolicyCard() {
               control={control}
               name="requireManualJeApproval"
               label={t("Require Manual JE Approval")}
-              description={t("Requires approval before an allowed manual journal entry can be finalized.")}
+              description={t(
+                "Requires approval before an allowed manual journal entry can be finalized.",
+              )}
               position="left"
             />
           </FormControl>
@@ -246,7 +264,9 @@ function JournalPolicyCard() {
               control={control}
               name="journalReversalPolicy"
               label={t("Journal Reversal Policy")}
-              description={t("Defines whether posted journals can be reversed through workflow and, if allowed, where the reversal is booked.")}
+              description={t(
+                "Defines whether posted journals can be reversed through workflow and, if allowed, where the reversal is booked.",
+              )}
               options={journalReversalPolicyChoices}
               rules={{ required: true }}
             />
@@ -257,7 +277,9 @@ function JournalPolicyCard() {
               name="defaultRevenueAccountId"
               label={t("Default Revenue Account")}
               placeholder={t("Select revenue account")}
-              description={t("Default GL account used when automatic journal posting creates revenue entries.")}
+              description={t(
+                "Default GL account used when automatic journal posting creates revenue entries.",
+              )}
               clearable
             />
           </FormControl>
@@ -267,7 +289,9 @@ function JournalPolicyCard() {
               name="defaultCashAccountId"
               label={t("Default Cash Account")}
               placeholder={t("Select cash account")}
-              description={t("GL account debited when customer payments are posted. Required to record customer payments.")}
+              description={t(
+                "GL account debited when customer payments are posted. Required to record customer payments.",
+              )}
               clearable
             />
           </FormControl>
@@ -277,7 +301,9 @@ function JournalPolicyCard() {
               name="defaultUnappliedCashAccountId"
               label={t("Default Unapplied Cash Account")}
               placeholder={t("Select unapplied cash account")}
-              description={t("Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments.")}
+              description={t(
+                "Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments.",
+              )}
               clearable
             />
           </FormControl>
@@ -287,7 +313,9 @@ function JournalPolicyCard() {
               name="defaultExpenseAccountId"
               label={t("Default Expense Account")}
               placeholder={t("Select expense account")}
-              description={t("Default GL account used when automatic journal posting creates expense entries.")}
+              description={t(
+                "Default GL account used when automatic journal posting creates expense entries.",
+              )}
               clearable
             />
           </FormControl>
@@ -297,7 +325,9 @@ function JournalPolicyCard() {
               name="defaultArAccountId"
               label={t("Default AR Account")}
               placeholder={t("Select AR account")}
-              description={t("Default accounts receivable account for invoice-related journal posting.")}
+              description={t(
+                "Default accounts receivable account for invoice-related journal posting.",
+              )}
               clearable
             />
           </FormControl>
@@ -307,7 +337,9 @@ function JournalPolicyCard() {
               name="defaultApAccountId"
               label={t("Default AP Account")}
               placeholder={t("Select AP account")}
-              description={t("Default accounts payable account for vendor-bill-related journal posting.")}
+              description={t(
+                "Default accounts payable account for vendor-bill-related journal posting.",
+              )}
               clearable
             />
           </FormControl>
@@ -317,7 +349,9 @@ function JournalPolicyCard() {
               name="defaultTaxLiabilityAccountId"
               label={t("Default Tax Liability Account")}
               placeholder={t("Select tax liability account")}
-              description={t("Default liability account used when tax amounts are posted from accounting flows.")}
+              description={t(
+                "Default liability account used when tax amounts are posted from accounting flows.",
+              )}
               clearable
             />
           </FormControl>
@@ -327,7 +361,9 @@ function JournalPolicyCard() {
               name="defaultWriteOffAccountId"
               label={t("Default Write-Off Account")}
               placeholder={t("Select write-off account")}
-              description={t("Default account used when approved write-offs are booked through adjustment workflows.")}
+              description={t(
+                "Default account used when approved write-offs are booked through adjustment workflows.",
+              )}
               clearable
             />
           </FormControl>
@@ -337,7 +373,9 @@ function JournalPolicyCard() {
               name="defaultRetainedEarningsAccountId"
               label={t("Default Retained Earnings Account")}
               placeholder={t("Select retained earnings account")}
-              description={t("Default retained earnings account used by closing and equity-related accounting processes.")}
+              description={t(
+                "Default retained earnings account used by closing and equity-related accounting processes.",
+              )}
               clearable
             />
           </FormControl>
@@ -357,7 +395,9 @@ function DriverSettlementPostingCard() {
       <CardHeader>
         <CardTitle>{t("Driver Settlement Posting")}</CardTitle>
         <CardDescription>
-          {t("GL accounts used when driver settlements post to the ledger. These allocations feed the DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects actual driver pay.")}
+          {t(
+            "GL accounts used when driver settlements post to the ledger. These allocations feed the DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects actual driver pay.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -368,7 +408,9 @@ function DriverSettlementPostingCard() {
               name="defaultDriverPayExpenseAccountId"
               label={t("Driver Pay Expense Account")}
               placeholder={t("Select driver pay expense account")}
-              description={t("Expense account debited for company-driver earnings when a settlement posts. Required to post settlements.")}
+              description={t(
+                "Expense account debited for company-driver earnings when a settlement posts. Required to post settlements.",
+              )}
               clearable
             />
           </FormControl>
@@ -378,7 +420,9 @@ function DriverSettlementPostingCard() {
               name="defaultPurchasedTransportationAccountId"
               label={t("Purchased Transportation Account")}
               placeholder={t("Select purchased transportation account")}
-              description={t("Expense account debited for owner-operator earnings instead of driver pay expense. Required to post owner-operator settlements.")}
+              description={t(
+                "Expense account debited for owner-operator earnings instead of driver pay expense. Required to post owner-operator settlements.",
+              )}
               clearable
             />
           </FormControl>
@@ -388,7 +432,9 @@ function DriverSettlementPostingCard() {
               name="defaultDriverReimbursementAccountId"
               label={t("Driver Reimbursement Account")}
               placeholder={t("Select reimbursement account")}
-              description={t("Expense account debited for non-taxable reimbursements such as per diem and stipends; falls back to the driver pay expense account when unset.")}
+              description={t(
+                "Expense account debited for non-taxable reimbursements such as per diem and stipends; falls back to the driver pay expense account when unset.",
+              )}
               clearable
             />
           </FormControl>
@@ -398,7 +444,9 @@ function DriverSettlementPostingCard() {
               name="defaultSettlementsPayableAccountId"
               label={t("Settlements Payable Account")}
               placeholder={t("Select settlements payable account")}
-              description={t("Liability account credited for the net pay owed to the driver until the settlement is paid. Required to post settlements.")}
+              description={t(
+                "Liability account credited for the net pay owed to the driver until the settlement is paid. Required to post settlements.",
+              )}
               clearable
             />
           </FormControl>
@@ -408,7 +456,9 @@ function DriverSettlementPostingCard() {
               name="defaultDriverAdvanceAccountId"
               label={t("Driver Advance Receivable Account")}
               placeholder={t("Select advance receivable account")}
-              description={t("Asset account tracking outstanding driver advances; credited when advances are recovered and debited for negative-balance carry-forwards.")}
+              description={t(
+                "Asset account tracking outstanding driver advances; credited when advances are recovered and debited for negative-balance carry-forwards.",
+              )}
               clearable
             />
           </FormControl>
@@ -418,7 +468,9 @@ function DriverSettlementPostingCard() {
               name="defaultEscrowLiabilityAccountId"
               label={t("Escrow Liability Account")}
               placeholder={t("Select escrow liability account")}
-              description={t("Liability account credited for driver escrow contributions withheld from settlements.")}
+              description={t(
+                "Liability account credited for driver escrow contributions withheld from settlements.",
+              )}
               clearable
             />
           </FormControl>
@@ -439,7 +491,9 @@ function PeriodAndReconciliationCard() {
       <CardHeader>
         <CardTitle>{t("Period And Reconciliation")}</CardTitle>
         <CardDescription>
-          {t("Define period-close automation, posting restrictions for locked and closed periods, and how reconciliation exceptions affect posting and close.")}
+          {t(
+            "Define period-close automation, posting restrictions for locked and closed periods, and how reconciliation exceptions affect posting and close.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -449,7 +503,9 @@ function PeriodAndReconciliationCard() {
               control={control}
               name="periodCloseMode"
               label={t("Period Close Mode")}
-              description={t("Controls whether accounting periods are closed manually or by a scheduled system job.")}
+              description={t(
+                "Controls whether accounting periods are closed manually or by a scheduled system job.",
+              )}
               options={periodCloseModeChoices}
               rules={{ required: true }}
             />
@@ -459,7 +515,9 @@ function PeriodAndReconciliationCard() {
               control={control}
               name="requirePeriodCloseApproval"
               label={t("Require Period Close Approval")}
-              description={t("Requires an approval step before a manually closed period can be finalized.")}
+              description={t(
+                "Requires an approval step before a manually closed period can be finalized.",
+              )}
               position="left"
             />
           </FormControl>
@@ -468,7 +526,9 @@ function PeriodAndReconciliationCard() {
               control={control}
               name="lockedPeriodPostingPolicy"
               label={t("Locked Period Posting Policy")}
-              description={t("Defines how the system handles posting attempts into a locked accounting period.")}
+              description={t(
+                "Defines how the system handles posting attempts into a locked accounting period.",
+              )}
               options={lockedPeriodPostingPolicyChoices}
               rules={{ required: true }}
             />
@@ -478,7 +538,9 @@ function PeriodAndReconciliationCard() {
               control={control}
               name="closedPeriodPostingPolicy"
               label={t("Closed Period Posting Policy")}
-              description={t("Defines whether posting to a closed period requires reopening or is redirected to the next open period.")}
+              description={t(
+                "Defines whether posting to a closed period requires reopening or is redirected to the next open period.",
+              )}
               options={closedPeriodPostingPolicyChoices}
               rules={{ required: true }}
             />
@@ -488,7 +550,9 @@ function PeriodAndReconciliationCard() {
               control={control}
               name="reconciliationMode"
               label={t("Reconciliation Mode")}
-              description={t("Controls whether reconciliation discrepancies are ignored, logged as warnings, or block posting.")}
+              description={t(
+                "Controls whether reconciliation discrepancies are ignored, logged as warnings, or block posting.",
+              )}
               options={reconciliationModeChoices}
               rules={{ required: true }}
             />
@@ -499,7 +563,9 @@ function PeriodAndReconciliationCard() {
                 control={control}
                 name="reconciliationToleranceAmount"
                 label={t("Reconciliation Tolerance Amount")}
-                description={t("Maximum allowed discrepancy amount before the configured reconciliation response applies.")}
+                description={t(
+                  "Maximum allowed discrepancy amount before the configured reconciliation response applies.",
+                )}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -509,7 +575,9 @@ function PeriodAndReconciliationCard() {
               control={control}
               name="requireReconciliationToClose"
               label={t("Require Reconciliation To Close")}
-              description={t("Prevents period close while unresolved reconciliation discrepancies remain open.")}
+              description={t(
+                "Prevents period close while unresolved reconciliation discrepancies remain open.",
+              )}
               position="left"
             />
           </FormControl>
@@ -576,7 +644,9 @@ function CurrencyAndAccountsCard() {
         <CardHeader>
           <CardTitle>{t("Currency Settings")}</CardTitle>
           <CardDescription>
-            {t("Configure the accounting currency mode and functional currency for financial reporting.")}
+            {t(
+              "Configure the accounting currency mode and functional currency for financial reporting.",
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="max-w-prose">
@@ -597,7 +667,9 @@ function CurrencyAndAccountsCard() {
                 control={control}
                 name="currencyMode"
                 label={t("Currency Mode")}
-                description={t("Determines whether the organization operates in a single functional currency or supports foreign-currency transactions.")}
+                description={t(
+                  "Determines whether the organization operates in a single functional currency or supports foreign-currency transactions.",
+                )}
                 options={currencyModeChoices}
                 rules={{ required: true }}
               />
@@ -607,7 +679,9 @@ function CurrencyAndAccountsCard() {
                 control={control}
                 name="functionalCurrencyCode"
                 label={t("Functional Currency")}
-                description={t("Base currency used for organization accounting and financial reporting.")}
+                description={t(
+                  "Base currency used for organization accounting and financial reporting.",
+                )}
                 options={currencyChoices}
                 rules={{ required: true }}
               />
@@ -617,7 +691,9 @@ function CurrencyAndAccountsCard() {
                 <div className="flex flex-col gap-1 border-t pt-4">
                   <h3 className="text-sm font-medium">{t("Currency Policy")}</h3>
                   <p className="text-muted-foreground text-sm">
-                    {t("Configure exchange-rate date selection, override handling, and realized FX accounts.")}
+                    {t(
+                      "Configure exchange-rate date selection, override handling, and realized FX accounts.",
+                    )}
                   </p>
                 </div>
                 <FormControl className="max-w-[420px]">
@@ -625,7 +701,9 @@ function CurrencyAndAccountsCard() {
                     control={control}
                     name="exchangeRateDatePolicy"
                     label={t("Exchange Rate Date Policy")}
-                    description={t("Determines which date is used to select the exchange rate for multi-currency accounting.")}
+                    description={t(
+                      "Determines which date is used to select the exchange rate for multi-currency accounting.",
+                    )}
                     options={exchangeRateDatePolicyChoices}
                     rules={{ required: true }}
                   />
@@ -635,7 +713,9 @@ function CurrencyAndAccountsCard() {
                     control={control}
                     name="exchangeRateOverridePolicy"
                     label={t("Exchange Rate Override Policy")}
-                    description={t("Controls whether users may override exchange rates and whether those overrides require approval.")}
+                    description={t(
+                      "Controls whether users may override exchange rates and whether those overrides require approval.",
+                    )}
                     options={exchangeRateOverridePolicyChoices}
                     rules={{ required: true }}
                   />
@@ -646,7 +726,9 @@ function CurrencyAndAccountsCard() {
                     name="realizedFxGainAccountId"
                     label={t("Realized FX Gain Account")}
                     placeholder={t("Select FX gain account")}
-                    description={t("Default account for realized foreign exchange gains in multi-currency accounting.")}
+                    description={t(
+                      "Default account for realized foreign exchange gains in multi-currency accounting.",
+                    )}
                     clearable
                   />
                 </FormControl>
@@ -656,7 +738,9 @@ function CurrencyAndAccountsCard() {
                     name="realizedFxLossAccountId"
                     label={t("Realized FX Loss Account")}
                     placeholder={t("Select FX loss account")}
-                    description={t("Default account for realized foreign exchange losses in multi-currency accounting.")}
+                    description={t(
+                      "Default account for realized foreign exchange losses in multi-currency accounting.",
+                    )}
                     clearable
                   />
                 </FormControl>

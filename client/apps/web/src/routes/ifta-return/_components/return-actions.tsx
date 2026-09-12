@@ -59,7 +59,9 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
       iftaReturnCsvFilename(ret),
     );
     toast.success(t("Worksheet exported"), {
-      description: t("Every line, each fuel type's subtotal and the grand total, as the form reads."),
+      description: t(
+        "Every line, each fuel type's subtotal and the grand total, as the form reads.",
+      ),
     });
   };
 

@@ -176,7 +176,11 @@ export function ModulePageList({
   const hasConfiguration = view.configuration.length > 0;
 
   if (!hasPages && !hasConfiguration) {
-    return <p className="text-muted-foreground px-2.5 py-4 text-xs">{t("This area has no pages yet.")}</p>;
+    return (
+      <p className="text-muted-foreground px-2.5 py-4 text-xs">
+        {t("This area has no pages yet.")}
+      </p>
+    );
   }
 
   return (

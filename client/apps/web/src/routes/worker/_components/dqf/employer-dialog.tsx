@@ -177,9 +177,13 @@ export function EmployerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? t("Edit previous employer") : t("Add a previous employer")}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? t("Edit previous employer") : t("Add a previous employer")}
+          </DialogTitle>
           <DialogDescription>
-            {t("Every DOT-regulated employer in the three years before the application has to be investigated within thirty days of hire (49 CFR 391.23).")}
+            {t(
+              "Every DOT-regulated employer in the three years before the application has to be investigated within thirty days of hire (49 CFR 391.23).",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -197,7 +201,9 @@ export function EmployerDialog({
                   name="employerName"
                   label={t("Employer")}
                   placeholder={t("e.g. Swift Transportation")}
-                  description={t("The carrier or company as it appeared on the driver's application.")}
+                  description={t(
+                    "The carrier or company as it appeared on the driver's application.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -283,7 +289,9 @@ export function EmployerDialog({
                   options={STATUS_OPTIONS}
                   rules={{ required: true }}
                   placeholder={t("Pick a status")}
-                  description={t("Where the request stands; anything past Pending needs the date it was sent.")}
+                  description={t(
+                    "Where the request stands; anything past Pending needs the date it was sent.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -292,7 +300,9 @@ export function EmployerDialog({
                   name="requestedAt"
                   label={t("Requested on")}
                   placeholder={t("Date the request went out")}
-                  description={t("Required once the status moves past Pending; the response cannot pre-date it.")}
+                  description={t(
+                    "Required once the status moves past Pending; the response cannot pre-date it.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -300,7 +310,9 @@ export function EmployerDialog({
                   control={control}
                   name="wasDotRegulated"
                   label={t("DOT-regulated employment")}
-                  description={t("Turn off for a job with no safety-sensitive duties; there is then no testing record to ask about.")}
+                  description={t(
+                    "Turn off for a job with no safety-sensitive duties; there is then no testing record to ask about.",
+                  )}
                 />
               </FormControl>
 
@@ -312,7 +324,9 @@ export function EmployerDialog({
                       name="responseReceivedAt"
                       label={t("Response received")}
                       placeholder={t("Date the reply arrived")}
-                      description={t("Required for a received response; cannot be earlier than the request.")}
+                      description={t(
+                        "Required for a received response; cannot be earlier than the request.",
+                      )}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -332,7 +346,9 @@ export function EmployerDialog({
                       control={control}
                       name="hadAccidents"
                       label={t("Accidents reported")}
-                      description={t("Turn on if the employer reported any accidents; the count is asked next.")}
+                      description={t(
+                        "Turn on if the employer reported any accidents; the count is asked next.",
+                      )}
                     />
                   </FormControl>
                   {hadAccidents ? (
@@ -342,7 +358,9 @@ export function EmployerDialog({
                         name="accidentCount"
                         label={t("How many")}
                         placeholder={t("e.g. 1")}
-                        description={t("Accidents the employer reported for the driver's time there.")}
+                        description={t(
+                          "Accidents the employer reported for the driver's time there.",
+                        )}
                         rules={{ required: true }}
                       />
                     </FormControl>
@@ -353,7 +371,9 @@ export function EmployerDialog({
                         control={control}
                         name="hadDrugAlcoholViolations"
                         label={t("Drug or alcohol violations reported")}
-                        description={t("Turn on when the employer's testing history reports a violation.")}
+                        description={t(
+                          "Turn on when the employer's testing history reports a violation.",
+                        )}
                       />
                     </FormControl>
                   ) : null}
@@ -363,7 +383,9 @@ export function EmployerDialog({
                       name="findings"
                       label={t("What the employer reported")}
                       placeholder={t("e.g. Company driver, no accidents, eligible for rehire")}
-                      description={t("The employer's answer, kept as the record of the investigation.")}
+                      description={t(
+                        "The employer's answer, kept as the record of the investigation.",
+                      )}
                       maxLength={4000}
                     />
                   </FormControl>
@@ -376,7 +398,9 @@ export function EmployerDialog({
                   name="notes"
                   label={t("Notes")}
                   placeholder={t("e.g. Left a voicemail with HR")}
-                  description={t("Office notes about this employer; not part of the response itself.")}
+                  description={t(
+                    "Office notes about this employer; not part of the response itself.",
+                  )}
                   maxLength={2000}
                 />
               </FormControl>
@@ -385,7 +409,9 @@ export function EmployerDialog({
                 <FormControl cols="full">
                   <Alert>
                     <AlertDescription>
-                      {t("Record the response once it arrives by editing this employer. Chasing a silent employer is tracked separately — the count of chases is the record of good-faith effort.")}
+                      {t(
+                        "Record the response once it arrives by editing this employer. Chasing a silent employer is tracked separately — the count of chases is the record of good-faith effort.",
+                      )}
                     </AlertDescription>
                   </Alert>
                 </FormControl>

@@ -816,7 +816,9 @@ function MessageArchive({
                       </div>
                     )}
                     {message.ackStatus && (
-                      <div className="text-2xs text-muted-foreground">{t("ACK {0}", message.ackStatus)}</div>
+                      <div className="text-2xs text-muted-foreground">
+                        {t("ACK {0}", message.ackStatus)}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-xs">{message.x12Version}</TableCell>

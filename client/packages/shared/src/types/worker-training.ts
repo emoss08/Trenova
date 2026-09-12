@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { driverTypeSchema } from "./worker";
 // Re-exported so callers keep importing training health from here; the
@@ -141,14 +142,14 @@ export const trainingCourseFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["contentUrl"],
-        message: "Online courses need a link the driver can open",
+        message: translate("Online courses need a link the driver can open"),
       });
     }
     if (values.contentUrl && !/^https?:\/\/\S+$/i.test(values.contentUrl)) {
       ctx.addIssue({
         code: "custom",
         path: ["contentUrl"],
-        message: "Link must be a full http(s) address",
+        message: translate("Link must be a full http(s) address"),
       });
     }
   });
@@ -174,7 +175,7 @@ export const completeTrainingFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["score"],
-        message: "This course is scored; enter the result",
+        message: translate("This course is scored; enter the result"),
       });
     }
   });
