@@ -48,7 +48,10 @@ WHERE
     AND bqi."shipment_id" = invl."shipment_id"
     AND bqi."organization_id" = inv."organization_id"
     AND bqi."business_unit_id" = inv."business_unit_id"
-    AND bqi."bill_type" = inv."bill_type"
+    -- billing_queue_items.bill_type is the billing_type enum and
+    -- invoices.bill_type is varchar(50), which have no equality operator
+    -- between them. Compare as text, which is how the enum renders anyway.
+    AND bqi."bill_type"::text = inv."bill_type"
     AND bqi."is_adjustment_origin" = FALSE;
 
 --bun:split
