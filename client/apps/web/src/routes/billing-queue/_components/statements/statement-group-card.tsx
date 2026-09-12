@@ -71,7 +71,8 @@ export function StatementGroupCard({
 
         <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
           {included.length}
-          {heldCount > 0 ? ` of ${shipments.length}` : ""} shp
+          {heldCount > 0 ? ` of ${shipments.length}` : ""} shipment
+          {shipments.length !== 1 ? "s" : ""}
         </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
           {formatCurrency(liveTotal, currencyCode)}
@@ -126,9 +127,7 @@ export function StatementGroupCard({
                 <span className="text-muted-foreground hidden shrink-0 lg:inline">
                   {shipment.serviceDate ? formatUnixDateMedium(shipment.serviceDate) : ""}
                 </span>
-                <span
-                  className={cn("ml-auto shrink-0 tabular-nums", held && "line-through")}
-                >
+                <span className={cn("ml-auto shrink-0 tabular-nums", held && "line-through")}>
                   {formatCurrency(Number(shipment.amount ?? 0), currencyCode)}
                 </span>
               </div>

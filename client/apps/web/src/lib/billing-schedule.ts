@@ -81,7 +81,8 @@ const SPLIT_CLAUSES: Record<InvoiceSplitKey, string> = {
   Customer: "are combined into a single invoice",
   CustomerAndPONumber: "are combined into one invoice per PO number",
   CustomerAndShipmentBOL: "are combined into one invoice per BOL",
-  CustomerAndOrder: "are combined into one invoice per order",
+  CustomerAndOrder:
+    "are combined into one invoice per order (a shipment booked without an order is invoiced on its own)",
   CustomerAndOrigin: "are combined into one invoice per pickup location",
   CustomerAndDestination: "are combined into one invoice per delivery location",
   CustomerAndServiceType: "are combined into one invoice per service type",

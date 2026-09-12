@@ -74,13 +74,13 @@ describe("StatementGroupCard", () => {
     renderCard({ heldIds: new Set(["bqi_2"]) });
 
     expect(screen.getByText("$175.00")).toBeInTheDocument();
-    expect(screen.getByText("2 of 3 shp")).toBeInTheDocument();
+    expect(screen.getByText("2 of 3 shipments")).toBeInTheDocument();
   });
 
   it("reports every shipment when nothing is held", () => {
     renderCard();
 
-    expect(screen.getByText("3 shp")).toBeInTheDocument();
+    expect(screen.getByText("3 shipments")).toBeInTheDocument();
   });
 
   it("hands back the shipment whose checkbox was clicked", async () => {
