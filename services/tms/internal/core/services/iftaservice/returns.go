@@ -324,7 +324,9 @@ func (s *Service) newDraft(
 	}
 	if open != nil {
 		return nil, errortypes.NewConflictError(
-			"A {0} return already exists for {1}; recompute or reopen it instead of generating another", strings.ToLower(open.Status.Label()), period.Label(),
+			"A {0} return already exists for {1}; recompute or reopen it instead of generating another",
+			strings.ToLower(open.Status.Label()),
+			period.Label(),
 		)
 	}
 
@@ -388,17 +390,21 @@ func (s *Service) Generate(
 	ctx context.Context,
 	req *GenerateReturnRequest,
 ) (*ifta.Return, error) {
-	latest, err := s.repo.GetLatestReturnForPeriod(ctx, &repositories.GetLatestReturnForPeriodRequest{
-		TenantInfo: req.TenantInfo,
-		Year:       req.Period.Year,
-		Quarter:    req.Period.Quarter,
-	})
+	latest, err := s.repo.GetLatestReturnForPeriod(
+		ctx,
+		&repositories.GetLatestReturnForPeriodRequest{
+			TenantInfo: req.TenantInfo,
+			Year:       req.Period.Year,
+			Quarter:    req.Period.Quarter,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if latest != nil && latest.Status == ifta.ReturnStatusFiled {
 		return nil, errortypes.NewConflictError(
-			"The {0} return has been filed; amend it instead of generating a new one", req.Period.Label(),
+			"The {0} return has been filed; amend it instead of generating a new one",
+			req.Period.Label(),
 		)
 	}
 

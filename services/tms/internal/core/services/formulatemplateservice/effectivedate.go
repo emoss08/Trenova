@@ -55,7 +55,8 @@ func (s *Service) UpdateVersionEffectiveDate(
 			return nil, errortypes.NewValidationError(
 				"versionNumber",
 				errortypes.ErrInvalid,
-				"Only approved snapshots can be scheduled; this version was captured while the template was {0}", version.Status.String(),
+				"Only approved snapshots can be scheduled; this version was captured while the template was {0}",
+				version.Status.String(),
 			)
 		}
 

@@ -44,7 +44,10 @@ func (s *Service) PublishVersion(
 	kind := s.kindOf(ctx, version, req.TenantInfo)
 	def, ok := s.registry.Get(kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError("This template names kind \"{0}\", which is not registered, so it cannot render", kind)
+		return nil, errortypes.NewBusinessError(
+			"This template names kind \"{0}\", which is not registered, so it cannot render",
+			kind,
+		)
 	}
 
 	if multiErr := s.VerifyForPublish(ctx, def, version); multiErr != nil {
@@ -100,7 +103,12 @@ func (s *Service) VerifyForPublish(
 ) *errortypes.MultiError {
 	if version.Status != documenttemplate.VersionStatusDraft {
 		multiErr := errortypes.NewMultiError()
-		multiErr.Add("status", errortypes.ErrInvalid, "Only a draft can be published. This version is {0}.", version.Status)
+		multiErr.Add(
+			"status",
+			errortypes.ErrInvalid,
+			"Only a draft can be published. This version is {0}.",
+			version.Status,
+		)
 		return multiErr
 	}
 

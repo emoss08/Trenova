@@ -207,7 +207,8 @@ func (s *Service) UpdateTemplate(
 			return nil, errortypes.NewValidationError(
 				"status",
 				errortypes.ErrInvalidOperation,
-				"{0} worker(s) are still on this shift — move or end their assignments first", count,
+				"{0} worker(s) are still on this shift — move or end their assignments first",
+				count,
 			)
 		}
 	}
@@ -317,7 +318,9 @@ func (s *Service) AssignShift(
 		return nil, errortypes.NewValidationError(
 			"cycleOffsetWeeks",
 			errortypes.ErrInvalid,
-			"This shift rotates over {0} weeks, so the offset is 0 to {1}", template.CycleWeeks, template.CycleWeeks-1,
+			"This shift rotates over {0} weeks, so the offset is 0 to {1}",
+			template.CycleWeeks,
+			template.CycleWeeks-1,
 		)
 	}
 

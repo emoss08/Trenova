@@ -342,7 +342,9 @@ func (s *Service) guardSourceOrders(
 			return errortypes.NewValidationError(
 				"shipmentIds",
 				errortypes.ErrInvalid,
-				"Shipment belongs to order {0} ({1}) and cannot be moved", source.OrderNumber, source.Status,
+				"Shipment belongs to order {0} ({1}) and cannot be moved",
+				source.OrderNumber,
+				source.Status,
 			)
 		}
 	}

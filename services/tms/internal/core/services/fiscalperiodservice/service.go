@@ -736,7 +736,9 @@ func (s *Service) validateCloseWithPeriods(
 				multiErr.Add(
 					"status",
 					errortypes.ErrInvalid,
-					"Cannot close period {0}: period {1} is still open. Close periods sequentially.", entity.PeriodNumber, p.PeriodNumber,
+					"Cannot close period {0}: period {1} is still open. Close periods sequentially.",
+					entity.PeriodNumber,
+					p.PeriodNumber,
 				)
 				break
 			}
@@ -821,7 +823,9 @@ func (s *Service) validateReopenWithPeriods(
 			multiErr.Add(
 				"status",
 				errortypes.ErrInvalid,
-				"Cannot reopen period {0}: period {1} is already closed. Reopen periods in reverse order.", entity.PeriodNumber, p.PeriodNumber,
+				"Cannot reopen period {0}: period {1} is already closed. Reopen periods in reverse order.",
+				entity.PeriodNumber,
+				p.PeriodNumber,
 			)
 			break
 		}

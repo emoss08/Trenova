@@ -67,7 +67,9 @@ func CreateVersionMismatchError(entityName, entityID string) error {
 	return errortypes.NewValidationError(
 		"version",
 		errortypes.ErrVersionMismatch,
-		"Version mismatch. The {0} ({1}) has either been updated or deleted since the last request.", entityName, entityID,
+		"Version mismatch. The {0} ({1}) has either been updated or deleted since the last request.",
+		entityName,
+		entityID,
 	)
 }
 
@@ -80,7 +82,9 @@ func CreateBulkVersionMismatchError(entityName string, entityIDs []pulid.ID) err
 	return errortypes.NewValidationError(
 		"version",
 		errortypes.ErrVersionMismatch,
-		"Version mismatch. The {0} ({1}) have either been updated or deleted since the last request.", entityName, strings.Join(
+		"Version mismatch. The {0} ({1}) have either been updated or deleted since the last request.",
+		entityName,
+		strings.Join(
 			pulid.Map(entityIDs, func(id pulid.ID) string { return id.String() }),
 			", ",
 		),

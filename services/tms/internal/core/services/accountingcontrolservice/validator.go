@@ -132,7 +132,9 @@ func createAccountingBasisRule() validationframework.TenantedRule[*accountingcon
 				multiErr.Add(
 					"revenueRecognitionPolicy",
 					errortypes.ErrInvalidOperation,
-					"Accounting basis {0} does not allow revenue recognition policy {1}", entity.AccountingBasis, entity.RevenueRecognitionPolicy,
+					"Accounting basis {0} does not allow revenue recognition policy {1}",
+					entity.AccountingBasis,
+					entity.RevenueRecognitionPolicy,
 				)
 			}
 
@@ -141,7 +143,9 @@ func createAccountingBasisRule() validationframework.TenantedRule[*accountingcon
 				multiErr.Add(
 					"expenseRecognitionPolicy",
 					errortypes.ErrInvalidOperation,
-					"Accounting basis {0} does not allow expense recognition policy {1}", entity.AccountingBasis, entity.ExpenseRecognitionPolicy,
+					"Accounting basis {0} does not allow expense recognition policy {1}",
+					entity.AccountingBasis,
+					entity.ExpenseRecognitionPolicy,
 				)
 			}
 
@@ -251,7 +255,8 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 						multiErr.Add(
 							"autoPostSourceEvents",
 							errortypes.ErrInvalidOperation,
-							"Auto-post source events must not include {0} when revenue recognition is OnCashReceipt", blockedEvent,
+							"Auto-post source events must not include {0} when revenue recognition is OnCashReceipt",
+							blockedEvent,
 						)
 					}
 				}

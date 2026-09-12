@@ -842,7 +842,9 @@ func (s *service) validateTrailerContinuity(
 	}
 
 	return errortypes.NewBusinessError(
-		"Trailer {0} is currently located at {1} which doesn't match this move's current pickup location. Locate the trailer before assigning or assign a different trailer", trailerEntity.Code, locationEntity.Name,
+		"Trailer {0} is currently located at {1} which doesn't match this move's current pickup location. Locate the trailer before assigning or assign a different trailer",
+		trailerEntity.Code,
+		locationEntity.Name,
 	).
 		WithParam("trailerId", candidate.TrailerID.String()).
 		WithParam("trailerCode", trailerEntity.Code).

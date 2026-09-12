@@ -135,6 +135,6 @@ func (m *MultiError) AllAdvisories() []*AdvisoryError {
 	return m.root().Advisories
 }
 
-func (a *AdvisoryError) LocalizedMessage() (string, []any) {
+func (a *AdvisoryError) LocalizedMessage() (message string, args []any) {
 	return a.Message, a.Args
 }

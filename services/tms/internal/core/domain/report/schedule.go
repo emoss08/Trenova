@@ -51,7 +51,12 @@ func (d *ScheduleDelivery) Validate(multiErr *errortypes.MultiError) {
 		return
 	}
 	if len(d.EmailRecipients) > MaxScheduleEmailRecipients {
-		multiErr.Add("emailRecipients", errortypes.ErrInvalid, "A schedule supports at most {0} email recipients", MaxScheduleEmailRecipients)
+		multiErr.Add(
+			"emailRecipients",
+			errortypes.ErrInvalid,
+			"A schedule supports at most {0} email recipients",
+			MaxScheduleEmailRecipients,
+		)
 	}
 	for i, recipient := range d.EmailRecipients {
 		if err := is.EmailFormat.Validate(recipient); err != nil {
@@ -63,7 +68,12 @@ func (d *ScheduleDelivery) Validate(multiErr *errortypes.MultiError) {
 		}
 	}
 	if len(d.NotifyUserIDs) > MaxScheduleNotifyUsers {
-		multiErr.Add("notifyUserIds", errortypes.ErrInvalid, "A schedule supports at most {0} in-app recipients", MaxScheduleNotifyUsers)
+		multiErr.Add(
+			"notifyUserIds",
+			errortypes.ErrInvalid,
+			"A schedule supports at most {0} in-app recipients",
+			MaxScheduleNotifyUsers,
+		)
 	}
 	for i, userID := range d.NotifyUserIDs {
 		if userID.IsNil() {

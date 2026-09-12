@@ -248,7 +248,9 @@ func (s *service) BulkUpdateStatus(
 
 			if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
 				return errortypes.NewBusinessError(
-					"Move status transition from {0} to {1} is not allowed", move.Status, req.Status,
+					"Move status transition from {0} to {1} is not allowed",
+					move.Status,
+					req.Status,
 				).WithParam("moveId", moveID.String())
 			}
 			if err = s.ensureEquipmentAvailableForProgressBulk(

@@ -66,7 +66,8 @@ func (s *Service) ResolveRows(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"This import is {0} and its rows cannot be worked out again", strings.ToLower(batch.Status.Label()),
+			"This import is {0} and its rows cannot be worked out again",
+			strings.ToLower(batch.Status.Label()),
 		)
 	}
 

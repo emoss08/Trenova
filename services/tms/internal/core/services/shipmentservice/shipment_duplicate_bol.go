@@ -36,7 +36,8 @@ func (s *service) checkDuplicateBOLsWithControl(
 	me.Add(
 		"bol",
 		errortypes.ErrInvalid,
-		"BOL is already in use by shipment(s) with Pro Number(s): {0}", strings.Join(proNumbers, ", "),
+		"BOL is already in use by shipment(s) with Pro Number(s): {0}",
+		strings.Join(proNumbers, ", "),
 	)
 
 	if me.HasErrors() {

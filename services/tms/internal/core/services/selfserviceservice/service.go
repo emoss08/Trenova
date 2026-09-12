@@ -257,7 +257,9 @@ func (s *Service) UpdatePolicy(
 			return nil, errortypes.NewValidationError(
 				"versionLabel",
 				errortypes.ErrInvalidOperation,
-				"{0} person(s) have signed version {1} — give the new text a new version so their signatures stay on what they read", signed, original.VersionLabel,
+				"{0} person(s) have signed version {1} — give the new text a new version so their signatures stay on what they read",
+				signed,
+				original.VersionLabel,
 			)
 		}
 	}
@@ -428,7 +430,9 @@ func (s *Service) Acknowledge(
 			return nil, errortypes.NewValidationError(
 				"signatureName",
 				errortypes.ErrInvalid,
-				"Sign as {0} {1} — the name on your record", req.Worker.FirstName, req.Worker.LastName,
+				"Sign as {0} {1} — the name on your record",
+				req.Worker.FirstName,
+				req.Worker.LastName,
 			)
 		}
 	}

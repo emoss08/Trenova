@@ -171,7 +171,8 @@ func (s *Service) RecordResult(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"This test is already {0}; record a correction as a new test", strings.ToLower(string(entity.Status)),
+			"This test is already {0}; record a correction as a new test",
+			strings.ToLower(string(entity.Status)),
 		)
 	}
 

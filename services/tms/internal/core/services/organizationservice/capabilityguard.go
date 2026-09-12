@@ -100,7 +100,10 @@ func (s *service) guardCapabilityDisable(
 		multiErr.Add(
 			guard.field,
 			errortypes.ErrResourceInUse,
-			"Cannot disable {0}: {1}. Resolve or close this work before turning {2} off", guard.noun, description, guard.noun,
+			"Cannot disable {0}: {1}. Resolve or close this work before turning {2} off",
+			guard.noun,
+			description,
+			guard.noun,
 		)
 	}
 

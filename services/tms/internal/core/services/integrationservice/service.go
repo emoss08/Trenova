@@ -470,7 +470,10 @@ func (s *Service) getRuntimeConfig(
 	record, err := s.repo.GetByType(ctx, tenantInfo, typ)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewBusinessError("{0} integration is not configured", string(typ))
+			return nil, errortypes.NewBusinessError(
+				"{0} integration is not configured",
+				string(typ),
+			)
 		}
 
 		return nil, errortypes.NewBusinessError(

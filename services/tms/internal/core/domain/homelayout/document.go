@@ -155,12 +155,24 @@ func validateWidgetGeometry(
 	fieldPath string,
 ) {
 	if widget.W < definition.MinW || widget.W > definition.MaxW {
-		multiErr.Add(fieldPath+".w", errortypes.ErrInvalid,
-			"{0} must be between {1} and {2} columns wide", definition.Label, definition.MinW, definition.MaxW)
+		multiErr.Add(
+			fieldPath+".w",
+			errortypes.ErrInvalid,
+			"{0} must be between {1} and {2} columns wide",
+			definition.Label,
+			definition.MinW,
+			definition.MaxW,
+		)
 	}
 	if widget.H < definition.MinH || widget.H > definition.MaxH {
-		multiErr.Add(fieldPath+".h", errortypes.ErrInvalid,
-			"{0} must be between {1} and {2} rows tall", definition.Label, definition.MinH, definition.MaxH)
+		multiErr.Add(
+			fieldPath+".h",
+			errortypes.ErrInvalid,
+			"{0} must be between {1} and {2} rows tall",
+			definition.Label,
+			definition.MinH,
+			definition.MaxH,
+		)
 	}
 }
 

@@ -453,7 +453,10 @@ func (r *repository) explainStatusConflict(
 	return errortypes.NewValidationError(
 		"status",
 		errortypes.ErrInvalidOperation,
-		"PTO is {0} and can only be {1} from {2}", strings.ToLower(string(current.Status)), strings.ToLower(string(req.Status)), strings.Join(labels, " or "),
+		"PTO is {0} and can only be {1} from {2}",
+		strings.ToLower(string(current.Status)),
+		strings.ToLower(string(req.Status)),
+		strings.Join(labels, " or "),
 	)
 }
 

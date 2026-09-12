@@ -30,5 +30,9 @@ func ValidateLocale(value any) error {
 		names[i] = locale.String()
 	}
 
-	return fmt.Errorf("unsupported language %q, expected one of: %s", tag, strings.Join(names, ", "))
+	return fmt.Errorf(
+		"unsupported language %q, expected one of: %s",
+		tag,
+		strings.Join(names, ", "),
+	)
 }

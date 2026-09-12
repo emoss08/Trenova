@@ -343,7 +343,9 @@ func (s *Service) BulkUpdateStatus(
 		return nil, errortypes.NewValidationError(
 			"templateIds",
 			errortypes.ErrInvalid,
-			"Template {0} is {1}; only Active and Inactive templates can be bulk updated", template.Name, template.Status,
+			"Template {0} is {1}; only Active and Inactive templates can be bulk updated",
+			template.Name,
+			template.Status,
 		)
 	}
 

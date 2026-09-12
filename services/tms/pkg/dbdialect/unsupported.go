@@ -1,13 +1,14 @@
 package dbdialect
 
 import (
-
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func Unsupported(kind Kind, capability Capability) *errortypes.NotImplementedError {
 	return errortypes.NewNotImplementedError(
-		"{0} is not available when running on {1}; configure database.driver=postgres to use this feature", capability.DisplayName(), kind.DisplayName(),
+		"{0} is not available when running on {1}; configure database.driver=postgres to use this feature",
+		capability.DisplayName(),
+		kind.DisplayName(),
 	).WithDriver(kind.String()).WithCapability(string(capability))
 }
 

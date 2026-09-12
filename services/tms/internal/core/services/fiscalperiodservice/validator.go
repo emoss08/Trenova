@@ -128,7 +128,8 @@ func (v *Validator) ValidateClose(
 	multiErr.Add(
 		"reconciliation",
 		errortypes.ErrInvalidOperation,
-		"Cannot close fiscal period while {0} posted invoice reconciliation discrepancies remain unresolved", count,
+		"Cannot close fiscal period while {0} posted invoice reconciliation discrepancies remain unresolved",
+		count,
 	)
 	return multiErr
 }
@@ -162,7 +163,8 @@ func (v *Validator) validateAccountingCloseBlockers(
 		multiErr.Add(
 			"accounting",
 			errortypes.ErrInvalidOperation,
-			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval", pendingManualCount,
+			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval",
+			pendingManualCount,
 		)
 	}
 
@@ -190,7 +192,8 @@ func (v *Validator) validateAccountingCloseBlockers(
 		multiErr.Add(
 			"accounting",
 			errortypes.ErrInvalidOperation,
-			"Cannot close fiscal period while {0} accounting sources remain unposted", pendingSourceCount,
+			"Cannot close fiscal period while {0} accounting sources remain unposted",
+			pendingSourceCount,
 		)
 	}
 }

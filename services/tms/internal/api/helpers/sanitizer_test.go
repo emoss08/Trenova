@@ -263,20 +263,23 @@ func TestSanitizer_ExtractErrors_BusinessError(t *testing.T) {
 		assert.Equal(t, "business", result[0].Location)
 	})
 
-	t.Run("keeps the details beside the message so only the message translates", func(t *testing.T) {
-		t.Parallel()
-		err := errortypes.NewBusinessError("Payment failed")
-		err.Details = "Card declined"
+	t.Run(
+		"keeps the details beside the message so only the message translates",
+		func(t *testing.T) {
+			t.Parallel()
+			err := errortypes.NewBusinessError("Payment failed")
+			err.Details = "Card declined"
 
-		result := s.ExtractErrors(err)
+			result := s.ExtractErrors(err)
 
-		require.Len(t, result, 1)
-		assert.Equal(t, "Payment failed", result[0].Message)
-		assert.Equal(t, "Card declined", result[0].Details)
+			require.Len(t, result, 1)
+			assert.Equal(t, "Payment failed", result[0].Message)
+			assert.Equal(t, "Card declined", result[0].Details)
 
-		localized := helpers.LocalizeErrors(i18n.EN, result)
-		assert.Equal(t, "Payment failed: Card declined", localized[0].Message)
-	})
+			localized := helpers.LocalizeErrors(i18n.EN, result)
+			assert.Equal(t, "Payment failed: Card declined", localized[0].Message)
+		},
+	)
 }
 
 func TestSanitizer_ExtractErrors_RateLimitError(t *testing.T) {

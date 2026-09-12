@@ -186,8 +186,13 @@ func (r *CapabilityRule) validateOverrideReason(multiErr *errortypes.MultiError)
 	}
 
 	if r.OverrideReason == "" {
-		multiErr.Add("overrideReason", errortypes.ErrRequired,
-			"Explain why {0} differs from the recommended {1} enforcement", def.Label, string(def.DefaultEnforcement))
+		multiErr.Add(
+			"overrideReason",
+			errortypes.ErrRequired,
+			"Explain why {0} differs from the recommended {1} enforcement",
+			def.Label,
+			string(def.DefaultEnforcement),
+		)
 	}
 }
 

@@ -916,7 +916,8 @@ func (s *Service) validateClose(
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			"Cannot close fiscal year: {0} period(s) are still open. Close all periods first.", openCount,
+			"Cannot close fiscal year: {0} period(s) are still open. Close all periods first.",
+			openCount,
 		)
 	}
 

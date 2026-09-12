@@ -92,7 +92,8 @@ func Validate(fields Fields, params ValidateParams) {
 			multiErr.Add(
 				"geofenceType",
 				errortypes.ErrInvalid,
-				"A geocoded {0} is required for automatic and circular geofences", geocodedSubject(params.GeocodedSubject),
+				"A geocoded {0} is required for automatic and circular geofences",
+				geocodedSubject(params.GeocodedSubject),
 			)
 		}
 		if fields.GeofenceRadiusMeters == nil || *fields.GeofenceRadiusMeters <= 0 {

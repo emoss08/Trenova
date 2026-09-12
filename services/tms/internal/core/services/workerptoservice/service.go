@@ -441,7 +441,9 @@ func (s *Service) transition(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			"PTO is {0} and cannot be {1}", strings.ToLower(string(current.Status)), strings.ToLower(string(params.target)),
+			"PTO is {0} and cannot be {1}",
+			strings.ToLower(string(current.Status)),
+			strings.ToLower(string(params.target)),
 		)
 	}
 
@@ -849,14 +851,22 @@ func (s *Service) prepareLedgerFields(
 	if err != nil {
 		return nil, err
 	}
-	if blocked := holidays.BlackoutsBetween(entity.StartDate, entity.EndDate, loc); len(blocked) > 0 {
+	if blocked := holidays.BlackoutsBetween(entity.StartDate, entity.EndDate, loc); len(
+		blocked,
+	) > 0 {
 		return nil, errortypes.NewValidationError(
 			"startDate",
 			errortypes.ErrInvalid,
 			"These dates fall on a blackout: {0}", blocked[0].Name,
 		)
 	}
-	entity.Days = worker.ComputePTODays(entity.StartDate, entity.EndDate, loc, countWeekends, holidays)
+	entity.Days = worker.ComputePTODays(
+		entity.StartDate,
+		entity.EndDate,
+		loc,
+		countWeekends,
+		holidays,
+	)
 
 	availability, err := s.ledger.CheckAvailability(ctx, &ptoledgerservice.AvailabilityRequest{
 		TenantInfo:   tenantInfo,

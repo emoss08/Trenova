@@ -132,8 +132,12 @@ func (v *Validator) validateNoOverlap(
 			field = "isOrgDefault"
 		}
 
-		multiErr.Add(field, errortypes.ErrInvalid,
-			"Policy {0} already covers this scope for an overlapping date range. Change the dates, narrow the scope, or set a different priority.", conflict.Code)
+		multiErr.Add(
+			field,
+			errortypes.ErrInvalid,
+			"Policy {0} already covers this scope for an overlapping date range. Change the dates, narrow the scope, or set a different priority.",
+			conflict.Code,
+		)
 		return
 	}
 }

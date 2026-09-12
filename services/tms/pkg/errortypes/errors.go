@@ -699,13 +699,13 @@ func MergeMultiErrors(multiErrs ...*MultiError) *MultiError {
 }
 
 type Localizable interface {
-	LocalizedMessage() (string, []any)
+	LocalizedMessage() (message string, args []any)
 }
 
-func (e *BaseError) LocalizedMessage() (string, []any) {
+func (e *BaseError) LocalizedMessage() (message string, args []any) {
 	return e.Message, e.Args
 }
 
-func (e *Error) LocalizedMessage() (string, []any) {
+func (e *Error) LocalizedMessage() (message string, args []any) {
 	return e.Message, e.Args
 }

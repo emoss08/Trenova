@@ -350,7 +350,13 @@ func (s *Service) assertYearAcceptsReversal(
 
 	if target.Status == fiscalyear.StatusClosed ||
 		target.Status == fiscalyear.StatusPermanentlyClosed {
-		return errortypes.NewBusinessError("{0} is {1} and holds the opening balances carried out of {2}. Reopen {3} first.", target.Name, target.Status, fy.Name, target.Name)
+		return errortypes.NewBusinessError(
+			"{0} is {1} and holds the opening balances carried out of {2}. Reopen {3} first.",
+			target.Name,
+			target.Status,
+			fy.Name,
+			target.Name,
+		)
 	}
 
 	return nil
@@ -372,7 +378,11 @@ func (s *Service) assertPeriodAcceptsReversal(
 	}
 
 	if period.Status == fiscalperiod.StatusPermanentlyClosed {
-		return errortypes.NewBusinessError("{0} is permanently closed, so entry {1} cannot be reversed and the year cannot be reopened.", period.Name, entry.EntryNumber)
+		return errortypes.NewBusinessError(
+			"{0} is permanently closed, so entry {1} cannot be reversed and the year cannot be reopened.",
+			period.Name,
+			entry.EntryNumber,
+		)
 	}
 
 	return nil

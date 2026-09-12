@@ -26,7 +26,10 @@ func (s *Service) RenderDocument(
 	}
 
 	if !def.HasChannel(documenttemplate.ChannelPDF) {
-		return nil, errortypes.NewBusinessError("Template kind \"{0}\" does not produce a document", req.Kind)
+		return nil, errortypes.NewBusinessError(
+			"Template kind \"{0}\" does not produce a document",
+			req.Kind,
+		)
 	}
 
 	resolved, err := s.Resolve(ctx, &services.ResolveTemplateRequest{
@@ -347,7 +350,10 @@ func (s *Service) PreviewVersion(
 
 	def, ok := s.registry.Get(resolved.Kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", resolved.Kind)
+		return nil, errortypes.NewBusinessError(
+			"Template kind \"{0}\" is not registered",
+			resolved.Kind,
+		)
 	}
 
 	data := req.Data

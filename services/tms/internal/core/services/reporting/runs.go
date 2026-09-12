@@ -100,16 +100,20 @@ func (s *Service) enforceEnqueueGate(ctx context.Context, req *RunReportRequest)
 		if s.metrics != nil {
 			s.metrics.RecordEnqueueRejection("concurrency")
 		}
-		return errortypes.NewRateLimitError("report",
-			"Your organization already has {0} reports generating — wait for one to finish", counts.Running,
+		return errortypes.NewRateLimitError(
+			"report",
+			"Your organization already has {0} reports generating — wait for one to finish",
+			counts.Running,
 		)
 	}
 	if counts.Queued >= s.cfg.GetMaxQueuedRunsPerOrg() {
 		if s.metrics != nil {
 			s.metrics.RecordEnqueueRejection("queue_depth")
 		}
-		return errortypes.NewRateLimitError("report",
-			"Your organization already has {0} reports queued — wait for the queue to drain", counts.Queued,
+		return errortypes.NewRateLimitError(
+			"report",
+			"Your organization already has {0} reports queued — wait for the queue to drain",
+			counts.Queued,
 		)
 	}
 

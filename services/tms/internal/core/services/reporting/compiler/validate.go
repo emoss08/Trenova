@@ -426,11 +426,21 @@ func validateComputedOperands(v *validatedDef, multiErr *errortypes.MultiError) 
 			}
 			target := v.columnByID(operand.ColumnID)
 			if target == nil {
-				multiErr.Add(fieldPath, errortypes.ErrInvalid, "Computed operand \"{0}\" does not reference a valid column", operand.ColumnID)
+				multiErr.Add(
+					fieldPath,
+					errortypes.ErrInvalid,
+					"Computed operand \"{0}\" does not reference a valid column",
+					operand.ColumnID,
+				)
 				continue
 			}
 			if target.spec.Kind != report.ColumnKindMeasure {
-				multiErr.Add(fieldPath, errortypes.ErrInvalid, "Computed operand \"{0}\" must be a measure column", operand.ColumnID)
+				multiErr.Add(
+					fieldPath,
+					errortypes.ErrInvalid,
+					"Computed operand \"{0}\" must be a measure column",
+					operand.ColumnID,
+				)
 			}
 		}
 	}
@@ -473,14 +483,24 @@ func (c *Compiler) validateDimensionColumn(
 	hasMeasures bool,
 ) bool {
 	if ref.toMany {
-		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, "Dimension \"{0}\" crosses a to-many relationship; only measures may aggregate across to-many paths", col.Ref.String())
+		multiErr.Add(
+			fieldPath+".ref",
+			errortypes.ErrInvalid,
+			"Dimension \"{0}\" crosses a to-many relationship; only measures may aggregate across to-many paths",
+			col.Ref.String(),
+		)
 		return false
 	}
 	// Groupable marks a field as a sensible grouping key on its own. A band
 	// makes any numeric field one — a charge amount has far too many distinct
 	// values to group by, but its distribution across ranges is the point.
 	if !ref.field.Groupable && hasMeasures && col.Band.IsEmpty() {
-		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, "Field \"{0}\" cannot be used as a grouping dimension", col.Ref.String())
+		multiErr.Add(
+			fieldPath+".ref",
+			errortypes.ErrInvalid,
+			"Field \"{0}\" cannot be used as a grouping dimension",
+			col.Ref.String(),
+		)
 		return false
 	}
 	if col.Agg != "" {
@@ -532,11 +552,21 @@ func validateBand(
 		return false
 	}
 	if !bandableType(ref.field.Type) {
-		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, "Ranges are only valid on numeric fields; \"{0}\" is not one", col.Ref.String())
+		multiErr.Add(
+			fieldPath+".band",
+			errortypes.ErrInvalid,
+			"Ranges are only valid on numeric fields; \"{0}\" is not one",
+			col.Ref.String(),
+		)
 		return false
 	}
 	if ref.field.Type == reportcatalog.FieldInt && !col.Band.IsWhole() {
-		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, "\"{0}\" holds whole numbers, so its range boundaries must be whole numbers too", col.Ref.String())
+		multiErr.Add(
+			fieldPath+".band",
+			errortypes.ErrInvalid,
+			"\"{0}\" holds whole numbers, so its range boundaries must be whole numbers too",
+			col.Ref.String(),
+		)
 		return false
 	}
 	if col.Transform != nil && col.Transform.Op != report.TransformNone {
@@ -562,7 +592,13 @@ func (c *Compiler) validateMeasureColumn(
 		return false
 	}
 	if !ref.field.SupportsAggregation(col.Agg) {
-		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid, "Aggregation \"{0}\" is not legal for field \"{1}\"", col.Agg, col.Ref.String())
+		multiErr.Add(
+			fieldPath+".agg",
+			errortypes.ErrInvalid,
+			"Aggregation \"{0}\" is not legal for field \"{1}\"",
+			col.Agg,
+			col.Ref.String(),
+		)
 		return false
 	}
 	if ref.toMany && col.Agg == reportcatalog.AggCountDistinct {
@@ -715,7 +751,13 @@ func (c *Compiler) validateHavingFilter(
 		return false
 	}
 	if !ref.field.SupportsAggregation(filter.Agg) {
-		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid, "Aggregation \"{0}\" is not legal for field \"{1}\"", filter.Agg, filter.Ref.String())
+		multiErr.Add(
+			fieldPath+".agg",
+			errortypes.ErrInvalid,
+			"Aggregation \"{0}\" is not legal for field \"{1}\"",
+			filter.Agg,
+			filter.Ref.String(),
+		)
 		return false
 	}
 	if ref.toMany && filter.Agg == reportcatalog.AggCountDistinct {
@@ -757,7 +799,13 @@ func (c *Compiler) validateRowFilter(
 		return false
 	}
 	if !operatorLegalForType(filter.Operator, ref.field.Type) {
-		multiErr.Add(fieldPath+".operator", errortypes.ErrInvalid, "Operator \"{0}\" is not valid for {1} fields", filter.Operator, ref.field.Type)
+		multiErr.Add(
+			fieldPath+".operator",
+			errortypes.ErrInvalid,
+			"Operator \"{0}\" is not valid for {1} fields",
+			filter.Operator,
+			ref.field.Type,
+		)
 		return false
 	}
 	return true
@@ -803,7 +851,14 @@ func validateMeasureFilterScope(
 		if reportcatalog.PathKey(filter.Ref.Path) == col.ref.pathKey {
 			return nil
 		}
-		multiErr.Add(fieldPath, errortypes.ErrInvalid, "A filter on \"{0}\" can only use fields of {1}, the records this measure aggregates; move \"{2}\" to the report filters", col.spec.ID, col.ref.entity.PluralLabel, filter.Ref.String())
+		multiErr.Add(
+			fieldPath,
+			errortypes.ErrInvalid,
+			"A filter on \"{0}\" can only use fields of {1}, the records this measure aggregates; move \"{2}\" to the report filters",
+			col.spec.ID,
+			col.ref.entity.PluralLabel,
+			filter.Ref.String(),
+		)
 		return nil
 	})
 }
@@ -828,11 +883,27 @@ func (c *Compiler) validateSort(v *validatedDef, multiErr *errortypes.MultiError
 
 		switch {
 		case isPivotCell && !pivoted[baseID]:
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, "Sort references pivot column \"{0}\", but \"{1}\" is not spread across the pivot", sortSpec.ColumnID, baseID)
+			multiErr.Add(
+				fieldPath+".columnId",
+				errortypes.ErrInvalid,
+				"Sort references pivot column \"{0}\", but \"{1}\" is not spread across the pivot",
+				sortSpec.ColumnID,
+				baseID,
+			)
 		case isPivotCell && !pivotValueExists(v.def.Pivot, pivotValue):
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, "Sort references pivot value \"{0}\", which this report does not produce", pivotValue)
+			multiErr.Add(
+				fieldPath+".columnId",
+				errortypes.ErrInvalid,
+				"Sort references pivot value \"{0}\", which this report does not produce",
+				pivotValue,
+			)
 		case !isPivotCell && pivoted[baseID]:
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, "\"{0}\" is spread across pivot columns; sort by one of them instead", baseID)
+			multiErr.Add(
+				fieldPath+".columnId",
+				errortypes.ErrInvalid,
+				"\"{0}\" is spread across pivot columns; sort by one of them instead",
+				baseID,
+			)
 		}
 	}
 }
@@ -900,8 +971,13 @@ func (c *Compiler) validatePivot(
 		pivotColumns += len(pivot.MeasureIDs)
 	}
 	if pivotColumns > c.limits.maxPivotColumns {
-		multiErr.Add("definition.pivot.values", errortypes.ErrInvalid,
-			"Pivot produces {0} columns, exceeding the maximum of {1}", pivotColumns, c.limits.maxPivotColumns)
+		multiErr.Add(
+			"definition.pivot.values",
+			errortypes.ErrInvalid,
+			"Pivot produces {0} columns, exceeding the maximum of {1}",
+			pivotColumns,
+			c.limits.maxPivotColumns,
+		)
 		return
 	}
 

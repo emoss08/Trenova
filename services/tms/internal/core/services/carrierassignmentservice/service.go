@@ -666,7 +666,8 @@ func enforceEligibility(entity *carrier.Carrier, overrideWarnings bool) error {
 
 	if result.HasWarnings() && !overrideWarnings {
 		return errortypes.NewBusinessError(
-			"Carrier has insurance warnings: {0}. Confirm the override to proceed", strings.Join(result.Warnings, "; "),
+			"Carrier has insurance warnings: {0}. Confirm the override to proceed",
+			strings.Join(result.Warnings, "; "),
 		).WithParam("carrierId", entity.ID.String()).
 			WithParam("overridable", "true")
 	}

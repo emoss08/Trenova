@@ -1,7 +1,6 @@
 package invoiceservice
 
 import (
-
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -34,7 +33,9 @@ func guardStatementCadence(
 	return errortypes.NewValidationError(
 		"offCycleReason",
 		errortypes.ErrRequired,
-		"{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.", cus.Name, profile.BillingCycle.Describe(),
+		"{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.",
+		cus.Name,
+		profile.BillingCycle.Describe(),
 	)
 }
 
