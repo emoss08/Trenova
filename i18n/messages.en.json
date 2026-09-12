@@ -5721,11 +5721,13 @@
     ]
   },
   "Absolute minimum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -78874,11 +78876,13 @@
     ]
   },
   "Maximum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -80304,11 +80308,13 @@
     ]
   },
   "Minimum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },

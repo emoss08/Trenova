@@ -2282,6 +2282,13 @@ export const rateQuoteOutcomeChoices = [
   { label: "Error", value: "Error", color: "#b91c1c" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
+/** The bounds the rate engine records as guardrails when one changes a price. */
+export const rateGuardrailKindChoices = [
+  { label: "Minimum charge", value: "MinimumCharge" },
+  { label: "Maximum charge", value: "MaximumCharge" },
+  { label: "Absolute minimum charge", value: "AbsoluteMinCharge" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
 export const rateQuotePurposeChoices = [
   { label: "Rating", value: "Rating" },
   { label: "Quote", value: "Quote" },
