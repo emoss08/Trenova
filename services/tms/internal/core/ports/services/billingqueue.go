@@ -15,6 +15,11 @@ type TransferToBillingRequest struct {
 	ShipmentID pulid.ID
 	BillType   billingqueue.BillType
 	TenantInfo pagination.TenantInfo
+	// AutoApprove clears the new item straight through the queue, for freight
+	// that passed every billing requirement and whose customer asked for clean
+	// loads to pass without review. The caller has already made that decision —
+	// see ShipmentBillingReadiness.ShouldAutoApproveBilling.
+	AutoApprove bool
 }
 
 type AssignBillerRequest struct {

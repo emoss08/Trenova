@@ -1,3 +1,7 @@
+import type {
+  ShipmentBillingAction,
+  ShipmentBillingActions,
+} from "@/hooks/use-shipment-billing-actions";
 import { isEligibleTenderStatus } from "@/lib/shipment-utils";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -14,12 +18,22 @@ export type ShipmentRowActionHandlers = {
   onEdit: (row: Row<Shipment>) => void;
   onDuplicate: (row: Row<Shipment>) => void;
   onCancel: (row: Row<Shipment>) => void;
-  onUncancel: (row: Row<Shipment>) => void;
+  onUncancel: (row: Row<Shipment>) => Promise<unknown>;
   onTransferOwnership: (row: Row<Shipment>) => void;
-  onTransferToBilling: (row: Row<Shipment>) => void;
+  billingActions: ShipmentBillingActions;
   onSendEDI: (row: Row<Shipment>) => void;
   canSendEDI: boolean;
 };
+
+function toRowAction(action: ShipmentBillingAction): RowAction<Shipment> {
+  return {
+    id: action.id,
+    label: action.label,
+    icon: action.icon,
+    onClick: (row) => (row.original.id ? action.run(row.original.id) : undefined),
+    hidden: (row) => !action.isAvailable(row.original),
+  };
+}
 
 export function buildShipmentRowActions(
   handlers: ShipmentRowActionHandlers,
@@ -62,18 +76,9 @@ export function buildShipmentRowActions(
         );
       },
     },
-    {
-      id: "transfer-to-billing",
-      label: "Transfer to Billing",
-      icon: SendIcon,
-      onClick: handlers.onTransferToBilling,
-      hidden: (row) => {
-        const s = row.original;
-        if (s.status !== "ReadyToInvoice") return true;
-        const bts = s.billingTransferStatus;
-        return !!bts && bts !== "SentBackToOps";
-      },
-    },
+    toRowAction(handlers.billingActions.markReadyToBill),
+    toRowAction(handlers.billingActions.markReadyAndTransferToBilling),
+    toRowAction(handlers.billingActions.transferToBilling),
     {
       id: "cancel",
       label: "Cancel",

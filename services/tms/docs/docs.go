@@ -33424,6 +33424,10 @@ const docTemplate = `{
                 "autoApplyAccessorials": {
                     "type": "boolean"
                 },
+                "autoApprove": {
+                    "description": "AutoApprove lets a shipment that passes every billing requirement clear the\nbilling queue without a biller clicking Approve, leaving the queue holding\nonly the freight that actually needs a human.\n\nIt is reachable only on the automatic transfer path, so an organization that\nhas not enabled automatic queue transfer cannot be auto-approving anything.",
+                    "type": "boolean"
+                },
                 "autoBill": {
                     "type": "boolean"
                 },
@@ -33456,9 +33460,6 @@ const docTemplate = `{
                 },
                 "businessUnitId": {
                     "type": "string"
-                },
-                "consolidationLookbackDays": {
-                    "type": "integer"
                 },
                 "countLateOnlyOnAppointmentStops": {
                     "type": "boolean"
@@ -48485,6 +48486,13 @@ const docTemplate = `{
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.StatementGroup"
                     }
                 },
+                "heldAmount": {
+                    "type": "number"
+                },
+                "heldCount": {
+                    "description": "HeldCount and HeldAmount are the freight that belongs to this period but is\nstill waiting on a biller, and so will not be on the invoice.\n\nWithout them the statement understates the period: a biller sees 197\nshipments and has no way to know 12 more are sitting in review. Chasing\nthose down is the work that has to happen before the cycle closes.",
+                    "type": "integer"
+                },
                 "invoiceCount": {
                     "type": "integer"
                 },
@@ -48687,6 +48695,10 @@ const docTemplate = `{
                 },
                 "shipmentStatus": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Status"
+                },
+                "shouldAutoApproveBilling": {
+                    "description": "ShouldAutoApproveBilling means this shipment may clear the billing queue\nwithout a biller looking at it, because it has no requirement or rate issue\nand its customer asked for clean freight to pass straight through.",
+                    "type": "boolean"
                 },
                 "shouldAutoMarkReadyToInvoice": {
                     "type": "boolean"

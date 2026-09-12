@@ -4,6 +4,7 @@ import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { usePermissions } from "@/hooks/use-permission";
 import {
   columnPinOffsetVar,
@@ -74,6 +75,7 @@ type CursorState = {
 
 const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, totalCount: null };
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
+const NO_ROW_ACTIONS: never[] = [];
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -85,7 +87,7 @@ export function DataTable<TData extends Record<string, any>>({
   TablePanel,
   onAddRecord: onAddRecordProp,
   addRecordActions = [],
-  contextMenuActions,
+  contextMenuActions: unguardedContextMenuActions,
   onRowClick,
   enableCreateAction = true,
   enableReadOnlyPanel = false,
@@ -96,6 +98,9 @@ export function DataTable<TData extends Record<string, any>>({
   renderEmptyState,
 }: DataTableProps<TData>) {
   "use no memo";
+  const contextMenuActions = useGuardedRowActions<TData>(
+    unguardedContextMenuActions ?? NO_ROW_ACTIONS,
+  );
   const permissions = usePermissions(resource ?? "");
   const canCreate = resource ? permissions.canCreate : true;
   const canUpdate = resource ? permissions.canUpdate : true;

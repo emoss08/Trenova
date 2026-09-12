@@ -118,9 +118,78 @@ func TestGroupKeyOrder(t *testing.T) {
 	assert.Equal(t, "ORD-9", withOrder.Label)
 
 	// A shipment with no order is its own group, not merged with a real order.
-	orphan := GroupKeyFor(customer.InvoiceSplitKeyCustomerAndOrder, candidate(nil))
-	assert.Equal(t, "No order", orphan.Label)
+	orphan := GroupKeyFor(
+		customer.InvoiceSplitKeyCustomerAndOrder,
+		candidate(func(c *repositories.ConsolidationCandidate) {
+			c.ShipmentID = pulid.MustNew("shp_")
+			c.ProNumber = "PRO-1"
+		}),
+	)
 	assert.NotEqual(t, withOrder.Key, orphan.Key)
+}
+
+// A shipment booked without an order is its own commercial unit, so under a
+// one-invoice-per-order split it is billed on its own.
+//
+// The previous fixture built a single order-less shipment, so it could never see
+// that every order-less shipment shared one "No order" group — and a customer
+// who asked for one invoice per order got all their standalone freight merged
+// onto a single invoice. That is the refusal the grouping rules exist to avoid.
+func TestOrderSplitNeverMergesStandaloneShipments(t *testing.T) {
+	t.Parallel()
+
+	first := GroupKeyFor(
+		customer.InvoiceSplitKeyCustomerAndOrder,
+		candidate(func(c *repositories.ConsolidationCandidate) {
+			c.ShipmentID = pulid.MustNew("shp_")
+			c.ProNumber = "PRO-1001"
+		}),
+	)
+	second := GroupKeyFor(
+		customer.InvoiceSplitKeyCustomerAndOrder,
+		candidate(func(c *repositories.ConsolidationCandidate) {
+			c.ShipmentID = pulid.MustNew("shp_")
+			c.ProNumber = "PRO-1002"
+		}),
+	)
+
+	assert.NotEqual(t, first.Key, second.Key, "two unrelated shipments must not share an invoice")
+	assert.Equal(t, "PRO-1001", first.Label, "a standalone shipment is named by its pro number")
+	assert.Equal(t, "PRO-1002", second.Label)
+}
+
+// The same shipment must land in the same group on every read, or a statement
+// re-read between preview and commit would propose different invoices.
+func TestStandaloneShipmentGroupIsStable(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	build := func() GroupKeyResult {
+		return GroupKeyFor(
+			customer.InvoiceSplitKeyCustomerAndOrder,
+			candidate(func(c *repositories.ConsolidationCandidate) {
+				c.ShipmentID = shipmentID
+				c.ProNumber = "PRO-1001"
+			}),
+		)
+	}
+
+	assert.Equal(t, build(), build())
+}
+
+// A standalone shipment with no pro number still needs a readable name; an empty
+// label would render a blank invoice card.
+func TestStandaloneShipmentWithoutAProNumberStillHasALabel(t *testing.T) {
+	t.Parallel()
+
+	result := GroupKeyFor(
+		customer.InvoiceSplitKeyCustomerAndOrder,
+		candidate(func(c *repositories.ConsolidationCandidate) {
+			c.ShipmentID = pulid.MustNew("shp_")
+		}),
+	)
+
+	assert.NotEmpty(t, result.Label)
 }
 
 func TestSplitOversizedIsDeterministic(t *testing.T) {

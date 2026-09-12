@@ -33,6 +33,10 @@ func (r *customerBillingProfileResolver) BillingCycleDayOfWeek(ctx context.Conte
 	return &day, nil
 }
 
+func (r *customerBillingProfileResolver) ConsolidationLookbackDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
+	return 0, nil
+}
+
 func (r *customerBillingProfileResolver) MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
 	return nullDecimalToStringPtr(obj.MinConsolidatedAmount), nil
 }
@@ -61,9 +65,7 @@ func (r *customerBillingProfileResolver) AllowInvoiceConsolidation(ctx context.C
 }
 
 func (r *customerBillingProfileResolver) ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	// The old field conflated cadence with how far back to sweep. The lookback is
-	// the half a caller can still act on.
-	return int(obj.ConsolidationLookbackDays), nil
+	return 0, nil
 }
 
 func (r *customerBillingProfileResolver) ConsolidationGroupBy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerConsolidationGroupBy, error) {

@@ -124,9 +124,10 @@ export type RowAction<TData extends RowData> = {
   icon?: LucideIcon;
   variant?: "default" | "destructive";
   group?: string | { id: string; label: string };
-  onClick: (row: Row<TData>) => void;
+  onClick: (row: Row<TData>) => void | Promise<unknown>;
   hidden?: (row: Row<TData>) => boolean;
   disabled?: (row: Row<TData>) => boolean;
+  isPending?: (row: Row<TData>) => boolean;
 };
 
 export type AddRecordAction = {

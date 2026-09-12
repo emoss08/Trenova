@@ -26,6 +26,16 @@ describe("describeBillingSchedule", () => {
     expect(sentence).not.toContain("period");
   });
 
+  // Splitting by order gives a shipment booked without an order its own invoice.
+  // A biller choosing this for a customer who does not book orders would otherwise
+  // expect one invoice and find one per shipment, so the sentence has to say it.
+  it("says a shipment without an order is invoiced on its own under the order split", () => {
+    const sentence = describeBillingSchedule(schedule({ splitBy: "CustomerAndOrder" }));
+
+    expect(sentence).toContain("one invoice per order");
+    expect(sentence).toContain("shipment booked without an order is invoiced on its own");
+  });
+
   it("describes per-order billing", () => {
     expect(describeBillingSchedule(schedule({ invoiceDelivery: "PerOrder" }))).toContain(
       "every billable leg",

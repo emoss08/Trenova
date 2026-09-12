@@ -16,11 +16,25 @@ type CreateInvoiceFromBillingQueueRequest struct {
 	// freight was supposed to accumulate onto a periodic statement. See
 	// CreateInvoiceFromShipmentsRequest.
 	OffCycleReason string
+	// DeferToStatement asks for a statement customer's freight to be approved onto
+	// their statement instead of invoiced.
+	//
+	// Set by the billing queue's approve action, where approval means "this
+	// freight is verified" rather than "invoice it now". Without it, approving a
+	// statement customer's shipment would either cut an invoice their schedule
+	// says is premature, or be refused outright — and being refused would leave
+	// the item unapproved, which is the one state that keeps it off the very
+	// statement it belongs to.
+	DeferToStatement bool
 }
 
 type CreateInvoiceFromBillingQueueResult struct {
 	Invoice  *invoice.Invoice
 	AutoPost bool
+	// DeferredToStatement reports that the item was approved onto its customer's
+	// statement rather than invoiced, and Invoice is nil. It is the ordinary
+	// outcome of approving a statement customer's freight, not a failure.
+	DeferredToStatement bool
 }
 
 type PostInvoiceRequest struct {

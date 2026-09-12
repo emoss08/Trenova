@@ -346,16 +346,6 @@ export function CustomerBillingProfileForm() {
                 />
               </FormControl>
               <FormControl>
-                <NumberField
-                  control={control}
-                  name="billingProfile.consolidationLookbackDays"
-                  label="Lookback"
-                  placeholder="30"
-                  sideText="days"
-                  description="How far before the period start to sweep shipments that were approved late."
-                />
-              </FormControl>
-              <FormControl>
                 <SelectField
                   control={control}
                   name="billingProfile.splitBy"
@@ -520,6 +510,15 @@ export function CustomerBillingProfileForm() {
             name="billingProfile.autoMarkReadyToBill"
             label="Auto-Mark Ready to Bill"
             description="Automatically flag transferred shipments as 'Ready to Bill' once all required documents and validations are satisfied."
+            position="left"
+          />
+        </FormControl>
+        <FormControl className="min-h-[3em]">
+          <SwitchField
+            control={control}
+            name="billingProfile.autoApprove"
+            label="Auto-Approve Clean Shipments"
+            description="Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer."
             position="left"
           />
         </FormControl>
