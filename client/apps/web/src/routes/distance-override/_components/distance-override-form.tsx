@@ -78,9 +78,7 @@ export function DistanceOverrideForm() {
           }
         >
           {fields.length === 0 ? (
-            <p className="text-muted-foreground text-xs">
-              {t("No intermediate stops configured.")}
-            </p>
+            <p className="text-muted-foreground text-xs">{t("No intermediate stops configured.")}</p>
           ) : (
             <div className="space-y-2">
               {fields.map((field, index) => (

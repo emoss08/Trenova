@@ -154,10 +154,7 @@ export function CommodityForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-      <FormSection
-        title={t("Handling")}
-        description={t("Loading instructions and handling requirements.")}
-      >
+      <FormSection title={t("Handling")} description={t("Loading instructions and handling requirements.")}>
         <FormGroup cols={2}>
           <FormControl cols="full">
             <TextareaField

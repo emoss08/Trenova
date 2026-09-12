@@ -170,10 +170,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
       size="xl"
     >
       <div className="space-y-5">
-        <Section
-          title={t("Entry Details")}
-          description={t("Detailed information about this audit event")}
-        >
+        <Section title={t("Entry Details")} description={t("Detailed information about this audit event")}>
           <dl className="border-border/70 rounded-md border px-3">
             <EntryDetailRow
               label={t("Event ID")}

@@ -79,10 +79,7 @@ function PoolsSkeleton() {
   const t = useT();
 
   return (
-    <section
-      aria-label={t("Pools")}
-      className="bg-card flex flex-col overflow-hidden rounded-lg border"
-    >
+    <section aria-label={t("Pools")} className="bg-card flex flex-col overflow-hidden rounded-lg border">
       <PanelHeaderSkeleton
         titleWidth="w-10"
         hint="w-20"

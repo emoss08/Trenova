@@ -135,9 +135,7 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">
-          {t("All clear ✓")}
-        </p>
+        <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">{t("All clear ✓")}</p>
       )}
       {visible.map((it, i) => {
         const Icon = KIND_ICON[it.kind];

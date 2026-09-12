@@ -191,10 +191,7 @@ function UrgencyColumn({
 
   return (
     <div className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1">
-      <header
-        className="flex items-center gap-1.5 border-b px-2 py-1.5"
-        title={t(meta.description)}
-      >
+      <header className="flex items-center gap-1.5 border-b px-2 py-1.5" title={t(meta.description)}>
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
         <span className="text-[10.5px] font-semibold tracking-wide uppercase">{t(meta.label)}</span>
         <span className="text-muted-foreground ml-auto text-[10.5px] tabular-nums">
@@ -212,9 +209,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="text-muted-foreground py-6 text-center text-[11px]">
-              {t("Nothing here.")}
-            </p>
+            <p className="text-muted-foreground py-6 text-center text-[11px]">{t("Nothing here.")}</p>
           )}
         </div>
       </ScrollArea>

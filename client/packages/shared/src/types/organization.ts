@@ -20,11 +20,15 @@ export const switchOrganizationRequestSchema = z.object({
   organizationId: z.string(),
 });
 
-export type SwitchOrganizationRequest = z.infer<typeof switchOrganizationRequestSchema>;
+export type SwitchOrganizationRequest = z.infer<
+  typeof switchOrganizationRequestSchema
+>;
 
 export const switchOrganizationResponseSchema = userSchema;
 
-export type SwitchOrganizationResponse = z.infer<typeof switchOrganizationResponseSchema>;
+export type SwitchOrganizationResponse = z.infer<
+  typeof switchOrganizationResponseSchema
+>;
 
 export const organizationSettingsSchema = z.object({
   id: z.string().min(1, { error: "Organization ID is required" }),
@@ -74,7 +78,9 @@ export const organizationLogoUrlResponseSchema = z.object({
   url: z.string(),
 });
 
-export type OrganizationLogoUrlResponse = z.infer<typeof organizationLogoUrlResponseSchema>;
+export type OrganizationLogoUrlResponse = z.infer<
+  typeof organizationLogoUrlResponseSchema
+>;
 
 export const microsoftSSOConfigSchema = z.object({
   organizationId: z.string().optional().default(""),

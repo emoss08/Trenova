@@ -43,9 +43,7 @@ export function LatestChange() {
     >
       <span className="text-muted-foreground font-mono text-[10px] font-light">UPDATE</span>
       <p className="text-xs font-medium">{t("v{0} available", status.latestVersion)}</p>
-      <span className="text-muted-foreground text-[10px]">
-        {t("Running v{0}", status.currentVersion)}
-      </span>
+      <span className="text-muted-foreground text-[10px]">{t("Running v{0}", status.currentVersion)}</span>
       {status.latestRelease.htmlUrl && (
         <Button
           render={

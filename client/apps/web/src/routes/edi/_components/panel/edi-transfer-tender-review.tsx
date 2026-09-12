@@ -48,15 +48,11 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
           <div className="flex flex-wrap items-center gap-2">
             <EDITransferStatusBadge status={transfer.status} />
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
-              {unresolvedCount > 0
-                ? t("{0} unresolved mappings", unresolvedCount)
-                : t("Ready to accept")}
+              {unresolvedCount > 0 ? t("{0} unresolved mappings", unresolvedCount) : t("Ready to accept")}
             </Badge>
           </div>
           <div>
-            <div className="truncate text-base font-semibold">
-              {payload.bol || t("Load tender")}
-            </div>
+            <div className="truncate text-base font-semibold">{payload.bol || t("Load tender")}</div>
             <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
               <span>{t("Submitted {0}", formatUnix(transfer.submittedAt))}</span>
               <span>
@@ -201,9 +197,7 @@ function TenderStopCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={stop.type === "Pickup" ? "active" : "secondary"}>{stop.type}</Badge>
-              <span className="text-muted-foreground text-xs">
-                {t("Stop {0}", stop.sequence + 1)}
-              </span>
+              <span className="text-muted-foreground text-xs">{t("Stop {0}", stop.sequence + 1)}</span>
               <Badge variant="outline">{stop.scheduleType}</Badge>
             </div>
             <div className="mt-2 truncate text-sm font-medium">{formatStopName(stop, mapping)}</div>
@@ -221,7 +215,9 @@ function TenderStopCard({
               <CalendarClockIcon className="size-3" />
               {formatWindow(stop.scheduledWindowStart, stop.scheduledWindowEnd)}
             </span>
-            <span>{t("{0} / {1} pcs", formatWeight(stop.weight), formatNumber(stop.pieces))}</span>
+            <span>
+              {t("{0} / {1} pcs", formatWeight(stop.weight), formatNumber(stop.pieces))}
+            </span>
           </div>
         </div>
       </div>

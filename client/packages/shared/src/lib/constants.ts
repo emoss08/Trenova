@@ -17,9 +17,11 @@ export const API_BASE_URL = resolveApiBaseUrl();
 
 export const APP_ENV = (import.meta.env.MODE as string) || "development";
 export const TERMS_URL =
-  (import.meta.env.VITE_TERMS_URL as string | undefined) ?? "https://trenova.app/legal/terms/";
+  (import.meta.env.VITE_TERMS_URL as string | undefined) ??
+  "https://trenova.app/legal/terms/";
 export const PRIVACY_URL =
-  (import.meta.env.VITE_PRIVACY_URL as string | undefined) ?? "https://trenova.app/legal/privacy/";
+  (import.meta.env.VITE_PRIVACY_URL as string | undefined) ??
+  "https://trenova.app/legal/privacy/";
 
 export const US_CENTER = { lat: 39.8, lng: -98.5 };
 export const DEFAULT_ZOOM = 4;

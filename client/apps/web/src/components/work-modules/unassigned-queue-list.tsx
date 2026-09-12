@@ -179,9 +179,7 @@ export function UnassignedQueueList({
               </span>
               <span className="text-[10.5px] font-semibold">
                 {formatCurrency(revenue)}{" "}
-                <span className="text-muted-foreground text-[9.5px] font-normal">
-                  {t("· {0}mi", miles)}
-                </span>
+                <span className="text-muted-foreground text-[9.5px] font-normal">{t("· {0}mi", miles)}</span>
               </span>
             </div>
           </button>

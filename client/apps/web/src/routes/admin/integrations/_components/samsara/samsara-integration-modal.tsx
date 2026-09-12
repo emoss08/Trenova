@@ -62,9 +62,7 @@ export function SamsaraIntegrationModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden p-0 md:max-h-[92vh] md:max-w-295 lg:max-w-330 xl:max-w-360">
         <DialogTitle className="sr-only">{t("Settings")}</DialogTitle>
-        <DialogDescription className="sr-only">
-          {t("Customize your settings here.")}
-        </DialogDescription>
+        <DialogDescription className="sr-only">{t("Customize your settings here.")}</DialogDescription>
         <SidebarProvider>
           <Sidebar collapsible="none" className="border-border hidden border-r md:flex">
             <SidebarContent>

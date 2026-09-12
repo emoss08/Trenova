@@ -12,7 +12,8 @@ function Highlight({ text, highlight = "", className }: HighlightProps) {
     return <span className={className}>{text}</span>;
   }
 
-  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapeRegExp = (value: string) =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const safe = escapeRegExp(highlight);
   const parts = text.split(new RegExp(`(${safe})`, "gi"));
@@ -21,7 +22,10 @@ function Highlight({ text, highlight = "", className }: HighlightProps) {
     <span className={className}>
       {parts.map((part, i) =>
         part.toLowerCase() === highlight.toLowerCase() ? (
-          <span key={i} className="shrink-0 bg-yellow-400/80 font-medium dark:bg-yellow-400/40">
+          <span
+            key={i}
+            className="shrink-0 bg-yellow-400/80 font-medium dark:bg-yellow-400/40"
+          >
             {part}
           </span>
         ) : (

@@ -99,11 +99,7 @@ export function ImportReviewTable({
   return (
     <div className="flex flex-col gap-2">
       {showFilters ? (
-        <div
-          className="flex flex-wrap items-center gap-1"
-          role="group"
-          aria-label={t("Row filter")}
-        >
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label={t("Row filter")}>
           {FILTERS.map((option) => (
             <Button
               key={option}

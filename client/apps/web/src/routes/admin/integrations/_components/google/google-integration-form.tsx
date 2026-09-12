@@ -144,9 +144,7 @@ export function GoogleMapsFormHeader() {
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">{t("Connect with Google Maps")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">
-            {t("To get a Google Maps API key, visit the")}
-          </p>
+          <p className="text-muted-foreground text-xs">{t("To get a Google Maps API key, visit the")}</p>
           <ExternalLink
             href="https://console.cloud.google.com/google/maps-apis/overview"
             className="text-xs"

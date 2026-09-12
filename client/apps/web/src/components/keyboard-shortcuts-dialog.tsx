@@ -51,9 +51,7 @@ export function KeyboardShortcutsDialog() {
                     >
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium">{t(keybind.label)}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {t(keybind.description)}
-                        </span>
+                        <span className="text-muted-foreground text-xs">{t(keybind.description)}</span>
                       </div>
                       <KbdGroup>
                         {keybind.keys.map((key) => (

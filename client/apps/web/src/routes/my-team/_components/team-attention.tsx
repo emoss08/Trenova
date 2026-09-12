@@ -57,9 +57,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
           ) : null}
         </div>
         {watched.length > 0 ? (
-          <span className="text-muted-foreground text-xs">
-            {t("{0} to keep an eye on", watched.length)}
-          </span>
+          <span className="text-muted-foreground text-xs">{t("{0} to keep an eye on", watched.length)}</span>
         ) : null}
       </header>
 

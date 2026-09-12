@@ -95,12 +95,7 @@ function TileControls({
     <Popover>
       <PopoverTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6 shrink-0"
-            aria-label={t("Tile options")}
-          >
+          <Button variant="ghost" size="icon" className="size-6 shrink-0" aria-label={t("Tile options")}>
             <MoreHorizontalIcon className="size-3.5" />
           </Button>
         }

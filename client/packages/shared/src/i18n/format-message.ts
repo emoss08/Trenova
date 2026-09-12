@@ -44,7 +44,7 @@ function stringify(value: unknown): string {
 function pluralBranch(forms: string, want: PluralForm): string | null {
   let fallback: string | null = null;
 
-  for (let i = 0; i < forms.length;) {
+  for (let i = 0; i < forms.length; ) {
     const char = forms[i];
     if (char === " " || char === "\t" || char === "\n") {
       i++;
@@ -94,7 +94,7 @@ export function formatMessage(locale: Locale, message: string, args: unknown[]):
   if (args.length === 0 || !message.includes("{")) return message;
 
   let out = "";
-  for (let i = 0; i < message.length;) {
+  for (let i = 0; i < message.length; ) {
     if (message[i] !== "{") {
       out += message[i];
       i++;

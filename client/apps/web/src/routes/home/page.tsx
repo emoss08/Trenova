@@ -132,10 +132,7 @@ export function Home() {
 
   return (
     <>
-      <Metadata
-        title={t("Home")}
-        description={t("Your work, your numbers, and where to go next.")}
-      />
+      <Metadata title={t("Home")} description={t("Your work, your numbers, and where to go next.")} />
 
       <BriefingBar
         attention={data.attention}

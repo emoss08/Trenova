@@ -99,10 +99,7 @@ function SummaryCardSkeleton() {
   const t = useT();
 
   return (
-    <section
-      aria-label={t("Form 300A")}
-      className="bg-card flex min-w-0 flex-col rounded-lg border"
-    >
+    <section aria-label={t("Form 300A")} className="bg-card flex min-w-0 flex-col rounded-lg border">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3">
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-2">
@@ -131,11 +128,7 @@ function SummaryCardSkeleton() {
             ))}
           </div>
         </BlockSkeleton>
-        <BlockSkeleton
-          label={t("Injury and illness types")}
-          titleWidth="w-36"
-          className="md:col-span-2"
-        >
+        <BlockSkeleton label={t("Injury and illness types")} titleWidth="w-36" className="md:col-span-2">
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
             {Array.from({ length: ILLNESS_TYPE_COUNT }, (_, index) => (
               <FigureSkeleton key={index} />

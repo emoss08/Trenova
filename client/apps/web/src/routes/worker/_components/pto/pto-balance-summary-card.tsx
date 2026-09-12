@@ -32,10 +32,7 @@ export function PTOBalanceSummaryCard() {
         className="mb-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-5"
         data-testid="pto-balance-summary"
       >
-        <SummaryTile
-          label={t("Workers on a policy")}
-          value={data.workersTracked.toLocaleString()}
-        />
+        <SummaryTile label={t("Workers on a policy")} value={data.workersTracked.toLocaleString()} />
         <SummaryTile
           label={t("Not enrolled")}
           value={data.workersUnassigned.toLocaleString()}
