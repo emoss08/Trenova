@@ -346,6 +346,16 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		Scan(ctx, &postedCount))
 	assert.Equal(t, 2, postedCount, "both leg billing-queue items should be Posted")
 
+	// Each leg's shipment shows its billing-queue item as Posted.
+	var postedLegCount int
+	require.NoError(t, db.NewSelect().
+		Table("shipments").
+		ColumnExpr("count(*)").
+		Where("id IN (?)", bun.List([]pulid.ID{legRows[0].ID, legRows[1].ID})).
+		Where("billing_transfer_status = ?", "Posted").
+		Scan(ctx, &postedLegCount))
+	assert.Equal(t, 2, postedLegCount, "both leg shipments should show Posted")
+
 	// Every leg was marked Invoiced.
 	assert.True(t, invoicedLegs[legRows[0].ID], "leg 0 should be invoiced")
 	assert.True(t, invoicedLegs[legRows[1].ID], "leg 1 should be invoiced")

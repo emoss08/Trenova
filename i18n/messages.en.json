@@ -5721,11 +5721,13 @@
     ]
   },
   "Absolute minimum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -8778,15 +8780,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Add operational notes, tag team members, and coordinate on this shipment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "Add optional stops between origin and destination in travel order": {
@@ -44729,6 +44722,24 @@
       "routes/invoice"
     ]
   },
+  "Documents are added while the item is in review. Anything attached to the shipment from its own record shows up here too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Documents attached to the shipment while it was in the billing queue travel with the invoice and show up here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Documents must include an expiration date": {
     "sites": 1,
     "scope": [
@@ -52137,6 +52148,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Every change to this record is written here as it happens: who made it, when, and what it changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.": {
@@ -73018,6 +73038,15 @@
       "routes/fuel-management"
     ]
   },
+  "Leave a note for whoever picks this shipment up next, or @mention a teammate to bring them in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Leave all unchecked to govern every stop type. Specificity +1.": {
     "sites": 1,
     "scope": [
@@ -75279,12 +75308,13 @@
     ]
   },
   "Loading documents...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/billing-queue"
     ]
   },
   "Loading entry details...": {
@@ -75599,6 +75629,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading supporting documents...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Loading templates...": {
@@ -78837,11 +78876,13 @@
     ]
   },
   "Maximum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -80267,11 +80308,13 @@
     ]
   },
   "Minimum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -84361,11 +84404,12 @@
     ]
   },
   "No activity yet": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/customer-ledger"
     ]
@@ -84449,15 +84493,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "No audit history for this resource.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "No authentication events found.": {
@@ -84713,7 +84748,7 @@
       "apps/web/components"
     ]
   },
-  "No comments match your filters": {
+  "No comment on this shipment matches the filters you have set.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -85145,6 +85180,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No documents yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "No draft generated": {
@@ -87362,6 +87406,15 @@
       "service/workerinjuryservice"
     ]
   },
+  "No supporting documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No swap requests.": {
     "sites": 1,
     "scope": [
@@ -89029,14 +89082,15 @@
     ]
   },
   "Nothing matches": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/carrier-invoice-matching",
-      "routes/home"
+      "routes/home",
+      "routes/shipment"
     ]
   },
   "Nothing matches \"{0}\"": {
@@ -102877,6 +102931,15 @@
       "routes/admin"
     ]
   },
+  "PostGIS spatial queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Postal Code": {
     "sites": 11,
     "scope": [
@@ -103035,6 +103098,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "PostgreSQL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Postgres full-text search": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Posting Accounts": {
@@ -113359,6 +113440,15 @@
       "routes/shipment"
     ]
   },
+  "Replace Document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Replace File": {
     "sites": 1,
     "scope": [
@@ -114800,6 +114890,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Required Documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Required For All": {
@@ -119725,6 +119824,15 @@
       "routes/edi"
     ]
   },
+  "SELECT ... FOR UPDATE row locking": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "SFTP Endpoint": {
     "sites": 1,
     "scope": [
@@ -119804,6 +119912,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "SQLite": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "SSN": {
@@ -123154,6 +123271,15 @@
     ]
   },
   "Select a document to preview it here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Select a document type to classify uploads (optional).": {
     "sites": 1,
     "scope": [
       "ts"
@@ -134298,6 +134424,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Supporting Requirements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Supporting document": {
@@ -152449,6 +152584,15 @@
       "routes/shipment"
     ]
   },
+  "Upload Documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Upload Logo": {
     "sites": 2,
     "scope": [
@@ -152510,6 +152654,24 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Upload a document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Upload a new version to replace the existing document.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.": {
@@ -152620,6 +152782,15 @@
     ],
     "areas": [
       "service/documentuploadservice"
+    ]
+  },
+  "Upload the proof of delivery, bill of lading and anything else this shipment is billed on. Pick a type first and the file is classified as it goes up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Upload the statement before staging the import": {
@@ -152758,6 +152929,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Uploads will be classified with the selected document type.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Upper bound on the retry backoff. Defaults to 900 seconds (15 minutes).": {
@@ -162795,6 +162975,15 @@
       "routes/scheduling"
     ]
   },
+  "advisory locks": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -163053,6 +163242,15 @@
       "template/report.delivery.email"
     ]
   },
+  "concurrent index creation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -163125,6 +163323,15 @@
       "go/other"
     ]
   },
+  "database session diagnostics": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -163159,6 +163366,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "declarative table partitioning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "did not apply.": {
@@ -165221,6 +165437,15 @@
       "routes/reports"
     ]
   },
+  "exact decimal arithmetic": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -165237,6 +165462,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "exclusion constraints": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -165609,6 +165843,15 @@
       "service/samsarasyncservice"
     ]
   },
+  "logical-replication change data capture": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "mapped Samsara driver is deactivated": {
     "sites": 1,
     "scope": [
@@ -165634,6 +165877,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "materialized views": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -166739,6 +166991,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "trigram similarity search": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {

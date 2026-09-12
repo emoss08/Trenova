@@ -26,6 +26,7 @@ import {
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { BillingQueueDocumentsEmpty } from "./billing-queue-documents-empty";
 
 function getFileIcon(fileType: string) {
   if (fileType.startsWith("image/")) return ImageIcon;
@@ -131,11 +132,21 @@ export function BillingQueueDocumentsTab({
     setUploadOpen(true);
   };
 
-  const requirementTitle = context === "invoice" ? "Supporting Requirements" : "Required Documents";
-  const loadingLabel =
-    context === "invoice" ? "Loading supporting documents..." : "Loading documents...";
-  const emptyLabel =
-    context === "invoice" ? "No supporting documents attached" : "No documents attached";
+  const isInvoice = context === "invoice";
+  const requirementTitle = isInvoice ? t("Supporting Requirements") : t("Required Documents");
+  const loadingLabel = isInvoice ? t("Loading supporting documents...") : t("Loading documents...");
+  const emptyTitle = isInvoice ? t("No supporting documents") : t("No documents yet");
+  const emptyDescription = isEditable
+    ? t(
+        "Upload the proof of delivery, bill of lading and anything else this shipment is billed on. Pick a type first and the file is classified as it goes up.",
+      )
+    : isInvoice
+      ? t(
+          "Documents attached to the shipment while it was in the billing queue travel with the invoice and show up here.",
+        )
+      : t(
+          "Documents are added while the item is in review. Anything attached to the shipment from its own record shows up here too.",
+        );
 
   return (
     <div className="flex h-full flex-col">
@@ -207,10 +218,11 @@ export function BillingQueueDocumentsTab({
           {loadingLabel}
         </div>
       ) : documents.length === 0 ? (
-        <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-12">
-          <FileIcon className="size-8" />
-          <p className="text-sm">{emptyLabel}</p>
-        </div>
+        <BillingQueueDocumentsEmpty
+          title={emptyTitle}
+          description={emptyDescription}
+          onUpload={isEditable ? () => setUploadOpen(true) : undefined}
+        />
       ) : (
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-1 p-3">
@@ -314,13 +326,13 @@ export function BillingQueueDocumentsTab({
         onRetry={retryUpload}
         onRemove={removeUpload}
         onClearCompleted={clearCompleted}
-        title={replacingLineageId ? "Replace Document" : undefined}
+        title={replacingLineageId ? t("Replace Document") : t("Upload Documents")}
         description={
           replacingLineageId
-            ? "Upload a new version to replace the existing document."
+            ? t("Upload a new version to replace the existing document.")
             : selectedDocTypeId
-              ? "Uploads will be classified with the selected document type."
-              : "Select a document type to classify uploads (optional)."
+              ? t("Uploads will be classified with the selected document type.")
+              : t("Select a document type to classify uploads (optional).")
         }
       />
     </div>

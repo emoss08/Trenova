@@ -1,22 +1,12 @@
 import { z } from "zod";
 import { billTypeSchema } from "./bill-type";
+import { billingQueueStatusSchema } from "./billing-queue-status";
 import { decimalStringSchema, nullableStringSchema, optionalStringSchema } from "./helpers";
 import { shipmentSchema } from "./shipment";
 import { userSchema } from "./user";
 
 export { billTypeSchema, defaultBillTypeSchema, type BillType } from "./bill-type";
-
-export const billingQueueStatusSchema = z.enum([
-  "ReadyForReview",
-  "InReview",
-  "Approved",
-  "Posted",
-  "OnHold",
-  "SentBackToOps",
-  "Exception",
-  "Canceled",
-]);
-export type BillingQueueStatus = z.infer<typeof billingQueueStatusSchema>;
+export { billingQueueStatusSchema, type BillingQueueStatus } from "./billing-queue-status";
 
 export const exceptionReasonCodeSchema = z.enum([
   "MissingDocumentation",

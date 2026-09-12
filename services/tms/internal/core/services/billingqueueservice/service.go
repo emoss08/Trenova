@@ -258,16 +258,6 @@ func (s *service) TransferToBilling(
 		return nil, err
 	}
 
-	now := timeutils.NowUnix()
-	shp.BillingTransferStatus = shipment.BillingTransferReadyForReview
-	shp.TransferredToBillingAt = &now
-	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
-		s.l.Warn("failed to update shipment billing tracking fields",
-			zap.String("shipmentId", shp.ID.String()),
-			zap.Error(err),
-		)
-	}
-
 	s.autoAssignDefaultBiller(ctx, created, shp.CustomerID, req.TenantInfo, actor)
 
 	if req.AutoApprove {
@@ -539,8 +529,6 @@ func (s *service) UpdateStatus(
 		return nil, err
 	}
 
-	s.syncShipmentBillingStatus(ctx, updated, req.NewStatus)
-
 	if req.NewStatus == billingqueue.StatusSentBackToOps {
 		s.createOpsComment(ctx, updated, actor)
 	}
@@ -596,62 +584,6 @@ func (s *service) completeReplacementReview(
 	adjustment.ReplacementReviewStatus = invoiceadjustment.ReplacementReviewStatusCompleted
 	_, err = s.adjustmentRepo.UpdateAdjustment(ctx, adjustment)
 	return err
-}
-
-func (s *service) syncShipmentBillingStatus(
-	ctx context.Context,
-	entity *billingqueue.BillingQueueItem,
-	newStatus billingqueue.Status,
-) {
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: entity.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		s.l.Warn("failed to fetch shipment for billing status sync",
-			zap.String("shipmentId", entity.ShipmentID.String()),
-			zap.Error(err),
-		)
-		return
-	}
-
-	shp.BillingTransferStatus = shipmentBillingTransferStatus(newStatus)
-
-	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
-		s.l.Warn("failed to sync shipment billing transfer status",
-			zap.String("shipmentId", shp.ID.String()),
-			zap.Error(err),
-		)
-	}
-}
-
-func shipmentBillingTransferStatus(status billingqueue.Status) shipment.BillingTransferStatus {
-	switch status {
-	case billingqueue.StatusReadyForReview:
-		return shipment.BillingTransferReadyForReview
-	case billingqueue.StatusInReview:
-		return shipment.BillingTransferInReview
-	case billingqueue.StatusApproved:
-		return shipment.BillingTransferApproved
-	case billingqueue.StatusPosted:
-		return shipment.BillingTransferApproved
-	case billingqueue.StatusOnHold:
-		return shipment.BillingTransferOnHold
-	case billingqueue.StatusException:
-		return shipment.BillingTransferException
-	case billingqueue.StatusSentBackToOps:
-		return shipment.BillingTransferSentBackToOps
-	case billingqueue.StatusCanceled:
-		return shipment.BillingTransferCanceled
-	default:
-		return shipment.BillingTransferNone
-	}
 }
 
 func (s *service) createOpsComment(

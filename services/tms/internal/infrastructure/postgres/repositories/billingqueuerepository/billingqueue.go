@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -124,6 +125,14 @@ func (r *repository) Create(
 		return nil, fmt.Errorf("insert billing queue item: %w", err)
 	}
 
+	if err := r.syncShipmentTransferState(
+		ctx,
+		tenantInfo(entity),
+		[]pulid.ID{entity.ShipmentID},
+	); err != nil {
+		return nil, err
+	}
+
 	return r.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
 		ItemID:     entity.ID,
 		TenantInfo: tenantInfo(entity),
@@ -165,6 +174,14 @@ func (r *repository) Update(
 		entity.ID.String(),
 	); rowsErr != nil {
 		return nil, rowsErr
+	}
+
+	if err = r.syncShipmentTransferState(
+		ctx,
+		tenantInfo(entity),
+		[]pulid.ID{entity.ShipmentID},
+	); err != nil {
+		return nil, err
 	}
 
 	return r.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
@@ -248,19 +265,61 @@ func (r *repository) markPosted(
 		Where(bqi.Status.Ne(), billingqueue.StatusPosted).
 		Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
 		Set(bqi.Status.Set(), billingqueue.StatusPosted).
-		Set(bqi.Version.Inc(1))
+		Set(bqi.Version.Inc(1)).
+		Returning(bqi.ShipmentID.Bare())
 
-	result, err := scope(q).Exec(ctx)
-	if err != nil {
+	shipmentIDs := make([]pulid.ID, 0)
+	if _, err := scope(q).Exec(ctx, &shipmentIDs); err != nil {
 		return 0, fmt.Errorf("mark billing queue items posted: %w", err)
 	}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("rows affected: %w", err)
+	if err := r.syncShipmentTransferState(ctx, tenantInfo, shipmentIDs); err != nil {
+		return 0, err
 	}
 
-	return affected, nil
+	return int64(len(shipmentIDs)), nil
+}
+
+// syncShipmentTransferState copies each shipment's billing-queue state onto the
+// shipment from its latest invoice item, inside the caller's transaction. Every write
+// to a billing queue item goes through this repository, so this is the only writer of
+// the shipment's billing_transfer_status and transferred_to_billing_at columns.
+func (r *repository) syncShipmentTransferState(
+	ctx context.Context,
+	ti pagination.TenantInfo,
+	shipmentIDs []pulid.ID,
+) error {
+	if len(shipmentIDs) == 0 {
+		return nil
+	}
+
+	bqi := buncolgen.BillingQueueItemColumns
+	sp := buncolgen.ShipmentColumns
+	db := r.db.DBForContext(ctx)
+
+	latest := db.NewSelect().
+		Model((*billingqueue.BillingQueueItem)(nil)).
+		DistinctOn(bqi.ShipmentID.Qualified()).
+		Column(bqi.ShipmentID.Bare(), bqi.Status.Bare(), bqi.CreatedAt.Bare()).
+		Apply(buncolgen.BillingQueueItemApplyTenant(ti)).
+		Where(bqi.ShipmentID.In(), bun.List(shipmentIDs)).
+		Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
+		Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderDesc(), bqi.ID.OrderDesc())
+
+	if _, err := db.NewUpdate().
+		Model((*shipment.Shipment)(nil)).
+		TableExpr("(?) AS latest", latest).
+		Set(sp.BillingTransferStatus.SetExpr("latest.status::text")).
+		Set(sp.TransferredToBillingAt.SetExpr("latest.created_at")).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ShipmentScopeTenantUpdate(uq, ti).
+				Where(sp.ID.Expr("{} = latest.shipment_id"))
+		}).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("sync shipment billing transfer state: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) ExistsByShipmentAndType(

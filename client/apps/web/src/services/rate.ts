@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
@@ -228,16 +229,23 @@ export class RateMatrixService {
 }
 
 export class RateQuoteService {
-  /** The quote a shipment is currently billed from, with its full trace. */
-  public async getAppliedForShipment(shipmentId: string): Promise<RateQuote> {
-    const response = await api.get<RateQuote>(`/rate-quotes/shipment/${shipmentId}/applied/`);
+  /**
+   * The quote a shipment is currently billed from, with its full trace, or null
+   * for a shipment that has never been rated.
+   */
+  public async getAppliedForShipment(shipmentId: string): Promise<RateQuote | null> {
+    const response = await api.get<RateQuote | null>(
+      `/rate-quotes/shipment/${shipmentId}/applied/`,
+    );
 
-    return safeParse(rateQuoteSchema, response, "Rate Quote");
+    return safeParse(rateQuoteSchema.nullable(), response, "Rate Quote");
   }
 
   /** A shipment's rating history, newest first. */
   public async listForShipment(shipmentId: string): Promise<RateQuote[]> {
-    return api.get<RateQuote[]>(`/rate-quotes/shipment/${shipmentId}/`);
+    const response = await api.get<RateQuote[]>(`/rate-quotes/shipment/${shipmentId}/`);
+
+    return safeParse(z.array(rateQuoteSchema), response, "Rate Quote History");
   }
 
   /**
