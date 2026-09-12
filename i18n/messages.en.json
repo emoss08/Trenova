@@ -5721,11 +5721,13 @@
     ]
   },
   "Absolute minimum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -8778,15 +8780,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Add operational notes, tag team members, and coordinate on this shipment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "Add optional stops between origin and destination in travel order": {
@@ -14290,7 +14283,7 @@
     ]
   },
   "Approved": {
-    "sites": 28,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -20260,6 +20253,15 @@
       "routes/billing-queue"
     ]
   },
+  "Billing queue: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Billing requirements not met": {
     "sites": 1,
     "scope": [
@@ -22348,7 +22350,7 @@
     ]
   },
   "Canceled": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -44752,6 +44754,24 @@
       "routes/invoice"
     ]
   },
+  "Documents are added while the item is in review. Anything attached to the shipment from its own record shows up here too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Documents attached to the shipment while it was in the billing queue travel with the invoice and show up here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Documents must include an expiration date": {
     "sites": 1,
     "scope": [
@@ -52162,6 +52182,15 @@
       "routes/worker"
     ]
   },
+  "Every change to this record is written here as it happens: who made it, when, and what it changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.": {
     "sites": 1,
     "scope": [
@@ -53068,7 +53097,7 @@
     ]
   },
   "Exception": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -66539,7 +66568,7 @@
     ]
   },
   "In Review": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -73050,6 +73079,15 @@
       "routes/fuel-management"
     ]
   },
+  "Leave a note for whoever picks this shipment up next, or @mention a teammate to bring them in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Leave all unchecked to govern every stop type. Specificity +1.": {
     "sites": 1,
     "scope": [
@@ -75311,12 +75349,13 @@
     ]
   },
   "Loading documents...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/billing-queue"
     ]
   },
   "Loading entry details...": {
@@ -75631,6 +75670,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading supporting documents...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Loading templates...": {
@@ -78869,11 +78917,13 @@
     ]
   },
   "Maximum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -80299,11 +80349,13 @@
     ]
   },
   "Minimum charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "service/rateengine"
     ]
   },
@@ -84393,11 +84445,12 @@
     ]
   },
   "No activity yet": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/customer-ledger"
     ]
@@ -84481,15 +84534,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "No audit history for this resource.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "No authentication events found.": {
@@ -84745,7 +84789,7 @@
       "apps/web/components"
     ]
   },
-  "No comments match your filters": {
+  "No comment on this shipment matches the filters you have set.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -85177,6 +85221,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No documents yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "No draft generated": {
@@ -87394,6 +87447,15 @@
       "service/workerinjuryservice"
     ]
   },
+  "No supporting documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No swap requests.": {
     "sites": 1,
     "scope": [
@@ -89061,14 +89123,15 @@
     ]
   },
   "Nothing matches": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/carrier-invoice-matching",
-      "routes/home"
+      "routes/home",
+      "routes/shipment"
     ]
   },
   "Nothing matches \"{0}\"": {
@@ -90860,7 +90923,7 @@
     ]
   },
   "On Hold": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -108755,7 +108818,7 @@
     ]
   },
   "Ready for Review": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -113433,6 +113496,15 @@
       "routes/shipment"
     ]
   },
+  "Replace Document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Replace File": {
     "sites": 1,
     "scope": [
@@ -114892,6 +114964,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Required Documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Required For All": {
@@ -123290,6 +123371,15 @@
       "routes/billing-queue"
     ]
   },
+  "Select a document type to classify uploads (optional).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Select a driver": {
     "sites": 4,
     "scope": [
@@ -125771,7 +125861,7 @@
     ]
   },
   "Sent Back to Ops": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -134429,6 +134519,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Supporting Requirements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Supporting document": {
@@ -152608,6 +152707,15 @@
       "routes/shipment"
     ]
   },
+  "Upload Documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Upload Logo": {
     "sites": 2,
     "scope": [
@@ -152669,6 +152777,24 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Upload a document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Upload a new version to replace the existing document.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.": {
@@ -152779,6 +152905,15 @@
     ],
     "areas": [
       "service/documentuploadservice"
+    ]
+  },
+  "Upload the proof of delivery, bill of lading and anything else this shipment is billed on. Pick a type first and the file is classified as it goes up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Upload the statement before staging the import": {
@@ -152917,6 +153052,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Uploads will be classified with the selected document type.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Upper bound on the retry backoff. Defaults to 900 seconds (15 minutes).": {
@@ -155265,6 +155409,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "View in billing queue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "View in table": {

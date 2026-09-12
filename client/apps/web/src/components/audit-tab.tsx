@@ -30,6 +30,7 @@ import { ChevronRight, ExternalLinkIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { AuditAlert } from "./audit-alert";
+import { AuditEmpty } from "./audit-empty";
 
 const PAGE_SIZE = 20;
 
@@ -110,9 +111,12 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
 
   if (allEntries.length === 0) {
     return (
-      <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
-        <p className="text-sm">{t("No audit history for this resource.")}</p>
-      </div>
+      <AuditEmpty
+        title={t("No activity yet")}
+        description={t(
+          "Every change to this record is written here as it happens: who made it, when, and what it changed.",
+        )}
+      />
     );
   }
 

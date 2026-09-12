@@ -27,6 +27,7 @@ import { parseAsBoolean, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
 import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
+import { ShipmentBillingQueueStatus } from "./shipment-billing-queue-status";
 import { ShipmentForm } from "./shipment-form";
 
 const AuditTab = lazy(() => import("@/components/audit-tab"));
@@ -215,7 +216,12 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         mutationFn={(values, currentRow) =>
           apiService.shipmentService.update(currentRow.id!, values as ShipmentUpdateInput)
         }
-        descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
+        descriptionExtra={
+          <div className="flex items-center gap-3">
+            {row && <ShipmentBillingQueueStatus shipment={row} />}
+            <OwnerDisplay ownerId={row?.ownerId} />
+          </div>
+        }
         headerActions={
           <>
             {row && <ShipmentBillingActionsMenu shipment={row} />}

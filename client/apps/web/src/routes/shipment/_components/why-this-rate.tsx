@@ -1,12 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { rateQuoteOutcomeChoices } from "@/lib/choices";
+import { rateGuardrailKindChoices, rateQuoteOutcomeChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { RateQuote, RateTraceCandidate } from "@trenova/shared/types/rate";
+import type { RateQuote, RateTraceCandidate, RateTraceGuardrail } from "@trenova/shared/types/rate";
 import { InfoIcon } from "lucide-react";
 
 type WhyThisRateProps = {
@@ -72,7 +72,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
             {winner?.agreementName || t("No contract covered this lane")}
           </span>
           <Badge variant="outline" className="text-[10px]">
-            {outcome?.label ?? quote.outcome}
+            {outcome ? t(outcome.label) : quote.outcome}
           </Badge>
         </div>
         {winner?.ruleLabel && (
@@ -103,7 +103,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
                   )}
                 </div>
                 <span className="text-xs tabular-nums">
-                  {formatCurrency(Number(component.amount ?? 0))}
+                  {formatCurrency(Number(component.amount ?? 0), quote.currency)}
                 </span>
               </div>
             ))}
@@ -116,13 +116,12 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
           <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
             {t("Guardrails")}
           </p>
-          {trace?.guardrails?.map((guardrail) => (
-            <p key={guardrail.kind} className="text-2xs text-muted-foreground">
-              {t(guardrail.label)}
-              {guardrail.applied
-                ? ` ${t("applied — {0} became {1}.", formatCurrency(Number(guardrail.rawAmount ?? 0)), formatCurrency(Number(guardrail.amount ?? 0)))}`
-                : ` ${t("did not apply.")}`}
-            </p>
+          {trace?.guardrails?.map((guardrail, index) => (
+            <GuardrailRow
+              key={`${guardrail.kind}-${index}`}
+              guardrail={guardrail}
+              currency={quote.currency}
+            />
           ))}
         </div>
       )}
@@ -132,9 +131,12 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
           <p className="text-2xs text-muted-foreground">
             {t(
               "This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}",
-              formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)),
-              formatCurrency(Number(quote.foregoneAmount)),
-              quote.overrideReason ? ` ${t("Reason given: {0}", quote.overrideReason)}` : "",
+              formatCurrency(
+                Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount),
+                quote.billingCurrency,
+              ),
+              formatCurrency(Number(quote.foregoneAmount), quote.billingCurrency),
+              quote.overrideReason ? t("Reason given: {0}", quote.overrideReason) : "",
             )}
           </p>
         </div>
@@ -163,6 +165,32 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
         </div>
       )}
     </div>
+  );
+}
+
+function GuardrailRow({
+  guardrail,
+  currency,
+}: {
+  guardrail: RateTraceGuardrail;
+  currency: string;
+}) {
+  const t = useT();
+
+  const kind = rateGuardrailKindChoices.find((option) => option.value === guardrail.kind);
+  const label = kind ? t(kind.label) : guardrail.kind;
+
+  return (
+    <p className="text-2xs text-muted-foreground">
+      {label}{" "}
+      {guardrail.applied
+        ? t(
+            "applied — {0} became {1}.",
+            formatCurrency(Number(guardrail.raw ?? 0), currency),
+            formatCurrency(Number(guardrail.result ?? 0), currency),
+          )
+        : t("did not apply.")}
+    </p>
   );
 }
 

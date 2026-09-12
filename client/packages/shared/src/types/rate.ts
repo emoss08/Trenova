@@ -538,6 +538,9 @@ export const rateQuotePurposeSchema = z.enum([
 ]);
 export type RateQuotePurpose = z.infer<typeof rateQuotePurposeSchema>;
 
+export const rateQuoteStatusSchema = z.enum(["Applied", "Superseded", "Quoted"]);
+export type RateQuoteStatus = z.infer<typeof rateQuoteStatusSchema>;
+
 /** Why a rate did not apply, or why it lost to another one. */
 export const rateRejectReasonSchema = z.string();
 
@@ -558,12 +561,15 @@ export const rateTraceCandidateSchema = z.object({
   matchedOn: z.array(z.string()).nullish(),
   rejectReason: rateRejectReasonSchema.default(""),
   rejectDetail: z.string().default(""),
+  /** Priced only where it was worth the cost: rate shopping and the what-if view. */
+  amount: decimalStringSchema,
 });
 export type RateTraceCandidate = z.infer<typeof rateTraceCandidateSchema>;
 
 export const rateTraceComponentSchema = z.object({
   sequence: z.number().int().default(0),
   kind: z.string().default(""),
+  code: z.string().default(""),
   label: z.string().default(""),
   basis: z.string().default(""),
   quantity: decimalStringSchema,
@@ -577,13 +583,13 @@ export const rateTraceComponentSchema = z.object({
 });
 export type RateTraceComponent = z.infer<typeof rateTraceComponentSchema>;
 
+/** A bound that changed the answer: the amount before it applied, and after. */
 export const rateTraceGuardrailSchema = z.object({
   kind: z.string().default(""),
-  label: z.string().default(""),
-  bound: decimalStringSchema,
-  rawAmount: decimalStringSchema,
-  amount: decimalStringSchema,
   applied: z.boolean().default(false),
+  bound: decimalStringSchema,
+  raw: decimalStringSchema,
+  result: decimalStringSchema,
 });
 export type RateTraceGuardrail = z.infer<typeof rateTraceGuardrailSchema>;
 
@@ -600,7 +606,12 @@ export const rateTraceSchema = z.object({
   totals: z
     .object({
       linehaul: decimalStringSchema,
+      fuel: decimalStringSchema,
+      accessorial: decimalStringSchema,
       total: decimalStringSchema,
+      cost: decimalStringSchema,
+      margin: decimalStringSchema,
+      marginPercent: decimalStringSchema,
     })
     .nullish(),
   inputs: z.record(z.string(), z.unknown()).nullish(),
@@ -609,6 +620,7 @@ export const rateTraceSchema = z.object({
       fromCurrency: z.string().default(""),
       toCurrency: z.string().default(""),
       rate: decimalStringSchema,
+      exchangeRateId: z.string().default(""),
       rateDate: z.string().default(""),
     })
     .nullish(),
@@ -619,25 +631,38 @@ export const rateQuoteSchema = z.object({
   ...tenantInfoSchema.shape,
 
   shipmentId: z.string().nullish(),
+  shipmentMoveId: z.string().nullish(),
   partyType: ratePartyTypeSchema,
   partyId: z.string().default(""),
   purpose: rateQuotePurposeSchema,
   outcome: rateQuoteOutcomeSchema,
+  status: rateQuoteStatusSchema,
   rateAgreementId: z.string().nullish(),
   rateAgreementRuleId: z.string().nullish(),
+  agreementVersionNumber: z.number().int().nullish(),
   formulaTemplateId: z.string().nullish(),
   specificityScore: z.number().int().default(0),
+  /** The contract's currency, which every amount in the trace is stated in. */
   currency: z.string().default("USD"),
-  billingCurrency: z.string().default("USD"),
   linehaulAmount: decimalStringSchema,
+  fuelAmount: decimalStringSchema,
+  accessorialAmount: decimalStringSchema,
   totalAmount: decimalStringSchema,
+  costAmount: decimalStringSchema,
+  marginAmount: decimalStringSchema,
+  marginPercent: decimalStringSchema,
+  billingCurrency: z.string().default("USD"),
   billingAmount: decimalStringSchema,
+  fxRate: decimalStringSchema,
+  exchangeRateId: z.string().nullish(),
+  /** What the contract would have charged beyond the hand-set rate, in the billing currency. */
   foregoneAmount: decimalStringSchema,
   overrideReason: z.string().default(""),
   asOf: z.number().int().default(0),
   ratedAt: z.number().int().default(0),
   ratedById: z.string().nullish(),
   engineVersion: z.string().default(""),
+  contextHash: z.string().default(""),
   trace: rateTraceSchema.nullish(),
 });
 export type RateQuote = z.infer<typeof rateQuoteSchema>;

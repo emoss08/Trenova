@@ -332,58 +332,63 @@ export function ShipmentTenderStatusBadge({
   );
 }
 
+export const billingQueueStatusBadges: Record<BillingQueueStatus, BadgeAttrProps> = {
+  ReadyForReview: {
+    variant: "info",
+    text: "Ready for Review",
+  },
+  InReview: {
+    variant: "purple",
+    text: "In Review",
+  },
+  Approved: {
+    variant: "active",
+    text: "Approved",
+  },
+  Posted: {
+    variant: "teal",
+    text: "Posted",
+  },
+  OnHold: {
+    variant: "warning",
+    text: "On Hold",
+  },
+  SentBackToOps: {
+    variant: "orange",
+    text: "Sent Back to Ops",
+  },
+  Exception: {
+    variant: "inactive",
+    text: "Exception",
+  },
+  Canceled: {
+    variant: "inactive",
+    text: "Canceled",
+  },
+};
+
 export function BillingQueueStatusBadge({
   status,
   className,
+  title,
 }: {
-  status?: BillingQueueStatus;
+  status?: BillingQueueStatus | null;
   className?: string;
+  title?: string;
 }) {
   const t = useT();
 
   if (!status) return null;
 
-  const statusAttributes: Record<BillingQueueStatus, BadgeAttrProps> = {
-    ReadyForReview: {
-      variant: "info",
-      text: t("Ready for Review"),
-    },
-    InReview: {
-      variant: "purple",
-      text: t("In Review"),
-    },
-    Approved: {
-      variant: "active",
-      text: t("Approved"),
-    },
-    Posted: {
-      variant: "teal",
-      text: t("Posted"),
-    },
-    OnHold: {
-      variant: "warning",
-      text: t("On Hold"),
-    },
-    SentBackToOps: {
-      variant: "orange",
-      text: t("Sent Back to Ops"),
-    },
-    Exception: {
-      variant: "inactive",
-      text: t("Exception"),
-    },
-    Canceled: {
-      variant: "inactive",
-      text: t("Canceled"),
-    },
-  };
+  const { variant, text } = billingQueueStatusBadges[status];
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
-      {statusAttributes[status].text}
+    <Badge variant={variant} title={title} className={cn(className, "max-h-5")}>
+      {t(text)}
     </Badge>
   );
 }
+
 export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueStatus }) {
   const t = useT();
 

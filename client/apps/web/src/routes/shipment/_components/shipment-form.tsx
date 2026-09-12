@@ -1,5 +1,6 @@
 "use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { FileTextIcon, LockIcon } from "lucide-react";
 import { parseAsBoolean, useQueryState } from "nuqs";
@@ -19,7 +20,12 @@ const LoadEnvelopePanel = lazy(() => import("./load-envelope-panel"));
 const ShipmentMoveDetails = lazy(() => import("./move/shipment-move-details"));
 const LoadPlannerDialog = lazy(() => import("./trailer-loading/trailer-loading-drawer"));
 
-const BILLING_REVIEW_STATUSES = new Set(["ReadyForReview", "InReview", "OnHold", "Exception"]);
+const BILLING_REVIEW_STATUSES: ReadonlySet<BillingQueueStatus> = new Set([
+  "ReadyForReview",
+  "InReview",
+  "OnHold",
+  "Exception",
+]);
 
 export function ShipmentForm() {
   const t = useT();
@@ -32,8 +38,9 @@ export function ShipmentForm() {
   const { control } = useFormContext<Shipment>();
   const billingTransferStatus = useWatch({ control, name: "billingTransferStatus" });
 
-  const isInBillingReview = BILLING_REVIEW_STATUSES.has(billingTransferStatus as string);
-  const isInvoiced = billingTransferStatus === "Approved";
+  const isInBillingReview =
+    !!billingTransferStatus && BILLING_REVIEW_STATUSES.has(billingTransferStatus);
+  const isInvoiced = billingTransferStatus === "Approved" || billingTransferStatus === "Posted";
   const isCanceled = billingTransferStatus === "Canceled";
   const isFullyLocked = isInBillingReview || isCanceled;
 

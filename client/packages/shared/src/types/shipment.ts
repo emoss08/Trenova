@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { accessorialChargeMethodSchema, type AccessorialCharge } from "./accessorial-charge";
 import { defaultBillTypeSchema } from "./bill-type";
+import { billingQueueStatusSchema } from "./billing-queue-status";
 import type { Commodity } from "./commodity";
 import { customerSchema } from "./customer";
 import { formulaReceiptSchema, formulaTemplateSchema } from "./formula-template";
 import {
   decimalNumberSchema,
   decimalStringSchema,
+  nullableEnumSchema,
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
@@ -560,7 +562,7 @@ const shipmentBaseSchema = z.object({
   actualDeliveryDate: nullableIntegerSchema,
   actualShipDate: nullableIntegerSchema,
   canceledAt: nullableIntegerSchema,
-  billingTransferStatus: nullableStringSchema,
+  billingTransferStatus: nullableEnumSchema(billingQueueStatusSchema),
   transferredToBillingAt: nullableIntegerSchema,
   markedReadyToBillAt: nullableIntegerSchema,
   billedAt: nullableIntegerSchema,
