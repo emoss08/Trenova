@@ -8,8 +8,7 @@ import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { usePermissions } from "@/hooks/use-permission";
 import {
-  columnPinOffsetVar,
-  columnSizeVar,
+  columnLayout,
   compileFormatRules,
   emptyTableColumns,
   fromColumnPinningState,
@@ -637,21 +636,7 @@ export function DataTable<TData extends Record<string, any>>({
 
   const panelRow = listRow;
 
-  const columnSizeVars: Record<string, string> = {};
-  let totalSize = 0;
-  for (const header of table.getFlatHeaders()) {
-    const { column } = header;
-    const size = header.getSize();
-    columnSizeVars[columnSizeVar(column.id)] = `${size}px`;
-    totalSize += size;
-
-    const pinned = column.getIsPinned();
-    if (pinned === "start") {
-      columnSizeVars[columnPinOffsetVar(column.id, "start")] = `${column.getStart("start")}px`;
-    } else if (pinned === "end") {
-      columnSizeVars[columnPinOffsetVar(column.id, "end")] = `${column.getAfter("end")}px`;
-    }
-  }
+  const { vars: columnSizeVars, totalSize } = columnLayout(table.getFlatHeaders());
 
   const reorderableIds = table.getVisibleLeafColumns().map((col) => col.id);
 

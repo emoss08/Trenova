@@ -11,6 +11,7 @@ import type {
   SortField,
   Column,
   ColumnDef,
+  Header,
   Row,
 } from "@trenova/shared/types/data-table";
 import type { EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
@@ -361,6 +362,30 @@ export function columnSizeVar(columnId: string): string {
 
 export function columnPinOffsetVar(columnId: string, side: "start" | "end"): string {
   return `--col-${columnId.replaceAll(".", "-")}-${side}`;
+}
+
+export type ColumnLayout = {
+  vars: Record<string, string>;
+  totalSize: number;
+};
+
+export function columnLayout<TData extends RowData>(headers: Header<TData>[]): ColumnLayout {
+  const vars: Record<string, string> = {};
+  let totalSize = 0;
+  for (const header of headers) {
+    const { column } = header;
+    const size = header.getSize();
+    vars[columnSizeVar(column.id)] = `${size}px`;
+    totalSize += size;
+
+    const pinned = column.getIsPinned();
+    if (pinned === "start") {
+      vars[columnPinOffsetVar(column.id, "start")] = `${column.getStart("start")}px`;
+    } else if (pinned === "end") {
+      vars[columnPinOffsetVar(column.id, "end")] = `${column.getAfter("end")}px`;
+    }
+  }
+  return { vars, totalSize };
 }
 
 export function toColumnPinningState(

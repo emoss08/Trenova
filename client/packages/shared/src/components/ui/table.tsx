@@ -4,11 +4,16 @@ import { ScrollArea, ScrollBar } from "./scroll-area";
 
 interface TableProps extends React.ComponentProps<"table"> {
   containerClassName?: string;
+  maskHeight?: number;
 }
 
-function Table({ className, containerClassName, ...props }: TableProps) {
+function Table({ className, containerClassName, maskHeight, ...props }: TableProps) {
   return (
-    <ScrollArea data-slot="table-container" className={cn("w-full", containerClassName)}>
+    <ScrollArea
+      data-slot="table-container"
+      className={cn("w-full", containerClassName)}
+      maskHeight={maskHeight}
+    >
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}

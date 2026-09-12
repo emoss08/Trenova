@@ -22,11 +22,15 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { DataTableColumnResizeHandle } from "@/components/data-table/data-table-column-resize-handle";
 import {
+  columnLayout,
   convertFilterItemsToFieldFilters,
   convertFilterItemsToFilterGroups,
+  fromColumnPinningState,
   initializeFilterItemsFromFieldFilters,
   initializeFilterItemsFromFilterGroups,
+  pinnedCellStyle,
 } from "@/lib/data-table";
 import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
@@ -42,13 +46,25 @@ import type {
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { TableConfig } from "@/types/table-configuration";
 import { useQuery } from "@tanstack/react-query";
-import { flexRender, useTable, type ColumnVisibilityState } from "@tanstack/react-table";
+import {
+  flexRender,
+  useTable,
+  type ColumnSizingState,
+  type ColumnVisibilityState,
+} from "@tanstack/react-table";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { ChartGanttIcon, ChevronLeftIcon, ChevronRightIcon, TableIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
 import { PanelSkeleton } from "./expanded-row/panel-skeletons";
 import { FilterChipRow } from "./filter-chip-row";
+import {
+  COMMAND_CENTER_COLUMN_PINNING,
+  pinnedHeaderCellClass,
+  pinnedRowCellClass,
+  pinnedRowCellStyle,
+  type CommandCenterRowTone,
+} from "./pinned-columns";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
 import {
@@ -111,13 +127,12 @@ function TableBodySkeleton({ columnCount, rowCount }: { columnCount: number; row
   return (
     <>
       {Array.from({ length: rowCount }).map((_, rowIndex) => (
-        <tr
-          key={rowIndex}
-          data-testid="command-center-skeleton-row"
-          className="border-border/70 h-9 border-b"
-        >
+        <tr key={rowIndex} data-testid="command-center-skeleton-row" className="h-9">
           {Array.from({ length: columnCount }).map((_, columnIndex) => (
-            <td key={columnIndex} className="px-2.5 py-1.5 align-middle">
+            <td
+              key={columnIndex}
+              className="border-border/70 border-b px-2.5 py-1.5 align-middle [tr:last-child>&]:border-b-0"
+            >
               <Skeleton
                 className={cn(
                   "h-3.5",
@@ -181,6 +196,7 @@ export function CommandCenterTable({
     deliveryAppointment: false,
   });
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const cursorCacheRef = useRef(new Map<string, Map<number, string | null>>());
 
@@ -297,9 +313,16 @@ export function CommandCenterTable({
     features: dataTableFeatures,
     data: rows,
     columns,
-    state: { columnVisibility, columnOrder },
+    state: {
+      columnVisibility,
+      columnOrder,
+      columnSizing,
+      columnPinning: COMMAND_CENTER_COLUMN_PINNING,
+    },
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
+    onColumnSizingChange: setColumnSizing,
+    columnResizeMode: "onChange",
     manualPagination: true,
     pageCount: totalPages,
     rowCount: totalCount,
@@ -322,6 +345,7 @@ export function CommandCenterTable({
       setFilterItems([...fromFields, ...fromGroups]);
       if (config.columnVisibility) setColumnVisibility(config.columnVisibility);
       if (config.columnOrder?.length) setColumnOrder(config.columnOrder);
+      if (config.columnSizing) setColumnSizing(config.columnSizing);
       void setUrl({ page: 1 });
     },
     [columns, setUrl],
@@ -347,12 +371,20 @@ export function CommandCenterTable({
       pageSize,
       columnVisibility: visibility,
       columnOrder,
-      columnSizing: {},
-      columnPinning: { left: [], right: [] },
+      columnSizing,
+      columnPinning: fromColumnPinningState(COMMAND_CENTER_COLUMN_PINNING),
       density: "comfortable",
       formatRules: [],
     };
-  }, [userFieldFilters, userFilterGroups, pageSize, table, columnVisibility, columnOrder]);
+  }, [
+    userFieldFilters,
+    userFilterGroups,
+    pageSize,
+    table,
+    columnVisibility,
+    columnOrder,
+    columnSizing,
+  ]);
 
   const handleRowClick = (row: Row<Shipment>) => {
     if (row.original.id) toggleExpandedId(row.original.id);
@@ -376,13 +408,22 @@ export function CommandCenterTable({
       ? backgroundQueriesEnabled
       : (timelineSummary?.backgroundQueriesEnabled ?? false);
 
+  const leafHeaders = table.getLeafHeaders();
+  const { vars: columnVars, totalSize } = columnLayout(leafHeaders);
+  const visibleColumnCount = leafHeaders.length;
+
   const tableBody = (
     <>
-      <div className="relative overflow-x-auto">
-        <Table>
+      <div className="@container relative">
+        <Table
+          data-testid="command-center-table"
+          className="table-fixed border-separate border-spacing-0"
+          style={{ ...columnVars, width: `${totalSize}px`, minWidth: "100%" }}
+          maskHeight={0}
+        >
           <colgroup>
-            {table.getVisibleFlatColumns().map((col) => (
-              <col key={col.id} style={{ width: `${col.getSize()}px` }} />
+            {leafHeaders.map((header) => (
+              <col key={header.id} style={{ width: `${header.getSize()}px` }} />
             ))}
           </colgroup>
           <TableHeader>
@@ -391,12 +432,19 @@ export function CommandCenterTable({
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="bg-muted"
-                    style={{ width: `${header.getSize()}px` }}
+                    className={cn(
+                      "group/head border-border bg-muted relative border-b",
+                      pinnedHeaderCellClass(header.column),
+                    )}
+                    style={{
+                      width: `${header.getSize()}px`,
+                      ...pinnedCellStyle(header.column),
+                    }}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
+                    <DataTableColumnResizeHandle header={header} />
                   </TableHead>
                 ))}
               </TableRow>
@@ -405,13 +453,15 @@ export function CommandCenterTable({
           <TableBody>
             {isInitialLoading ? (
               <TableBodySkeleton
-                columnCount={table.getVisibleFlatColumns().length}
+                columnCount={visibleColumnCount}
                 rowCount={Math.min(pageSize, 10)}
               />
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={table.getVisibleFlatColumns().length}>
-                  {t("No shipments match the current view.")}
+                <TableCell colSpan={visibleColumnCount} className="p-0">
+                  <div className="sticky left-0 w-[100cqw] p-2">
+                    {t("No shipments match the current view.")}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -423,8 +473,7 @@ export function CommandCenterTable({
                   <RowFragment
                     key={row.id}
                     row={row}
-                    isExpanded={isExpanded}
-                    isHighlighted={isHighlighted}
+                    tone={isExpanded ? "expanded" : isHighlighted ? "highlighted" : "default"}
                     onClick={() => handleRowClick(row)}
                     onMouseEnter={() => row.original.id && setHighlightId(row.original.id)}
                     onMouseLeave={() => setHighlightId(null)}
@@ -437,7 +486,7 @@ export function CommandCenterTable({
           </TableBody>
         </Table>
         {dataQuery.isFetching && !isInitialLoading && (
-          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] backdrop-blur-sm">
+          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] backdrop-blur-sm">
             <Spinner className="size-3" />
             {t("Refreshing")}
           </div>
@@ -568,8 +617,7 @@ function ViewModeToggle({
 
 function RowFragment({
   row,
-  isExpanded,
-  isHighlighted,
+  tone,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -577,36 +625,48 @@ function RowFragment({
   onUploadDocument,
 }: {
   row: Row<Shipment>;
-  isExpanded: boolean;
-  isHighlighted: boolean;
+  tone: CommandCenterRowTone;
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   rowActions: RowAction<Shipment>[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 }) {
+  const isExpanded = tone === "expanded";
+  const visibleCells = row.getVisibleCells();
+
   return (
     <>
       <tr
         className={cn(
-          "group/row border-border/70 hover:bg-muted/30 h-9 cursor-pointer border-b transition-colors",
+          "group/row hover:bg-muted/30 h-9 cursor-pointer transition-colors",
           isExpanded && "bg-brand/10 outline-brand hover:bg-brand/20 outline-1 -outline-offset-1",
-          isHighlighted && "bg-muted/50",
+          tone === "highlighted" && "bg-muted/50",
         )}
         onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        {row.getVisibleCells().map((cell) => (
-          <td key={cell.id} className="px-2.5 py-1.5 align-middle text-[11.5px]">
+        {visibleCells.map((cell) => (
+          <td
+            key={cell.id}
+            className={cn(
+              "border-border/70 overflow-hidden border-b px-2.5 py-1.5 align-middle text-[11.5px] [tr:last-child>&]:border-b-0",
+              pinnedRowCellClass(cell.column, tone),
+            )}
+            style={pinnedRowCellStyle(cell.column, tone)}
+          >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </td>
         ))}
       </tr>
       {isExpanded && (
-        <tr className="border-border bg-background border-b">
-          <td colSpan={row.getVisibleCells().length} className="p-0">
-            <div className="cc-fade-in">
+        <tr className="bg-background">
+          <td
+            colSpan={visibleCells.length}
+            className="border-border border-b p-0 [tr:last-child>&]:border-b-0"
+          >
+            <div className="cc-fade-in sticky left-0 w-[100cqw]">
               <Suspense fallback={<ExpandedRowLoadingFallback />}>
                 <ExpandedRow
                   row={row}

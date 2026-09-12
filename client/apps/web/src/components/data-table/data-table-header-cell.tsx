@@ -12,6 +12,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender, type RowData } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
+import { DataTableColumnResizeHandle } from "./data-table-column-resize-handle";
 
 type DataTableHeaderCellProps<TData extends RowData> = {
   header: Header<TData, unknown>;
@@ -62,21 +63,7 @@ export function DataTableHeaderCell<TData extends RowData>({
       ) : (
         flexRender(column.columnDef.header, header.getContext())
       )}
-      {column.getCanResize() && (
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          aria-label={`Resize ${column.id} column`}
-          onMouseDown={header.getResizeHandler()}
-          onTouchStart={header.getResizeHandler()}
-          onDoubleClick={() => column.resetSize()}
-          onPointerDown={(e) => e.stopPropagation()}
-          className={cn(
-            "hover:bg-border absolute inset-y-0 right-0 z-10 w-1 cursor-col-resize touch-none transition-colors select-none",
-            column.getIsResizing() && "bg-primary hover:bg-primary",
-          )}
-        />
-      )}
+      <DataTableColumnResizeHandle header={header} />
     </TableHead>
   );
 }
