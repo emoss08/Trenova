@@ -11,7 +11,10 @@ ALTER TABLE "billing_queue_items"
 
 --bun:split
 ALTER TABLE "billing_queue_items"
-    ADD CONSTRAINT "fk_billing_queue_items_invoice" FOREIGN KEY ("invoice_id", "organization_id", "business_unit_id") REFERENCES "invoices"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+    -- Only invoice_id is cleared. An unqualified SET NULL clears every column of
+    -- the key, and the two tenant columns are NOT NULL, so deleting a referenced
+    -- invoice would fail on them rather than unlinking the queue item.
+    ADD CONSTRAINT "fk_billing_queue_items_invoice" FOREIGN KEY ("invoice_id", "organization_id", "business_unit_id") REFERENCES "invoices"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL ("invoice_id");
 
 --bun:split
 -- Backfill 1 — the anchor. Every invoice names its own queue item directly.
