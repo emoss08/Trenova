@@ -685,16 +685,6 @@ export const billingQueueStatusChoices = [
   { label: "Canceled", value: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<GenericSelectOption<BillingQueueStatus>>;
 
-export const billingTransferStatusChoices = [
-  { label: "Ready for Review", value: "ReadyForReview", color: "#3b82f6" },
-  { label: "In Review", value: "InReview", color: "#0891b2" },
-  { label: "Approved", value: "Approved", color: "#16a34a" },
-  { label: "On Hold", value: "OnHold", color: "#f59e0b" },
-  { label: "Sent Back to Ops", value: "SentBackToOps", color: "#f97316" },
-  { label: "Exception", value: "Exception", color: "#dc2626" },
-  { label: "Canceled", value: "Canceled", color: "#b91c1c" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
 export const moveStatusChoices = [
   { label: "New", value: "New", color: "#3b82f6" },
   { label: "Assigned", value: "Assigned", color: "#16a34a" },

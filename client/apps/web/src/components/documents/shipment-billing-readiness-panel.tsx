@@ -14,6 +14,7 @@ import {
   ExternalLinkIcon,
   UploadIcon,
 } from "lucide-react";
+import { ShipmentBillingQueueBadge } from "@/routes/shipment/_components/shipment-billing-queue-status";
 
 interface ShipmentBillingReadinessPanelProps {
   readiness: ShipmentBillingReadiness;
@@ -134,7 +135,11 @@ export function ShipmentBillingReadinessPanel({
       <div className="border-b px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           <span className="text-sm font-semibold">{t("Billing Readiness")}</span>
-          <span className="text-2xs text-muted-foreground">{statusHint}</span>
+          {shipment?.billingTransferStatus ? (
+            <ShipmentBillingQueueBadge status={shipment.billingTransferStatus} />
+          ) : (
+            <span className="text-2xs text-muted-foreground">{statusHint}</span>
+          )}
         </div>
 
         <div className="mt-3 space-y-1.5">
