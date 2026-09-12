@@ -4,6 +4,7 @@ package fiscalyearservice
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseblockers"
+	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,6 +41,7 @@ type Params struct {
 	Validator        *Validator
 	AuditService     services.AuditService
 	Transformer      services.DataTransformer
+	CloseService     *fiscalcloseservice.Service
 }
 
 type Service struct {
@@ -49,6 +52,7 @@ type Service struct {
 	validator        *Validator
 	auditService     services.AuditService
 	transformer      services.DataTransformer
+	closeService     *fiscalcloseservice.Service
 }
 
 func New(p Params) *Service {
@@ -60,6 +64,7 @@ func New(p Params) *Service {
 		validator:        p.Validator,
 		auditService:     p.AuditService,
 		transformer:      p.Transformer,
+		closeService:     p.CloseService,
 	}
 }
 
@@ -113,17 +118,41 @@ func (s *Service) GetCloseBlockers(
 	ctx context.Context,
 	req repositories.GetFiscalYearByIDRequest,
 ) (*fiscalclose.Result, error) {
+	plan, err := s.GetClosePreview(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &fiscalclose.Result{CanClose: plan.CanClose, Blockers: plan.Blockers}, nil
+}
+
+// GetClosePreview reports what closing the year would post — the closing entry
+// that empties the income statement into retained earnings and the opening entry
+// that carries the balance sheet into the next year — together with everything
+// that currently stands in the way. Nothing is written.
+func (s *Service) GetClosePreview(
+	ctx context.Context,
+	req repositories.GetFiscalYearByIDRequest,
+) (*fiscalclose.Plan, error) {
 	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	blockers := fiscalcloseblockers.AppendFromMultiError(
-		make([]*fiscalclose.Blocker, 0),
+	plan, err := s.closeService.BuildPlan(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	yearBlockers := fiscalcloseblockers.AppendFromMultiError(
+		make([]*fiscalclose.Blocker, 0, len(plan.Blockers)),
 		s.validateClose(ctx, entity),
 		"year",
 	)
-	return &fiscalclose.Result{CanClose: len(blockers) == 0, Blockers: blockers}, nil
+	plan.Blockers = append(yearBlockers, plan.Blockers...)
+	plan.CanClose = len(plan.Blockers) == 0
+
+	return plan, nil
 }
 
 func (s *Service) GetCurrentFiscalYear(
@@ -520,7 +549,7 @@ func (s *Service) Close(
 	req.ClosedByID = userID
 	req.ClosedAt = timeutils.NowUnix()
 
-	closedEntity, err := s.repo.Close(ctx, req)
+	closedEntity, postResult, err := s.closeWithAccounting(ctx, req, userID)
 	if err != nil {
 		log.Error("failed to close fiscal year", zap.Error(err))
 		return nil, err
@@ -529,20 +558,207 @@ func (s *Service) Close(
 	if err = s.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     closedEntity.GetID().String(),
-		Operation:      permission.OpUpdate,
+		Operation:      permission.OpClose,
 		UserID:         userID,
 		CurrentState:   jsonutils.MustToJSON(closedEntity),
 		PreviousState:  jsonutils.MustToJSON(existing),
 		OrganizationID: closedEntity.OrganizationID,
 		BusinessUnitID: closedEntity.BusinessUnitID,
 	},
-		auditservice.WithComment("Fiscal year closed"),
+		auditservice.WithComment(closeAuditComment(postResult)),
 		auditservice.WithDiff(existing, closedEntity),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
 	return closedEntity, nil
+}
+
+// closeWithAccounting posts the year-end entries and flips the year to Closed in
+// one transaction. The two have to move together: a year marked closed without
+// its closing entries would leave revenue on the books forever, and closing
+// entries without the status flip would be posted again on the next attempt.
+func (s *Service) closeWithAccounting(
+	ctx context.Context,
+	req repositories.CloseFiscalYearRequest,
+	userID pulid.ID,
+) (*fiscalyear.FiscalYear, *fiscalclose.PostResult, error) {
+	if s.db == nil {
+		return s.closeInTx(ctx, req, userID)
+	}
+
+	var (
+		closedEntity *fiscalyear.FiscalYear
+		postResult   *fiscalclose.PostResult
+	)
+	err := s.db.WithTx(
+		ctx,
+		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		func(txCtx context.Context, _ bun.Tx) error {
+			var txErr error
+			closedEntity, postResult, txErr = s.closeInTx(txCtx, req, userID)
+
+			return txErr
+		},
+	)
+	if err != nil {
+		return nil, nil, dberror.MapRetryableTransactionError(
+			err,
+			"The fiscal year is busy. Retry the request.",
+		)
+	}
+
+	return closedEntity, postResult, nil
+}
+
+func (s *Service) closeInTx(
+	ctx context.Context,
+	req repositories.CloseFiscalYearRequest,
+	userID pulid.ID,
+) (*fiscalyear.FiscalYear, *fiscalclose.PostResult, error) {
+	current, err := s.repo.GetByIDForUpdate(ctx, repositories.GetFiscalYearByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if multiErr := s.validateClose(ctx, current); multiErr != nil {
+		return nil, nil, multiErr
+	}
+
+	postResult, err := s.closeService.Post(ctx, current, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	closedEntity, err := s.repo.Close(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return closedEntity, postResult, nil
+}
+
+// Reopen unwinds a closed year so corrections can be posted. The closing and
+// opening entries are reversed rather than deleted, so the ledger keeps a record
+// of both the close and its undo.
+func (s *Service) Reopen(
+	ctx context.Context,
+	req repositories.ReopenFiscalYearRequest,
+	userID pulid.ID,
+) (*fiscalyear.FiscalYear, error) {
+	log := s.l.With(
+		zap.String("operation", "Reopen"),
+		zap.String("id", req.ID.String()),
+	)
+
+	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		log.Error("failed to get fiscal year", zap.Error(err))
+		return nil, err
+	}
+
+	if multiErr := s.validateReopen(existing, req.ReopenReason); multiErr != nil {
+		return nil, multiErr
+	}
+
+	req.ReopenedByID = userID
+	req.ReopenedAt = timeutils.NowUnix()
+
+	reopenedEntity, err := s.reopenWithAccounting(ctx, req, userID)
+	if err != nil {
+		log.Error("failed to reopen fiscal year", zap.Error(err))
+		return nil, err
+	}
+
+	if err = s.auditService.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceFiscalYear,
+		ResourceID:     reopenedEntity.GetID().String(),
+		Operation:      permission.OpReopen,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(reopenedEntity),
+		PreviousState:  jsonutils.MustToJSON(existing),
+		OrganizationID: reopenedEntity.OrganizationID,
+		BusinessUnitID: reopenedEntity.BusinessUnitID,
+	},
+		auditservice.WithComment("Fiscal year reopened: "+req.ReopenReason),
+		auditservice.WithDiff(existing, reopenedEntity),
+	); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	return reopenedEntity, nil
+}
+
+func (s *Service) reopenWithAccounting(
+	ctx context.Context,
+	req repositories.ReopenFiscalYearRequest,
+	userID pulid.ID,
+) (*fiscalyear.FiscalYear, error) {
+	if s.db == nil {
+		return s.reopenInTx(ctx, req, userID)
+	}
+
+	var reopenedEntity *fiscalyear.FiscalYear
+	err := s.db.WithTx(
+		ctx,
+		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		func(txCtx context.Context, _ bun.Tx) error {
+			var txErr error
+			reopenedEntity, txErr = s.reopenInTx(txCtx, req, userID)
+
+			return txErr
+		},
+	)
+	if err != nil {
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"The fiscal year is busy. Retry the request.",
+		)
+	}
+
+	return reopenedEntity, nil
+}
+
+func (s *Service) reopenInTx(
+	ctx context.Context,
+	req repositories.ReopenFiscalYearRequest,
+	userID pulid.ID,
+) (*fiscalyear.FiscalYear, error) {
+	current, err := s.repo.GetByIDForUpdate(ctx, repositories.GetFiscalYearByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if multiErr := s.validateReopen(current, req.ReopenReason); multiErr != nil {
+		return nil, multiErr
+	}
+
+	if _, err = s.closeService.Reverse(ctx, current, userID, req.ReopenReason); err != nil {
+		return nil, err
+	}
+
+	return s.repo.Reopen(ctx, req)
+}
+
+func closeAuditComment(result *fiscalclose.PostResult) string {
+	if result == nil {
+		return "Fiscal year closed"
+	}
+
+	return fmt.Sprintf(
+		"Fiscal year closed; net income %d minor units posted across %d journal entries",
+		result.NetIncomeMinor,
+		len(result.Entries),
+	)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -714,11 +930,46 @@ func (s *Service) validateClose(
 	return nil
 }
 
+// validateReopen guards the only path that un-closes a year. A reason is
+// mandatory because the reversal it triggers is what an auditor will ask about.
+func (s *Service) validateReopen(
+	entity *fiscalyear.FiscalYear,
+	reason string,
+) *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	if entity.Status != fiscalyear.StatusClosed {
+		multiErr.Add("status", errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"Only Closed fiscal years can be reopened. Current status: %s",
+				entity.Status,
+			))
+	}
+
+	if strings.TrimSpace(reason) == "" {
+		multiErr.Add("reopenReason", errortypes.ErrRequired, "A reason for reopening is required")
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
 func (s *Service) validateActivate(entity *fiscalyear.FiscalYear) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
 	if entity.Status == fiscalyear.StatusPermanentlyClosed {
 		multiErr.Add("status", errortypes.ErrInvalid, "Closed fiscal years cannot be activated")
+	}
+
+	// A closed year carries posted closing entries. Flipping it back to Open
+	// here would leave those entries standing against an open year, so the only
+	// way back is Reopen, which reverses them first.
+	if entity.Status == fiscalyear.StatusClosed {
+		multiErr.Add("status", errortypes.ErrInvalid,
+			"This fiscal year is closed. Reopen it first so its closing entries are reversed.")
 	}
 
 	if multiErr.HasErrors() {

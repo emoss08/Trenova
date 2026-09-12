@@ -56,13 +56,15 @@ func TestGetIncomeStatementAggregatesCategories(t *testing.T) {
 	assert.Equal(t, int64(3500), statement.NetIncomeMinor)
 }
 
-func TestGetBalanceSheetIncludesCurrentPeriodIncome(t *testing.T) {
+func TestGetBalanceSheetIncludesCurrentYearEarnings(t *testing.T) {
 	t.Parallel()
 
 	periodID := pulid.MustNew("fp_")
 	repo := mocks.NewMockGLBalanceRepository(t)
+	// A balance sheet reads the cumulative position through the period, never a
+	// single period's movement.
 	repo.EXPECT().
-		ListTrialBalanceByPeriod(mock.Anything, mock.Anything).
+		ListCumulativeBalancesThroughPeriod(mock.Anything, mock.Anything).
 		Return([]*repositories.GLPeriodAccountBalance{
 			{
 				GLAccountID:      pulid.MustNew("gla_"),
@@ -109,6 +111,6 @@ func TestGetBalanceSheetIncludesCurrentPeriodIncome(t *testing.T) {
 	assert.Equal(t, int64(10000), statement.TotalAssetsMinor)
 	assert.Equal(t, int64(3000), statement.TotalLiabilitiesMinor)
 	assert.Equal(t, int64(2000), statement.Equity.TotalMinor)
-	assert.Equal(t, int64(5000), statement.CurrentPeriodNetIncomeMinor)
+	assert.Equal(t, int64(5000), statement.CurrentYearEarningsMinor)
 	assert.Equal(t, int64(7000), statement.TotalEquityMinor)
 }

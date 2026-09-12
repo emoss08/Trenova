@@ -176,6 +176,142 @@ func (_c *MockFiscalYearRepository_Close_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// Reopen provides a mock function for the type MockFiscalYearRepository
+func (_mock *MockFiscalYearRepository) Reopen(ctx context.Context, req repositories.ReopenFiscalYearRequest) (*fiscalyear.FiscalYear, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Reopen")
+	}
+
+	var r0 *fiscalyear.FiscalYear
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ReopenFiscalYearRequest) (*fiscalyear.FiscalYear, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ReopenFiscalYearRequest) *fiscalyear.FiscalYear); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*fiscalyear.FiscalYear)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ReopenFiscalYearRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalYearRepository_Reopen_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reopen'
+type MockFiscalYearRepository_Reopen_Call struct {
+	*mock.Call
+}
+
+// Reopen is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ReopenFiscalYearRequest
+func (_e *MockFiscalYearRepository_Expecter) Reopen(ctx any, req any) *MockFiscalYearRepository_Reopen_Call {
+	return &MockFiscalYearRepository_Reopen_Call{Call: _e.mock.On("Reopen", ctx, req)}
+}
+
+func (_c *MockFiscalYearRepository_Reopen_Call) Run(run func(ctx context.Context, req repositories.ReopenFiscalYearRequest)) *MockFiscalYearRepository_Reopen_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ReopenFiscalYearRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ReopenFiscalYearRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_Reopen_Call) Return(fiscalYear *fiscalyear.FiscalYear, err error) *MockFiscalYearRepository_Reopen_Call {
+	_c.Call.Return(fiscalYear, err)
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_Reopen_Call) RunAndReturn(run func(ctx context.Context, req repositories.ReopenFiscalYearRequest) (*fiscalyear.FiscalYear, error)) *MockFiscalYearRepository_Reopen_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetNextFiscalYear provides a mock function for the type MockFiscalYearRepository
+func (_mock *MockFiscalYearRepository) GetNextFiscalYear(ctx context.Context, req repositories.GetNextFiscalYearRequest) (*fiscalyear.FiscalYear, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNextFiscalYear")
+	}
+
+	var r0 *fiscalyear.FiscalYear
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetNextFiscalYearRequest) (*fiscalyear.FiscalYear, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetNextFiscalYearRequest) *fiscalyear.FiscalYear); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*fiscalyear.FiscalYear)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetNextFiscalYearRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalYearRepository_GetNextFiscalYear_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNextFiscalYear'
+type MockFiscalYearRepository_GetNextFiscalYear_Call struct {
+	*mock.Call
+}
+
+// GetNextFiscalYear is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetNextFiscalYearRequest
+func (_e *MockFiscalYearRepository_Expecter) GetNextFiscalYear(ctx any, req any) *MockFiscalYearRepository_GetNextFiscalYear_Call {
+	return &MockFiscalYearRepository_GetNextFiscalYear_Call{Call: _e.mock.On("GetNextFiscalYear", ctx, req)}
+}
+
+func (_c *MockFiscalYearRepository_GetNextFiscalYear_Call) Run(run func(ctx context.Context, req repositories.GetNextFiscalYearRequest)) *MockFiscalYearRepository_GetNextFiscalYear_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetNextFiscalYearRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetNextFiscalYearRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_GetNextFiscalYear_Call) Return(fiscalYear *fiscalyear.FiscalYear, err error) *MockFiscalYearRepository_GetNextFiscalYear_Call {
+	_c.Call.Return(fiscalYear, err)
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_GetNextFiscalYear_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetNextFiscalYearRequest) (*fiscalyear.FiscalYear, error)) *MockFiscalYearRepository_GetNextFiscalYear_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CountByTenant provides a mock function for the type MockFiscalYearRepository
 func (_mock *MockFiscalYearRepository) CountByTenant(ctx context.Context, req repositories.CountFiscalYearsByTenantRequest) (int, error) {
 	ret := _mock.Called(ctx, req)
@@ -907,6 +1043,74 @@ func (_c *MockFiscalYearRepository_SelectOptions_Call) Return(listResult *pagina
 }
 
 func (_c *MockFiscalYearRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.FiscalYearSelectOptionsRequest) (*pagination.ListResult[*fiscalyear.FiscalYear], error)) *MockFiscalYearRepository_SelectOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetExpiredOpenFiscalYears provides a mock function for the type MockFiscalYearRepository
+func (_mock *MockFiscalYearRepository) GetExpiredOpenFiscalYears(ctx context.Context, req repositories.GetExpiredOpenFiscalYearsRequest) ([]*fiscalyear.FiscalYear, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetExpiredOpenFiscalYears")
+	}
+
+	var r0 []*fiscalyear.FiscalYear
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetExpiredOpenFiscalYearsRequest) ([]*fiscalyear.FiscalYear, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetExpiredOpenFiscalYearsRequest) []*fiscalyear.FiscalYear); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*fiscalyear.FiscalYear)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetExpiredOpenFiscalYearsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExpiredOpenFiscalYears'
+type MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call struct {
+	*mock.Call
+}
+
+// GetExpiredOpenFiscalYears is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetExpiredOpenFiscalYearsRequest
+func (_e *MockFiscalYearRepository_Expecter) GetExpiredOpenFiscalYears(ctx any, req any) *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call {
+	return &MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call{Call: _e.mock.On("GetExpiredOpenFiscalYears", ctx, req)}
+}
+
+func (_c *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call) Run(run func(ctx context.Context, req repositories.GetExpiredOpenFiscalYearsRequest)) *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetExpiredOpenFiscalYearsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetExpiredOpenFiscalYearsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call) Return(fiscalYears []*fiscalyear.FiscalYear, err error) *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call {
+	_c.Call.Return(fiscalYears, err)
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetExpiredOpenFiscalYearsRequest) ([]*fiscalyear.FiscalYear, error)) *MockFiscalYearRepository_GetExpiredOpenFiscalYears_Call {
 	_c.Call.Return(run)
 	return _c
 }

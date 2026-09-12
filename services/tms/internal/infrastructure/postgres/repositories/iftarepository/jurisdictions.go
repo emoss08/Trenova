@@ -8,9 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -19,53 +18,82 @@ const (
 	defaultJurisdictionCount = 64
 )
 
-func (r *repository) ListJurisdictions(
-	ctx context.Context,
-	req *repositories.ListJurisdictionsRequest,
-) ([]*ifta.Jurisdiction, error) {
+func (r *repository) allJurisdictions(ctx context.Context) ([]*ifta.Jurisdiction, error) {
+	cached, err := r.jurisdictionCache.GetAll(ctx)
+	if err == nil && len(cached) > 0 {
+		return cached, nil
+	}
+
 	cols := buncolgen.JurisdictionColumns
 	entities := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCount)
-
-	q := r.db.DBForContext(ctx).
+	if err = r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		Order(cols.SortOrder.OrderAsc()).
 		Order(cols.CountryCode.OrderAsc()).
-		Order(cols.Code.OrderAsc())
-
-	if req.MembersOnly {
-		q = q.Where(cols.IsIftaMember.IsTrue())
-	}
-	if req.CountryCode != "" {
-		q = q.Where(cols.CountryCode.Eq(), strings.ToUpper(strings.TrimSpace(req.CountryCode)))
-	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.In(req.Statuses))
+		Order(cols.Code.OrderAsc()).
+		Scan(ctx); err != nil {
+		r.l.Error("failed to load ifta jurisdictions", zap.Error(err))
+		return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
 	}
 
-	if err := q.Scan(ctx); err != nil {
-		r.l.Error("failed to list ifta jurisdictions", zap.Error(err))
-		return nil, fmt.Errorf("list ifta jurisdictions: %w", err)
+	if cacheErr := r.jurisdictionCache.Set(ctx, entities); cacheErr != nil {
+		r.l.Warn("failed to populate ifta jurisdiction cache", zap.Error(cacheErr))
 	}
 
 	return entities, nil
+}
+
+func (r *repository) ListJurisdictions(
+	ctx context.Context,
+	req *repositories.ListJurisdictionsRequest,
+) ([]*ifta.Jurisdiction, error) {
+	all, err := r.allJurisdictions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	countryCode := strings.ToUpper(strings.TrimSpace(req.CountryCode))
+	statuses := make(map[ifta.JurisdictionStatus]struct{}, len(req.Statuses))
+	for _, status := range req.Statuses {
+		statuses[status] = struct{}{}
+	}
+
+	out := make([]*ifta.Jurisdiction, 0, len(all))
+	for _, entity := range all {
+		if req.MembersOnly && !entity.IsIftaMember {
+			continue
+		}
+		if countryCode != "" && entity.CountryCode != countryCode {
+			continue
+		}
+		if len(statuses) > 0 {
+			if _, ok := statuses[entity.Status]; !ok {
+				continue
+			}
+		}
+		out = append(out, entity)
+	}
+
+	return out, nil
 }
 
 func (r *repository) GetJurisdictionByID(
 	ctx context.Context,
 	id pulid.ID,
 ) (*ifta.Jurisdiction, error) {
-	entity := new(ifta.Jurisdiction)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(buncolgen.JurisdictionColumns.ID.Eq(), id).
-		Scan(ctx)
+	all, err := r.allJurisdictions(ctx)
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "IFTA jurisdiction")
+		return nil, err
 	}
 
-	return entity, nil
+	for _, entity := range all {
+		if entity.ID == id {
+			return entity, nil
+		}
+	}
+
+	return nil, errortypes.NewNotFoundError("IFTA jurisdiction not found")
 }
 
 func (r *repository) GetJurisdictionsByIDs(
@@ -76,38 +104,44 @@ func (r *repository) GetJurisdictionsByIDs(
 		return []*ifta.Jurisdiction{}, nil
 	}
 
-	entities := make([]*ifta.Jurisdiction, 0, len(ids))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Where(buncolgen.JurisdictionColumns.ID.In(), bun.List(ids)).
-		Order(buncolgen.JurisdictionColumns.SortOrder.OrderAsc()).
-		Scan(ctx)
+	all, err := r.allJurisdictions(ctx)
 	if err != nil {
-		r.l.Error("failed to load ifta jurisdictions by id", zap.Error(err))
-		return nil, fmt.Errorf("get ifta jurisdictions by ids: %w", err)
+		return nil, err
 	}
 
-	return entities, nil
+	wanted := make(map[pulid.ID]struct{}, len(ids))
+	for _, id := range ids {
+		wanted[id] = struct{}{}
+	}
+
+	out := make([]*ifta.Jurisdiction, 0, len(ids))
+	for _, entity := range all {
+		if _, ok := wanted[entity.ID]; ok {
+			out = append(out, entity)
+		}
+	}
+
+	return out, nil
 }
 
 func (r *repository) GetJurisdictionByCode(
 	ctx context.Context,
 	countryCode, code string,
 ) (*ifta.Jurisdiction, error) {
-	cols := buncolgen.JurisdictionColumns
-	entity := new(ifta.Jurisdiction)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(cols.CountryCode.Eq(), strings.ToUpper(strings.TrimSpace(countryCode))).
-		Where(cols.Code.Eq(), strings.ToUpper(strings.TrimSpace(code))).
-		Scan(ctx)
+	all, err := r.allJurisdictions(ctx)
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "IFTA jurisdiction")
+		return nil, err
 	}
 
-	return entity, nil
+	wantedCountry := strings.ToUpper(strings.TrimSpace(countryCode))
+	wantedCode := strings.ToUpper(strings.TrimSpace(code))
+	for _, entity := range all {
+		if entity.CountryCode == wantedCountry && entity.Code == wantedCode {
+			return entity, nil
+		}
+	}
+
+	return nil, errortypes.NewNotFoundError("IFTA jurisdiction not found")
 }
 
 func splitJurisdictionKey(key string) (countryCode, code string, ok bool) {
@@ -141,44 +175,24 @@ func (r *repository) FindJurisdictionsByCodes(
 	}
 
 	normalised := make(map[string]string, len(keys))
-	countries := make([]string, 0, 2)
-	codes := make([]string, 0, len(keys))
-	seenCountry := make(map[string]struct{}, 2)
-	seenCode := make(map[string]struct{}, len(keys))
 	for _, key := range keys {
 		countryCode, code, ok := splitJurisdictionKey(key)
 		if !ok {
 			continue
 		}
 		normalised[key] = ifta.JurisdictionKey(countryCode, code)
-		if _, dup := seenCountry[countryCode]; !dup {
-			seenCountry[countryCode] = struct{}{}
-			countries = append(countries, countryCode)
-		}
-		if _, dup := seenCode[code]; !dup {
-			seenCode[code] = struct{}{}
-			codes = append(codes, code)
-		}
 	}
-	if len(codes) == 0 {
+	if len(normalised) == 0 {
 		return out, nil
 	}
 
-	cols := buncolgen.JurisdictionColumns
-	entities := make([]*ifta.Jurisdiction, 0, len(codes))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Where(cols.CountryCode.In(), bun.In(countries)).
-		Where(cols.Code.In(), bun.In(codes)).
-		Scan(ctx)
+	all, err := r.allJurisdictions(ctx)
 	if err != nil {
-		r.l.Error("failed to find ifta jurisdictions by code", zap.Error(err))
-		return nil, fmt.Errorf("find ifta jurisdictions by codes: %w", err)
+		return nil, err
 	}
 
-	byKey := make(map[string]*ifta.Jurisdiction, len(entities))
-	for _, entity := range entities {
+	byKey := make(map[string]*ifta.Jurisdiction, len(all))
+	for _, entity := range all {
 		byKey[entity.Key()] = entity
 	}
 	for key, canonical := range normalised {

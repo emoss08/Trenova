@@ -104,6 +104,115 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 	assert.Equal(t, int64(3000), balances[0].PeriodCreditMinor+balances[1].PeriodCreditMinor)
 }
 
+// A balance sheet is cumulative: every period of the year up to the one asked
+// for, and never the year-end adjusting period unless that is what was asked
+// for. The adjusting period shares the final operating period's dates, so the
+// ordering has to come from the period number rather than from a date.
+func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	defer cleanup()
+
+	seedRegistry := seeder.NewRegistry()
+	seeds.Register(seedRegistry)
+	engine := seeder.NewEngine(db, seedRegistry, &config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}})
+	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	require.NoError(t, err)
+
+	conn := postgres.NewTestConnection(db)
+	postingRepo := journalpostingrepository.New(journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()})
+	periodRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
+	balanceRepo := New(Params{DB: conn, Logger: zap.NewNop()})
+	orgID, buID, userID, fiscalYearID, januaryID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
+	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
+
+	february, err := periodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		FiscalYearID:   fiscalYearID,
+		PeriodNumber:   2,
+		PeriodType:     fiscalperiod.PeriodTypeMonth,
+		Status:         fiscalperiod.StatusOpen,
+		Name:           "February 2027",
+		StartDate:      time.Date(2027, time.February, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		EndDate:        time.Date(2027, time.February, 28, 23, 59, 59, 0, time.UTC).Unix(),
+	})
+	require.NoError(t, err)
+
+	adjusting, err := periodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
+		OrganizationID:        orgID,
+		BusinessUnitID:        buID,
+		FiscalYearID:          fiscalYearID,
+		PeriodNumber:          13,
+		PeriodType:            fiscalperiod.PeriodTypeAdjusting,
+		Status:                fiscalperiod.StatusInactive,
+		Name:                  "Adjusting Period - FY 2027",
+		StartDate:             february.StartDate,
+		EndDate:               february.EndDate,
+		IsAdjusting:           true,
+		AllowAdjustingEntries: true,
+	})
+	require.NoError(t, err)
+
+	post := func(periodID pulid.ID, amount int64, suffix string) {
+		at := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
+		require.NoError(t, postingRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+			BatchID:          pulid.MustNew("jb_"),
+			OrganizationID:   orgID,
+			BusinessUnitID:   buID,
+			BatchNumber:      "JB-CUM-" + suffix,
+			BatchType:        "Manual",
+			BatchStatus:      "Posted",
+			BatchDescription: "Cumulative seed",
+			FiscalYearID:     fiscalYearID,
+			FiscalPeriodID:   periodID,
+			AccountingDate:   at,
+			PostedAt:         &at,
+			PostedByID:       userID,
+			CreatedByID:      userID,
+			UpdatedByID:      userID,
+			EntryID:          pulid.MustNew("je_"),
+			EntryNumber:      "JE-CUM-" + suffix,
+			EntryType:        "Standard",
+			EntryStatus:      "Posted",
+			EntryDescription: "Cumulative seed",
+			TotalDebit:       amount,
+			TotalCredit:      amount,
+			IsPosted:         true,
+			Lines: []repositories.JournalPostingLine{
+				{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[0], LineNumber: 1, Description: "Debit", DebitAmount: amount, NetAmount: amount},
+				{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[1], LineNumber: 2, Description: "Credit", CreditAmount: amount, NetAmount: -amount},
+			},
+		}))
+	}
+
+	post(januaryID, 1000, "1")
+	post(february.ID, 500, "2")
+	post(adjusting.ID, 250, "3")
+
+	debitFor := func(periodID pulid.ID) int64 {
+		balances, listErr := balanceRepo.ListCumulativeBalancesThroughPeriod(ctx, repositories.ListCumulativeBalancesThroughPeriodRequest{
+			TenantInfo:     tenantInfo,
+			FiscalPeriodID: periodID,
+		})
+		require.NoError(t, listErr)
+		for _, balance := range balances {
+			if balance.GLAccountID == accountIDs[0] {
+				return balance.PeriodDebitMinor
+			}
+		}
+		return 0
+	}
+
+	assert.Equal(t, int64(1000), debitFor(januaryID), "January stands alone")
+	assert.Equal(t, int64(1500), debitFor(february.ID), "February carries January with it")
+	assert.Equal(
+		t,
+		int64(1750),
+		debitFor(adjusting.ID),
+		"the adjusting period is the only view that includes year-end entries",
+	)
+}
+
 func setupGLBalanceFixture(t *testing.T, ctx context.Context, conn *postgres.Connection) (pulid.ID, pulid.ID, pulid.ID, pulid.ID, pulid.ID, []pulid.ID) {
 	t.Helper()
 

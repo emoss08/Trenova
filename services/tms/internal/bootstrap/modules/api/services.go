@@ -73,6 +73,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
+	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
@@ -381,6 +382,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	accounttypeservice.New,
 	glaccountservice.New,
 	glbalanceservice.New,
+	fiscalcloseservice.New,
 	fiscalyearservice.New,
 	fiscalperiodservice.New,
 	locationcodegenerator.New,

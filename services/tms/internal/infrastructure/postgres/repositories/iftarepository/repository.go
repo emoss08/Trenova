@@ -10,18 +10,21 @@ import (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB                *postgres.Connection
+	Logger            *zap.Logger
+	JurisdictionCache repositories.IFTAJurisdictionCacheRepository
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db                *postgres.Connection
+	l                 *zap.Logger
+	jurisdictionCache repositories.IFTAJurisdictionCacheRepository
 }
 
 func New(p Params) repositories.IFTARepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.ifta-repository"),
+		db:                p.DB,
+		l:                 p.Logger.Named("postgres.ifta-repository"),
+		jurisdictionCache: p.JurisdictionCache,
 	}
 }

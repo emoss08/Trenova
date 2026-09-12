@@ -10,6 +10,29 @@ var accountShellRoutes = mergeRouteRefs(
 	realtimeShellRoutes,
 	platformCatalogShellRoutes,
 	usStateShellRoutes,
+	graphQLTransportShellRoutes,
+	pushSubscriptionShellRoutes,
+)
+
+var pushSubscriptionShellRoutes = mergeRouteRefs(
+	routeRefsFor("GET",
+		"/api/v1/push/public-key/",
+	),
+	routeRefsFor("POST",
+		"/api/v1/push/subscriptions/",
+	),
+	routeRefsFor("DELETE",
+		"/api/v1/push/subscriptions/",
+	),
+)
+
+var graphQLTransportShellRoutes = mergeRouteRefs(
+	routeRefsFor("GET",
+		"/graphql",
+	),
+	routeRefsFor("POST",
+		"/graphql",
+	),
 )
 
 var currentUserShellRoutes = mergeRouteRefs(

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -48,6 +50,9 @@ func setupTestEngine(
 	userRepo := mocks.NewMockUserRepository(t)
 	logger := zap.NewNop()
 
+	metricsRegistry, err := metrics.NewRegistry(&config.Config{}, logger)
+	require.NoError(t, err)
+
 	e := &engine{
 		roleRepo:      roleRepo,
 		rbacRepo:      &rbactest.Repository{},
@@ -55,6 +60,7 @@ func setupTestEngine(
 		userRepo:      userRepo,
 		registry:      permission.NewRegistry(),
 		routeRegistry: permission.NewRouteRegistry(),
+		metrics:       metricsRegistry,
 		l:             logger.Named("test.permission-engine"),
 	}
 

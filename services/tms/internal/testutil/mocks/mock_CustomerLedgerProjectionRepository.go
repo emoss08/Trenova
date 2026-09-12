@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -91,6 +92,72 @@ func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) Return(err 
 }
 
 func (_c *MockCustomerLedgerProjectionRepository_AppendEntries_Call) RunAndReturn(run func(ctx context.Context, entries []*customerledger.CustomerLedgerEntry) error) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SumBalanceAsOf provides a mock function for the type MockCustomerLedgerProjectionRepository
+func (_mock *MockCustomerLedgerProjectionRepository) SumBalanceAsOf(ctx context.Context, req repositories.SumCustomerLedgerBalanceRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SumBalanceAsOf")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.SumCustomerLedgerBalanceRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.SumCustomerLedgerBalanceRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.SumCustomerLedgerBalanceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SumBalanceAsOf'
+type MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call struct {
+	*mock.Call
+}
+
+// SumBalanceAsOf is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.SumCustomerLedgerBalanceRequest
+func (_e *MockCustomerLedgerProjectionRepository_Expecter) SumBalanceAsOf(ctx any, req any) *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call {
+	return &MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call{Call: _e.mock.On("SumBalanceAsOf", ctx, req)}
+}
+
+func (_c *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call) Run(run func(ctx context.Context, req repositories.SumCustomerLedgerBalanceRequest)) *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.SumCustomerLedgerBalanceRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.SumCustomerLedgerBalanceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call) Return(n int64, err error) *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call) RunAndReturn(run func(ctx context.Context, req repositories.SumCustomerLedgerBalanceRequest) (int64, error)) *MockCustomerLedgerProjectionRepository_SumBalanceAsOf_Call {
 	_c.Call.Return(run)
 	return _c
 }

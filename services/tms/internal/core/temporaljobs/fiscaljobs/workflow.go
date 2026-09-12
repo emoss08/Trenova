@@ -51,7 +51,75 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.FiscalTaskQueue,
 			Description: "Automatically create next fiscal year when current one is nearing end",
 		},
+		{
+			Name:        "FiscalYearCloseReadinessWorkflow",
+			Fn:          FiscalYearCloseReadinessWorkflow,
+			TaskQueue:   temporaltype.FiscalTaskQueue,
+			Description: "Notify controllers about fiscal years that are past their end date and still open",
+		},
 	}
+}
+
+// FiscalYearCloseReadinessWorkflow surfaces year-end work rather than doing it.
+// Closing a year is a judgement call that depends on audit adjustments nobody
+// can detect from the data, so this reports what is outstanding and leaves the
+// close to a person.
+func FiscalYearCloseReadinessWorkflow(ctx workflow.Context) (*FiscalTenantRunResult, error) {
+	logger := workflow.GetLogger(ctx)
+
+	fetchCtx := workflow.WithActivityOptions(ctx, fetchActivityOptions)
+
+	var a *Activities
+	var tenantsResult *GetAutoCloseTenantsResult
+
+	err := workflow.ExecuteActivity(fetchCtx, a.GetFiscalCalendarTenantsActivity).
+		Get(ctx, &tenantsResult)
+	if err != nil {
+		logger.Error("Failed to get tenants", "error", err)
+		return nil, err
+	}
+
+	summary := &FiscalTenantRunResult{}
+	if len(tenantsResult.Tenants) == 0 {
+		return summary, nil
+	}
+	summary.TenantsScanned = len(tenantsResult.Tenants)
+
+	notifyCtx := workflow.WithActivityOptions(ctx, closeActivityOptions)
+
+	for _, tenant := range tenantsResult.Tenants {
+		item := temporaljobs.TenantWorkItem{
+			OrganizationID: tenant.OrganizationID,
+			BusinessUnitID: tenant.BusinessUnitID,
+		}
+		payload := &CloseReadinessPayload{
+			OrganizationID: tenant.OrganizationID,
+			BusinessUnitID: tenant.BusinessUnitID,
+		}
+
+		var readiness *CloseReadinessResult
+		err = workflow.ExecuteActivity(notifyCtx, a.NotifyCloseReadinessActivity, payload).
+			Get(ctx, &readiness)
+		if err != nil {
+			logger.Error("Failed to report close readiness for tenant",
+				"orgId", tenant.OrganizationID.String(),
+				"error", err,
+			)
+			summary.AddFailure(item, err)
+			continue
+		}
+
+		summary.AddTenantResult(readiness.Notified, 0)
+		summary.Notified += readiness.Notified
+	}
+
+	logger.Info("Fiscal year close readiness workflow completed",
+		"tenantsProcessed", len(tenantsResult.Tenants),
+		"notified", summary.Notified,
+		"failureCount", summary.FailureCount,
+	)
+
+	return summary, nil
 }
 
 func AutoCloseFiscalPeriodsWorkflow(ctx workflow.Context) (*FiscalTenantRunResult, error) {
@@ -125,7 +193,7 @@ func AutoCreateNextFiscalYearWorkflow(ctx workflow.Context) (*FiscalTenantRunRes
 	var a *Activities
 	var tenantsResult *GetAutoCloseTenantsResult
 
-	err := workflow.ExecuteActivity(fetchCtx, a.GetAutoCloseTenantsActivity).
+	err := workflow.ExecuteActivity(fetchCtx, a.GetFiscalCalendarTenantsActivity).
 		Get(ctx, &tenantsResult)
 	if err != nil {
 		logger.Error("Failed to get tenants", "error", err)

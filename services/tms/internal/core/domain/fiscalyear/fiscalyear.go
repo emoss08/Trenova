@@ -235,7 +235,41 @@ func (fy *FiscalYear) GenerateMonthlyPeriods() []*fiscalperiod.FiscalPeriod {
 		currentStart = periodEnd.Add(time.Second)
 	}
 
-	return periods
+	return appendAdjustingPeriod(periods, fy)
+}
+
+// appendAdjustingPeriod adds the year-end adjusting period (Period 13) that
+// holds closing entries and auditor adjustments. It shares the final operating
+// period's date range on purpose — that is what keeps December showing December
+// once the close posts — and starts Inactive so nothing lands in it until a
+// controller opens it or the year-end close seals it.
+func appendAdjustingPeriod(
+	periods []*fiscalperiod.FiscalPeriod,
+	fy *FiscalYear,
+) []*fiscalperiod.FiscalPeriod {
+	if len(periods) == 0 {
+		return periods
+	}
+
+	last := periods[len(periods)-1]
+	number := last.PeriodNumber + 1
+	if number > fiscalperiod.MaxAdjustingPeriodNumber {
+		return periods
+	}
+
+	return append(periods, &fiscalperiod.FiscalPeriod{
+		FiscalYearID:          fy.ID,
+		OrganizationID:        fy.OrganizationID,
+		BusinessUnitID:        fy.BusinessUnitID,
+		PeriodNumber:          number,
+		PeriodType:            fiscalperiod.PeriodTypeAdjusting,
+		Name:                  fmt.Sprintf("Adjusting Period - %s", fy.Name),
+		StartDate:             last.StartDate,
+		EndDate:               last.EndDate,
+		Status:                fiscalperiod.StatusInactive,
+		IsAdjusting:           true,
+		AllowAdjustingEntries: true,
+	})
 }
 
 func (fy *FiscalYear) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -11,9 +11,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/glaccountrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/glbalancerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalsourcerepository"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -127,7 +135,7 @@ func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {
 	conn := postgres.NewTestConnection(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fyRepo, fiscalPeriodRepo: fpRepo, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fyRepo, fiscalPeriodRepo: fpRepo, auditService: &mocks.NoopAuditService{}, closeService: newTestCloseService(conn, fyRepo, fpRepo)}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	fy := mustCreateFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, Status: fiscalyear.StatusOpen, Year: 2026, Name: "FY 2026", StartDate: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), EndDate: time.Date(2026, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(), IsCurrent: false})
@@ -153,4 +161,35 @@ func mustCreateFiscalYear(
 	created, err := repo.Create(ctx, entity)
 	require.NoError(t, err)
 	return created
+}
+
+func newTestCloseService(
+	conn *postgres.Connection,
+	fyRepo repositories.FiscalYearRepository,
+	fpRepo repositories.FiscalPeriodRepository,
+) *fiscalcloseservice.Service {
+	logger := zap.NewNop()
+
+	return fiscalcloseservice.New(fiscalcloseservice.Params{
+		Logger:           logger,
+		FiscalYearRepo:   fyRepo,
+		FiscalPeriodRepo: fpRepo,
+		GLBalanceRepo:    glbalancerepository.New(glbalancerepository.Params{DB: conn, Logger: logger}),
+		GLAccountRepo:    glaccountrepository.New(glaccountrepository.Params{DB: conn, Logger: logger}),
+		AccountingRepo: accountingcontrolrepository.New(
+			accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		),
+		CustomerLedger: customerledgerrepository.New(
+			customerledgerrepository.Params{DB: conn, Logger: logger},
+		),
+		JournalPostRepo: journalpostingrepository.New(
+			journalpostingrepository.Params{DB: conn, Logger: logger},
+		),
+		JournalEntryRepo: journalentryrepository.New(
+			journalentryrepository.Params{DB: conn, Logger: logger},
+		),
+		SourceRepo: journalsourcerepository.New(
+			journalsourcerepository.Params{DB: conn, Logger: logger},
+		),
+	})
 }

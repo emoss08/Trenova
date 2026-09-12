@@ -6,12 +6,21 @@ type FeatureKey string
 
 type MeterKey string
 
+type PackKey string
+
+type GraphQLSource string
+
 type RouteAccessClass string
 
 const (
 	RouteAccessClassAccountShell RouteAccessClass = "account_shell"
 	RouteAccessClassProduct      RouteAccessClass = "product"
 	RouteAccessClassUnclassified RouteAccessClass = "unclassified"
+)
+
+const (
+	GraphQLOperationQuery    = "Query"
+	GraphQLOperationMutation = "Mutation"
 )
 
 type Product struct {
@@ -22,14 +31,35 @@ type Product struct {
 }
 
 type Feature struct {
-	Key              FeatureKey      `json:"key"`
-	ProductKey       ProductKey      `json:"productKey"`
-	Name             string          `json:"name"`
-	Description      string          `json:"description"`
-	RequiresFeatures []FeatureKey    `json:"requiresFeatures"`
-	Routes           []RouteRef      `json:"routes"`
-	Permissions      []PermissionRef `json:"permissions"`
-	Meters           []MeterKey      `json:"meters"`
+	Key                    FeatureKey         `json:"key"`
+	ProductKey             ProductKey         `json:"productKey"`
+	Name                   string             `json:"name"`
+	Description            string             `json:"description"`
+	RequiresFeatures       []FeatureKey       `json:"requiresFeatures"`
+	LegacyGrantingFeatures []FeatureKey       `json:"legacyGrantingFeatures,omitempty"`
+	Routes                 []RouteRef         `json:"routes"`
+	GraphQLSources         []GraphQLSource    `json:"graphqlSources,omitempty"`
+	GraphQLRootFields      []GraphQLRootField `json:"graphqlRootFields,omitempty"`
+	Permissions            []PermissionRef    `json:"permissions"`
+	Meters                 []MeterKey         `json:"meters"`
+}
+
+type Pack struct {
+	Key           PackKey      `json:"key"`
+	Name          string       `json:"name"`
+	Description   string       `json:"description"`
+	Standalone    bool         `json:"standalone"`
+	RequiresPacks []PackKey    `json:"requiresPacks,omitempty"`
+	Features      []FeatureKey `json:"features"`
+}
+
+type GraphQLRootField struct {
+	Operation string `json:"operation"`
+	Field     string `json:"field"`
+}
+
+func (f GraphQLRootField) Key() string {
+	return f.Operation + "." + f.Field
 }
 
 type Meter struct {
@@ -66,4 +96,8 @@ type CatalogProvider interface {
 	Products() []Product
 	Features() []Feature
 	Meters() []Meter
+}
+
+type PackProvider interface {
+	Packs() []Pack
 }

@@ -514,7 +514,8 @@ func (r *repository) GetPeriodByDate(
 			return sq.Where("fp.organization_id = ?", req.OrgID).
 				Where("fp.business_unit_id = ?", req.BuID).
 				Where("fp.start_date <= ?", req.Date).
-				Where("fp.end_date >= ?", req.Date)
+				Where("fp.end_date >= ?", req.Date).
+				Where("fp.is_adjusting = ?", false)
 		}).
 		Scan(ctx)
 	if err != nil {
