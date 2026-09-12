@@ -125,6 +125,13 @@ type postedBillingQueueResult struct {
 var _ servicesports.InvoiceService = (*Service)(nil)
 
 func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable API shape
+	return NewService(p)
+}
+
+// NewService returns the concrete service. The run service needs
+// CreateConsolidated, which is not on the InvoiceService port, so the container
+// provides this and derives the port from it rather than building twice.
+func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 	return &Service{
 		l:                   p.Logger.Named("service.invoice"),
 		db:                  p.DB,

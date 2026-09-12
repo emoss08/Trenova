@@ -408,7 +408,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },
 	),
 	invoiceadjustmentservice.New,
-	invoiceservice.New,
+	// Provided concrete and narrowed to the port: the run service consolidates
+	// through CreateConsolidated, which the port does not carry, and both must
+	// resolve to the same instance.
+	invoiceservice.NewService,
+	func(s *invoiceservice.Service) services.InvoiceService { return s },
 	invoicerunservice.New,
 	// The billing job takes the sweeper interface rather than the concrete
 	// service, because the job package is imported by the invoice service the
