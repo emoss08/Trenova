@@ -96,7 +96,7 @@ export function DataTableContextMenu<TData extends RowData>({
                 <ContextMenuItem
                   key={action.id}
                   disabled={action.disabled?.(row)}
-                  onClick={() => action.onClick(row)}
+                  onClick={() => void action.onClick(row)}
                 >
                   {Icon && <Icon className="size-4" />}
                   {t(action.label)}
@@ -116,7 +116,7 @@ export function DataTableContextMenu<TData extends RowData>({
                     key={action.id}
                     variant="destructive"
                     disabled={action.disabled?.(row)}
-                    onClick={() => action.onClick(row)}
+                    onClick={() => void action.onClick(row)}
                   >
                     {Icon && <Icon className="size-4" />}
                     {t(action.label)}

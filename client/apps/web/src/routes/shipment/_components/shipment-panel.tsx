@@ -26,6 +26,7 @@ import {
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
+import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
 import { ShipmentForm } from "./shipment-form";
 
 const AuditTab = lazy(() => import("@/components/audit-tab"));
@@ -216,21 +217,24 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         }
         descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
         headerActions={
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={() => setLoadPlannerOpen(true)}
-                />
-              }
-            >
-              <ContainerIcon className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t("Load Planner")}</TooltipContent>
-          </Tooltip>
+          <>
+            {row && <ShipmentBillingActionsMenu shipment={row} />}
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => setLoadPlannerOpen(true)}
+                  />
+                }
+              >
+                <ContainerIcon className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t("Load Planner")}</TooltipContent>
+            </Tooltip>
+          </>
         }
         useDock
       />

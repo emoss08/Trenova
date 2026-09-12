@@ -18,6 +18,11 @@ const (
 	// string, so a shipment with no PO can never land in the same group as one
 	// whose PO literally reads "No PO".
 	missingValue = "\x00none"
+
+	// standaloneShipment prefixes the key of a shipment grouped on its own because
+	// it has no order. The NUL byte keeps it out of the space an order id can
+	// occupy, so a shipment id can never collide with an order's key.
+	standaloneShipment = "\x00shipment:"
 )
 
 // GroupKeyResult is the stable key a group is identified by plus the label an
@@ -47,10 +52,19 @@ func GroupKeyFor(
 		return discriminated(customerID, candidate.ShipmentBOL, "BOL %s", "No BOL")
 
 	case customer.InvoiceSplitKeyCustomerAndOrder:
+		// A shipment booked without an order is its own commercial unit, so it gets
+		// its own invoice. Unlike a missing PO, there is nothing these shipments
+		// share: bucketing them together would merge every standalone job the
+		// customer shipped onto one invoice, which is not what "one invoice per
+		// order" means.
 		if candidate.OrderID.IsNil() {
+			label := candidate.ProNumber
+			if label == "" {
+				label = candidate.ShipmentID.String()
+			}
 			return GroupKeyResult{
-				Key:   customerID + keySeparator + missingValue,
-				Label: "No order",
+				Key:   customerID + keySeparator + standaloneShipment + candidate.ShipmentID.String(),
+				Label: label,
 			}
 		}
 		label := candidate.OrderNumber

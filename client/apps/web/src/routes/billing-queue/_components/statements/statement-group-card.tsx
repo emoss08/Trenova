@@ -73,8 +73,14 @@ export function StatementGroupCard({
         </button>
 
         <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
-          {t("{0}{1} shp", included.length, heldCount > 0 ? ` ${t("of {0}", shipments.length)}` : "")}
-            </span>
+          {heldCount > 0
+            ? t(
+                "{0} of {1, plural, one {# shipment} other {# shipments}}",
+                included.length,
+                shipments.length,
+              )
+            : t("{0, plural, one {# shipment} other {# shipments}}", shipments.length)}
+        </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
           {formatCurrency(liveTotal, currencyCode)}
         </span>
@@ -127,9 +133,7 @@ export function StatementGroupCard({
                 <span className="text-muted-foreground hidden shrink-0 lg:inline">
                   {shipment.serviceDate ? formatUnixDateMedium(shipment.serviceDate) : ""}
                 </span>
-                <span
-                  className={cn("ml-auto shrink-0 tabular-nums", held && "line-through")}
-                >
+                <span className={cn("ml-auto shrink-0 tabular-nums", held && "line-through")}>
                   {formatCurrency(Number(shipment.amount ?? 0), currencyCode)}
                 </span>
               </div>

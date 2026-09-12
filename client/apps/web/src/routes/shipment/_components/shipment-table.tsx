@@ -3,6 +3,8 @@ import { formatFileSize, type RejectedFile } from "@/components/documents/docume
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
+import { useGuardedRowActions } from "@/hooks/use-pending-actions";
+import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -88,7 +90,9 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     [closePanel],
   );
 
-  const { mutate: uncancelMutation } = useMutation({
+  const billingActions = useShipmentBillingActions();
+
+  const { mutateAsync: uncancelShipment } = useMutation({
     mutationFn: (shipmentId: string) => apiService.shipmentService.uncancel(shipmentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
@@ -98,19 +102,6 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     },
     onError: () => {
       toast.error(t("Failed to uncancel shipment"));
-    },
-  });
-
-  const { mutate: transferToBillingMutation } = useMutation({
-    mutationFn: (shipmentId: string) => apiService.shipmentService.transferToBilling(shipmentId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Transferred to billing"), {
-        description: t("The shipment has been added to the billing queue."),
-      });
-    },
-    onError: () => {
-      toast.error(t("Failed to transfer shipment to billing"));
     },
   });
 
@@ -196,11 +187,6 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     setUploadDocumentType(null);
   }, [isUploadOpen, isUploading]);
 
-  const handleTransferToBilling = useCallback(
-    (row: Row<Shipment>) => transferToBillingMutation(row.original.id || ""),
-    [transferToBillingMutation],
-  );
-
   const handleDuplicate = useCallback(
     (row: Row<Shipment>) => setDuplicateShipmentId(row.original.id || ""),
     [],
@@ -212,8 +198,8 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
   );
 
   const handleUncancel = useCallback(
-    (row: Row<Shipment>) => uncancelMutation(row.original.id || ""),
-    [uncancelMutation],
+    (row: Row<Shipment>) => uncancelShipment(row.original.id || "").catch(() => undefined),
+    [uncancelShipment],
   );
 
   const handleTransferOwnership = useCallback(
@@ -222,7 +208,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
   );
   const handleSendEDI = useCallback((row: Row<Shipment>) => setEDIShipment(row.original), []);
 
-  const rowActions = useMemo(
+  const unguardedRowActions = useMemo(
     () =>
       buildShipmentRowActions({
         onEdit: handleEdit,
@@ -230,7 +216,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
         onCancel: handleCancel,
         onUncancel: handleUncancel,
         onTransferOwnership: handleTransferOwnership,
-        onTransferToBilling: handleTransferToBilling,
+        billingActions,
         onSendEDI: handleSendEDI,
         canSendEDI,
       }),
@@ -240,11 +226,13 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
       handleCancel,
       handleUncancel,
       handleTransferOwnership,
-      handleTransferToBilling,
+      billingActions,
       handleSendEDI,
       canSendEDI,
     ],
   );
+
+  const rowActions = useGuardedRowActions(unguardedRowActions);
 
   const columns = useMemo(() => getColumns(rowActions), [rowActions]);
 

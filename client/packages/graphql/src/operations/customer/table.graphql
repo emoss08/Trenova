@@ -3,8 +3,11 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   businessUnitId
   organizationId
   customerId
-  billingCycleType
-  billingCycleDayOfWeek
+  invoiceDelivery
+  billingCycle
+  billingCycleAnchorDay
+  billingCycleTimezone
+  lastBilledPeriodEnd
   paymentTerm
   hasBillingControlOverrides
   creditLimit
@@ -13,11 +16,12 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   enforceCreditLimit
   autoCreditHold
   creditHoldReason
-  invoiceMethod
   autoSendInvoiceOnGeneration
-  allowInvoiceConsolidation
-  consolidationPeriodDays
-  consolidationGroupBy
+  splitBy
+  sectionBy
+  invoiceDetail
+  minConsolidatedAmount
+  maxShipmentsPerInvoice
   invoiceNumberFormat
   customerInvoicePrefix
   invoiceCopies
@@ -32,6 +36,7 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   validateCustomerRates
   autoTransfer
   autoMarkReadyToBill
+  autoApprove
   autoBill
   countLateOnlyOnAppointmentStops
   autoApplyAccessorials

@@ -23,8 +23,6 @@ const (
 	maxInvoicePrefixLength   = 20
 	maxTaxExemptNumberLength = 50
 	currencyCodeLength       = 3
-
-	defaultConsolidationLookbackDays = 30
 )
 
 type CustomerBillingProfile struct {
@@ -51,7 +49,6 @@ type CustomerBillingProfile struct {
 	SplitBy                                   InvoiceSplitKey                           `json:"splitBy"                                   bun:"split_by,type:invoice_split_key_enum,notnull,default:'Customer'"`
 	SectionBy                                 InvoiceSectionKey                         `json:"sectionBy"                                 bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
 	InvoiceDetail                             InvoiceDetail                             `json:"invoiceDetail"                             bun:"invoice_detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
-	ConsolidationLookbackDays                 int16                                     `json:"consolidationLookbackDays"                 bun:"consolidation_lookback_days,type:SMALLINT,notnull,default:30"`
 	MinConsolidatedAmount                     decimal.NullDecimal                       `json:"minConsolidatedAmount"                     bun:"min_consolidated_amount,type:NUMERIC(19,4),nullzero"`
 	MinConsolidatedAmountMinor                *int64                                    `json:"minConsolidatedAmountMinor"                bun:"min_consolidated_amount_minor,type:BIGINT,nullzero"`
 	MaxShipmentsPerInvoice                    int16                                     `json:"maxShipmentsPerInvoice"                    bun:"max_shipments_per_invoice,type:SMALLINT,notnull"`
@@ -70,6 +67,13 @@ type CustomerBillingProfile struct {
 	AutoTransfer                              bool                                      `json:"autoTransfer"                              bun:"auto_transfer,type:BOOLEAN,notnull"`
 	AutoMarkReadyToBill                       bool                                      `json:"autoMarkReadyToBill"                       bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull"`
 	AutoBill                                  bool                                      `json:"autoBill"                                  bun:"auto_bill,type:BOOLEAN,notnull"`
+	// AutoApprove lets a shipment that passes every billing requirement clear the
+	// billing queue without a biller clicking Approve, leaving the queue holding
+	// only the freight that actually needs a human.
+	//
+	// It is reachable only on the automatic transfer path, so an organization that
+	// has not enabled automatic queue transfer cannot be auto-approving anything.
+	AutoApprove bool `json:"autoApprove" bun:"auto_approve,type:BOOLEAN,notnull"`
 	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
 	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull"`
 	BillingCurrency                           string                                    `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
@@ -147,10 +151,6 @@ func (b *CustomerBillingProfile) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&b.InvoiceDetail,
 			validation.Required.Error("Invoice detail is required"),
 			domainvalidation.ValidEnum[InvoiceDetail]("Invoice detail is invalid"),
-		),
-		validation.Field(&b.ConsolidationLookbackDays,
-			validation.Min(int16(0)).Error("Lookback cannot be negative"),
-			validation.Max(int16(365)).Error("Lookback cannot exceed a year"),
 		),
 		// Zero means unbounded. The ceiling is what one PDF and one EDI 210 can
 		// carry without becoming unusable.
@@ -287,7 +287,6 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		SplitBy:                     InvoiceSplitKeyCustomer,
 		SectionBy:                   InvoiceSectionKeyShipment,
 		InvoiceDetail:               InvoiceDetailDetailed,
-		ConsolidationLookbackDays:   defaultConsolidationLookbackDays,
 		InvoiceAdjustmentSupportingDocumentPolicy: InvoiceAdjustmentSupportingDocumentPolicyInherit,
 	}
 }

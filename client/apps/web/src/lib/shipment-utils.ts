@@ -126,3 +126,13 @@ export function isEligibleTenderStatus(tenderStatus: Shipment["tenderStatus"]) {
     tenderStatus === "Canceled"
   );
 }
+
+export function canMarkShipmentReadyToBill(shipment: Shipment) {
+  return shipment.status === "Completed";
+}
+
+export function canTransferShipmentToBilling(shipment: Shipment) {
+  if (shipment.status !== "ReadyToInvoice") return false;
+  const transferStatus = shipment.billingTransferStatus;
+  return !transferStatus || transferStatus === "SentBackToOps";
+}

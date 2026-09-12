@@ -196,7 +196,6 @@ func (s *Service) buildGroups(
 		&repositories.ListConsolidationCandidatesRequest{
 			TenantInfo:  pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID},
 			CustomerIDs: customerIDs,
-			PeriodStart: run.PeriodStart,
 			PeriodEnd:   run.PeriodEnd,
 		},
 	)

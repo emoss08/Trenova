@@ -8,6 +8,8 @@ const QUICK_ACTION_IDS = new Set([
   "edit",
   "send-edi-load-tender",
   "transfer-ownership",
+  "mark-ready-to-bill",
+  "mark-ready-and-transfer-to-billing",
   "transfer-to-billing",
   "cancel",
   "uncancel",
@@ -41,9 +43,11 @@ export function QuickActionsBlock({
               size="xs"
               className="justify-start"
               disabled={disabled}
+              isLoading={action.isPending?.(row) ?? false}
+              loadingText={action.label}
               onClick={(event) => {
                 event.stopPropagation();
-                if (!disabled) action.onClick(row);
+                if (!disabled) void action.onClick(row);
               }}
             >
               {Icon && <Icon className="size-3" />}

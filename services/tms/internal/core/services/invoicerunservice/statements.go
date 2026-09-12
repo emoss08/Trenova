@@ -132,7 +132,6 @@ func (s *Service) fillStatements(
 		&repositories.ListConsolidationCandidatesRequest{
 			TenantInfo:  req.TenantInfo,
 			CustomerIDs: customerIDs,
-			PeriodStart: window.start,
 			PeriodEnd:   window.end,
 		},
 	)
@@ -157,6 +156,43 @@ func (s *Service) fillStatements(
 		if statement, ok := byCustomer[customerID]; ok {
 			syncStatementTotals(statement)
 		}
+	}
+
+	return s.fillHeldFreight(ctx, req, window, customerIDs, byCustomer)
+}
+
+// fillHeldFreight records the freight that belongs to these periods but has not
+// cleared the billing queue yet.
+//
+// One grouped query for the whole window rather than one per customer, on the
+// same principle as the candidate fetch: a deployment with hundreds of statement
+// customers must not pay a round trip each to answer "anything still waiting?".
+func (s *Service) fillHeldFreight(
+	ctx context.Context,
+	req *servicesports.ListOpenStatementsRequest,
+	window windowKey,
+	customerIDs []pulid.ID,
+	byCustomer map[pulid.ID]*servicesports.OpenStatement,
+) error {
+	held, err := s.billingQueueRepo.CountHeldForPeriod(
+		ctx,
+		&repositories.CountHeldForPeriodRequest{
+			TenantInfo:  req.TenantInfo,
+			CustomerIDs: customerIDs,
+			PeriodEnd:   window.end,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, row := range held {
+		statement, ok := byCustomer[row.CustomerID]
+		if !ok {
+			continue
+		}
+		statement.HeldCount = row.ShipmentCount
+		statement.HeldAmount = row.TotalAmount
 	}
 
 	return nil
@@ -312,6 +348,7 @@ func newOpenStatement(
 		MinimumAmount:         schedule.MinConsolidatedAmount,
 		AutoBill:              schedule.AutoBill,
 		TotalAmount:           decimal.Zero,
+		HeldAmount:            decimal.Zero,
 		Groups:                make([]*servicesports.StatementGroup, 0, 1),
 	}
 }

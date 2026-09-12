@@ -416,6 +416,11 @@ func (r *repository) saveBillingProfile(
 
 	cbp := buncolgen.CustomerBillingProfileColumns
 
+	// Every column the profile owns is listed below except last_billed_period_end,
+	// and that omission is deliberate: the billing watermark is advanced only by
+	// AdvanceBilledPeriod inside the commit transaction. Taking it from the
+	// incoming row would let an ordinary customer edit drag it backwards and
+	// re-open a period whose invoices already exist.
 	if _, err := tx.NewInsert().
 		Model(billingProfile).
 		On("CONFLICT (customer_id, organization_id, business_unit_id) DO UPDATE").
@@ -435,7 +440,6 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.SplitBy.SetExcluded()).
 		Set(cbp.SectionBy.SetExcluded()).
 		Set(cbp.InvoiceDetail.SetExcluded()).
-		Set(cbp.ConsolidationLookbackDays.SetExcluded()).
 		Set(cbp.MinConsolidatedAmount.SetExcluded()).
 		Set(cbp.MinConsolidatedAmountMinor.SetExcluded()).
 		Set(cbp.MaxShipmentsPerInvoice.SetExcluded()).
@@ -453,13 +457,16 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.ValidateCustomerRates.SetExcluded()).
 		Set(cbp.AutoTransfer.SetExcluded()).
 		Set(cbp.AutoMarkReadyToBill.SetExcluded()).
+		Set(cbp.AutoApprove.SetExcluded()).
 		Set(cbp.AutoBill.SetExcluded()).
+		Set(cbp.CountLateOnlyOnAppointmentStops.SetExcluded()).
 		Set(cbp.AutoApplyAccessorials.SetExcluded()).
 		Set(cbp.BillingCurrency.SetExcluded()).
 		Set(cbp.RequirePONumber.SetExcluded()).
 		Set(cbp.RequireBOLNumber.SetExcluded()).
 		Set(cbp.RequireDeliveryNumber.SetExcluded()).
 		Set(cbp.InvoiceAdjustmentSupportingDocumentPolicy.SetExcluded()).
+		Set(cbp.DefaultBillerID.SetExcluded()).
 		Set(cbp.BillingNotes.SetExcluded()).
 		Set(cbp.FuelSurchargeMode.SetExcluded()).
 		Set(cbp.FuelSurchargeProgramID.SetExcluded()).

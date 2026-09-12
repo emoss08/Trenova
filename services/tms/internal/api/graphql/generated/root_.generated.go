@@ -1344,6 +1344,7 @@ type ComplexityRoot struct {
 		AllowInvoiceConsolidation                 func(childComplexity int) int
 		ApplyLateCharges                          func(childComplexity int) int
 		AutoApplyAccessorials                     func(childComplexity int) int
+		AutoApprove                               func(childComplexity int) int
 		AutoBill                                  func(childComplexity int) int
 		AutoCreditHold                            func(childComplexity int) int
 		AutoMarkReadyToBill                       func(childComplexity int) int
@@ -15349,6 +15350,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.AutoApplyAccessorials(childComplexity), true
+	case "CustomerBillingProfile.autoApprove":
+		if e.ComplexityRoot.CustomerBillingProfile.AutoApprove == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.AutoApprove(childComplexity), true
 	case "CustomerBillingProfile.autoBill":
 		if e.ComplexityRoot.CustomerBillingProfile.AutoBill == nil {
 			break
@@ -62677,8 +62684,8 @@ type CustomerBillingProfile {
   splitBy: InvoiceSplitKey!
   sectionBy: InvoiceSectionKey!
   invoiceDetail: InvoiceDetail!
-  """How far before the period start to sweep shipments approved late."""
   consolidationLookbackDays: Int!
+    @deprecated(reason: "Statements no longer stop looking for owed freight after a window: every approved, unbilled shipment is included until it bills. Has no effect and is always 0. Removed in a later release.")
   """Below this, a group defers to the next period instead of billing."""
   minConsolidatedAmount: Decimal
   """Zero means unbounded."""
@@ -62697,7 +62704,7 @@ type CustomerBillingProfile {
   allowInvoiceConsolidation: Boolean!
     @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   consolidationPeriodDays: Int!
-    @deprecated(reason: "Split into billingCycle (cadence) and consolidationLookbackDays (how far back to sweep). Removed in a later release.")
+    @deprecated(reason: "Replaced by billingCycle. Statements no longer use a sweep window, so this has no effect and is always 0. Removed in a later release.")
   consolidationGroupBy: CustomerConsolidationGroupBy!
     @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
@@ -62714,6 +62721,13 @@ type CustomerBillingProfile {
   validateCustomerRates: Boolean!
   autoTransfer: Boolean!
   autoMarkReadyToBill: Boolean!
+  """
+  Lets freight that passes every billing requirement clear the billing queue
+  without a biller approving it, leaving the queue holding only what needs a
+  human. Reachable only when the organization has enabled automatic queue
+  transfer, and never for a shipment with a requirement or rate issue.
+  """
+  autoApprove: Boolean!
   autoBill: Boolean!
   countLateOnlyOnAppointmentStops: Boolean!
   autoApplyAccessorials: Boolean!
@@ -81143,6 +81157,8 @@ func (ec *executionContext) childFields_CustomerBillingProfile(ctx context.Conte
 		return ec.fieldContext_CustomerBillingProfile_autoTransfer(ctx, field)
 	case "autoMarkReadyToBill":
 		return ec.fieldContext_CustomerBillingProfile_autoMarkReadyToBill(ctx, field)
+	case "autoApprove":
+		return ec.fieldContext_CustomerBillingProfile_autoApprove(ctx, field)
 	case "autoBill":
 		return ec.fieldContext_CustomerBillingProfile_autoBill(ctx, field)
 	case "countLateOnlyOnAppointmentStops":

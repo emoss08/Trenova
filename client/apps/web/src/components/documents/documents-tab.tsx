@@ -4,13 +4,13 @@ import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-cont
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePendingActions } from "@/hooks/use-pending-actions";
+import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import type {
-  Shipment,
   ShipmentBillingReadiness,
   ShipmentBillingRequirement,
 } from "@trenova/shared/types/shipment";
@@ -447,34 +447,8 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     [setIsUploadOpen],
   );
 
-  const { mutateAsync: markReadyToInvoice, isPending: isMarkingReady } = useApiMutation<
-    Shipment,
-    Shipment
-  >({
-    mutationFn: async (payload) => apiService.shipmentService.update(payload.id, payload),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: shipmentDetailsQuery.queryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: billingReadinessQuery.queryKey,
-        }),
-        queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
-      ]);
-      toast.success(t("Shipment marked ready to invoice"));
-    },
-    resourceName: "Shipment",
-  });
-
-  const handleMarkReadyToInvoice = useCallback(async () => {
-    if (!shipment) return;
-
-    await markReadyToInvoice({
-      ...shipment,
-      status: "ReadyToInvoice",
-    });
-  }, [markReadyToInvoice, shipment]);
+  const { markReadyToBill } = useShipmentBillingActions();
+  const { pending: pendingBillingActions, run: runBillingAction } = usePendingActions();
 
   if (!resourceId) {
     return (
@@ -496,9 +470,11 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           shipment={shipment}
           onUploadRequired={handleRequiredUpload}
           onMarkReadyToInvoice={() => {
-            void handleMarkReadyToInvoice();
+            void runBillingAction(resourceId, markReadyToBill.id, () =>
+              markReadyToBill.run(resourceId),
+            );
           }}
-          isMarkingReady={isMarkingReady}
+          isMarkingReady={pendingBillingActions.has(resourceId)}
           disabled={disabled}
         />
       )}

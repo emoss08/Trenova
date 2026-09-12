@@ -270,6 +270,10 @@ func (s *service) TransferToBilling(
 
 	s.autoAssignDefaultBiller(ctx, created, shp.CustomerID, req.TenantInfo, actor)
 
+	if req.AutoApprove {
+		created = s.autoApprove(ctx, created, req.TenantInfo, actor)
+	}
+
 	auditActor := actor.AuditActor()
 	s.logAction(
 		created,
@@ -303,6 +307,43 @@ func (s *service) generateBillingNumber(
 			"Unsupported bill type for number generation",
 		)
 	}
+}
+
+// autoApprove clears a clean item straight through the queue.
+//
+// Whether the freight is clean was decided by the billing readiness evaluation
+// before transfer — this only carries the decision out, so the requirement and
+// rate gates are enforced in exactly one place.
+//
+// A failure here is logged and swallowed: the item is already in the queue, and
+// leaving it at ReadyForReview for a biller is the right outcome when something
+// unexpected stops the approval. Failing the transfer instead would strand the
+// shipment outside billing altogether.
+func (s *service) autoApprove(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+	actor *services.RequestActor,
+) *billingqueue.BillingQueueItem {
+	approved, err := s.UpdateStatus(ctx, &services.UpdateBillingQueueStatusRequest{
+		ItemID:     item.ID,
+		NewStatus:  billingqueue.StatusApproved,
+		TenantInfo: tenantInfo,
+	}, actor)
+	if err != nil {
+		s.l.Warn("failed to auto-approve billing queue item; left for review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
+		return item
+	}
+
+	s.l.Info("auto-approved billing queue item",
+		zap.String("billingQueueItemId", item.ID.String()),
+		zap.String("shipmentId", item.ShipmentID.String()),
+	)
+
+	return approved
 }
 
 func (s *service) autoAssignDefaultBiller(
@@ -471,11 +512,15 @@ func (s *service) UpdateStatus(
 		updated = updatedEntity
 
 		if req.NewStatus == billingqueue.StatusApproved && s.invoiceSvc != nil {
+			// Approving means the freight is verified, not that it bills today. A
+			// statement customer's item is approved onto their statement and waits
+			// for their cycle; everyone else is invoiced here as before.
 			createResult, updateErr = s.invoiceSvc.CreateFromApprovedBillingQueueItem(
 				txCtx,
 				&services.CreateInvoiceFromBillingQueueRequest{
 					BillingQueueItemID: updated.ID,
 					TenantInfo:         req.TenantInfo,
+					DeferToStatement:   true,
 				},
 				actor,
 			)

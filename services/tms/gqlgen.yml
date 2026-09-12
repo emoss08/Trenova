@@ -2196,6 +2196,8 @@ models:
         resolver: true
       consolidationPeriodDays:
         resolver: true
+      consolidationLookbackDays:
+        resolver: true
       consolidationGroupBy:
         resolver: true
       minConsolidatedAmount:

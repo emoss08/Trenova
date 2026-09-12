@@ -18,14 +18,22 @@ import (
 // The error is keyed on "offCycleReason" specifically so the client can tell this
 // apart from an ordinary validation failure and ask for the reason instead of
 // showing a dead end.
+// isStatementBilled reports whether this customer's freight accumulates onto a
+// periodic statement rather than being invoiced as it is approved.
+func isStatementBilled(cus *customer.Customer) bool {
+	profile := billingProfileOf(cus)
+
+	return profile != nil && profile.IsStatementBilled()
+}
+
 func guardStatementCadence(
 	cus *customer.Customer,
 	reason string,
 ) error {
-	profile := billingProfileOf(cus)
-	if profile == nil || !profile.IsStatementBilled() {
+	if !isStatementBilled(cus) {
 		return nil
 	}
+	profile := billingProfileOf(cus)
 	if reason != "" {
 		return nil
 	}
