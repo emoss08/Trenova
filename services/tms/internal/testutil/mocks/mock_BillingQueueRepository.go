@@ -391,25 +391,27 @@ func (_c *MockBillingQueueRepository_List_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
-// MarkPostedByOrderID provides a mock function for the type MockBillingQueueRepository
-func (_mock *MockBillingQueueRepository) MarkPostedByOrderID(ctx context.Context, req *repositories.MarkPostedByOrderRequest) (int64, error) {
+// ListConsolidationCandidates provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListConsolidationCandidates(ctx context.Context, req *repositories.ListConsolidationCandidatesRequest) ([]*repositories.ConsolidationCandidate, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for MarkPostedByOrderID")
+		panic("no return value specified for ListConsolidationCandidates")
 	}
 
-	var r0 int64
+	var r0 []*repositories.ConsolidationCandidate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkPostedByOrderRequest) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListConsolidationCandidatesRequest) ([]*repositories.ConsolidationCandidate, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkPostedByOrderRequest) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListConsolidationCandidatesRequest) []*repositories.ConsolidationCandidate); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.ConsolidationCandidate)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.MarkPostedByOrderRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListConsolidationCandidatesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -417,27 +419,27 @@ func (_mock *MockBillingQueueRepository) MarkPostedByOrderID(ctx context.Context
 	return r0, r1
 }
 
-// MockBillingQueueRepository_MarkPostedByOrderID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkPostedByOrderID'
-type MockBillingQueueRepository_MarkPostedByOrderID_Call struct {
+// MockBillingQueueRepository_ListConsolidationCandidates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConsolidationCandidates'
+type MockBillingQueueRepository_ListConsolidationCandidates_Call struct {
 	*mock.Call
 }
 
-// MarkPostedByOrderID is a helper method to define mock.On call
+// ListConsolidationCandidates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.MarkPostedByOrderRequest
-func (_e *MockBillingQueueRepository_Expecter) MarkPostedByOrderID(ctx any, req any) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
-	return &MockBillingQueueRepository_MarkPostedByOrderID_Call{Call: _e.mock.On("MarkPostedByOrderID", ctx, req)}
+//   - req *repositories.ListConsolidationCandidatesRequest
+func (_e *MockBillingQueueRepository_Expecter) ListConsolidationCandidates(ctx any, req any) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	return &MockBillingQueueRepository_ListConsolidationCandidates_Call{Call: _e.mock.On("ListConsolidationCandidates", ctx, req)}
 }
 
-func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) Run(run func(ctx context.Context, req *repositories.MarkPostedByOrderRequest)) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) Run(run func(ctx context.Context, req *repositories.ListConsolidationCandidatesRequest)) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *repositories.MarkPostedByOrderRequest
+		var arg1 *repositories.ListConsolidationCandidatesRequest
 		if args[1] != nil {
-			arg1 = args[1].(*repositories.MarkPostedByOrderRequest)
+			arg1 = args[1].(*repositories.ListConsolidationCandidatesRequest)
 		}
 		run(
 			arg0,
@@ -447,12 +449,144 @@ func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) Return(n int64, err error) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) Return(candidates []*repositories.ConsolidationCandidate, err error) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	_c.Call.Return(candidates, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListConsolidationCandidatesRequest) ([]*repositories.ConsolidationCandidate, error)) *MockBillingQueueRepository_ListConsolidationCandidates_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkPostedForInvoice provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) MarkPostedForInvoice(ctx context.Context, req *repositories.MarkPostedForInvoiceRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkPostedForInvoice")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkPostedForInvoiceRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkPostedForInvoiceRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.MarkPostedForInvoiceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_MarkPostedForInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkPostedForInvoice'
+type MockBillingQueueRepository_MarkPostedForInvoice_Call struct {
+	*mock.Call
+}
+
+// MarkPostedForInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.MarkPostedForInvoiceRequest
+func (_e *MockBillingQueueRepository_Expecter) MarkPostedForInvoice(ctx any, req any) *MockBillingQueueRepository_MarkPostedForInvoice_Call {
+	return &MockBillingQueueRepository_MarkPostedForInvoice_Call{Call: _e.mock.On("MarkPostedForInvoice", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_MarkPostedForInvoice_Call) Run(run func(ctx context.Context, req *repositories.MarkPostedForInvoiceRequest)) *MockBillingQueueRepository_MarkPostedForInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.MarkPostedForInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.MarkPostedForInvoiceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkPostedForInvoice_Call) Return(n int64, err error) *MockBillingQueueRepository_MarkPostedForInvoice_Call {
 	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) RunAndReturn(run func(ctx context.Context, req *repositories.MarkPostedByOrderRequest) (int64, error)) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+func (_c *MockBillingQueueRepository_MarkPostedForInvoice_Call) RunAndReturn(run func(ctx context.Context, req *repositories.MarkPostedForInvoiceRequest) (int64, error)) *MockBillingQueueRepository_MarkPostedForInvoice_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AttachInvoice provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) AttachInvoice(ctx context.Context, req *repositories.AttachInvoiceRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AttachInvoice")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.AttachInvoiceRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.AttachInvoiceRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.AttachInvoiceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_AttachInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AttachInvoice'
+type MockBillingQueueRepository_AttachInvoice_Call struct {
+	*mock.Call
+}
+
+// AttachInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.AttachInvoiceRequest
+func (_e *MockBillingQueueRepository_Expecter) AttachInvoice(ctx any, req any) *MockBillingQueueRepository_AttachInvoice_Call {
+	return &MockBillingQueueRepository_AttachInvoice_Call{Call: _e.mock.On("AttachInvoice", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_AttachInvoice_Call) Run(run func(ctx context.Context, req *repositories.AttachInvoiceRequest)) *MockBillingQueueRepository_AttachInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.AttachInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.AttachInvoiceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_AttachInvoice_Call) Return(n int64, err error) *MockBillingQueueRepository_AttachInvoice_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_AttachInvoice_Call) RunAndReturn(run func(ctx context.Context, req *repositories.AttachInvoiceRequest) (int64, error)) *MockBillingQueueRepository_AttachInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }

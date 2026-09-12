@@ -39,7 +39,7 @@ func TestLiveInvoicePDFRendersThroughTheSidecar(t *testing.T) {
 	entity := testInvoiceForPDF(
 		testPULID(t, "inv_"), testPULID(t, "org_"), testPULID(t, "bu_"),
 	)
-	entity.Lines = []*invoice.InoviceLine{
+	entity.Lines = []*invoice.InvoiceLine{
 		{
 			LineNumber:  1,
 			Type:        invoice.InvoiceLineTypeFreight,

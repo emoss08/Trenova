@@ -16,6 +16,7 @@ const (
 	SequenceTypeLocationCode         = SequenceType("location_code")
 	SequenceTypeDriverSettlement     = SequenceType("driver_settlement")
 	SequenceTypeCarrierSettlement    = SequenceType("carrier_settlement")
+	SequenceTypeInvoiceRun           = SequenceType("invoice_run")
 )
 
 type AccountingBasisType string
@@ -532,6 +533,7 @@ func (v SequenceType) IsValid() bool {
 		SequenceTypeConsolidation,
 		SequenceTypeOrder,
 		SequenceTypeInvoice,
+		SequenceTypeInvoiceRun,
 		SequenceTypeCreditMemo,
 		SequenceTypeDebitMemo,
 		SequenceTypeWorkOrder,

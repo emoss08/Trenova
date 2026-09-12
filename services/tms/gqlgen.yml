@@ -1269,6 +1269,9 @@ models:
   InvoiceStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.Status
+  InvoiceScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.Scope
   InvoicePaymentTerm:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.PaymentTerm
@@ -1295,7 +1298,7 @@ models:
         resolver: true
   InvoiceLine:
     model:
-      - github.com/emoss08/trenova/internal/core/domain/invoice.InoviceLine
+      - github.com/emoss08/trenova/internal/core/domain/invoice.InvoiceLine
     fields:
       quantity:
         resolver: true
@@ -2149,24 +2152,30 @@ models:
   Customer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.Customer
-  CustomerBillingCycleType:
-    model:
-      - github.com/emoss08/trenova/internal/core/domain/customer.BillingCycleType
   CustomerPaymentTerm:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.PaymentTerm
   CustomerCreditStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.CreditStatus
-  CustomerInvoiceMethod:
-    model:
-      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceMethod
-  CustomerConsolidationGroupBy:
-    model:
-      - github.com/emoss08/trenova/internal/core/domain/customer.ConsolidationGroupBy
   CustomerInvoiceNumberFormat:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceNumberFormat
+  CustomerInvoiceDelivery:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceDelivery
+  CustomerBillingCycle:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.BillingCycle
+  InvoiceSplitKey:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceSplitKey
+  InvoiceSectionKey:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceSectionKey
+  InvoiceDetail:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceDetail
   CustomerInvoiceAdjustmentSupportingDocumentPolicy:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceAdjustmentSupportingDocumentPolicy
@@ -2177,6 +2186,20 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.CustomerBillingProfile
     fields:
+      billingCycleType:
+        resolver: true
+      billingCycleDayOfWeek:
+        resolver: true
+      invoiceMethod:
+        resolver: true
+      allowInvoiceConsolidation:
+        resolver: true
+      consolidationPeriodDays:
+        resolver: true
+      consolidationGroupBy:
+        resolver: true
+      minConsolidatedAmount:
+        resolver: true
       arAccountId:
         fieldName: ARAccountID
       requirePONumber:

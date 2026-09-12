@@ -368,7 +368,7 @@ entities:
       lines: { label: "Invoice Lines" }
 
   invoice_line:
-    struct: invoice.InoviceLine
+    struct: invoice.InvoiceLine
     resource: invoice
     label: Invoice Line
     pluralLabel: Invoice Lines

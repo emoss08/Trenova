@@ -49,7 +49,9 @@ func reconciliationRelatedEntities(entity *invoice.Invoice) map[string]any {
 
 // reconciliationExpectedTotal is the source-of-truth amount an invoice should
 // reconcile against: the signed sum of the current rated totals of its legs, plus —
-// for order invoices — the order-level lines at their invoiced amount.
+// for anything wider than one shipment — the unattributed lines at their invoiced
+// amount. Only a single-shipment invoice has no unattributed lines to add; keying
+// this off a nil order id instead dropped them from every consolidated invoice.
 func reconciliationExpectedTotal(
 	entity *invoice.Invoice,
 	legs []*shipment.Shipment,
@@ -60,7 +62,7 @@ func reconciliationExpectedTotal(
 	}
 
 	expected := signedAmount(entity.BillType, legTotal)
-	if entity.OrderID.IsNil() {
+	if entity.Scope == invoice.ScopeShipment {
 		return expected
 	}
 

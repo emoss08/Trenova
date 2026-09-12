@@ -1,5 +1,5 @@
 {
-  "operationCount": 697,
+  "operationCount": 698,
   "fragmentCount": 168,
   "operations": [
     {
@@ -3009,7 +3009,7 @@
       "kind": "mutation",
       "domain": "order",
       "sourceFile": "src/operations/order/mutations.graphql",
-      "hash": "sha256:cae43848db3ff746b04aca0c2e169bedeb64675591f61d673d246905ba337a3b",
+      "hash": "sha256:775335abc4ecdb1bd747990a951043d00c3822e84b8937e46c301ad1d79bb30f",
       "rootFields": [
         "createInvoiceFromOrder"
       ],
@@ -3018,11 +3018,41 @@
           "name": "orderId",
           "type": "ID!",
           "defaultValue": null
+        },
+        {
+          "name": "offCycleReason",
+          "type": "String",
+          "defaultValue": null
         }
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation CreateInvoiceFromOrder($orderId: ID!) {\n  createInvoiceFromOrder(orderId: $orderId) {\n    id\n    number\n  }\n}"
+      "sdl": "mutation CreateInvoiceFromOrder($orderId: ID!, $offCycleReason: String) {\n  createInvoiceFromOrder(orderId: $orderId, offCycleReason: $offCycleReason) {\n    id\n    number\n  }\n}"
+    },
+    {
+      "name": "CreateInvoiceFromShipments",
+      "kind": "mutation",
+      "domain": "order",
+      "sourceFile": "src/operations/order/mutations.graphql",
+      "hash": "sha256:d4c1361e483de462a2dbadc15deb482f9aab682208e5b391e6582fcb701aed2f",
+      "rootFields": [
+        "createInvoiceFromShipments"
+      ],
+      "variables": [
+        {
+          "name": "shipmentIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "offCycleReason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation CreateInvoiceFromShipments($shipmentIds: [ID!]!, $offCycleReason: String) {\n  createInvoiceFromShipments(\n    shipmentIds: $shipmentIds\n    offCycleReason: $offCycleReason\n  ) {\n    id\n    number\n  }\n}"
     },
     {
       "name": "CreateJobPosition",

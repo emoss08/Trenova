@@ -6,7 +6,7 @@ import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils"
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentLineage } from "@/types/invoice-adjustment";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, TriangleAlertIcon } from "lucide-react";
 import { Link } from "react-router";
 import { InvoiceAdjustmentRuntimeSection } from "./invoice-adjustment-runtime-section";
 
@@ -36,6 +36,21 @@ export function InvoiceOverviewTab({
           latestAdjustment={latestAdjustment}
           latestAdjustmentDetail={latestAdjustmentDetail}
         />
+        {invoice.offCycleReason ? (
+          <div className="rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+            <div className="flex items-start gap-2">
+              <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div>
+                <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                  Billed outside this customer&apos;s statement
+                </p>
+                <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
+                  {invoice.offCycleReason}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="flex flex-col gap-5">
             <div className="bg-card rounded-lg border p-3">

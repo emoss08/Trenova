@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -122,11 +123,48 @@ func validateLineDerivedTotals(
 		)
 	}
 
+	validateMinorUnitTotals(entity, multiErr)
+
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
 	return nil
+}
+
+// validateMinorUnitTotals catches the two ways a minor-unit total can disagree
+// with the money it is supposed to represent.
+//
+// Both checks are needed. The rounded-decimal check catches a bad conversion.
+// The line-sum check catches per-line rounding drift that the first cannot see:
+// MinorUnits rounds half-to-even, so ten lines at x.005 can drift five cents
+// while the header total still rounds cleanly. A minor-unit total that is wrong
+// is a silent revenue error — it is what posts to the general ledger.
+func validateMinorUnitTotals(entity *invoice.Invoice, multiErr *errortypes.MultiError) {
+	lineSum := int64(0)
+	for _, line := range entity.Lines {
+		if line == nil {
+			continue
+		}
+		lineSum += line.AmountMinor
+	}
+
+	if entity.TotalAmountMinor != money.MinorUnits(entity.TotalAmount) {
+		multiErr.Add(
+			"totalAmountMinor",
+			errortypes.ErrInvalid,
+			"Invoice minor-unit total must equal the rounded decimal total",
+		)
+		return
+	}
+
+	if lineSum != entity.TotalAmountMinor {
+		multiErr.Add(
+			"totalAmountMinor",
+			errortypes.ErrInvalid,
+			"Invoice minor-unit total must equal the sum of line minor units",
+		)
+	}
 }
 
 func (v *Validator) validatePostingPeriodPolicy(

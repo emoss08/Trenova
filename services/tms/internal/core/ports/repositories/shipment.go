@@ -416,6 +416,32 @@ type GetShipmentsByIDsRequest struct {
 	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
 }
 
+// ListShipmentSummariesRequest asks for the flat per-shipment facts a document
+// names, for many shipments at once.
+type ListShipmentSummariesRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
+}
+
+// ShipmentSummary is one shipment as a consolidated invoice lists it.
+//
+// It exists because a consolidated invoice names dozens of shipments and needs
+// only a line of text about each. Loading whole shipments with their moves,
+// stops and locations to render one row apiece would be dozens of round trips
+// for data the document throws away.
+type ShipmentSummary struct {
+	ShipmentID       pulid.ID            `bun:"shipment_id"`
+	ProNumber        string              `bun:"pro_number"`
+	BOL              string              `bun:"bol"`
+	PONumber         string              `bun:"po_number"`
+	ServiceDate      *int64              `bun:"service_date"`
+	OriginCity       string              `bun:"origin_city"`
+	OriginState      string              `bun:"origin_state"`
+	DestinationCity  string              `bun:"destination_city"`
+	DestinationState string              `bun:"destination_state"`
+	TotalCharge      decimal.NullDecimal `bun:"total_charge_amount"`
+}
+
 type ShipmentSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	CustomerID         pulid.ID                       `json:"customerId"`
@@ -451,6 +477,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *GetShipmentsByIDsRequest,
 	) ([]*shipment.Shipment, error)
+	ListSummariesByIDs(
+		ctx context.Context,
+		req *ListShipmentSummariesRequest,
+	) ([]*ShipmentSummary, error)
 	SelectOptions(
 		ctx context.Context,
 		req *ShipmentSelectOptionsRequest,

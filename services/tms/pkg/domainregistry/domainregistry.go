@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
@@ -48,11 +49,14 @@ func RegisterEntities() []any {
 		&dispatchcontrol.DispatchControl{},
 		&tenant.BillingControl{},
 		&invoice.Invoice{},
-		&invoice.InoviceLine{},
+		&invoice.InvoiceLine{},
 		&invoice.Attachment{},
 		&invoice.EmailAttempt{},
 		&invoice.EmailAttemptAttachment{},
 		&invoice.DocumentShareToken{},
+		&invoicerun.InvoiceRun{},
+		&invoicerun.InvoiceRunGroup{},
+		&invoicerun.InvoiceRunGroupItem{},
 		&permission.Role{},
 		&permission.ResourcePermission{},
 		&permission.UserRoleAssignment{},

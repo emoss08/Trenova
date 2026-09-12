@@ -7843,10 +7843,19 @@ export type DetachOrderShipmentMutation = { detachOrderShipment: { ' $fragmentRe
 
 export type CreateInvoiceFromOrderMutationVariables = Exact<{
   orderId: string | number;
+  offCycleReason?: string | null | undefined;
 }>;
 
 
 export type CreateInvoiceFromOrderMutation = { createInvoiceFromOrder: { id: string, number: string } };
+
+export type CreateInvoiceFromShipmentsMutationVariables = Exact<{
+  shipmentIds: Array<string | number> | string | number;
+  offCycleReason?: string | null | undefined;
+}>;
+
+
+export type CreateInvoiceFromShipmentsMutation = { createInvoiceFromShipments: { id: string, number: string } };
 
 export type CreateOrderMutationVariables = Exact<{
   input: OrderInput;
@@ -16131,7 +16140,8 @@ export const RestoreNotificationsDocument = {"__meta__":{"kind":"mutation","name
 export const OrderDetailDocument = {"__meta__":{"kind":"query","name":"OrderDetail","hash":"sha256:7f3565d2e4b7025b6b94522b2f084b22e66738f934977fcf89f7921873655f7b"}} as unknown as TypedDocumentString<OrderDetailQuery, OrderDetailQueryVariables>;
 export const AttachOrderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"AttachOrderShipments","hash":"sha256:c5dd0f391421cd1c7def4a849abaf9630283cc0b9b5c4ad83164f677b79273a9"}} as unknown as TypedDocumentString<AttachOrderShipmentsMutation, AttachOrderShipmentsMutationVariables>;
 export const DetachOrderShipmentDocument = {"__meta__":{"kind":"mutation","name":"DetachOrderShipment","hash":"sha256:5a7b3fa35274ee455c2c6c8eb92842cbf663284cf5639cbc0c4dea9d7350984c"}} as unknown as TypedDocumentString<DetachOrderShipmentMutation, DetachOrderShipmentMutationVariables>;
-export const CreateInvoiceFromOrderDocument = {"__meta__":{"kind":"mutation","name":"CreateInvoiceFromOrder","hash":"sha256:cae43848db3ff746b04aca0c2e169bedeb64675591f61d673d246905ba337a3b"}} as unknown as TypedDocumentString<CreateInvoiceFromOrderMutation, CreateInvoiceFromOrderMutationVariables>;
+export const CreateInvoiceFromOrderDocument = {"__meta__":{"kind":"mutation","name":"CreateInvoiceFromOrder","hash":"sha256:775335abc4ecdb1bd747990a951043d00c3822e84b8937e46c301ad1d79bb30f"}} as unknown as TypedDocumentString<CreateInvoiceFromOrderMutation, CreateInvoiceFromOrderMutationVariables>;
+export const CreateInvoiceFromShipmentsDocument = {"__meta__":{"kind":"mutation","name":"CreateInvoiceFromShipments","hash":"sha256:d4c1361e483de462a2dbadc15deb482f9aab682208e5b391e6582fcb701aed2f"}} as unknown as TypedDocumentString<CreateInvoiceFromShipmentsMutation, CreateInvoiceFromShipmentsMutationVariables>;
 export const CreateOrderDocument = {"__meta__":{"kind":"mutation","name":"CreateOrder","hash":"sha256:7fb5e40596d163d5d39851904b98476de863ef34c103de223cdcdef3ee097041"}} as unknown as TypedDocumentString<CreateOrderMutation, CreateOrderMutationVariables>;
 export const UpdateOrderDocument = {"__meta__":{"kind":"mutation","name":"UpdateOrder","hash":"sha256:96308fccacc82642fbb51c915e2fa69d53fa1d7a4a5eb982d352dc4c0cdeb409"}} as unknown as TypedDocumentString<UpdateOrderMutation, UpdateOrderMutationVariables>;
 export const AddOrderChargeDocument = {"__meta__":{"kind":"mutation","name":"AddOrderCharge","hash":"sha256:b1a4b7643a5a90dc1d54ec27959c4dbc92d94fa7c45274d378e16fcabceabf36"}} as unknown as TypedDocumentString<AddOrderChargeMutation, AddOrderChargeMutationVariables>;

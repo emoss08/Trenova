@@ -105,6 +105,7 @@ const (
 	// Billing
 	ResourceInvoice              Resource = "invoice"
 	ResourceBillingQueue         Resource = "billing_queue"
+	ResourceInvoiceRun           Resource = "invoice_run"
 	ResourceAccessorialCharge    Resource = "accessorial_charge"
 	ResourceChargeType           Resource = "charge_type"
 	ResourceRevenueCode          Resource = "revenue_code"
