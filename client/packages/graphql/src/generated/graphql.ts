@@ -748,21 +748,15 @@ export type CreateWorkerPtoInput = {
   workerId: string | number;
 };
 
-export type CustomerBillingCycleType =
+/** How often a statement-billed customer is billed. */
+export type CustomerBillingCycle =
   | 'BiWeekly'
   | 'Daily'
   | 'Immediate'
   | 'Monthly'
-  | 'PerShipment'
   | 'Quarterly'
+  | 'SemiMonthly'
   | 'Weekly';
-
-export type CustomerConsolidationGroupBy =
-  | 'BOL'
-  | 'Division'
-  | 'Location'
-  | 'None'
-  | 'PONumber';
 
 export type CustomerCreditStatus =
   | 'Active'
@@ -781,10 +775,14 @@ export type CustomerInvoiceAdjustmentSupportingDocumentPolicy =
   | 'Optional'
   | 'Required';
 
-export type CustomerInvoiceMethod =
-  | 'Individual'
-  | 'Summary'
-  | 'SummaryWithDetail';
+/** How many invoices a customer's freight turns into. */
+export type CustomerInvoiceDelivery =
+  /** One or more invoices per billing period, covering the period's shipments. */
+  | 'Consolidated'
+  /** One invoice per order, covering every billable leg. */
+  | 'PerOrder'
+  /** One invoice per shipment. */
+  | 'PerShipment';
 
 export type CustomerInvoiceNumberFormat =
   | 'CustomPrefix'
@@ -2184,6 +2182,11 @@ export type InviteWorkerToPortalInput = {
   workerId: string | number;
 };
 
+/** How verbose each section of a consolidated invoice is. */
+export type InvoiceDetail =
+  | 'Detailed'
+  | 'Summary';
+
 export type InvoiceDisputeStatus =
   | 'Disputed'
   | 'None';
@@ -2197,6 +2200,13 @@ export type InvoicePaymentTerm =
   | 'Net60'
   | 'Net90';
 
+/** How the lines inside one invoice are organised. Never changes how many there are. */
+export type InvoiceSectionKey =
+  | 'Destination'
+  | 'Origin'
+  | 'PONumber'
+  | 'Shipment';
+
 export type InvoiceSendStatus =
   | 'Failed'
   | 'NotSent'
@@ -2208,6 +2218,19 @@ export type InvoiceSettlementStatus =
   | 'Paid'
   | 'PartiallyPaid'
   | 'Unpaid';
+
+/**
+ * How many invoices a billing period yields. Customer means one; every other
+ * member means one per distinct value of that key.
+ */
+export type InvoiceSplitKey =
+  | 'Customer'
+  | 'CustomerAndDestination'
+  | 'CustomerAndOrder'
+  | 'CustomerAndOrigin'
+  | 'CustomerAndPONumber'
+  | 'CustomerAndServiceType'
+  | 'CustomerAndShipmentBOL';
 
 export type InvoiceStatus =
   | 'Draft'
@@ -5641,7 +5664,7 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
-export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, consolidationLookbackDays: number, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
@@ -10865,8 +10888,11 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   businessUnitId
   organizationId
   customerId
-  billingCycleType
-  billingCycleDayOfWeek
+  invoiceDelivery
+  billingCycle
+  billingCycleAnchorDay
+  billingCycleTimezone
+  lastBilledPeriodEnd
   paymentTerm
   hasBillingControlOverrides
   creditLimit
@@ -10875,11 +10901,13 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   enforceCreditLimit
   autoCreditHold
   creditHoldReason
-  invoiceMethod
   autoSendInvoiceOnGeneration
-  allowInvoiceConsolidation
-  consolidationPeriodDays
-  consolidationGroupBy
+  splitBy
+  sectionBy
+  invoiceDetail
+  consolidationLookbackDays
+  minConsolidatedAmount
+  maxShipmentsPerInvoice
   invoiceNumberFormat
   customerInvoicePrefix
   invoiceCopies
@@ -10975,8 +11003,11 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   businessUnitId
   organizationId
   customerId
-  billingCycleType
-  billingCycleDayOfWeek
+  invoiceDelivery
+  billingCycle
+  billingCycleAnchorDay
+  billingCycleTimezone
+  lastBilledPeriodEnd
   paymentTerm
   hasBillingControlOverrides
   creditLimit
@@ -10985,11 +11016,13 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   enforceCreditLimit
   autoCreditHold
   creditHoldReason
-  invoiceMethod
   autoSendInvoiceOnGeneration
-  allowInvoiceConsolidation
-  consolidationPeriodDays
-  consolidationGroupBy
+  splitBy
+  sectionBy
+  invoiceDetail
+  consolidationLookbackDays
+  minConsolidatedAmount
+  maxShipmentsPerInvoice
   invoiceNumberFormat
   customerInvoicePrefix
   invoiceCopies
@@ -15850,7 +15883,7 @@ export const CustomerPaymentDetailDocument = {"__meta__":{"kind":"query","name":
 export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"PostAndApplyCustomerPayment","hash":"sha256:8509b32952e2ba614257d3189c57cbd58da45afbb0dafb31f17958e117f62ea6"}} as unknown as TypedDocumentString<PostAndApplyCustomerPaymentMutation, PostAndApplyCustomerPaymentMutationVariables>;
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
-export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:95143aae8acd86145d79d54c28619eba14ab57159429096e98eafbf729e4e02d"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:763ac6b319b5f9918c9364ef8c9766926eb36b618b73f69a7dd1fa5b32b6133e"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DetentionFacilityStatsDocument = {"__meta__":{"kind":"query","name":"DetentionFacilityStats","hash":"sha256:c7c1f1b8d0b5c5fa3dced842b3436b910f8525f3f3dc5992cd753d0e247a40c2"}} as unknown as TypedDocumentString<DetentionFacilityStatsQuery, DetentionFacilityStatsQueryVariables>;
 export const DetentionCustomerStatsDocument = {"__meta__":{"kind":"query","name":"DetentionCustomerStats","hash":"sha256:188bf76366f9651b4c37387fa0792d2ba42578a237866a2bbfa3a1d0d904c056"}} as unknown as TypedDocumentString<DetentionCustomerStatsQuery, DetentionCustomerStatsQueryVariables>;
 export const DetentionWaiverStatsDocument = {"__meta__":{"kind":"query","name":"DetentionWaiverStats","hash":"sha256:23077469702670463ce465420c6147c9583c2fbb143df6d60a5c0ac2276d0da1"}} as unknown as TypedDocumentString<DetentionWaiverStatsQuery, DetentionWaiverStatsQueryVariables>;
