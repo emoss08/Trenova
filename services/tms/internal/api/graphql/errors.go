@@ -8,11 +8,19 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
+	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
+
+func init() {
+	errcode.RegisterErrorType(querycost.DepthLimitErrorCode, errcode.KindProtocol)
+	errcode.RegisterErrorType(querycost.ComplexityLimitErrorCode, errcode.KindProtocol)
+	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
+	errcode.RegisterErrorType(FeatureAccessErrorCode, errcode.KindProtocol)
+}
 
 func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 	classifier := helpers.NewDefaultClassifier()

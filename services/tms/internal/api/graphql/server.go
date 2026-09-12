@@ -29,8 +29,6 @@ type ServerParams struct {
 }
 
 func NewServer(p ServerParams) *gqlhandler.Server {
-	registerQueryLimitErrorCodes()
-
 	srv := gqlhandler.New(newCostLimitedSchema(generated.NewExecutableSchema(generated.Config{
 		Resolvers: p.Resolver,
 	})))

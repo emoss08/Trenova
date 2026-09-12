@@ -25,6 +25,24 @@ func presenterTestConfig() *config.Config {
 	}
 }
 
+func TestProtocolErrorCodesAreRegistered(t *testing.T) {
+	t.Parallel()
+
+	for _, code := range []string{
+		querycost.DepthLimitErrorCode,
+		querycost.ComplexityLimitErrorCode,
+		CostBudgetErrorCode,
+		FeatureAccessErrorCode,
+	} {
+		err := &gqlerror.Error{
+			Message:    "limit exceeded",
+			Extensions: map[string]any{"code": code},
+		}
+		assert.Equal(t, errcode.KindProtocol, errcode.GetErrorKind(gqlerror.List{err}),
+			"%s must map to a 422 rather than a 200, with no constructor having run", code)
+	}
+}
+
 func TestErrorPresenter_CostBudgetIsRateLimitProblem(t *testing.T) {
 	t.Parallel()
 
