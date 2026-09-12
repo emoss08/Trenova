@@ -5,33 +5,18 @@ import { StatusCell } from "./status-cell";
 
 afterEach(cleanup);
 
-function makeShipment(overrides: Partial<Shipment>): Shipment {
-  return { id: "shp_1", status: "ReadyToInvoice", ...overrides } as Shipment;
-}
-
 describe("StatusCell", () => {
-  it("shows where the shipment sits in the billing queue under its status", () => {
-    render(<StatusCell shipment={makeShipment({ billingTransferStatus: "InReview" })} />);
-
-    const billing = screen.getByText("In Review");
-    expect(billing.closest("[title]")).toHaveAttribute("title", "Billing queue: In Review");
-  });
-
-  it("shows a posted invoice as Posted", () => {
+  // Billing has its own column; the status cell holds the shipment's status alone.
+  it("shows the shipment status without the billing queue state", () => {
     render(
       <StatusCell
-        shipment={makeShipment({ status: "Invoiced", billingTransferStatus: "Posted" })}
+        shipment={
+          { id: "shp_1", status: "ReadyToInvoice", billingTransferStatus: "InReview" } as Shipment
+        }
       />,
     );
 
-    expect(screen.getByTitle("Billing queue: Posted")).toBeInTheDocument();
-  });
-
-  it("shows nothing extra for a shipment billing has never received", () => {
-    const { container } = render(
-      <StatusCell shipment={makeShipment({ billingTransferStatus: null })} />,
-    );
-
-    expect(container.querySelector("[title^='Billing queue']")).toBeNull();
+    expect(screen.getByText("Ready to Invoice")).toBeInTheDocument();
+    expect(screen.queryByText("In Review")).not.toBeInTheDocument();
   });
 });
