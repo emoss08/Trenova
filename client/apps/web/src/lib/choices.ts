@@ -685,6 +685,13 @@ export const billingQueueStatusChoices = [
   { label: "Canceled", value: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<GenericSelectOption<BillingQueueStatus>>;
 
+// The queue hides posted items behind its own toggle, so its status filter omits
+// Posted; a shipment's billing state includes it.
+export const shipmentBillingStatusChoices = [
+  ...billingQueueStatusChoices,
+  { label: "Posted", value: "Posted", color: "#0d9488" },
+] satisfies ReadonlyArray<GenericSelectOption<BillingQueueStatus>>;
+
 export const moveStatusChoices = [
   { label: "New", value: "New", color: "#3b82f6" },
   { label: "Assigned", value: "Assigned", color: "#16a34a" },
