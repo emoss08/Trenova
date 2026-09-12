@@ -86,7 +86,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
                   <MemberIdentity member={row.member} size="sm" className="w-auto min-w-0 flex-1" />
                   {/* Every reason, not just the worst: a manager chasing one
                       person wants to deal with all of it in the one trip. */}
-                  <span className="flex shrink-0 flex-wrap items-center gap-1">
+                  <span className="flex min-w-0 flex-wrap items-center gap-1">
                     {reasons.map((reason) => (
                       <Badge
                         key={reason.key}

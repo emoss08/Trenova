@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:96f62d38dbd1634e5fc4f8f4098510679995fd4ca6598be7cf4e2cf6314d8584"
+const Version = "sha256:3489682d01dccba330e20e890a8d905ca2426e8e4d16c3de2fc4dc49615699f7"
 
 var Default = indexed(defaultCatalog)
 
@@ -7472,6 +7472,98 @@ var defaultCatalog = Catalog{
 					Column:       buncolgen.NewColumn("customer_id", "inv"),
 					Label:        "Customer ID",
 					Type:         FieldRef,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:    "scope",
+					Column: buncolgen.NewColumn("scope", "inv"),
+					Label:  "Scope",
+					Type:   FieldEnum,
+					EnumValues: []EnumValue{
+						{Value: "Shipment", Label: "Shipment"},
+						{Value: "Order", Label: "Order"},
+						{Value: "Consolidated", Label: "Consolidated"},
+						{Value: "Adjustment", Label: "Adjustment"},
+					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "invoiceRunId",
+					Column:       buncolgen.NewColumn("invoice_run_id", "inv"),
+					Label:        "Invoice Run ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "periodStart",
+					Column:       buncolgen.NewColumn("period_start", "inv"),
+					Label:        "Period Start",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "periodEnd",
+					Column:       buncolgen.NewColumn("period_end", "inv"),
+					Label:        "Period End",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "shipmentCount",
+					Column:       buncolgen.NewColumn("shipment_count", "inv"),
+					Label:        "Shipment Count",
+					Type:         FieldInt,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:    "detail",
+					Column: buncolgen.NewColumn("detail", "inv"),
+					Label:  "Detail",
+					Type:   FieldEnum,
+					EnumValues: []EnumValue{
+						{Value: "Detailed", Label: "Detailed"},
+						{Value: "Summary", Label: "Summary"},
+					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:    "sectionBy",
+					Column: buncolgen.NewColumn("section_by", "inv"),
+					Label:  "Section By",
+					Type:   FieldEnum,
+					EnumValues: []EnumValue{
+						{Value: "Shipment", Label: "Shipment"},
+						{Value: "PONumber", Label: "Po Number"},
+						{Value: "Origin", Label: "Origin"},
+						{Value: "Destination", Label: "Destination"},
+					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "offCycleReason",
+					Column:       buncolgen.NewColumn("off_cycle_reason", "inv"),
+					Label:        "Off Cycle Reason",
+					Type:         FieldString,
+					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,

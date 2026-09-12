@@ -3195,12 +3195,56 @@ func init() {
 				FieldMapKey: "customerId",
 			},
 			{
-				Name:        "billingCycleType",
-				FieldMapKey: "billingCycleType",
+				Name:    "billingCycleType",
+				Special: "billingCycleType",
 			},
 			{
-				Name:        "billingCycleDayOfWeek",
-				FieldMapKey: "billingCycleDayOfWeek",
+				Name:    "billingCycleDayOfWeek",
+				Special: "billingCycleDayOfWeek",
+			},
+			{
+				Name:        "invoiceDelivery",
+				FieldMapKey: "invoiceDelivery",
+			},
+			{
+				Name:        "billingCycle",
+				FieldMapKey: "billingCycle",
+			},
+			{
+				Name:        "billingCycleAnchorDay",
+				FieldMapKey: "billingCycleAnchorDay",
+			},
+			{
+				Name:        "billingCycleTimezone",
+				FieldMapKey: "billingCycleTimezone",
+			},
+			{
+				Name:        "lastBilledPeriodEnd",
+				FieldMapKey: "lastBilledPeriodEnd",
+			},
+			{
+				Name:        "splitBy",
+				FieldMapKey: "splitBy",
+			},
+			{
+				Name:        "sectionBy",
+				FieldMapKey: "sectionBy",
+			},
+			{
+				Name:        "invoiceDetail",
+				FieldMapKey: "invoiceDetail",
+			},
+			{
+				Name:        "consolidationLookbackDays",
+				FieldMapKey: "consolidationLookbackDays",
+			},
+			{
+				Name:        "minConsolidatedAmount",
+				FieldMapKey: "minConsolidatedAmount",
+			},
+			{
+				Name:        "maxShipmentsPerInvoice",
+				FieldMapKey: "maxShipmentsPerInvoice",
 			},
 			{
 				Name:        "paymentTerm",
@@ -3235,24 +3279,24 @@ func init() {
 				FieldMapKey: "creditHoldReason",
 			},
 			{
-				Name:        "invoiceMethod",
-				FieldMapKey: "invoiceMethod",
+				Name:    "invoiceMethod",
+				Special: "invoiceMethod",
 			},
 			{
 				Name:        "autoSendInvoiceOnGeneration",
 				FieldMapKey: "autoSendInvoiceOnGeneration",
 			},
 			{
-				Name:        "allowInvoiceConsolidation",
-				FieldMapKey: "allowInvoiceConsolidation",
+				Name:    "allowInvoiceConsolidation",
+				Special: "allowInvoiceConsolidation",
 			},
 			{
-				Name:        "consolidationPeriodDays",
-				FieldMapKey: "consolidationPeriodDays",
+				Name:    "consolidationPeriodDays",
+				Special: "consolidationPeriodDays",
 			},
 			{
-				Name:        "consolidationGroupBy",
-				FieldMapKey: "consolidationGroupBy",
+				Name:    "consolidationGroupBy",
+				Special: "consolidationGroupBy",
 			},
 			{
 				Name:        "invoiceNumberFormat",
@@ -9298,6 +9342,34 @@ func init() {
 			{
 				Name:        "customerId",
 				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "scope",
+				FieldMapKey: "scope",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "shipmentCount",
+				FieldMapKey: "shipmentCount",
+			},
+			{
+				Name:        "detail",
+				FieldMapKey: "detail",
+			},
+			{
+				Name:        "sectionBy",
+				FieldMapKey: "sectionBy",
+			},
+			{
+				Name:        "offCycleReason",
+				FieldMapKey: "offCycleReason",
 			},
 			{
 				Name:        "number",

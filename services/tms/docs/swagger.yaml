@@ -8558,9 +8558,8 @@ definitions:
                 type: array
             loaded:
                 description: |-
-                    Loaded is false for a deadhead move. It declares no bun default so that
-                    survives the insert: bun writes DEFAULT in place of any zero value whose
-                    field declares one, which would file deadhead miles as loaded.
+                    Loaded is false for a deadhead move. Deadhead miles are not recorded as
+                    loaded.
                 type: boolean
             organizationId:
                 type: string

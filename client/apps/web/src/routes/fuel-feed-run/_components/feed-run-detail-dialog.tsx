@@ -59,7 +59,7 @@ export function FeedRunDetailDialog({
   // The run being worked out is passed in rather than read from the closure:
   // it is what the mutation acts on, and the version it carries is what the
   // server checks, so it has to be the one the button was pressed on.
-  const { mutateAsync, isPending } = useApiMutation<
+  const { mutate, isPending } = useApiMutation<
     FuelPurchaseImportResolveResult,
     ResolveVariables
   >({
@@ -117,7 +117,7 @@ export function FeedRunDetailDialog({
             type="button"
             onClick={() => {
               if (batch) {
-                void mutateAsync({ batchId: batch.id, version: batch.version });
+                mutate({ batchId: batch.id, version: batch.version });
               }
             }}
             isLoading={isPending}

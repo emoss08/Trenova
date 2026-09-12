@@ -16,15 +16,14 @@ const maxDistanceFieldLength = 50
 type ShipmentMove struct {
 	bun.BaseModel `json:"-" bun:"table:shipment_moves,alias:sm"`
 
-	ID                     pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID             pulid.ID           `json:"shipmentId"                  bun:"shipment_id,type:VARCHAR(100),notnull"`
-	Status                 MoveStatus         `json:"status"                      bun:"status,type:move_status_enum,notnull,default:'New'"`
-	CoverageType           MoveCoverageType   `json:"coverageType"                bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
-	// Loaded is false for a deadhead move. It declares no bun default so that
-	// survives the insert: bun writes DEFAULT in place of any zero value whose
-	// field declares one, which would file deadhead miles as loaded.
+	ID             pulid.ID         `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID pulid.ID         `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ShipmentID     pulid.ID         `json:"shipmentId"                  bun:"shipment_id,type:VARCHAR(100),notnull"`
+	Status         MoveStatus       `json:"status"                      bun:"status,type:move_status_enum,notnull,default:'New'"`
+	CoverageType   MoveCoverageType `json:"coverageType"                bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
+	// Loaded is false for a deadhead move. Deadhead miles are not recorded as
+	// loaded.
 	Loaded                 bool               `json:"loaded"                      bun:"loaded,type:BOOLEAN,notnull"`
 	Sequence               int64              `json:"sequence"                    bun:"sequence,type:INTEGER,notnull"`
 	Distance               *float64           `json:"distance"                    bun:"distance,type:FLOAT,nullzero"`

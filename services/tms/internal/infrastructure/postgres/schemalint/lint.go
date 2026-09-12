@@ -128,27 +128,63 @@ func boolDefaultField(
 		return BoolField{}, false
 	}
 
+	// A bun tag may omit the column name, as `default:true` or `,default:true`,
+	// in which case bun derives the column from the field name. Every option is
+	// scanned rather than just the ones after the name, and the derived name is
+	// used when none is given, so those two forms are not silently skipped.
 	parts := strings.Split(tag, ",")
+	column := parts[0]
+	if strings.Contains(column, ":") {
+		column = ""
+	}
+
 	hasDefault := false
-	for _, part := range parts[1:] {
-		if strings.HasPrefix(part, "default:") {
+	for _, part := range parts {
+		if part != column && strings.HasPrefix(part, "default:") {
 			hasDefault = true
 			break
 		}
 	}
-	if !hasDefault || parts[0] == "" {
+	if !hasDefault {
 		return BoolField{}, false
+	}
+	if column == "" {
+		column = underscore(field.Names[0].Name)
 	}
 
 	return BoolField{
 		Table:  table,
-		Column: parts[0],
+		Column: column,
 		Struct: structName,
 		Field:  field.Names[0].Name,
 		File:   file,
 		Line:   fset.Position(field.Pos()).Line,
 	}, true
 }
+
+// underscore converts "CamelCasedString" to "camel_cased_string". It mirrors
+// bun's internal.Underscore, which is unexported, so a tag that omits its column
+// name is checked against the column bun would actually derive.
+func underscore(s string) string {
+	out := make([]byte, 0, len(s)+5)
+	for i := range len(s) {
+		c := s[i]
+		if c < 'A' || c > 'Z' {
+			out = append(out, c)
+			continue
+		}
+		lower := c + 32
+		if i > 0 && i+1 < len(s) && (isLower(s[i-1]) || isLower(s[i+1])) {
+			out = append(out, '_', lower)
+			continue
+		}
+		out = append(out, lower)
+	}
+
+	return string(out)
+}
+
+func isLower(c byte) bool { return c >= 'a' && c <= 'z' }
 
 func bunTag(field *ast.Field) (string, bool) {
 	if field.Tag == nil {

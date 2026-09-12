@@ -44289,7 +44289,7 @@ const docTemplate = `{
                     }
                 },
                 "loaded": {
-                    "description": "Loaded is false for a deadhead move. It declares no bun default so that\nsurvives the insert: bun writes DEFAULT in place of any zero value whose\nfield declares one, which would file deadhead miles as loaded.",
+                    "description": "Loaded is false for a deadhead move. Deadhead miles are not recorded as\nloaded.",
                     "type": "boolean"
                 },
                 "organizationId": {
